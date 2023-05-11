@@ -1,1 +1,72 @@
+name: Test
 
+on: [push, pull_request]
+
+env:
+    NODE_VERSION: '18'
+
+jobs:
+    nest_test_cov:
+        name: jest tests coverage
+        runs-on: ubuntu-latest
+        steps:
+         - name: checkout
+           uses: actions/checkout@v3
+         - name: Setup node
+           uses: actions/setup-node@v3
+           with:
+            node-version: ${{ env.NODE_VERSION }}
+         - name: npm ci
+           run: npm ci --prefer-offline --no-audit
+         - name: jest
+           run: npm run test:cov
+        #- name: save coverage artifacts
+        # run: mv coverage/lcov.info coverage/${{matrix.shard}}.info
+        # - name: "upload-artifacts"
+        #   uses: actions/upload-artifact@v3
+        #   with:
+        #     name: coverage-artifacts
+        #     path: coverage/
+    nest_lint:
+     runs-on: ubuntu-latest
+     timeout-minutes: 5
+     steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: npm ci
+        run: npm ci --prefer-offline --no-audit
+      - name: eslint
+        run: npm run lint
+   # sonarcloud:
+   #     name: sonarcloud coverage
+   #     runs-on: ubuntu-lastes
+   #     needs: [nest_test_cov]
+   #     steps:
+   #     - uses: actions/checkout@v3
+   #       with:
+   #         fetch-depth: 0
+   #     - uses: actions/download-artifact@v3
+   #       with:
+   #         name: coverage-artifacts
+   #         path: coverage
+   #     - name: Merge code coverage
+   #       run: |
+   #        sudo apt-get install -y lcov
+   #        find coverage -name *.info -exec echo -a {} \; | xargs lcov -o merged-lcov.info
+   #     - name: SonarCloud upload coverage
+   #       uses: SonarSource/sonarcloud-github-action@v1.9
+   #       env:
+   #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+   #        SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
+   #        with:
+   #        args: >
+   #         -Dsonar.sources=.
+   #         -Dsonar.organization=schulcloud-verbund
+   #         -Dsonar.projectKey=hpi-schul-cloud_schulcloud-server
+   #         -Dsonar.exclusions=**/*.js
+   #         -Dsonar.cpd.exclusions=**/controller/dto/*.ts,**/*.spec.ts
+   #         -Dsonar.javascript.lcov.reportPaths=merged-lcov.info
