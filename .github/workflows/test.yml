@@ -43,7 +43,7 @@ jobs:
         run: npm run lint
     sonarcloud:
         name: sonarcloud coverage
-        runs-on: ubuntu-lastes
+        runs-on: ubuntu-latest
         needs: [nest_test_cov]
         steps:
         - uses: actions/checkout@v3
