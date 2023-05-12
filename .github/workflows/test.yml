@@ -2,9 +2,10 @@ name: Test
 
 on:
   push:
-    branches: '*'
+    branches:
+      - main
   pull_request:
-    branches: '*'
+    types: [opened, synchronize, reopened]
 
 env:
     NODE_VERSION: '18'
@@ -68,9 +69,6 @@ jobs:
            SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
           with:
             args: >
-             -Dsonar.sources=.
-             -Dsonar.organization=schulcloud-verbund
-             -Dsonar.projectKey=hpi-schul-cloud_dbildungs-isle
              -Dsonar.exclusions=**/*.js
-             -Dsonar.cpd.exclusions=**/controller/dto/*.ts,**/*.spec.ts
+             -Dsonar.cpd.exclusions=**/*.ts,**/*.spec.ts
              -Dsonar.javascript.lcov.reportPaths=merged-lcov.info
