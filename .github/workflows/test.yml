@@ -25,7 +25,9 @@ jobs:
          - name: jest
            run: npm run test:cov
          - name: save coverage artifacts
-           run: mv coverage/lcov-report coverage/
+           run: |
+            mkdir -p coverage
+            mv ./coverage/lcov-report coverage/
          - name: "upload-artifacts"
            uses: actions/upload-artifact@v3
            with:
