@@ -67,8 +67,6 @@ jobs:
              -Dsonar.sources=.
              -Dsonar.organization=schulcloud-verbund
              -Dsonar.projectKey=hpi-schul-cloud_dbildungs-isle
-             -Dsonar.projectName=dbildungs-isle
-             -Dsonar.projectVersion=1.0
              -Dsonar.exclusions=**/*.js
              -Dsonar.cpd.exclusions=**/controller/dto/*.ts,**/*.spec.ts
              -Dsonar.javascript.lcov.reportPaths=merged-lcov.info
