@@ -25,7 +25,7 @@ jobs:
          - name: jest
            run: npm run test:cov
          - name: save coverage artifacts
-           run: mv coverage/lcov.info coverage/coverage.xml
+           run: mv coverage/lcov-report coverage/
          - name: "upload-artifacts"
            uses: actions/upload-artifact@v3
            with:
@@ -68,4 +68,7 @@ jobs:
              -Dsonar.sources=.
              -Dsonar.organization=schulcloud-verbund
              -Dsonar.projectKey=hpi-schul-cloud_dbildungs-isle
-             -Dsonar.coverageReportPaths=coverage/coverage.xml
+             -Dsonar.tests=.
+             -Dsonar.test.inclusions=**/*.spec.ts
+             -Dsonar.test.exclusions=**/node_modules/**
+             -Dsonar.javascript.lcov.reportPaths=coverage/lcov-report/*.lcov
