@@ -68,5 +68,4 @@ jobs:
              -Dsonar.sources=.
              -Dsonar.organization=schulcloud-verbund
              -Dsonar.projectKey=hpi-schul-cloud_dbildungs-isle
-             -Dsonar.tests=./test
              -Dsonar.coverageReportPaths=coverage/.info
