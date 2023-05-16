@@ -10,4 +10,8 @@ async function bootstrap() {
     console.error('Failed to start server:', error);
   }
 }
-bootstrap();
+
+bootstrap().catch((error) => {
+  console.error('An unhandled error occurred:', error);
+  process.exit(1);
+});
