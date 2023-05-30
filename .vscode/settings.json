@@ -1,4 +1,5 @@
 {
+    // TODO: remove this file from version controll
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
@@ -7,5 +8,8 @@
         "**/.DS_Store": true,
         "**/Thumbs.db": true,
         "**/node_modules": true
-    }
+    },
+    "cSpell.words": [
+        "DTOs"
+    ]
 }
