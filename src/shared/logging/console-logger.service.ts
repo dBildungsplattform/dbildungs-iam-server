@@ -1,6 +1,6 @@
-import LoggerService from "./logger.service";
+import { LoggerService } from "./logger.service.js";
 
-export default class ConsoleLoggerService extends LoggerService {
+export class ConsoleLoggerService extends LoggerService {
     public trace(message: string): void {
         console.trace(message);
     }

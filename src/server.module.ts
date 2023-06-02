@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
-import PersonApiModule from "@root/modules/person/person.api.module";
+import { PersonApiModule } from "./modules/person/person-api.module.js";
 
 @Module({
     imports: [PersonApiModule],
 })
-export default class ServerModule {}
+export class ServerModule {}

@@ -1,3 +1,3 @@
-export * from "./console-logger.service";
-export * from "./empty-logger.service";
-export * from "./logger.service";
+export * from "./console-logger.service.js";
+export * from "./empty-logger.service.js";
+export * from "./logger.service.js";

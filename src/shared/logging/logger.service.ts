@@ -1,4 +1,4 @@
-export default abstract class LoggerService {
+export abstract class LoggerService {
     public abstract trace(message: string): void;
 
     public abstract debug(message: string): void;

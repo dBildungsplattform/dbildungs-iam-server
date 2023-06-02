@@ -5,6 +5,7 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "type": "module",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -21,10 +22,17 @@
     "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@automapper/classes": "^8.7.7",
+    "@automapper/core": "^8.7.7",
+    "@automapper/nestjs": "^8.7.7",
+    "@mikro-orm/core": "^5.7.11",
+    "@mikro-orm/nestjs": "^5.1.8",
+    "@mikro-orm/postgresql": "^5.7.11",
     "@nestjs/common": "^9.0.0",
     "@nestjs/core": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
     "class-validator": "^0.14.0",
+    "mediatr-ts": "^1.2.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0"
   },

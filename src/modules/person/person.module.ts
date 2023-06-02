@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
-import PersonService from "./person.service";
-import PersonUc from "./person.uc";
+import { PersonRepo } from "./person.repo.js";
+import { PersonService } from "./person.service.js";
 
 @Module({
-    providers: [PersonService, PersonUc],
-    exports: [PersonService, PersonUc],
+    providers: [PersonRepo, PersonService],
+    exports: [PersonService],
 })
-export default class PersonModule {}
+export class PersonModule {}

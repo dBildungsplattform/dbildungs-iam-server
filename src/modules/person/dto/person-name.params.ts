@@ -1,6 +1,6 @@
 import { IsArray, IsOptional, IsString } from "class-validator";
 
-export default class PersonNameDto {
+export class PersonNameParams {
     @IsString()
     public readonly familienname!: string;
 

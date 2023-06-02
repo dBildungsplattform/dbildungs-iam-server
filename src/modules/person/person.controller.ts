@@ -1,10 +1,8 @@
-import { Controller } from "@nestjs/common";
-import PersonUc from "./person.uc";
+import { Controller, Post } from "@nestjs/common";
 
-@Controller()
-export default class PersonController {
-    public constructor(private readonly uc: PersonUc) {}
-
+@Controller({ path: "person" })
+export class PersonController {
+    @Post()
     public create(): unknown {
         throw new Error("Method not implemented");
     }

@@ -1,4 +1,4 @@
 import { Injectable } from "@nestjs/common";
 
 @Injectable()
-export default class PersonUc {}
+export class PersonUc {}

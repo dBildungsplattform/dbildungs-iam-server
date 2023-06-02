@@ -1,6 +1,6 @@
 import { IsDateString, IsOptional, Length } from "class-validator";
 
-export default class PersonBirthDto {
+export class PersonBirthParams {
     @IsOptional()
     @IsDateString()
     public readonly datum?: Date;
