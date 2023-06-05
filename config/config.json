@@ -1,0 +1,7 @@
+{
+    "HOST_PORT": 8080,
+    "DATABASE": {
+        "CLIENT_URL": "postgres://admin:admin@127.0.0.1:5432",
+        "DB_NAME": "dbildungs-iam-server"
+    }
+}

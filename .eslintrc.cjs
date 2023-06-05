@@ -22,7 +22,7 @@ module.exports = {
         node: true,
         jest: true,
     },
-    ignorePatterns: [".eslintrc.cjs", ".prettierrc.cjs"],
+    ignorePatterns: [".eslintrc.cjs", ".prettierrc.cjs", "dist/*"],
     rules: {
         "prettier/prettier": ["warn"],
         "@typescript-eslint/explicit-member-accessibility": "error",

@@ -11,7 +11,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
+    "start:debug": "nest start --debug",
     "start:prod": "node dist/main",
     "test": "npm run test:cov",
     "test:watch": "jest --watch",
@@ -29,12 +29,13 @@
     "@mikro-orm/nestjs": "^5.1.8",
     "@mikro-orm/postgresql": "^5.7.11",
     "@nestjs/common": "^9.0.0",
+    "@nestjs/config": "^2.3.2",
     "@nestjs/core": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
     "class-validator": "^0.14.0",
-    "mediatr-ts": "^1.2.0",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.2.0",
+    "z-schema": "^6.0.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",

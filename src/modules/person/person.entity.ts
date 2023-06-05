@@ -1,4 +1,4 @@
-import { EntityBase } from "../../shared/data/index.js";
+import { EntityBase } from "../../shared/db/index.js";
 
 export type PersonEntityProps = Readonly<PersonEntity>;
 

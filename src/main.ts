@@ -1,10 +1,13 @@
 import { NestFactory } from "@nestjs/core";
-import { AppModule } from "./app.module.js";
+import { ServerModule } from "./server.module.js";
+import { ConfigService } from "@nestjs/config";
 
 async function bootstrap(): Promise<void> {
     try {
-        const app = await NestFactory.create(AppModule);
-        await app.listen(3000);
+        const app = await NestFactory.create(ServerModule);
+        const config = app.get(ConfigService);
+        const host = config.getOrThrow<number>("HOST");
+        await app.listen(host);
         console.log("Server started successfully!");
     } catch (error) {
         console.error("Failed to start server:", error);
