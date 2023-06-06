@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { RepoBase } from "../../shared/db/index.js";
+import { RepoBase } from "../../shared/data/index.js";
 import { PersonEntity } from "./person.entity.js";
 import { EntityManager } from "@mikro-orm/postgresql";
 import { EntityName } from "@mikro-orm/core";
