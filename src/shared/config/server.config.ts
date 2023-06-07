@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { plainToClass, Type } from "class-transformer";
+import { Type, plainToClass } from "class-transformer";
 import { ValidateNested, validateSync } from "class-validator";
 import { DbConfig } from "./db.config.js";
 import { HostConfig } from "./host.config.js";

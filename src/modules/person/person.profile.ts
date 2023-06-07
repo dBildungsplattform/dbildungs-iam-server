@@ -1,10 +1,21 @@
-import { MappingProfile } from "@automapper/core";
-import { AutomapperProfile } from "@automapper/nestjs";
+import { Mapper, MappingProfile, createMap } from "@automapper/core";
+import { AutomapperProfile, InjectMapper, getMapperToken } from "@automapper/nestjs";
 import { Injectable } from "@nestjs/common";
+import { CreatePersonBodyParams, CreatePersonDO, CreatePersonResponse, PersonDO } from "./dto/index.js";
+import { PersonEntity } from "./person.entity.js";
 
 @Injectable()
 export class PersonProfile extends AutomapperProfile {
+    public constructor(@InjectMapper(getMapperToken()) mapper: Mapper) {
+        super(mapper);
+    }
+
     public override get profile(): MappingProfile {
-        throw new Error("Method not implemented.");
+        return (mapper: Mapper) => {
+            createMap(mapper, CreatePersonBodyParams, CreatePersonDO);
+            createMap(mapper, CreatePersonDO, PersonEntity);
+            createMap(mapper, PersonEntity, PersonDO);
+            createMap(mapper, PersonDO, CreatePersonResponse);
+        };
     }
 }
