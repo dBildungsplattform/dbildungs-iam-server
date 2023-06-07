@@ -1,1 +1,1 @@
-export * from "./global-validation.pipe.js";
+export * from './global-validation.pipe.js';

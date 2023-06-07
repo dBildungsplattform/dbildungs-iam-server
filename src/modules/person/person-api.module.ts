@@ -1,7 +1,7 @@
-import { Module } from "@nestjs/common";
-import { PersonController } from "./person.controller.js";
-import { PersonModule } from "./person.module.js";
-import { PersonUc } from "./person.uc.js";
+import { Module } from '@nestjs/common';
+import { PersonController } from './person.controller.js';
+import { PersonModule } from './person.module.js';
+import { PersonUc } from './person.uc.js';
 
 @Module({
     imports: [PersonModule],

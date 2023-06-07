@@ -1,6 +1,6 @@
-import { EntityName, FilterQuery } from "@mikro-orm/core";
-import { EntityManager } from "@mikro-orm/postgresql";
-import { EntityBase } from "./entity-base.js";
+import { EntityName, FilterQuery } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/postgresql';
+import { EntityBase } from './entity-base.js';
 
 export abstract class RepoBase<E extends EntityBase> {
     public constructor(protected readonly em: EntityManager) {}

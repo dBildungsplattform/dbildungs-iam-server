@@ -1,6 +1,6 @@
-import { BaseEntity, PrimaryKey, Property } from "@mikro-orm/core";
+import { BaseEntity, PrimaryKey, Property } from '@mikro-orm/core';
 
-export abstract class EntityBase extends BaseEntity<EntityBase, "id"> {
+export abstract class EntityBase extends BaseEntity<EntityBase, 'id'> {
     @PrimaryKey()
     public readonly id!: string;
 

@@ -1,5 +1,5 @@
 {
-  "name": "dummy_projekt",
+  "name": "dbildungs-iam-server",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -41,7 +41,7 @@
     "@golevelup/ts-jest": "^0.3.7",
     "@nestjs/cli": "^9.0.0",
     "@nestjs/schematics": "^9.0.0",
-    "@nestjs/testing": "^9.0.0",
+    "@nestjs/testing": "^9.4.2",
     "@types/express": "^4.17.13",
     "@types/jest": "^29.2.4",
     "@types/node": "^18.11.18",
@@ -72,11 +72,20 @@
     ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
+    "extensionsToTreatAsEsm": [".ts"],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "useESM": true
+        }
+      ]
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+        "**/*.tsx?"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"

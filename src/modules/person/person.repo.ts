@@ -1,8 +1,8 @@
-import { EntityManager } from "@mikro-orm/postgresql";
-import { EntityName } from "@mikro-orm/core";
-import { Injectable } from "@nestjs/common";
-import { RepoBase } from "../../shared/data/index.js";
-import { PersonEntity } from "./person.entity.js";
+import { EntityManager } from '@mikro-orm/postgresql';
+import { EntityName } from '@mikro-orm/core';
+import { Injectable } from '@nestjs/common';
+import { RepoBase } from '../../shared/data/index.js';
+import { PersonEntity } from './person.entity.js';
 
 @Injectable()
 export class PersonRepo extends RepoBase<PersonEntity> {

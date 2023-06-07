@@ -1,4 +1,4 @@
-import { LoggerService } from "./logger.service.js";
+import { LoggerService } from './logger.service.js';
 
 export class ConsoleLoggerService extends LoggerService {
     public trace(message: string): void {

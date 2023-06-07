@@ -1,12 +1,12 @@
-import { Mapper, MappingProfile, createMap } from "@automapper/core";
-import { AutomapperProfile, InjectMapper, getMapperToken } from "@automapper/nestjs";
-import { Injectable } from "@nestjs/common";
-import { CreatePersonBodyParams, CreatePersonDO, CreatePersonResponse, PersonDO } from "./dto/index.js";
-import { PersonEntity } from "./person.entity.js";
+import { Mapper, MappingProfile, createMap } from '@automapper/core';
+import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
+import { Inject, Injectable } from '@nestjs/common';
+import { CreatePersonBodyParams, CreatePersonDO, CreatePersonResponse, PersonDO } from './dto/index.js';
+import { PersonEntity } from './person.entity.js';
 
 @Injectable()
 export class PersonProfile extends AutomapperProfile {
-    public constructor(@InjectMapper(getMapperToken()) mapper: Mapper) {
+    public constructor(@Inject(getMapperToken()) mapper: Mapper) {
         super(mapper);
     }
 
