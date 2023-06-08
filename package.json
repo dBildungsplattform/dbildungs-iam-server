@@ -62,7 +62,7 @@
     "ts-loader": "^9.2.3",
     "ts-node": "^10.0.0",
     "tsconfig-paths": "4.1.1",
-    "typescript": "^4.7.4"
+    "typescript": "^4.9.5"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -72,7 +72,9 @@
     ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
-    "extensionsToTreatAsEsm": [".ts"],
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
     },
@@ -85,7 +87,7 @@
       ]
     },
     "collectCoverageFrom": [
-        "**/*.tsx?"
+      "**/*.tsx?"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
