@@ -1,7 +1,7 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
-import { CreatePersonDO, PersonDO } from './dto/index.js';
+import { CreatePersonDTO, PersonDO } from './dto/index.js';
 import { PersonRepo } from './person.repo.js';
 import { PersonEntity } from './person.entity.js';
 import { DomainError, PersonAlreadyExistsError } from '../../shared/index.js';
@@ -13,8 +13,8 @@ export class PersonService {
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
-    public async createPerson(person: CreatePersonDO): Promise<Result<PersonDO, DomainError>> {
-        const newPerson = this.mapper.map(person, CreatePersonDO, PersonEntity);
+    public async createPerson(person: CreatePersonDTO): Promise<Result<PersonDO, DomainError>> {
+        const newPerson = this.mapper.map(person, CreatePersonDTO, PersonEntity);
         const personName = ''; // TODO: set name
         const foundPerson = await this.personRepo.findByName(personName);
         if (foundPerson) {

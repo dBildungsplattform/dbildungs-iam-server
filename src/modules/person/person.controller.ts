@@ -1,7 +1,7 @@
 import { Mapper } from '@automapper/core';
 import { Body, Controller, Inject, Post } from '@nestjs/common';
 import { MapPipe, getMapperToken } from '@automapper/nestjs';
-import { CreatePersonBodyParams, CreatePersonDO, CreatePersonResponse, PersonDO } from './dto/index.js';
+import { CreatePersonBodyParams, CreatePersonDTO, CreatePersonResponse, PersonDO } from './dto/index.js';
 import { PersonUc } from './person.uc.js';
 
 @Controller({ path: 'person' })
@@ -10,7 +10,7 @@ export class PersonController {
 
     @Post()
     public async createPerson(
-        @Body(MapPipe(CreatePersonBodyParams, CreatePersonDO)) person: CreatePersonDO,
+        @Body(MapPipe(CreatePersonBodyParams, CreatePersonDTO)) person: CreatePersonDTO,
     ): Promise<CreatePersonResponse> {
         const response = this.mapper.map(await this.uc.createPerson(person), PersonDO, CreatePersonResponse);
         return response;

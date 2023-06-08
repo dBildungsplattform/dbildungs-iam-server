@@ -1,5 +1,5 @@
 import { Entity } from '@mikro-orm/core';
-import { EntityBase } from '../../shared/data/index.js';
+import { EntityBase } from '../../shared/types/index.js';
 
 export type PersonEntityProps = Readonly<PersonEntity>;
 
