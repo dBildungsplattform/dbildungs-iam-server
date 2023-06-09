@@ -14,8 +14,7 @@ export class PersonRepo extends RepoBase<PersonEntity> {
         return PersonEntity;
     }
 
-    public async findByName(name: string): Promise<Option<PersonEntity>> {
-        await Promise.resolve(name);
-        throw new Error();
+    public findByReferrer(referrer: string): Promise<Option<PersonEntity>> {
+        return this.em.findOne(this.entityName, { referrer });
     }
 }
