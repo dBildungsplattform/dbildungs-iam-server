@@ -8,9 +8,29 @@ export class CreatePersonDTO {
     @AutoMap()
     public readonly client?: string;
 
-    @AutoMap(() => PersonNameParams)
-    @ValidateNested()
-    public readonly name!: PersonNameParams;
+    @AutoMap()
+    public readonly lastName!: string;
+
+    @AutoMap()
+    public readonly firstName!: string;
+
+    @AutoMap()
+    public readonly initialLastName?: string;
+
+    @AutoMap()
+    public readonly nickName?: string;
+
+    @AutoMap()
+    public readonly nameTitle?: string;
+
+    @AutoMap()
+    public readonly nameSalutation?: string[];
+
+    @AutoMap()
+    public readonly nameSuffix?: string[];
+
+    @AutoMap()
+    public readonly nameSortIndex?: string;
 
     @AutoMap()
     public readonly birthDate?: Date;

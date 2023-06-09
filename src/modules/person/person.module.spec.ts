@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DatabaseTestModule, MapperTestModule } from '../../shared/index.js';
 import { PersonModule } from './person.module';
-import { PersonProfile } from './person.profile';
+import { PersonMapperProfile } from './person.mapper.profile.js';
 import { PersonRepo } from './person.repo';
 import { PersonService } from './person.service';
 
@@ -19,7 +19,7 @@ describe('PersonModule', () => {
     });
 
     it('should resolve PersonProfile', () => {
-        expect(module.get(PersonProfile)).toBeInstanceOf(PersonProfile);
+        expect(module.get(PersonMapperProfile)).toBeInstanceOf(PersonMapperProfile);
     });
 
     it('should resolve PersonRepo', () => {

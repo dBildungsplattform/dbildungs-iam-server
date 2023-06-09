@@ -1,13 +1,14 @@
+import { classes } from '@automapper/classes';
+import { CamelCaseNamingConvention } from '@automapper/core';
+import { AutomapperModule } from '@automapper/nestjs';
 import { Module } from '@nestjs/common';
 import { PersonApiModule } from './modules/person/person-api.module.js';
-import { classes } from '@automapper/classes';
-import { AutomapperModule } from '@automapper/nestjs';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ServerConfig, loadConfig } from './shared/config/server.config.js';
 import { AppModule } from './app.module.js';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
-import { DbConfig } from './shared/index.js';
+import { DbConfig, MappingError } from './shared/index.js';
 
 @Module({
     imports: [
@@ -17,6 +18,12 @@ import { DbConfig } from './shared/index.js';
         }),
         AutomapperModule.forRoot({
             strategyInitializer: classes(),
+            namingConventions: new CamelCaseNamingConvention(),
+            errorHandler: {
+                handle: (error: unknown): void => {
+                    throw new MappingError(error);
+                },
+            },
         }),
         MikroOrmModule.forRootAsync({
             useFactory: (config: ConfigService<ServerConfig, true>) => {

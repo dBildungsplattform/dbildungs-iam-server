@@ -1,42 +1,51 @@
 import { AutoMap } from '@automapper/classes';
+import { Expose } from 'class-transformer';
 import { IsArray, IsOptional, IsString } from 'class-validator';
 
 export class PersonNameParams {
     @AutoMap()
     @IsString()
-    public readonly familienname!: string;
+    @Expose({ name: 'familienname' })
+    public readonly lastName!: string;
 
     @AutoMap()
     @IsString()
-    public readonly vorname!: string;
-
-    @AutoMap()
-    @IsOptional()
-    @IsString()
-    public readonly initialenFamilienname?: string;
+    @Expose({ name: 'vorname' })
+    public readonly firstName!: string;
 
     @AutoMap()
     @IsOptional()
     @IsString()
-    public readonly rufname?: string;
+    @Expose({ name: 'initialenFamilienname' })
+    public readonly initialLastName?: string;
 
     @AutoMap()
     @IsOptional()
     @IsString()
+    @Expose({ name: 'rufname' })
+    public readonly nickName?: string;
+
+    @AutoMap()
+    @IsOptional()
+    @IsString()
+    @Expose({ name: 'titel' })
     public readonly title?: string;
 
     @AutoMap()
     @IsOptional()
     @IsArray()
-    public readonly anrede?: string[];
+    @Expose({ name: 'anrede' })
+    public readonly salutation?: string[];
 
     @AutoMap()
     @IsOptional()
     @IsArray()
-    public readonly namenssuffix?: string[];
+    @Expose({ name: 'namenssuffix' })
+    public readonly suffix?: string[];
 
     @AutoMap()
     @IsOptional()
     @IsString()
-    public readonly sortierindex?: string;
+    @Expose({ name: 'sortierindex' })
+    public readonly sortIndex?: string;
 }

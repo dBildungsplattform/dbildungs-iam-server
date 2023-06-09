@@ -1,14 +1,18 @@
 import { AutoMap } from '@automapper/classes';
+import { Expose, Type } from 'class-transformer';
 import { IsDateString, IsOptional, Length } from 'class-validator';
 
 export class PersonBirthParams {
     @AutoMap()
     @IsOptional()
     @IsDateString()
-    public readonly datum?: Date;
+    @Expose({ name: 'datum' })
+    @Type(() => Date)
+    public readonly date?: Date;
 
     @AutoMap()
     @IsOptional()
     @Length(1, 100)
-    public readonly geburtsort?: string;
+    @Expose({ name: 'geburtsort' })
+    public readonly place?: string;
 }

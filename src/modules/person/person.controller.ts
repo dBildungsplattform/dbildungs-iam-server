@@ -2,6 +2,7 @@ import { Mapper } from '@automapper/core';
 import { Body, Controller, Inject, Post } from '@nestjs/common';
 import { MapPipe, getMapperToken } from '@automapper/nestjs';
 import { CreatePersonBodyParams, CreatePersonDTO, CreatePersonResponse, PersonDO } from './dto/index.js';
+import { PersonDO } from './person.do.js';
 import { PersonUc } from './person.uc.js';
 
 @Controller({ path: 'person' })

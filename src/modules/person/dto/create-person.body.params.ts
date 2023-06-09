@@ -1,8 +1,9 @@
+import { AutoMap } from '@automapper/classes';
+import { Expose, Type } from 'class-transformer';
 import { IsBoolean, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
 import { PersonGender, PersonTrustLevel } from '../person.enums.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonNameParams } from './person-name.params.js';
-import { AutoMap } from '@automapper/classes';
 
 export class CreatePersonBodyParams {
     @AutoMap()
@@ -12,35 +13,43 @@ export class CreatePersonBodyParams {
     @AutoMap()
     @IsOptional()
     @IsString()
-    public readonly mandant?: string;
+    @Expose({ name: 'mandant' })
+    public readonly client?: string;
 
     @AutoMap(() => PersonNameParams)
     @ValidateNested()
+    @Type(() => PersonNameParams)
     public readonly name!: PersonNameParams;
 
     @AutoMap(() => PersonBirthParams)
     @ValidateNested()
-    public readonly geburt!: PersonBirthParams;
+    @Expose({ name: 'geburt' })
+    @Type(() => PersonBirthParams)
+    public readonly birth!: PersonBirthParams;
 
     @AutoMap()
     @IsOptional()
     @IsString()
     @Matches(Object.values(PersonGender).join('|'))
-    public readonly geschlecht?: PersonGender;
+    @Expose({ name: 'geschlecht' })
+    public readonly gender?: PersonGender;
 
     @AutoMap()
     @IsOptional()
     @IsString()
-    public readonly lokalisierung = 'de-DE';
+    @Expose({ name: 'lokalisierung' })
+    public readonly localization = 'de-DE';
 
     @AutoMap()
     @IsOptional()
     @IsString()
     @Matches(Object.values(PersonTrustLevel).join('|'))
-    public readonly vertrauensstufe?: PersonTrustLevel;
+    @Expose({ name: 'vertrauensstufe' })
+    public readonly trustLevel?: PersonTrustLevel;
 
     @AutoMap()
     @IsOptional()
     @IsBoolean()
-    public readonly auskunftssperre?: boolean;
+    @Expose({ name: 'auskunftssperre' })
+    public readonly isActive?: boolean;
 }
