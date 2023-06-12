@@ -2,7 +2,7 @@ import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MapperTestModule, MappingError } from '../../shared/index.js';
-import { CreatePersonBodyParams, CreatePersonDTO } from './dto/index.js';
+import { CreatePersonBodyParams, CreatePersonDto } from './dto/index.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonMapperProfile } from './person.mapper.profile.js';
 
@@ -33,17 +33,17 @@ describe('PersonMapperProfile', () => {
                 birth: {},
                 localization: 'de-DE',
             };
-            expect(() => mapper.map(params, CreatePersonBodyParams, CreatePersonDTO)).not.toThrowError(MappingError);
+            expect(() => mapper.map(params, CreatePersonBodyParams, CreatePersonDto)).not.toThrowError(MappingError);
         });
 
         it('should map CreatePersonDTO to PersonEntity', () => {
-            const dto: CreatePersonDTO = {
+            const dto: CreatePersonDto = {
                 firstName: 'john',
                 lastName: 'doe',
                 localization: 'de-DE',
                 referrer: 'referrer',
             };
-            expect(() => mapper.map(dto, CreatePersonDTO, PersonEntity)).not.toThrowError(MappingError);
+            expect(() => mapper.map(dto, CreatePersonDto, PersonEntity)).not.toThrowError(MappingError);
         });
 
         it('should map CreatePersonBodyParams to PersonEntity', () => {});

@@ -1,9 +1,9 @@
 import { AutoMap } from '@automapper/classes';
 import { PersonGender, PersonTrustLevel } from '../person.enums.js';
 
-export class CreatePersonDTO {
+export class CreatePersonDto {
     @AutoMap()
-    public readonly referrer!: string;
+    public readonly referrer?: string;
 
     @AutoMap()
     public readonly client?: string;
@@ -48,7 +48,7 @@ export class CreatePersonDTO {
     public readonly gender?: PersonGender;
 
     @AutoMap()
-    public readonly localization = 'de-DE';
+    public readonly localization?: string;
 
     @AutoMap()
     public readonly trustLevel?: PersonTrustLevel;
