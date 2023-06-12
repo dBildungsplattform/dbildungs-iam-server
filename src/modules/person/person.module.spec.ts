@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DatabaseTestModule, MapperTestModule } from '../../shared/index.js';
-import { PersonModule } from './person.module';
+import { PersonModule } from './person.module.js';
 import { PersonMapperProfile } from './person.mapper.profile.js';
-import { PersonRepo } from './person.repo';
-import { PersonService } from './person.service';
+import { PersonRepo } from './person.repo.js';
+import { PersonService } from './person.service.js';
 
 describe('PersonModule', () => {
     let module: TestingModule;
@@ -18,15 +18,17 @@ describe('PersonModule', () => {
         await module.close();
     });
 
-    it('should resolve PersonProfile', () => {
-        expect(module.get(PersonMapperProfile)).toBeInstanceOf(PersonMapperProfile);
-    });
+    describe('when module is initialized', () => {
+        it('should resolve PersonProfile', () => {
+            expect(module.get(PersonMapperProfile)).toBeInstanceOf(PersonMapperProfile);
+        });
 
-    it('should resolve PersonRepo', () => {
-        expect(module.get(PersonRepo)).toBeInstanceOf(PersonRepo);
-    });
+        it('should resolve PersonRepo', () => {
+            expect(module.get(PersonRepo)).toBeInstanceOf(PersonRepo);
+        });
 
-    it('should resolve PersonService', () => {
-        expect(module.get(PersonService)).toBeInstanceOf(PersonService);
+        it('should resolve PersonService', () => {
+            expect(module.get(PersonService)).toBeInstanceOf(PersonService);
+        });
     });
 });

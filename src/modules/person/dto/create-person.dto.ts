@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { PersonGender, PersonTrustLevel } from '../person.enums';
+import { PersonGender, PersonTrustLevel } from '../person.enums.js';
 
 export class CreatePersonDTO {
     @AutoMap()
@@ -15,7 +15,10 @@ export class CreatePersonDTO {
     public readonly firstName!: string;
 
     @AutoMap()
-    public readonly initialLastName?: string;
+    public readonly initialsLastName?: string;
+
+    @AutoMap()
+    public readonly initialsFirstName?: string;
 
     @AutoMap()
     public readonly nickName?: string;
@@ -25,6 +28,9 @@ export class CreatePersonDTO {
 
     @AutoMap()
     public readonly nameSalutation?: string[];
+
+    @AutoMap()
+    public readonly namePrefix?: string[];
 
     @AutoMap()
     public readonly nameSuffix?: string[];

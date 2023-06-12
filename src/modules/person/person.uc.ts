@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { CreatePersonDTO } from './dto/index.js';
 import { PersonService } from './person.service.js';
-import { CreatePersonDTO, PersonDO } from './dto/index.js';
+import { PersonDO } from './person.do.js';
 
 @Injectable()
 export class PersonUc {

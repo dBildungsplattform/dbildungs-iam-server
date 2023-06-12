@@ -16,8 +16,14 @@ export class PersonNameParams {
     @AutoMap()
     @IsOptional()
     @IsString()
-    @Expose({ name: 'initialenFamilienname' })
-    public readonly initialLastName?: string;
+    @Expose({ name: 'initialenfamilienname' })
+    public readonly initialsLastName?: string;
+
+    @AutoMap()
+    @IsOptional()
+    @IsString()
+    @Expose({ name: 'initialenvorname' })
+    public readonly initialsFirstName?: string;
 
     @AutoMap()
     @IsOptional()

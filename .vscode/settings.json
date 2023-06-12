@@ -12,6 +12,7 @@
     "jest.autoRun": "off",
     "cSpell.words": [
         "automapper",
+        "bitnami",
         "codepaths",
         "dbildungs",
         "DTOs",

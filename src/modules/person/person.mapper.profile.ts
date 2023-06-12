@@ -26,8 +26,12 @@ export class PersonMapperProfile extends AutomapperProfile {
                     mapFrom((src) => src.name.firstName),
                 ),
                 forMember(
-                    (dest) => dest.initialLastName,
-                    mapFrom((src) => src.name.initialLastName),
+                    (dest) => dest.initialsLastName,
+                    mapFrom((src) => src.name.initialsLastName),
+                ),
+                forMember(
+                    (dest) => dest.initialsFirstName,
+                    mapFrom((src) => src.name.initialsFirstName),
                 ),
                 forMember(
                     (dest) => dest.nickName,

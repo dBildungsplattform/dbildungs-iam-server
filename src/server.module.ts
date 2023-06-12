@@ -2,13 +2,12 @@ import { classes } from '@automapper/classes';
 import { CamelCaseNamingConvention } from '@automapper/core';
 import { AutomapperModule } from '@automapper/nestjs';
 import { Module } from '@nestjs/common';
+import { DbConfig, MappingError, ServerConfig, loadConfig } from './shared/index.js';
 import { PersonApiModule } from './modules/person/person-api.module.js';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ServerConfig, loadConfig } from './shared/config/server.config.js';
 import { AppModule } from './app.module.js';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
-import { DbConfig, MappingError } from './shared/index.js';
 
 @Module({
     imports: [

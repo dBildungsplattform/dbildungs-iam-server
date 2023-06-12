@@ -1,7 +1,7 @@
 import { EntityManager } from '@mikro-orm/postgresql';
 import { EntityName } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
-import { RepoBase } from '../../shared/types/index.js';
+import { RepoBase } from '../../shared/index.js';
 import { PersonEntity } from './person.entity.js';
 
 @Injectable()

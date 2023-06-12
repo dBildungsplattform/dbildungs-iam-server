@@ -7,8 +7,9 @@ import { PersonNameParams } from './person-name.params.js';
 
 export class CreatePersonBodyParams {
     @AutoMap()
+    @IsOptional()
     @IsString()
-    public readonly referrer!: string;
+    public readonly referrer?: string;
 
     @AutoMap()
     @IsOptional()
@@ -38,7 +39,7 @@ export class CreatePersonBodyParams {
     @IsOptional()
     @IsString()
     @Expose({ name: 'lokalisierung' })
-    public readonly localization = 'de-DE';
+    public readonly localization?: string = 'de-DE';
 
     @AutoMap()
     @IsOptional()

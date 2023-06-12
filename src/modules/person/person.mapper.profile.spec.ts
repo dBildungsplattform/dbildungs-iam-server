@@ -22,30 +22,30 @@ describe('PersonMapperProfile', () => {
         await module.close();
     });
 
-    it('should map CreatePersonBodyParams to CreatePersonDTO', () => {
-        const params: CreatePersonBodyParams = {
-            referrer: 'referrer',
-            name: {
+    describe('when mapper is initialized', () => {
+        it('should map CreatePersonBodyParams to CreatePersonDTO', () => {
+            const params: CreatePersonBodyParams = {
+                referrer: 'referrer',
+                name: {
+                    firstName: 'john',
+                    lastName: 'doe',
+                },
+                birth: {},
+                localization: 'de-DE',
+            };
+            expect(() => mapper.map(params, CreatePersonBodyParams, CreatePersonDTO)).not.toThrowError(MappingError);
+        });
+
+        it('should map CreatePersonDTO to PersonEntity', () => {
+            const dto: CreatePersonDTO = {
                 firstName: 'john',
                 lastName: 'doe',
-            },
-            birth: {},
-            localization: 'de-DE',
-        };
-        expect(() => mapper.map(params, CreatePersonBodyParams, CreatePersonDTO)).not.toThrowError(MappingError);
+                localization: 'de-DE',
+                referrer: 'referrer',
+            };
+            expect(() => mapper.map(dto, CreatePersonDTO, PersonEntity)).not.toThrowError(MappingError);
+        });
+
+        it('should map CreatePersonBodyParams to PersonEntity', () => {});
     });
-
-    it('should map CreatePersonDTO to PersonEntity', () => {
-        const dto: CreatePersonDTO = {
-            firstName: 'john',
-            lastName: 'doe',
-            localization: 'de-DE',
-            referrer: 'referrer',
-        };
-        expect(() => mapper.map(dto, CreatePersonDTO, PersonEntity)).not.toThrowError(MappingError);
-    });
-
-    it('should map CreatePersonDTO to PeronDO', () => {});
-
-    it('should map CreatePersonBodyParams to PersonEntity', () => {});
 });

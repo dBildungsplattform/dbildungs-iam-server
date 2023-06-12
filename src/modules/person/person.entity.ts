@@ -1,29 +1,33 @@
 import { AutoMap } from '@automapper/classes';
 import { Entity, Enum, Property } from '@mikro-orm/core';
-import { EntityBase } from '../../shared/types/index.js';
+import { EntityBase } from '../../shared/index.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
 
 @Entity({ tableName: 'persons' })
 export class PersonEntity extends EntityBase {
     @AutoMap()
-    @Property({})
-    public referrer!: string;
-
-    @AutoMap()
     @Property({ nullable: true })
-    public client?: string;
+    public referrer?: string;
 
     @AutoMap()
-    @Property({})
+    @Property()
+    public client!: string;
+
+    @AutoMap()
+    @Property()
     public lastName!: string;
 
     @AutoMap()
-    @Property({})
+    @Property()
     public firstName!: string;
 
     @AutoMap()
     @Property({ nullable: true })
-    public initialLastName?: string;
+    public initialsLastName?: string;
+
+    @AutoMap()
+    @Property({ nullable: true })
+    public initialsFirstName?: string;
 
     @AutoMap()
     @Property({ nullable: true })
@@ -36,6 +40,10 @@ export class PersonEntity extends EntityBase {
     @AutoMap()
     @Property({ nullable: true })
     public nameSalutation?: string[];
+
+    @AutoMap()
+    @Property({ nullable: true })
+    public namePrefix?: string[];
 
     @AutoMap()
     @Property({ nullable: true })
