@@ -25,7 +25,8 @@ module.exports = {
     ignorePatterns: ['.eslintrc.cjs', '.prettierrc.cjs', 'dist/*'],
     rules: {
         'prettier/prettier': ['warn'],
-        "import/extensions": ['error', 'ignorePackages'],
+        'import/extensions': ['error', 'ignorePackages'],
+        'import/no-cycle': ['error'],
         'no-void': ['error', { allowAsStatement: true }],
         'max-classes-per-file': ['error', 1],
         'class-methods-use-this': 'off',

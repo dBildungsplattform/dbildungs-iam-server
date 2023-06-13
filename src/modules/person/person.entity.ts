@@ -67,7 +67,7 @@ export class PersonEntity extends EntityBase {
 
     @AutoMap()
     @Property({ nullable: true })
-    public localization = 'de-DE';
+    public localization?: string = 'de-DE';
 
     @AutoMap()
     @Enum({ items: () => PersonTrustLevel, nullable: true })
