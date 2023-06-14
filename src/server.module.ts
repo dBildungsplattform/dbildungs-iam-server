@@ -5,7 +5,6 @@ import { Module } from '@nestjs/common';
 import { DbConfig, MappingError, ServerConfig, loadConfig } from './shared/index.js';
 import { PersonApiModule } from './modules/person/person-api.module.js';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AppModule } from './app.module.js';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
 
@@ -35,7 +34,6 @@ import { defineConfig } from '@mikro-orm/postgresql';
             },
             inject: [ConfigService],
         }),
-        AppModule,
         PersonApiModule,
     ],
 })

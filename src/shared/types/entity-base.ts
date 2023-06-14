@@ -1,8 +1,8 @@
-import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
+import { BaseEntity, Entity, PrimaryKey, Property } from '@mikro-orm/core';
 import { randomUUID } from 'crypto';
 
 @Entity({ abstract: true })
-export class EntityBase {
+export abstract class EntityBase extends BaseEntity<EntityBase, 'id'> {
     @PrimaryKey()
     public readonly id: string = randomUUID();
 

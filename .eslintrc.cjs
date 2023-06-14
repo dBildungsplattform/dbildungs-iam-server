@@ -32,12 +32,11 @@ module.exports = {
         'class-methods-use-this': 'off',
         'no-param-reassign': 'warn',
         'no-underscore-dangle': 'error',
-        'no-unused-vars': 'warn',
         '@typescript-eslint/unbound-method': 'error',
         '@typescript-eslint/explicit-member-accessibility': 'error',
         '@typescript-eslint/explicit-function-return-type': 'error',
         '@typescript-eslint/no-explicit-any': 'error',
-        '@typescript-eslint/no-unused-vars': [ 'error', { 'argsIgnorePattern': '_.+' } ],
+        '@typescript-eslint/no-unused-vars': [ 'error', { 'argsIgnorePattern': '\_.+' } ],
         '@typescript-eslint/no-empty-interface': [
             'error',
             {

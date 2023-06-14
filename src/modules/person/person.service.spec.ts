@@ -1,25 +1,34 @@
+import { fakerDE as faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DomainError, EntityFactory, MapperTestModule, PersonAlreadyExistsError } from '../../shared/index.js';
+import { DomainError, MapperTestModule, PersonAlreadyExistsError } from '../../shared/index.js';
 import { PersonDo } from './person.do.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
 import { PersonService } from './person.service.js';
+import { PersonMapperProfile } from './person.mapper.profile.js';
 
 describe('PersonService', () => {
     let module: TestingModule;
     let personService: PersonService;
     let personRepoMock: DeepMocked<PersonRepo>;
-
-    const [personMock] = EntityFactory.createPersons(1);
+    const personMock: Partial<PersonEntity> = {
+        id: faker.string.uuid(),
+        createdAt: faker.date.past(),
+        updatedAt: faker.date.recent(),
+        referrer: faker.string.uuid(),
+        firstName: faker.person.firstName(),
+        lastName: faker.person.lastName(),
+    };
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [MapperTestModule],
             providers: [
+                PersonMapperProfile,
                 PersonService,
                 {
-                    provide: PersonService,
+                    provide: PersonRepo,
                     useValue: createMock<PersonRepo>(),
                 },
             ],
@@ -32,9 +41,13 @@ describe('PersonService', () => {
         await module.close();
     });
 
+    beforeEach(() => {
+        jest.resetAllMocks();
+    });
+
     describe('when person not exists', () => {
         it('should create user', async () => {
-            personRepoMock.findByReferrer.mockResolvedValueOnce(null);
+            personRepoMock.findByReferrer.mockResolvedValue(null);
             const result = await personService.createPerson({
                 firstName: personMock?.firstName as string,
                 lastName: personMock?.lastName as string,
@@ -48,14 +61,17 @@ describe('PersonService', () => {
 
     describe('when person already exists', () => {
         it('should return domain error', async () => {
-            personRepoMock.findByReferrer.mockResolvedValueOnce(personMock);
+            personRepoMock.findByReferrer.mockResolvedValue(personMock as PersonEntity);
             const result = await personService.createPerson({
-                firstName: personMock?.firstName as string,
-                lastName: personMock?.lastName as string,
+                firstName: personMock.firstName as string,
+                lastName: personMock.lastName as string,
+                referrer: personMock.referrer as string,
             });
             expect(result).toEqual<Result<PersonDo, DomainError>>({
                 ok: false,
-                error: new PersonAlreadyExistsError(`Person with referrer ${personMock?.referrer as string}`),
+                error: new PersonAlreadyExistsError(
+                    `Person with referrer ${personMock.referrer as string} already exists`,
+                ),
             });
         });
     });

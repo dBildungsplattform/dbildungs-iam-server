@@ -7,10 +7,11 @@ import { Module } from '@nestjs/common';
     imports: [
         MikroOrmModule.forRoot(
             defineConfig({
-                clientUrl: 'postgres://admin:admin@127.0.0.1:5432',
-                dbName: `test-${randomUUID()}`,
+                clientUrl: 'postgres://127.0.0.1:5432',
+                dbName: `test-db-${randomUUID()}`,
                 entities: ['./dist/**/*.entity.js'],
                 entitiesTs: ['./src/**/*.entity.ts'],
+                allowGlobalContext: true,
             }),
         ),
     ],
