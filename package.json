@@ -71,7 +71,7 @@
             "json",
             "ts"
         ],
-        "rootDir": "src",
+        "rootDir": "./src",
         "testRegex": ".*\\.spec\\.ts$",
         "extensionsToTreatAsEsm": [
             ".ts"
@@ -87,7 +87,12 @@
                 }
             ]
         },
-        "coverageDirectory": "<rootDir>/coverage",
+        "collectCoverageFrom": [
+            "**/*.ts",
+            "!**/*.d.ts",
+            "!**/*.spec.ts"
+        ],
+        "coverageDirectory": "../coverage",
         "coverageProvider": "v8"
     }
 }
