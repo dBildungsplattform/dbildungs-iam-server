@@ -87,10 +87,7 @@
                 }
             ]
         },
-        "collectCoverageFrom": [
-            "**/*.tsx?"
-        ],
-        "coverageDirectory": "../coverage",
-        "testEnvironment": "node"
+        "coverageDirectory": "<rootDir>/coverage",
+        "coverageProvider": "v8"
     }
 }

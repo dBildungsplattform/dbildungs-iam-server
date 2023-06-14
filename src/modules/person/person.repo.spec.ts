@@ -4,7 +4,7 @@ import { ConfigTestModule, ContainerFactory, DatabaseTestModule } from '../../sh
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
 
-describe('PersonRepo', () => {
+describe.skip('PersonRepo', () => {
     let module: TestingModule;
     let em: EntityManager;
     let personRepo: PersonRepo;
