@@ -22,6 +22,10 @@ describe('PersonMapperProfile', () => {
         await module.close();
     });
 
+    it('should be defined', () => {
+        expect(mapper).toBeDefined();
+    });
+
     describe('when mapper is initialized', () => {
         it('should map CreatePersonBodyParams to CreatePersonDTO', () => {
             const params: CreatePersonBodyParams = {

@@ -17,6 +17,10 @@ describe('PersonApiModule', () => {
         await module.close();
     });
 
+    it('should be defined', () => {
+        expect(module).toBeDefined();
+    });
+
     describe('when module is initialized', () => {
         it('should resolve PersonController', () => {
             expect(module.get(PersonController)).toBeInstanceOf(PersonController);

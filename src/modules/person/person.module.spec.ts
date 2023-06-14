@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DatabaseTestModule, MapperTestModule } from '../../shared/index.js';
+import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../shared/index.js';
 import { PersonModule } from './person.module.js';
 import { PersonMapperProfile } from './person.mapper.profile.js';
 import { PersonRepo } from './person.repo.js';
@@ -10,12 +10,16 @@ describe('PersonModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [DatabaseTestModule, MapperTestModule, PersonModule],
+            imports: [ConfigTestModule, DatabaseTestModule, MapperTestModule, PersonModule],
         }).compile();
     });
 
     afterAll(async () => {
         await module.close();
+    });
+
+    it('should be defined', () => {
+        expect(module).toBeDefined();
     });
 
     describe('when module is initialized', () => {

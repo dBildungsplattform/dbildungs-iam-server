@@ -1,19 +1,23 @@
-import { randomUUID } from 'crypto';
+import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
-import { Module } from '@nestjs/common';
+import { DbConfig, ServerConfig } from '../../shared/index.js';
 
 @Module({
     imports: [
-        MikroOrmModule.forRoot(
-            defineConfig({
-                clientUrl: 'postgres://127.0.0.1:5432',
-                dbName: `test-db-${randomUUID()}`,
-                entities: ['./dist/**/*.entity.js'],
-                entitiesTs: ['./src/**/*.entity.ts'],
-                allowGlobalContext: true,
-            }),
-        ),
+        MikroOrmModule.forRootAsync({
+            useFactory: (configService: ConfigService<ServerConfig, true>) => {
+                return defineConfig({
+                    clientUrl: configService.getOrThrow<DbConfig>('DB').CLIENT_URL,
+                    dbName: configService.getOrThrow<DbConfig>('DB').DB_NAME,
+                    entities: ['./dist/**/*.entity.js'],
+                    entitiesTs: ['./src/**/*.entity.ts'],
+                    allowGlobalContext: true,
+                });
+            },
+            inject: [ConfigService],
+        }),
     ],
 })
 export class DatabaseTestModule {}

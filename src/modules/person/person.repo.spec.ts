@@ -1,6 +1,6 @@
 import { EntityManager } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, ContainerFactory, DatabaseTestModule } from '../../shared/index.js';
+import { ConfigTestModule, DatabaseTestModule } from '../../shared/index.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
 
@@ -10,7 +10,6 @@ describe.skip('PersonRepo', () => {
     let personRepo: PersonRepo;
 
     beforeAll(async () => {
-        await ContainerFactory.createPostgres();
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule],
         }).compile();
@@ -20,12 +19,15 @@ describe.skip('PersonRepo', () => {
 
     afterAll(async () => {
         await module.close();
-        await ContainerFactory.close();
     });
 
     afterEach(async () => {
         const persons = em.find(PersonEntity, {});
         await em.removeAndFlush(persons);
+    });
+
+    it('should be defined', () => {
+        expect(personRepo).toBeDefined();
     });
 
     describe('save', () => {
