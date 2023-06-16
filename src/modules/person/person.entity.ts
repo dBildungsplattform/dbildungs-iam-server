@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { Entity, Enum, Property } from '@mikro-orm/core';
+import { ArrayType, DateTimeType, Entity, Enum, Property } from '@mikro-orm/core';
 import { EntityBase } from '../../shared/index.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
 
@@ -38,15 +38,15 @@ export class PersonEntity extends EntityBase {
     public nameTitle?: string;
 
     @AutoMap()
-    @Property({ nullable: true })
+    @Property({ nullable: true, type: ArrayType })
     public nameSalutation?: string[];
 
     @AutoMap()
-    @Property({ nullable: true })
+    @Property({ nullable: true, type: ArrayType })
     public namePrefix?: string[];
 
     @AutoMap()
-    @Property({ nullable: true })
+    @Property({ nullable: true, type: ArrayType })
     public nameSuffix?: string[];
 
     @AutoMap()
@@ -54,7 +54,7 @@ export class PersonEntity extends EntityBase {
     public nameSortIndex?: string;
 
     @AutoMap()
-    @Property({ nullable: true })
+    @Property({ nullable: true, type: DateTimeType })
     public birthDate?: Date;
 
     @AutoMap()

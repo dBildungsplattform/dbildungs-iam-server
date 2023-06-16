@@ -90,7 +90,8 @@
         "collectCoverageFrom": [
             "**/*.ts",
             "!**/*.d.ts",
-            "!**/*.spec.ts"
+            "!**/*.spec.ts",
+            "!main.ts"
         ],
         "coverageDirectory": "../coverage",
         "coverageProvider": "v8"

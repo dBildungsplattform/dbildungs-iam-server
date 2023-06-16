@@ -10,7 +10,7 @@ describe('PersonModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule, MapperTestModule, PersonModule],
+            imports: [ConfigTestModule, DatabaseTestModule.register(), MapperTestModule, PersonModule],
         }).compile();
     });
 

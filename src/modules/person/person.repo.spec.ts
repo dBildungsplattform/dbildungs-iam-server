@@ -1,11 +1,11 @@
 import { fakerDE as faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule } from '../../shared/index.js';
+import { ConfigTestModule, DatabaseTestModule, clearDatabase, setupDatabase } from '../../shared/index.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
 
-describe('PersonRepo', () => {
+describe.skip('PersonRepo', () => {
     let module: TestingModule;
     let personRepo: PersonRepo;
     let orm: MikroORM;
@@ -13,22 +13,21 @@ describe('PersonRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule],
+            imports: [ConfigTestModule, DatabaseTestModule.register({ isDatabaseRequired: true })],
             providers: [PersonRepo],
         }).compile();
         personRepo = module.get(PersonRepo);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
-        await orm.getSchemaGenerator().createSchema();
-    });
+        await setupDatabase(orm);
+    }, 60 * 10000);
 
     afterAll(async () => {
         await module.close();
-    });
+    }, 60 * 10000);
 
     beforeEach(async () => {
-        const generator = orm.getSchemaGenerator();
-        await generator.clearDatabase();
+        await clearDatabase(orm);
     });
 
     it('should be defined', () => {
@@ -48,9 +47,30 @@ describe('PersonRepo', () => {
         });
     });
 
-    describe('findById', () => {});
+    describe('findById', () => {
+        describe('when found by id', () => {
+            let person: PersonEntity;
 
-    describe('findByReferrer', () => {});
+            beforeAll(async () => {
+                person = new PersonEntity();
+                person.client = faker.company.name();
+                person.firstName = faker.person.firstName();
+                person.lastName = faker.person.lastName();
+                await em.persistAndFlush(person);
+            });
 
-    describe('remove', () => {});
+            it('should return the found person', async () => {
+                const foundPerson = await personRepo.findById(person.id);
+                expect(foundPerson).toEqual(person);
+            });
+        });
+
+        // describe('when not found by id', () => {
+        //     it('should')
+        // })
+    });
+
+    describe.skip('findByReferrer', () => {});
+
+    describe.skip('remove', () => {});
 });

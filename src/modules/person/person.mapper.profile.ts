@@ -39,7 +39,6 @@ export class PersonMapperProfile extends AutomapperProfile {
                 ),
             );
             createMap(mapper, CreatePersonDto, PersonEntity);
-            createMap(mapper, PersonEntity, PersonDo);
             createMap(mapper, PersonDo, CreatePersonResponse);
         };
     }
