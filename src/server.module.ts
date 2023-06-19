@@ -2,7 +2,7 @@ import { classes } from '@automapper/classes';
 import { CamelCaseNamingConvention } from '@automapper/core';
 import { AutomapperModule } from '@automapper/nestjs';
 import { Module } from '@nestjs/common';
-import { DbConfig, MappingError, ServerConfig, loadConfig } from './shared/index.js';
+import { DbConfig, MappingError, JsonConfig, loadConfig, validateConfig } from './shared/index.js';
 import { PersonApiModule } from './modules/person/person-api.module.js';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -12,6 +12,7 @@ import { defineConfig } from '@mikro-orm/postgresql';
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
+            validate: validateConfig,
             load: [loadConfig],
         }),
         AutomapperModule.forRoot({
@@ -24,7 +25,7 @@ import { defineConfig } from '@mikro-orm/postgresql';
             },
         }),
         MikroOrmModule.forRootAsync({
-            useFactory: (config: ConfigService<ServerConfig, true>) => {
+            useFactory: (config: ConfigService<JsonConfig, true>) => {
                 return defineConfig({
                     clientUrl: config.getOrThrow<DbConfig>('DB').CLIENT_URL,
                     dbName: config.getOrThrow<DbConfig>('DB').DB_NAME,

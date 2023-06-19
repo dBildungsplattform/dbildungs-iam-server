@@ -1,6 +1,6 @@
+import { readFileSync } from 'fs';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import TestConfig from '../../../config/config.test.json';
 
 @Module({
     imports: [
@@ -10,7 +10,10 @@ import TestConfig from '../../../config/config.test.json';
             ignoreEnvVars: true,
             load: [
                 (): Record<string, unknown> => {
-                    return TestConfig as Record<string, unknown>;
+                    return JSON.parse(readFileSync('./config/config.testing.json', { encoding: 'utf-8' })) as Record<
+                        string,
+                        unknown
+                    >;
                 },
             ],
         }),

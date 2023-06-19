@@ -28,6 +28,7 @@ module.exports = {
         'import/extensions': ['error', 'ignorePackages'],
         'import/no-cycle': ['error'],
         'no-void': ['error', { allowAsStatement: true }],
+        'no-console': ['warn'],
         'max-classes-per-file': ['error', 1],
         'class-methods-use-this': 'off',
         'no-param-reassign': 'warn',

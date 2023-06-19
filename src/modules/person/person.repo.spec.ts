@@ -20,11 +20,11 @@ describe.skip('PersonRepo', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         await setupDatabase(orm);
-    }, 60 * 10000);
+    }, 30 * 1_000);
 
     afterAll(async () => {
         await module.close();
-    }, 60 * 10000);
+    }, 30 * 1_000);
 
     beforeEach(async () => {
         await clearDatabase(orm);

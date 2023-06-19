@@ -4,12 +4,12 @@ import { DynamicModule, Module, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
-import { DbConfig, ServerConfig } from '../../shared/index.js';
+import { DbConfig, JsonConfig } from '../../shared/index.js';
 import { MikroORM } from '@mikro-orm/core';
 
 let postgres: Option<StartedPostgreSqlContainer>;
 
-type DatabaseTestModuleOptions = { isDatabaseRequired: boolean };
+type DatabaseTestModuleOptions = { isDatabaseRequired: boolean; databaseName?: string };
 
 @Module({})
 export class DatabaseTestModule implements OnModuleDestroy {
@@ -18,12 +18,14 @@ export class DatabaseTestModule implements OnModuleDestroy {
             module: DatabaseTestModule,
             imports: [
                 MikroOrmModule.forRootAsync({
-                    useFactory: async (configService: ConfigService<ServerConfig, true>) => {
-                        const dbName = `${configService.getOrThrow<DbConfig>('DB').DB_NAME}-${randomUUID()}`;
+                    useFactory: async (configService: ConfigService<JsonConfig, true>) => {
+                        const dbName =
+                            options?.databaseName ||
+                            `${configService.getOrThrow<DbConfig>('DB').DB_NAME}-${randomUUID()}`;
                         if (options?.isDatabaseRequired) {
-                            console.debug('n\n STARTING A NEW POSTGRES CONTAINER!');
                             postgres = await new PostgreSqlContainer('docker.io/postgres:15.3-alpine')
                                 .withDatabase(dbName)
+                                .withReuse()
                                 .start();
                         }
                         return defineConfig({

@@ -6,6 +6,7 @@
     "private": true,
     "license": "UNLICENSED",
     "type": "module",
+    "module": "es2020",
     "scripts": {
         "build": "nest build",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

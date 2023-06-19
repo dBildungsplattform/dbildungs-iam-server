@@ -22,5 +22,24 @@
         "nestjs",
         "testcontainers",
         "tsbuildinfo"
-    ]
+    ],
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "dBildungs IAM Server",
+            "database": "keycloak",
+            "username": "admin",
+            "password": "password"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "Temp",
+            "database": "${workspaceFolder:dbildungs-iam-server}/dist/db/24edb71b-2dc9-4e7c-bb47-67c9e65f19a8.db"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
 }
