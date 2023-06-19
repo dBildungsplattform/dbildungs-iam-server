@@ -1,4 +1,5 @@
 {
+    // TODO: cleanup
     "extends": "./tsconfig.json",
     "exclude": [
         "node_modules",

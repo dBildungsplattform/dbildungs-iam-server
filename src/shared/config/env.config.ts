@@ -1,9 +1,9 @@
 import { IsEnum } from 'class-validator';
 
 export enum NodeEnvType {
-    TEST = 'testing',
-    DEV = 'development',
-    PROD = 'production',
+    TEST = 'test',
+    DEV = 'dev',
+    PROD = 'prod',
 }
 
 export class EnvConfig {

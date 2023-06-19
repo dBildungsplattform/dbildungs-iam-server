@@ -10,7 +10,7 @@ import { ConfigModule } from '@nestjs/config';
             ignoreEnvVars: true,
             load: [
                 (): Record<string, unknown> => {
-                    return JSON.parse(readFileSync('./config/config.testing.json', { encoding: 'utf-8' })) as Record<
+                    return JSON.parse(readFileSync('./config/config.test.json', { encoding: 'utf-8' })) as Record<
                         string,
                         unknown
                     >;
