@@ -30,7 +30,15 @@ module.exports = {
             ...commonConfig,
         },
     ],
-    collectCoverageFrom: ['**/*.ts', '!**/*.d.ts', '!**/*.integration-spec.ts', '!**/*.spec.ts', '!main.ts'],
     coverageDirectory: '../coverage',
     coverageProvider: 'v8',
+    collectCoverageFrom: ['**/*.ts', '!**/*.d.ts', '!**/*.integration-spec.ts', '!**/*.spec.ts', '!main.ts'],
+    coverageThreshold: {
+        global: {
+            statements: 100,
+            branches: 100,
+            functions: 100,
+            lines: 100,
+        },
+    },
 };
