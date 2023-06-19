@@ -14,25 +14,25 @@ jobs:
         name: jest tests coverage
         runs-on: ubuntu-latest
         steps:
-         - name: checkout
-           uses: actions/checkout@v3
-         - name: Setup node
-           uses: actions/setup-node@v3
-           with:
-            node-version: ${{ env.NODE_VERSION }}
-         - name: npm ci
-           run: npm ci --prefer-offline --no-audit
-         - name: jest
-           run: npm run test:cov
-         - name: save coverage artifacts
-           run: |
-            mkdir -p coverage
-            mv ./coverage/lcov-report coverage/coverage.info
-         - name: "upload-artifacts"
-           uses: actions/upload-artifact@v3
-           with:
-            name: coverage-artifacts
-            path: coverage/
+          - name: checkout
+            uses: actions/checkout@v3
+          - name: Setup node
+            uses: actions/setup-node@v3
+            with:
+              node-version: ${{ env.NODE_VERSION }}
+          - name: npm ci
+            run: npm ci --prefer-offline --no-audit
+          - name: jest
+            run: npm run test:unit
+          - name: save coverage artifacts
+            run: |
+              mkdir -p coverage
+              mv ./coverage/lcov-report coverage/coverage.info
+          - name: "upload-artifacts"
+            uses: actions/upload-artifact@v3
+            with:
+              name: coverage-artifacts
+              path: coverage/
     nest_lint:
      name: eslint coverage
      runs-on: ubuntu-latest

@@ -5,7 +5,7 @@ import { ConfigTestModule, DatabaseTestModule, clearDatabase, setupDatabase } fr
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
 
-describe.skip('PersonRepo', () => {
+describe('PersonRepo', () => {
     let module: TestingModule;
     let personRepo: PersonRepo;
     let orm: MikroORM;

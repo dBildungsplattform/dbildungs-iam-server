@@ -10,15 +10,14 @@
         "build": "nest build",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
         "start": "nest start",
-        "start:dev": "nest start --watch",
         "start:debug": "nest start --debug",
         "start:prod": "node dist/main",
         "test": "jest --coverage",
         "test:watch": "jest --watch",
         "test:unit": "jest --coverage --selectProjects unit",
         "test:integration": "jest --coverage --selectProjects integration",
-        "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --ignore-path .gitignore",
-        "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix --ignore-path .gitignore"
+        "lint": "eslint \"./{src,test}/**/*.ts\" --ignore-path .gitignore --max-warnings=0",
+        "lint:fix": "eslint \"./{src,test}/**/*.ts\" --fix --ignore-path .gitignore"
     },
     "dependencies": {
         "@automapper/classes": "^8.7.7",
