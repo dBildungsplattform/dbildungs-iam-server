@@ -16,6 +16,8 @@ jobs:
         steps:
           - name: checkout
             uses: actions/checkout@v3
+          - name: docker check
+            run: docker --version
           - name: Setup node
             uses: actions/setup-node@v3
             with:
@@ -23,7 +25,7 @@ jobs:
           - name: npm ci
             run: npm ci --prefer-offline --no-audit
           - name: jest
-            run: npm run test:unit
+            run: npm run test
           - name: save coverage artifacts
             run: |
               mkdir -p coverage
