@@ -1,25 +1,22 @@
 import { fakerDE as faker } from '@faker-js/faker';
-import { EntityManager, MikroORM } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, clearDatabase, setupDatabase } from '../../shared/index.js';
+import { ConfigTestModule, DatabaseTestModule } from '../../shared/index.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
 
 describe('PersonRepo', () => {
     let module: TestingModule;
     let personRepo: PersonRepo;
-    let orm: MikroORM;
     let em: EntityManager;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.register({ isDatabaseRequired: true })],
+            imports: [ConfigTestModule, DatabaseTestModule.register({ isDbRequired: true })],
             providers: [PersonRepo],
         }).compile();
         personRepo = module.get(PersonRepo);
-        orm = module.get(MikroORM);
         em = module.get(EntityManager);
-        await setupDatabase(orm);
     }, 30 * 1_000);
 
     afterAll(async () => {
@@ -27,7 +24,7 @@ describe('PersonRepo', () => {
     }, 30 * 1_000);
 
     beforeEach(async () => {
-        await clearDatabase(orm);
+        await DatabaseTestModule.clearDatabase();
     });
 
     it('should be defined', () => {

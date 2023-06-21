@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { HostConfig, ServerConfig } from './shared/index.js';
@@ -8,13 +9,7 @@ async function bootstrap(): Promise<void> {
     const configService = app.get(ConfigService<ServerConfig, true>);
     const port = configService.getOrThrow<HostConfig>('HOST').PORT;
     await app.listen(port);
-    console.log(`\nListening on: http://127.0.0.1:${port}`);
+    console.info(`\nListening on: http://127.0.0.1:${port}`);
 }
 
-bootstrap()
-    .then(() => {
-        console.log('Server started successfully!');
-    })
-    .catch((error) => {
-        console.error('Failed to start server:', error);
-    });
+bootstrap().catch((error) => console.error('Failed to start server with error:', error));
