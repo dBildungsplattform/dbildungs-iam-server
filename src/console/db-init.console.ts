@@ -4,7 +4,7 @@ import { CommandRunner, SubCommand } from 'nest-commander';
 import { DbConfig, LoggerService, ServerConfig } from '../shared/index.js';
 
 @SubCommand({ name: 'init', description: 'initializes the database' })
-export class DbInitCommand extends CommandRunner {
+export class DbInitConsole extends CommandRunner {
     public constructor(
         private readonly orm: MikroORM,
         private readonly configService: ConfigService<ServerConfig, true>,
@@ -14,9 +14,9 @@ export class DbInitCommand extends CommandRunner {
     }
 
     public override async run(_passedParams: string[], _options?: Record<string, unknown>): Promise<void> {
-        this.logger.info('initializing database...');
+        this.logger.info('Initializing database...');
         await this.orm.getSchemaGenerator().createDatabase(this.configService.getOrThrow<DbConfig>('DB').DB_NAME);
         await this.orm.getSchemaGenerator().createSchema();
-        this.logger.info('initialized database');
+        this.logger.info('Initialized database');
     }
 }

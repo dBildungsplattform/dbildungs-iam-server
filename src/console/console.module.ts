@@ -5,9 +5,16 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DbConfig, LoggingModule, MappingError, ServerConfig, loadConfig, validateConfig } from '../shared/index.js';
-import { DbCommand } from './db.command.js';
-import { DbInitCommand } from './db-init.command.js';
+import {
+    DbConfig,
+    LoggingModule,
+    ServerConfig,
+    loadConfig,
+    mappingErrorHandler,
+    validateConfig,
+} from '../shared/index.js';
+import { DbConsole } from './db.console.js';
+import { DbInitConsole } from './db-init.console.js';
 
 @Module({
     imports: [
@@ -20,11 +27,7 @@ import { DbInitCommand } from './db-init.command.js';
         AutomapperModule.forRoot({
             strategyInitializer: classes(),
             namingConventions: new CamelCaseNamingConvention(),
-            errorHandler: {
-                handle: (error: unknown): void => {
-                    throw new MappingError(error);
-                },
-            },
+            errorHandler: mappingErrorHandler,
         }),
         MikroOrmModule.forRootAsync({
             useFactory: (config: ConfigService<ServerConfig, true>) => {
@@ -38,6 +41,6 @@ import { DbInitCommand } from './db-init.command.js';
             inject: [ConfigService],
         }),
     ],
-    providers: [DbCommand, DbInitCommand],
+    providers: [DbConsole, DbInitConsole],
 })
-export class CommandModule {}
+export class ConsoleModule {}

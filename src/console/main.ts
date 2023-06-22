@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
 import { CommandFactory } from 'nest-commander';
-import { CommandModule } from './command.module.js';
+import { ConsoleModule } from './console.module.js';
 
 async function bootstrap(): Promise<void> {
-    await CommandFactory.run(CommandModule, ['warn']);
+    await CommandFactory.run(ConsoleModule, ['warn']);
 }
 
 bootstrap().catch((error) => console.error('Failed to run command with error: ', error));

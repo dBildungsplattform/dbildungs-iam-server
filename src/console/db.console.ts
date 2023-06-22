@@ -1,14 +1,14 @@
 import { Command, CommandRunner } from 'nest-commander';
-import { DbInitCommand } from './db-init.command.js';
+import { DbInitConsole } from './db-init.console.js';
 import { LoggerService } from '../shared/index.js';
 
 @Command({
     name: 'db',
     arguments: '<sub-command>',
-    description: 'Runs commands to manage the database.',
-    subCommands: [DbInitCommand],
+    description: 'runs commands to manage the database',
+    subCommands: [DbInitConsole],
 })
-export class DbCommand extends CommandRunner {
+export class DbConsole extends CommandRunner {
     public constructor(private readonly logger: LoggerService) {
         super();
     }
