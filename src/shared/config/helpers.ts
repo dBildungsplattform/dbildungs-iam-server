@@ -4,7 +4,7 @@ import { validateSync } from 'class-validator';
 import { EnvConfig, NodeEnvType } from './env.config.js';
 import { JsonConfig } from './json.config.js';
 
-let envType: Option<NodeEnvType>;
+let envType = NodeEnvType.PROD;
 
 export function validateConfig(config: Record<string, unknown>): EnvConfig {
     const parsedConfig = plainToInstance(EnvConfig, config, { enableImplicitConversion: true });
@@ -23,9 +23,7 @@ export function validateConfig(config: Record<string, unknown>): EnvConfig {
 }
 
 export function loadConfig(): JsonConfig {
-    const json = JSON.parse(
-        readFileSync(`./config/config.${envType || NodeEnvType.PROD}.json`, { encoding: 'utf8' }),
-    ) as unknown;
+    const json = JSON.parse(readFileSync(`./config/config.${envType}.json`, { encoding: 'utf8' })) as unknown;
     const config = plainToInstance(JsonConfig, json, { enableImplicitConversion: true });
     const errors = validateSync(config, {
         skipMissingProperties: false,

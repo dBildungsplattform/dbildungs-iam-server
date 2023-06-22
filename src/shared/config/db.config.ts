@@ -1,8 +1,8 @@
-import { IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class DbConfig {
     @IsString()
-    @Matches('postgres://.+:.+@.+')
+    @IsNotEmpty()
     public readonly CLIENT_URL!: string;
 
     @IsString()

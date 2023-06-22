@@ -32,7 +32,14 @@ module.exports = {
     ],
     coverageDirectory: '../coverage',
     coverageProvider: 'v8',
-    collectCoverageFrom: ['**/*.ts', '!**/*.d.ts', '!**/*.integration-spec.ts', '!**/*.spec.ts', '!main.ts'],
+    collectCoverageFrom: [
+        '**/*.ts',
+        '!**/*.d.ts',
+        '!**/*.spec.ts',
+        '!**/*.integration-spec.ts',
+        '!**/testing/**/*.ts',
+        '!**/main.ts',
+    ],
     coverageThreshold: {
         global: {
             statements: 100,

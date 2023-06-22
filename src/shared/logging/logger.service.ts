@@ -1,3 +1,6 @@
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
 export abstract class LoggerService {
     public abstract trace(message: string): void;
 

@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { Expose, Type } from 'class-transformer';
-import { IsBoolean, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { PersonGender, PersonTrustLevel } from '../person.enums.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonNameParams } from './person-name.params.js';
@@ -31,7 +31,7 @@ export class CreatePersonBodyParams {
     @AutoMap()
     @IsOptional()
     @IsString()
-    @Matches(Object.values(PersonGender).join('|'))
+    @IsEnum(PersonGender)
     @Expose({ name: 'geschlecht' })
     public readonly gender?: PersonGender;
 
@@ -44,7 +44,7 @@ export class CreatePersonBodyParams {
     @AutoMap()
     @IsOptional()
     @IsString()
-    @Matches(Object.values(PersonTrustLevel).join('|'))
+    @IsEnum(PersonTrustLevel)
     @Expose({ name: 'vertrauensstufe' })
     public readonly trustLevel?: PersonTrustLevel;
 
@@ -52,5 +52,6 @@ export class CreatePersonBodyParams {
     @IsOptional()
     @IsBoolean()
     @Expose({ name: 'auskunftssperre' })
+    // TODO: rename this prop
     public readonly isActive?: boolean;
 }

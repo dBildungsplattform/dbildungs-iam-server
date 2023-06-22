@@ -5,3 +5,9 @@ export class MappingError extends DomainError {
         super((error as Error).toString(), 'MAPPING_ERROR');
     }
 }
+
+export const mappingErrorHandler = {
+    handle: (error: unknown): void => {
+        throw new MappingError(error);
+    },
+};
