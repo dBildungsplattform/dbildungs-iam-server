@@ -1,5 +1,5 @@
 import { fakerDE as faker } from '@faker-js/faker';
-import { EntityManager } from '@mikro-orm/core';
+import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule } from '../../shared/index.js';
 import { PersonEntity } from './person.entity.js';
@@ -7,16 +7,19 @@ import { PersonRepo } from './person.repo.js';
 
 describe('PersonRepo', () => {
     let module: TestingModule;
-    let personRepo: PersonRepo;
+    let sut: PersonRepo;
+    let orm: MikroORM;
     let em: EntityManager;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.register({ isDbRequired: true })],
+            imports: [ConfigTestModule, DatabaseTestModule.register({ isDatabaseRequired: true })],
             providers: [PersonRepo],
         }).compile();
-        personRepo = module.get(PersonRepo);
+        sut = module.get(PersonRepo);
+        orm = module.get(MikroORM);
         em = module.get(EntityManager);
+        await DatabaseTestModule.setupDatabase(orm);
     }, 30 * 1_000);
 
     afterAll(async () => {
@@ -24,50 +27,95 @@ describe('PersonRepo', () => {
     }, 30 * 1_000);
 
     beforeEach(async () => {
-        await DatabaseTestModule.clearDatabase();
+        await DatabaseTestModule.clearDatabase(orm);
     });
 
     it('should be defined', () => {
-        expect(personRepo).toBeDefined();
+        expect(sut).toBeDefined();
     });
 
     describe('save', () => {
-        describe('when saving a person', () => {
-            it('should persist the person to the db', async () => {
+        describe('when creating person', () => {
+            it('should persist person into database', async () => {
                 const person = new PersonEntity();
                 person.client = faker.company.name();
                 person.firstName = faker.person.firstName();
                 person.lastName = faker.person.lastName();
-                await personRepo.save(person);
+                await sut.save(person);
                 await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
+            });
+        });
+
+        describe('when updating person', () => {
+            it('should persist person into database', async () => {
+                const person = new PersonEntity();
+                person.client = faker.company.name();
+                person.firstName = faker.person.firstName();
+                person.lastName = faker.person.lastName();
+                await sut.save(person);
+                await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
+                person.referrer = faker.string.uuid();
+                await sut.save(person);
+                await expect(em.find(PersonEntity, { referrer: person.referrer })).resolves.toHaveLength(1);
             });
         });
     });
 
     describe('findById', () => {
         describe('when found by id', () => {
-            let person: PersonEntity;
-
-            beforeAll(async () => {
-                person = new PersonEntity();
+            it('should return found person', async () => {
+                const person = new PersonEntity();
                 person.client = faker.company.name();
                 person.firstName = faker.person.firstName();
                 person.lastName = faker.person.lastName();
                 await em.persistAndFlush(person);
-            });
-
-            it('should return the found person', async () => {
-                const foundPerson = await personRepo.findById(person.id);
+                const foundPerson = await sut.findById(person.id);
                 expect(foundPerson).toEqual(person);
             });
         });
 
-        // describe('when not found by id', () => {
-        //     it('should')
-        // })
+        describe('when not found by id', () => {
+            it('should return null or undefined', async () => {
+                const foundPerson = await sut.findById(faker.string.uuid());
+                expect(foundPerson).toBeFalsy();
+            });
+        });
     });
 
-    describe.skip('findByReferrer', () => {});
+    describe('findByReferrer', () => {
+        describe('when found by referrer', () => {
+            it('should return found person', async () => {
+                const person = new PersonEntity();
+                person.client = faker.company.name();
+                person.firstName = faker.person.firstName();
+                person.lastName = faker.person.lastName();
+                person.referrer = faker.string.uuid();
+                await em.persistAndFlush(person);
+                const foundPerson = await sut.findByReferrer(person.referrer);
+                expect(foundPerson).toEqual(person);
+            });
+        });
 
-    describe.skip('remove', () => {});
+        describe('when not found by referrer', () => {
+            it('should return null or undefined', async () => {
+                const foundPerson = await sut.findByReferrer(faker.string.uuid());
+                expect(foundPerson).toBeFalsy();
+            });
+        });
+    });
+
+    describe('remove', () => {
+        describe('when removing a person', () => {
+            it('should persist person into database', async () => {
+                const person = new PersonEntity();
+                person.client = faker.company.name();
+                person.firstName = faker.person.firstName();
+                person.lastName = faker.person.lastName();
+                await em.persistAndFlush(person);
+                await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
+                await sut.remove(person);
+                await expect(em.find(PersonEntity, {})).resolves.toHaveLength(0);
+            });
+        });
+    });
 });
