@@ -1,7 +1,7 @@
 import { fakerDE as faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule } from '../../shared/index.js';
+import { ConfigTestModule, DatabaseTestModule } from '../../../shared/index.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
 

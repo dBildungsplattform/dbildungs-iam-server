@@ -1,6 +1,12 @@
+/* eslint-disable max-classes-per-file */
 type DOProps = {
     id: string;
 };
+
+
+abstract class DomainObjectBase<Id = string, Persisted extends true | false = false> {
+    public abstract get id(): V ;
+}
 
 export abstract class DOBase<T extends DOProps> {
     protected constructor(protected readonly inner: T) {}

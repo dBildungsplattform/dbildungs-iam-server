@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MapperTestModule, MappingError } from '../../shared/index.js';
 import { CreatePersonBodyParams, CreatePersonDto, CreatePersonResponse } from './dto/index.js';
 import { PersonDo } from './person.do.js';
-import { PersonEntity } from './person.entity.js';
+import { PersonEntity } from './persistence/person.entity.js';
 import { PersonMapperProfile } from './person.mapper.profile.js';
 
 describe('PersonMapperProfile', () => {

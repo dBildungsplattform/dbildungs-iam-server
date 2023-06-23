@@ -43,3 +43,9 @@ $ npm run test:cov
   - Environment variables will be loaded first: best used to determine the environment and to store secrets
   - Loaded from json file is used for more static stuff like ports, db name or feature flags
   - These configs will NOT override each other
+
+
+### Notes
+
+- TODO: Abstrakte klassen in domain defineiren für repos und in persistence implmentieren
+- TODO: ApiProperty per Hand annotieren

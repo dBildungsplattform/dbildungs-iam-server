@@ -3,9 +3,9 @@ import { getMapperToken } from '@automapper/nestjs';
 import { fakerDE as faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PersonAlreadyExistsError } from '../../shared/index.js';
+import { PersonAlreadyExistsError } from '../../../shared/index.js';
 import { PersonDo } from './person.do.js';
-import { PersonEntity } from './person.entity.js';
+import { PersonEntity } from '../persistence/person.entity.js';
 import { PersonRepo } from './person.repo.js';
 import { PersonService } from './person.service.js';
 

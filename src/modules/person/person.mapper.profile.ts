@@ -3,7 +3,7 @@ import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { CreatePersonBodyParams, CreatePersonDto, CreatePersonResponse } from './dto/index.js';
 import { PersonDo } from './person.do.js';
-import { PersonEntity } from './person.entity.js';
+import { PersonEntity } from './persistence/person.entity.js';
 
 @Injectable()
 export class PersonMapperProfile extends AutomapperProfile {

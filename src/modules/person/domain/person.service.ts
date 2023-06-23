@@ -4,7 +4,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DomainError, PersonAlreadyExistsError } from '../../shared/index.js';
 import { CreatePersonDto } from './dto/index.js';
 import { PersonDo } from './person.do.js';
-import { PersonEntity } from './person.entity.js';
+import { PersonEntity } from './persistence/person.entity.js';
 import { PersonRepo } from './person.repo.js';
 
 @Injectable()

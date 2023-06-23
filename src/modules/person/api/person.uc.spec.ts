@@ -1,8 +1,8 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PersonAlreadyExistsError } from '../../shared/index.js';
-import { CreatePersonDto } from './dto/index.js';
-import { PersonEntity } from './person.entity.js';
+import { PersonAlreadyExistsError } from '../../../shared/index.js';
+import { CreatePersonDto } from '../dto/index.js';
+import { PersonEntity } from '../persistence/person.entity.js';
 import { PersonDo } from './person.do.js';
 import { PersonService } from './person.service.js';
 import { PersonUc } from './person.uc.js';

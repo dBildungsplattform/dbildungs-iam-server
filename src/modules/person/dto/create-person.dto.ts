@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { PersonGender, PersonTrustLevel } from '../person.enums.js';
+import { PersonGender, PersonTrustLevel } from '../domain/person.enums.js';
 
 export class CreatePersonDto {
     @AutoMap()

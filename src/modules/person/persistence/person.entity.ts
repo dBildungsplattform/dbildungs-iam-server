@@ -1,9 +1,9 @@
 import { AutoMap } from '@automapper/classes';
 import { ArrayType, DateTimeType, Entity, Enum, Property } from '@mikro-orm/core';
-import { EntityBase } from '../../shared/index.js';
-import { PersonGender, PersonTrustLevel } from './person.enums.js';
+import { EntityBase } from '../../../shared/index.js';
+import { PersonGender, PersonTrustLevel } from '../domain/person.enums.js';
 
-@Entity({ tableName: 'persons' })
+@Entity({ tableName: 'person' })
 export class PersonEntity extends EntityBase {
     @AutoMap()
     @Property({ nullable: true })

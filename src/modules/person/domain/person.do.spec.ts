@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { PersonDo } from './person.do.js';
-import { PersonEntity } from './person.entity.js';
+import { PersonEntity } from '../persistence/person.entity.js';
 
 describe('PersonDo', () => {
     let sut: PersonDo;
