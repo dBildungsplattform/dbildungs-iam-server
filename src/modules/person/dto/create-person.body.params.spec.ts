@@ -11,9 +11,7 @@ describe('CreatePersonBodyParams', () => {
         name: {
             firstName: faker.person.firstName(),
             lastName: faker.person.lastName(),
-            // TODO: rename prop
             initialsFirstName: faker.person.prefix(),
-            // TODO: rename prop
             initialsLastName: faker.person.suffix(),
             nickName: faker.person.fullName(),
             title: faker.person.jobTitle(),
@@ -28,7 +26,7 @@ describe('CreatePersonBodyParams', () => {
         gender: PersonGender.UNKNOWN,
         localization: faker.location.zipCode(),
         trustLevel: PersonTrustLevel.UNKNOWN,
-        isActive: true,
+        isEnabled: true,
     };
 
     it('should map to german to english properties', () => {
@@ -53,7 +51,7 @@ describe('CreatePersonBodyParams', () => {
             geschlecht: referenceParams.gender,
             lokalisierung: referenceParams.localization,
             vertrauensstufe: referenceParams.trustLevel,
-            auskunftssperre: referenceParams.isActive,
+            auskunftssperre: referenceParams.isEnabled,
         };
         const mappedParams = plainToInstance(CreatePersonBodyParams, incomingParams, {});
         expect(mappedParams).toBeInstanceOf(CreatePersonBodyParams);

@@ -52,6 +52,5 @@ export class CreatePersonBodyParams {
     @IsOptional()
     @IsBoolean()
     @Expose({ name: 'auskunftssperre' })
-    // TODO: rename this prop
-    public readonly isActive?: boolean;
+    public readonly isEnabled?: boolean;
 }
