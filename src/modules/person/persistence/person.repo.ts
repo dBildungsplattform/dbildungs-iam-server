@@ -1,20 +1,38 @@
+import { Mapper } from '@automapper/core';
+import { getMapperToken } from '@automapper/nestjs';
 import { EntityManager } from '@mikro-orm/postgresql';
-import { EntityName } from '@mikro-orm/core';
-import { Injectable } from '@nestjs/common';
-import { RepoBase } from '../../shared/index.js';
-import { PersonEntity } from './persistence/person.entity.js';
+import { Inject, Injectable } from '@nestjs/common';
+import { PersonDo } from '../domain/person.do.js';
+import { PersonEntity } from './person.entity.js';
 
 @Injectable()
-export class PersonRepo extends RepoBase<PersonEntity> {
-    public constructor(em: EntityManager) {
-        super(em);
+export class PersonRepo {
+    public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
+
+    public async findById(id: string): Promise<Option<PersonDo<true>>> {
+        const person = await this.em.findOne(PersonEntity, { id });
+        if (person) {
+            return this.mapper.map(person, PersonEntity, PersonDo);
+        }
+        return null;
     }
 
-    public override get entityName(): EntityName<PersonEntity> {
-        return PersonEntity;
+    public async findByReferrer(referrer: string): Promise<Option<PersonDo<true>>> {
+        const person = await this.em.findOne(PersonEntity, { referrer });
+        if (person) {
+            return this.mapper.map(person, PersonEntity, PersonDo);
+        }
+        return null;
     }
 
-    public findByReferrer(referrer: string): Promise<Option<PersonEntity>> {
-        return this.em.findOne(this.entityName, { referrer });
+    public async save(personDo: PersonDo<false>): Promise<PersonDo<true>> {
+        const personEntity = this.mapper.map(personDo, PersonDo<false>, PersonEntity);
+        await this.em.persistAndFlush(personEntity);
+        return this.mapper.map(personEntity, PersonEntity, PersonDo);
+    }
+
+    public async delete(personDo: PersonDo<true>): Promise<void> {
+        const personEntity = this.mapper.map(personDo, PersonDo, PersonEntity);
+        await this.em.removeAndFlush(personEntity);
     }
 }

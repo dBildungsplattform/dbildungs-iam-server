@@ -4,7 +4,7 @@ import { Expose, Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { PersonGender, PersonTrustLevel } from '../domain/person.enums.js';
 import { PersonBirthParams } from './person-birth.params.js';
-import { PersonNameParams } from '../dto/person-name.params.js';
+import { PersonNameParams } from './person-name.params.js';
 
 export class CreatePersonBodyParams {
     @AutoMap()

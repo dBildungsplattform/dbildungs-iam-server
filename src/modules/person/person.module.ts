@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { PersonRepo } from './person.repo.js';
-import { PersonService } from './person.service.js';
+import { PersonService } from './domain/person.service.js';
+import { PersonRepo } from './persistence/person.repo.js';
 import { PersonMapperProfile } from './person.mapper.profile.js';
 
 @Module({

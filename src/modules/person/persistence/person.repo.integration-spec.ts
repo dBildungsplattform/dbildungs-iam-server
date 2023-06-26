@@ -1,9 +1,10 @@
 import { fakerDE as faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule } from '../../../shared/index.js';
+import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../shared/index.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
+import { PersonMapperProfile } from '../person.mapper.profile.js';
 
 describe('PersonRepo', () => {
     let module: TestingModule;
@@ -13,8 +14,8 @@ describe('PersonRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.register({ isDatabaseRequired: true })],
-            providers: [PersonRepo],
+            imports: [ConfigTestModule, DatabaseTestModule.register({ isDatabaseRequired: true }), MapperTestModule],
+            providers: [PersonMapperProfile, PersonRepo],
         }).compile();
         sut = module.get(PersonRepo);
         orm = module.get(MikroORM);
@@ -104,16 +105,16 @@ describe('PersonRepo', () => {
         });
     });
 
-    describe('remove', () => {
-        describe('when removing a person', () => {
-            it('should persist person into database', async () => {
+    describe('delete', () => {
+        describe('when deleting a person', () => {
+            it('should delete person into database', async () => {
                 const person = new PersonEntity();
                 person.client = faker.company.name();
                 person.firstName = faker.person.firstName();
                 person.lastName = faker.person.lastName();
                 await em.persistAndFlush(person);
                 await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
-                await sut.remove(person);
+                await sut.delete(person);
                 await expect(em.find(PersonEntity, {})).resolves.toHaveLength(0);
             });
         });

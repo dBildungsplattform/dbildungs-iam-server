@@ -4,6 +4,9 @@ import { validateSync } from 'class-validator';
 import { EnvConfig, NodeEnvType } from './env.config.js';
 import { JsonConfig } from './json.config.js';
 
+// TODO: this is necessary for state management and to determine which
+// config json should be loaded, if we use generated config json via
+// Kubernetes this will no longer be necessary: EW-???
 let envType = NodeEnvType.PROD;
 
 export function validateConfig(config: Record<string, unknown>): EnvConfig {

@@ -2,9 +2,10 @@ import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Body, Controller, Inject, Post } from '@nestjs/common';
 import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
-import { CreatePersonBodyParams, CreatePersonDto, CreatePersonResponse } from './dto/index.js';
-import { PersonDo } from './person.do.js';
-import { PersonUc } from './person.uc.js';
+import { PersonUc } from '../api/person.uc.js';
+import { CreatePersonResponse } from './create-person.response.js';
+import { CreatePersonBodyParams } from './create-person.body.params.js';
+import { CreatePersonDto } from '../domain/create-person.dto.js';
 
 @ApiTags('person')
 @Controller({ path: 'person' })
@@ -15,8 +16,8 @@ export class PersonController {
     @Post()
     @ApiCreatedResponse({ description: 'The person was successfully created.', type: CreatePersonResponse })
     public async createPerson(@Body() params: CreatePersonBodyParams): Promise<CreatePersonResponse> {
-        const dto = this.mapper.map(params, CreatePersonBodyParams, CreatePersonDto);
-        const response = this.mapper.map(await this.uc.createPerson(dto), PersonDo, CreatePersonResponse);
+        const personDto = this.mapper.map(params, CreatePersonBodyParams, CreatePersonDto);
+        const response = await this.uc.createPerson(personDto);
         return response;
     }
 }

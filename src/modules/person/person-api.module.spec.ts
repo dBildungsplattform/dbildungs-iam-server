@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../shared/index.js';
+import { PersonController } from './api/person.controller.js';
+import { PersonUc } from './api/person.uc.js';
 import { PersonApiModule } from './person-api.module.js';
-import { PersonController } from './person.controller.js';
-import { PersonUc } from './person.uc.js';
 
 describe('PersonApiModule', () => {
     let module: TestingModule;

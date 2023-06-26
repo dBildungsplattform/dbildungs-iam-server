@@ -1,21 +1,12 @@
-/* eslint-disable max-classes-per-file */
-type DOProps = {
-    id: string;
-};
+import { AutoMap } from '@automapper/classes';
 
+export abstract class DoBase<WasPersisted extends true | false = false> {
+    @AutoMap()
+    public id!: WasPersisted extends true ? string : Option<string>;
 
-abstract class DomainObjectBase<Id = string, Persisted extends true | false = false> {
-    public abstract get id(): V ;
-}
+    @AutoMap()
+    public createdAt!: WasPersisted extends true ? Date : Option<Date>;
 
-export abstract class DOBase<T extends DOProps> {
-    protected constructor(protected readonly inner: T) {}
-
-    public get id(): string {
-        return this.inner.id;
-    }
-
-    public get props(): Readonly<T> {
-        return this.inner;
-    }
+    @AutoMap()
+    public updatedAt!: WasPersisted extends true ? Date : Option<Date>;
 }

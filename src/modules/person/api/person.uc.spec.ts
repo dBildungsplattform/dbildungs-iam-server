@@ -1,10 +1,9 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PersonAlreadyExistsError } from '../../../shared/index.js';
-import { CreatePersonDto } from '../dto/index.js';
-import { PersonEntity } from '../persistence/person.entity.js';
-import { PersonDo } from './person.do.js';
-import { PersonService } from './person.service.js';
+import { CreatePersonDto } from '../domain/create-person.dto.js';
+import { PersonDo } from '../domain/person.do.js';
+import { PersonService } from '../domain/person.service.js';
 import { PersonUc } from './person.uc.js';
 
 describe('PersonUc', () => {
@@ -43,7 +42,7 @@ describe('PersonUc', () => {
             it('should create a new person', async () => {
                 personServiceMock.createPerson.mockResolvedValue({
                     ok: true,
-                    value: new PersonDo(new PersonEntity()),
+                    value: new PersonDo(),
                 });
                 await expect(personUc.createPerson({} as CreatePersonDto)).resolves.not.toThrow();
             });

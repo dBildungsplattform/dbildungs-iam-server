@@ -1,28 +1,20 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
-import { Inject, Injectable } from '@nestjs/common';
-import { DomainError, PersonAlreadyExistsError } from '../../shared/index.js';
-import { CreatePersonDto } from './dto/index.js';
-import { PersonDo } from './person.do.js';
-import { PersonEntity } from './persistence/person.entity.js';
-import { PersonRepo } from './person.repo.js';
+import { Injectable } from '@nestjs/common';
+import { DomainError, PersonAlreadyExistsError } from '../../../shared/index.js';
+import { PersonDo } from '../domain/person.do.js';
+import { PersonRepo } from '../persistence/person.repo.js';
 
 @Injectable()
 export class PersonService {
-    public constructor(
-        private readonly personRepo: PersonRepo,
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
-    ) {}
+    public constructor(private readonly personRepo: PersonRepo) {}
 
-    public async createPerson(person: CreatePersonDto): Promise<Result<PersonDo, DomainError>> {
-        if (person.referrer && (await this.personRepo.findByReferrer(person.referrer))) {
+    public async createPerson(personDo: PersonDo<false>): Promise<Result<PersonDo<true>, DomainError>> {
+        if (personDo.referrer && (await this.personRepo.findByReferrer(personDo.referrer))) {
             return {
                 ok: false,
-                error: new PersonAlreadyExistsError(`Person with referrer ${person.referrer} already exists`),
+                error: new PersonAlreadyExistsError(`Person with referrer ${personDo.referrer} already exists`),
             };
         }
-        const newPerson = this.mapper.map(person, CreatePersonDto, PersonEntity);
-        await this.personRepo.save(newPerson);
-        return { ok: true, value: new PersonDo(newPerson) };
+        const newPerson = await this.personRepo.save(personDo);
+        return { ok: true, value: newPerson };
     }
 }

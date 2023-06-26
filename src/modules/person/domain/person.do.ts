@@ -1,10 +1,60 @@
-import { DOBase as DoBase } from '../../shared/index.js';
-import { PersonEntity } from './person.entity.js';
+import { AutoMap } from '@automapper/classes';
+import { DoBase } from '../../../shared/index.js';
+import { PersonGender, PersonTrustLevel } from './person.enums.js';
 
-// TODO: add properties
+export class PersonDo<WasPersisted extends boolean> extends DoBase<WasPersisted> {
+    @AutoMap()
+    public referrer?: string;
 
-export class PersonDo extends DoBase<PersonEntity> {
-    public constructor(props: PersonEntity) {
-        super(props);
-    }
+    @AutoMap()
+    public client!: string;
+
+    @AutoMap()
+    public lastName!: string;
+
+    @AutoMap()
+    public firstName!: string;
+
+    @AutoMap()
+    public initialsLastName?: string;
+
+    @AutoMap()
+    public initialsFirstName?: string;
+
+    @AutoMap()
+    public nickName?: string;
+
+    @AutoMap()
+    public nameTitle?: string;
+
+    @AutoMap()
+    public nameSalutation?: string[];
+
+    @AutoMap()
+    public namePrefix?: string[];
+
+    @AutoMap()
+    public nameSuffix?: string[];
+
+    @AutoMap()
+    public nameSortIndex?: string;
+
+    @AutoMap()
+    public birthDate?: Date;
+
+    @AutoMap()
+    public birthPlace?: string;
+
+    @AutoMap()
+    public gender?: PersonGender;
+
+    @AutoMap()
+    public localization?: string = 'de-DE';
+
+    @AutoMap()
+    public trustLevel?: PersonTrustLevel;
+
+    @AutoMap()
+    // TODO: rename prop - german Auskunftssperre
+    public isEnabled?: boolean;
 }

@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../shared/index.js';
+import { PersonService } from './domain/person.service.js';
+import { PersonRepo } from './persistence/person.repo.js';
 import { PersonModule } from './person.module.js';
 import { PersonMapperProfile } from './person.mapper.profile.js';
-import { PersonRepo } from './person.repo.js';
-import { PersonService } from './person.service.js';
 
 describe('PersonModule', () => {
     let module: TestingModule;

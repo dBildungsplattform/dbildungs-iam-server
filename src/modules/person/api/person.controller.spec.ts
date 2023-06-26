@@ -2,11 +2,10 @@ import { fakerDE as faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MapperTestModule } from '../../../shared/index.js';
-import { CreatePersonBodyParams } from '../dto/index.js';
+import { CreatePersonBodyParams } from '../api/create-person.body.params.js';
 import { PersonController } from './person.controller.js';
-import { PersonEntity } from '../persistence/person.entity.js';
-import { PersonDo } from '../person.do.js';
-import { PersonUc } from '../person.uc.js';
+import { PersonUc } from '../api/person.uc.js';
+import { PersonDo } from '../domain/person.do.js';
 import { PersonMapperProfile } from '../person.mapper.profile.js';
 
 describe('PersonController', () => {
@@ -44,7 +43,7 @@ describe('PersonController', () => {
 
     describe('when creating a person', () => {
         it('should not throw', async () => {
-            personUcMock.createPerson.mockResolvedValue(new PersonDo(new PersonEntity()));
+            personUcMock.createPerson.mockResolvedValue(new PersonDo());
             const params: CreatePersonBodyParams = {
                 name: {
                     firstName: faker.person.firstName(),

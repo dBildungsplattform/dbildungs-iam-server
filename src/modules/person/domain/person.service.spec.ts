@@ -5,9 +5,9 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PersonAlreadyExistsError } from '../../../shared/index.js';
 import { PersonDo } from './person.do.js';
-import { PersonEntity } from '../persistence/person.entity.js';
-import { PersonRepo } from './person.repo.js';
+import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonService } from './person.service.js';
+import { DoFactory } from '../../../shared/testing/do-factory.js';
 
 describe('PersonService', () => {
     let module: TestingModule;
@@ -49,38 +49,42 @@ describe('PersonService', () => {
     describe('createPerson', () => {
         describe('when person not exists', () => {
             it('should create user', async () => {
-                const person = new PersonEntity();
-                person.firstName = faker.person.firstName();
-                person.lastName = faker.person.lastName();
+                const person = DoFactory.createPerson(true);
                 personRepoMock.findByReferrer.mockResolvedValue(null);
-                personRepoMock.save.mockResolvedValue();
+                personRepoMock.save.mockResolvedValue(person);
                 mapperMock.map.mockReturnValue(person as unknown as Dictionary<unknown>);
                 const result = await personService.createPerson({
                     firstName: person.firstName,
                     lastName: person.lastName,
+                    client: faker.company.name(),
+                    id: undefined,
+                    createdAt: undefined,
+                    updatedAt: undefined,
                 });
-                expect(result).toEqual<Result<PersonDo>>({
+                expect(result).toEqual<Result<PersonDo<true>>>({
                     ok: true,
-                    value: new PersonDo(person),
+                    value: person,
                 });
             });
         });
 
         describe('when person already exists', () => {
             it('should return domain error', async () => {
-                const person = new PersonEntity();
-                person.firstName = faker.person.firstName();
-                person.lastName = faker.person.lastName();
-                person.referrer = faker.company.name();
+                const person = DoFactory.createPerson(true, { referrer: faker.string.uuid() });
                 personRepoMock.findByReferrer.mockResolvedValue(person);
                 const result = await personService.createPerson({
                     firstName: person.firstName,
                     lastName: person.lastName,
-                    referrer: person.referrer,
+                    client: faker.company.name(),
+                    id: undefined,
+                    createdAt: undefined,
+                    updatedAt: undefined,
                 });
-                expect(result).toEqual<Result<PersonDo>>({
+                expect(result).toEqual<Result<PersonDo<true>>>({
                     ok: false,
-                    error: new PersonAlreadyExistsError(`Person with referrer ${person.referrer} already exists`),
+                    error: new PersonAlreadyExistsError(
+                        `Person with referrer ${person.referrer as string} already exists`,
+                    ),
                 });
             });
         });

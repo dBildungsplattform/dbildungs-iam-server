@@ -1,22 +1,25 @@
+import 'reflect-metadata';
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Test, TestingModule } from '@nestjs/testing';
-import { MapperTestModule, MappingError } from '../../shared/index.js';
-import { CreatePersonBodyParams, CreatePersonDto, CreatePersonResponse } from './dto/index.js';
-import { PersonDo } from './person.do.js';
+import { DoFactory, MapperTestModule, MappingError } from '../../shared/index.js';
+import { CreatePersonBodyParams } from './api/create-person.body.params.js';
+import { CreatePersonResponse } from './api/create-person.response.js';
+import { CreatePersonDto } from './domain/create-person.dto.js';
+import { PersonDo } from './domain/person.do.js';
 import { PersonEntity } from './persistence/person.entity.js';
 import { PersonMapperProfile } from './person.mapper.profile.js';
 
 describe('PersonMapperProfile', () => {
     let module: TestingModule;
-    let mapper: Mapper;
+    let sut: Mapper;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [MapperTestModule],
             providers: [PersonMapperProfile],
         }).compile();
-        mapper = module.get(getMapperToken());
+        sut = module.get(getMapperToken());
     });
 
     afterAll(async () => {
@@ -24,7 +27,7 @@ describe('PersonMapperProfile', () => {
     });
 
     it('should be defined', () => {
-        expect(mapper).toBeDefined();
+        expect(sut).toBeDefined();
     });
 
     describe('when mapper is initialized', () => {
@@ -38,22 +41,32 @@ describe('PersonMapperProfile', () => {
                 birth: {},
                 localization: 'de-DE',
             };
-            expect(() => mapper.map(params, CreatePersonBodyParams, CreatePersonDto)).not.toThrowError(MappingError);
+            expect(() => sut.map(params, CreatePersonBodyParams, CreatePersonDto)).not.toThrowError(MappingError);
         });
 
-        it('should map CreatePersonDTO to PersonEntity', () => {
+        it('should map CreatePersonDto to PersonDo', () => {
             const dto: CreatePersonDto = {
                 firstName: 'john',
                 lastName: 'doe',
                 localization: 'de-DE',
                 referrer: 'referrer',
             };
-            expect(() => mapper.map(dto, CreatePersonDto, PersonEntity)).not.toThrowError(MappingError);
+            expect(() => sut.map(dto, CreatePersonDto, PersonDo)).not.toThrowError(MappingError);
         });
 
-        it('should map PersonDO to CreatePersonResponse', () => {
-            const entity = new PersonDo(new PersonEntity());
-            expect(() => mapper.map(entity, PersonDo, CreatePersonResponse)).not.toThrowError(MappingError);
+        it('should map PersonDo to PersonEntity', () => {
+            const person = DoFactory.createPerson(true);
+            expect(() => sut.map(person, PersonDo, PersonEntity)).not.toThrowError(MappingError);
+        });
+
+        it('should map PersonEntity to PersonDo', () => {
+            const person = new PersonEntity();
+            expect(() => sut.map(person, PersonEntity, PersonDo)).not.toThrowError(MappingError);
+        });
+
+        it('should map PersonDo to CreatePersonResponse', () => {
+            const person = DoFactory.createPerson(true);
+            expect(() => sut.map(person, PersonDo, CreatePersonResponse)).not.toThrowError(MappingError);
         });
     });
 });
