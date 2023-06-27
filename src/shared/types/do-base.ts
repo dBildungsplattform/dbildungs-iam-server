@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 
-export abstract class DoBase<WasPersisted extends true | false = false> {
+export abstract class DoBase<WasPersisted extends boolean = false> {
     @AutoMap()
     public id!: WasPersisted extends true ? string : Option<string>;
 

@@ -45,7 +45,8 @@ $ npm run test:cov
   - These configs will NOT override each other
 
 
-### Notes
+### Npm Scripts
 
-- TODO: Abstrakte klassen in domain defineiren für repos und in persistence implmentieren
-- TODO: ApiProperty per Hand annotieren
+### Console Applications
+
+### Configuration
