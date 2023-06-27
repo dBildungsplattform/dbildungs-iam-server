@@ -2,7 +2,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { HostConfig, ServerConfig } from './shared/index.js';
+import { HostConfig, ServerConfig } from './shared/config/index.js';
 import { ServerModule } from './server.module.js';
 
 async function bootstrap(): Promise<void> {

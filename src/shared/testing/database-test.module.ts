@@ -2,10 +2,10 @@ import { randomUUID } from 'crypto';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from 'testcontainers';
 import { DynamicModule, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { MikroORM } from '@mikro-orm/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
-import { DbConfig, ServerConfig } from '../../shared/index.js';
-import { MikroORM } from '@mikro-orm/core';
+import { DbConfig, ServerConfig } from '../../shared/config/index.js';
 
 type DatabaseTestModuleOptions = { isDatabaseRequired: boolean; databaseName?: string };
 

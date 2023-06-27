@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../shared/index.js';
+import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../shared/testing/index.js';
 import { DbInitConsole } from './db-init.console.js';
 
 describe('DbInitConsole', () => {

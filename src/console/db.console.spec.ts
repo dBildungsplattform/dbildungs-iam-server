@@ -1,7 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DbConsole } from './db.console.js';
-import { LoggerService } from '../shared/index.js';
+import { LoggerService } from '../shared/logging/index.js';
 
 describe('DbConsole', () => {
     let module: TestingModule;

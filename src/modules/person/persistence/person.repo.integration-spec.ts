@@ -1,10 +1,10 @@
 import { fakerDE as faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../shared/index.js';
+import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../shared/testing/index.js';
+import { PersonMapperProfile } from '../person.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
-import { PersonMapperProfile } from '../person.mapper.profile.js';
 
 describe('PersonRepo', () => {
     let module: TestingModule;

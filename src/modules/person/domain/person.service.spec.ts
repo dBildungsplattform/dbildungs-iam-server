@@ -3,11 +3,11 @@ import { getMapperToken } from '@automapper/nestjs';
 import { fakerDE as faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PersonAlreadyExistsError } from '../../../shared/index.js';
+import { PersonAlreadyExistsError } from '../../../shared/error/index.js';
+import { DoFactory } from '../../../shared/testing/do-factory.js';
 import { PersonDo } from './person.do.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonService } from './person.service.js';
-import { DoFactory } from '../../../shared/testing/do-factory.js';
 
 describe('PersonService', () => {
     let module: TestingModule;

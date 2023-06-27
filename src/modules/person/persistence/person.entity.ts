@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { ArrayType, DateTimeType, Entity, Enum, Property } from '@mikro-orm/core';
-import { EntityBase } from '../../../shared/index.js';
+import { EntityBase } from '../../../shared/types/index.js';
 import { PersonGender, PersonTrustLevel } from '../domain/person.enums.js';
 
 @Entity({ tableName: 'person' })

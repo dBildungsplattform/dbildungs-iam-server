@@ -1,6 +1,6 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { DbInitConsole } from './db-init.console.js';
-import { LoggerService } from '../shared/index.js';
+import { LoggerService } from '../shared/logging/index.js';
 
 @Command({
     name: 'db',

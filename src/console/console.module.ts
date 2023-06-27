@@ -5,14 +5,9 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import {
-    DbConfig,
-    LoggingModule,
-    ServerConfig,
-    loadConfig,
-    mappingErrorHandler,
-    validateConfig,
-} from '../shared/index.js';
+import { DbConfig, ServerConfig, loadConfig, validateConfig } from '../shared/config/index.js';
+import { mappingErrorHandler } from '../shared/error/index.js';
+import { LoggingModule } from '../shared/logging/index.js';
 import { DbConsole } from './db.console.js';
 import { DbInitConsole } from './db-init.console.js';
 

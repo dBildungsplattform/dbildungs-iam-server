@@ -1,6 +1,6 @@
 import 'reflect-metadata'; // some decorators use reflect-metadata in the background
 import fs from 'fs';
-import { EnvConfig, JsonConfig, NodeEnvType, loadConfig, validateConfig } from '../index.js';
+import { EnvConfig, JsonConfig, NodeEnvType, loadConfig, validateConfig } from '../config/index.js';
 
 describe('helpers', () => {
     describe('validateConfig', () => {

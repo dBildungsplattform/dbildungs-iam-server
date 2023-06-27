@@ -1,6 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Global, Module } from '@nestjs/common';
-import { LoggerService } from '../index.js';
+import { LoggerService } from '../logging/index.js';
 
 @Global()
 @Module({

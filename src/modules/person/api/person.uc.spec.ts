@@ -1,6 +1,6 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PersonAlreadyExistsError } from '../../../shared/index.js';
+import { PersonAlreadyExistsError } from '../../../shared/error/index.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';

@@ -1,8 +1,8 @@
-import 'reflect-metadata';
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory, MapperTestModule, MappingError } from '../../shared/index.js';
+import { DoFactory, MapperTestModule } from '../../shared/testing/index.js';
+import { MappingError } from '../../shared/error/index.js';
 import { CreatePersonBodyParams } from './api/create-person.body.params.js';
 import { CreatePersonResponse } from './api/create-person.response.js';
 import { CreatePersonDto } from './domain/create-person.dto.js';

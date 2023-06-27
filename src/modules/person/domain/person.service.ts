@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DomainError, PersonAlreadyExistsError } from '../../../shared/index.js';
+import { DomainError, PersonAlreadyExistsError } from '../../../shared/error/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 
