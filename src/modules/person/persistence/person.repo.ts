@@ -31,8 +31,12 @@ export class PersonRepo {
         return this.mapper.map(person, PersonEntity, PersonDo);
     }
 
-    public async delete(personDo: PersonDo<true>): Promise<void> {
-        const person: PersonEntity = this.mapper.map(personDo, PersonDo, PersonEntity);
-        await this.em.removeAndFlush(person);
+    public async deleteById(id: string): Promise<Option<PersonDo<false>>> {
+        const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { id });
+        if (person) {
+            await this.em.removeAndFlush(person);
+            return this.mapper.map(person, PersonEntity, PersonDo);
+        }
+        return null;
     }
 }

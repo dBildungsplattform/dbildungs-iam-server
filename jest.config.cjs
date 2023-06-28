@@ -38,6 +38,7 @@ module.exports = {
         '!**/*.spec.ts',
         '!**/*.integration-spec.ts',
         '!**/testing/**/*.ts',
+        '!**/index.ts',
         '!**/main.ts',
     ],
     coverageThreshold: {
