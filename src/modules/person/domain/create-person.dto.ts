@@ -54,5 +54,5 @@ export class CreatePersonDto {
     public readonly trustLevel?: PersonTrustLevel;
 
     @AutoMap()
-    public readonly isActive?: boolean;
+    public readonly isInformationBlocked?: boolean;
 }

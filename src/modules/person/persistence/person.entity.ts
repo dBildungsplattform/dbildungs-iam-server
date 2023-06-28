@@ -75,6 +75,5 @@ export class PersonEntity extends EntityBase {
 
     @AutoMap()
     @Property({ nullable: true })
-    // TODO: rename prop - german Auskunftssperre
-    public isEnabled?: boolean;
+    public isInformationBlocked?: boolean;
 }

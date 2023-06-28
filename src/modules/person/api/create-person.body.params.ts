@@ -61,5 +61,5 @@ export class CreatePersonBodyParams {
     @IsBoolean()
     @Expose({ name: 'auskunftssperre' })
     @ApiProperty({ name: 'auskunftssperre', required: false })
-    public readonly isEnabled?: boolean;
+    public readonly isInformationBlocked?: boolean;
 }

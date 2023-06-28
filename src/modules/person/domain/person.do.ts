@@ -55,6 +55,5 @@ export class PersonDo<WasPersisted extends boolean> extends DoBase<WasPersisted>
     public trustLevel?: PersonTrustLevel;
 
     @AutoMap()
-    // TODO: rename prop - german Auskunftssperre
-    public isEnabled?: boolean;
+    public isInformationBlocked?: boolean;
 }

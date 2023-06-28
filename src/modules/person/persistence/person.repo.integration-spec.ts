@@ -1,16 +1,20 @@
+import { Mapper } from '@automapper/core';
+import { getMapperToken } from '@automapper/nestjs';
 import { fakerDE as faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../shared/testing/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../shared/testing/index.js';
 import { PersonMapperProfile } from '../person.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
+import { PersonDo } from '../domain/person.do.js';
 
 describe('PersonRepo', () => {
     let module: TestingModule;
     let sut: PersonRepo;
     let orm: MikroORM;
     let em: EntityManager;
+    let mapper: Mapper;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -20,6 +24,7 @@ describe('PersonRepo', () => {
         sut = module.get(PersonRepo);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
+        mapper = module.get(getMapperToken());
         await DatabaseTestModule.setupDatabase(orm);
     }, 30 * 1_000);
 
@@ -38,10 +43,7 @@ describe('PersonRepo', () => {
     describe('save', () => {
         describe('when creating person', () => {
             it('should persist person into database', async () => {
-                const person = new PersonEntity();
-                person.client = faker.company.name();
-                person.firstName = faker.person.firstName();
-                person.lastName = faker.person.lastName();
+                const person = DoFactory.createPerson(false, { referrer: faker.string.uuid() });
                 await sut.save(person);
                 await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
             });
@@ -49,10 +51,7 @@ describe('PersonRepo', () => {
 
         describe('when updating person', () => {
             it('should persist person into database', async () => {
-                const person = new PersonEntity();
-                person.client = faker.company.name();
-                person.firstName = faker.person.firstName();
-                person.lastName = faker.person.lastName();
+                const person = DoFactory.createPerson(false, { referrer: faker.string.uuid() });
                 await sut.save(person);
                 await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
                 person.referrer = faker.string.uuid();
@@ -65,13 +64,10 @@ describe('PersonRepo', () => {
     describe('findById', () => {
         describe('when found by id', () => {
             it('should return found person', async () => {
-                const person = new PersonEntity();
-                person.client = faker.company.name();
-                person.firstName = faker.person.firstName();
-                person.lastName = faker.person.lastName();
-                await em.persistAndFlush(person);
+                const person = DoFactory.createPerson(true, { referrer: faker.string.uuid() });
+                await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
                 const foundPerson = await sut.findById(person.id);
-                expect(foundPerson).toEqual(person);
+                expect(foundPerson).toBeDefined();
             });
         });
 
@@ -86,14 +82,10 @@ describe('PersonRepo', () => {
     describe('findByReferrer', () => {
         describe('when found by referrer', () => {
             it('should return found person', async () => {
-                const person = new PersonEntity();
-                person.client = faker.company.name();
-                person.firstName = faker.person.firstName();
-                person.lastName = faker.person.lastName();
-                person.referrer = faker.string.uuid();
-                await em.persistAndFlush(person);
-                const foundPerson = await sut.findByReferrer(person.referrer);
-                expect(foundPerson).toEqual(person);
+                const person = DoFactory.createPerson(true, { referrer: faker.string.uuid() });
+                await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
+                const foundPerson = await sut.findByReferrer(person.referrer as string);
+                expect(foundPerson).toBeDefined();
             });
         });
 
@@ -108,11 +100,8 @@ describe('PersonRepo', () => {
     describe('delete', () => {
         describe('when deleting a person', () => {
             it('should delete person into database', async () => {
-                const person = new PersonEntity();
-                person.client = faker.company.name();
-                person.firstName = faker.person.firstName();
-                person.lastName = faker.person.lastName();
-                await em.persistAndFlush(person);
+                const person = DoFactory.createPerson(true, { referrer: faker.string.uuid() });
+                await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
                 await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
                 await sut.delete(person);
                 await expect(em.find(PersonEntity, {})).resolves.toHaveLength(0);

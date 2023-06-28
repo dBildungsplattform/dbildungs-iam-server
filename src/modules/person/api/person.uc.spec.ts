@@ -1,10 +1,12 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PersonAlreadyExistsError } from '../../../shared/error/index.js';
+import { MapperTestModule } from '../../../shared/testing/index.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonUc } from './person.uc.js';
+import { PersonMapperProfile } from '../person.mapper.profile.js';
 
 describe('PersonUc', () => {
     let module: TestingModule;
@@ -13,8 +15,10 @@ describe('PersonUc', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [MapperTestModule],
             providers: [
                 PersonUc,
+                PersonMapperProfile,
                 {
                     provide: PersonService,
                     useValue: createMock<PersonService>(),
