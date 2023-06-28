@@ -20,24 +20,24 @@ export class PersonMapperProfile extends AutomapperProfile {
                 CreatePersonBodyParams,
                 CreatePersonDto,
                 forMember(
-                    (dest) => dest.lastName,
-                    mapFrom((src) => src.name.lastName),
+                    (dest: CreatePersonDto) => dest.lastName,
+                    mapFrom((src: CreatePersonBodyParams) => src.name.lastName),
                 ),
                 forMember(
-                    (dest) => dest.firstName,
-                    mapFrom((src) => src.name.firstName),
+                    (dest: CreatePersonDto) => dest.firstName,
+                    mapFrom((src: CreatePersonBodyParams) => src.name.firstName),
                 ),
                 forMember(
-                    (dest) => dest.initialsLastName,
-                    mapFrom((src) => src.name.initialsLastName),
+                    (dest: CreatePersonDto) => dest.initialsLastName,
+                    mapFrom((src: CreatePersonBodyParams) => src.name.initialsLastName),
                 ),
                 forMember(
-                    (dest) => dest.initialsFirstName,
-                    mapFrom((src) => src.name.initialsFirstName),
+                    (dest: CreatePersonDto) => dest.initialsFirstName,
+                    mapFrom((src: CreatePersonBodyParams) => src.name.initialsFirstName),
                 ),
                 forMember(
-                    (dest) => dest.nickName,
-                    mapFrom((src) => src.name.nickName),
+                    (dest: CreatePersonDto) => dest.nickName,
+                    mapFrom((src: CreatePersonBodyParams) => src.name.nickName),
                 ),
             );
             createMap(mapper, CreatePersonDto, PersonDo);

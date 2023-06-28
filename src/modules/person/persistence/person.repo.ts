@@ -10,7 +10,7 @@ export class PersonRepo {
     public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
 
     public async findById(id: string): Promise<Option<PersonDo<true>>> {
-        const person = await this.em.findOne(PersonEntity, { id });
+        const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { id });
         if (person) {
             return this.mapper.map(person, PersonEntity, PersonDo);
         }
@@ -18,7 +18,7 @@ export class PersonRepo {
     }
 
     public async findByReferrer(referrer: string): Promise<Option<PersonDo<true>>> {
-        const person = await this.em.findOne(PersonEntity, { referrer });
+        const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { referrer });
         if (person) {
             return this.mapper.map(person, PersonEntity, PersonDo);
         }
@@ -26,13 +26,13 @@ export class PersonRepo {
     }
 
     public async save(personDo: PersonDo<false>): Promise<PersonDo<true>> {
-        const personEntity = this.mapper.map(personDo, PersonDo<false>, PersonEntity);
-        await this.em.persistAndFlush(personEntity);
-        return this.mapper.map(personEntity, PersonEntity, PersonDo);
+        const person: PersonEntity = this.mapper.map(personDo, PersonDo<false>, PersonEntity);
+        await this.em.persistAndFlush(person);
+        return this.mapper.map(person, PersonEntity, PersonDo);
     }
 
     public async delete(personDo: PersonDo<true>): Promise<void> {
-        const personEntity = this.mapper.map(personDo, PersonDo, PersonEntity);
-        await this.em.removeAndFlush(personEntity);
+        const person: PersonEntity = this.mapper.map(personDo, PersonDo, PersonEntity);
+        await this.em.removeAndFlush(person);
     }
 }

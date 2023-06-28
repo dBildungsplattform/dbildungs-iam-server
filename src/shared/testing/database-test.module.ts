@@ -18,7 +18,7 @@ export class DatabaseTestModule implements OnModuleDestroy {
             imports: [
                 MikroOrmModule.forRootAsync({
                     useFactory: async (configService: ConfigService<ServerConfig, true>) => {
-                        const dbName =
+                        const dbName: string =
                             options?.databaseName ||
                             `${configService.getOrThrow<DbConfig>('DB').DB_NAME}-${randomUUID()}`;
                         if (options?.isDatabaseRequired) {

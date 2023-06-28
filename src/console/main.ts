@@ -6,4 +6,4 @@ async function bootstrap(): Promise<void> {
     await CommandFactory.run(ConsoleModule, ['warn']);
 }
 
-bootstrap().catch((error) => console.error('Failed to run command with error: ', error));
+bootstrap().catch((error: unknown) => console.error('Failed to run command with error: ', error));

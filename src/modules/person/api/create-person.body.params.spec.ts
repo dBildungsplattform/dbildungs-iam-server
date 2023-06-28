@@ -30,7 +30,7 @@ describe('CreatePersonBodyParams', () => {
     };
 
     it('should map to german to english properties', () => {
-        const incomingParams = {
+        const incomingParams: object = {
             referrer: referenceParams.referrer,
             mandant: referenceParams.client,
             name: {
@@ -53,7 +53,7 @@ describe('CreatePersonBodyParams', () => {
             vertrauensstufe: referenceParams.trustLevel,
             auskunftssperre: referenceParams.isInformationBlocked,
         };
-        const mappedParams = plainToInstance(CreatePersonBodyParams, incomingParams, {});
+        const mappedParams: CreatePersonBodyParams = plainToInstance(CreatePersonBodyParams, incomingParams, {});
         expect(mappedParams).toBeInstanceOf(CreatePersonBodyParams);
         expect(mappedParams).toEqual(referenceParams);
     });

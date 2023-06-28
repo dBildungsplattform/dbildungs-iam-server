@@ -16,8 +16,8 @@ export class PersonController {
     @Post()
     @ApiCreatedResponse({ description: 'The person was successfully created.', type: CreatePersonResponse })
     public async createPerson(@Body() params: CreatePersonBodyParams): Promise<CreatePersonResponse> {
-        const personDto = this.mapper.map(params, CreatePersonBodyParams, CreatePersonDto);
-        const response = await this.uc.createPerson(personDto);
+        const dto: CreatePersonDto = this.mapper.map(params, CreatePersonBodyParams, CreatePersonDto);
+        const response: CreatePersonResponse = await this.uc.createPerson(dto);
         return response;
     }
 }

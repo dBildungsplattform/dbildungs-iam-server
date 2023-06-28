@@ -6,15 +6,15 @@ describe('helpers', () => {
     describe('validateConfig', () => {
         describe('when config is valid', () => {
             it('should return validated EnvConfig', () => {
-                const config = { NODE_ENV: NodeEnvType.DEV };
-                const validatedConfig = validateConfig(config);
+                const config: Record<string, unknown> = { NODE_ENV: NodeEnvType.DEV };
+                const validatedConfig: EnvConfig = validateConfig(config);
                 expect(validatedConfig).toBeInstanceOf(EnvConfig);
             });
         });
 
         describe('when config is invalid', () => {
             it('should throw', () => {
-                const config = { NODE_ENV: '' };
+                const config: Record<string, unknown> = { NODE_ENV: '' };
                 expect(() => validateConfig(config)).toThrow();
             });
         });
@@ -24,7 +24,7 @@ describe('helpers', () => {
         describe('when config is valid', () => {
             let readFileSyncSpy: jest.SpyInstance;
 
-            const config = {
+            const config: JsonConfig = {
                 HOST: {
                     PORT: 8080,
                 },
@@ -32,7 +32,7 @@ describe('helpers', () => {
                     CLIENT_URL: 'postgres://localhost:5432',
                     DB_NAME: 'test-db',
                 },
-            } as JsonConfig;
+            };
 
             beforeAll(() => {
                 readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
@@ -43,7 +43,7 @@ describe('helpers', () => {
             });
 
             it('should return validated JsonConfig', () => {
-                const validatedConfig = loadConfig();
+                const validatedConfig: JsonConfig = loadConfig();
                 expect(validatedConfig).toBeInstanceOf(JsonConfig);
                 expect(readFileSyncSpy).toBeCalledTimes(1);
             });
@@ -52,7 +52,15 @@ describe('helpers', () => {
         describe('when config is invalid', () => {
             let readFileSyncSpy: jest.SpyInstance;
 
-            const config = { HOST: { PORT: 1 } } as JsonConfig;
+            const config: JsonConfig = {
+                HOST: {
+                    PORT: 1,
+                },
+                DB: {
+                    CLIENT_URL: '',
+                    DB_NAME: '',
+                },
+            };
 
             beforeAll(() => {
                 readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));

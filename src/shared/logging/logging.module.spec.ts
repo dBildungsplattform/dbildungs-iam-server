@@ -22,7 +22,7 @@ describe('LoggingModule', () => {
 
     describe('when LoggingModule is initialized', () => {
         it('should resolve LoggerService', () => {
-            const service = module.get(LoggerService);
+            const service: LoggerService = module.get(LoggerService);
             expect(service).toBeInstanceOf(ConsoleLoggerService);
         });
     });

@@ -4,7 +4,7 @@ describe('MappingError', () => {
     describe('constructor', () => {
         describe('when calling the constructor', () => {
             it('should set message and code', () => {
-                const error = new MappingError('No mapping provided');
+                const error: MappingError = new MappingError('No mapping provided');
                 expect(error.message).toBe('No mapping provided');
                 expect(error.code).toBe('MAPPING_ERROR');
             });

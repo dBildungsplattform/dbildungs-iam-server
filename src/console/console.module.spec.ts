@@ -22,12 +22,12 @@ describe('ConsoleModule', () => {
 
     describe('when module is initialized', () => {
         it('should resolve DbConsole', () => {
-            const service = module.get(DbConsole);
+            const service: DbConsole = module.get(DbConsole);
             expect(service).toBeInstanceOf(DbConsole);
         });
 
         it('should resolve DbInitConsole', () => {
-            const service = module.get(DbInitConsole);
+            const service: DbInitConsole = module.get(DbInitConsole);
             expect(service).toBeInstanceOf(DbInitConsole);
         });
     });

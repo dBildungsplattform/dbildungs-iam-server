@@ -43,7 +43,7 @@ describe('PersonRepo', () => {
     describe('save', () => {
         describe('when creating person', () => {
             it('should persist person into database', async () => {
-                const person = DoFactory.createPerson(false, { referrer: faker.string.uuid() });
+                const person: PersonDo<false> = DoFactory.createPerson(false, { referrer: faker.string.uuid() });
                 await sut.save(person);
                 await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
             });
@@ -51,7 +51,7 @@ describe('PersonRepo', () => {
 
         describe('when updating person', () => {
             it('should persist person into database', async () => {
-                const person = DoFactory.createPerson(false, { referrer: faker.string.uuid() });
+                const person: PersonDo<false> = DoFactory.createPerson(false, { referrer: faker.string.uuid() });
                 await sut.save(person);
                 await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
                 person.referrer = faker.string.uuid();
@@ -64,17 +64,17 @@ describe('PersonRepo', () => {
     describe('findById', () => {
         describe('when found by id', () => {
             it('should return found person', async () => {
-                const person = DoFactory.createPerson(true, { referrer: faker.string.uuid() });
+                const person: PersonDo<true> = DoFactory.createPerson(true, { referrer: faker.string.uuid() });
                 await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
-                const foundPerson = await sut.findById(person.id);
-                expect(foundPerson).toBeDefined();
+                const foundPerson: Option<PersonDo<true>> = await sut.findById(person.id);
+                expect(foundPerson).toBeInstanceOf(PersonDo);
             });
         });
 
         describe('when not found by id', () => {
-            it('should return null or undefined', async () => {
-                const foundPerson = await sut.findById(faker.string.uuid());
-                expect(foundPerson).toBeFalsy();
+            it('should return null', async () => {
+                const foundPerson: Option<PersonDo<true>> = await sut.findById(faker.string.uuid());
+                expect(foundPerson).toBeNull();
             });
         });
     });
@@ -82,17 +82,17 @@ describe('PersonRepo', () => {
     describe('findByReferrer', () => {
         describe('when found by referrer', () => {
             it('should return found person', async () => {
-                const person = DoFactory.createPerson(true, { referrer: faker.string.uuid() });
+                const person: PersonDo<true> = DoFactory.createPerson(true, { referrer: faker.string.uuid() });
                 await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
-                const foundPerson = await sut.findByReferrer(person.referrer as string);
-                expect(foundPerson).toBeDefined();
+                const foundPerson: Option<PersonDo<true>> = await sut.findByReferrer(person.referrer as string);
+                expect(foundPerson).toBeInstanceOf(PersonDo);
             });
         });
 
         describe('when not found by referrer', () => {
-            it('should return null or undefined', async () => {
-                const foundPerson = await sut.findByReferrer(faker.string.uuid());
-                expect(foundPerson).toBeFalsy();
+            it('should return null', async () => {
+                const foundPerson: Option<PersonDo<true>> = await sut.findByReferrer(faker.string.uuid());
+                expect(foundPerson).toBeNull();
             });
         });
     });
@@ -100,7 +100,7 @@ describe('PersonRepo', () => {
     describe('delete', () => {
         describe('when deleting a person', () => {
             it('should delete person into database', async () => {
-                const person = DoFactory.createPerson(true, { referrer: faker.string.uuid() });
+                const person: PersonDo<true> = DoFactory.createPerson(true, { referrer: faker.string.uuid() });
                 await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
                 await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
                 await sut.delete(person);

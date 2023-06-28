@@ -55,17 +55,17 @@ describe('PersonMapperProfile', () => {
         });
 
         it('should map PersonDo to PersonEntity', () => {
-            const person = DoFactory.createPerson(true);
+            const person: PersonDo<true> = DoFactory.createPerson(true);
             expect(() => sut.map(person, PersonDo, PersonEntity)).not.toThrowError(MappingError);
         });
 
         it('should map PersonEntity to PersonDo', () => {
-            const person = new PersonEntity();
+            const person: PersonDo<true> = new PersonEntity();
             expect(() => sut.map(person, PersonEntity, PersonDo)).not.toThrowError(MappingError);
         });
 
         it('should map PersonDo to CreatePersonResponse', () => {
-            const person = DoFactory.createPerson(true);
+            const person: PersonDo<true> = DoFactory.createPerson(true);
             expect(() => sut.map(person, PersonDo, CreatePersonResponse)).not.toThrowError(MappingError);
         });
     });

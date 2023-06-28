@@ -14,8 +14,8 @@ export class PersonUc {
     ) {}
 
     public async createPerson(personDto: CreatePersonDto): Promise<CreatePersonResponse> {
-        const personDo = this.mapper.map(personDto, CreatePersonDto, PersonDo);
-        const result = await this.personService.createPerson(personDo);
+        const personDo: PersonDo<false> = this.mapper.map(personDto, CreatePersonDto, PersonDo);
+        const result: Result<PersonDo<true>> = await this.personService.createPerson(personDo);
         if (result.ok) {
             return this.mapper.map(result.value, PersonDo, CreatePersonResponse);
         }

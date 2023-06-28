@@ -1,3 +1,4 @@
+import { ErrorHandler } from '@automapper/core';
 import { DomainError } from './domain.error.js';
 
 export class MappingError extends DomainError {
@@ -6,7 +7,7 @@ export class MappingError extends DomainError {
     }
 }
 
-export const mappingErrorHandler = {
+export const mappingErrorHandler: ErrorHandler = {
     handle: (error: unknown): void => {
         throw new MappingError(error);
     },

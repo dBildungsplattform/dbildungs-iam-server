@@ -12,11 +12,7 @@ module.exports = {
         tsconfigRootDir: __dirname,
         sourceType: 'module',
     },
-    plugins: [
-        '@typescript-eslint/eslint-plugin',
-        'import',
-        'prettier',
-    ],
+    plugins: ['@typescript-eslint/eslint-plugin', 'import', 'prettier'],
     root: true,
     env: {
         node: true,
@@ -26,7 +22,10 @@ module.exports = {
     rules: {
         'prettier/prettier': ['warn'],
         'import/extensions': ['error', 'ignorePackages'],
-        'import/no-extraneous-dependencies': ['error', { 'devDependencies': ['**/testing/*', '**/*.integration-spec.ts', '**/*.spec.ts']}],
+        'import/no-extraneous-dependencies': [
+            'error',
+            { devDependencies: ['**/testing/*', '**/*.integration-spec.ts', '**/*.spec.ts'] },
+        ],
         'import/no-cycle': ['error'],
         'no-void': ['error', { allowAsStatement: true }],
         'no-console': ['warn'],
@@ -34,11 +33,24 @@ module.exports = {
         'class-methods-use-this': 'off',
         'no-param-reassign': 'warn',
         'no-underscore-dangle': 'error',
+        '@typescript-eslint/typedef': [
+            'warn',
+            {
+                arrayDestructuring: true,
+                arrowParameter: true,
+                memberVariableDeclaration: true,
+                objectDestructuring: true,
+                parameter: true,
+                propertyDeclaration: true,
+                variableDeclaration: true,
+                variableDeclarationIgnoreFunction: true,
+            },
+        ],
         '@typescript-eslint/unbound-method': 'error',
         '@typescript-eslint/explicit-member-accessibility': 'error',
         '@typescript-eslint/explicit-function-return-type': 'error',
         '@typescript-eslint/no-explicit-any': 'error',
-        '@typescript-eslint/no-unused-vars': [ 'error', { 'argsIgnorePattern': '\_.+' } ],
+        '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '_.+' }],
         '@typescript-eslint/no-empty-interface': [
             'error',
             {

@@ -14,7 +14,7 @@ export class PersonService {
                 error: new PersonAlreadyExistsError(`Person with referrer ${personDo.referrer} already exists`),
             };
         }
-        const newPerson = await this.personRepo.save(personDo);
+        const newPerson: PersonDo<true> = await this.personRepo.save(personDo);
         return { ok: true, value: newPerson };
     }
 }

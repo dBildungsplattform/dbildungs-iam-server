@@ -23,7 +23,7 @@ import { defineConfig } from '@mikro-orm/postgresql';
         }),
         MikroOrmModule.forRootAsync({
             useFactory: (config: ConfigService<ServerConfig, true>) => {
-                const dbConfig = config.getOrThrow<DbConfig>('DB');
+                const dbConfig: DbConfig = config.getOrThrow<DbConfig>('DB');
                 return defineConfig({
                     clientUrl: dbConfig.CLIENT_URL,
                     dbName: dbConfig.DB_NAME,

@@ -49,11 +49,11 @@ describe('PersonService', () => {
     describe('createPerson', () => {
         describe('when person not exists', () => {
             it('should create user', async () => {
-                const person = DoFactory.createPerson(true);
+                const person: PersonDo<true> = DoFactory.createPerson(true);
                 personRepoMock.findByReferrer.mockResolvedValue(null);
                 personRepoMock.save.mockResolvedValue(person);
                 mapperMock.map.mockReturnValue(person as unknown as Dictionary<unknown>);
-                const result = await personService.createPerson({
+                const result: Result<PersonDo<true>> = await personService.createPerson({
                     firstName: person.firstName,
                     lastName: person.lastName,
                     client: faker.company.name(),
@@ -70,9 +70,9 @@ describe('PersonService', () => {
 
         describe('when person already exists', () => {
             it('should return domain error', async () => {
-                const person = DoFactory.createPerson(true, { referrer: faker.string.uuid() });
+                const person: PersonDo<true> = DoFactory.createPerson(true, { referrer: faker.string.uuid() });
                 personRepoMock.findByReferrer.mockResolvedValue(person);
-                const result = await personService.createPerson({
+                const result: Result<PersonDo<true>> = await personService.createPerson({
                     firstName: person.firstName,
                     lastName: person.lastName,
                     client: person.client,

@@ -5,12 +5,12 @@ describe('ConsoleLoggerService', () => {
     let module: TestingModule;
     let sut: ConsoleLoggerService;
 
-    const traceSpy = jest.spyOn(console, 'trace').mockImplementation();
-    const debugSpy = jest.spyOn(console, 'debug').mockImplementation();
-    const logSpy = jest.spyOn(console, 'log').mockImplementation();
-    const infoSpy = jest.spyOn(console, 'info').mockImplementation();
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+    const traceSpy: jest.SpyInstance = jest.spyOn(console, 'trace').mockImplementation();
+    const debugSpy: jest.SpyInstance = jest.spyOn(console, 'debug').mockImplementation();
+    const logSpy: jest.SpyInstance = jest.spyOn(console, 'log').mockImplementation();
+    const infoSpy: jest.SpyInstance = jest.spyOn(console, 'info').mockImplementation();
+    const warnSpy: jest.SpyInstance = jest.spyOn(console, 'warn').mockImplementation();
+    const errorSpy: jest.SpyInstance = jest.spyOn(console, 'error').mockImplementation();
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
