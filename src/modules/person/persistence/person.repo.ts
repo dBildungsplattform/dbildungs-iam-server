@@ -4,6 +4,7 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonEntity } from './person.entity.js';
+import { Loaded } from '@mikro-orm/core';
 
 @Injectable()
 export class PersonRepo {
@@ -25,10 +26,11 @@ export class PersonRepo {
         return null;
     }
 
-    public async save(personDo: PersonDo<false>): Promise<PersonDo<true>> {
-        const person: PersonEntity = this.mapper.map(personDo, PersonDo<false>, PersonEntity);
-        await this.em.persistAndFlush(person);
-        return this.mapper.map(person, PersonEntity, PersonDo);
+    public async save(personDo: PersonDo<boolean>): Promise<PersonDo<true>> {
+        if (personDo.id) {
+            return this.update(personDo);
+        }
+        return this.create(personDo);
     }
 
     public async deleteById(id: string): Promise<Option<PersonDo<false>>> {
@@ -38,5 +40,22 @@ export class PersonRepo {
             return this.mapper.map(person, PersonEntity, PersonDo);
         }
         return null;
+    }
+
+    private async create(personDo: PersonDo<false>): Promise<PersonDo<true>> {
+        const person: PersonEntity = this.mapper.map(personDo, PersonDo, PersonEntity);
+        await this.em.persistAndFlush(person);
+        return this.mapper.map(person, PersonEntity, PersonDo);
+    }
+
+    private async update(personDo: PersonDo<true>): Promise<PersonDo<true>> {
+        let person: Option<Loaded<PersonEntity, never>> = await this.em.findOne(PersonEntity, { id: personDo.id });
+        if (person) {
+            person.assign(this.mapper.map(personDo, PersonDo, PersonEntity));
+        } else {
+            person = this.mapper.map(personDo, PersonDo, PersonEntity);
+        }
+        await this.em.persistAndFlush(person);
+        return this.mapper.map(person, PersonEntity, PersonDo);
     }
 }

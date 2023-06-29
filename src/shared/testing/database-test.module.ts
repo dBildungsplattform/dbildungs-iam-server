@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from 'testcontainers';
+import { DefaultPullPolicy, PostgreSqlContainer, StartedPostgreSqlContainer } from 'testcontainers';
 import { DynamicModule, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MikroORM } from '@mikro-orm/core';
@@ -24,6 +24,7 @@ export class DatabaseTestModule implements OnModuleDestroy {
                         if (options?.isDatabaseRequired) {
                             this.postgres = await new PostgreSqlContainer('docker.io/postgres:15.3-alpine')
                                 .withDatabase(dbName)
+                                .withPullPolicy(new DefaultPullPolicy())
                                 .withReuse()
                                 .start();
                         }

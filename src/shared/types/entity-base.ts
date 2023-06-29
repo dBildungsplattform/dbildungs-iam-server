@@ -1,14 +1,18 @@
-import { DateTimeType, Entity, PrimaryKey, Property } from '@mikro-orm/core';
+import { AutoMap } from '@automapper/classes';
+import { BaseEntity, DateTimeType, Entity, PrimaryKey, Property } from '@mikro-orm/core';
 import { randomUUID } from 'crypto';
 
 @Entity({ abstract: true })
-export abstract class EntityBase {
-    @PrimaryKey()
-    public readonly id: string = randomUUID();
+export abstract class EntityBase<E extends EntityBase<E>> extends BaseEntity<E, 'id'> {
+    @AutoMap()
+    @PrimaryKey({ onCreate: () => randomUUID() })
+    public readonly id!: string;
 
-    @Property({ type: DateTimeType })
-    public readonly createdAt: Date = new Date();
+    @AutoMap()
+    @Property({ onCreate: () => new Date(), type: DateTimeType })
+    public readonly createdAt!: Date;
 
-    @Property({ onUpdate: () => new Date(), type: DateTimeType })
-    public readonly updatedAt: Date = new Date();
+    @AutoMap()
+    @Property({ onCreate: () => new Date(), onUpdate: () => new Date(), type: DateTimeType })
+    public readonly updatedAt!: Date;
 }

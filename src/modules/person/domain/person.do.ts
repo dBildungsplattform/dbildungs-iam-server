@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { DoBase } from '../../../shared/types/do-base.js';
+import { DoBase } from '../../../shared/types/index.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
 
 export class PersonDo<WasPersisted extends boolean> extends DoBase<WasPersisted> {

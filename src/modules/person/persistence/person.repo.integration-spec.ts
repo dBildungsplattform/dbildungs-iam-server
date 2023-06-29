@@ -42,7 +42,7 @@ describe('PersonRepo', () => {
 
     describe('save', () => {
         describe('when creating person', () => {
-            it('should persist person into database', async () => {
+            it('should create person', async () => {
                 const person: PersonDo<false> = DoFactory.createPerson(false, { referrer: faker.string.uuid() });
                 await sut.save(person);
                 await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
@@ -50,13 +50,24 @@ describe('PersonRepo', () => {
         });
 
         describe('when updating person', () => {
-            it('should persist person into database', async () => {
-                let person: PersonDo<boolean> = DoFactory.createPerson(false, { referrer: faker.string.uuid() });
-                person = await sut.save(person);
+            it('should update person', async () => {
+                const newPerson: PersonDo<false> = DoFactory.createPerson(false);
+                const savedPerson: PersonDo<true> = await sut.save(newPerson);
                 await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
-                person.referrer = faker.string.uuid();
-                await sut.save(person);
-                await expect(em.find(PersonEntity, { referrer: person.referrer })).resolves.toHaveLength(1);
+                savedPerson.referrer = faker.string.uuid();
+                await sut.save(savedPerson);
+                await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
+                await expect(em.find(PersonEntity, { referrer: savedPerson.referrer })).resolves.toHaveLength(1);
+            });
+
+            it('should create person', async () => {
+                const newPerson: PersonDo<false> = DoFactory.createPerson(false, { id: faker.string.uuid() });
+                const savedPerson: PersonDo<true> = await sut.save(newPerson);
+                await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
+                savedPerson.referrer = faker.string.uuid();
+                await sut.save(savedPerson);
+                await expect(em.find(PersonEntity, {})).resolves.toHaveLength(1);
+                await expect(em.find(PersonEntity, { referrer: savedPerson.referrer })).resolves.toHaveLength(1);
             });
         });
     });

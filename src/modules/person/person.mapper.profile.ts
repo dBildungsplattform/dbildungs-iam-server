@@ -41,8 +41,40 @@ export class PersonMapperProfile extends AutomapperProfile {
                 ),
             );
             createMap(mapper, CreatePersonDto, PersonDo);
-            createMap(mapper, PersonDo, PersonEntity);
-            createMap(mapper, PersonEntity, PersonDo);
+            createMap(
+                mapper,
+                PersonDo,
+                PersonEntity,
+                forMember(
+                    (dest: PersonEntity) => dest.id,
+                    mapFrom((src: PersonDo<boolean>) => src.id),
+                ),
+                forMember(
+                    (dest: PersonEntity) => dest.createdAt,
+                    mapFrom((src: PersonDo<boolean>) => src.createdAt),
+                ),
+                forMember(
+                    (dest: PersonEntity) => dest.updatedAt,
+                    mapFrom((src: PersonDo<boolean>) => src.updatedAt),
+                ),
+            );
+            createMap(
+                mapper,
+                PersonEntity,
+                PersonDo,
+                forMember(
+                    (dest: PersonDo<boolean>) => dest.id,
+                    mapFrom((src: PersonEntity) => src.id),
+                ),
+                forMember(
+                    (dest: PersonDo<boolean>) => dest.createdAt,
+                    mapFrom((src: PersonEntity) => src.createdAt),
+                ),
+                forMember(
+                    (dest: PersonDo<boolean>) => dest.updatedAt,
+                    mapFrom((src: PersonEntity) => src.updatedAt),
+                ),
+            );
             createMap(mapper, PersonDo, CreatePersonResponse);
         };
     }

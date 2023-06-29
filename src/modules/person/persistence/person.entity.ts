@@ -4,7 +4,7 @@ import { EntityBase } from '../../../shared/types/index.js';
 import { PersonGender, PersonTrustLevel } from '../domain/person.enums.js';
 
 @Entity({ tableName: 'person' })
-export class PersonEntity extends EntityBase {
+export class PersonEntity extends EntityBase<PersonEntity> {
     @AutoMap()
     @Property({ nullable: true })
     public referrer?: string;
