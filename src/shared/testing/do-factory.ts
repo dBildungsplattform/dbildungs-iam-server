@@ -1,4 +1,4 @@
-import { fakerDE as faker } from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { PersonDo } from '../../modules/person/domain/person.do.js';
 
 export class DoFactory {
@@ -7,7 +7,7 @@ export class DoFactory {
         props?: Partial<PersonDo<false>>,
     ): PersonDo<WasPersisted> {
         const person: PersonDo<false> = {
-            client: faker.company.name(),
+            client: faker.string.uuid(),
             lastName: faker.person.lastName(),
             firstName: faker.person.fullName(),
             id: withId ? faker.string.uuid() : undefined,

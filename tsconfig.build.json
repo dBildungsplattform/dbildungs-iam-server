@@ -4,7 +4,7 @@
         "node_modules",
         "test",
         "dist",
-        // "**/*.spec.ts",
-        // "**/*.integration-spec.ts"
+        "**/*.spec.ts",
+        "**/*.integration-spec.ts"
     ]
 }

@@ -17,9 +17,10 @@ async function bootstrap(): Promise<void> {
         .build();
     const configService: ConfigService<ServerConfig, true> = app.get(ConfigService<ServerConfig, true>);
     const port: number = configService.getOrThrow<HostConfig>('HOST').PORT;
-    SwaggerModule.setup('api', app, SwaggerModule.createDocument(app, swagger));
+    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger));
     await app.listen(port);
     console.info(`\nListening on: http://127.0.0.1:${port}`);
+    console.info(`API documentation can be found on: http://127.0.0.1:${port}/docs`);
 }
 
 bootstrap().catch((error: unknown) => console.error('Failed to start server with error:', error));

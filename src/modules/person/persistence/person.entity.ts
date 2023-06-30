@@ -14,6 +14,10 @@ export class PersonEntity extends EntityBase<PersonEntity> {
     public client!: string;
 
     @AutoMap()
+    @Property({ nullable: true })
+    public readonly mainOrganization?: string;
+
+    @AutoMap()
     @Property()
     public lastName!: string;
 

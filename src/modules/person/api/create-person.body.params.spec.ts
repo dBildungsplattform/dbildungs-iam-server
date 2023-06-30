@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { fakerDE as faker } from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { plainToInstance } from 'class-transformer';
 import { PersonGender, PersonTrustLevel } from '../domain/person.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
@@ -7,7 +7,7 @@ import { CreatePersonBodyParams } from './create-person.body.params.js';
 describe('CreatePersonBodyParams', () => {
     const referenceParams: CreatePersonBodyParams = {
         referrer: faker.string.uuid(),
-        client: faker.company.name(),
+        client: faker.string.uuid(),
         name: {
             firstName: faker.person.firstName(),
             lastName: faker.person.lastName(),

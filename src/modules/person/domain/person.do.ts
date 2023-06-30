@@ -10,6 +10,9 @@ export class PersonDo<WasPersisted extends boolean> extends DoBase<WasPersisted>
     public client!: string;
 
     @AutoMap()
+    public readonly mainOrganization?: string;
+
+    @AutoMap()
     public lastName!: string;
 
     @AutoMap()

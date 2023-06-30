@@ -2,7 +2,6 @@ import { Mapper, MappingProfile, createMap, forMember, mapFrom } from '@automapp
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { CreatePersonBodyParams } from './api/create-person.body.params.js';
-import { CreatePersonResponse } from './api/create-person.response.js';
 import { CreatePersonDto } from './domain/create-person.dto.js';
 import { PersonDo } from './domain/person.do.js';
 import { PersonEntity } from './persistence/person.entity.js';
@@ -75,7 +74,6 @@ export class PersonMapperProfile extends AutomapperProfile {
                     mapFrom((src: PersonEntity) => src.updatedAt),
                 ),
             );
-            createMap(mapper, PersonDo, CreatePersonResponse);
         };
     }
 }

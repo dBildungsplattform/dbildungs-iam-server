@@ -1,7 +1,7 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { PersonGender, PersonTrustLevel } from '../domain/person.enums.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonNameParams } from './person-name.params.js';
@@ -16,9 +16,17 @@ export class CreatePersonBodyParams {
     @AutoMap()
     @IsOptional()
     @IsString()
+    @IsUUID()
     @Expose({ name: 'mandant' })
-    @ApiProperty({ name: 'mandant', required: false })
-    public readonly client?: string;
+    @ApiProperty({ name: 'mandant', required: true })
+    public readonly client!: string;
+
+    @AutoMap()
+    @IsOptional()
+    @IsString()
+    @Expose({ name: 'stammorganisation' })
+    @ApiProperty({ name: 'stammorganisation', required: false })
+    public readonly mainOrganization?: string;
 
     @AutoMap(() => PersonNameParams)
     @ValidateNested()

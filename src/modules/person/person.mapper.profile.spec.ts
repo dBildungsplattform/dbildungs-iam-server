@@ -4,11 +4,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../shared/testing/index.js';
 import { MappingError } from '../../shared/error/index.js';
 import { CreatePersonBodyParams } from './api/create-person.body.params.js';
-import { CreatePersonResponse } from './api/create-person.response.js';
 import { CreatePersonDto } from './domain/create-person.dto.js';
 import { PersonDo } from './domain/person.do.js';
 import { PersonEntity } from './persistence/person.entity.js';
 import { PersonMapperProfile } from './person.mapper.profile.js';
+import { faker } from '@faker-js/faker';
 
 describe('PersonMapperProfile', () => {
     let module: TestingModule;
@@ -33,6 +33,8 @@ describe('PersonMapperProfile', () => {
     describe('when mapper is initialized', () => {
         it('should map CreatePersonBodyParams to CreatePersonDTO', () => {
             const params: CreatePersonBodyParams = {
+                client: faker.string.uuid(),
+                mainOrganization: faker.string.uuid(),
                 referrer: 'referrer',
                 name: {
                     firstName: 'john',
@@ -46,6 +48,7 @@ describe('PersonMapperProfile', () => {
 
         it('should map CreatePersonDto to PersonDo', () => {
             const dto: CreatePersonDto = {
+                client: faker.string.uuid(),
                 firstName: 'john',
                 lastName: 'doe',
                 localization: 'de-DE',
@@ -62,11 +65,6 @@ describe('PersonMapperProfile', () => {
         it('should map PersonEntity to PersonDo', () => {
             const person: PersonDo<true> = new PersonEntity();
             expect(() => sut.map(person, PersonEntity, PersonDo)).not.toThrowError(MappingError);
-        });
-
-        it('should map PersonDo to CreatePersonResponse', () => {
-            const person: PersonDo<true> = DoFactory.createPerson(true);
-            expect(() => sut.map(person, PersonDo, CreatePersonResponse)).not.toThrowError(MappingError);
         });
     });
 });

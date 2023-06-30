@@ -1,6 +1,6 @@
 import { Dictionary, Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { fakerDE as faker } from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PersonAlreadyExistsError } from '../../../shared/error/index.js';
@@ -56,7 +56,7 @@ describe('PersonService', () => {
                 const result: Result<PersonDo<true>> = await personService.createPerson({
                     firstName: person.firstName,
                     lastName: person.lastName,
-                    client: faker.company.name(),
+                    client: faker.string.uuid(),
                     id: undefined,
                     createdAt: undefined,
                     updatedAt: undefined,

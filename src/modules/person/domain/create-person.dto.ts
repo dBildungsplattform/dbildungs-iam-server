@@ -6,7 +6,10 @@ export class CreatePersonDto {
     public readonly referrer?: string;
 
     @AutoMap()
-    public readonly client?: string;
+    public readonly client!: string;
+
+    @AutoMap()
+    public readonly mainOrganization?: string;
 
     @AutoMap()
     public readonly lastName!: string;
