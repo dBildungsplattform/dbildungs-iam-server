@@ -1,8 +1,8 @@
-[![Test](https://github.com/hpi-schul-cloud/dbildungs-iam-server/actions/workflows/test.yml/badge.svg)](https://github.com/hpi-schul-cloud/dbildungs-iam-server/actions/workflows/test.yml)
-
 # dBildungs IAM Server
 
 We have the strategic goal SG-02 "stand-alone system". We want to succeed this goal, therefor we need to set the ErWIn system separate to the dBC. This repository is used for the development the separate ErWIn system to achieve this goal.
+
+[![Test](https://github.com/hpi-schul-cloud/dbildungs-iam-server/actions/workflows/test.yml/badge.svg)](https://github.com/hpi-schul-cloud/dbildungs-iam-server/actions/workflows/test.yml)
 
 ## Prerequisites
 
@@ -50,4 +50,5 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 * Configuration conventions can be found [here](./docs/config.md)
 
 ## License
+
 The software is licensed under the [AGPL-3.0 license](./LICENSE).
