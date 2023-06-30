@@ -31,14 +31,14 @@ export class CreatePersonBodyParams {
     @AutoMap(() => PersonNameParams)
     @ValidateNested()
     @Type(() => PersonNameParams)
-    @ApiProperty({ type: PersonNameParams })
+    @ApiProperty({ type: PersonNameParams, required: true })
     public readonly name!: PersonNameParams;
 
     @AutoMap(() => PersonBirthParams)
     @ValidateNested()
     @Expose({ name: 'geburt' })
     @Type(() => PersonBirthParams)
-    @ApiProperty({ name: 'geburt' })
+    @ApiProperty({ name: 'geburt', required: true })
     public readonly birth!: PersonBirthParams;
 
     @AutoMap()
