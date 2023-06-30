@@ -1,7 +1,7 @@
 import { AutoMap } from '@automapper/classes';
 import { ArrayType, DateTimeType, Entity, Enum, Property } from '@mikro-orm/core';
 import { EntityBase } from '../../../shared/types/index.js';
-import { PersonGender, PersonTrustLevel } from '../domain/person.enums.js';
+import { Gender, TrustLevel } from '../domain/person.enums.js';
 
 @Entity({ tableName: 'person' })
 export class PersonEntity extends EntityBase<PersonEntity> {
@@ -66,16 +66,16 @@ export class PersonEntity extends EntityBase<PersonEntity> {
     public birthPlace?: string;
 
     @AutoMap()
-    @Enum({ items: () => PersonGender, nullable: true })
-    public gender?: PersonGender;
+    @Enum({ items: () => Gender, nullable: true })
+    public gender?: Gender;
 
     @AutoMap()
     @Property({ nullable: true })
     public localization?: string = 'de-DE';
 
     @AutoMap()
-    @Enum({ items: () => PersonTrustLevel, nullable: true })
-    public trustLevel?: PersonTrustLevel;
+    @Enum({ items: () => TrustLevel, nullable: true })
+    public trustLevel?: TrustLevel;
 
     @AutoMap()
     @Property({ nullable: true })

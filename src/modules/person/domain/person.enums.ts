@@ -1,6 +1,3 @@
-// TODO: map enums in the api to english
-// TODO: write long names for enum fields
-
 export enum PersonGender {
     MALE = 'm',
     FEMALE = 'f',
@@ -8,9 +5,23 @@ export enum PersonGender {
     UNKNOWN = 'x',
 }
 
+export enum Gender {
+    MALE = 'male',
+    FEMALE = 'female',
+    DIVERSE = 'diverse',
+    UNKNOWN = 'unknown',
+}
+
 export enum PersonTrustLevel {
     NONE = 'kein',
     UNKNOWN = 'unbe',
     TRUSTED = 'teil',
     VERIFIED = 'voll',
+}
+
+export enum TrustLevel {
+    NONE = 'none',
+    UNKNOWN = 'unknown',
+    TRUSTED = 'trusted',
+    VERIFIED = 'verified',
 }

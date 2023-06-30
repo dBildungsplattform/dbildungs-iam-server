@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { DoBase } from '../../../shared/types/index.js';
-import { PersonGender, PersonTrustLevel } from './person.enums.js';
+import { Gender, TrustLevel } from './person.enums.js';
 
 export class PersonDo<WasPersisted extends boolean> extends DoBase<WasPersisted> {
     @AutoMap()
@@ -49,13 +49,13 @@ export class PersonDo<WasPersisted extends boolean> extends DoBase<WasPersisted>
     public birthPlace?: string;
 
     @AutoMap()
-    public gender?: PersonGender;
+    public gender?: Gender;
 
     @AutoMap()
     public localization?: string = 'de-DE';
 
     @AutoMap()
-    public trustLevel?: PersonTrustLevel;
+    public trustLevel?: TrustLevel;
 
     @AutoMap()
     public isInformationBlocked?: boolean;

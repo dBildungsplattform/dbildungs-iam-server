@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { PersonGender, PersonTrustLevel } from './person.enums.js';
+import { Gender, TrustLevel } from './person.enums.js';
 
 export class CreatePersonDto {
     @AutoMap()
@@ -48,13 +48,13 @@ export class CreatePersonDto {
     public readonly birthPlace?: string;
 
     @AutoMap()
-    public readonly gender?: PersonGender;
+    public readonly gender?: Gender;
 
     @AutoMap()
     public readonly localization?: string;
 
     @AutoMap()
-    public readonly trustLevel?: PersonTrustLevel;
+    public readonly trustLevel?: TrustLevel;
 
     @AutoMap()
     public readonly isInformationBlocked?: boolean;
