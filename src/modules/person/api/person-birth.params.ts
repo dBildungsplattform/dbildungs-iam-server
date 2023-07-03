@@ -1,12 +1,12 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
-import { IsDateString, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsOptional, IsString } from 'class-validator';
 
 export class PersonBirthParams {
     @AutoMap()
     @IsOptional()
-    @IsDateString()
+    @IsDate()
     @Expose({ name: 'datum' })
     @Type(() => Date)
     @ApiProperty({ name: 'datum', required: false })
