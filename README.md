@@ -15,8 +15,9 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 1. Run `npm ci` to install all dependencies
 2. Start the required services from the `compose.yaml` file
    * db
-3. Run `npm run start:debug` to start the server
-4. Server runs on the url printed in the console
+3. Create a `.env` file and set the required environment variables from `env.config.ts`
+4. Run `npm run start:debug` to start the server
+5. Server runs on the url printed in the console
 
 ## Scripts for Development
 

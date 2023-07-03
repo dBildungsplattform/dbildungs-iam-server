@@ -1,4 +1,5 @@
 # Configuration
+
 > This site explains how configuration is implemented and gives guidelines on
 > how to extend or implemented your own configuration modules. For configuration
 > we are using the [@nestjs/config](https://www.npmjs.com/package/@nestjs/config)
@@ -6,6 +7,7 @@
 > documentation site.
 
 ## Usage
+
 The nest configuration package provides a module which must be imported to use the `ConfigService`.
 We are using the config module as a global module, which makes the `ConfigService` globally available.
 Here comes an example:
