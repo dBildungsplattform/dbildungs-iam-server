@@ -16,7 +16,9 @@ export class DbInitConsole extends CommandRunner {
 
     public override async run(_passedParams: string[], _options?: Record<string, unknown>): Promise<void> {
         this.logger.info('Initializing database...');
-        await this.orm.getSchemaGenerator().createDatabase(this.configService.getOrThrow<DbConfig>('DB').DB_NAME);
+        if (!(await this.orm.getSchemaGenerator().ensureDatabase())) {
+            await this.orm.getSchemaGenerator().createDatabase(this.configService.getOrThrow<DbConfig>('DB').DB_NAME);
+        }
         await this.orm.getSchemaGenerator().createSchema();
         this.logger.info('Initialized database');
     }

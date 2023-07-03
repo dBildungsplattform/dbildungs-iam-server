@@ -7,13 +7,13 @@ export class PersonNameParams {
     @AutoMap()
     @IsString()
     @Expose({ name: 'familienname' })
-    @ApiProperty({ name: 'familienname' })
+    @ApiProperty({ name: 'familienname', required: true })
     public readonly lastName!: string;
 
     @AutoMap()
     @IsString()
     @Expose({ name: 'vorname' })
-    @ApiProperty({ name: 'vorname' })
+    @ApiProperty({ name: 'vorname', required: true })
     public readonly firstName!: string;
 
     @AutoMap()
