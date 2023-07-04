@@ -33,6 +33,7 @@ module.exports = {
         'class-methods-use-this': 'off',
         'no-param-reassign': 'warn',
         'no-underscore-dangle': 'error',
+        '@typescript-eslint/no-inferrable-types': ['off'],
         '@typescript-eslint/typedef': [
             'warn',
             {

@@ -7,16 +7,16 @@ export class PersonDo<WasPersisted extends boolean> extends DoBase<WasPersisted>
     public referrer?: string;
 
     @AutoMap()
-    public client!: string;
+    public client: string = '';
 
     @AutoMap()
     public readonly mainOrganization?: string;
 
     @AutoMap()
-    public lastName!: string;
+    public lastName: string = '';
 
     @AutoMap()
-    public firstName!: string;
+    public firstName: string = '';
 
     @AutoMap()
     public initialsLastName?: string;
