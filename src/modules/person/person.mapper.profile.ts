@@ -5,7 +5,8 @@ import { CreatePersonBodyParams } from './api/create-person.body.params.js';
 import { CreatePersonDto } from './domain/create-person.dto.js';
 import { PersonDo } from './domain/person.do.js';
 import { PersonEntity } from './persistence/person.entity.js';
-import { Gender, PersonGender, PersonTrustLevel, TrustLevel } from './domain/person.enums.js';
+import { PersonGender, PersonTrustLevel } from './api/person.enums.js';
+import { Gender, TrustLevel } from './domain/person.enums.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
     convert(source: PersonGender): Gender {

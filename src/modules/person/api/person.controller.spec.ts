@@ -52,6 +52,7 @@ describe('PersonController', () => {
                 birth: {},
             };
             await expect(personController.createPerson(params)).resolves.not.toThrow();
+            expect(personUcMock.createPerson).toHaveBeenCalledTimes(1);
         });
     });
 });
