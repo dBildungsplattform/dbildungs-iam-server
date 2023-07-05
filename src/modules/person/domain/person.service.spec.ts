@@ -47,8 +47,8 @@ describe('PersonService', () => {
     });
 
     describe('createPerson', () => {
-        describe('when person does not exists', () => {
-            it('should create user', async () => {
+        describe('when person does not exist', () => {
+            it('should create person', async () => {
                 const person: PersonDo<true> = DoFactory.createPerson(true);
                 personRepoMock.findByReferrer.mockResolvedValue(null);
                 personRepoMock.save.mockResolvedValue(person);
