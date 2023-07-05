@@ -5,8 +5,8 @@ import { MapperTestModule } from '../../../shared/testing/index.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';
+import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonUc } from './person.uc.js';
-import { PersonMapperProfile } from '../person.mapper.profile.js';
 
 describe('PersonUc', () => {
     let module: TestingModule;
@@ -18,7 +18,7 @@ describe('PersonUc', () => {
             imports: [MapperTestModule],
             providers: [
                 PersonUc,
-                PersonMapperProfile,
+                PersonApiMapperProfile,
                 {
                     provide: PersonService,
                     useValue: createMock<PersonService>(),

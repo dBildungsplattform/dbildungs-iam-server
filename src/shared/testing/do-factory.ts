@@ -14,6 +14,6 @@ export class DoFactory {
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
         };
-        return Object.assign(new PersonDo(), person, props);
+        return Object.assign(new PersonDo<WasPersisted>(), person, props);
     }
 }

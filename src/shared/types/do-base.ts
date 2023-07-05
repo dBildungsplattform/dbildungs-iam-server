@@ -1,7 +1,5 @@
-export abstract class DoBase<WasPersisted extends boolean> {
-    public id!: WasPersisted extends true ? string : Option<string>;
-
-    public createdAt!: WasPersisted extends true ? Date : Option<Date>;
-
-    public updatedAt!: WasPersisted extends true ? Date : Option<Date>;
-}
+export type DoBase<WasPersisted extends boolean> = {
+    id: Persisted<string, WasPersisted>;
+    createdAt: Persisted<Date, WasPersisted>;
+    updatedAt: Persisted<Date, WasPersisted>;
+};

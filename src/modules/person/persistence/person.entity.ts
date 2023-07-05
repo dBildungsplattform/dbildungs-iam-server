@@ -11,6 +11,7 @@ export class PersonEntity extends EntityBase<PersonEntity> {
 
     @AutoMap()
     @Property()
+    // TODO: automapper use constructor
     public client!: string;
 
     @AutoMap()

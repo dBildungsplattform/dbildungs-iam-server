@@ -2,7 +2,17 @@ import { AutoMap } from '@automapper/classes';
 import { DoBase } from '../../../shared/types/index.js';
 import { Gender, TrustLevel } from './person.enums.js';
 
-export class PersonDo<WasPersisted extends boolean> extends DoBase<WasPersisted> {
+// TODO: no bang operator and default values
+export class PersonDo<WasPersisted extends boolean = false> implements DoBase<WasPersisted> {
+    @AutoMap()
+    public id!: Persisted<string, WasPersisted>;
+
+    @AutoMap()
+    public createdAt!: Persisted<Date, WasPersisted>;
+
+    @AutoMap()
+    public updatedAt!: Persisted<Date, WasPersisted>;
+
     @AutoMap()
     public referrer?: string;
 

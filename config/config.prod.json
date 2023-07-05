@@ -3,7 +3,7 @@
         "PORT": 8080
     },
     "DB": {
-        "CLIENT_URL": "postgres://127.0.0.1:5432",
-        "DB_NAME": "dbildungs-iam"
+        "CLIENT_URL": "<here goes your connection string>",
+        "DB_NAME": "<here goes your db name>"
     }
 }

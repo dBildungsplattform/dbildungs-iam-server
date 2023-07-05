@@ -12,7 +12,7 @@ type DatabaseTestModuleOptions = { isDatabaseRequired: boolean; databaseName?: s
 export class DatabaseTestModule implements OnModuleDestroy {
     private static postgres: Option<StartedPostgreSqlContainer>;
 
-    public static register(options?: DatabaseTestModuleOptions): DynamicModule {
+    public static forRoot(options?: DatabaseTestModuleOptions): DynamicModule {
         return {
             module: DatabaseTestModule,
             imports: [

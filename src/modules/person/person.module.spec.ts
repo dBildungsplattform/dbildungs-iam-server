@@ -3,14 +3,14 @@ import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../sh
 import { PersonService } from './domain/person.service.js';
 import { PersonRepo } from './persistence/person.repo.js';
 import { PersonModule } from './person.module.js';
-import { PersonMapperProfile } from './person.mapper.profile.js';
+import { PersonPersistenceMapperProfile } from './persistence/person-persistence.mapper.profile.js';
 
 describe('PersonModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.register(), MapperTestModule, PersonModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, PersonModule],
         }).compile();
     });
 
@@ -24,7 +24,7 @@ describe('PersonModule', () => {
 
     describe('when module is initialized', () => {
         it('should resolve PersonProfile', () => {
-            expect(module.get(PersonMapperProfile)).toBeInstanceOf(PersonMapperProfile);
+            expect(module.get(PersonPersistenceMapperProfile)).toBeInstanceOf(PersonPersistenceMapperProfile);
         });
 
         it('should resolve PersonRepo', () => {

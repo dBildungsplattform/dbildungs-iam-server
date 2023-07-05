@@ -1,12 +1,11 @@
 import { Converter, Mapper, MappingProfile, convertUsing, createMap, forMember, mapFrom } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
-import { CreatePersonBodyParams } from './api/create-person.body.params.js';
-import { CreatePersonDto } from './domain/create-person.dto.js';
-import { PersonDo } from './domain/person.do.js';
-import { PersonEntity } from './persistence/person.entity.js';
-import { PersonGender, PersonTrustLevel } from './api/person.enums.js';
-import { Gender, TrustLevel } from './domain/person.enums.js';
+import { CreatePersonDto } from '../domain/create-person.dto.js';
+import { PersonDo } from '../domain/person.do.js';
+import { Gender, TrustLevel } from '../domain/person.enums.js';
+import { CreatePersonBodyParams } from './create-person.body.params.js';
+import { PersonGender, PersonTrustLevel } from './person.enums.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
     convert(source: PersonGender): Gender {
@@ -39,7 +38,7 @@ export const personTrustLevelToTrustLevelConverter: Converter<PersonTrustLevel, 
 };
 
 @Injectable()
-export class PersonMapperProfile extends AutomapperProfile {
+export class PersonApiMapperProfile extends AutomapperProfile {
     public constructor(@Inject(getMapperToken()) mapper: Mapper) {
         super(mapper);
     }
@@ -83,40 +82,6 @@ export class PersonMapperProfile extends AutomapperProfile {
                 ),
             );
             createMap(mapper, CreatePersonDto, PersonDo);
-            createMap(
-                mapper,
-                PersonDo,
-                PersonEntity,
-                forMember(
-                    (dest: PersonEntity) => dest.id,
-                    mapFrom((src: PersonDo<boolean>) => src.id),
-                ),
-                forMember(
-                    (dest: PersonEntity) => dest.createdAt,
-                    mapFrom((src: PersonDo<boolean>) => src.createdAt),
-                ),
-                forMember(
-                    (dest: PersonEntity) => dest.updatedAt,
-                    mapFrom((src: PersonDo<boolean>) => src.updatedAt),
-                ),
-            );
-            createMap(
-                mapper,
-                PersonEntity,
-                PersonDo,
-                forMember(
-                    (dest: PersonDo<boolean>) => dest.id,
-                    mapFrom((src: PersonEntity) => src.id),
-                ),
-                forMember(
-                    (dest: PersonDo<boolean>) => dest.createdAt,
-                    mapFrom((src: PersonEntity) => src.createdAt),
-                ),
-                forMember(
-                    (dest: PersonDo<boolean>) => dest.updatedAt,
-                    mapFrom((src: PersonEntity) => src.updatedAt),
-                ),
-            );
         };
     }
 }

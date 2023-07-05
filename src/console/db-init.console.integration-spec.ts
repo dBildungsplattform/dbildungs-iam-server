@@ -13,7 +13,7 @@ describe('DbInitConsole', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.register({ isDatabaseRequired: true }), LoggingTestModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), LoggingTestModule],
             providers: [DbInitConsole],
         }).compile();
         sut = module.get(DbInitConsole);

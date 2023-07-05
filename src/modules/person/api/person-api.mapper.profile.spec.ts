@@ -1,28 +1,28 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory, MapperTestModule } from '../../shared/testing/index.js';
-import { MappingError } from '../../shared/error/index.js';
-import { CreatePersonBodyParams } from './api/create-person.body.params.js';
-import { CreatePersonDto } from './domain/create-person.dto.js';
-import { PersonDo } from './domain/person.do.js';
-import { PersonEntity } from './persistence/person.entity.js';
+import { MapperTestModule } from '../../../shared/testing/index.js';
+import { MappingError } from '../../../shared/error/index.js';
+import { CreatePersonBodyParams } from './create-person.body.params.js';
+import { CreatePersonDto } from '../domain/create-person.dto.js';
+import { PersonDo } from '../domain/person.do.js';
 import {
-    PersonMapperProfile,
+    PersonApiMapperProfile,
     personGenderToGenderConverter,
     personTrustLevelToTrustLevelConverter,
-} from './person.mapper.profile.js';
+} from './person-api.mapper.profile.js';
 import { faker } from '@faker-js/faker';
-import { Gender, PersonGender, PersonTrustLevel, TrustLevel } from './domain/person.enums.js';
+import { Gender, TrustLevel } from '../domain/person.enums.js';
+import { PersonGender, PersonTrustLevel } from './person.enums.js';
 
-describe('PersonMapperProfile', () => {
+describe('PersonApiMapperProfile', () => {
     let module: TestingModule;
     let sut: Mapper;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [MapperTestModule],
-            providers: [PersonMapperProfile],
+            providers: [PersonApiMapperProfile],
         }).compile();
         sut = module.get(getMapperToken());
     });
@@ -118,16 +118,6 @@ describe('PersonMapperProfile', () => {
                 referrer: 'referrer',
             };
             expect(() => sut.map(dto, CreatePersonDto, PersonDo)).not.toThrowError(MappingError);
-        });
-
-        it('should map PersonDo to PersonEntity', () => {
-            const person: PersonDo<true> = DoFactory.createPerson(true);
-            expect(() => sut.map(person, PersonDo, PersonEntity)).not.toThrowError(MappingError);
-        });
-
-        it('should map PersonEntity to PersonDo', () => {
-            const person: PersonDo<true> = new PersonEntity();
-            expect(() => sut.map(person, PersonEntity, PersonDo)).not.toThrowError(MappingError);
         });
     });
 });

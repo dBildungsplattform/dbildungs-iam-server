@@ -1,11 +1,11 @@
 import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { MapperTestModule } from '../../../shared/testing/index.js';
-import { CreatePersonBodyParams } from '../api/create-person.body.params.js';
+import { MapperTestModule } from '@shared/testing/index.js';
+import { CreatePersonBodyParams } from './create-person.body.params.js';
+import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonController } from './person.controller.js';
-import { PersonUc } from '../api/person.uc.js';
-import { PersonMapperProfile } from '../person.mapper.profile.js';
+import { PersonUc } from './person.uc.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -17,7 +17,7 @@ describe('PersonController', () => {
             imports: [MapperTestModule],
             providers: [
                 PersonController,
-                PersonMapperProfile,
+                PersonApiMapperProfile,
                 {
                     provide: PersonUc,
                     useValue: createMock<PersonUc>(),

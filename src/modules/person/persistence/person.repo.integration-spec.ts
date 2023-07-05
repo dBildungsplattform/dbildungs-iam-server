@@ -18,7 +18,7 @@ describe('PersonRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.register({ isDatabaseRequired: true }), MapperTestModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
             providers: [PersonMapperProfile, PersonRepo],
         }).compile();
         sut = module.get(PersonRepo);
