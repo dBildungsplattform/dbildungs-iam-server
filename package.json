@@ -14,7 +14,7 @@
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
         "start": "nest start server ",
         "start:debug": "nest start server --debug",
-        "start:prod": "node dist/main",
+        "start:prod": "node dist/src/server/main.js",
         "test": "jest",
         "test:ci": "jest --coverage --maxWorkers=100%",
         "test:cov": "jest --coverage --maxWorkers=50%",

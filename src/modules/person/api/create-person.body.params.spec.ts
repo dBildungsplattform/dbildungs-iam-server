@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { faker } from '@faker-js/faker';
 import { plainToInstance } from 'class-transformer';
-import { PersonGender, PersonTrustLevel } from '../domain/person.enums.js';
+import { PersonGender, PersonTrustLevel } from './person.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 
 describe('CreatePersonBodyParams', () => {

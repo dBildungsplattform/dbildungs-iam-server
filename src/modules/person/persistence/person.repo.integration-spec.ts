@@ -4,10 +4,10 @@ import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../shared/testing/index.js';
-import { PersonMapperProfile } from '../person.mapper.profile.js';
+import { PersonDo } from '../domain/person.do.js';
+import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
-import { PersonDo } from '../domain/person.do.js';
 
 describe('PersonRepo', () => {
     let module: TestingModule;
@@ -19,7 +19,7 @@ describe('PersonRepo', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [PersonMapperProfile, PersonRepo],
+            providers: [PersonPersistenceMapperProfile, PersonRepo],
         }).compile();
         sut = module.get(PersonRepo);
         orm = module.get(MikroORM);

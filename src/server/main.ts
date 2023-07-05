@@ -3,9 +3,9 @@ import { NestFactory } from '@nestjs/core';
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
-import { HostConfig, ServerConfig } from './shared/config/index.js';
+import { HostConfig, ServerConfig } from '../shared/config/index.js';
+import { GlobalValidationPipe } from '../shared/validation/index.js';
 import { ServerModule } from './server.module.js';
-import { GlobalValidationPipe } from './shared/validation/index.js';
 
 async function bootstrap(): Promise<void> {
     const app: INestApplication = await NestFactory.create(ServerModule);

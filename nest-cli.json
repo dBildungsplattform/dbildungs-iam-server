@@ -12,7 +12,7 @@
         "server": {
             "type": "application",
             "root": "src",
-            "entryFile": "src/main",
+            "entryFile": "src/server/main",
             "sourceRoot": "src",
             "compilerOptions": {
                 "tsConfigPath": "tsconfig.build.json"
