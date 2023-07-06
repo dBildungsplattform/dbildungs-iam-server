@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../shared/testing/index.js';
+import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
 import { PersonService } from './domain/person.service.js';
 import { PersonRepo } from './persistence/person.repo.js';
 import { PersonModule } from './person.module.js';

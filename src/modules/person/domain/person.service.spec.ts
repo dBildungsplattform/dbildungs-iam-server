@@ -4,7 +4,7 @@ import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PersonAlreadyExistsError } from '../../../shared/error/index.js';
-import { DoFactory } from '../../../shared/testing/do-factory.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonDo } from './person.do.js';
 import { PersonService } from './person.service.js';

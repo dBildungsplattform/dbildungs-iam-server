@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { MapperTestModule } from '../../../shared/testing/index.js';
+import { MapperTestModule } from '../../../../test/utils/index.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonController } from './person.controller.js';

@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { MikroORM } from '@mikro-orm/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
-import { DbConfig, ServerConfig } from '../../shared/config/index.js';
+import { DbConfig, ServerConfig } from '../../src/shared/config/index.js';
 
 type DatabaseTestModuleOptions = { isDatabaseRequired: boolean; databaseName?: string };
 

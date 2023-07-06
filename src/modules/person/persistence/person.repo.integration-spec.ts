@@ -3,7 +3,7 @@ import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../shared/testing/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';

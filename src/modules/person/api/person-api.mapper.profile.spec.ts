@@ -1,7 +1,7 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Test, TestingModule } from '@nestjs/testing';
-import { MapperTestModule } from '../../../shared/testing/index.js';
+import { MapperTestModule } from '../../../../test/utils/index.js';
 import { MappingError } from '../../../shared/error/index.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';

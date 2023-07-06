@@ -22,10 +22,7 @@ module.exports = {
     rules: {
         'prettier/prettier': ['warn'],
         'import/extensions': ['error', 'ignorePackages'],
-        'import/no-extraneous-dependencies': [
-            'error',
-            { devDependencies: ['**/testing/*', '**/*.integration-spec.ts', '**/*.spec.ts'] },
-        ],
+        'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
         'import/no-cycle': ['error'],
         'no-void': ['error', { allowAsStatement: true }],
         'no-console': ['warn'],

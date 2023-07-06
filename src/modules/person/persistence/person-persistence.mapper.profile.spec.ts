@@ -1,7 +1,7 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory, MapperTestModule } from '../../../shared/testing/index.js';
+import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { MappingError } from '../../../shared/error/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonEntity } from '../persistence/person.entity.js';

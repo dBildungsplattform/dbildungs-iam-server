@@ -2,7 +2,7 @@ import { classes } from '@automapper/classes';
 import { CamelCaseNamingConvention } from '@automapper/core';
 import { AutomapperModule } from '@automapper/nestjs';
 import { Module } from '@nestjs/common';
-import { mappingErrorHandler } from '../error/index.js';
+import { mappingErrorHandler } from '../../src/shared/error/index.js';
 
 @Module({
     imports: [

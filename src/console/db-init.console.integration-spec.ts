@@ -1,6 +1,6 @@
 import { MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../shared/testing/index.js';
+import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../test/utils/index.js';
 import { DbInitConsole } from './db-init.console.js';
 import { ConfigService } from '@nestjs/config';
 import { DbConfig, ServerConfig } from '../shared/config/index.js';

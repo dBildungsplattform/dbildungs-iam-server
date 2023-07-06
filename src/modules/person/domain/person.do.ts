@@ -2,8 +2,13 @@ import { AutoMap } from '@automapper/classes';
 import { DoBase } from '../../../shared/types/index.js';
 import { Gender, TrustLevel } from './person.enums.js';
 
-// TODO: no bang operator and default values
-export class PersonDo<WasPersisted extends boolean = false> implements DoBase<WasPersisted> {
+export class PersonDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
+    /**
+     * @deprecated This constructor is for automapper only.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-useless-constructor, @typescript-eslint/no-empty-function
+    public constructor() {}
+
     @AutoMap()
     public id!: Persisted<string, WasPersisted>;
 

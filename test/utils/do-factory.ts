@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { PersonDo } from '../../modules/person/domain/person.do.js';
+import { PersonDo } from '../../src/modules/person/domain/person.do.js';
 
 export class DoFactory {
     public static createPerson<WasPersisted extends boolean>(

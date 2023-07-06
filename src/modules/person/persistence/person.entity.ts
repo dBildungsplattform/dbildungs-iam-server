@@ -5,13 +5,19 @@ import { Gender, TrustLevel } from '../domain/person.enums.js';
 
 @Entity({ tableName: 'person' })
 export class PersonEntity extends EntityBase<PersonEntity> {
+    /**
+     * @deprecated This constructor is for automapper only.
+     */
+    public constructor() {
+        super();
+    }
+
     @AutoMap()
     @Property({ nullable: true })
     public referrer?: string;
 
     @AutoMap()
     @Property()
-    // TODO: automapper use constructor
     public client!: string;
 
     @AutoMap()
