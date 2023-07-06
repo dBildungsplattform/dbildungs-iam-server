@@ -1,16 +1,26 @@
+import { randomUUID } from 'crypto';
 import { AutoMap } from '@automapper/classes';
-import { ArrayType, DateTimeType, Entity, Enum, Property } from '@mikro-orm/core';
+import { ArrayType, BaseEntity, DateTimeType, Entity, Enum, PrimaryKey, Property } from '@mikro-orm/core';
 import { EntityBase } from '../../../shared/types/index.js';
 import { Gender, TrustLevel } from '../domain/person.enums.js';
 
 @Entity({ tableName: 'person' })
-export class PersonEntity extends EntityBase<PersonEntity> {
+export class PersonEntity extends BaseEntity<PersonEntity, 'id'> implements EntityBase {
     /**
      * @deprecated This constructor is for automapper only.
      */
     public constructor() {
         super();
     }
+
+    @PrimaryKey({ onCreate: () => randomUUID() })
+    public readonly id!: string;
+
+    @Property({ onCreate: () => new Date(), type: DateTimeType })
+    public readonly createdAt!: Date;
+
+    @Property({ onCreate: () => new Date(), onUpdate: () => new Date(), type: DateTimeType })
+    public readonly updatedAt!: Date;
 
     @AutoMap()
     @Property({ nullable: true })
