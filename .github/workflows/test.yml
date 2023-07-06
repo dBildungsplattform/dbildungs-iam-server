@@ -70,6 +70,7 @@ jobs:
            SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
           with:
             args: >
+             -X
              -Dsonar.sources=.
              -Dsonar.organization=schulcloud-verbund
              -Dsonar.projectKey=hpi-schul-cloud_dbildungs-isle
