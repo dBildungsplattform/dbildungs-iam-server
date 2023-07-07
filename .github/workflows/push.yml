@@ -1,0 +1,50 @@
+name: Push
+on:
+  push:
+    branches:
+      - '*'
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  nest_test_cov:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Docker check
+        run: docker --version
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Installing dependencies
+        run: npm ci --prefer-offline --no-audit
+      - name: Running tests
+        run: npm run test:ci
+      - name: save coverage artifacts
+        run: |
+          mkdir -p artifacts
+          mv ./coverage/lcov.info artifacts/
+      - name: upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-artifacts
+          path: artifacts/
+  nest_lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Installing dependencies
+        run: npm ci --prefer-offline --no-audit
+      - name: Running linter
+        run: npm run lint
