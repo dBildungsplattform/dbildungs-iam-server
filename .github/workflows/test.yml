@@ -29,7 +29,7 @@ jobs:
           - name: save coverage artifacts
             run: |
               mkdir -p coverage
-              mv ./coverage coverage
+              mv ./coverage/lcov.info coverage/
           - name: upload artifacts
             uses: actions/upload-artifact@v3
             with:
