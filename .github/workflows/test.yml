@@ -26,10 +26,10 @@ jobs:
             run: npm ci --prefer-offline --no-audit
           - name: jest
             run: npm run test:ci
-          # - name: save coverage artifacts
-          #   run: |
-          #     mkdir -p coverage
-          #     mv ./coverage/lcov-report coverage/coverage.info
+          - name: save coverage artifacts
+            run: |
+              mkdir -p coverage
+              mv ./coverage coverage
           - name: upload artifacts
             uses: actions/upload-artifact@v3
             with:
@@ -69,12 +69,4 @@ jobs:
            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
            SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
           with:
-            args: >
-             -X
-             -Dsonar.sources=.
-             -Dsonar.organization=schulcloud-verbund
-             -Dsonar.projectKey=hpi-schul-cloud_dbildungs-isle
-             -Dsonar.tests=.
-             -Dsonar.test.inclusions=**/*spec.ts
-             -Dsonar.test.exclusions=**/node_modules/**
-             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            args: -X
