@@ -23,7 +23,7 @@ jobs:
         uses: github/codeql-action/init@v2
         with:
           languages: javascript
-      - name: Performing analysis
+      - name: Perform analysis
         uses: github/codeql-action/analyze@v2
         with:
           category: /language:javascript

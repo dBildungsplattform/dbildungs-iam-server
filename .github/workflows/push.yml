@@ -20,19 +20,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Installing dependencies
+      - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
-      - name: Running tests
+      - name: Run tests
         run: npm run test:ci
-      - name: save coverage artifacts
-        run: |
-          mkdir -p artifacts
-          mv ./coverage/lcov.info artifacts/
-      - name: upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage-artifacts
-          path: artifacts/
   nest_lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -44,7 +35,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Installing dependencies
+      - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
-      - name: Running linter
+      - name: Run linter
         run: npm run lint
