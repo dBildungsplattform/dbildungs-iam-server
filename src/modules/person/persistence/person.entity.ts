@@ -1,11 +1,10 @@
 import { randomUUID } from 'crypto';
 import { AutoMap } from '@automapper/classes';
 import { ArrayType, BaseEntity, DateTimeType, Entity, Enum, PrimaryKey, Property } from '@mikro-orm/core';
-import { EntityBase } from '../../../shared/types/index.js';
 import { Gender, TrustLevel } from '../domain/person.enums.js';
 
 @Entity({ tableName: 'person' })
-export class PersonEntity extends BaseEntity<PersonEntity, 'id'> implements EntityBase {
+export class PersonEntity extends BaseEntity<PersonEntity, 'id'> {
     /**
      * @deprecated This constructor is for automapper only.
      */
