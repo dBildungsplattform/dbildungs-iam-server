@@ -4,6 +4,7 @@
     "sourceRoot": "src",
     "monorepo": true,
     "compilerOptions": {
+        "builder": "tsc",
         "deleteOutDir": true,
         "webpack": false,
         "tsConfigPath": "tsconfig.build.json"
