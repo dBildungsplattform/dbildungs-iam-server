@@ -24,6 +24,15 @@ jobs:
         run: npm ci --prefer-offline --no-audit
       - name: Run tests
         run: npm run test:ci
+      - name: Save test artifacts
+        run: |
+          mkdir -p coverage
+          mv ./coverage artifacts
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-artifacts
+          path: artifacts/
   nest_lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -39,3 +48,21 @@ jobs:
         run: npm ci --prefer-offline --no-audit
       - name: Run linter
         run: npm run lint
+  code_analysis:
+    name: Code Analysis
+    runs-on: ubuntu-latest
+    needs: [nest_test_cov]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: test-artifacts
+          path: artifacts/
+      - name: SonarCloud upload
+        uses: SonarSource/sonarcloud-github-action@v1.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
