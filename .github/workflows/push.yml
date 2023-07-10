@@ -49,7 +49,7 @@ jobs:
       - name: Run linter
         run: npm run lint
   code_analysis:
-    name: Code Analysis
+    name: SonarCloud
     runs-on: ubuntu-latest
     needs: [nest_test_cov]
     steps:
@@ -66,3 +66,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
+        with:
+          args: -X
