@@ -26,8 +26,8 @@ jobs:
         run: npm run test:ci
       - name: Save test artifacts
         run: |
-          mkdir -p artifacts
-          mv ./coverage artifacts
+          mkdir -p coverage
+          mv ./coverage/lcov-report coverage/coverage.info
       - name: Upload test artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -60,7 +60,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: test-artifacts
-          path: artifacts/
+          path: coverage/
       - name: SonarCloud upload
         uses: SonarSource/sonarcloud-github-action@v1.9
         env:
