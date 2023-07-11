@@ -27,12 +27,12 @@ jobs:
       - name: Save test artifacts
         run: |
           mkdir -p coverage
-          mv ./coverage/lcov-report coverage/coverage.info
+          mv ./coverage artifacts
       - name: Upload test artifacts
         uses: actions/upload-artifact@v3
         with:
           name: test-artifacts
-          path: coverage/
+          path: artifacts/
   nest_lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -60,11 +60,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: test-artifacts
-          path: coverage/
+          path: artifacts/
       - name: SonarCloud upload
         uses: SonarSource/sonarcloud-github-action@v1.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
         with:
-          args: -X
+          args: -X -Dsonar.verbose=true
