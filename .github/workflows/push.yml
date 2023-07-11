@@ -72,6 +72,7 @@ jobs:
            -Dsonar.sources=.
            -Dsonar.organization=schulcloud-verbund
            -Dsonar.projectKey=hpi-schul-cloud_dbildungs-isle
+           -Dsonar.projectName=dbildungs-iam-server
            -Dsonar.tests=.
            -Dsonar.test.inclusions=**/*.spec.ts
            -Dsonar.test.exclusions=**/node_modules/**
