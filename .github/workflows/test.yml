@@ -70,7 +70,7 @@ jobs:
             args: >
              -Dsonar.sources=.
              -Dsonar.organization=schulcloud-verbund
-             -Dsonar.projectKey=hpi-schul-cloud_dbildungs-isle
+             -Dsonar.projectKey=hpi-schul-cloud_dbildungs-iam-server
              -Dsonar.tests=.
              -Dsonar.test.inclusions=**/*.spec.ts
              -Dsonar.test.exclusions=**/node_modules/**
