@@ -1,0 +1,68 @@
+name: Push
+on:
+  push:
+    branches:
+      - '*'
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  nest_test_cov:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Docker check
+        run: docker --version
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      - name: Run tests
+        run: npm run test:ci
+      - name: Save test artifacts
+        run: |
+          mkdir -p coverage
+          mv ./coverage artifacts
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-artifacts
+          path: artifacts/
+  nest_lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      - name: Run linter
+        run: npm run lint
+  code_analysis:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    needs: [nest_test_cov]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: test-artifacts
+          path: artifacts/
+      - name: SonarCloud upload
+        uses: SonarSource/sonarcloud-github-action@v1.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}

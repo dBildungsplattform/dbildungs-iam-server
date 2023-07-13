@@ -1,0 +1,9 @@
+{
+    "HOST": {
+        "PORT": 8080
+    },
+    "DB": {
+        "CLIENT_URL": "<here goes your connection string>",
+        "DB_NAME": "<here goes your db name>"
+    }
+}
