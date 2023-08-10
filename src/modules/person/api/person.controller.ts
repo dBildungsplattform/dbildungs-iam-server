@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Inject, Post } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -12,7 +12,6 @@ import {
 import { PersonUc } from '../api/person.uc.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
-
 @ApiTags('person')
 @Controller({ path: 'person' })
 export class PersonController {
@@ -27,5 +26,19 @@ export class PersonController {
     public async createPerson(@Body() params: CreatePersonBodyParams): Promise<void> {
         const dto: CreatePersonDto = this.mapper.map(params, CreatePersonBodyParams, CreatePersonDto);
         await this.uc.createPerson(dto);
+    }
+
+    @Get(':id')
+    @ApiCreatedResponse({ description: 'The person was successfully created.' })
+    @ApiBadRequestResponse({ description: 'The person already exists.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to create the person.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
+    public async getPerson(@Param() _id: string): Promise<CreatePersonDto> {
+        const person: CreatePersonDto = await this.uc.findPersonById(_id);
+        if (!person) {
+            throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
+        }
+        return person;
     }
 }

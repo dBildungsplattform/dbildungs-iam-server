@@ -20,4 +20,15 @@ export class PersonUc {
         }
         throw result.error;
     }
+
+    public async findPersonById(id: string): Promise<CreatePersonDto> {
+        const result: Result<PersonDo<true>> = await this.personService.findPersonById(id);
+        if (result.ok) {
+            // map to transfer object.
+            const personDo: PersonDo<true> = result.value;
+            const person: CreatePersonDto = this.mapper.map(personDo, PersonDo, CreatePersonDto);
+            return person;
+        }
+        throw result.error;
+    }
 }
