@@ -6,6 +6,7 @@ import { PersonDo } from '../domain/person.do.js';
 import { Gender, TrustLevel } from '../domain/person.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
+import { PersonResponse } from './person.response.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
     convert(source: PersonGender): Gender {
@@ -82,6 +83,23 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 ),
             );
             createMap(mapper, CreatePersonDto, PersonDo);
+            createMap(
+                mapper,
+                PersonDo,
+                PersonResponse,
+                forMember(
+                    (dest: PersonResponse) => dest.id,
+                    mapFrom((src: PersonDo<true>) => src.id),
+                ),
+                forMember(
+                    (dest: PersonResponse) => dest.createdAt,
+                    mapFrom((src: PersonDo<true>) => src.createdAt),
+                ),
+                forMember(
+                    (dest: PersonResponse) => dest.updatedAt,
+                    mapFrom((src: PersonDo<true>) => src.updatedAt),
+                ),
+            );
         };
     }
 }
