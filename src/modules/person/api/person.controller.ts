@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus  } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,

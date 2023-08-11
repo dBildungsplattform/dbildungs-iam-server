@@ -23,6 +23,6 @@ export class PersonService {
         if (person) {
             return { ok: true, value: person };
         }
-        return { ok: false, error: new PersonDoesNotExistError(`Person with the following ID ${id} does not exist`)};
+        return { ok: false, error: new PersonDoesNotExistError(`Person with the following ID ${id} does not exist`) };
     }
 }
