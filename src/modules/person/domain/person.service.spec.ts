@@ -98,7 +98,7 @@ describe('PersonService', () => {
                 personRepoMock.findById.mockResolvedValue(person);
                 personRepoMock.save.mockResolvedValue(person);
                 mapperMock.map.mockReturnValue(person as unknown as Dictionary<unknown>);
-                const result: Result<PersonDo<true>> | Error = await personService.findPersonById(person.id)
+                const result: Result<PersonDo<true>> | Error = await personService.findPersonById(person.id);
                 expect(result).toEqual<Result<PersonDo<true>>>({
                     ok: true,
                     value: person,
@@ -111,7 +111,7 @@ describe('PersonService', () => {
                 const person: PersonDo<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValue(null);
                 mapperMock.map.mockReturnValue(person as unknown as Dictionary<unknown>);
-                const result: Result<PersonDo<true>> | Error = await personService.findPersonById(person.id)
+                const result: Result<PersonDo<true>> | Error = await personService.findPersonById(person.id);
                 expect(result).toEqual<Result<PersonDo<true>>>({
                     ok: false,
                     error: new PersonDoesNotExistError(`Person with the following ID ${person.id} does not exist`),
