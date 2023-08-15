@@ -65,10 +65,10 @@ describe('PersonController', () => {
         }) => {
             const response: PersonResponse = {
                 id: faker.string.uuid(),
-                lastName: faker.person.lastName(),
-                firstName: faker.person.firstName(),
-                createdAt: new Date(),
-                updatedAt: new Date(),
+                name: {
+                    lastName: faker.person.lastName(),
+                    firstName: faker.person.firstName(),
+                },
                 client: '',
             };
             personUcMock.findPersonById.mockResolvedValue(response);
