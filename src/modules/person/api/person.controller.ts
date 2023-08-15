@@ -41,7 +41,7 @@ export class PersonController {
     public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonResponse | HttpException> {
         let person: PersonResponse;
         try {
-            person = await this.uc.findPersonById(params.id);
+            person = await this.uc.findPersonById(params.personId);
         } catch (error) {
             return new HttpException('Requested entity does not exist', HttpStatus.NOT_FOUND);
         }

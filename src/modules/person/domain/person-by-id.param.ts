@@ -8,5 +8,5 @@ export class PersonByIdParams {
         required: true,
         nullable: false,
     })
-    public id!: string;
+    public personId!: string;
 }

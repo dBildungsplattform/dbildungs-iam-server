@@ -61,7 +61,7 @@ describe('PersonController', () => {
 
     describe('when getting a person', () => {
         it('should get a person', async (params: PersonByIdParams = {
-            id: faker.string.uuid(),
+            personId: faker.string.uuid(),
         }) => {
             const response: PersonResponse = {
                 id: faker.string.uuid(),
@@ -77,7 +77,7 @@ describe('PersonController', () => {
         });
 
         it('should throw an Http not found exception', async (params: PersonByIdParams = {
-            id: 'valid-id',
+            personId: 'valid-id',
         }) => {
             const mockError: Error = new Error('person does not exist.');
             personUcMock.findPersonById.mockRejectedValue(mockError);
