@@ -33,10 +33,10 @@ export class PersonController {
 
     @Get(':personId')
     @ApiCreatedResponse({ description: 'The person was successfully pulled.' })
-    @ApiBadRequestResponse({ description: 'The person does not exist.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to create the person.' })
+    @ApiBadRequestResponse({ description: 'Person ID is required' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get the person.' })
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the person.' })
     public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonResponse | HttpException> {
         let person: PersonResponse;
