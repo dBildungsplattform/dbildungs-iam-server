@@ -1,6 +1,6 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PersonAlreadyExistsError, PersonDoesNotExistError } from '../../../shared/error/index.js';
+import { EntityNotFoundError, PersonAlreadyExistsError } from '../../../shared/error/index.js';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonService } from '../domain/person.service.js';
@@ -80,9 +80,9 @@ describe('PersonUc', () => {
             it('should throw a person does not exist exception', async () => {
                 personServiceMock.findPersonById.mockResolvedValue({
                     ok: false,
-                    error: new PersonDoesNotExistError(''),
+                    error: new EntityNotFoundError(''),
                 });
-                await expect(personUc.findPersonById(id)).rejects.toThrowError(PersonDoesNotExistError);
+                await expect(personUc.findPersonById(id)).rejects.toThrowError(EntityNotFoundError);
             });
         });
     });

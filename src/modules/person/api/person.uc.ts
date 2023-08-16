@@ -25,8 +25,7 @@ export class PersonUc {
     public async findPersonById(id: string): Promise<PersonResponse> {
         const result: Result<PersonDo<true>> = await this.personService.findPersonById(id);
         if (result.ok) {
-            const personDo: PersonDo<true> = result.value;
-            const person: PersonResponse = this.mapper.map(personDo, PersonDo, PersonResponse);
+            const person: PersonResponse = this.mapper.map(result.value, PersonDo, PersonResponse);
             return person;
         }
         throw result.error;

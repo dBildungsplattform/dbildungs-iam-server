@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DomainError, PersonAlreadyExistsError, PersonDoesNotExistError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError, PersonAlreadyExistsError } from '../../../shared/error/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 
@@ -23,6 +23,6 @@ export class PersonService {
         if (person) {
             return { ok: true, value: person };
         }
-        return { ok: false, error: new PersonDoesNotExistError(`Person with the following ID ${id} does not exist`) };
+        return { ok: false, error: new EntityNotFoundError(`Person with the following ID ${id} does not exist`) };
     }
 }

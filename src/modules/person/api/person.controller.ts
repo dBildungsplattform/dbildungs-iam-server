@@ -13,7 +13,7 @@ import {
 import { PersonUc } from '../api/person.uc.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
-import { PersonByIdParams } from '../domain/person-by-id.param.js';
+import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonResponse } from './person.response.js';
 @ApiTags('person')
 @Controller({ path: 'person' })
@@ -31,7 +31,7 @@ export class PersonController {
         await this.uc.createPerson(dto);
     }
 
-    @Get(':id')
+    @Get(':personId')
     @ApiCreatedResponse({ description: 'The person was successfully pulled.' })
     @ApiBadRequestResponse({ description: 'The person does not exist.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the person.' })

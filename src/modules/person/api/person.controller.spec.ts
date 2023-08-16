@@ -6,7 +6,7 @@ import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonController } from './person.controller.js';
 import { PersonUc } from './person.uc.js';
-import { PersonByIdParams } from '../domain/person-by-id.param.js';
+import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonResponse } from './person.response.js';
 import { HttpException } from '@nestjs/common';
 

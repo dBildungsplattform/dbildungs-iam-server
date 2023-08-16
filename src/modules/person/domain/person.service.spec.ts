@@ -3,7 +3,7 @@ import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PersonAlreadyExistsError, PersonDoesNotExistError } from '../../../shared/error/index.js';
+import { EntityNotFoundError, PersonAlreadyExistsError } from '../../../shared/error/index.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonDo } from './person.do.js';
@@ -96,7 +96,6 @@ describe('PersonService', () => {
             it('should get a person', async () => {
                 const person: PersonDo<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValue(person);
-                personRepoMock.save.mockResolvedValue(person);
                 mapperMock.map.mockReturnValue(person as unknown as Dictionary<unknown>);
                 const result: Result<PersonDo<true>> | Error = await personService.findPersonById(person.id);
                 expect(result).toEqual<Result<PersonDo<true>>>({
@@ -114,7 +113,7 @@ describe('PersonService', () => {
                 const result: Result<PersonDo<true>> | Error = await personService.findPersonById(person.id);
                 expect(result).toEqual<Result<PersonDo<true>>>({
                     ok: false,
-                    error: new PersonDoesNotExistError(`Person with the following ID ${person.id} does not exist`),
+                    error: new EntityNotFoundError(`Person with the following ID ${person.id} does not exist`),
                 });
             });
         });
