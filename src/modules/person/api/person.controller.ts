@@ -40,7 +40,7 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the person.' })
     public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonResponse | HttpException> {
         try {
-            const person = await this.uc.findPersonById(params.personId);
+            const person: PersonResponse = await this.uc.findPersonById(params.personId);
             return person;
         } catch (error) {
             return new HttpException('Requested entity does not exist', HttpStatus.NOT_FOUND);
