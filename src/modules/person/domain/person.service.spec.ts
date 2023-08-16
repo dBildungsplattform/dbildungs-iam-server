@@ -106,7 +106,7 @@ describe('PersonService', () => {
         });
 
         describe('if person cloud not be found', () => {
-            it('should get a PersonDoesNotExist error ', async () => {
+            it('should get a EntityNotFoundError error ', async () => {
                 const person: PersonDo<true> = DoFactory.createPerson(true);
                 personRepoMock.findById.mockResolvedValue(null);
                 mapperMock.map.mockReturnValue(person as unknown as Dictionary<unknown>);

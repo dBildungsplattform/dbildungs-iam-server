@@ -39,12 +39,11 @@ export class PersonController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the person.' })
     public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonResponse | HttpException> {
-        let person: PersonResponse;
         try {
-            person = await this.uc.findPersonById(params.personId);
+           const person = await this.uc.findPersonById(params.personId);
+           return person;
         } catch (error) {
             return new HttpException('Requested entity does not exist', HttpStatus.NOT_FOUND);
         }
-        return person;
     }
 }

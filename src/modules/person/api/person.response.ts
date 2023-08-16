@@ -3,6 +3,7 @@ import { PersonNameParams } from './person-name.params.js';
 import { IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
+
 export class PersonResponse {
     @AutoMap()
     @IsOptional()

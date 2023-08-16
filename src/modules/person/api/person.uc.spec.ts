@@ -67,6 +67,7 @@ describe('PersonUc', () => {
 
     describe('findPersonById', () => {
         const id: string = faker.string.uuid();
+
         describe('when person exists', () => {
             it('should find a person by an ID', async () => {
                 personServiceMock.findPersonById.mockResolvedValue({
@@ -76,6 +77,7 @@ describe('PersonUc', () => {
                 await expect(personUc.findPersonById(id)).resolves.not.toThrow();
             });
         });
+
         describe('when person does not exist', () => {
             it('should throw a person does not exist exception', async () => {
                 personServiceMock.findPersonById.mockResolvedValue({
