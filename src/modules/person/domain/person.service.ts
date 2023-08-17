@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DomainError, PersonAlreadyExistsError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError, PersonAlreadyExistsError } from '../../../shared/error/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 
@@ -16,5 +16,13 @@ export class PersonService {
         }
         const newPerson: PersonDo<true> = await this.personRepo.save(personDo);
         return { ok: true, value: newPerson };
+    }
+
+    public async findPersonById(id: string): Promise<Result<PersonDo<true>, DomainError>> {
+        const person: Option<PersonDo<true>> = await this.personRepo.findById(id);
+        if (person) {
+            return { ok: true, value: person };
+        }
+        return { ok: false, error: new EntityNotFoundError(`Person with the following ID ${id} does not exist`) };
     }
 }
