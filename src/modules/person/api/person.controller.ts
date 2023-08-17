@@ -15,6 +15,7 @@ import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonResponse } from './person.response.js';
+
 @ApiTags('person')
 @Controller({ path: 'person' })
 export class PersonController {

@@ -63,6 +63,7 @@ describe('PersonController', () => {
         const params: PersonByIdParams = {
             personId: faker.string.uuid(),
         };
+
         it('should get a person', async () => {
             const response: PersonResponse = {
                 id: faker.string.uuid(),
