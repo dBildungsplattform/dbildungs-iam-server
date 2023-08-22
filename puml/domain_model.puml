@@ -1,0 +1,89 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+hide circle
+skinparam linetype ortho
+
+hide empty members
+class Notification {
+    name: string
+}
+Notification --> User : target
+Notification --> User : source
+
+class ExcludedPermission {
+    name: string
+}
+ExcludedPermission --> User
+ExcludedPermission --> RolePermission
+
+class Permission
+class RolePermission
+RolePermission --> Permission
+RolePermission --> ServiceProviderAccess
+
+class AdditionalPersonProperty {
+    value: any
+}
+AdditionalPersonProperty --> AdditionalPersonPropertyNames
+AdditionalPersonProperty --> User
+
+class User {
+    externalId: string
+    name
+    ...
+}
+DataProvider -- User
+
+class UserRoleAssignment
+UserRoleAssignment --> User
+UserRoleAssignment --> Role
+UserRoleAssignment --> SchoolStructureNode
+
+class Role
+Role --> SchoolStructureNode : administered by
+
+class AdditionalPersonPropertyNames
+AdditionalPersonPropertyNames --> User
+
+class AuthenticationProvider
+AuthenticationProvider --> DataProvider
+
+class DataProvider
+
+class SchoolStructureNode {
+    externalId: string
+    name: string
+}
+SchoolStructureNode --> DataProvider
+SchoolStructureNode --> SchoolStructureNode : administrative parent
+SchoolStructureNode --> SchoolStructureNode : organizational parent
+
+class RolePermissionNodeAssignment
+RolePermissionNodeAssignment --> SchoolStructureNode
+RolePermissionNodeAssignment --> RolePermission
+
+class ServiceProviderAccess
+ServiceProviderAccess --> ServiceProvider
+
+class Sponsor {
+    type: enum
+}
+Sponsor --> SchoolStructureNode
+
+class Organization
+Organization --> SchoolStructureNode
+
+class Group
+Group --> SchoolStructureNode
+
+class ServiceProviderLicence
+ServiceProviderLicence --> ServiceProvider
+ServiceProviderLicence --> SchoolStructureNode
+
+class ServiceProvider {
+    accessProviderInSubnode: enum
+}
+ServiceProvider --> SchoolStructureNode : administrated on
+
+@enduml
