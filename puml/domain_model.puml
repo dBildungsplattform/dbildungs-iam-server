@@ -1,89 +1,101 @@
-@startuml
+0@startuml
 'https://plantuml.com/class-diagram
 
 hide circle
 skinparam linetype ortho
-
+left to right direction
 hide empty members
 class Notification {
     name: string
 }
-Notification --> User : target
-Notification --> User : source
-
 class ExcludedPermission {
     name: string
 }
-ExcludedPermission --> User
-ExcludedPermission --> RolePermission
 
-class Permission
-class RolePermission
-RolePermission --> Permission
-RolePermission --> ServiceProviderAccess
-
-class AdditionalPersonProperty {
-    value: any
+together {
+    class Permission
+    class RolePermission
 }
-AdditionalPersonProperty --> AdditionalPersonPropertyNames
-AdditionalPersonProperty --> User
-
-class User {
+together {
+    class AdditionalPersonProperty {
+        value: any
+    }
+    class AdditionalPersonPropertyNames
+}
+class Person {
     externalId: string
     name
     ...
 }
-DataProvider -- User
-
 class UserRoleAssignment
-UserRoleAssignment --> User
-UserRoleAssignment --> Role
-UserRoleAssignment --> SchoolStructureNode
-
 class Role
-Role --> SchoolStructureNode : administered by
-
-class AdditionalPersonPropertyNames
-AdditionalPersonPropertyNames --> User
 
 class AuthenticationProvider
-AuthenticationProvider --> DataProvider
-
 class DataProvider
+
+class RolePermissionNodeAssignment
 
 class SchoolStructureNode {
     externalId: string
     name: string
 }
-SchoolStructureNode --> DataProvider
-SchoolStructureNode --> SchoolStructureNode : administrative parent
-SchoolStructureNode --> SchoolStructureNode : organizational parent
+together {
+    class Sponsor {
+        type: enum
+    }
+    class Organization
+    class Group
+}
+together {
+    class ServiceProviderAccess
+    class ServiceProviderLicence
+    class ServiceProvider {
+        accessProviderInSubnode: enum
+    }
+}
+Notification ---> Person : target
+Notification ---> Person : source
 
-class RolePermissionNodeAssignment
+ExcludedPermission --> Person
+ExcludedPermission --> RolePermission
+
+RolePermission --> Permission
+RolePermission --> ServiceProviderAccess
+
+AdditionalPersonProperty --> AdditionalPersonPropertyNames
+AdditionalPersonProperty --> Person
+
+DataProvider -- Person
+
+UserRoleAssignment --> Person
+UserRoleAssignment --> Role
+UserRoleAssignment --> SchoolStructureNode
+
+Role --> SchoolStructureNode : administered by
+
+AdditionalPersonPropertyNames --> Person
+
+AuthenticationProvider -r-> DataProvider
+
+SchoolStructureNode --> DataProvider
+SchoolStructureNode -l-> SchoolStructureNode : administrative parent
+SchoolStructureNode -r-> SchoolStructureNode : organizational parent
+
 RolePermissionNodeAssignment --> SchoolStructureNode
 RolePermissionNodeAssignment --> RolePermission
+RolePermissionNodeAssignment --> Role
 
-class ServiceProviderAccess
 ServiceProviderAccess --> ServiceProvider
 
-class Sponsor {
-    type: enum
-}
-Sponsor --> SchoolStructureNode
+Organization -u-> SchoolStructureNode
 
-class Organization
-Organization --> SchoolStructureNode
+Sponsor -u-> SchoolStructureNode
 
-class Group
-Group --> SchoolStructureNode
+Group -u-> SchoolStructureNode
 
-class ServiceProviderLicence
 ServiceProviderLicence --> ServiceProvider
 ServiceProviderLicence --> SchoolStructureNode
 
-class ServiceProvider {
-    accessProviderInSubnode: enum
-}
 ServiceProvider --> SchoolStructureNode : administrated on
 
 @enduml
