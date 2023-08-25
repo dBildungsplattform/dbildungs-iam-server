@@ -1,5 +1,5 @@
 import { TimestampedEntity } from './timestamped.entity.js';
-import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
+import { Entity, ManyToOne, PrimaryKey, Rel } from '@mikro-orm/core';
 import { PersonEntity } from './person.entity.js';
 
 @Entity({ tableName: 'notification' })
@@ -11,9 +11,9 @@ export class NotificationEntity extends TimestampedEntity<NotificationEntity, 'i
     @PrimaryKey()
     public readonly id!: string;
 
-    @Property()
-    public source!: PersonEntity;
+    @ManyToOne(() => PersonEntity)
+    public source!: Rel<PersonEntity>;
 
-    @Property()
-    public target!: PersonEntity;
+    @ManyToOne(() => PersonEntity)
+    public target!: Rel<PersonEntity>;
 }
