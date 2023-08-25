@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus, Query } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -15,6 +15,8 @@ import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonResponse } from './person.response.js';
+import { AllPersonFilterParams } from './person-all-filter.param.js';
+import { FindPersonDTO } from './find-person.dto.js';
 
 @ApiTags('person')
 @Controller({ path: 'person' })
@@ -46,5 +48,16 @@ export class PersonController {
         } catch (error) {
             return new HttpException('Requested entity does not exist', HttpStatus.NOT_FOUND);
         }
+    }
+
+    @Get()
+    @ApiCreatedResponse({ description: 'persons were successfully pulled.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
+    public async findPersons(@Query() queryParams: AllPersonFilterParams): Promise<PersonResponse[]> {
+        const personDto: FindPersonDTO = this.mapper.map(queryParams, AllPersonFilterParams, FindPersonDTO);
+        const persons: PersonResponse[] = await this.uc.findAll(personDto);
+        return persons;
     }
 }

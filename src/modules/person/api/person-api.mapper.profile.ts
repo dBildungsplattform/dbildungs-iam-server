@@ -1,4 +1,13 @@
-import { Converter, Mapper, MappingProfile, convertUsing, createMap, forMember, mapFrom } from '@automapper/core';
+import {
+    Converter,
+    Mapper,
+    MappingProfile,
+    convertUsing,
+    createMap,
+    forMember,
+    ignore,
+    mapFrom,
+} from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
@@ -7,6 +16,8 @@ import { Gender, TrustLevel } from '../domain/person.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
 import { PersonResponse } from './person.response.js';
+import { AllPersonFilterParams, VisibilityType } from './person-all-filter.param.js';
+import { FindPersonDTO } from './find-person.dto.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
     convert(source: PersonGender): Gender {
@@ -34,6 +45,18 @@ export const personTrustLevelToTrustLevelConverter: Converter<PersonTrustLevel, 
                 return TrustLevel.VERIFIED;
             default:
                 return TrustLevel.UNKNOWN;
+        }
+    },
+};
+
+export const personVisibilityToBooleanConverter: Converter<VisibilityType, boolean> = {
+    convert(source: VisibilityType) {
+        switch (source) {
+            case VisibilityType.JA:
+                return true;
+            case VisibilityType.NEIN:
+            default:
+                return false;
         }
     },
 };
@@ -127,6 +150,53 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     (dest: PersonResponse) => dest.name.suffix,
                     mapFrom((src: PersonDo<true>) => src.nameSuffix),
                 ),
+            );
+            createMap(
+                mapper,
+                AllPersonFilterParams,
+                FindPersonDTO,
+                forMember(
+                    (dest: FindPersonDTO) => dest.visibility,
+                    convertUsing(personVisibilityToBooleanConverter, (src: AllPersonFilterParams) => src.visibility),
+                ),
+            );
+            createMap(
+                mapper,
+                FindPersonDTO,
+                PersonDo<false>,
+                forMember(
+                    (dest: PersonDo<false>) => dest.lastName,
+                    mapFrom((src: FindPersonDTO) => src.familyName),
+                ),
+                forMember(
+                    (dest: PersonDo<false>) => dest.isInformationBlocked,
+                    mapFrom((src: FindPersonDTO) => src.visibility),
+                ),
+                forMember(
+                    (dest: PersonDo<false>) => dest.firstName,
+                    mapFrom((src: FindPersonDTO) => src.firstName),
+                ),
+                forMember(
+                    (dest: PersonDo<false>) => dest.referrer,
+                    mapFrom((src: FindPersonDTO) => src.referrer),
+                ),
+                forMember((dest: PersonDo<false>) => dest.id, ignore()),
+                forMember((dest: PersonDo<false>) => dest.createdAt, ignore()),
+                forMember((dest: PersonDo<false>) => dest.updatedAt, ignore()),
+                forMember((dest: PersonDo<false>) => dest.client, ignore()),
+                forMember((dest: PersonDo<false>) => dest.mainOrganization, ignore()),
+                forMember((dest: PersonDo<false>) => dest.initialsLastName, ignore()),
+                forMember((dest: PersonDo<false>) => dest.initialsFirstName, ignore()),
+                forMember((dest: PersonDo<false>) => dest.nickName, ignore()),
+                forMember((dest: PersonDo<false>) => dest.nameTitle, ignore()),
+                forMember((dest: PersonDo<false>) => dest.nameSalutation, ignore()),
+                forMember((dest: PersonDo<false>) => dest.namePrefix, ignore()),
+                forMember((dest: PersonDo<false>) => dest.nameSortIndex, ignore()),
+                forMember((dest: PersonDo<false>) => dest.birthDate, ignore()),
+                forMember((dest: PersonDo<false>) => dest.birthPlace, ignore()),
+                forMember((dest: PersonDo<false>) => dest.gender, ignore()),
+                forMember((dest: PersonDo<false>) => dest.localization, ignore()),
+                forMember((dest: PersonDo<false>) => dest.trustLevel, ignore()),
             );
         };
     }

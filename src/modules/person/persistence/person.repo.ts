@@ -5,7 +5,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonEntity } from './person.entity.js';
 import { Loaded } from '@mikro-orm/core';
-
 @Injectable()
 export class PersonRepo {
     public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
@@ -57,5 +56,33 @@ export class PersonRepo {
         }
         await this.em.persistAndFlush(person);
         return this.mapper.map(person, PersonEntity, PersonDo);
+    }
+
+    public async findAll(personDo: PersonDo<false>): Promise<Option<PersonDo<true>>[]> {
+        const result: Option<PersonEntity>[] = await this.em.find(PersonEntity, {
+            $and: [
+                {
+                    firstName: personDo.firstName,
+                },
+                {
+                    lastName: personDo.lastName,
+                },
+                {
+                    referrer: personDo.referrer!,
+                },
+                {
+                    isInformationBlocked: personDo.isInformationBlocked!,
+                },
+            ],
+        });
+        const persons: Option<PersonDo<true>>[] = [];
+        if (result) {
+            result.forEach((person: Option<PersonEntity>) => {
+                if (person !== null && person !== undefined) {
+                    persons.push(this.mapper.map(person, PersonEntity, PersonDo));
+                }
+            });
+        }
+        return persons;
     }
 }
