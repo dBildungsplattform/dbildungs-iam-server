@@ -59,22 +59,26 @@ export class PersonRepo {
     }
 
     public async findAll(personDo: PersonDo<false>): Promise<Option<PersonDo<true>>[]> {
-        const result: Option<PersonEntity>[] = await this.em.find(PersonEntity, {
-            $and: [
-                {
-                    firstName: personDo.firstName,
-                },
-                {
-                    lastName: personDo.lastName,
-                },
-                {
-                    referrer: personDo.referrer!,
-                },
-                {
-                    isInformationBlocked: personDo.isInformationBlocked!,
-                },
-            ],
-        });
+        let result: Option<PersonEntity>[] = [];
+        if (personDo.referrer && personDo.isInformationBlocked) {
+            result = await this.em.find(PersonEntity, {
+                $and: [
+                    {
+                        firstName: personDo.firstName,
+                    },
+                    {
+                        lastName: personDo.lastName,
+                    },
+                    {
+                        referrer: personDo.referrer,
+                    },
+                    {
+                        isInformationBlocked: personDo.isInformationBlocked,
+                    },
+                ],
+            });
+        }
+
         const persons: Option<PersonDo<true>>[] = [];
         if (result) {
             result.forEach((person: Option<PersonEntity>) => {
