@@ -77,8 +77,8 @@ export class PersonRepo {
                 ],
             });
             return result
-                .filter((person) => person !== null)
-                .map((person) => this.mapper.map(person, PersonEntity, PersonDo));
+                .filter((person: Option<PersonDo<true>>) => person !== null)
+                .map((person: Option<PersonDo<true>>) => this.mapper.map(person, PersonEntity, PersonDo));
         }
         return [];
     }
