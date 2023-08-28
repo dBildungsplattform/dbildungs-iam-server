@@ -48,10 +48,11 @@ src
 
 ### File naming conventions
 
-In TypeScript files: File names use `kebab-case` and ends with a hint what kind of class it contains e.g. `.uc.ts` or `.controller.ts`
+In TypeScript files: File names use `kebab-case` and end with an indication what kind of class it contains e.g. `.uc.ts` or `.controller.ts`
 For Classes we use `PascalCase` (names start with uppercase letter), variables use lowercase for the first letter `camelCase`.
 
-DTOs are named after their purpose. DTOs concerning the REST API are either `.param.ts` or `.response.ts`. For params we need to differentiate between body, query and path parameters since multiple of them could be used for the same request.
+DTOs are named after their purpose. DTOs concerning the REST API are either `.param.ts` or `.response.ts`.
+For params we need to differentiate between body, query and path parameters since multiple of them could be used for the same request.
  e.g. create-person.body.param.ts, get-persons.query.params.ts, get-person.response.ts
 
 #### Samples
@@ -70,7 +71,9 @@ Components are defined as NestJS [Modules](https://docs.nestjs.com/modules).
 
 ### Communication between components
 
-To access other modules services, it can be injected anywhere. The usage is allowed only, when the module which owns that service has exported it in the modules definition.
+To access another module's service in your module, that other module has to be imported.
+Only services that are listed its module's `exports`-array can be used by other modules.<br>
+It is forbidden to provide a service in multiple modules.
 
 ```TypeScript
 // modules/feathers/feathers-service.provider.ts

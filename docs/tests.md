@@ -58,9 +58,9 @@ this is known as the AAA-pattern.
 
 The tests for a unit should cover as much scenarios as possible. Parameters and the combination of parameters can often take numerous values.
 The test coverage report already enforces scenarios that test every possible if/else result in the code, but don't rely on code coverage alone. Think about different real world scenarios and cover them even if coverage is reached with only a few of them.
-Think especially about error scenarios.
+Pay particular attention to error scenarios.
 
-Test preparation that is shared over multiple tests can be done in before(...) or beforeEach(...) blocks. Try to avoid too many   before/beforeEach blocks in nested describes, since that makes it more difficult to understand what test preparations were made for a specific test.
+Test preparation which is shared over multiple tests can be done in before(...) or beforeEach(...) blocks. Try to avoid too many before/beforeEach blocks in nested describes, since that makes it more difficult to understand what test preparations were made for a specific test.
 
 ```TypeScript
 describe('[method]', () => {
