@@ -1,13 +1,13 @@
 import 'reflect-metadata'; // some decorators use reflect-metadata in the background
 import fs from 'fs';
-import { EnvConfig, JsonConfig, NodeEnvType, loadConfig, validateConfig } from '../config/index.js';
+import { EnvConfig, JsonConfig, NodeEnvType, loadConfigFiles, loadEnvConfig } from '../config/index.js';
 
 describe('helpers', () => {
     describe('validateConfig', () => {
         describe('when config is valid', () => {
             it('should return validated EnvConfig', () => {
                 const config: Record<string, unknown> = { NODE_ENV: NodeEnvType.DEV };
-                const validatedConfig: EnvConfig = validateConfig(config);
+                const validatedConfig: EnvConfig = loadEnvConfig(config);
                 expect(validatedConfig).toBeInstanceOf(EnvConfig);
             });
         });
@@ -15,7 +15,7 @@ describe('helpers', () => {
         describe('when config is invalid', () => {
             it('should throw', () => {
                 const config: Record<string, unknown> = { NODE_ENV: '' };
-                expect(() => validateConfig(config)).toThrow();
+                expect(() => loadEnvConfig(config)).toThrow();
             });
         });
     });
@@ -43,7 +43,7 @@ describe('helpers', () => {
             });
 
             it('should return validated JsonConfig', () => {
-                const validatedConfig: JsonConfig = loadConfig();
+                const validatedConfig: JsonConfig = loadConfigFiles();
                 expect(validatedConfig).toBeInstanceOf(JsonConfig);
                 expect(readFileSyncSpy).toBeCalledTimes(1);
             });
@@ -71,7 +71,7 @@ describe('helpers', () => {
             });
 
             it('should throw', () => {
-                expect(() => loadConfig()).toThrow();
+                expect(() => loadConfigFiles()).toThrow();
                 expect(readFileSyncSpy).toBeCalledTimes(1);
             });
         });
