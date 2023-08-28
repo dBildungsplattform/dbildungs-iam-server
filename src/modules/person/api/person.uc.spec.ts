@@ -11,7 +11,6 @@ import { faker } from '@faker-js/faker';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonResponse } from './person.response.js';
 
-
 describe('PersonUc', () => {
     let module: TestingModule;
     let personUc: PersonUc;

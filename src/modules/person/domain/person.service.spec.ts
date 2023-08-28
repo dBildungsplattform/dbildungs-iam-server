@@ -129,7 +129,7 @@ describe('PersonService', () => {
                 persons.push(secondPerson as unknown as PersonDo<true>);
                 personRepoMock.findAll.mockResolvedValue(persons);
                 mapperMock.map.mockReturnValue(persons as unknown as Dictionary<unknown>);
-                const personDoWithQueryParam: PersonDo<false>  = DoFactory.createPerson(false);
+                const personDoWithQueryParam: PersonDo<false> = DoFactory.createPerson(false);
                 const result: Option<PersonDo<true>>[] = await personService.findAllPersons(personDoWithQueryParam);
                 expect(result).toHaveLength(2);
             });

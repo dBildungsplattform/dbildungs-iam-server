@@ -3,7 +3,6 @@ import { Expose } from 'class-transformer';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { AutoMap } from '@automapper/classes';
 
-
 export enum VisibilityType {
     JA = 'ja',
     NEIN = 'nein',
