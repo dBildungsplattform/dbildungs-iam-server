@@ -59,9 +59,8 @@ export class PersonRepo {
     }
 
     public async findAll(personDo: PersonDo<false>): Promise<Option<PersonDo<true>>[]> {
-        let result: Option<PersonEntity>[] = [];
-        if (personDo.referrer && personDo.isInformationBlocked) {
-            result = await this.em.find(PersonEntity, {
+        if (personDo.referrer !== undefined && personDo.isInformationBlocked !== undefined) {
+            const result: Option<PersonDo<true>>[] = await this.em.find(PersonEntity, {
                 $and: [
                     {
                         firstName: personDo.firstName,
@@ -77,16 +76,10 @@ export class PersonRepo {
                     },
                 ],
             });
+            return result
+                .filter((person) => person !== null)
+                .map((person) => this.mapper.map(person, PersonEntity, PersonDo));
         }
-
-        const persons: Option<PersonDo<true>>[] = [];
-        if (result) {
-            result.forEach((person: Option<PersonEntity>) => {
-                if (person !== null && person !== undefined) {
-                    persons.push(this.mapper.map(person, PersonEntity, PersonDo));
-                }
-            });
-        }
-        return persons;
+        return [];
     }
 }

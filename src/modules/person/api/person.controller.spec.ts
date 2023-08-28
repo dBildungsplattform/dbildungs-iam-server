@@ -30,7 +30,6 @@ describe('PersonController', () => {
         }).compile();
         personController = module.get(PersonController);
         personUcMock = module.get(PersonUc);
-        mapperMock: module.get(PersonApiMapperProfile);
     });
 
     afterAll(async () => {
@@ -88,11 +87,18 @@ describe('PersonController', () => {
     });
 
     describe('when getting all persons', () => {
-        const queryParams: AllPersonsQueryParam = {
-            referrer: faker.string.alphanumeric(),
-            familyName: faker.string.alpha(),
-            firstName: faker.string.alpha(),
+        // eslint-disable-next-line @typescript-eslint/typedef
+        const options = {
+            referrer: faker.string.alpha(),
+            lastName: faker.person.lastName(),
+            firstName: faker.person.firstName(),
             visibility: VisibilityType.NEIN,
+        };
+        const queryParams: AllPersonsQueryParam = {
+            referrer: options.referrer,
+            familyName: options.lastName,
+            firstName: options.firstName,
+            visibility: options.visibility,
         };
 
         it('should get all persons', async () => {
@@ -100,25 +106,28 @@ describe('PersonController', () => {
                 {
                     id: faker.string.uuid(),
                     name: {
-                        lastName: faker.person.lastName(),
-                        firstName: faker.person.firstName(),
+                        lastName: options.lastName,
+                        firstName: options.firstName,
                     },
                     client: '',
-                    referrer: faker.string.alpha(),
+                    referrer: options.referrer,
                 },
                 {
                     id: faker.string.uuid(),
                     name: {
-                        lastName: faker.person.lastName(),
-                        firstName: faker.person.firstName(),
+                        lastName: options.lastName,
+                        firstName: options.firstName,
                     },
                     client: '',
-                    referrer: faker.string.alpha(),
+                    referrer: options.referrer,
                 },
             ];
             personUcMock.findAll.mockResolvedValue(mockPersonResponse);
             const result: PersonResponse[] = await personController.findPersons(queryParams);
             expect(personUcMock.findAll).toHaveBeenCalledTimes(1);
+            expect(result.at(0)?.referrer).toEqual(queryParams.referrer);
+            expect(result.at(0)?.name.firstName).toEqual(queryParams.firstName);
+            expect(result.at(0)?.name.lastName).toEqual(queryParams.familyName);
             expect(result).toEqual(mockPersonResponse);
         });
     });
