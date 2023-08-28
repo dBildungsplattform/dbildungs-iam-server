@@ -9,6 +9,7 @@ import { PersonUc } from './person.uc.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonResponse } from './person.response.js';
 import { HttpException } from '@nestjs/common';
+import { AllPersonsQueryParam, VisibilityType } from './persons-query.param.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -29,6 +30,7 @@ describe('PersonController', () => {
         }).compile();
         personController = module.get(PersonController);
         personUcMock = module.get(PersonUc);
+        mapperMock: module.get(PersonApiMapperProfile);
     });
 
     afterAll(async () => {
@@ -58,7 +60,6 @@ describe('PersonController', () => {
             expect(personUcMock.createPerson).toHaveBeenCalledTimes(1);
         });
     });
-
     describe('when getting a person', () => {
         const params: PersonByIdParams = {
             personId: faker.string.uuid(),
@@ -83,6 +84,42 @@ describe('PersonController', () => {
             personUcMock.findPersonById.mockRejectedValue(mockError);
             await expect(personController.findPersonById(params)).resolves.toThrow(HttpException);
             expect(personUcMock.findPersonById).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('when getting all persons', () => {
+        const queryParams: AllPersonsQueryParam = {
+            referrer: faker.string.alphanumeric(),
+            familyName: faker.string.alpha(),
+            firstName: faker.string.alpha(),
+            visibility: VisibilityType.NEIN,
+        };
+
+        it('should get all persons', async () => {
+            const mockPersonResponse: PersonResponse[] = [
+                {
+                    id: faker.string.uuid(),
+                    name: {
+                        lastName: faker.person.lastName(),
+                        firstName: faker.person.firstName(),
+                    },
+                    client: '',
+                    referrer: faker.string.alpha(),
+                },
+                {
+                    id: faker.string.uuid(),
+                    name: {
+                        lastName: faker.person.lastName(),
+                        firstName: faker.person.firstName(),
+                    },
+                    client: '',
+                    referrer: faker.string.alpha(),
+                },
+            ];
+            personUcMock.findAll.mockResolvedValue(mockPersonResponse);
+            const result: PersonResponse[] = await personController.findPersons(queryParams);
+            expect(personUcMock.findAll).toHaveBeenCalledTimes(1);
+            expect(result).toEqual(mockPersonResponse);
         });
     });
 });

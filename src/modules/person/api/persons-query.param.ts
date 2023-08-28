@@ -3,12 +3,13 @@ import { Expose } from 'class-transformer';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { AutoMap } from '@automapper/classes';
 
+
 export enum VisibilityType {
     JA = 'ja',
     NEIN = 'nein',
 }
 
-export class AllPersonFilterParams {
+export class AllPersonsQueryParam {
     @AutoMap()
     @IsOptional()
     @IsString()

@@ -15,7 +15,7 @@ import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonResponse } from './person.response.js';
-import { AllPersonFilterParams } from './person-all-filter.param.js';
+import { AllPersonsQueryParam } from './persons-query.param.js';
 import { FindPersonDTO } from './find-person.dto.js';
 
 @ApiTags('person')
@@ -55,8 +55,8 @@ export class PersonController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
-    public async findPersons(@Query() queryParams: AllPersonFilterParams): Promise<PersonResponse[]> {
-        const personDto: FindPersonDTO = this.mapper.map(queryParams, AllPersonFilterParams, FindPersonDTO);
+    public async findPersons(@Query() queryParams: AllPersonsQueryParam): Promise<PersonResponse[]> {
+        const personDto: FindPersonDTO = this.mapper.map(queryParams, AllPersonsQueryParam, FindPersonDTO);
         const persons: PersonResponse[] = await this.uc.findAll(personDto);
         return persons;
     }

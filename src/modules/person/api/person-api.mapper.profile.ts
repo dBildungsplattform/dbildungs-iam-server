@@ -16,7 +16,7 @@ import { Gender, TrustLevel } from '../domain/person.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
 import { PersonResponse } from './person.response.js';
-import { AllPersonFilterParams, VisibilityType } from './person-all-filter.param.js';
+import { AllPersonsQueryParam, VisibilityType } from './persons-query.param.js';
 import { FindPersonDTO } from './find-person.dto.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
@@ -153,11 +153,11 @@ export class PersonApiMapperProfile extends AutomapperProfile {
             );
             createMap(
                 mapper,
-                AllPersonFilterParams,
+                AllPersonsQueryParam,
                 FindPersonDTO,
                 forMember(
                     (dest: FindPersonDTO) => dest.visibility,
-                    convertUsing(personVisibilityToBooleanConverter, (src: AllPersonFilterParams) => src.visibility),
+                    convertUsing(personVisibilityToBooleanConverter, (src: AllPersonsQueryParam) => src.visibility),
                 ),
             );
             createMap(

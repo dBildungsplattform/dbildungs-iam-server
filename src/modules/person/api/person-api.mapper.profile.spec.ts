@@ -10,10 +10,12 @@ import {
     PersonApiMapperProfile,
     personGenderToGenderConverter,
     personTrustLevelToTrustLevelConverter,
+    personVisibilityToBooleanConverter,
 } from './person-api.mapper.profile.js';
 import { faker } from '@faker-js/faker';
 import { Gender, TrustLevel } from '../domain/person.enums.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
+import { VisibilityType } from './persons-query.param.js';
 
 describe('PersonApiMapperProfile', () => {
     let module: TestingModule;
@@ -89,6 +91,18 @@ describe('PersonApiMapperProfile', () => {
                 expect(personTrustLevelToTrustLevelConverter.convert(undefined as unknown as PersonTrustLevel)).toBe(
                     TrustLevel.UNKNOWN,
                 );
+            });
+        });
+    });
+
+    describe('personVisibilityToBooleanConverter', () => {
+        describe('when converting Visibility type to boolean', () => {
+            it('should convert VisibilityType.JA to true', () => {
+                expect(personVisibilityToBooleanConverter.convert(VisibilityType.JA)).toBe(true);
+            });
+
+            it('should convert VisibilityType.NEIN to false', () => {
+                expect(personVisibilityToBooleanConverter.convert(VisibilityType.NEIN)).toBe(false);
             });
         });
     });

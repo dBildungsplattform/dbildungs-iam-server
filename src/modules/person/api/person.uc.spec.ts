@@ -6,7 +6,11 @@ import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonUc } from './person.uc.js';
+import { FindPersonDTO } from './find-person.dto.js';
 import { faker } from '@faker-js/faker';
+import { PersonDo } from '../domain/person.do.js';
+import { PersonResponse } from './person.response.js';
+
 
 describe('PersonUc', () => {
     let module: TestingModule;
@@ -85,6 +89,29 @@ describe('PersonUc', () => {
                     error: new EntityNotFoundError(''),
                 });
                 await expect(personUc.findPersonById(id)).rejects.toThrowError(EntityNotFoundError);
+            });
+        });
+    });
+
+    describe('findAll', () => {
+        const personDTO: FindPersonDTO = {
+            referrer: '',
+            familyName: '',
+            firstName: '',
+            visibility: false,
+        };
+        describe('when person exists', () => {
+            it('should find all persons that match with query param', async () => {
+                const firstPerson: PersonDo<true> = DoFactory.createPerson(true);
+                const secondPerson: PersonDo<true> = DoFactory.createPerson(true);
+                const persons: PersonDo<true>[] = [];
+                persons.push(firstPerson);
+                persons.push(secondPerson);
+                personServiceMock.findAllPersons.mockResolvedValue(persons as Option<PersonDo<true>>[]);
+                const result: PersonResponse[] = await personUc.findAll(personDTO);
+                expect(result).toHaveLength(2);
+                expect(result.at(0)?.name.firstName).toEqual(persons.at(0)?.firstName);
+                expect(result.at(0)?.name.lastName).toEqual(persons.at(0)?.lastName);
             });
         });
     });
