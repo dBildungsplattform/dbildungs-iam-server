@@ -1,5 +1,5 @@
 import { TimestampedEntity } from './timestamped.entity.js';
-import { Entity, ManyToOne, OneToOne, PrimaryKey } from '@mikro-orm/core';
+import { Entity, ManyToOne, OneToOne } from '@mikro-orm/core';
 import { DataProviderEntity } from './data-provider.entity.js';
 
 @Entity({
@@ -8,9 +8,6 @@ import { DataProviderEntity } from './data-provider.entity.js';
     discriminatorMap: { sponsor: 'sponsor', organization: 'organization', group: 'group' },
 })
 export abstract class SchoolStructureNodeEntity extends TimestampedEntity<SchoolStructureNodeEntity, 'id'> {
-    @PrimaryKey()
-    public readonly id!: string;
-
     @OneToOne()
     public administrativeParent?: SchoolStructureNodeEntity;
 

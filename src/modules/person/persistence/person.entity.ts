@@ -1,16 +1,5 @@
-import { randomUUID } from 'crypto';
 import { AutoMap } from '@automapper/classes';
-import {
-    ArrayType,
-    Collection,
-    DateTimeType,
-    Entity,
-    Enum,
-    ManyToOne,
-    OneToMany,
-    PrimaryKey,
-    Property,
-} from '@mikro-orm/core';
+import { ArrayType, Collection, DateTimeType, Entity, Enum, ManyToOne, OneToMany, Property } from '@mikro-orm/core';
 import { Gender, TrustLevel } from '../domain/person.enums.js';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { NotificationEntity } from '../../../persistence/notification.entity.js';
@@ -24,9 +13,6 @@ export class PersonEntity extends TimestampedEntity<PersonEntity, 'id'> {
     public constructor() {
         super();
     }
-
-    @PrimaryKey({ onCreate: () => randomUUID() })
-    public readonly id!: string;
 
     @AutoMap()
     @Property({ nullable: true })
