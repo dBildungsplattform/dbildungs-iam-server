@@ -1,6 +1,5 @@
 import { TimestampedEntity } from './timestamped.entity.js';
-import { Entity, ManyToOne, PrimaryKey } from '@mikro-orm/core';
-import { PermissionEntity } from './permission.entity.js';
+import { Entity, PrimaryKey } from '@mikro-orm/core';
 
 @Entity({
     tableName: 'role_permission',
@@ -8,7 +7,4 @@ import { PermissionEntity } from './permission.entity.js';
 export class RolePermissionEntity extends TimestampedEntity<RolePermissionEntity, 'id'> {
     @PrimaryKey()
     public readonly id!: string;
-
-    @ManyToOne()
-    public permission!: PermissionEntity;
 }
