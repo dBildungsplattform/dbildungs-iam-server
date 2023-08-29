@@ -1,7 +1,7 @@
-import { TimestampedEntity } from './timestamped.entity.js';
+import { TimestampedEntity } from './timestamped.entity';
 import { Entity, ManyToOne, PrimaryKey, Property } from '@mikro-orm/core';
-import { PersonEntity } from './person.entity.js';
-import { RolePermissionEntity } from './rolePermission.entity.js';
+import { PersonEntity } from '../modules/person/persistence/person.entity';
+import { RolePermissionEntity } from './rolePermission.entity';
 
 @Entity({ tableName: 'excluded_permission' })
 export class ExcludedPermissionEntity extends TimestampedEntity<ExcludedPermissionEntity, 'id'> {

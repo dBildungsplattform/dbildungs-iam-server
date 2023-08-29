@@ -1,6 +1,6 @@
-import { TimestampedEntity } from './timestamped.entity.js';
+import { TimestampedEntity } from './timestamped.entity';
 import { Entity, ManyToOne, PrimaryKey } from '@mikro-orm/core';
-import { SchoolStructureNodeEntity } from './schoolStructureNode.entity.js';
+import { SchoolStructureNodeEntity } from './schoolStructureNode.entity';
 
 @Entity({ tableName: 'role' })
 export class RoleEntity extends TimestampedEntity<RoleEntity, 'id'> {

@@ -1,6 +1,6 @@
-import { TimestampedEntity } from './timestamped.entity.js';
+import { TimestampedEntity } from './timestamped.entity';
 import { Entity, ManyToOne, PrimaryKey, Rel } from '@mikro-orm/core';
-import { PersonEntity } from './person.entity.js';
+import { PersonEntity } from '../modules/person/persistence/person.entity';
 
 @Entity({ tableName: 'notification' })
 export class NotificationEntity extends TimestampedEntity<NotificationEntity, 'id'> {

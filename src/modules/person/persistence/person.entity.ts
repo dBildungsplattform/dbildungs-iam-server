@@ -12,9 +12,9 @@ import {
     Property,
 } from '@mikro-orm/core';
 import { Gender, TrustLevel } from '../domain/person.enums.js';
-import { TimestampedEntity } from './timestamped.entity.js';
-import { NotificationEntity } from './notification.entity.js';
-import { DataProviderEntity } from './dataProvider.entity.js';
+import { TimestampedEntity } from '../../../persistence/timestamped.entity';
+import { NotificationEntity } from '../../../persistence/notification.entity';
+import { DataProviderEntity } from '../../../persistence/dataProvider.entity';
 
 @Entity({ tableName: 'person' })
 export class PersonEntity extends TimestampedEntity<PersonEntity, 'id'> {

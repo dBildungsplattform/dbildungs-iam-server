@@ -1,6 +1,6 @@
-import { TimestampedEntity } from './timestamped.entity.js';
+import { TimestampedEntity } from './timestamped.entity';
 import { Entity, ManyToOne, PrimaryKey } from '@mikro-orm/core';
-import { PermissionEntity } from './permission.entity.js';
+import { PermissionEntity } from './permission.entity';
 
 @Entity({
     tableName: 'role_permission',

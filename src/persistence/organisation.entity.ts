@@ -1,4 +1,4 @@
-import { SchoolStructureNodeEntity } from './schoolStructureNode.entity.js';
+import { SchoolStructureNodeEntity } from './schoolStructureNode.entity';
 import { Entity } from '@mikro-orm/core';
 
 @Entity({ discriminatorColumn: 'nodeType', discriminatorValue: 'organisation' })
