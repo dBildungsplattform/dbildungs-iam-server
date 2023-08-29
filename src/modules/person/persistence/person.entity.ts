@@ -14,7 +14,7 @@ import {
 import { Gender, TrustLevel } from '../domain/person.enums.js';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { NotificationEntity } from '../../../persistence/notification.entity.js';
-import { DataProviderEntity } from '../../../persistence/dataProvider.entity.js';
+import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
 
 @Entity({ tableName: 'person' })
 export class PersonEntity extends TimestampedEntity<PersonEntity, 'id'> {
