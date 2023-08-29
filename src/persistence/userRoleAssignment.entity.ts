@@ -1,7 +1,7 @@
-import { TimestampedEntity } from './timestamped.entity';
+import { TimestampedEntity } from './timestamped.entity.js';
 import { Entity, ManyToOne, PrimaryKey } from '@mikro-orm/core';
-import { PersonEntity } from '../modules/person/persistence/person.entity';
-import { RoleEntity } from './role.entity';
+import { PersonEntity } from '../modules/person/persistence/person.entity.js';
+import { RoleEntity } from './role.entity.js';
 
 @Entity({ tableName: 'user_role_assignment' })
 export class UserRoleAssignmentEntity extends TimestampedEntity<UserRoleAssignmentEntity, 'id'> {

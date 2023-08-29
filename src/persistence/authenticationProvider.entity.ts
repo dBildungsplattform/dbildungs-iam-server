@@ -1,6 +1,6 @@
-import { TimestampedEntity } from './timestamped.entity';
+import { TimestampedEntity } from './timestamped.entity.js';
 import { ManyToOne, PrimaryKey } from '@mikro-orm/core';
-import { DataProviderEntity } from './dataProvider.entity';
+import { DataProviderEntity } from './dataProvider.entity.js';
 
 export class AuthenticationProviderEntity extends TimestampedEntity<AuthenticationProviderEntity, 'id'> {
     @PrimaryKey()
