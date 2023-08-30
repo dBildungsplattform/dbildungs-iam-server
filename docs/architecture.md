@@ -7,15 +7,15 @@ Business logic is handled in the domain layer.<br>
 The domain layer has no dependencies to other layers.
 The domain layer offers services. In the application layer there are use cases consuming and orchestrating the services to fulfill a users request.<br>
 A use case can be called via a controller exposing an API (usually REST) to clients.<br>
-In the future a use case could be called directly by other micro services as well via a communication channel that is to be defined.
+In the future a use case could be called directly by other microservices as well via a communication channel that is to be defined.
 
-![Class Structure](./img/class-structure.svg)
+![Class Structure](./img/class-structure.svg "Source of draw.io diagram is embedded in the file")
 
 ## Modules
 
 A module contains a cohesive portion of the domain. <br>
 We always have two modules belonging together. One module that contains the domain and persistence and one module that contains the corresponding use-case and API.
-The reason is that this way it is possible to reuse modules for different micro services without including the reused module's API.
+The reason is that this way it is possible to reuse modules for different microservices without including the reused module's API.
 
 A module can contain both services for internal use only and services that are meant to be consumed by other modules.
 Decide what services to put in the module's `exports`-array instead of defaulting to export everything "just in case".

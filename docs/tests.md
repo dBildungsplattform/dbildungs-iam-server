@@ -68,7 +68,6 @@ describe('[method]', () => {
     // prepare stuff globally
   });
 
-  describe('when [scenario description that is prepared in setup]', () => {
     beforeEach(() => {
         // prepare stuff for describe block
     });
@@ -79,14 +78,6 @@ describe('[method]', () => {
 
     it('...', () => {
     });
- });
-
- describe('when [scenario description that is prepared in setup]', () => {
-
-  it('...', () => {
-   const { } = setup();
-  });
- });
 });
 ```
 
