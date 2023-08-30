@@ -72,7 +72,7 @@ Components are defined as NestJS [Modules](https://docs.nestjs.com/modules).
 ### Communication between components
 
 To access another module's service in your module, that other module has to be imported.
-Only services that are listed its module's `exports`-array can be used by other modules.<br>
+Only services that are listed in its module's `exports`-array can be used by other modules.<br>
 It is forbidden to provide a service in multiple modules.
 
 ```TypeScript
