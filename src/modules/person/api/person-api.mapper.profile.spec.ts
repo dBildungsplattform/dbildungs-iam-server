@@ -110,15 +110,15 @@ describe('PersonApiMapperProfile', () => {
     describe('when mapper is initialized', () => {
         it('should map CreatePersonBodyParams to CreatePersonDTO', () => {
             const params: CreatePersonBodyParams = {
-                client: faker.string.uuid(),
-                mainOrganization: faker.string.uuid(),
+                mandant: faker.string.uuid(),
+                stammorganisation: faker.string.uuid(),
                 referrer: 'referrer',
                 name: {
-                    firstName: 'john',
-                    lastName: 'doe',
+                    vorname: 'john',
+                    familienname: 'doe',
                 },
-                birth: {},
-                localization: 'de-DE',
+                geburt: {},
+                lokalisierung: 'de-DE',
             };
             expect(() => sut.map(params, CreatePersonBodyParams, CreatePersonDto)).not.toThrowError(MappingError);
         });

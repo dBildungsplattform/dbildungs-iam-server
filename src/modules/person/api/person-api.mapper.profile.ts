@@ -74,34 +74,58 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 CreatePersonBodyParams,
                 CreatePersonDto,
                 forMember(
+                    (dest: CreatePersonDto) => dest.client,
+                    mapFrom((src: CreatePersonBodyParams) => src.mandant),
+                ),
+                forMember(
+                    (dest: CreatePersonDto) => dest.mainOrganization,
+                    mapFrom((src: CreatePersonBodyParams) => src.stammorganisation),
+                ),
+                forMember(
                     (dest: CreatePersonDto) => dest.lastName,
-                    mapFrom((src: CreatePersonBodyParams) => src.name.lastName),
+                    mapFrom((src: CreatePersonBodyParams) => src.name.familienname),
                 ),
                 forMember(
                     (dest: CreatePersonDto) => dest.firstName,
-                    mapFrom((src: CreatePersonBodyParams) => src.name.firstName),
+                    mapFrom((src: CreatePersonBodyParams) => src.name.vorname),
                 ),
                 forMember(
                     (dest: CreatePersonDto) => dest.initialsLastName,
-                    mapFrom((src: CreatePersonBodyParams) => src.name.initialsLastName),
+                    mapFrom((src: CreatePersonBodyParams) => src.name.initialenfamilienname),
                 ),
                 forMember(
                     (dest: CreatePersonDto) => dest.initialsFirstName,
-                    mapFrom((src: CreatePersonBodyParams) => src.name.initialsFirstName),
+                    mapFrom((src: CreatePersonBodyParams) => src.name.initialenvorname),
                 ),
                 forMember(
                     (dest: CreatePersonDto) => dest.nickName,
-                    mapFrom((src: CreatePersonBodyParams) => src.name.nickName),
+                    mapFrom((src: CreatePersonBodyParams) => src.name.rufname),
+                ),
+                forMember(
+                    (dest: CreatePersonDto) => dest.birthDate,
+                    mapFrom((src: CreatePersonBodyParams) => src.geburt.datum),
+                ),
+                forMember(
+                    (dest: CreatePersonDto) => dest.birthPlace,
+                    mapFrom((src: CreatePersonBodyParams) => src.geburt.geburtsort),
+                ),
+                forMember(
+                    (dest: CreatePersonDto) => dest.localization,
+                    mapFrom((src: CreatePersonBodyParams) => src.lokalisierung),
+                ),
+                forMember(
+                    (dest: CreatePersonDto) => dest.isInformationBlocked,
+                    mapFrom((src: CreatePersonBodyParams) => src.sichtfreigabe),
                 ),
                 forMember(
                     (dest: CreatePersonDto) => dest.gender,
-                    convertUsing(personGenderToGenderConverter, (src: CreatePersonBodyParams) => src.gender),
+                    convertUsing(personGenderToGenderConverter, (src: CreatePersonBodyParams) => src.geschlecht),
                 ),
                 forMember(
                     (dest: CreatePersonDto) => dest.trustLevel,
                     convertUsing(
                         personTrustLevelToTrustLevelConverter,
-                        (src: CreatePersonBodyParams) => src.trustLevel,
+                        (src: CreatePersonBodyParams) => src.vertrauensstufe,
                     ),
                 ),
             );
@@ -115,27 +139,31 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     mapFrom((src: PersonDo<true>) => src.id),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.name.firstName,
+                    (dest: PersonResponse) => dest.mandant,
+                    mapFrom((src: PersonDo<true>) => src.client),
+                ),
+                forMember(
+                    (dest: PersonResponse) => dest.name.vorname,
                     mapFrom((src: PersonDo<true>) => src.firstName),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.name.lastName,
+                    (dest: PersonResponse) => dest.name.familienname,
                     mapFrom((src: PersonDo<true>) => src.lastName),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.name.initialsFirstName,
+                    (dest: PersonResponse) => dest.name.initialenvorname,
                     mapFrom((src: PersonDo<true>) => src.initialsFirstName),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.name.initialsLastName,
+                    (dest: PersonResponse) => dest.name.initialenfamilienname,
                     mapFrom((src: PersonDo<true>) => src.initialsLastName),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.name.sortIndex,
+                    (dest: PersonResponse) => dest.name.sortierindex,
                     mapFrom((src: PersonDo<true>) => src.nameSortIndex),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.name.nickName,
+                    (dest: PersonResponse) => dest.name.rufname,
                     mapFrom((src: PersonDo<true>) => src.nickName),
                 ),
                 forMember(
@@ -143,12 +171,32 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     mapFrom((src: PersonDo<true>) => src.nameTitle),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.name.salutation,
+                    (dest: PersonResponse) => dest.name.anrede,
                     mapFrom((src: PersonDo<true>) => src.nameSalutation),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.name.suffix,
+                    (dest: PersonResponse) => dest.name.namenssuffix,
                     mapFrom((src: PersonDo<true>) => src.nameSuffix),
+                ),
+                forMember(
+                    (dest: PersonResponse) => dest.geburt.datum,
+                    mapFrom((src: PersonDo<true>) => src.birthDate),
+                ),
+                forMember(
+                    (dest: PersonResponse) => dest.geburt.geburtsort,
+                    mapFrom((src: PersonDo<true>) => src.birthPlace),
+                ),
+                forMember(
+                    (dest: PersonResponse) => dest.vertrauensstufe,
+                    mapFrom((src: PersonDo<true>) => src.trustLevel),
+                ),
+                forMember(
+                    (dest: PersonResponse) => dest.geschlecht,
+                    mapFrom((src: PersonDo<true>) => src.gender),
+                ),
+                forMember(
+                    (dest: PersonResponse) => dest.lokalisierung,
+                    mapFrom((src: PersonDo<true>) => src.localization),
                 ),
             );
             createMap(

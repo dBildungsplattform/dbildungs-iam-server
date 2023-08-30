@@ -23,7 +23,7 @@ export class AllPersonsQueryParam {
     @IsString()
     @Expose({ name: 'familienname' })
     @ApiProperty({
-        name: 'family name of a person',
+        name: 'familienname',
         required: false,
         nullable: true,
     })
@@ -34,7 +34,7 @@ export class AllPersonsQueryParam {
     @IsString()
     @Expose({ name: 'vorname' })
     @ApiProperty({
-        name: 'first name of a person',
+        name: 'vorname',
         required: false,
         nullable: true,
     })
@@ -45,7 +45,7 @@ export class AllPersonsQueryParam {
     @IsEnum(VisibilityType)
     @Expose({ name: 'sichtfreigabe' })
     @ApiProperty({
-        name: 'visibility of a person',
+        name: 'sichtfreigabe',
         enum: VisibilityType,
         default: VisibilityType.NEIN,
         required: false,

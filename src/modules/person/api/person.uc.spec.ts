@@ -109,8 +109,8 @@ describe('PersonUc', () => {
                 personServiceMock.findAllPersons.mockResolvedValue(persons as Option<PersonDo<true>>[]);
                 const result: PersonResponse[] = await personUc.findAll(personDTO);
                 expect(result).toHaveLength(2);
-                expect(result.at(0)?.name.firstName).toEqual(persons.at(0)?.firstName);
-                expect(result.at(0)?.name.lastName).toEqual(persons.at(0)?.lastName);
+                expect(result.at(0)?.name.vorname).toEqual(persons.at(0)?.firstName);
+                expect(result.at(0)?.name.familienname).toEqual(persons.at(0)?.lastName);
             });
         });
     });

@@ -10,11 +10,17 @@ import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonResponse } from './person.response.js';
 import { HttpException } from '@nestjs/common';
 import { AllPersonsQueryParam, VisibilityType } from './persons-query.param.js';
+import { PersonBirthParams } from './person-birth.params.js';
+import { TrustLevel } from '../domain/person.enums.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
     let personController: PersonController;
     let personUcMock: DeepMocked<PersonUc>;
+    const mockBirthParams: PersonBirthParams = {
+        datum: faker.date.anytime(),
+        geburtsort: faker.string.alpha(),
+    };
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -48,12 +54,12 @@ describe('PersonController', () => {
         it('should not throw', async () => {
             personUcMock.createPerson.mockResolvedValue();
             const params: CreatePersonBodyParams = {
-                client: faker.string.uuid(),
+                mandant: faker.string.uuid(),
                 name: {
-                    firstName: faker.person.firstName(),
-                    lastName: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
                 },
-                birth: {},
+                geburt: {},
             };
             await expect(personController.createPerson(params)).resolves.not.toThrow();
             expect(personUcMock.createPerson).toHaveBeenCalledTimes(1);
@@ -68,10 +74,15 @@ describe('PersonController', () => {
             const response: PersonResponse = {
                 id: faker.string.uuid(),
                 name: {
-                    lastName: faker.person.lastName(),
-                    firstName: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
                 },
-                client: '',
+                mandant: '',
+                referrer: '',
+                geburt: mockBirthParams,
+                geschlecht: '',
+                lokalisierung: '',
+                vertrauensstufe: TrustLevel.TRUSTED,
             };
             personUcMock.findPersonById.mockResolvedValue(response);
             await expect(personController.findPersonById(params)).resolves.not.toThrow();
@@ -106,28 +117,36 @@ describe('PersonController', () => {
                 {
                     id: faker.string.uuid(),
                     name: {
-                        lastName: options.lastName,
-                        firstName: options.firstName,
+                        familienname: options.lastName,
+                        vorname: options.firstName,
                     },
-                    client: '',
+                    mandant: '',
                     referrer: options.referrer,
+                    geburt: mockBirthParams,
+                    geschlecht: '',
+                    lokalisierung: '',
+                    vertrauensstufe: TrustLevel.TRUSTED,
                 },
                 {
                     id: faker.string.uuid(),
                     name: {
-                        lastName: options.lastName,
-                        firstName: options.firstName,
+                        familienname: options.lastName,
+                        vorname: options.firstName,
                     },
-                    client: '',
+                    mandant: '',
                     referrer: options.referrer,
+                    geburt: mockBirthParams,
+                    geschlecht: '',
+                    lokalisierung: '',
+                    vertrauensstufe: TrustLevel.TRUSTED,
                 },
             ];
             personUcMock.findAll.mockResolvedValue(mockPersonResponse);
             const result: PersonResponse[] = await personController.findPersons(queryParams);
             expect(personUcMock.findAll).toHaveBeenCalledTimes(1);
             expect(result.at(0)?.referrer).toEqual(queryParams.referrer);
-            expect(result.at(0)?.name.firstName).toEqual(queryParams.firstName);
-            expect(result.at(0)?.name.lastName).toEqual(queryParams.familyName);
+            expect(result.at(0)?.name.vorname).toEqual(queryParams.firstName);
+            expect(result.at(0)?.name.familienname).toEqual(queryParams.familyName);
             expect(result).toEqual(mockPersonResponse);
         });
     });

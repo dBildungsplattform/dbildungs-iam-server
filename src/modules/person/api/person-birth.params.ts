@@ -10,12 +10,12 @@ export class PersonBirthParams {
     @Expose({ name: 'datum' })
     @Type(() => Date)
     @ApiProperty({ name: 'datum', required: false })
-    public readonly date?: Date;
+    public readonly datum?: Date;
 
     @AutoMap()
     @IsOptional()
     @IsString()
     @Expose({ name: 'geburtsort' })
     @ApiProperty({ name: 'geburtsort', required: false })
-    public readonly place?: string;
+    public readonly geburtsort?: string;
 }
