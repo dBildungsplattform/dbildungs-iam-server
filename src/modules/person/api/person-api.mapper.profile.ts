@@ -163,22 +163,6 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     mapFrom((src: PersonDo<true>) => src.nameSortIndex),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.name.rufname,
-                    mapFrom((src: PersonDo<true>) => src.nickName),
-                ),
-                forMember(
-                    (dest: PersonResponse) => dest.name.title,
-                    mapFrom((src: PersonDo<true>) => src.nameTitle),
-                ),
-                forMember(
-                    (dest: PersonResponse) => dest.name.anrede,
-                    mapFrom((src: PersonDo<true>) => src.nameSalutation),
-                ),
-                forMember(
-                    (dest: PersonResponse) => dest.name.namenssuffix,
-                    mapFrom((src: PersonDo<true>) => src.nameSuffix),
-                ),
-                forMember(
                     (dest: PersonResponse) => dest.geburt.datum,
                     mapFrom((src: PersonDo<true>) => src.birthDate),
                 ),
