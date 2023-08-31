@@ -154,7 +154,7 @@ describe('PersonRepo', () => {
         it('should return null', async () => {
             const props: Partial<PersonDo<false>> = {};
             const personDoFromQueryParam: PersonDo<false> = DoFactory.createPerson(false, props);
-            const result:  PersonDo<true>[] = await sut.findAll(personDoFromQueryParam);
+            const result: PersonDo<true>[] = await sut.findAll(personDoFromQueryParam);
             expect(result).not.toBeNull();
             await expect(em.find(PersonEntity, {})).resolves.toHaveLength(0);
         });
