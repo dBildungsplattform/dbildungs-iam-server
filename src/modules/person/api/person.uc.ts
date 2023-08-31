@@ -38,9 +38,7 @@ export class PersonUc {
         const persons: PersonResponse[] = [];
         if (result) {
             result.forEach((person: Option<PersonDo<true>>) => {
-                if (person !== null && person !== undefined) {
-                    persons.push(this.mapper.map(person, PersonDo, PersonResponse));
-                }
+                persons.push(this.mapper.map(person, PersonDo, PersonResponse));
             });
         }
         return persons;

@@ -97,7 +97,7 @@ describe('PersonController', () => {
         });
     });
 
-    describe('when getting all persons', () => {
+    describe('findAll', () => {
         // eslint-disable-next-line @typescript-eslint/typedef
         const options = {
             referrer: faker.string.alpha(),
@@ -107,9 +107,9 @@ describe('PersonController', () => {
         };
         const queryParams: AllPersonsQueryParam = {
             referrer: options.referrer,
-            familyName: options.lastName,
-            firstName: options.firstName,
-            visibility: options.visibility,
+            familienname: options.lastName,
+            vorname: options.firstName,
+            sichtfreigabe: options.visibility,
         };
 
         it('should get all persons', async () => {
@@ -145,8 +145,8 @@ describe('PersonController', () => {
             const result: PersonResponse[] = await personController.findPersons(queryParams);
             expect(personUcMock.findAll).toHaveBeenCalledTimes(1);
             expect(result.at(0)?.referrer).toEqual(queryParams.referrer);
-            expect(result.at(0)?.name.vorname).toEqual(queryParams.firstName);
-            expect(result.at(0)?.name.familienname).toEqual(queryParams.familyName);
+            expect(result.at(0)?.name.vorname).toEqual(queryParams.vorname);
+            expect(result.at(0)?.name.familienname).toEqual(queryParams.familienname);
             expect(result).toEqual(mockPersonResponse);
         });
     });

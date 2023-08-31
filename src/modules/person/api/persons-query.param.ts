@@ -27,7 +27,7 @@ export class AllPersonsQueryParam {
         required: false,
         nullable: true,
     })
-    public readonly familyName?: string;
+    public readonly familienname?: string;
 
     @AutoMap()
     @IsOptional()
@@ -38,7 +38,7 @@ export class AllPersonsQueryParam {
         required: false,
         nullable: true,
     })
-    public readonly firstName?: string;
+    public readonly vorname?: string;
 
     @AutoMap()
     @IsOptional()
@@ -51,5 +51,5 @@ export class AllPersonsQueryParam {
         required: false,
         nullable: true,
     })
-    public readonly visibility: VisibilityType = VisibilityType.NEIN;
+    public readonly sichtfreigabe: VisibilityType = VisibilityType.NEIN;
 }

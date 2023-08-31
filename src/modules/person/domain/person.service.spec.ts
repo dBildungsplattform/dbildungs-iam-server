@@ -120,29 +120,26 @@ describe('PersonService', () => {
     });
 
     describe('findAllPersons', () => {
-        describe('when person exists', () => {
-            it('should get all persons that match', async () => {
-                const firstPerson: PersonDo<false> = DoFactory.createPerson(false);
-                const secondPerson: PersonDo<false> = DoFactory.createPerson(false);
-                const persons: PersonDo<true>[] = [];
-                persons.push(firstPerson as unknown as PersonDo<true>);
-                persons.push(secondPerson as unknown as PersonDo<true>);
-                personRepoMock.findAll.mockResolvedValue(persons);
-                mapperMock.map.mockReturnValue(persons as unknown as Dictionary<unknown>);
-                const personDoWithQueryParam: PersonDo<false> = DoFactory.createPerson(false);
-                const result: Option<PersonDo<true>>[] = await personService.findAllPersons(personDoWithQueryParam);
-                expect(result).toHaveLength(2);
-            });
+        it('should get all persons that match', async () => {
+            const firstPerson: PersonDo<false> = DoFactory.createPerson(false);
+            const secondPerson: PersonDo<false> = DoFactory.createPerson(false);
+            const persons: PersonDo<true>[] = [];
+            persons.push(firstPerson as unknown as PersonDo<true>);
+            persons.push(secondPerson as unknown as PersonDo<true>);
+            personRepoMock.findAll.mockResolvedValue(persons);
+            mapperMock.map.mockReturnValue(persons as unknown as Dictionary<unknown>);
+            const personDoWithQueryParam: PersonDo<false> = DoFactory.createPerson(false);
+            const result: PersonDo<true>[] = await personService.findAllPersons(personDoWithQueryParam);
+            expect(result).toHaveLength(2);
         });
 
-        describe('when no person were found', () => {
-            it('should return an empty list of persons ', async () => {
-                const person: PersonDo<false> = DoFactory.createPerson(false);
-                personRepoMock.findAll.mockResolvedValue([]);
-                mapperMock.map.mockReturnValue(person as unknown as Dictionary<unknown>);
-                const result: Option<PersonDo<true>>[] = await personService.findAllPersons(person);
-                expect(result).toBeInstanceOf(Array);
-            });
+        it('should return an empty list of persons ', async () => {
+            const person: PersonDo<false> = DoFactory.createPerson(false);
+            personRepoMock.findAll.mockResolvedValue([]);
+            mapperMock.map.mockReturnValue(person as unknown as Dictionary<unknown>);
+            const result: PersonDo<true>[] = await personService.findAllPersons(person);
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(0);
         });
     });
 });

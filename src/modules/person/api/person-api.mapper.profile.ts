@@ -189,7 +189,19 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 FindPersonDTO,
                 forMember(
                     (dest: FindPersonDTO) => dest.visibility,
-                    convertUsing(personVisibilityToBooleanConverter, (src: AllPersonsQueryParam) => src.visibility),
+                    convertUsing(personVisibilityToBooleanConverter, (src: AllPersonsQueryParam) => src.sichtfreigabe),
+                ),
+                forMember(
+                    (dest: FindPersonDTO) => dest.firstName,
+                    mapFrom((src: AllPersonsQueryParam) => src.vorname),
+                ),
+                forMember(
+                    (dest: FindPersonDTO) => dest.familyName,
+                    mapFrom((src: AllPersonsQueryParam) => src.familienname),
+                ),
+                forMember(
+                    (dest: FindPersonDTO) => dest.referrer,
+                    mapFrom((src: AllPersonsQueryParam) => src.referrer),
                 ),
             );
             createMap(

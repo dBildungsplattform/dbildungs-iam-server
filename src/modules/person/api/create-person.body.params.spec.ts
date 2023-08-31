@@ -51,7 +51,7 @@ describe('CreatePersonBodyParams', () => {
             geschlecht: referenceParams.geschlecht,
             lokalisierung: referenceParams.lokalisierung,
             vertrauensstufe: referenceParams.vertrauensstufe,
-            auskunftssperre: referenceParams.sichtfreigabe,
+            sichtfreigabe: referenceParams.sichtfreigabe,
         };
         const mappedParams: CreatePersonBodyParams = plainToInstance(CreatePersonBodyParams, incomingParams, {});
         expect(mappedParams).toBeInstanceOf(CreatePersonBodyParams);

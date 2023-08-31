@@ -26,8 +26,8 @@ export class PersonService {
         return { ok: false, error: new EntityNotFoundError(`Person with the following ID ${id} does not exist`) };
     }
 
-    public async findAllPersons(personDo: PersonDo<false>): Promise<Option<PersonDo<true>>[]> {
-        const persons: Option<PersonDo<true>>[] = await this.personRepo.findAll(personDo);
+    public async findAllPersons(personDo: PersonDo<false>): Promise<PersonDo<true>[]> {
+        const persons: PersonDo<true>[] = await this.personRepo.findAll(personDo);
         return persons;
     }
 }

@@ -5,17 +5,17 @@ import { AllPersonsQueryParam, VisibilityType } from './persons-query.param.js';
 describe('CreatePersonBodyParams', () => {
     const referenceParams: AllPersonsQueryParam = {
         referrer: faker.string.uuid(),
-        firstName: faker.person.firstName(),
-        familyName: faker.person.lastName(),
-        visibility: VisibilityType.JA,
+        vorname: faker.person.firstName(),
+        familienname: faker.person.lastName(),
+        sichtfreigabe: VisibilityType.JA,
     };
 
     it('should map to german to english properties', () => {
         const incomingParams: object = {
             referrer: referenceParams.referrer,
-            vorname: referenceParams.firstName,
-            familienname: referenceParams.familyName,
-            sichtfreigabe: referenceParams.visibility,
+            vorname: referenceParams.vorname,
+            familienname: referenceParams.familienname,
+            sichtfreigabe: referenceParams.sichtfreigabe,
         };
         const mappedParams: AllPersonsQueryParam = plainToInstance(AllPersonsQueryParam, incomingParams, {});
         expect(mappedParams).toBeInstanceOf(AllPersonsQueryParam);
