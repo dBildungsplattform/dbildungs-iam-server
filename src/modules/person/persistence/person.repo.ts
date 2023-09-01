@@ -59,25 +59,17 @@ export class PersonRepo {
     }
 
     public async findAll(personDo: PersonDo<false>): Promise<PersonDo<true>[]> {
-        if (personDo.referrer !== undefined && personDo.isInformationBlocked !== undefined) {
-            const result: PersonEntity[] = await this.em.find(PersonEntity, {
-                $and: [
-                    {
-                        firstName: personDo.firstName,
-                    },
-                    {
-                        lastName: personDo.lastName,
-                    },
-                    {
-                        referrer: personDo.referrer,
-                    },
-                    {
-                        isInformationBlocked: personDo.isInformationBlocked,
-                    },
-                ],
-            });
-            return result.map((person: PersonEntity) => this.mapper.map(person, PersonEntity, PersonDo));
+        let query: object = {};
+        if (personDo.firstName && personDo.lastName) {
+            query = {
+                firstName: { $ilike: personDo.firstName },
+                lastName:{ $ilike: personDo.lastName },
+                referrer: personDo.referrer ?? null,
+                isInformationBlocked: personDo.isInformationBlocked ?? false,
+            };
         }
-        return [];
+
+        const result: PersonEntity[] = await this.em.find(PersonEntity, query);
+        return result.map((person: PersonEntity) => this.mapper.map(person, PersonEntity, PersonDo));
     }
 }
