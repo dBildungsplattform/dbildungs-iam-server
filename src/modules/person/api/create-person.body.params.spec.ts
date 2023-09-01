@@ -26,7 +26,7 @@ describe('CreatePersonBodyParams', () => {
         geschlecht: PersonGender.UNKNOWN,
         lokalisierung: faker.location.zipCode(),
         vertrauensstufe: PersonTrustLevel.UNKNOWN,
-        sichtfreigabe: true,
+        auskunftssperre: false,
     };
 
     it('should map to german to english properties', () => {
@@ -51,7 +51,7 @@ describe('CreatePersonBodyParams', () => {
             geschlecht: referenceParams.geschlecht,
             lokalisierung: referenceParams.lokalisierung,
             vertrauensstufe: referenceParams.vertrauensstufe,
-            sichtfreigabe: referenceParams.sichtfreigabe,
+            auskunftssperre: referenceParams.auskunftssperre,
         };
         const mappedParams: CreatePersonBodyParams = plainToInstance(CreatePersonBodyParams, incomingParams, {});
         expect(mappedParams).toBeInstanceOf(CreatePersonBodyParams);

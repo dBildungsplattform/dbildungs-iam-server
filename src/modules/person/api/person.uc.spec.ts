@@ -97,7 +97,6 @@ describe('PersonUc', () => {
             referrer: '',
             familyName: '',
             firstName: '',
-            visibility: false,
         };
 
         it('should find all persons that match with query param', async () => {

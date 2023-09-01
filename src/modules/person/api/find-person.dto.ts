@@ -9,7 +9,4 @@ export class FindPersonDTO {
 
     @AutoMap()
     public firstName?: string;
-
-    @AutoMap()
-    public visibility?: boolean;
 }

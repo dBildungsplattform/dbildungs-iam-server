@@ -9,7 +9,7 @@ import { PersonUc } from './person.uc.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonResponse } from './person.response.js';
 import { HttpException } from '@nestjs/common';
-import { AllPersonsQueryParam, VisibilityType } from './persons-query.param.js';
+import { AllPersonsQueryParam } from './persons-query.param.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { TrustLevel } from '../domain/person.enums.js';
 
@@ -103,13 +103,11 @@ describe('PersonController', () => {
             referrer: faker.string.alpha(),
             lastName: faker.person.lastName(),
             firstName: faker.person.firstName(),
-            visibility: VisibilityType.NEIN,
         };
         const queryParams: AllPersonsQueryParam = {
             referrer: options.referrer,
             familienname: options.lastName,
             vorname: options.firstName,
-            sichtfreigabe: options.visibility,
         };
 
         it('should get all persons', async () => {

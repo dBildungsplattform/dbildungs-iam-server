@@ -115,7 +115,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 ),
                 forMember(
                     (dest: CreatePersonDto) => dest.isInformationBlocked,
-                    mapFrom((src: CreatePersonBodyParams) => src.sichtfreigabe),
+                    mapFrom((src: CreatePersonBodyParams) => src.auskunftssperre),
                 ),
                 forMember(
                     (dest: CreatePersonDto) => dest.gender,
@@ -188,10 +188,6 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 AllPersonsQueryParam,
                 FindPersonDTO,
                 forMember(
-                    (dest: FindPersonDTO) => dest.visibility,
-                    convertUsing(personVisibilityToBooleanConverter, (src: AllPersonsQueryParam) => src.sichtfreigabe),
-                ),
-                forMember(
                     (dest: FindPersonDTO) => dest.firstName,
                     mapFrom((src: AllPersonsQueryParam) => src.vorname),
                 ),
@@ -211,10 +207,6 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember(
                     (dest: PersonDo<false>) => dest.lastName,
                     mapFrom((src: FindPersonDTO) => src.familyName),
-                ),
-                forMember(
-                    (dest: PersonDo<false>) => dest.isInformationBlocked,
-                    mapFrom((src: FindPersonDTO) => src.visibility),
                 ),
                 forMember(
                     (dest: PersonDo<false>) => dest.firstName,
@@ -241,6 +233,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<false>) => dest.gender, ignore()),
                 forMember((dest: PersonDo<false>) => dest.localization, ignore()),
                 forMember((dest: PersonDo<false>) => dest.trustLevel, ignore()),
+                forMember((dest: PersonDo<false>) => dest.isInformationBlocked, ignore()),
             );
         };
     }

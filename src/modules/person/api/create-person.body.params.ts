@@ -61,6 +61,6 @@ export class CreatePersonBodyParams {
     @AutoMap()
     @IsOptional()
     @IsBoolean()
-    @ApiProperty({ name: 'sichtfreigabe', required: false })
-    public readonly sichtfreigabe?: boolean;
+    @ApiProperty({ name: 'auskunftssperre', required: false })
+    public readonly auskunftssperre?: boolean;
 }

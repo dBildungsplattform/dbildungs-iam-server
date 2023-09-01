@@ -65,7 +65,6 @@ export class PersonRepo {
                 firstName: { $ilike: personDo.firstName },
                 lastName: { $ilike: personDo.lastName },
                 referrer: personDo.referrer ?? null,
-                isInformationBlocked: personDo.isInformationBlocked ?? false,
             };
         }
 
