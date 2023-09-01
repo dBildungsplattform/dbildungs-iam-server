@@ -18,7 +18,7 @@ class MyClass {
 
     public myFunction(): void {
         // the config keys are compile time checked
-        const env: NodeEnvType = this.configService.getOrThrow<NodeEnvType>('NODE_ENV');
+        const env: DeployStage = this.configService.getOrThrow<DeployStage>('DEPLOY_STAGE');
         const dbConfig: DbConfig = this.configService.getOrThrow<DbConfig>('DB');
         // ...
     }
