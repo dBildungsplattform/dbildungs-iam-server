@@ -63,7 +63,7 @@ export class PersonRepo {
         if (personDo.firstName && personDo.lastName) {
             query = {
                 firstName: { $ilike: personDo.firstName },
-                lastName:{ $ilike: personDo.lastName },
+                lastName: { $ilike: personDo.lastName },
                 referrer: personDo.referrer ?? null,
                 isInformationBlocked: personDo.isInformationBlocked ?? false,
             };
