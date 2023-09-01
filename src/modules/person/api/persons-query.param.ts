@@ -41,7 +41,7 @@ export class AllPersonsQueryParam {
     public readonly vorname?: string;
 
     // this property would be needed for person context.
-   /* @AutoMap()
+    /* @AutoMap()
     @IsOptional()
     @IsEnum(VisibilityType)
     @Expose({ name: 'sichtfreigabe' })
