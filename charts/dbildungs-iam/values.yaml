@@ -4,12 +4,3 @@ dbildungsIamExternalPort: 80
 dbildungsIamCpuMax: 2
 dbildungsIamMemMax: 4G
 dbildungsIamReplications: 1
-environment: prod
-
-configfile:
-  secrets: 'config/secrets.json'
-  dev: 'config/config.dev.json'
-  test: 'config/config.test.json'
-  prod: 'config/config.prod.json'
-
-enableServiceMonitor: false

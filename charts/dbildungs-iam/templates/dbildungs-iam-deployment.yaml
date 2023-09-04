@@ -3,53 +3,25 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}-deployment
   labels:
-    app.kubernetes.io/name: dbildungs-iam
+    app: dbildungs-iam
 spec:
   replicas: {{.Values.dbildungsIamReplications}}
   selector:
     matchLabels:
-      app.kubernetes.io/name: dbildungs-iam
+      app: dbildungs-iam
   template:
     metadata:
       name: dbildungs-iam
       labels:
-        app.kubernetes.io/name: dbildungs-iam
+        app: dbildungs-iam
     spec:
       containers:
         - name: dbildungs-iam
           image: {{.Values.dbildungsIamContainer}}
           imagePullPolicy: IfNotPresent
-          ports:
-             - name: web
-               containerPort: 8080
-          env:
-            - name: NODE_ENV
-              value: {{.Values.environment}}
-            - name: DEPLOY_STAGE
-              value: {{.Values.environment}}
-          volumeMounts:
-            - mountPath: /app/config/
-              name: config
-              readOnly: true
           resources:
             limits:
               cpu: {{.Values.dbildungsIamCpuMax}}
               memory: {{.Values.dbildungsIamMemMax}}
-          livenessProbe:
-            initialDelaySeconds: 10
-            httpGet:
-              port: 8080
-              scheme: 'HTTP'
-              path: '/health'
-          readinessProbe:
-            initialDelaySeconds: 10
-            httpGet:
-              port: 8080
-              scheme: 'HTTP'
-              path: '/health'
       restartPolicy: Always
-      volumes:
-        - name: config
-          secret:
-            secretName: {{.Release.Name}}-secret
       

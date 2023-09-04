@@ -1,17 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: {{.Values.namespace}}
   name: {{.Release.Name }}-services
-  labels:
-    app.kubernetes.io/name: dbildungs-iam
 spec:
   selector:
-    app.kubernetes.io/name: dbildungs-iam
+    app: dbildungs-iam
   ports:
     - protocol: TCP
-      name: web
       port: {{.Values.dbildungsIamExternalPort}}
-      targetPort: web
+      targetPort: 8080
   type: ClusterIP
   
