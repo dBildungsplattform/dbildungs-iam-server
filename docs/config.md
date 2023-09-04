@@ -82,7 +82,7 @@ class MyClass {
         // the config keys are compile time checked
         const env: DeployStage = this.configService.getOrThrow<DeployStage>('DEPLOY_STAGE');
         const dbConfig: DbConfig = this.configService.getOrThrow<DbConfig>('DB');
-        const dbName: string = dbConfig.DB_NAME:
+        const dbName: string = dbConfig.DB_NAME;
         // ...
     }
 }

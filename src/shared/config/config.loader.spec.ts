@@ -24,7 +24,6 @@ describe('configloader', () => {
         describe('when config is valid', () => {
             let readFileSyncSpy: jest.SpyInstance;
 
-
             const config: JsonConfig = {
                 HOST: {
                     PORT: 8080,
