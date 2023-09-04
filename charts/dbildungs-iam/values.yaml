@@ -1,0 +1,6 @@
+dbildungsIamContainer: "dbildungs-iam:0.1.0"
+
+dbildungsIamExternalPort: 80
+dbildungsIamCpuMax: 2
+dbildungsIamMemMax: 4G
+dbildungsIamReplications: 1

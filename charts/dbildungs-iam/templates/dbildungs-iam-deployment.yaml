@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-deployment
+  labels:
+    app: dbildungs-iam
+spec:
+  replicas: {{.Values.dbildungsIamReplications}}
+  selector:
+    matchLabels:
+      app: dbildungs-iam
+  template:
+    metadata:
+      name: dbildungs-iam
+      labels:
+        app: dbildungs-iam
+    spec:
+      containers:
+        - name: dbildungs-iam
+          image: {{.Values.dbildungsIamContainer}}
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              cpu: {{.Values.dbildungsIamCpuMax}}
+              memory: {{.Values.dbildungsIamMemMax}}
+      restartPolicy: Always
+      
