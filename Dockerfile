@@ -17,6 +17,7 @@ ENV NODE_ENV=prod
 
 WORKDIR /app
 COPY package*.json ./
+COPY config/ ./config/
 
 RUN npm ci --omit-dev
 
