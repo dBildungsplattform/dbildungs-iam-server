@@ -59,15 +59,19 @@ export class PersonRepo {
     }
 
     public async findAll(personDo: PersonDo<false>): Promise<PersonDo<true>[]> {
-        let query: object = {};
-        if (personDo.firstName && personDo.lastName) {
-            query = {
-                firstName: { $ilike: personDo.firstName },
-                lastName: { $ilike: personDo.lastName },
-                referrer: personDo.referrer ?? null,
-            };
+        const query: Record<string, unknown> = {};
+
+        if (personDo.firstName) {
+            query['firstName'] = { $ilike: personDo.firstName };
         }
 
+        if (personDo.lastName) {
+            query['lastName'] = { $ilike: personDo.lastName };
+        }
+
+        if (personDo.referrer) {
+            query['referrer'] = personDo.referrer;
+        }
         const result: PersonEntity[] = await this.em.find(PersonEntity, query);
         return result.map((person: PersonEntity) => this.mapper.map(person, PersonEntity, PersonDo));
     }
