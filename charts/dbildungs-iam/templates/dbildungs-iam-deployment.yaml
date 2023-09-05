@@ -19,9 +19,19 @@ spec:
         - name: dbildungs-iam
           image: {{.Values.dbildungsIamContainer}}
           imagePullPolicy: IfNotPresent
+          env:
+            - name: NODE_ENV
+              value: {{.Values.environment}}
+          volumeMounts:
+            - mountPath: /app/config/
+              name: config
           resources:
             limits:
               cpu: {{.Values.dbildungsIamCpuMax}}
               memory: {{.Values.dbildungsIamMemMax}}
       restartPolicy: Always
+      volumes:
+        - name: config
+          configMap:
+            name: {{.Release.Name}}-configmap
       

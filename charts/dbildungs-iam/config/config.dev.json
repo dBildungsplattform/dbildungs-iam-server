@@ -1,9 +1,9 @@
 {
     "HOST": {
-        "PORT": 8080
+        "PORT": 9090
     },
     "DB": {
-        "CLIENT_URL": "postgres://admin:password@host.docker.internal:5432",
+        "CLIENT_URL": "postgres://admin:password@127.0.0.1:5432",
         "DB_NAME": "dbildungs-iam"
     }
 }
