@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{.Release.Name}}-configmap
+data:
+  config.dev.json: |-
+{{.Files.Get "config/config.dev.json" | indent 4}}
+  config.test.json: |-
+{{.Files.Get "config/config.test.json" | indent 4}}
+  config.prod.json: |-
+{{.Files.Get "config/config.prod.json" | indent 4}}

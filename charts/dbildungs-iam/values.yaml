@@ -4,3 +4,4 @@ dbildungsIamExternalPort: 80
 dbildungsIamCpuMax: 2
 dbildungsIamMemMax: 4G
 dbildungsIamReplications: 1
+environment: prod
