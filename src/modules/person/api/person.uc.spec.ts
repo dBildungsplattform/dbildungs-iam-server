@@ -102,14 +102,23 @@ describe('PersonUc', () => {
         it('should find all persons that match with query param', async () => {
             const firstPerson: PersonDo<true> = DoFactory.createPerson(true);
             const secondPerson: PersonDo<true> = DoFactory.createPerson(true);
-            const persons: PersonDo<true>[] = [];
-            persons.push(firstPerson);
-            persons.push(secondPerson);
+            const persons: PersonDo<true>[] = [firstPerson, secondPerson];
             personServiceMock.findAllPersons.mockResolvedValue(persons);
             const result: PersonResponse[] = await personUc.findAll(personDTO);
             expect(result).toHaveLength(2);
-            expect(result.at(0)?.name.vorname).toEqual(persons.at(0)?.firstName);
-            expect(result.at(0)?.name.familienname).toEqual(persons.at(0)?.lastName);
+            expect(result.at(0)?.name.vorname).toEqual(firstPerson.firstName);
+            expect(result.at(0)?.name.familienname).toEqual(firstPerson.lastName);
+            expect(result.at(1)?.name.vorname).toEqual(secondPerson.firstName);
+            expect(result.at(1)?.name.familienname).toEqual(secondPerson.lastName);
+        });
+
+        it('should return an empty array when no matching persons are found', async () => {
+            const emptyResult: PersonDo<true>[] = [];
+            personServiceMock.findAllPersons.mockResolvedValue(emptyResult);
+
+            const result: PersonResponse[] = await personUc.findAll(personDTO);
+
+            expect(result).toHaveLength(0);
         });
     });
 });

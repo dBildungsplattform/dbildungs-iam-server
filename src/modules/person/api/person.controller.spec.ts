@@ -97,9 +97,12 @@ describe('PersonController', () => {
         });
     });
 
-    describe('findAll', () => {
-        // eslint-disable-next-line @typescript-eslint/typedef
-        const options = {
+    describe('findPersons', () => {
+        const options: {
+            referrer: string;
+            lastName: string;
+            firstName: string;
+        } = {
             referrer: faker.string.alpha(),
             lastName: faker.person.lastName(),
             firstName: faker.person.firstName(),

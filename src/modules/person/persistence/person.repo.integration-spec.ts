@@ -132,7 +132,7 @@ describe('PersonRepo', () => {
     });
 
     describe('findAll', () => {
-        it('should delete person from database', async () => {
+        it('should find all persons from database', async () => {
             const props: Partial<PersonDo<false>> = {
                 referrer: 'referrer_value',
                 firstName: 'first name',
@@ -141,21 +141,21 @@ describe('PersonRepo', () => {
             };
             const personDo1: PersonDo<false> = DoFactory.createPerson(false, props);
             const personDo2: PersonDo<false> = DoFactory.createPerson(false, props);
-            const personEntity1: PersonEntity = mapper.map(personDo1, PersonDo, PersonEntity);
-            const personEntity2: PersonEntity = mapper.map(personDo2, PersonDo, PersonEntity);
-            await em.persistAndFlush(personEntity1);
-            await em.persistAndFlush(personEntity2);
+            await em.persistAndFlush(mapper.map(personDo1, PersonDo, PersonEntity));
+            await em.persistAndFlush(mapper.map(personDo2, PersonDo, PersonEntity));
             const personDoFromQueryParam: PersonDo<false> = DoFactory.createPerson(false, props);
             const result: PersonDo<true>[] = await sut.findAll(personDoFromQueryParam);
             expect(result).not.toBeNull();
+            expect(result).toHaveLength(2);
             await expect(em.find(PersonEntity, {})).resolves.toHaveLength(2);
         });
 
-        it('should return null', async () => {
+        it('should return an empty list', async () => {
             const props: Partial<PersonDo<false>> = {};
             const personDoFromQueryParam: PersonDo<false> = DoFactory.createPerson(false, props);
             const result: PersonDo<true>[] = await sut.findAll(personDoFromQueryParam);
             expect(result).not.toBeNull();
+            expect(result).toHaveLength(0);
             await expect(em.find(PersonEntity, {})).resolves.toHaveLength(0);
         });
     });

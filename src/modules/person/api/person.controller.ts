@@ -51,7 +51,7 @@ export class PersonController {
     }
 
     @Get()
-    @ApiCreatedResponse({ description: 'persons were successfully pulled.' })
+    @ApiCreatedResponse({ description: 'The persons were successfully pulled.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })

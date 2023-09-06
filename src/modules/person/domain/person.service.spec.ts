@@ -123,9 +123,10 @@ describe('PersonService', () => {
         it('should get all persons that match', async () => {
             const firstPerson: PersonDo<false> = DoFactory.createPerson(false);
             const secondPerson: PersonDo<false> = DoFactory.createPerson(false);
-            const persons: PersonDo<true>[] = [];
-            persons.push(firstPerson as unknown as PersonDo<true>);
-            persons.push(secondPerson as unknown as PersonDo<true>);
+            const persons: PersonDo<true>[] = [
+                firstPerson as unknown as PersonDo<true>,
+                secondPerson as unknown as PersonDo<true>,
+            ];
             personRepoMock.findAll.mockResolvedValue(persons);
             mapperMock.map.mockReturnValue(persons as unknown as Dictionary<unknown>);
             const personDoWithQueryParam: PersonDo<false> = DoFactory.createPerson(false);

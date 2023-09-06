@@ -34,10 +34,10 @@ export class PersonUc {
 
     public async findAll(personDto: FindPersonDTO): Promise<PersonResponse[]> {
         const personDo: PersonDo<false> = this.mapper.map(personDto, FindPersonDTO, PersonDo);
-        const result: Option<PersonDo<true>>[] = await this.personService.findAllPersons(personDo);
+        const result: PersonDo<true>[] = await this.personService.findAllPersons(personDo);
         const persons: PersonResponse[] = [];
         if (result) {
-            result.forEach((person: Option<PersonDo<true>>) => {
+            result.forEach((person: PersonDo<true>) => {
                 persons.push(this.mapper.map(person, PersonDo, PersonResponse));
             });
         }
