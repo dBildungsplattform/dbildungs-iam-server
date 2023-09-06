@@ -102,7 +102,7 @@ class MyClass {
   * Should be used as the generic parameter e.g. `ConfigService<ServerConfig, true>`
 * **EnvConfig**
   * Is loaded from environment variables and .env file
-  * Should be used for secrets or api keys
+  * This is used to determine the correct deployment environment
 * **JsonConfig**
   * Is loaded form an environment specific json file
   * Json files can be found in the `config` folder in the repository root
