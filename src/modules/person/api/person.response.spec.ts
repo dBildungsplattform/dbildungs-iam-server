@@ -29,7 +29,7 @@ describe('PersonResponse', () => {
         vertrauensstufe: TrustLevel.TRUSTED,
     };
 
-    it('should convert plain object of person resopne to a class of person response', async () => {
+    it('should convert plain object of person resopne to a class of person response', () => {
         const person: object = {
             id: personResponse.id,
             name: personResponse.name,
