@@ -56,7 +56,11 @@ export class PersonController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
     public async findPersons(@Query() queryParams: PersonenQueryParam): Promise<Personendatensatz[]> {
-        const persondatensatzDTO: FindePersondatensatzDTO = this.mapper.map(queryParams, PersonenQueryParam, FindePersondatensatzDTO);
+        const persondatensatzDTO: FindePersondatensatzDTO = this.mapper.map(
+            queryParams,
+            PersonenQueryParam,
+            FindePersondatensatzDTO,
+        );
         const persons: Personendatensatz[] = await this.uc.findAll(persondatensatzDTO);
         return persons;
     }
