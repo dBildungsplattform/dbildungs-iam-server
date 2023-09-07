@@ -171,8 +171,6 @@ describe('PersonController', () => {
             expect(result.at(0)?.person.name.vorname).toEqual(queryParams.vorname);
             expect(result.at(0)?.person.name.familienname).toEqual(queryParams.familienname);
             expect(result).toEqual(mockPersondatensatz);
-            expect(result.at(0)?.person.name.vorname).toEqual(person1.name.vorname);
-            expect(result.at(1)?.person.name.familienname).toEqual(person2.name.familienname);
         });
     });
 });

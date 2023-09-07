@@ -29,7 +29,7 @@ describe('CreatePersonBodyParams', () => {
         auskunftssperre: false,
     };
 
-    it('should map to german to english properties', () => {
+    it('should convert a plain object to a class of createPersonBodyParams', () => {
         const incomingParams: object = {
             referrer: referenceParams.referrer,
             mandant: referenceParams.mandant,

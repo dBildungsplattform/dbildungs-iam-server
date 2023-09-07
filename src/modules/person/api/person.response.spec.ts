@@ -1,8 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { PersonResponse } from './person.response.js';
 import { TrustLevel } from '../domain/person.enums.js';
-import { validate } from 'class-validator';
-import { ValidationError } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 
 describe('PersonResponse', () => {
     const personResponse: PersonResponse = {
@@ -30,8 +29,19 @@ describe('PersonResponse', () => {
         vertrauensstufe: TrustLevel.TRUSTED,
     };
 
-    it('should validate person response', async () => {
-        const validationErrors: ValidationError[] = await validate(personResponse);
-        expect(validationErrors).toHaveLength(0);
+    it('should convert plain object of person resopne to a class of person response', async () => {
+        const person: object = {
+            id: personResponse.id,
+            name: personResponse.name,
+            mandant: personResponse.mandant,
+            referrer: personResponse.referrer,
+            geburt: personResponse.geburt,
+            geschlecht: personResponse.geschlecht,
+            lokalisierung: personResponse.lokalisierung,
+            vertrauensstufe: personResponse.vertrauensstufe,
+        };
+        const mappedParams: PersonResponse = plainToInstance(PersonResponse, person, {});
+        expect(mappedParams).toBeInstanceOf(PersonResponse);
+        expect(mappedParams).toEqual(personResponse);
     });
 });
