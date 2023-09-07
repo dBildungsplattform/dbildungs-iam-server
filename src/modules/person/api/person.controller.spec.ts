@@ -9,9 +9,10 @@ import { PersonUc } from './person.uc.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonResponse } from './person.response.js';
 import { HttpException } from '@nestjs/common';
-import { AllPersonsQueryParam } from './persons-query.param.js';
+import { PersonenQueryParam } from './personen-query.param.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { TrustLevel } from '../domain/person.enums.js';
+import { Personendatensatz } from './personendatensatz.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -71,20 +72,34 @@ describe('PersonController', () => {
         };
 
         it('should get a person', async () => {
-            const response: PersonResponse = {
+            const personResponse: PersonResponse = {
                 id: faker.string.uuid(),
                 name: {
-                    familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    initialenfamilienname: faker.person.lastName(),
+                    initialenvorname: faker.person.firstName(),
+                    rufname: faker.person.middleName(),
+                    title: faker.string.alpha(),
+                    anrede: [faker.string.alpha(), faker.string.alpha()],
+                    namenssuffix: [],
+                    namenspraefix: [],
+                    sortierindex: 'sortierindex',
                 },
-                mandant: '',
-                referrer: '',
-                geburt: mockBirthParams,
-                geschlecht: '',
-                lokalisierung: '',
+                mandant: faker.string.uuid(),
+                referrer: faker.string.uuid(),
+                geburt: {
+                    datum: new Date('2022.02.02'),
+                    geburtsort: faker.location.country(),
+                },
+                geschlecht: faker.person.gender(),
+                lokalisierung: faker.location.country(),
                 vertrauensstufe: TrustLevel.TRUSTED,
             };
-            personUcMock.findPersonById.mockResolvedValue(response);
+            const persondatensatz: Personendatensatz = {
+                person: personResponse,
+            };
+            personUcMock.findPersonById.mockResolvedValue(persondatensatz);
             await expect(personController.findPersonById(params)).resolves.not.toThrow();
             expect(personUcMock.findPersonById).toHaveBeenCalledTimes(1);
         });
@@ -107,48 +122,57 @@ describe('PersonController', () => {
             lastName: faker.person.lastName(),
             firstName: faker.person.firstName(),
         };
-        const queryParams: AllPersonsQueryParam = {
+        const queryParams: PersonenQueryParam = {
             referrer: options.referrer,
             familienname: options.lastName,
             vorname: options.firstName,
         };
 
         it('should get all persons', async () => {
-            const mockPersonResponse: PersonResponse[] = [
-                {
-                    id: faker.string.uuid(),
-                    name: {
-                        familienname: options.lastName,
-                        vorname: options.firstName,
-                    },
-                    mandant: '',
-                    referrer: options.referrer,
-                    geburt: mockBirthParams,
-                    geschlecht: '',
-                    lokalisierung: '',
-                    vertrauensstufe: TrustLevel.TRUSTED,
+            const person1: PersonResponse = {
+                id: faker.string.uuid(),
+                name: {
+                    familienname: options.lastName,
+                    vorname: options.firstName,
                 },
-                {
-                    id: faker.string.uuid(),
-                    name: {
-                        familienname: options.lastName,
-                        vorname: options.firstName,
-                    },
-                    mandant: '',
-                    referrer: options.referrer,
-                    geburt: mockBirthParams,
-                    geschlecht: '',
-                    lokalisierung: '',
-                    vertrauensstufe: TrustLevel.TRUSTED,
+                mandant: '',
+                referrer: options.referrer,
+                geburt: mockBirthParams,
+                geschlecht: '',
+                lokalisierung: '',
+                vertrauensstufe: TrustLevel.TRUSTED,
+            };
+
+            const person2: PersonResponse = {
+                id: faker.string.uuid(),
+                name: {
+                    familienname: options.lastName,
+                    vorname: options.firstName,
                 },
-            ];
-            personUcMock.findAll.mockResolvedValue(mockPersonResponse);
-            const result: PersonResponse[] = await personController.findPersons(queryParams);
+                mandant: '',
+                referrer: options.referrer,
+                geburt: mockBirthParams,
+                geschlecht: '',
+                lokalisierung: '',
+                vertrauensstufe: TrustLevel.TRUSTED,
+            };
+
+            const mockPersondatensatz1: Personendatensatz = {
+                person: person1,
+            };
+            const mockPersondatensatz2: Personendatensatz = {
+                person: person2,
+            };
+            const mockPersondatensatz: Personendatensatz[] = [mockPersondatensatz1, mockPersondatensatz2];
+            personUcMock.findAll.mockResolvedValue(mockPersondatensatz);
+            const result: Personendatensatz[] = await personController.findPersons(queryParams);
             expect(personUcMock.findAll).toHaveBeenCalledTimes(1);
-            expect(result.at(0)?.referrer).toEqual(queryParams.referrer);
-            expect(result.at(0)?.name.vorname).toEqual(queryParams.vorname);
-            expect(result.at(0)?.name.familienname).toEqual(queryParams.familienname);
-            expect(result).toEqual(mockPersonResponse);
+            expect(result.at(0)?.person.referrer).toEqual(queryParams.referrer);
+            expect(result.at(0)?.person.name.vorname).toEqual(queryParams.vorname);
+            expect(result.at(0)?.person.name.familienname).toEqual(queryParams.familienname);
+            expect(result).toEqual(mockPersondatensatz);
+            expect(result.at(0)?.person.name.vorname).toEqual(person1.name.vorname);
+            expect(result.at(1)?.person.name.familienname).toEqual(person2.name.familienname);
         });
     });
 });

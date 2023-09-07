@@ -1,12 +1,12 @@
 import { AutoMap } from '@automapper/classes';
 
-export class FindPersonDTO {
+export class FindePersondatensatzDTO {
     @AutoMap()
     public referrer?: string;
 
     @AutoMap()
-    public familyName?: string;
+    public familienname?: string;
 
     @AutoMap()
-    public firstName?: string;
+    public vorname?: string;
 }

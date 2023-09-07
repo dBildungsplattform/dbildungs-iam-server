@@ -15,9 +15,9 @@ import { PersonDo } from '../domain/person.do.js';
 import { Gender, TrustLevel } from '../domain/person.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
-import { PersonResponse } from './person.response.js';
-import { AllPersonsQueryParam, VisibilityType } from './persons-query.param.js';
-import { FindPersonDTO } from './find-person.dto.js';
+import { PersonenQueryParam, SichtfreigabeType } from './personen-query.param.js';
+import { FindePersondatensatzDTO } from './finde-persondatensatz-dto.js';
+import { Personendatensatz } from './personendatensatz.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
     convert(source: PersonGender): Gender {
@@ -49,12 +49,12 @@ export const personTrustLevelToTrustLevelConverter: Converter<PersonTrustLevel, 
     },
 };
 
-export const personVisibilityToBooleanConverter: Converter<VisibilityType, boolean> = {
-    convert(source: VisibilityType) {
+export const personVisibilityToBooleanConverter: Converter<SichtfreigabeType, boolean> = {
+    convert(source: SichtfreigabeType) {
         switch (source) {
-            case VisibilityType.JA:
+            case SichtfreigabeType.JA:
                 return true;
-            case VisibilityType.NEIN:
+            case SichtfreigabeType.NEIN:
             default:
                 return false;
         }
@@ -133,88 +133,108 @@ export class PersonApiMapperProfile extends AutomapperProfile {
             createMap(
                 mapper,
                 PersonDo,
-                PersonResponse,
+                Personendatensatz,
                 forMember(
-                    (dest: PersonResponse) => dest.id,
+                    (dest: Personendatensatz) => dest.person.id,
                     mapFrom((src: PersonDo<true>) => src.id),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.mandant,
+                    (dest: Personendatensatz) => dest.person.mandant,
                     mapFrom((src: PersonDo<true>) => src.client),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.name.vorname,
+                    (dest: Personendatensatz) => dest.person.name.vorname,
                     mapFrom((src: PersonDo<true>) => src.firstName),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.name.familienname,
+                    (dest: Personendatensatz) => dest.person.name.rufname,
+                    mapFrom((src: PersonDo<true>) => src.nickName),
+                ),
+                forMember(
+                    (dest: Personendatensatz) => dest.person.name.familienname,
                     mapFrom((src: PersonDo<true>) => src.lastName),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.name.initialenvorname,
+                    (dest: Personendatensatz) => dest.person.name.initialenvorname,
                     mapFrom((src: PersonDo<true>) => src.initialsFirstName),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.name.initialenfamilienname,
+                    (dest: Personendatensatz) => dest.person.name.initialenfamilienname,
                     mapFrom((src: PersonDo<true>) => src.initialsLastName),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.name.sortierindex,
+                    (dest: Personendatensatz) => dest.person.name.sortierindex,
                     mapFrom((src: PersonDo<true>) => src.nameSortIndex),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.geburt.datum,
+                    (dest: Personendatensatz) => dest.person.geburt.datum,
                     mapFrom((src: PersonDo<true>) => src.birthDate),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.geburt.geburtsort,
+                    (dest: Personendatensatz) => dest.person.geburt.geburtsort,
                     mapFrom((src: PersonDo<true>) => src.birthPlace),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.vertrauensstufe,
+                    (dest: Personendatensatz) => dest.person.vertrauensstufe,
                     mapFrom((src: PersonDo<true>) => src.trustLevel),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.geschlecht,
+                    (dest: Personendatensatz) => dest.person.geschlecht,
                     mapFrom((src: PersonDo<true>) => src.gender),
                 ),
                 forMember(
-                    (dest: PersonResponse) => dest.lokalisierung,
+                    (dest: Personendatensatz) => dest.person.lokalisierung,
                     mapFrom((src: PersonDo<true>) => src.localization),
                 ),
+                forMember(
+                    (dest: Personendatensatz) => dest.person.stammorganisation,
+                    mapFrom((src: PersonDo<true>) => src.mainOrganization),
+                ),
+                forMember(
+                    (dest: Personendatensatz) => dest.person.name.anrede,
+                    mapFrom((src: PersonDo<true>) => src.nameSalutation),
+                ),
+                forMember(
+                    (dest: Personendatensatz) => dest.person.name.namenssuffix,
+                    mapFrom((src: PersonDo<true>) => src.nameSuffix),
+                ),
+                forMember(
+                    (dest: Personendatensatz) => dest.person.name.namenspraefix,
+                    mapFrom((src: PersonDo<true>) => src.namePrefix),
+                ),
             );
             createMap(
                 mapper,
-                AllPersonsQueryParam,
-                FindPersonDTO,
+                PersonenQueryParam,
+                FindePersondatensatzDTO,
                 forMember(
-                    (dest: FindPersonDTO) => dest.firstName,
-                    mapFrom((src: AllPersonsQueryParam) => src.vorname),
+                    (dest: FindePersondatensatzDTO) => dest.vorname,
+                    mapFrom((src: PersonenQueryParam) => src.vorname),
                 ),
                 forMember(
-                    (dest: FindPersonDTO) => dest.familyName,
-                    mapFrom((src: AllPersonsQueryParam) => src.familienname),
+                    (dest: FindePersondatensatzDTO) => dest.familienname,
+                    mapFrom((src: PersonenQueryParam) => src.familienname),
                 ),
                 forMember(
-                    (dest: FindPersonDTO) => dest.referrer,
-                    mapFrom((src: AllPersonsQueryParam) => src.referrer),
+                    (dest: FindePersondatensatzDTO) => dest.referrer,
+                    mapFrom((src: PersonenQueryParam) => src.referrer),
                 ),
             );
             createMap(
                 mapper,
-                FindPersonDTO,
+                FindePersondatensatzDTO,
                 PersonDo<false>,
                 forMember(
                     (dest: PersonDo<false>) => dest.lastName,
-                    mapFrom((src: FindPersonDTO) => src.familyName),
+                    mapFrom((src: FindePersondatensatzDTO) => src.familienname),
                 ),
                 forMember(
                     (dest: PersonDo<false>) => dest.firstName,
-                    mapFrom((src: FindPersonDTO) => src.firstName),
+                    mapFrom((src: FindePersondatensatzDTO) => src.vorname),
                 ),
                 forMember(
                     (dest: PersonDo<false>) => dest.referrer,
-                    mapFrom((src: FindPersonDTO) => src.referrer),
+                    mapFrom((src: FindePersondatensatzDTO) => src.referrer),
                 ),
                 forMember((dest: PersonDo<false>) => dest.id, ignore()),
                 forMember((dest: PersonDo<false>) => dest.createdAt, ignore()),

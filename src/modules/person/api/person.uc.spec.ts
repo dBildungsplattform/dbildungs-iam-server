@@ -6,10 +6,10 @@ import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonUc } from './person.uc.js';
-import { FindPersonDTO } from './find-person.dto.js';
+import { FindePersondatensatzDTO } from './finde-persondatensatz-dto.js';
 import { faker } from '@faker-js/faker';
 import { PersonDo } from '../domain/person.do.js';
-import { PersonResponse } from './person.response.js';
+import { Personendatensatz } from './personendatensatz.js';
 
 describe('PersonUc', () => {
     let module: TestingModule;
@@ -93,10 +93,10 @@ describe('PersonUc', () => {
     });
 
     describe('findAll', () => {
-        const personDTO: FindPersonDTO = {
+        const personDTO: FindePersondatensatzDTO = {
             referrer: '',
-            familyName: '',
-            firstName: '',
+            familienname: '',
+            vorname: '',
         };
 
         it('should find all persons that match with query param', async () => {
@@ -104,21 +104,19 @@ describe('PersonUc', () => {
             const secondPerson: PersonDo<true> = DoFactory.createPerson(true);
             const persons: PersonDo<true>[] = [firstPerson, secondPerson];
             personServiceMock.findAllPersons.mockResolvedValue(persons);
-            const result: PersonResponse[] = await personUc.findAll(personDTO);
+            const result: Personendatensatz[] = await personUc.findAll(personDTO);
             expect(result).toHaveLength(2);
-            expect(result.at(0)?.name.vorname).toEqual(firstPerson.firstName);
-            expect(result.at(0)?.name.familienname).toEqual(firstPerson.lastName);
-            expect(result.at(1)?.name.vorname).toEqual(secondPerson.firstName);
-            expect(result.at(1)?.name.familienname).toEqual(secondPerson.lastName);
+            expect(result.at(0)?.person.name.vorname).toEqual(firstPerson.firstName);
+            expect(result.at(0)?.person.name.familienname).toEqual(firstPerson.lastName);
+            expect(result.at(1)?.person.name.vorname).toEqual(secondPerson.firstName);
+            expect(result.at(1)?.person.name.familienname).toEqual(secondPerson.lastName);
         });
 
         it('should return an empty array when no matching persons are found', async () => {
             const emptyResult: PersonDo<true>[] = [];
             personServiceMock.findAllPersons.mockResolvedValue(emptyResult);
-
-            const result: PersonResponse[] = await personUc.findAll(personDTO);
-
-            expect(result).toHaveLength(0);
+            const result: Personendatensatz[] = await personUc.findAll(personDTO);
+            expect(result).toEqual([]);
         });
     });
 });

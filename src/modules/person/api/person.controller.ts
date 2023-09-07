@@ -14,9 +14,9 @@ import { PersonUc } from '../api/person.uc.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
-import { PersonResponse } from './person.response.js';
-import { AllPersonsQueryParam } from './persons-query.param.js';
-import { FindPersonDTO } from './find-person.dto.js';
+import { PersonenQueryParam } from './personen-query.param.js';
+import { FindePersondatensatzDTO } from './finde-persondatensatz-dto.js';
+import { Personendatensatz } from './personendatensatz.js';
 
 @ApiTags('person')
 @Controller({ path: 'person' })
@@ -41,9 +41,9 @@ export class PersonController {
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the person.' })
-    public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonResponse | HttpException> {
+    public async findPersonById(@Param() params: PersonByIdParams): Promise<Personendatensatz | HttpException> {
         try {
-            const person: PersonResponse = await this.uc.findPersonById(params.personId);
+            const person: Personendatensatz = await this.uc.findPersonById(params.personId);
             return person;
         } catch (error) {
             return new HttpException('Requested entity does not exist', HttpStatus.NOT_FOUND);
@@ -55,9 +55,9 @@ export class PersonController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
-    public async findPersons(@Query() queryParams: AllPersonsQueryParam): Promise<PersonResponse[]> {
-        const personDto: FindPersonDTO = this.mapper.map(queryParams, AllPersonsQueryParam, FindPersonDTO);
-        const persons: PersonResponse[] = await this.uc.findAll(personDto);
+    public async findPersons(@Query() queryParams: PersonenQueryParam): Promise<Personendatensatz[]> {
+        const persondatensatzDTO: FindePersondatensatzDTO = this.mapper.map(queryParams, PersonenQueryParam, FindePersondatensatzDTO);
+        const persons: Personendatensatz[] = await this.uc.findAll(persondatensatzDTO);
         return persons;
     }
 }

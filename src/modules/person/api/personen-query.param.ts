@@ -3,12 +3,12 @@ import { Expose } from 'class-transformer';
 import { IsOptional, IsString } from 'class-validator';
 import { AutoMap } from '@automapper/classes';
 
-export enum VisibilityType {
+export enum SichtfreigabeType {
     JA = 'ja',
     NEIN = 'nein',
 }
 
-export class AllPersonsQueryParam {
+export class PersonenQueryParam {
     @AutoMap()
     @IsOptional()
     @IsString()
@@ -43,14 +43,14 @@ export class AllPersonsQueryParam {
     // this property would be needed for person context.
     /* @AutoMap()
     @IsOptional()
-    @IsEnum(VisibilityType)
+    @IsEnum(SichtfreigabeType)
     @Expose({ name: 'sichtfreigabe' })
     @ApiProperty({
         name: 'sichtfreigabe',
-        enum: VisibilityType,
-        default: VisibilityType.NEIN,
+        enum: SichtfreigabeType,
+        default: SichtfreigabeType.NEIN,
         required: false,
         nullable: true,
     })
-    public readonly sichtfreigabe: VisibilityType = VisibilityType.NEIN;*/
+    public readonly sichtfreigabe: SichtfreigabeType = SichtfreigabeType.NEIN;*/
 }

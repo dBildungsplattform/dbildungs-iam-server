@@ -41,6 +41,12 @@ export class PersonResponse {
     @AutoMap()
     @IsOptional()
     @IsString()
+    @ApiProperty({ name: 'stammorganisation', required: false })
+    public readonly stammorganisation?: string;
+
+    @AutoMap()
+    @IsOptional()
+    @IsString()
     @ApiProperty({ name: 'geschlecht', required: true })
     public geschlecht!: string;
 

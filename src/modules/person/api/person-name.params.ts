@@ -51,7 +51,14 @@ export class PersonNameParams {
 
     @AutoMap()
     @IsOptional()
+    @IsArray()
+    @ApiProperty( { name: 'namenspraefix'   })
+    public readonly namenspraefix?: string[];
+
+    @AutoMap()
+    @IsOptional()
     @IsString()
     @ApiProperty({ name: 'sortierindex', required: false })
     public readonly sortierindex?: string;
+
 }
