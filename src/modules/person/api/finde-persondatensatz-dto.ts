@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 
-export class FindePersondatensatzDTO {
+export class FindePersonDatensatzDTO {
     @AutoMap()
     public referrer?: string;
 

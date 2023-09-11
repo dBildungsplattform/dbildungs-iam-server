@@ -4,7 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ValidateNested } from 'class-validator';
 import { PersonResponse } from './person.response.js';
 
-export class Personendatensatz {
+export class PersonenDatensatz {
     @AutoMap(() => PersonResponse)
     @ValidateNested()
     @Type(() => PersonResponse)

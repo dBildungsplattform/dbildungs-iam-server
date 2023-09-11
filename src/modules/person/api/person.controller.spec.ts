@@ -12,7 +12,7 @@ import { HttpException } from '@nestjs/common';
 import { PersonenQueryParam } from './personen-query.param.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { TrustLevel } from '../domain/person.enums.js';
-import { Personendatensatz } from './personendatensatz.js';
+import { PersonenDatensatz } from './personendatensatz.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -96,7 +96,7 @@ describe('PersonController', () => {
                 lokalisierung: faker.location.country(),
                 vertrauensstufe: TrustLevel.TRUSTED,
             };
-            const persondatensatz: Personendatensatz = {
+            const persondatensatz: PersonenDatensatz = {
                 person: personResponse,
             };
             personUcMock.findPersonById.mockResolvedValue(persondatensatz);
@@ -157,15 +157,15 @@ describe('PersonController', () => {
                 vertrauensstufe: TrustLevel.TRUSTED,
             };
 
-            const mockPersondatensatz1: Personendatensatz = {
+            const mockPersondatensatz1: PersonenDatensatz = {
                 person: person1,
             };
-            const mockPersondatensatz2: Personendatensatz = {
+            const mockPersondatensatz2: PersonenDatensatz = {
                 person: person2,
             };
-            const mockPersondatensatz: Personendatensatz[] = [mockPersondatensatz1, mockPersondatensatz2];
+            const mockPersondatensatz: PersonenDatensatz[] = [mockPersondatensatz1, mockPersondatensatz2];
             personUcMock.findAll.mockResolvedValue(mockPersondatensatz);
-            const result: Personendatensatz[] = await personController.findPersons(queryParams);
+            const result: PersonenDatensatz[] = await personController.findPersons(queryParams);
             expect(personUcMock.findAll).toHaveBeenCalledTimes(1);
             expect(result.at(0)?.person.referrer).toEqual(queryParams.referrer);
             expect(result.at(0)?.person.name.vorname).toEqual(queryParams.vorname);

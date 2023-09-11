@@ -4,8 +4,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonDo } from '../domain/person.do.js';
-import { FindePersondatensatzDTO } from './finde-persondatensatz-dto.js';
-import { Personendatensatz } from './personendatensatz.js';
+import { FindePersonDatensatzDTO } from './finde-persondatensatz-dto.js';
+import { PersonenDatensatz } from './personendatensatz.js';
 
 @Injectable()
 export class PersonUc {
@@ -23,21 +23,21 @@ export class PersonUc {
         throw result.error;
     }
 
-    public async findPersonById(id: string): Promise<Personendatensatz> {
+    public async findPersonById(id: string): Promise<PersonenDatensatz> {
         const result: Result<PersonDo<true>> = await this.personService.findPersonById(id);
         if (result.ok) {
-            const person: Personendatensatz = this.mapper.map(result.value, PersonDo, Personendatensatz);
+            const person: PersonenDatensatz = this.mapper.map(result.value, PersonDo, PersonenDatensatz);
             return person;
         }
         throw result.error;
     }
 
-    public async findAll(personDto: FindePersondatensatzDTO): Promise<Personendatensatz[]> {
-        const personDo: PersonDo<false> = this.mapper.map(personDto, FindePersondatensatzDTO, PersonDo);
+    public async findAll(personDto: FindePersonDatensatzDTO): Promise<PersonenDatensatz[]> {
+        const personDo: PersonDo<false> = this.mapper.map(personDto, FindePersonDatensatzDTO, PersonDo);
         const result: PersonDo<true>[] = await this.personService.findAllPersons(personDo);
         if (result.length !== 0) {
-            const persons: Personendatensatz[] = result.map((person: PersonDo<true>) =>
-                this.mapper.map(person, PersonDo, Personendatensatz),
+            const persons: PersonenDatensatz[] = result.map((person: PersonDo<true>) =>
+                this.mapper.map(person, PersonDo, PersonenDatensatz),
             );
             return persons;
         }
