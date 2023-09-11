@@ -1,0 +1,14 @@
+{{if .Values.enableServiceMonitor}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{.Release.Name}}-servicemonitor
+spec:
+  namespaceSelector:
+    any: true
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dbildungs-iam
+  endpoints:
+    - port: web
+  {{end}}

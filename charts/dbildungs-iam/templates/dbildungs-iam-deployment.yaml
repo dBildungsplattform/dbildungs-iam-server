@@ -1,24 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  namespace: {{.Values.namespace}}
   name: {{ .Release.Name }}-deployment
   labels:
-    app: dbildungs-iam
+    app.kubernetes.io/name: dbildungs-iam
 spec:
   replicas: {{.Values.dbildungsIamReplications}}
   selector:
     matchLabels:
-      app: dbildungs-iam
+      app.kubernetes.io/name: dbildungs-iam
   template:
     metadata:
       name: dbildungs-iam
       labels:
-        app: dbildungs-iam
+        app.kubernetes.io/name: dbildungs-iam
     spec:
       containers:
         - name: dbildungs-iam
           image: {{.Values.dbildungsIamContainer}}
           imagePullPolicy: IfNotPresent
+          ports:
+             - name: web
+               containerPort: 8080
           env:
             - name: NODE_ENV
               value: {{.Values.environment}}
