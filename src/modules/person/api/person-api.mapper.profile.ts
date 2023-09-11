@@ -143,6 +143,10 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     mapFrom((src: PersonDo<true>) => src.client),
                 ),
                 forMember(
+                    (dest: Personendatensatz) => dest.person.referrer,
+                    mapFrom((src: PersonDo<true>) => src.referrer),
+                ),
+                forMember(
                     (dest: Personendatensatz) => dest.person.name.vorname,
                     mapFrom((src: PersonDo<true>) => src.firstName),
                 ),
