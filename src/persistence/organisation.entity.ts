@@ -1,5 +1,5 @@
-import { SchoolStructureNodeEntity } from './school-structure-node.entity.js';
+import { SchulstrukturknotenEntity } from './schulstrukturknoten.entity.js';
 import { Entity } from '@mikro-orm/core';
 
 @Entity({ discriminatorColumn: 'nodeType', discriminatorValue: 'organisation' })
-export class OrganisationEntity extends SchoolStructureNodeEntity {}
+export class OrganisationEntity extends SchulstrukturknotenEntity {}

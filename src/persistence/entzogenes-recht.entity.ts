@@ -1,10 +1,10 @@
 import { TimestampedEntity } from './timestamped.entity.js';
 import { Entity, ManyToOne, Property } from '@mikro-orm/core';
 import { PersonEntity } from '../modules/person/persistence/person.entity.js';
-import { RolePermissionEntity } from './role-permission.entity.js';
+import { RolleRechtEntity } from './rolle-recht.entity.js';
 
-@Entity({ tableName: 'excluded_permission' })
-export class ExcludedPermissionEntity extends TimestampedEntity<ExcludedPermissionEntity, 'id'> {
+@Entity({ tableName: 'entzogenes_recht' })
+export class EntzogenesRechtEntity extends TimestampedEntity<EntzogenesRechtEntity, 'id'> {
     public constructor() {
         super();
     }
@@ -16,5 +16,5 @@ export class ExcludedPermissionEntity extends TimestampedEntity<ExcludedPermissi
     public person!: PersonEntity;
 
     @ManyToOne()
-    public permission!: RolePermissionEntity;
+    public permission!: RolleRechtEntity;
 }
