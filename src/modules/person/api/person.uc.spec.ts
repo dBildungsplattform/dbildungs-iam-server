@@ -6,7 +6,7 @@ import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonUc } from './person.uc.js';
-import { FindePersonDatensatzDTO } from './finde-persondatensatz-dto.js';
+import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
 import { faker } from '@faker-js/faker';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenDatensatz } from './personendatensatz.js';
@@ -93,7 +93,7 @@ describe('PersonUc', () => {
     });
 
     describe('findAll', () => {
-        const personDTO: FindePersonDatensatzDTO = {
+        const personDTO: FindPersonDatensatzDTO = {
             referrer: '',
             familienname: '',
             vorname: '',

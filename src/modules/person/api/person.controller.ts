@@ -15,7 +15,7 @@ import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonenQueryParam } from './personen-query.param.js';
-import { FindePersonDatensatzDTO } from './finde-persondatensatz-dto.js';
+import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
 import { PersonenDatensatz } from './personendatensatz.js';
 
 @ApiTags('person')
@@ -56,10 +56,10 @@ export class PersonController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
     public async findPersons(@Query() queryParams: PersonenQueryParam): Promise<PersonenDatensatz[]> {
-        const persondatensatzDTO: FindePersonDatensatzDTO = this.mapper.map(
+        const persondatensatzDTO: FindPersonDatensatzDTO = this.mapper.map(
             queryParams,
             PersonenQueryParam,
-            FindePersonDatensatzDTO,
+            FindPersonDatensatzDTO,
         );
         const persons: PersonenDatensatz[] = await this.uc.findAll(persondatensatzDTO);
         return persons;

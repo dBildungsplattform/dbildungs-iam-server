@@ -16,7 +16,7 @@ import { Gender, TrustLevel } from '../domain/person.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
 import { PersonenQueryParam, SichtfreigabeType } from './personen-query.param.js';
-import { FindePersonDatensatzDTO } from './finde-persondatensatz-dto.js';
+import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
 import { PersonenDatensatz } from './personendatensatz.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
@@ -210,35 +210,35 @@ export class PersonApiMapperProfile extends AutomapperProfile {
             createMap(
                 mapper,
                 PersonenQueryParam,
-                FindePersonDatensatzDTO,
+                FindPersonDatensatzDTO,
                 forMember(
-                    (dest: FindePersonDatensatzDTO) => dest.vorname,
+                    (dest: FindPersonDatensatzDTO) => dest.vorname,
                     mapFrom((src: PersonenQueryParam) => src.vorname),
                 ),
                 forMember(
-                    (dest: FindePersonDatensatzDTO) => dest.familienname,
+                    (dest: FindPersonDatensatzDTO) => dest.familienname,
                     mapFrom((src: PersonenQueryParam) => src.familienname),
                 ),
                 forMember(
-                    (dest: FindePersonDatensatzDTO) => dest.referrer,
+                    (dest: FindPersonDatensatzDTO) => dest.referrer,
                     mapFrom((src: PersonenQueryParam) => src.referrer),
                 ),
             );
             createMap(
                 mapper,
-                FindePersonDatensatzDTO,
+                FindPersonDatensatzDTO,
                 PersonDo<false>,
                 forMember(
                     (dest: PersonDo<false>) => dest.lastName,
-                    mapFrom((src: FindePersonDatensatzDTO) => src.familienname),
+                    mapFrom((src: FindPersonDatensatzDTO) => src.familienname),
                 ),
                 forMember(
                     (dest: PersonDo<false>) => dest.firstName,
-                    mapFrom((src: FindePersonDatensatzDTO) => src.vorname),
+                    mapFrom((src: FindPersonDatensatzDTO) => src.vorname),
                 ),
                 forMember(
                     (dest: PersonDo<false>) => dest.referrer,
-                    mapFrom((src: FindePersonDatensatzDTO) => src.referrer),
+                    mapFrom((src: FindPersonDatensatzDTO) => src.referrer),
                 ),
                 forMember((dest: PersonDo<false>) => dest.id, ignore()),
                 forMember((dest: PersonDo<false>) => dest.createdAt, ignore()),

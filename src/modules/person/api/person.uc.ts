@@ -4,7 +4,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonDo } from '../domain/person.do.js';
-import { FindePersonDatensatzDTO } from './finde-persondatensatz-dto.js';
+import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
 import { PersonenDatensatz } from './personendatensatz.js';
 
 @Injectable()
@@ -32,8 +32,8 @@ export class PersonUc {
         throw result.error;
     }
 
-    public async findAll(personDto: FindePersonDatensatzDTO): Promise<PersonenDatensatz[]> {
-        const personDo: PersonDo<false> = this.mapper.map(personDto, FindePersonDatensatzDTO, PersonDo);
+    public async findAll(personDto: FindPersonDatensatzDTO): Promise<PersonenDatensatz[]> {
+        const personDo: PersonDo<false> = this.mapper.map(personDto, FindPersonDatensatzDTO, PersonDo);
         const result: PersonDo<true>[] = await this.personService.findAllPersons(personDo);
         if (result.length !== 0) {
             const persons: PersonenDatensatz[] = result.map((person: PersonDo<true>) =>
