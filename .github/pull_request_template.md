@@ -32,22 +32,23 @@ Base links to copy
   Notice about:
   - model changes
   - logging of user data
-  - right changes
-  - and other user data stuff
+  - permission changes
+  - and other sensitive user related data
   If you are not sure if it is relevant, take a look at confluence or ask the data-security team.
 -->
 
 ## Deployment
 <!--
   - Keep in mind to change seed data, if changes are done on migration scripts.
-  - What is required for deployment after changes on infrastructure
-  - Explain Environment variables like FEATURE_XY=true
+  - Mention what is required for deployment after changes on infrastructure and inform SRE about it
+  - Explain changes on the config schema, which need to be addressed regarding the impact on helm charts 
   - Mention Migration scripts to run, or other requirements
 -->
 
 ## New Repos, NPM pakages or vendor scripts
 <!--
   Keep in mind the stability, performance, activity and author.
+  Check licenses and have it cleared.
 
   Describe why it is needed.
 -->
