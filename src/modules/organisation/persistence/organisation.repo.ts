@@ -1,0 +1,38 @@
+import { Mapper } from '@automapper/core';
+import { getMapperToken } from '@automapper/nestjs';
+import { EntityManager } from '@mikro-orm/postgresql';
+import { Inject, Injectable } from '@nestjs/common';
+import { OrganisationDo } from '../domain/organisation.do.js';
+import { OrganisationEntity } from './organisation.entity.js';
+import { Loaded } from '@mikro-orm/core';
+
+@Injectable()
+export class OrganisationRepo {
+    public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
+
+    public async create(organisationDo: OrganisationDo<false>): Promise<OrganisationDo<true>> {
+        const organisation: OrganisationEntity = this.mapper.map(organisationDo, OrganisationDo, OrganisationEntity);
+        await this.em.persistAndFlush(organisation);
+        return this.mapper.map(organisation, OrganisationEntity, OrganisationDo);
+    }
+
+    public async save(organisationDo: OrganisationDo<boolean>): Promise<OrganisationDo<true>> {
+        if (organisationDo.id) {
+            return this.update(organisationDo);
+        }
+        return this.create(organisationDo);
+    }
+
+    public async update(organisationDo: OrganisationDo<true>): Promise<OrganisationDo<true>> {
+        let organisation: Option<Loaded<OrganisationEntity, never>> = await this.em.findOne(OrganisationEntity, {
+            id: organisationDo.id
+        });
+        if (organisation) {
+            organisation.assign(this.mapper.map(organisationDo, OrganisationDo, OrganisationEntity));
+        } else {
+            organisation = this.mapper.map(organisationDo, OrganisationDo, OrganisationEntity);
+        }
+        await this.em.persistAndFlush(organisation);
+        return this.mapper.map(organisation, OrganisationEntity, OrganisationDo);
+    }
+}
