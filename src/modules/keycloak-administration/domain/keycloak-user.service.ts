@@ -17,7 +17,7 @@ export class KeycloakUserService {
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
-    public async create(user: UserDo<false>): Promise<Result<string, DomainError>> {
+    public async create(user: UserDo<false>, password?: string): Promise<Result<string, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
 
@@ -26,13 +26,19 @@ export class KeycloakUserService {
         }
 
         try {
-            const response: { id: string } = await kcAdminClientResult.value.users.create({
+            const userRepresentation: UserRepresentation = {
                 username: user.username,
                 email: user.email,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 enabled: true,
-            });
+            };
+
+            if (password) {
+                userRepresentation.credentials = [{ type: 'password', value: password, temporary: false }];
+            }
+
+            const response: { id: string } = await kcAdminClientResult.value.users.create(userRepresentation);
 
             return { ok: true, value: response.id };
         } catch (err) {
