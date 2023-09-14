@@ -134,3 +134,6 @@ dist
 
 # VSCode user settings
 .vscode/settings.json
+
+# Secrets, this file is normally being injected by the build process
+config/secrets.json
