@@ -16,5 +16,4 @@ export class CreateOrganisationDto {
 
     @AutoMap()
     public readonly typ!: OrganisationsTyp;
-
 }

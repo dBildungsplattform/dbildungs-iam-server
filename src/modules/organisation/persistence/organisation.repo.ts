@@ -25,7 +25,7 @@ export class OrganisationRepo {
 
     public async update(organisationDo: OrganisationDo<true>): Promise<OrganisationDo<true>> {
         let organisation: Option<Loaded<OrganisationEntity, never>> = await this.em.findOne(OrganisationEntity, {
-            id: organisationDo.id
+            id: organisationDo.id,
         });
         if (organisation) {
             organisation.assign(this.mapper.map(organisationDo, OrganisationDo, OrganisationEntity));
