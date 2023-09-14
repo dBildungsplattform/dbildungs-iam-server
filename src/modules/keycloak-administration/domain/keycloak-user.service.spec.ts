@@ -8,6 +8,7 @@ import { KeycloakAdministrationService } from './keycloak-admin-client.service.j
 import { UserMapperProfile } from './keycloak-client/user.mapper.profile.js';
 import { KeycloakUserService } from './keycloak-user.service.js';
 import { UserDo } from './user.do.js';
+import { faker } from '@faker-js/faker';
 
 describe('KeycloakUserService', () => {
     let module: TestingModule;
@@ -69,6 +70,35 @@ describe('KeycloakUserService', () => {
                 expect(res).toStrictEqual<Result<string>>({
                     ok: true,
                     value: user.id,
+                });
+            });
+        });
+
+        describe('when user is created with password', () => {
+            it('should call KeycloakAdminClient.users.create with correct props', async () => {
+                const user: UserDo<true> = DoFactory.createUser(true);
+                const password: string = faker.internet.password();
+                kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
+
+                await service.create(
+                    {
+                        id: undefined,
+                        createdDate: undefined,
+                        email: user.email,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        username: user.username,
+                    },
+                    password,
+                );
+
+                expect(kcUsersMock.create).toHaveBeenCalledWith({
+                    username: user.username,
+                    email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    enabled: true,
+                    credentials: [{ type: 'password', value: password, temporary: false }],
                 });
             });
         });
