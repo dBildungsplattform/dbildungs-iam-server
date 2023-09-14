@@ -12,7 +12,7 @@ export class OrganisationUc {
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
-    public async createOrganisation(organisationDto: CreateOrganisationDto): Promise<void> {
+    public async createOrganisation(organisationDto: CreateOrganisationDto): Promise<CreateOrganisationDto> {
         const organisationDo: OrganisationDo<false> = this.mapper.map(
             organisationDto,
             CreateOrganisationDto,
@@ -20,7 +20,7 @@ export class OrganisationUc {
         );
         const result: Result<OrganisationDo<true>> = await this.organisationService.createOrganisation(organisationDo);
         if (result.ok) {
-            return;
+            return this.mapper.map(result.value, OrganisationDo, CreateOrganisationDto);
         }
         throw result.error;
     }

@@ -1,4 +1,4 @@
-import { Mapper, MappingProfile, createMap } from '@automapper/core';
+import { Mapper, MappingProfile, createMap, forMember, mapFrom } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganisationDo } from '../domain/organisation.do.js';
@@ -13,7 +13,15 @@ export class OrganisationPersistenceMapperProfile extends AutomapperProfile {
     public override get profile(): MappingProfile {
         return (mapper: Mapper) => {
             createMap(mapper, OrganisationDo, OrganisationEntity);
-            createMap(mapper, OrganisationEntity, OrganisationDo);
+            createMap(
+                mapper,
+                OrganisationEntity,
+                OrganisationDo,
+                forMember(
+                    (dest: OrganisationDo<true>) => dest.id,
+                    mapFrom((src: OrganisationEntity) => src.id),
+                ),
+            );
         };
     }
 }

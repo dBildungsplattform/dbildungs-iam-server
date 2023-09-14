@@ -1,8 +1,7 @@
 import { AutoMap } from '@automapper/classes';
 import { OrganisationsTyp } from '../domain/organisation.enum.js';
 
-export class CreateOrganisationDto {
-
+export class OrganisationResponse {
     @AutoMap()
     public readonly id!: string;
 

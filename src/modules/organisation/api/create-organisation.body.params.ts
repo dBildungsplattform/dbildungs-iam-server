@@ -1,36 +1,31 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsString } from 'class-validator';
 import { OrganisationsTyp } from '../domain/organisation.enum.js';
 
 export class CreateOrganisationBodyParams {
     @AutoMap()
-    @IsOptional()
     @IsString()
-    @ApiProperty({ required: false })
+    @ApiProperty({ required: true })
     public readonly kennung!: string;
 
     @AutoMap()
-    @IsOptional()
     @IsString()
-    @ApiProperty({ required: false })
+    @ApiProperty({ required: true })
     public readonly name!: string;
 
     @AutoMap()
-    @IsOptional()
     @IsString()
-    @ApiProperty({ required: false })
+    @ApiProperty({ required: true })
     public readonly namensergaenzung!: string;
 
     @AutoMap()
-    @IsOptional()
     @IsString()
-    @ApiProperty({ required: false })
+    @ApiProperty({ required: true })
     public readonly kuerzel!: string;
 
     @AutoMap()
-    @IsOptional()
     @IsEnum(OrganisationsTyp)
-    @ApiProperty({ name: 'type der organisation', enum: OrganisationsTyp, required: false })
+    @ApiProperty({ name: 'type der organisation', enum: OrganisationsTyp, required: true })
     public readonly typ!: OrganisationsTyp;
 }

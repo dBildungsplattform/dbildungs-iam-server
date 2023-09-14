@@ -12,6 +12,7 @@ import {
 } from '@nestjs/swagger';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
 import { CreateOrganisationDto } from './create-organisation.dto.js';
+import { OrganisationResponse } from './organisatuin.response.js';
 
 @ApiTags('organisation')
 @Controller({ path: 'organisation' })
@@ -27,12 +28,13 @@ export class OrganisationController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
-    public async createOrganisation(@Body() params: CreateOrganisationBodyParams): Promise<void> {
+    public async createOrganisation(@Body() params: CreateOrganisationBodyParams): Promise<OrganisationResponse> {
         const organisationDto: CreateOrganisationDto = this.mapper.map(
             params,
             CreateOrganisationBodyParams,
             CreateOrganisationDto,
         );
-        await this.uc.createOrganisation(organisationDto);
+        const createdOrganisation: CreateOrganisationDto = await this.uc.createOrganisation(organisationDto);
+        return this.mapper.map(createdOrganisation, CreateOrganisationDto, OrganisationResponse);
     }
 }
