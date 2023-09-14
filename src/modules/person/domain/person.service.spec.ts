@@ -1,7 +1,7 @@
 import { Dictionary, Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityNotFoundError, PersonAlreadyExistsError } from '../../../shared/error/index.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';

@@ -94,9 +94,7 @@ export class PersonEntity extends TimestampedEntity<PersonEntity, 'id'> {
     public sourceNotifications: Collection<BenachrichtigungEntity> = new Collection<BenachrichtigungEntity>(this);
 
     @OneToMany(() => BenachrichtigungEntity, (n: BenachrichtigungEntity) => n.target)
-    public targetNotifications: Collection<BenachrichtigungEntity, object> = new Collection<BenachrichtigungEntity>(
-        this,
-    );
+    public targetNotifications: Collection<BenachrichtigungEntity> = new Collection<BenachrichtigungEntity>(this);
 
     @ManyToOne({ nullable: true })
     public dataProvider?: DataProviderEntity;
