@@ -11,5 +11,5 @@ export class DbConfig {
 
     @IsString()
     @IsNotEmpty()
-    public readonly SECRET?: string;
+    public readonly SECRET!: string;
 }
