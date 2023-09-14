@@ -27,10 +27,8 @@ export class KeycloakUserService {
 
         try {
             const userRepresentation: UserRepresentation = {
-                username: user.username,
+                username: user.email,
                 email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
                 enabled: true,
             };
 

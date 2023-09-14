@@ -34,9 +34,6 @@ describe('UserMapperProfile', () => {
         it('should map UserRepresentationDto to UserDo', () => {
             const userRepr: UserRepresentationDto = {
                 id: faker.string.uuid(),
-                username: faker.internet.userName(),
-                firstName: faker.person.firstName(),
-                lastName: faker.person.lastName(),
                 email: faker.internet.email(),
                 createdTimestamp: faker.date.recent().getTime(),
             };

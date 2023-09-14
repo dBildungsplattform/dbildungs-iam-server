@@ -26,9 +26,6 @@ export class DoFactory {
             id: withId ? faker.string.uuid() : undefined,
             createdDate: withId ? faker.date.past() : undefined,
             email: faker.internet.email(),
-            lastName: faker.person.lastName(),
-            firstName: faker.person.firstName(),
-            username: faker.internet.userName(),
         };
 
         return Object.assign(new UserDo<WasPersisted>(), user, props);

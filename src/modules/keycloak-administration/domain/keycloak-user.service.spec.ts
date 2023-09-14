@@ -62,9 +62,6 @@ describe('KeycloakUserService', () => {
                     id: undefined,
                     createdDate: undefined,
                     email: user.email,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    username: user.username,
                 });
 
                 expect(res).toStrictEqual<Result<string>>({
@@ -85,18 +82,13 @@ describe('KeycloakUserService', () => {
                         id: undefined,
                         createdDate: undefined,
                         email: user.email,
-                        firstName: user.firstName,
-                        lastName: user.lastName,
-                        username: user.username,
                     },
                     password,
                 );
 
                 expect(kcUsersMock.create).toHaveBeenCalledWith({
-                    username: user.username,
+                    username: user.email,
                     email: user.email,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
                     enabled: true,
                     credentials: [{ type: 'password', value: password, temporary: false }],
                 });
@@ -136,13 +128,11 @@ describe('KeycloakUserService', () => {
 
     describe('findById', () => {
         describe('when user exists', () => {
-            it('should result with UserDo', async () => {
+            it('should return result with UserDo', async () => {
                 const user: UserDo<true> = DoFactory.createUser(true);
                 kcUsersMock.findOne.mockResolvedValueOnce({
                     email: user.email,
-                    username: user.username,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
+                    username: user.email,
                     id: user.id,
                     createdTimestamp: user.createdDate.getTime(),
                 });
