@@ -22,7 +22,7 @@ jobs:
         with:
           fileName: 'secrets.json'
           fileDir: './config/'
-          encodedString: ewogICAgIkRCIjogewogICAgICAgICJTRUNSRVQiOiAiVmVyeSBoaWRkZW4gc2VjcmV0IgogICAgfQp9
+          encodedString: ewogICAgIkRCIjogewogICAgICAgICJTRUNSRVQiOiAiVmVyeSBoaWRkZW4gc2VjcmV0IgogICAgfSwKICAgICJLRVlDTE9BSyI6IHsKICAgICAgICAiUEFTU1dPUkQiOiAiQWRtaW5QYXNzd29yZCIKICAgIH0KfQ==
       - name: Setup node
         uses: actions/setup-node@v3
         with:
