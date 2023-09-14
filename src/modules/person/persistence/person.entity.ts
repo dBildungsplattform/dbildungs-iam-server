@@ -98,6 +98,6 @@ export class PersonEntity extends TimestampedEntity<PersonEntity, 'id'> {
         this,
     );
 
-    @ManyToOne({nullable: true})
+    @ManyToOne({ nullable: true })
     public dataProvider?: DataProviderEntity;
 }
