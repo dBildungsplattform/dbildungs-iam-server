@@ -47,7 +47,11 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 
 ## Developer Guides
 
-* Code conventions are enforced through the compile, eslint and prettier
+* Code conventions are enforced through the compile, eslint and prettier as far as possible
+    * Non enforcable conventions will be documented here. If they become enforcable we will put them into
+      automation.
+    * Table names will be all lowercase if the name contains multiple words they will be separated by
+        underscores.
 * Git conventions can be found [here](./docs/git.md)
 * Test conventions can be found [here](./docs/tests.md)
 * Configuration conventions can be found [here](./docs/config.md)
