@@ -1,8 +1,7 @@
 import { AutoMap } from '@automapper/classes';
-import { ArrayType, Collection, DateTimeType, Entity, Enum, ManyToOne, OneToMany, Property } from '@mikro-orm/core';
+import { ArrayType, DateTimeType, Entity, Enum, ManyToOne, Property } from '@mikro-orm/core';
 import { Gender, TrustLevel } from '../domain/person.enums.js';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { BenachrichtigungEntity } from '../../../persistence/benachrichtigung.entity.js';
 import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
 
 @Entity({ tableName: 'person' })
@@ -93,12 +92,6 @@ export class PersonEntity extends TimestampedEntity<PersonEntity, 'id'> {
     @AutoMap()
     @Property({ nullable: true })
     public isInformationBlocked?: boolean;
-
-    @OneToMany(() => BenachrichtigungEntity, (n: BenachrichtigungEntity) => n.source)
-    public sourceNotifications: Collection<BenachrichtigungEntity> = new Collection<BenachrichtigungEntity>(this);
-
-    @OneToMany(() => BenachrichtigungEntity, (n: BenachrichtigungEntity) => n.target)
-    public targetNotifications: Collection<BenachrichtigungEntity> = new Collection<BenachrichtigungEntity>(this);
 
     @ManyToOne({ nullable: true })
     public dataProvider?: DataProviderEntity;
