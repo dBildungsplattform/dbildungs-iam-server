@@ -25,6 +25,7 @@ export class DoFactory {
         const user: UserDo<false> = {
             id: withId ? faker.string.uuid() : undefined,
             createdDate: withId ? faker.date.past() : undefined,
+            username: faker.internet.userName(),
             email: faker.internet.email(),
         };
 

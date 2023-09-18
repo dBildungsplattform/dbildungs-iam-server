@@ -1,14 +1,14 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
+import { KeycloakAdminClient, UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
 
+import { faker } from '@faker-js/faker';
 import { ConfigTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { UserMapperProfile } from './keycloak-client/user.mapper.profile.js';
-import { KeycloakUserService } from './keycloak-user.service.js';
+import { KeycloakUserService, type FindUserFilter } from './keycloak-user.service.js';
 import { UserDo } from './user.do.js';
-import { faker } from '@faker-js/faker';
 
 describe('KeycloakUserService', () => {
     let module: TestingModule;
@@ -61,6 +61,7 @@ describe('KeycloakUserService', () => {
                 const res: Result<string> = await service.create({
                     id: undefined,
                     createdDate: undefined,
+                    username: user.username,
                     email: user.email,
                 });
 
@@ -81,16 +82,43 @@ describe('KeycloakUserService', () => {
                     {
                         id: undefined,
                         createdDate: undefined,
+                        username: user.username,
                         email: user.email,
                     },
                     password,
                 );
 
                 expect(kcUsersMock.create).toHaveBeenCalledWith({
-                    username: user.email,
+                    username: user.username,
                     email: user.email,
                     enabled: true,
                     credentials: [{ type: 'password', value: password, temporary: false }],
+                });
+            });
+        });
+
+        describe('when username and email already exists', () => {
+            it('should return error result', async () => {
+                const user: UserDo<true> = DoFactory.createUser(true);
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: user.username,
+                        email: user.email,
+                        id: user.id,
+                        createdTimestamp: user.createdDate.getTime(),
+                    },
+                ] as unknown as UserRepresentation[]);
+
+                const res: Result<string> = await service.create({
+                    id: undefined,
+                    createdDate: undefined,
+                    username: user.username,
+                    email: user.email,
+                });
+
+                expect(res).toStrictEqual<Result<string>>({
+                    ok: false,
+                    error: new KeycloakClientError('Username or email already exists'),
                 });
             });
         });
@@ -131,11 +159,11 @@ describe('KeycloakUserService', () => {
             it('should return result with UserDo', async () => {
                 const user: UserDo<true> = DoFactory.createUser(true);
                 kcUsersMock.findOne.mockResolvedValueOnce({
+                    username: user.username,
                     email: user.email,
-                    username: user.email,
                     id: user.id,
                     createdTimestamp: user.createdDate.getTime(),
-                });
+                } as unknown as UserRepresentation);
 
                 const res: Result<UserDo<true>> = await service.findById(user.id);
 
@@ -185,7 +213,7 @@ describe('KeycloakUserService', () => {
 
                 expect(res).toStrictEqual<Result<UserDo<true>>>({
                     ok: false,
-                    error: new KeycloakClientError('Could not retrieve user'),
+                    error: new KeycloakClientError('Keycloak request failed'),
                 });
             });
         });
@@ -201,7 +229,86 @@ describe('KeycloakUserService', () => {
 
                 expect(res).toStrictEqual<Result<UserDo<true>>>({
                     ok: false,
-                    error: new KeycloakClientError('Keycloak response for findOne is invalid'),
+                    error: new KeycloakClientError('Response is invalid'),
+                });
+            });
+        });
+    });
+
+    describe('findOne', () => {
+        describe('when user exists', () => {
+            it('should return result with UserDo', async () => {
+                const user: UserDo<true> = DoFactory.createUser(true);
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: user.username,
+                        email: user.email,
+                        id: user.id,
+                        createdTimestamp: user.createdDate.getTime(),
+                    },
+                ] as unknown as UserRepresentation[]);
+
+                const res: Result<UserDo<true>> = await service.findOne({
+                    username: user.username,
+                    email: user.email,
+                } as unknown as FindUserFilter);
+
+                expect(res).toStrictEqual<Result<UserDo<true>>>({
+                    ok: true,
+                    value: user,
+                });
+            });
+        });
+
+        describe('when user does not exist', () => {
+            it('should return error result', async () => {
+                const user: UserDo<true> = DoFactory.createUser(true);
+                kcUsersMock.find.mockResolvedValueOnce([]);
+
+                const res: Result<UserDo<true>> = await service.findOne({
+                    username: user.username,
+                    email: user.email,
+                } as unknown as FindUserFilter);
+
+                expect(res).toStrictEqual<Result<UserDo<true>>>({
+                    ok: false,
+                    error: new EntityNotFoundError('Keycloak User could not be found'),
+                });
+            });
+        });
+
+        describe('when getAuthedKcAdminClient fails', () => {
+            it('should pass along error result', async () => {
+                const error: Result<KeycloakAdminClient, DomainError> = {
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                };
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
+                const user: UserDo<true> = DoFactory.createUser(true);
+
+                const res: Result<UserDo<true>> = await service.findOne({
+                    username: user.username,
+                    email: user.email,
+                } as unknown as FindUserFilter);
+
+                expect(res).toBe(error);
+            });
+        });
+
+        describe('when KeycloakAdminClient throws', () => {
+            it('should return error result', async () => {
+                kcUsersMock.find.mockRejectedValueOnce(new Error());
+                const user: UserDo<true> = DoFactory.createUser(true);
+
+                const res: Result<UserDo<true>> = await service.findOne({
+                    username: user.username,
+                    email: user.email,
+                } as unknown as FindUserFilter);
+
+                expect(res).toStrictEqual<Result<UserDo<true>>>({
+                    ok: false,
+                    error: new KeycloakClientError('Keycloak request failed'),
                 });
             });
         });

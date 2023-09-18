@@ -4,6 +4,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { UserDo } from '../user.do.js';
 import { UserRepresentationDto } from './user-representation.dto.js';
+import { CreateUserRepresentationDto } from './create-user-representation.dto.js';
 
 @Injectable()
 export class UserMapperProfile extends AutomapperProfile {
@@ -22,10 +23,15 @@ export class UserMapperProfile extends AutomapperProfile {
                     mapFrom((src: UserRepresentationDto) => src.id),
                 ),
                 forMember(
+                    (dest: UserDo<boolean>) => dest.email,
+                    mapFrom((src: UserRepresentationDto) => src.email),
+                ),
+                forMember(
                     (dest: UserDo<boolean>) => dest.createdDate,
                     mapFrom((src: UserRepresentationDto) => new Date(src.createdTimestamp)),
                 ),
             );
+            createMap(mapper, UserDo, CreateUserRepresentationDto);
         };
     }
 }

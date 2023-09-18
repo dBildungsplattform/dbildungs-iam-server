@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UserRepresentationDto {
     @AutoMap()
@@ -10,7 +10,12 @@ export class UserRepresentationDto {
     @AutoMap()
     @IsString()
     @IsNotEmpty()
-    public email!: string;
+    public username!: string;
+
+    @AutoMap()
+    @IsOptional()
+    @IsEmail()
+    public email?: string;
 
     @AutoMap()
     @IsNumber()

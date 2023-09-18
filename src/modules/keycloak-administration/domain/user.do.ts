@@ -5,7 +5,10 @@ export class UserDo<WasPersisted extends boolean> {
     public id!: Persisted<string, WasPersisted>;
 
     @AutoMap()
-    public email!: string;
+    public username!: string;
+
+    @AutoMap()
+    public email?: string | undefined;
 
     @AutoMap()
     public createdDate!: Persisted<Date, WasPersisted>;
