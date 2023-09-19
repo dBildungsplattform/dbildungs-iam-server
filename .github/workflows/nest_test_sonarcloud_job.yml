@@ -33,8 +33,8 @@ jobs:
         run: npm run test:ci
       - name: Save test artifacts
         run: |
-            mkdir -p coverage
-            mv ./coverage artifacts
+          mkdir -p coverage
+          mv ./coverage artifacts
       - name: Upload test artifacts
         uses: actions/upload-artifact@v3
         with:
