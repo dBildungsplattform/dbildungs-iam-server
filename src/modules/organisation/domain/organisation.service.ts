@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OrganisationRepo } from '../persistence/organisation.repo.js';
-import { DomainError, IdWasSentWithPayload } from '../../../shared/error/index.js';
+import { DomainError, IdIncludedWithPayload } from '../../../shared/error/index.js';
 import { OrganisationDo } from './organisation.do.js';
 
 @Injectable()
@@ -13,7 +13,7 @@ export class OrganisationService {
         if (organisationDo.id) {
             return {
                 ok: false,
-                error: new IdWasSentWithPayload(
+                error: new IdIncludedWithPayload(
                     `zu erstellende Organisation darf keien ID ${organisationDo.id} in der Payload haben`,
                 ),
             };
