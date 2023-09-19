@@ -1,5 +1,5 @@
 import { TimestampedEntity } from './timestamped.entity.js';
-import { Entity, OneToOne } from '@mikro-orm/core';
+import { Entity, OneToOne, Property } from '@mikro-orm/core';
 
 @Entity({
     tableName: 'schulstrukturknoten',
@@ -16,5 +16,6 @@ export abstract class SchulstrukturknotenEntity extends TimestampedEntity<Schuls
     /**
      * Points to DataProvider
      */
+    @Property()
     public dataProvider?: string;
 }
