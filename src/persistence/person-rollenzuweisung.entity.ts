@@ -1,11 +1,9 @@
 import { TimestampedEntity } from './timestamped.entity.js';
-import {Entity, ManyToOne, Property} from '@mikro-orm/core';
+import { Entity, ManyToOne, Property } from '@mikro-orm/core';
 import { RolleEntity } from './rolle.entity.js';
-import { SchulstrukturknotenEntity } from './schulstrukturknoten.entity.js';
 
 @Entity({ tableName: 'person_rollenzuweisung' })
 export class PersonRollenzuweisungEntity extends TimestampedEntity<PersonRollenzuweisungEntity, 'id'> {
-
     /**
      * Links to Person
      */
@@ -15,6 +13,8 @@ export class PersonRollenzuweisungEntity extends TimestampedEntity<PersonRollenz
     @ManyToOne()
     public role!: RolleEntity;
 
-    @ManyToOne()
-    public schoolStructureNode!: SchulstrukturknotenEntity;
+    /**
+     * Points to Schulstrukturknoten
+     */
+    public schoolStructureNode!: string;
 }

@@ -1,6 +1,5 @@
 import { TimestampedEntity } from './timestamped.entity.js';
-import { Entity, ManyToOne, OneToOne } from '@mikro-orm/core';
-import { DataProviderEntity } from './data-provider.entity.js';
+import { Entity, OneToOne } from '@mikro-orm/core';
 
 @Entity({
     tableName: 'schulstrukturknoten',
@@ -14,6 +13,8 @@ export abstract class SchulstrukturknotenEntity extends TimestampedEntity<Schuls
     @OneToOne()
     public organizationalParent?: SchulstrukturknotenEntity;
 
-    @ManyToOne()
-    public dataProvider?: DataProviderEntity;
+    /**
+     * Points to DataProvider
+     */
+    public dataProvider?: string;
 }
