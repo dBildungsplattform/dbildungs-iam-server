@@ -15,3 +15,4 @@ jobs:
     uses: ./.github/workflows/nest_lint_job.yml
   nest_test_and_sonarcloud:
     uses: ./.github/workflows/nest_test_sonarcloud_job.yml
+    needs: [nest_lint]

@@ -42,7 +42,6 @@ jobs:
   code_analysis:
     name: SonarCloud
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     needs: [nest_test_cov]
     steps:
       - uses: actions/checkout@v3
