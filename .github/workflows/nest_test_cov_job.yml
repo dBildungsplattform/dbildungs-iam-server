@@ -1,0 +1,36 @@
+name: 'Nest Test coverage'
+on:
+  workflow_call:
+
+jobs:
+  nest_test_cov:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Docker check
+        run: docker --version
+      - name: Inject Secrets
+        uses: timheuer/base64-to-file@v1.2
+        with:
+          fileName: 'secrets.json'
+          fileDir: './config/'
+          encodedString: ewogICAgIkRCIjogewogICAgICAgICJTRUNSRVQiOiAiVmVyeSBoaWRkZW4gc2VjcmV0IgogICAgfSwKICAgICJLRVlDTE9BSyI6IHsKICAgICAgICAiUEFTU1dPUkQiOiAiQWRtaW5QYXNzd29yZCIKICAgIH0KfQ==
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      - name: Run tests
+        run: npm run test:ci
+      - name: Save test artifacts
+        run: |
+            mkdir -p coverage
+            mv ./coverage artifacts
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-artifacts
+          path: artifacts/
