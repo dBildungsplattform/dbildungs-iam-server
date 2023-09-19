@@ -49,7 +49,7 @@ describe('OgranisationRepo', () => {
         });
 
         it('should update an organisation and should not create a new organisation', async () => {
-            const newOrganisation: OrganisationDo<false> = DoFactory.createOrganisation(false);
+            const newOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
             const savedOrganisation: OrganisationDo<true> = await sut.save(newOrganisation);
             await expect(em.find(OrganisationEntity, {})).resolves.toHaveLength(1);
             await sut.save(savedOrganisation);
