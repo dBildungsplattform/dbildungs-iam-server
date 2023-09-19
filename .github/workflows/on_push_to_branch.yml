@@ -21,5 +21,3 @@ jobs:
     uses: ./.github/workflows/nest_test_sonarcloud_job.yml
     with:
       NODE_VERSION: ${{ env.NODE_VERSION }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
