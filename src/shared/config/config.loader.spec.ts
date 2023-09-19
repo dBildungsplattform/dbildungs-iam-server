@@ -1,6 +1,7 @@
 import 'reflect-metadata'; // some decorators use reflect-metadata in the background
 import fs from 'fs';
 import { EnvConfig, JsonConfig, DeployStage, loadConfigFiles, loadEnvConfig } from './index.js';
+import { DeepPartial } from '../../../test/utils/index.js';
 
 describe('configloader', () => {
     describe('loadEnvConfig', () => {
@@ -24,7 +25,7 @@ describe('configloader', () => {
         describe('when config is valid', () => {
             let readFileSyncSpy: jest.SpyInstance;
 
-            const config: JsonConfig = {
+            const config: DeepPartial<JsonConfig> = {
                 HOST: {
                     PORT: 8080,
                 },
@@ -32,13 +33,22 @@ describe('configloader', () => {
                     CLIENT_URL: 'postgres://localhost:5432',
                     DB_NAME: 'test-db',
                 },
+                KEYCLOAK: {
+                    BASE_URL: 'localhost:8080',
+                    CLIENT_ID: 'admin-cli',
+                    REALM_NAME: 'master',
+                    USERNAME: 'admin',
+                },
             };
 
-            const secrets: string = '{"DB": {"SECRET": "SuperSecretSecret"}}';
+            const secrets: DeepPartial<JsonConfig> = {
+                DB: { SECRET: 'SuperSecretSecret' },
+                KEYCLOAK: { PASSWORD: 'admin' },
+            };
 
             beforeAll(() => {
                 readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
-                readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(secrets);
+                readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(secrets));
             });
 
             afterAll(() => {
@@ -55,13 +65,19 @@ describe('configloader', () => {
         describe('when config is invalid', () => {
             let readFileSyncSpy: jest.SpyInstance;
 
-            const config: JsonConfig = {
+            const config: DeepPartial<JsonConfig> = {
                 HOST: {
                     PORT: 1,
                 },
                 DB: {
                     CLIENT_URL: '',
                     DB_NAME: '',
+                },
+                KEYCLOAK: {
+                    BASE_URL: '',
+                    CLIENT_ID: '',
+                    REALM_NAME: '',
+                    USERNAME: '',
                 },
             };
 

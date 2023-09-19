@@ -1,16 +1,13 @@
 import { AutoMap } from '@automapper/classes';
-import { BaseEntity, Entity, Enum, PrimaryKey, Property } from '@mikro-orm/core';
-import { randomUUID } from 'crypto';
+import { Entity, Enum, Property } from '@mikro-orm/core';
 import { OrganisationsTyp } from '../domain/organisation.enum.js';
+import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 
 @Entity({ tableName: 'organisation' })
-export class OrganisationEntity extends BaseEntity<OrganisationEntity, 'id'> {
+export class OrganisationEntity extends TimestampedEntity<OrganisationEntity, 'id'> {
     public constructor() {
         super();
     }
-
-    @PrimaryKey({ onCreate: () => randomUUID() })
-    public readonly id!: string;
 
     @AutoMap()
     @Property({ nullable: true })
