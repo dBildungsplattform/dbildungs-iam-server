@@ -2,10 +2,8 @@ name: 'Push to branch Workflow'
 
 on:
   push:
-    branches:
-      - '*'
-      - '!master'
-      - '!main'
+    branches-ignore:
+      - 'main'
 
 jobs:
   codeql_analyze:

@@ -3,6 +3,7 @@ name: 'Push to main branch Workflow'
 on:
   push:
     branches: ['main']
+  pull_request:
 
 jobs:
   codeql_analyze:
