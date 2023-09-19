@@ -16,5 +16,6 @@ export class PersonRollenzuweisungEntity extends TimestampedEntity<PersonRollenz
     /**
      * Points to Schulstrukturknoten
      */
+    @Property()
     public schoolStructureNode!: string;
 }
