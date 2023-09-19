@@ -1,5 +1,5 @@
 import { MapperTestModule } from '../../../../test/utils/index.js';
-import { OrganisationApiMapperProfile } from './organisation-api.mapper.js';
+import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
 import { OrganisationController } from './organisation.controller.js';
 import { OrganisationUc } from './organisation.uc.js';
 import { Test, TestingModule } from '@nestjs/testing';

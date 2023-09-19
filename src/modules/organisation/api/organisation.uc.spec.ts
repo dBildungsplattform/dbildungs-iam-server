@@ -3,7 +3,7 @@ import { OrganisationUc } from './organisation.uc.js';
 import { OrganisationService } from '../domain/organisation.service.js';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
-import { OrganisationApiMapperProfile } from './organisation-api.mapper.js';
+import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
 import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { IdIncludedWithPayload } from '../../../shared/error/id-included-with-payload.error.js';
 

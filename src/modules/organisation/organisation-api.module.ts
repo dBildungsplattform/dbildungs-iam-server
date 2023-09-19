@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { OrganisationController } from './api/organisation.controller.js';
 import { OrganisationModule } from './organisation.module.js';
 import { OrganisationUc } from './api/organisation.uc.js';
-import { OrganisationApiMapperProfile } from './api/organisation-api.mapper.js';
+import { OrganisationApiMapperProfile } from './api/organisation-api.mapper.profile.js';
 
 @Module({
     imports: [OrganisationModule],
