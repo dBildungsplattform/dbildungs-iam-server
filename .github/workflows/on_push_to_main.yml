@@ -13,9 +13,5 @@ jobs:
     uses: ./.github/workflows/codeql_job.yml
   nest_lint:
     uses: ./.github/workflows/nest_lint_job.yml
-    with:
-      NODE_VERSION: ${{ env.NODE_VERSION }}
   nest_test_and_sonarcloud:
     uses: ./.github/workflows/nest_test_sonarcloud_job.yml
-    with:
-      NODE_VERSION: ${{ env.NODE_VERSION }}
