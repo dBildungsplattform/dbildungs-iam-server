@@ -1,4 +1,5 @@
-name: 'Nest lint'
+name: 'Nest lint - reusable job'
+
 on:
   workflow_call:
 
@@ -6,10 +7,9 @@ env:
   NODE_VERSION: '18'
   DEPLOY_STAGE: 'dev'
 
-
 jobs:
   nest_lint:
-    name: Lint
+    name: Nest Lint
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
