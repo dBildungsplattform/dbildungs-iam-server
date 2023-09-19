@@ -26,6 +26,6 @@ export class CreateOrganisationBodyParams {
 
     @AutoMap()
     @IsEnum(OrganisationsTyp)
-    @ApiProperty({ name: 'type der organisation', enum: OrganisationsTyp, required: true })
+    @ApiProperty({ enum: OrganisationsTyp, required: true })
     public readonly typ!: OrganisationsTyp;
 }
