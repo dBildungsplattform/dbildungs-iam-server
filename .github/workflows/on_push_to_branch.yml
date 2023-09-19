@@ -1,4 +1,4 @@
-name: 'Push to main Workflow'
+name: 'Push to branch Workflow'
 
 on:
   push:
