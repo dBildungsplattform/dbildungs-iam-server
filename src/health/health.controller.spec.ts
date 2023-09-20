@@ -1,6 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HealthController } from './health.controller.js';
-import { HealthCheckService, HealthIndicatorFunction, MikroOrmHealthIndicator } from '@nestjs/terminus';
+import {
+    HealthCheckService,
+    HealthIndicatorFunction,
+    HealthIndicatorResult,
+    MikroOrmHealthIndicator,
+} from '@nestjs/terminus';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { SqlEntityManager } from '@mikro-orm/postgresql';
 
@@ -34,12 +39,15 @@ describe('HealthController', () => {
         await controller.check();
 
         expect(healthCheckService.check).toHaveBeenCalled();
-        const lastCallArgs = healthCheckService.check.mock.lastCall;
+        const lastCallArgs: jest.ArgsType<HealthCheckService['check']> | undefined =
+            healthCheckService.check.mock.lastCall;
         expect(lastCallArgs).toHaveLength(1);
-        const indicators = lastCallArgs![0];
+        const indicators: HealthIndicatorFunction[] | undefined = lastCallArgs?.[0];
         expect(indicators).toHaveLength(1);
-        const firstIndicator: HealthIndicatorFunction = indicators[0]!;
-        await firstIndicator.call(indicators[0]);
+        const firstIndicator: (() => PromiseLike<HealthIndicatorResult> | HealthIndicatorResult) | undefined =
+            indicators?.[0];
+        expect(firstIndicator).not.toBeNull();
+        await firstIndicator?.call(indicators?.[0]);
 
         expect(mikroOrmHealthIndicator.pingCheck).toHaveBeenCalled();
     });
