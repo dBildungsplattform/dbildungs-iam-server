@@ -14,6 +14,7 @@ RUN npm run build
 
 FROM $BASE_IMAGE
 ENV NODE_ENV=prod
+ENV DEPLOY_STAGE=prod
 
 WORKDIR /app
 COPY package*.json ./
