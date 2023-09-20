@@ -8,6 +8,7 @@ import {
     MikroOrmHealthIndicator,
 } from '@nestjs/terminus';
 import { EntityManager } from '@mikro-orm/postgresql';
+import { ConfigService } from '@nestjs/config';
 import { KeycloakConfig } from '../shared/config/index.js';
 
 @Controller('health')
@@ -17,13 +18,14 @@ export class HealthController {
         private mikroOrm: MikroOrmHealthIndicator,
         private http: HttpHealthIndicator,
         private em: EntityManager,
-        private keycloakConfig: KeycloakConfig,
+        private configService: ConfigService,
     ) {}
 
     @Get()
     @HealthCheck()
     public check(): Promise<HealthCheckResult> {
-        const baseUrl: string = this.keycloakConfig.BASE_URL;
+        const keycloakConfig: KeycloakConfig = this.configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
+        const baseUrl: string = keycloakConfig.BASE_URL;
         return this.health.check([
             (): Promise<HealthIndicatorResult> =>
                 this.mikroOrm.pingCheck('database', { connection: this.em.getConnection() }),

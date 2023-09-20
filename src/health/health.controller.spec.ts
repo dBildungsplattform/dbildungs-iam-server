@@ -10,6 +10,7 @@ import {
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { SqlEntityManager } from '@mikro-orm/postgresql';
 import { KeycloakConfig } from '../shared/config/index.js';
+import { ConfigService } from '@nestjs/config';
 
 describe('HealthController', () => {
     let controller: HealthController;
@@ -25,11 +26,17 @@ describe('HealthController', () => {
         USERNAME: '',
         BASE_URL: 'http://keycloak.test',
     };
+    let configService: DeepMocked<ConfigService>;
+
     beforeEach(async () => {
         healthCheckService = createMock<HealthCheckService>();
         mikroOrmHealthIndicator = createMock<MikroOrmHealthIndicator>();
         entityManager = createMock<SqlEntityManager>();
         httpHealthIndicator = createMock<HttpHealthIndicator>();
+        configService = createMock<ConfigService>();
+
+        configService.getOrThrow.mockReturnValue(keycloakConfig);
+
         const module: TestingModule = await Test.createTestingModule({
             controllers: [HealthController],
             providers: [
@@ -38,6 +45,7 @@ describe('HealthController', () => {
                 { provide: SqlEntityManager, useValue: entityManager },
                 { provide: HttpHealthIndicator, useValue: httpHealthIndicator },
                 { provide: KeycloakConfig, useValue: keycloakConfig },
+                { provide: ConfigService, useValue: configService },
             ],
         }).compile();
 

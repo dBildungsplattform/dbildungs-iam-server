@@ -1,4 +1,4 @@
-dbildungsIamContainer: "dbildungs-iam:0.1.0"
+dbildungsIamContainer: "dbildungs-iam/dev:latest"
 
 dbildungsIamExternalPort: 80
 dbildungsIamCpuMax: 2
