@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { OrganisationRepo } from '../persistence/organisation.repo.js';
-import { DomainError, IdIncludedWithPayload } from '../../../shared/error/index.js';
+import { DomainError } from '../../../shared/error/index.js';
 import { OrganisationDo } from './organisation.do.js';
+import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 
 @Injectable()
 export class OrganisationService {
@@ -10,15 +11,10 @@ export class OrganisationService {
     public async createOrganisation(
         organisationDo: OrganisationDo<false>,
     ): Promise<Result<OrganisationDo<true>, DomainError>> {
-        if (organisationDo.id) {
-            return {
-                ok: false,
-                error: new IdIncludedWithPayload(
-                    `zu erstellende Organisation darf keien ID ${organisationDo.id} in der Payload haben`,
-                ),
-            };
-        }
         const organisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
-        return { ok: true, value: organisation };
+        if (organisation) {
+            return { ok: true, value: organisation };
+        }
+        return { ok: false, error: new EntityCouldNotBeCreated(`Organization could not be created`) };
     }
 }

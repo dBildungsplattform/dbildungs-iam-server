@@ -5,7 +5,7 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
 import { CreateOrganisationDto } from './create-organisation.dto.js';
-import { IdIncludedWithPayload } from '../../../shared/error/id-included-with-payload.error.js';
+import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 
 describe('OrganisationUc', () => {
     let module: TestingModule;
@@ -52,10 +52,10 @@ describe('OrganisationUc', () => {
         it('should throw an error', async () => {
             organisationServiceMock.createOrganisation.mockResolvedValue({
                 ok: false,
-                error: new IdIncludedWithPayload(''),
+                error: new EntityCouldNotBeCreated(`organisation cloud not be created`),
             });
             await expect(organisationUc.createOrganisation({} as CreateOrganisationDto)).rejects.toThrowError(
-                IdIncludedWithPayload,
+                EntityCouldNotBeCreated,
             );
         });
     });

@@ -8,7 +8,7 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { Dictionary } from '@mikro-orm/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
-import { IdIncludedWithPayload } from '../../../shared/error/id-included-with-payload.error.js';
+import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -65,9 +65,7 @@ describe('OrganisationService', () => {
             const result: Result<OrganisationDo<true>> = await organisationService.createOrganisation(organisationDo);
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: false,
-                error: new IdIncludedWithPayload(
-                    `zu erstellende Organisation darf keien ID ${organisationDo.id} in der Payload haben`,
-                ),
+                error: new EntityCouldNotBeCreated(`Organization could not be created`),
             });
         });
     });

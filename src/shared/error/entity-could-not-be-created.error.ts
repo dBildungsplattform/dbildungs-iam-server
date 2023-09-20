@@ -1,7 +1,7 @@
 import { DomainError } from './domain.error.js';
 
-export class IdIncludedWithPayload extends DomainError {
+export class EntityCouldNotBeCreated extends DomainError {
     public constructor(message: string, details?: unknown[] | Record<string, unknown>) {
-        super(message, 'ID_WAS_SENT_WITH_PAYLOAD', details);
+        super(message, 'ENTITY_CLOUD_NOT_BE_CREATED', details);
     }
 }
