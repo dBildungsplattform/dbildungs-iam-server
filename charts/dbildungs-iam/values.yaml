@@ -6,4 +6,10 @@ dbildungsIamMemMax: 4G
 dbildungsIamReplications: 1
 environment: prod
 
-enableServiceMonitor: true
+configfile:
+  secrets: 'config/secrets.json'
+  dev: 'config/config.dev.json'
+  test: 'config/config.test.json'
+  prod: 'config/config.prod.json'
+
+enableServiceMonitor: false
