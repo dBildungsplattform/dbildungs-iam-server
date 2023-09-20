@@ -1,9 +1,11 @@
-name: 'On Pull Request or Push to main branch Workflow'
+name: 'All static tests on every push or pull request'
 on:
   push:
-    branches: ['main']
+    branches:
+      - '*'
   pull_request:
     branches: ['main']
+
 
 jobs:
   codeql_analyze:
@@ -12,5 +14,4 @@ jobs:
     uses: ./.github/workflows/r_job_nest_lint.yml
   nest_test_and_sonarcloud:
     uses: ./.github/workflows/r_job_nest_test_sonarcloud.yml
-    needs: [nest_lint]
     secrets: inherit
