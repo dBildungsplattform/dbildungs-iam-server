@@ -8,6 +8,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DbConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../shared/config/index.js';
 import { mappingErrorHandler } from '../shared/error/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
+import { HealthModule } from '../health/health.module.js';
+import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
 
 @Module({
@@ -30,12 +32,16 @@ import { OrganisationApiModule } from '../modules/organisation/organisation-api.
                     dbName: dbConfig.DB_NAME,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
+                    // Needed for HealthCheck
+                    type: 'postgresql',
                 });
             },
             inject: [ConfigService],
         }),
         PersonApiModule,
         OrganisationApiModule,
+        KeycloakAdministrationModule,
+        HealthModule,
     ],
 })
 export class ServerModule {}
