@@ -1,15 +1,14 @@
 name: 'Push to branch Workflow'
-
 on:
   push:
-    branches-ignore:
-      - 'main'
+    branches:
+      - '*'
 
 jobs:
   codeql_analyze:
-    uses: ./.github/workflows/codeql_job.yml
+    uses: ./.github/workflows/reusable_jobs/codeql_job.yml
   nest_lint:
-    uses: ./.github/workflows/nest_lint_job.yml
+    uses: ./.github/workflows/reusable_jobs/nest_lint_job.yml
   nest_test_and_sonarcloud:
-    uses: ./.github/workflows/nest_test_sonarcloud_job.yml
+    uses: ./.github/workflows/reusable_jobs/nest_test_sonarcloud_job.yml
     secrets: inherit
