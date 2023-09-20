@@ -1,7 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: {{.Values.namespace}}
   name: {{ .Release.Name }}-deployment
   labels:
     app.kubernetes.io/name: dbildungs-iam
@@ -26,16 +25,31 @@ spec:
           env:
             - name: NODE_ENV
               value: {{.Values.environment}}
+            - name: DEPLOY_STAGE
+              value: {{.Values.environment}}
           volumeMounts:
             - mountPath: /app/config/
               name: config
+              readOnly: true
           resources:
             limits:
               cpu: {{.Values.dbildungsIamCpuMax}}
               memory: {{.Values.dbildungsIamMemMax}}
+          livenessProbe:
+            initialDelaySeconds: 10
+            httpGet:
+              port: 8080
+              scheme: 'HTTP'
+              path: '/health'
+          readinessProbe:
+            initialDelaySeconds: 10
+            httpGet:
+              port: 8080
+              scheme: 'HTTP'
+              path: '/health'
       restartPolicy: Always
       volumes:
         - name: config
-          configMap:
-            name: {{.Release.Name}}-configmap
+          secret:
+            secretName: {{.Release.Name}}-secret
       
