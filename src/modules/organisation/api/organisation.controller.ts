@@ -12,7 +12,7 @@ import {
 } from '@nestjs/swagger';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
 import { CreateOrganisationDto } from './create-organisation.dto.js';
-import { OrganisationResponse } from './organisatuin.response.js';
+import { OrganisationResponse } from './organisation.response.js';
 
 @ApiTags('organisation')
 @Controller({ path: 'organisation' })

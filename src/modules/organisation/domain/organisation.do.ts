@@ -3,6 +3,9 @@ import { DoBase } from '../../../shared/types/index.js';
 import { OrganisationsTyp } from './organisation.enum.js';
 
 export class OrganisationDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
+    /**
+     * @deprecated This constructor is for automapper only.
+     */
     // eslint-disable-next-line @typescript-eslint/no-useless-constructor, @typescript-eslint/no-empty-function
     public constructor() {}
 

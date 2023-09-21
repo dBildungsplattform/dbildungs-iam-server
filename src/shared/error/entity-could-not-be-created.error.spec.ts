@@ -4,8 +4,8 @@ describe('EntityCouldNotBeCreated', () => {
     describe('constructor', () => {
         describe('when calling the constructor', () => {
             it('should set message and code', () => {
-                const error: EntityCouldNotBeCreated = new EntityCouldNotBeCreated('Entity could not be created');
-                expect(error.message).toBe('Entity could not be created');
+                const error: EntityCouldNotBeCreated = new EntityCouldNotBeCreated('EntityName');
+                expect(error.message).toBe('EntityName could not be created');
                 expect(error.code).toBe('ENTITY_CLOUD_NOT_BE_CREATED');
             });
         });

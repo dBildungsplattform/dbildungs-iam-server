@@ -4,7 +4,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
 import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { OrganisationDo } from '../domain/organisation.do.js';
-import { OrganisationResponse } from './organisatuin.response.js';
+import { OrganisationResponse } from './organisation.response.js';
 
 @Injectable()
 export class OrganisationApiMapperProfile extends AutomapperProfile {

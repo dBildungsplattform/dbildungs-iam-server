@@ -10,7 +10,7 @@ import { Loaded } from '@mikro-orm/core';
 export class OrganisationRepo {
     public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
 
-    public async create(organisationDo: OrganisationDo<false>): Promise<OrganisationDo<true>> {
+    private async create(organisationDo: OrganisationDo<false>): Promise<OrganisationDo<true>> {
         const organisation: OrganisationEntity = this.mapper.map(organisationDo, OrganisationDo, OrganisationEntity);
         await this.em.persistAndFlush(organisation);
         return this.mapper.map(organisation, OrganisationEntity, OrganisationDo);
@@ -23,7 +23,7 @@ export class OrganisationRepo {
         return this.create(organisationDo);
     }
 
-    public async update(organisationDo: OrganisationDo<true>): Promise<OrganisationDo<true>> {
+    private async update(organisationDo: OrganisationDo<true>): Promise<OrganisationDo<true>> {
         let organisation: Option<Loaded<OrganisationEntity, never>> = await this.em.findOne(OrganisationEntity, {
             id: organisationDo.id,
         });
