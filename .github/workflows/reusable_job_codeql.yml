@@ -1,16 +1,13 @@
-name: 'CodeQL'
+name: 'Analyze CodeQL - reusable job'
 
 on:
-  push:
-    branches: ['main']
-  pull_request:
-    branches: ['main']
+  workflow_call:
 
 jobs:
   analyze:
-    name: Analyze
+    name: Analyze CodeQL
     runs-on: 'ubuntu-latest'
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
       actions: read
       contents: read

@@ -1,8 +1,7 @@
-name: Push
+name: 'Nest Test & Sonarcloud - reusable job'
+
 on:
-  push:
-    branches:
-      - '*'
+  workflow_call:
 
 env:
   NODE_VERSION: '18'
@@ -10,8 +9,9 @@ env:
 
 jobs:
   nest_test_cov:
-    name: Test
+    name: Nest Test
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -40,21 +40,6 @@ jobs:
         with:
           name: test-artifacts
           path: artifacts/
-  nest_lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit
-      - name: Run linter
-        run: npm run lint
   code_analysis:
     name: SonarCloud
     runs-on: ubuntu-latest
