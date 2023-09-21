@@ -4,6 +4,7 @@ import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { OrganisationDo } from '../domain/organisation.do.js';
+import { CreatedOrganisationDto } from './created-organisation.dto.js';
 
 @Injectable()
 export class OrganisationUc {
@@ -12,7 +13,7 @@ export class OrganisationUc {
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
-    public async createOrganisation(organisationDto: CreateOrganisationDto): Promise<CreateOrganisationDto> {
+    public async createOrganisation(organisationDto: CreateOrganisationDto): Promise<CreatedOrganisationDto> {
         const organisationDo: OrganisationDo<false> = this.mapper.map(
             organisationDto,
             CreateOrganisationDto,
@@ -20,7 +21,7 @@ export class OrganisationUc {
         );
         const result: Result<OrganisationDo<true>> = await this.organisationService.createOrganisation(organisationDo);
         if (result.ok) {
-            return this.mapper.map(result.value, OrganisationDo, CreateOrganisationDto);
+            return this.mapper.map(result.value, OrganisationDo, CreatedOrganisationDto);
         }
         throw result.error;
     }

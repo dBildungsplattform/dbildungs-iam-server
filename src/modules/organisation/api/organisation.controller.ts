@@ -13,6 +13,7 @@ import {
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
 import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { OrganisationResponse } from './organisation.response.js';
+import { CreatedOrganisationDto } from './created-organisation.dto.js';
 
 @ApiTags('organisation')
 @Controller({ path: 'organisation' })
@@ -34,7 +35,7 @@ export class OrganisationController {
             CreateOrganisationBodyParams,
             CreateOrganisationDto,
         );
-        const createdOrganisation: CreateOrganisationDto = await this.uc.createOrganisation(organisationDto);
-        return this.mapper.map(createdOrganisation, CreateOrganisationDto, OrganisationResponse);
+        const createdOrganisation: CreatedOrganisationDto = await this.uc.createOrganisation(organisationDto);
+        return this.mapper.map(createdOrganisation, CreatedOrganisationDto, OrganisationResponse);
     }
 }

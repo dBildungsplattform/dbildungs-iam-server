@@ -7,7 +7,7 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
 import { OrganisationsTyp } from '../domain/organisation.enum.js';
 import { faker } from '@faker-js/faker';
-import { CreateOrganisationDto } from './create-organisation.dto.js';
+import { CreatedOrganisationDto } from './created-organisation.dto.js';
 
 describe('OrganisationController', () => {
     let module: TestingModule;
@@ -52,7 +52,7 @@ describe('OrganisationController', () => {
                 typ: OrganisationsTyp.SONSTIGE,
             };
 
-            const returnedValue: CreateOrganisationDto = {
+            const returnedValue: CreatedOrganisationDto = {
                 id: faker.string.uuid(),
                 kennung: faker.lorem.word(),
                 name: faker.lorem.word(),

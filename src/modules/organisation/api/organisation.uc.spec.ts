@@ -52,7 +52,7 @@ describe('OrganisationUc', () => {
         it('should throw an error', async () => {
             organisationServiceMock.createOrganisation.mockResolvedValue({
                 ok: false,
-                error: new EntityCouldNotBeCreated(`organisation cloud not be created`),
+                error: new EntityCouldNotBeCreated(''),
             });
             await expect(organisationUc.createOrganisation({} as CreateOrganisationDto)).rejects.toThrowError(
                 EntityCouldNotBeCreated,
