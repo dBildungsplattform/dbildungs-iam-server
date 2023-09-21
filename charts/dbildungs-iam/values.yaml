@@ -6,4 +6,15 @@ dbildungsIamMemMax: 4G
 dbildungsIamReplications: 1
 environment: prod
 
-enableServiceMonitor: true
+configfile:
+  secrets: 'config/secrets.json'
+  dev: 'config/config.dev.json'
+  test: 'config/config.test.json'
+  prod: 'config/config.prod.json'
+
+# Configuration of necessary secrets
+secrets:
+  # Name of the secrets to inject
+  name: null
+# If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
+enableServiceMonitor: false
