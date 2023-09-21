@@ -1,4 +1,5 @@
 name: 'All static tests on every push'
+# Runs on every push to a branch or main. Will be triggered in checks for PR.
 on:
   push:
     branches:
