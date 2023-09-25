@@ -1,0 +1,17 @@
+{{- if .Values.deployDedicatedDB}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{.Release.Name }}-services-db
+  labels:
+    app.kubernetes.io/name: dbildungs-iam
+spec:
+  selector:
+    name: dbildungs-iam-db
+  ports:
+    - protocol: TCP
+      name: db
+      port: 5432
+      targetPort: db
+  type: ClusterIP
+{{- end}}
