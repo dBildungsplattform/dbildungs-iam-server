@@ -1,4 +1,4 @@
-dbildungsIamContainer: "dbildungs-iam/dev:latest"
+dbildungsIamContainer: "ghcr.io/dbildungsplattform/dbildungs-iam-server:fbef02f93f9aca1ffb6e04cf3f8eeda4c356031f"
 
 dbildungsIamExternalPort: 80
 dbildungsIamCpuMax: 2
@@ -6,11 +6,14 @@ dbildungsIamMemMax: 4G
 dbildungsIamReplications: 1
 environment: prod
 
+backendHostname: main.dev.spsh.dbildungsplattform.de
+
 configfile:
   secrets: 'config/secrets.json'
   dev: 'config/config.dev.json'
   test: 'config/config.test.json'
   prod: 'config/config.prod.json'
+  local: 'config/config.local.json'
 
 # Configuration of necessary secrets
 secrets:
@@ -18,3 +21,8 @@ secrets:
   name: null
 # If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
 enableServiceMonitor: false
+deployDedicatedDB: false
+dedicatedDB:
+  user: admin
+  password: admin
+  dbname: dbiam

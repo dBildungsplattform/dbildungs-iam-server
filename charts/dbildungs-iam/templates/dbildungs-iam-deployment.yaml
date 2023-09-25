@@ -5,15 +5,15 @@ metadata:
   labels:
     app.kubernetes.io/name: dbildungs-iam
 spec:
-  replicas: {{.Values.dbildungsIamReplications}}
   selector:
     matchLabels:
-      app.kubernetes.io/name: dbildungs-iam
+      layer: dbildungs-iam-backend
+  replicas: {{.Values.dbildungsIamReplications}}
   template:
     metadata:
       name: dbildungs-iam
       labels:
-        app.kubernetes.io/name: dbildungs-iam
+        layer: dbildungs-iam-backend
     spec:
       containers:
         - name: dbildungs-iam
