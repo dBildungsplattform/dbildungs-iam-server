@@ -154,6 +154,42 @@ describe('KeycloakUserService', () => {
         });
     });
 
+    describe('delete', () => {
+        it('should return ok result if user exists', async () => {
+            kcUsersMock.del.mockResolvedValueOnce();
+
+            const result: Result<void> = await service.delete(faker.string.uuid());
+
+            expect(result).toStrictEqual<Result<void>>({
+                ok: true,
+                value: undefined,
+            });
+        });
+
+        it('should return error result if client.users.del throws', async () => {
+            kcUsersMock.del.mockRejectedValueOnce(new Error('User does not exist'));
+
+            const result: Result<void> = await service.delete(faker.string.uuid());
+
+            expect(result).toStrictEqual<Result<void>>({
+                ok: false,
+                error: new KeycloakClientError('Keycloak request failed'),
+            });
+        });
+
+        it('should return error result of getAuthedKcAdminClient', async () => {
+            const error: Result<KeycloakAdminClient, DomainError> = {
+                ok: false,
+                error: new KeycloakClientError('Could not authenticate'),
+            };
+            adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
+
+            const result: Result<void> = await service.delete(faker.string.uuid());
+
+            expect(result).toBe(error);
+        });
+    });
+
     describe('findById', () => {
         describe('when user exists', () => {
             it('should return result with UserDo', async () => {

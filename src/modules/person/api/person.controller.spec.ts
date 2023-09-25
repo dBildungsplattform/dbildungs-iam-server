@@ -55,6 +55,7 @@ describe('PersonController', () => {
         it('should not throw', async () => {
             personUcMock.createPerson.mockResolvedValue();
             const params: CreatePersonBodyParams = {
+                username: faker.internet.userName(),
                 mandant: faker.string.uuid(),
                 name: {
                     vorname: faker.person.firstName(),

@@ -3,6 +3,12 @@ import { Gender, TrustLevel } from './person.enums.js';
 
 export class CreatePersonDto {
     @AutoMap()
+    public readonly username!: string;
+
+    @AutoMap()
+    public readonly email?: string;
+
+    @AutoMap()
     public readonly referrer?: string;
 
     @AutoMap()

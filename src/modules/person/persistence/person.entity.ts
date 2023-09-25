@@ -15,6 +15,10 @@ export class PersonEntity extends TimestampedEntity<PersonEntity, 'id'> {
     }
 
     @AutoMap()
+    @Property()
+    public keycloakUserId!: string;
+
+    @AutoMap()
     @Property({ nullable: true })
     public referrer?: string;
 

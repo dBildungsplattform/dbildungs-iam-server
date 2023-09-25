@@ -110,6 +110,7 @@ describe('PersonApiMapperProfile', () => {
     describe('when mapper is initialized', () => {
         it('should map CreatePersonBodyParams to CreatePersonDTO', () => {
             const params: CreatePersonBodyParams = {
+                username: faker.internet.userName(),
                 mandant: faker.string.uuid(),
                 stammorganisation: faker.string.uuid(),
                 referrer: 'referrer',
@@ -125,6 +126,7 @@ describe('PersonApiMapperProfile', () => {
 
         it('should map CreatePersonDto to PersonDo', () => {
             const dto: CreatePersonDto = {
+                username: faker.internet.userName(),
                 client: faker.string.uuid(),
                 firstName: 'john',
                 lastName: 'doe',

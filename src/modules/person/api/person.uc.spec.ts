@@ -1,6 +1,6 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { EntityNotFoundError, PersonAlreadyExistsError } from '../../../shared/error/index.js';
+import { EntityNotFoundError, KeycloakClientError, PersonAlreadyExistsError } from '../../../shared/error/index.js';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonService } from '../domain/person.service.js';
@@ -10,11 +10,13 @@ import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
 import { faker } from '@faker-js/faker';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenDatensatz } from './personendatensatz.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
 
 describe('PersonUc', () => {
     let module: TestingModule;
     let personUc: PersonUc;
     let personServiceMock: DeepMocked<PersonService>;
+    let userServiceMock: DeepMocked<KeycloakUserService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -26,10 +28,15 @@ describe('PersonUc', () => {
                     provide: PersonService,
                     useValue: createMock<PersonService>(),
                 },
+                {
+                    provide: KeycloakUserService,
+                    useValue: createMock<KeycloakUserService>(),
+                },
             ],
         }).compile();
         personUc = module.get(PersonUc);
         personServiceMock = module.get(PersonService);
+        userServiceMock = module.get(KeycloakUserService);
     });
 
     afterAll(async () => {
@@ -45,25 +52,61 @@ describe('PersonUc', () => {
     });
 
     describe('createPerson', () => {
-        describe('when person not exists', () => {
+        describe('when person and user do not exist', () => {
             it('should create a new person', async () => {
+                const personDo: PersonDo<true> = DoFactory.createPerson(true);
+                userServiceMock.create.mockResolvedValueOnce({ ok: true, value: personDo.keycloakUserId });
                 personServiceMock.createPerson.mockResolvedValue({
                     ok: true,
-                    value: DoFactory.createPerson(true),
+                    value: personDo,
                 });
-                await expect(personUc.createPerson({} as CreatePersonDto)).resolves.not.toThrow();
+
+                const createPersonPromise: Promise<unknown> = personUc.createPerson({} as CreatePersonDto);
+
+                await expect(createPersonPromise).resolves.not.toThrow();
             });
         });
 
-        describe('when person already exists', () => {
+        describe('when user in keycloak already exists', () => {
+            it('should throw Error', async () => {
+                const error: PersonAlreadyExistsError = new PersonAlreadyExistsError('');
+                userServiceMock.create.mockResolvedValueOnce({ ok: false, error });
+
+                const createPersonPromise: Promise<unknown> = personUc.createPerson({} as CreatePersonDto);
+
+                await expect(createPersonPromise).rejects.toThrow(error);
+            });
+        });
+
+        describe('when person already exists and user can be deleted', () => {
             it('should throw PersonAlreadyExistsError', async () => {
+                userServiceMock.create.mockResolvedValueOnce({ ok: true, value: faker.string.uuid() });
                 personServiceMock.createPerson.mockResolvedValue({
                     ok: false,
                     error: new PersonAlreadyExistsError(''),
                 });
-                await expect(personUc.createPerson({} as CreatePersonDto)).rejects.toThrowError(
-                    PersonAlreadyExistsError,
-                );
+
+                const createPersonPromise: Promise<unknown> = personUc.createPerson({} as CreatePersonDto);
+
+                await expect(createPersonPromise).rejects.toThrowError(PersonAlreadyExistsError);
+            });
+        });
+
+        describe('when person already exists and user could not be deleted', () => {
+            it('should throw PersonAlreadyExistsError', async () => {
+                userServiceMock.create.mockResolvedValueOnce({ ok: true, value: faker.string.uuid() });
+                userServiceMock.delete.mockResolvedValueOnce({
+                    ok: false,
+                    error: new KeycloakClientError('Could not delete user'),
+                });
+                personServiceMock.createPerson.mockResolvedValue({
+                    ok: false,
+                    error: new PersonAlreadyExistsError(''),
+                });
+
+                const createPromise: Promise<unknown> = personUc.createPerson({} as CreatePersonDto);
+
+                await expect(createPromise).rejects.toThrowError(KeycloakClientError);
             });
         });
     });
