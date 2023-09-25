@@ -10,6 +10,7 @@ export class DoFactory {
         props?: Partial<PersonDo<false>>,
     ): PersonDo<WasPersisted> {
         const person: PersonDo<false> = {
+            keycloakUserId: faker.string.uuid(),
             client: faker.string.uuid(),
             lastName: faker.person.lastName(),
             firstName: faker.person.fullName(),

@@ -6,6 +6,8 @@ import { CreatePersonBodyParams } from './create-person.body.params.js';
 
 describe('CreatePersonBodyParams', () => {
     const referenceParams: CreatePersonBodyParams = {
+        username: faker.internet.userName(),
+        email: faker.internet.email(),
         referrer: faker.string.uuid(),
         mandant: faker.string.uuid(),
         name: {
@@ -31,6 +33,8 @@ describe('CreatePersonBodyParams', () => {
 
     it('should convert a plain object to a class of createPersonBodyParams', () => {
         const incomingParams: object = {
+            username: referenceParams.username,
+            email: referenceParams.email,
             referrer: referenceParams.referrer,
             mandant: referenceParams.mandant,
             name: {

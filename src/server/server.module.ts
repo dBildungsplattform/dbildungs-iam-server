@@ -9,7 +9,6 @@ import { DbConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../share
 import { mappingErrorHandler } from '../shared/error/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
-import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 
 @Module({
     imports: [
@@ -37,7 +36,6 @@ import { KeycloakAdministrationModule } from '../modules/keycloak-administration
         }),
         PersonApiModule,
         OrganisationApiModule,
-        KeycloakAdministrationModule,
     ],
 })
 export class ServerModule {}

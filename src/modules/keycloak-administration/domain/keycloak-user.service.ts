@@ -72,6 +72,21 @@ export class KeycloakUserService {
         }
     }
 
+    public async delete(id: string): Promise<Result<void, DomainError>> {
+        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+            await this.kcAdminService.getAuthedKcAdminClient();
+
+        if (!kcAdminClientResult.ok) {
+            return kcAdminClientResult;
+        }
+
+        const deleteResult: Result<void, DomainError> = await this.wrapClientResponse(
+            kcAdminClientResult.value.users.del({ id }),
+        );
+
+        return deleteResult;
+    }
+
     public async findById(id: string): Promise<Result<UserDo<true>, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();

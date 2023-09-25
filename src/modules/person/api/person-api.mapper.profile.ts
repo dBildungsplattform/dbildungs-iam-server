@@ -10,13 +10,14 @@ import {
 } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
+import { UserDo } from '../../keycloak-administration/index.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonDo } from '../domain/person.do.js';
 import { Gender, TrustLevel } from '../domain/person.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
+import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
 import { PersonenQueryParam, SichtfreigabeType } from './personen-query.param.js';
-import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
 import { PersonenDatensatz } from './personendatensatz.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
@@ -129,7 +130,12 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     ),
                 ),
             );
-            createMap(mapper, CreatePersonDto, PersonDo);
+            createMap(
+                mapper,
+                CreatePersonDto,
+                PersonDo,
+                forMember((dest: PersonDo<boolean>) => dest.keycloakUserId, ignore()),
+            );
             createMap(
                 mapper,
                 PersonDo,
@@ -243,6 +249,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<false>) => dest.id, ignore()),
                 forMember((dest: PersonDo<false>) => dest.createdAt, ignore()),
                 forMember((dest: PersonDo<false>) => dest.updatedAt, ignore()),
+                forMember((dest: PersonDo<false>) => dest.keycloakUserId, ignore()),
                 forMember((dest: PersonDo<false>) => dest.client, ignore()),
                 forMember((dest: PersonDo<false>) => dest.mainOrganization, ignore()),
                 forMember((dest: PersonDo<false>) => dest.initialsLastName, ignore()),
@@ -259,6 +266,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<false>) => dest.trustLevel, ignore()),
                 forMember((dest: PersonDo<false>) => dest.isInformationBlocked, ignore()),
             );
+            createMap(mapper, CreatePersonDto, UserDo);
         };
     }
 }

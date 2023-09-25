@@ -19,6 +19,9 @@ export class PersonDo<WasPersisted extends boolean> implements DoBase<WasPersist
     public updatedAt!: Persisted<Date, WasPersisted>;
 
     @AutoMap()
+    public keycloakUserId!: string;
+
+    @AutoMap()
     public referrer?: string;
 
     @AutoMap()
