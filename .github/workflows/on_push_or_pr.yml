@@ -1,0 +1,15 @@
+name: 'All static tests on every push'
+# Runs on every push to a branch or main. Will be triggered in checks for PR.
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  codeql_analyze:
+    uses: ./.github/workflows/reusable_job_codeql.yml
+  nest_lint:
+    uses: ./.github/workflows/reusable_job_nest_lint.yml
+  nest_test_and_sonarcloud:
+    uses: ./.github/workflows/reusable_job_nest_test_sonarcloud.yml
+    secrets: inherit
