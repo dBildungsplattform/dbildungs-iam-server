@@ -46,40 +46,41 @@ describe('OrganisationApiMapperProfile', () => {
             namensergaenzung: faker.lorem.word(),
             typ: OrganisationsTyp.SONSTIGE,
         };
-        const params: CreateOrganisationBodyParams = options;
 
         it('should map CreateOrganisationBodyParams to CreateOrganisationDto', () => {
+            const params: CreateOrganisationBodyParams = options;
+
             expect(() => sut.map(params, CreateOrganisationBodyParams, CreateOrganisationDto)).not.toThrowError(
                 MappingError,
             );
         });
 
-        const createOrganisationDto: CreateOrganisationDto = options;
-
         it('should map CreateOrganisationDto to OrganisationDo', () => {
+            const createOrganisationDto: CreateOrganisationDto = options;
+
             expect(() => sut.map(createOrganisationDto, CreateOrganisationDto, OrganisationDo<false>)).not.toThrowError(
                 MappingError,
             );
         });
 
-        const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true);
-
         it('should map OrganisationDo to CreatedOrganisationDto', () => {
+            const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true);
+
             expect(() => sut.map(organisationDo, OrganisationDo<true>, CreatedOrganisationDto)).not.toThrowError(
                 MappingError,
             );
         });
 
-        const createdOrganisationDto: CreatedOrganisationDto = {
-            id: faker.string.uuid(),
-            kennung: options.kennung,
-            kuerzel: options.kuerzel,
-            name: options.name,
-            namensergaenzung: options.namensergaenzung,
-            typ: options.typ,
-        };
-
         it('should map CreatedOrganisationDto to OrganisationResponse', () => {
+            const createdOrganisationDto: CreatedOrganisationDto = {
+                id: faker.string.uuid(),
+                kennung: options.kennung,
+                kuerzel: options.kuerzel,
+                name: options.name,
+                namensergaenzung: options.namensergaenzung,
+                typ: options.typ,
+            };
+
             expect(() =>
                 sut.map(createdOrganisationDto, CreatedOrganisationDto, OrganisationResponse),
             ).not.toThrowError(MappingError);
