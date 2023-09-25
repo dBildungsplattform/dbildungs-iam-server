@@ -8,6 +8,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DbConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../shared/config/index.js';
 import { mappingErrorHandler } from '../shared/error/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
+import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 
 @Module({
@@ -35,6 +36,7 @@ import { KeycloakAdministrationModule } from '../modules/keycloak-administration
             inject: [ConfigService],
         }),
         PersonApiModule,
+        OrganisationApiModule,
         KeycloakAdministrationModule,
     ],
 })
