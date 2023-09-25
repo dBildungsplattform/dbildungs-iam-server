@@ -19,6 +19,7 @@ jobs:
         shell: bash
         id: extract_branch_meta
         run: |
+          lowercase_repo=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
           if [ "${{ github.event_name }}" == 'pull_request' ]; then
             echo "branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
             echo "sha=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
@@ -75,7 +76,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ env.LOWERCASE_REPO }}:${{ needs.branch_meta.outputs.sha }}
+          tags: ghcr.io/${{ needs.branch_meta.outputs.lowercase_repo }}:${{ needs.branch_meta.outputs.sha }}
           labels: ${{ steps.docker_meta_img.outputs.labels }}
 
   trivy-vulnerability-scanning:
@@ -91,7 +92,7 @@ jobs:
       - name: Run trivy vulnerability scanner
         uses: aquasecurity/trivy-action@9ab158e8597f3b310480b9a69402b419bc03dbd5
         with:
-          image-ref: 'ghcr.io/${{ github.repository }}:${{ needs.branch_meta.outputs.sha }}'
+          image-ref: 'ghcr.io/${{ needs.branch_meta.outputs.lowercase_repo }}:${{ needs.branch_meta.outputs.sha }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
