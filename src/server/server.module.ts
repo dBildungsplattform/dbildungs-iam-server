@@ -8,6 +8,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DbConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../shared/config/index.js';
 import { mappingErrorHandler } from '../shared/error/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
+import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
 
 @Module({
     imports: [
@@ -34,6 +35,7 @@ import { PersonApiModule } from '../modules/person/person-api.module.js';
             inject: [ConfigService],
         }),
         PersonApiModule,
+        OrganisationApiModule,
     ],
 })
 export class ServerModule {}

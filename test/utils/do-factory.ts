@@ -1,5 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { PersonDo } from '../../src/modules/person/domain/person.do.js';
+import { OrganisationDo } from '../../src/modules/organisation/domain/organisation.do.js';
+import { OrganisationsTyp } from '../../src/modules/organisation/domain/organisation.enum.js';
 import { UserDo } from '../../src/modules/keycloak-administration/domain/user.do.js';
 
 export class DoFactory {
@@ -17,6 +19,23 @@ export class DoFactory {
             updatedAt: withId ? faker.date.recent() : undefined,
         };
         return Object.assign(new PersonDo<WasPersisted>(), person, props);
+    }
+
+    public static createOrganisation<WasPersisted extends boolean>(
+        withId: WasPersisted,
+        props?: Partial<OrganisationDo<false>>,
+    ): OrganisationDo<WasPersisted> {
+        const organisation: OrganisationDo<false> = {
+            id: withId ? faker.string.uuid() : undefined,
+            kennung: faker.lorem.word(),
+            name: faker.company.name(),
+            namensergaenzung: faker.company.name(),
+            kuerzel: faker.lorem.word(),
+            typ: OrganisationsTyp.SONSTIGE,
+            createdAt: withId ? faker.date.past() : undefined,
+            updatedAt: withId ? faker.date.recent() : undefined,
+        };
+        return Object.assign(new OrganisationDo<WasPersisted>(), organisation, props);
     }
 
     public static createUser<WasPersisted extends boolean>(
