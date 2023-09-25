@@ -19,7 +19,7 @@ jobs:
         shell: bash
         id: extract_branch_meta
         run: |
-          lowercase_repo=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
+          echo "lowercase_repo=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
           if [ "${{ github.event_name }}" == 'pull_request' ]; then
             echo "branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
             echo "sha=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
