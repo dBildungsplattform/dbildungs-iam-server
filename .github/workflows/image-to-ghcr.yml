@@ -19,7 +19,7 @@ jobs:
         shell: bash
         id: extract_branch_meta
         run: |
-          echo "lowercase_repo=${{ GITHUB_REPOSITORY,,}}" >> $GITHUB_OUTPUT
+          echo "lowercase_repo=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
           if [ "${{ github.event_name }}" == 'pull_request' ]; then
             echo "branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
             echo "sha=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
@@ -64,7 +64,6 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Lowercase REPO name
-        id: lowercase_repo
         run: |
           echo "LOWERCASE_REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
 
@@ -76,7 +75,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ needs.branch_meta.outputs.lowercase_repo }}:${{ needs.branch_meta.outputs.sha }}
+          tags: ghcr.io/${ env.LOWERCASE_REPO }:${{ needs.branch_meta.outputs.sha }}
           labels: ${{ steps.docker_meta_img.outputs.labels }}
 
   trivy-vulnerability-scanning:
@@ -89,14 +88,19 @@ jobs:
       contents: read
       security-events: write
     steps:
+      - name: Lowercase REPO name
+        run: |
+          echo "LOWERCASE_REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
+
       - name: Run trivy vulnerability scanner
         uses: aquasecurity/trivy-action@9ab158e8597f3b310480b9a69402b419bc03dbd5
         with:
-          image-ref: 'ghcr.io/${{ needs.branch_meta.outputs.lowercase_repo }}:${{ needs.branch_meta.outputs.sha }}'
+          image-ref: 'ghcr.io/${ env.LOWERCASE_REPO }:${{ needs.branch_meta.outputs.sha }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
+          
       - name: Upload trivy results
         if: ${{ always() }}
         uses: github/codeql-action/upload-sarif@v2
