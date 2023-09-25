@@ -65,7 +65,7 @@ jobs:
       - name: Lowercase REPO name
         id: lowercase_repo
         run: |
-          echo "lowercase_repo=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
+          echo "LOWERCASE_REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
 
       - name: Build and push ${{ github.repository }}
         if: ${{ env.IMAGE_EXISTS == 0 }}
@@ -75,7 +75,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ needs.lowercase_repo.outputs.lowercase_repo }}:${{ needs.branch_meta.outputs.sha }}
+          tags: ghcr.io/${LOWERCASE}:${{ needs.branch_meta.outputs.sha }}
           labels: ${{ steps.docker_meta_img.outputs.labels }}
 
   trivy-vulnerability-scanning:
