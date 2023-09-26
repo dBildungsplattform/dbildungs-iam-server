@@ -11,5 +11,5 @@ export class ServiceProviderLizenzEntity extends TimestampedEntity<ServiceProvid
      * Points to Schulstrukturknoten
      */
     @Property()
-    public schoolStructureNode!: string;
+    public schulstrukturknoten!: string;
 }
