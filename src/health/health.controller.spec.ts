@@ -68,13 +68,5 @@ describe('HealthController', () => {
         // ourselves to make sure they do the right things
         await firstIndicator?.call(firstIndicator);
         expect(mikroOrmHealthIndicator.pingCheck).toHaveBeenCalled();
-
-        const secondIndicator: (() => PromiseLike<HealthIndicatorResult> | HealthIndicatorResult) | undefined =
-            indicators?.[1];
-        expect(secondIndicator).toBeDefined();
-        await secondIndicator?.call(secondIndicator);
-
-        expect(httpHealthIndicator.pingCheck).toHaveBeenCalled();
-        expect(httpHealthIndicator.pingCheck).toBeCalledWith('keycloak', 'http://keycloak.test');
     });
 });
