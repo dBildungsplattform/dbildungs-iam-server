@@ -34,7 +34,11 @@ import { OrganisationApiModule } from '../modules/organisation/organisation-api.
                     entitiesTs: ['./src/**/*.entity.ts'],
                     // Needed for HealthCheck
                     type: 'postgresql',
-                    driverOptions: { ssl: true },
+                    driverOptions: {
+                        connection: {
+                            ssl: true,
+                        },
+                    },
                 });
             },
             inject: [ConfigService],
