@@ -16,13 +16,8 @@ configfile:
   local: 'config/config.local.json'
 
 # Configuration of necessary secrets
+# Name of the secrets to inject
 secrets:
-  # Name of the secrets to inject
-  name: null
+  name: spsh-config
 # If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
 enableServiceMonitor: false
-deployDedicatedDB: false
-dedicatedDB:
-  user: admin
-  password: admin
-  dbname: dbiam
