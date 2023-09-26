@@ -7,5 +7,5 @@ export class ServiceProviderEntity extends TimestampedEntity<ServiceProviderEnti
      * Points to Schulstrukturknoten
      */
     @Property()
-    public providedOnNode!: string;
+    public providedOnSchulstrukturknoten!: string;
 }
