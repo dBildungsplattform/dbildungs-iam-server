@@ -7,5 +7,5 @@ export class RolleEntity extends TimestampedEntity<RolleEntity, 'id'> {
      * Points to Schulstrukturknoten
      */
     @Property()
-    public administeredByRolle!: string;
+    public administeredBySchulstrukturknoten!: string;
 }
