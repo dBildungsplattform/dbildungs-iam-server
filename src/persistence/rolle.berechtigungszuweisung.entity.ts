@@ -17,5 +17,5 @@ export class RolleBerechtigungszuweisungEntity extends TimestampedEntity<RolleBe
      * Points to Schulstrukturknoten
      */
     @Property()
-    public schoolStructureNode!: string;
+    public schulstrukturknoten!: string;
 }
