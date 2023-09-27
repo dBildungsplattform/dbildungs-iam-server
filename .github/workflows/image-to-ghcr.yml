@@ -75,7 +75,9 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ env.LOWERCASE_REPO }}:${{ needs.branch_meta.outputs.sha }}
+          # temporarily change this to latest to make deployment easier
+          # tags: ghcr.io/${{ env.LOWERCASE_REPO }}:${{ needs.branch_meta.outputs.sha }}
+          tags: ghcr.io/${{ env.LOWERCASE_REPO }}:latest
           labels: ${{ steps.docker_meta_img.outputs.labels }}
 
   trivy-vulnerability-scanning:
