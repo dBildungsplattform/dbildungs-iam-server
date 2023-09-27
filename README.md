@@ -6,15 +6,15 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 
 ## Prerequisites
 
-* Node in the version stated in the `package.json`
-* Container Runtime like Docker or Podman
-  * Is required for local setup and integration tests
+-   Node in the version stated in the `package.json`
+-   Container Runtime like Docker or Podman
+    -   Is required for local setup and integration tests
 
 ## Local Setup
 
 1. Run `npm ci` to install all dependencies
 2. Start the required services from the `compose.yaml` file
-   * db
+    - db
 3. Create a `.env` file and set the required environment variables from `env.config.ts`
 4. run `npm run setup` to initialize the DB
 5. Run `npm run start:debug` to start the server
@@ -51,14 +51,14 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 
 ## Developer Guides
 
-* Code conventions are enforced through the compile, eslint and prettier as far as possible
-    * Non enforcable conventions will be documented here. If they become enforcable we will put them into
-      automation.
-    * Table names will be all lowercase if the name contains multiple words they will be separated by
+-   Code conventions are enforced through the compile, eslint and prettier as far as possible
+    -   Non enforcable conventions will be documented here. If they become enforcable we will put them into
+        automation.
+    -   Table names will be all lowercase if the name contains multiple words they will be separated by
         underscores.
-* Git conventions can be found [here](./docs/git.md)
-* Test conventions can be found [here](./docs/tests.md)
-* Configuration conventions can be found [here](./docs/config.md)
+-   Git conventions can be found [here](./docs/git.md)
+-   Test conventions can be found [here](./docs/tests.md)
+-   Configuration conventions can be found [here](./docs/config.md)
 
 ## License
 
