@@ -9,14 +9,14 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{.Values.backendHostname}}
-    - http:
+    - host: {{.Values.dbildungsIamBackendHost}}
+      http:
         paths:
           - path: /api
             pathType: Prefix
             backend:
               service:
-                name: {{.Release.Name}}-backend-api
+                name: dbiam
                 port:
                   number: 80
                 
