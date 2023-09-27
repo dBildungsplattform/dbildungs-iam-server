@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OrganisationRepo } from '../persistence/organisation.repo.js';
-import { DomainError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { OrganisationDo } from './organisation.do.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 
@@ -16,5 +16,13 @@ export class OrganisationService {
             return { ok: true, value: organisation };
         }
         return { ok: false, error: new EntityCouldNotBeCreated(`Organization could not be created`) };
+    }
+
+    public async findOrganisationById(id: string): Promise<Result<OrganisationDo<true>, DomainError>> {
+        const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(id);
+        if (organisation) {
+            return { ok: true, value: organisation };
+        }
+        return { ok: false, error: new EntityNotFoundError(`Organization with the following ID ${id} does not exist`) };
     }
 }

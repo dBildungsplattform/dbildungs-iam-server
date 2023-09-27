@@ -9,6 +9,7 @@ import { Dictionary } from '@mikro-orm/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -66,6 +67,36 @@ describe('OrganisationService', () => {
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: false,
                 error: new EntityCouldNotBeCreated(`Organization could not be created`),
+            });
+        });
+    });
+
+    describe('findOrganisationById', () => {
+        it('should find an organization by its ID', async () => {
+            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
+            organisationDo.id = faker.string.uuid();
+            organisationRepoMock.findById.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
+            const result: Result<OrganisationDo<true>> = await organisationService.findOrganisationById(
+                organisationDo.id,
+            );
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: true,
+                value: organisationDo as unknown as OrganisationDo<true>,
+            });
+        });
+
+        it('should return a domain error', async () => {
+            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
+            organisationDo.id = faker.string.uuid();
+            organisationRepoMock.findById.mockResolvedValue(null);
+            const result: Result<OrganisationDo<true>> = await organisationService.findOrganisationById(
+                organisationDo.id,
+            );
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new EntityNotFoundError(
+                    `Organization with the following ID ${organisationDo.id} does not exist`,
+                ),
             });
         });
     });
