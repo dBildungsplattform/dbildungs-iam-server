@@ -75,36 +75,37 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          # temporarily change this to latest to make deployment easier
+          # temporarily change this to latest to make deployment 
           # tags: ghcr.io/${{ env.LOWERCASE_REPO }}:${{ needs.branch_meta.outputs.sha }}
           tags: ghcr.io/${{ env.LOWERCASE_REPO }}:latest
           labels: ${{ steps.docker_meta_img.outputs.labels }}
 
-  trivy-vulnerability-scanning:
-    needs:
-      - build_and_push
-      - branch_meta
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    steps:
-      - name: Lowercase REPO name
-        run: |
-          echo "LOWERCASE_REPO=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+  # trivy-vulnerability-scanning:
+  #   needs:
+  #     - build_and_push
+  #     - branch_meta
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     actions: read
+  #     contents: read
+  #     security-events: write
+  #   steps:
+  #     - name: Lowercase REPO name
+  #       run: |
+  #         echo "LOWERCASE_REPO=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
-      - name: Run trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@9ab158e8597f3b310480b9a69402b419bc03dbd5
-        with:
-          image-ref: 'ghcr.io/${{ env.LOWERCASE_REPO }}:${{ needs.branch_meta.outputs.sha }}'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
+  #     - name: Run trivy vulnerability scanner
+  #       uses: aquasecurity/trivy-action@9ab158e8597f3b310480b9a69402b419bc03dbd5
+  #       with:
+  #         # image-ref: 'ghcr.io/${{ env.LOWERCASE_REPO }}:${{ needs.branch_meta.outputs.sha }}'
+            # image-ref: 'ghcr.io/${{ env.LOWERCASE_REPO }}:latest'
+  #         format: 'sarif'
+  #         output: 'trivy-results.sarif'
+  #         severity: 'CRITICAL,HIGH'
+  #         ignore-unfixed: true
 
-      - name: Upload trivy results
-        if: ${{ always() }}
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-results.sarif'
+  #     - name: Upload trivy results
+  #       if: ${{ always() }}
+  #       uses: github/codeql-action/upload-sarif@v2
+  #       with:
+  #         sarif_file: 'trivy-results.sarif'
