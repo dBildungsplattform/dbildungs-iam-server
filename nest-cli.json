@@ -19,6 +19,15 @@
                 "tsConfigPath": "tsconfig.build.json"
             }
         },
+        "frontend": {
+            "type": "application",
+            "root": "src",
+            "entryFile": "src/frontend/main",
+            "sourceRoot": "src",
+            "compilerOptions": {
+                "tsConfigPath": "tsconfig.build.json"
+            }
+        },
         "console": {
             "type": "application",
             "root": "src",

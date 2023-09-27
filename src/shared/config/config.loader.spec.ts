@@ -29,6 +29,9 @@ describe('configloader', () => {
                 HOST: {
                     PORT: 8080,
                 },
+                FRONTEND: {
+                    PORT: 8081,
+                },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
                     DB_NAME: 'test-db',
@@ -68,6 +71,9 @@ describe('configloader', () => {
             const config: DeepPartial<JsonConfig> = {
                 HOST: {
                     PORT: 1,
+                },
+                FRONTEND: {
+                    PORT: 2,
                 },
                 DB: {
                     CLIENT_URL: '',
