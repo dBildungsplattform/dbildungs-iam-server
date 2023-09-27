@@ -9,7 +9,7 @@ import { DbConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../share
 import { mappingErrorHandler } from '../shared/error/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
-import {UiBackendApiModule} from "../modules/ui-backend/ui-backend-api.module.js";
+import { UiBackendApiModule } from '../modules/ui-backend/ui-backend-api.module.js';
 
 @Module({
     imports: [
@@ -37,7 +37,7 @@ import {UiBackendApiModule} from "../modules/ui-backend/ui-backend-api.module.js
         }),
         PersonApiModule,
         KeycloakAdministrationModule,
-        UiBackendApiModule
+        UiBackendApiModule,
     ],
 })
 export class ServerModule {}

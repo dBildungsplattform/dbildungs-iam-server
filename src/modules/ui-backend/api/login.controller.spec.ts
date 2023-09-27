@@ -1,12 +1,11 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {LoginController} from "./login.controller";
-import {MapperTestModule} from "../../../../test/utils";
-import {createMock, DeepMocked} from "@golevelup/ts-jest";
-import {LoginService} from "../domain/login.service";
-import {faker} from "@faker-js/faker";
-import {TokenSet} from "openid-client";
-import {UserParams} from "./user.params";
-import {KeycloakClientError, UserAuthenticationFailedError} from "../../../shared/error";
+import { Test, TestingModule } from '@nestjs/testing';
+import { LoginController } from './login.controller.js';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { LoginService } from '../domain/login.service.js';
+import { faker } from '@faker-js/faker';
+import { TokenSet } from 'openid-client';
+import { UserParams } from './user.params.js';
+import { KeycloakClientError, UserAuthenticationFailedError } from '../../../shared/error/index.js';
 
 describe('LoginController', () => {
     let module: TestingModule;
@@ -16,7 +15,7 @@ describe('LoginController', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [MapperTestModule],
+            imports: [],
             providers: [
                 LoginController,
                 {
@@ -25,15 +24,13 @@ describe('LoginController', () => {
                 },
                 {
                     provide: TokenSet,
-                    useValue: createMock<TokenSet>()
-                }
+                    useValue: createMock<TokenSet>(),
+                },
             ],
         }).compile();
         loginController = module.get(LoginController);
         loginServiceMock = module.get(LoginService);
         tokenSet = module.get(TokenSet);
-        console.log(loginServiceMock);
-
     });
 
     afterAll(async () => {
@@ -44,7 +41,6 @@ describe('LoginController', () => {
         jest.resetAllMocks();
     });
 
-
     it('should be defined', () => {
         expect(loginController).toBeDefined();
     });
@@ -53,7 +49,7 @@ describe('LoginController', () => {
         it('should not throw', async () => {
             const userParams: UserParams = {
                 username: faker.string.alpha(),
-                password: faker.string.alpha()
+                password: faker.string.alpha(),
             };
             loginServiceMock.getTokenForUser.mockResolvedValue(tokenSet);
             await expect(loginController.loginUser(userParams)).resolves.not.toThrow();
@@ -63,10 +59,10 @@ describe('LoginController', () => {
 
     describe('when getting KeyCloak-error from service', () => {
         it('should throw', async () => {
-            const errorMsg = 'keycloak not available';
+            const errorMsg: string = 'keycloak not available';
             const userParams: UserParams = {
                 username: faker.string.alpha(),
-                password: faker.string.alpha()
+                password: faker.string.alpha(),
             };
             loginServiceMock.getTokenForUser.mockImplementation(() => {
                 throw new KeycloakClientError(errorMsg);
@@ -78,10 +74,10 @@ describe('LoginController', () => {
 
     describe('when getting User-authentication-failed-error from service', () => {
         it('should throw', async () => {
-            const errorMsg = 'user could not be authenticated';
+            const errorMsg: string = 'user could not be authenticated';
             const userParams: UserParams = {
                 username: faker.string.alpha(),
-                password: faker.string.alpha()
+                password: faker.string.alpha(),
             };
             loginServiceMock.getTokenForUser.mockImplementation(() => {
                 throw new UserAuthenticationFailedError(errorMsg);
@@ -90,4 +86,4 @@ describe('LoginController', () => {
             expect(loginServiceMock.getTokenForUser).toHaveBeenCalledTimes(1);
         });
     });
-})
+});

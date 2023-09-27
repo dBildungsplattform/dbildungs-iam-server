@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {LoginService} from "./login.service";
+import { LoginService } from './login.service.js';
 
 describe('LoginService', () => {
     let module: TestingModule;
@@ -7,9 +7,7 @@ describe('LoginService', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            providers: [
-                LoginService,
-            ],
+            providers: [LoginService],
         }).compile();
         loginService = module.get(LoginService);
     });
@@ -28,17 +26,11 @@ describe('LoginService', () => {
 
     describe('getTokenForUser by username and password', () => {
         describe('when user credentials are correct', () => {
-            it('should return token', async () => {
-
-            });
+            it('should return token', async () => {});
         });
 
         describe('when user credentials are not correct', () => {
-            it('should return User-authentication-failed-error', async () => {
-
-            });
+            it('should return User-authentication-failed-error', async () => {});
         });
     });
-
-
 });

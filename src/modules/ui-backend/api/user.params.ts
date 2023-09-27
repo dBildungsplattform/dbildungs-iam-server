@@ -12,5 +12,4 @@ export class UserParams {
     @IsString()
     @ApiProperty({ name: 'password', required: true })
     public readonly password!: string;
-
 }
