@@ -71,7 +71,6 @@ describe('OrganisationController', () => {
     });
 
     describe('findOrganisationById', () => {
-
         const params: OrganisationByIdParams = {
             organisationId: faker.string.uuid(),
         };
