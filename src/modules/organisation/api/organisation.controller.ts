@@ -27,7 +27,7 @@ export class OrganisationController {
     @ApiCreatedResponse({ description: 'The organisation was successfully created.' })
     @ApiBadRequestResponse({ description: 'The organisation already exists.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to create the organisation.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
     public async createOrganisation(@Body() params: CreateOrganisationBodyParams): Promise<OrganisationResponse> {
         const organisationDto: CreateOrganisationDto = this.mapper.map(
