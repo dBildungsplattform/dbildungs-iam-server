@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { FrontendController } from './frontend.controller.js';
@@ -32,9 +33,11 @@ describe('FrontendController', () => {
 
     describe('Logout', () => {
         it('should not throw', () => {
-            const loginResponse: string = frontendController.logout();
+            const userDummy: unknown = { id: faker.string.uuid() };
 
-            expect(loginResponse).toBe('Logout!');
+            const loginResponse: string = frontendController.logout(userDummy);
+
+            expect(loginResponse).toBe(`Logout! ${JSON.stringify(userDummy)}`);
         });
     });
 });

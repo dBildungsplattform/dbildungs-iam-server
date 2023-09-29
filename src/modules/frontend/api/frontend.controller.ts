@@ -1,31 +1,24 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Post } from '@nestjs/common';
 import { ApiAcceptedResponse, ApiTags } from '@nestjs/swagger';
-import { AuthenticatedUser, Public } from 'nest-keycloak-connect';
+import { AuthenticatedUser, Public, Resource } from 'nest-keycloak-connect';
 
 @ApiTags('frontend')
 @Controller({ path: 'frontend' })
 export class FrontendController {
-    @Get('public')
+    // Endpoints decorated with @Public are accessible to everyone
     @Public()
-    public publicMethod(): string {
-        return 'Everyone can access @Public endpoints.';
-    }
-
-    @Get('me')
-    public me(@AuthenticatedUser() user: unknown): string {
-        return JSON.stringify(user);
-    }
-
-    @Public()
+    @Resource('test')
     @Post('login')
     @ApiAcceptedResponse({ description: 'The person was successfully logged in.' })
     public login(): string {
         return 'Login!';
     }
 
+    // Endpoints without @Public decorator automatically verify user
     @Post('logout')
     @ApiAcceptedResponse({ description: 'The person was successfully logged out.' })
-    public logout(): string {
-        return 'Logout!';
+    public logout(@AuthenticatedUser() user: unknown): string {
+        // Can get logged in user with @AuthenticatedUser (technically any-type, is the JSON response from keycloak)
+        return `Logout! ${JSON.stringify(user)}`;
     }
 }
