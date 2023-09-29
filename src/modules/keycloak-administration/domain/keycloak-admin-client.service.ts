@@ -44,10 +44,9 @@ export class KeycloakAdministrationService {
         if (shouldAuth) {
             try {
                 const credentials: Credentials = {
-                    grantType: 'password',
+                    grantType: 'client_credentials',
                     clientId: this.kcConfig.CLIENT_ID,
-                    username: this.kcConfig.USERNAME,
-                    password: this.kcConfig.PASSWORD,
+                    clientSecret: this.kcConfig.SECRET,
                 };
 
                 await this.kcAdminClient.auth(credentials);

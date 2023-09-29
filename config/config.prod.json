@@ -5,5 +5,10 @@
     "DB": {
         "CLIENT_URL": "<here goes your connection string>",
         "DB_NAME": "<here goes your db name>"
+    },
+    "KEYCLOAK": {
+        "BASE_URL": "<URL to keycloak>",
+        "REALM_NAME": "<name of the used realm>",
+        "CLIENT_ID": "<id of the client>"
     }
 }

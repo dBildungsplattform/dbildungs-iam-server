@@ -5,9 +5,11 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard, KeycloakConnectModule, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
 
 import { FrontendApiModule } from '../modules/frontend/frontend-api.module.js';
-import { DbConfig, ServerConfig, loadConfigFiles, loadEnvConfig } from '../shared/config/index.js';
+import { DbConfig, KeycloakConfig, ServerConfig, loadConfigFiles, loadEnvConfig } from '../shared/config/index.js';
 import { mappingErrorHandler } from '../shared/error/mapping.error.js';
 
 @Module({
@@ -34,7 +36,34 @@ import { mappingErrorHandler } from '../shared/error/mapping.error.js';
             },
             inject: [ConfigService],
         }),
+        KeycloakConnectModule.registerAsync({
+            useFactory: (config: ConfigService<ServerConfig, true>) => {
+                const keycloakConfig: KeycloakConfig = config.getOrThrow<KeycloakConfig>('KEYCLOAK');
+
+                return {
+                    authServerUrl: keycloakConfig.BASE_URL,
+                    realm: keycloakConfig.REALM_NAME,
+                    clientId: keycloakConfig.CLIENT_ID,
+                    secret: keycloakConfig.SECRET,
+                };
+            },
+            inject: [ConfigService],
+        }),
         FrontendApiModule,
+    ],
+    providers: [
+        {
+            provide: APP_GUARD,
+            useClass: AuthGuard,
+        },
+        {
+            provide: APP_GUARD,
+            useClass: RoleGuard,
+        },
+        {
+            provide: APP_GUARD,
+            useClass: ResourceGuard,
+        },
     ],
 })
 export class FrontendModule {}
