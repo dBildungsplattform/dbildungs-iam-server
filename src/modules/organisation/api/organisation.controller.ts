@@ -56,7 +56,7 @@ export class OrganisationController {
             const organisation: OrganisationResponse = await this.uc.findOrganisationById(params.organisationId);
             return organisation;
         } catch (error) {
-            return new HttpException('Requested Entity does not exist', HttpStatus.NOT_FOUND);
+            throw new HttpException('Requested Entity does not exist', HttpStatus.NOT_FOUND);
         }
     }
 }
