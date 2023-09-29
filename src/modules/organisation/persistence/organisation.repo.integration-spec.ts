@@ -61,12 +61,8 @@ describe('OgranisationRepo', () => {
     describe('findById', () => {
         it('should find an organization by ID', async () => {
             const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
-            await sut.save(organisationDo);
-            const [organisation]: OrganisationEntity[] = await em.find(OrganisationEntity, {});
-            expect(organisation).toBeInstanceOf(OrganisationEntity);
-            const foundOrganisation: Option<OrganisationDo<true>> = await sut.findById(
-                (organisation as OrganisationEntity).id,
-            );
+            const organisation: OrganisationDo<boolean> = await sut.save(organisationDo);
+            const foundOrganisation: Option<OrganisationDo<true>> = await sut.findById(organisation.id as string);
             expect(foundOrganisation).toBeInstanceOf(OrganisationDo);
         });
 
