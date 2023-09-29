@@ -23,6 +23,6 @@ export class OrganisationService {
         if (organisation) {
             return { ok: true, value: organisation };
         }
-        return { ok: false, error: new EntityNotFoundError(`Organization with the following ID ${id} does not exist`) };
+        return { ok: false, error: new EntityNotFoundError('Organization', id) };
     }
 }

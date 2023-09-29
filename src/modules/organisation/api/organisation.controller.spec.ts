@@ -90,7 +90,7 @@ describe('OrganisationController', () => {
         });
 
         it('should throw an error', async () => {
-            const mockError: EntityNotFoundError = new EntityNotFoundError('organization does not exist.');
+            const mockError: EntityNotFoundError = new EntityNotFoundError('organization', faker.string.uuid());
             organisationUcMock.findOrganisationById.mockRejectedValue(mockError);
             await expect(organisationController.findOrganisationById(params)).resolves.toThrowError(HttpException);
             expect(organisationUcMock.findOrganisationById).toHaveBeenCalledTimes(1);

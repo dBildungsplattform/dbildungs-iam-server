@@ -90,7 +90,7 @@ describe('OrganisationService', () => {
             const result: Result<OrganisationDo<true>> = await organisationService.findOrganisationById(organisationId);
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: false,
-                error: new EntityNotFoundError(`Organization with the following ID ${organisationId} does not exist`),
+                error: new EntityNotFoundError('Organization', organisationId),
             });
         });
     });
