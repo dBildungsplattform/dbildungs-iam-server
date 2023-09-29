@@ -74,7 +74,6 @@ describe('OrganisationController', () => {
         const params: OrganisationByIdParams = {
             organisationId: faker.string.uuid(),
         };
-
         const response: OrganisationResponse = {
             id: params.organisationId,
             kennung: faker.lorem.word(),
@@ -83,6 +82,7 @@ describe('OrganisationController', () => {
             kuerzel: faker.lorem.word(),
             typ: OrganisationsTyp.SONSTIGE,
         };
+
         it('should find an organization by it id', async () => {
             organisationUcMock.findOrganisationById.mockResolvedValue(response);
             await expect(organisationController.findOrganisationById(params)).resolves.not.toThrow();

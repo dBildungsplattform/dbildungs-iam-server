@@ -73,30 +73,24 @@ describe('OrganisationService', () => {
 
     describe('findOrganisationById', () => {
         it('should find an organization by its ID', async () => {
-            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
-            organisationDo.id = faker.string.uuid();
-            organisationRepoMock.findById.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
+            const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true);
+            organisationRepoMock.findById.mockResolvedValue(organisationDo);
             const result: Result<OrganisationDo<true>> = await organisationService.findOrganisationById(
                 organisationDo.id,
             );
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: true,
-                value: organisationDo as unknown as OrganisationDo<true>,
+                value: organisationDo,
             });
         });
 
         it('should return a domain error', async () => {
-            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
-            organisationDo.id = faker.string.uuid();
             organisationRepoMock.findById.mockResolvedValue(null);
-            const result: Result<OrganisationDo<true>> = await organisationService.findOrganisationById(
-                organisationDo.id,
-            );
+            const organisationId: string = faker.string.uuid();
+            const result: Result<OrganisationDo<true>> = await organisationService.findOrganisationById(organisationId);
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: false,
-                error: new EntityNotFoundError(
-                    `Organization with the following ID ${organisationDo.id} does not exist`,
-                ),
+                error: new EntityNotFoundError(`Organization with the following ID ${organisationId} does not exist`),
             });
         });
     });

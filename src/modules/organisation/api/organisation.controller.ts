@@ -8,6 +8,7 @@ import {
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
+    ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -42,7 +43,7 @@ export class OrganisationController {
     }
 
     @Get(':organisationId')
-    @ApiCreatedResponse({ description: 'The organization was successfully pulled.' })
+    @ApiOkResponse({ description: 'The organization was successfully pulled.' })
     @ApiBadRequestResponse({ description: 'Organization ID is required' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the organization.' })
     @ApiNotFoundResponse({ description: 'The organization does not exist.' })
