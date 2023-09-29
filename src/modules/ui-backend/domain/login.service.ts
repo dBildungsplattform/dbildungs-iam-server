@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Client, errors, Issuer, TokenSet } from 'openid-client';
-import { KeycloakClientError } from '../../../shared/error/index.js';
 import OPError = errors.OPError;
+import { KeycloakClientError } from '../../../shared/error/index.js';
 import { UserAuthenticationFailedError } from '../../../shared/error/user-authentication-failed.error.js';
 
 @Injectable()
 export class LoginService {
-    private static readonly REALM_NAME: string = 'http://localhost:8680/realms/schulportal';
+    private static readonly REALM_NAME: string = 'http://localhost:8080/realms/schulportal';
 
     private static readonly CLIENT_ID: string = 'schulportal';
 

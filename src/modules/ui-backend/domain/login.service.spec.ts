@@ -1,5 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LoginService } from './login.service.js';
+import { errors, Issuer, TokenSet } from 'openid-client';
+import { createMock } from '@golevelup/ts-jest';
+import { KeycloakClientError, UserAuthenticationFailedError } from '../../../shared/error/index.js';
+import OPError = errors.OPError;
+
+const issuerDiscoverMock: jest.Mock = jest.fn();
+Issuer.discover = issuerDiscoverMock;
 
 describe('LoginService', () => {
     let module: TestingModule;
@@ -24,13 +31,28 @@ describe('LoginService', () => {
         expect(loginService).toBeDefined();
     });
 
-    describe('getTokenForUser by username and password', () => {
-        describe('when user credentials are correct', () => {
-            it('should return token', async () => {});
+    describe('should execute getTokenForUser', () => {
+        it('expect success when Keycloak is mocked', () => {
+            const expectedValue = Promise.resolve(createMock(TokenSet));
+            issuerDiscoverMock.mockResolvedValueOnce(createMock(Issuer));
+            expect(loginService.getTokenForUser('u', 'p')).toEqual(expectedValue);
+            expect(issuerDiscoverMock).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('should fail during execute getTokenForUser', () => {
+        it('expect KeycloakClientError', async () => {
+            const expectedError: KeycloakClientError = new KeycloakClientError('KeyCloak service did not respond.');
+            issuerDiscoverMock.mockRejectedValueOnce(expectedError);
+            await expect(loginService.getTokenForUser('u', 'p')).rejects.toThrow(KeycloakClientError);
+            expect(issuerDiscoverMock).toHaveBeenCalledTimes(1);
         });
 
-        describe('when user credentials are not correct', () => {
-            it('should return User-authentication-failed-error', async () => {});
+        it('expect UserAuthenticationFailedError', async () => {
+            const expectedError: OPError = new OPError({ error: 'invalid_grant' });
+            issuerDiscoverMock.mockRejectedValueOnce(expectedError);
+            await expect(loginService.getTokenForUser('u', 'p')).rejects.toThrow(UserAuthenticationFailedError);
+            expect(issuerDiscoverMock).toHaveBeenCalledTimes(1);
         });
     });
 });

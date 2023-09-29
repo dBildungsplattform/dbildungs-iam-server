@@ -37,4 +37,22 @@ export class LoginController {
     public async loginUser(@Body() params: UserParams): Promise<TokenSet> {
         return this.loginService.getTokenForUser(params.username, params.password);
     }
+    /*
+    @Post('2')
+    @UseFilters(
+        new KeyCloakExceptionFilter(HttpStatus.SERVICE_UNAVAILABLE),
+        new UserAuthenticationFailedExceptionFilter(HttpStatus.NOT_FOUND),
+    )
+    @ApiOkResponse({ description: 'Request successful, returning token.' })
+    @ApiBadRequestResponse({ description: 'Bad request for retrieving token.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve token.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to retrieve token.' })
+    @ApiNotFoundResponse({
+        description: 'USER_AUTHENTICATION_FAILED_ERROR: User could not be authenticated successfully.',
+    })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while retrieving token.' })
+    @ApiServiceUnavailableResponse({ description: 'KEYCLOAK_CLIENT_ERROR: KeyCloak service did not respond.' })
+    public async loginUser2(@Body() params: UserParams): Promise<String | undefined> {
+        return this.keycloakUserService.getTokenForUser(params.username, params.password);
+    }*/
 }
