@@ -32,6 +32,11 @@ The config file contains all static, non-secret information we need to start and
   "DB": {
     "CLIENT_URL": "<here goes your connection string>",
     "DB_NAME": "<here goes your db name>"
+  },
+  "KEYCLOAK": {
+    "BASE_URL": "<URL of keycloak>",
+    "REALM_NAME": "<name of the realm>",
+    "CLIENT_ID": "<id of the client>"
   }
 }
 ```
@@ -52,6 +57,9 @@ There are however a few special rules applied to them:
 {
     "DB": {
         "SECRET": "<here goes your secret>"
+    },
+    "KEYCLOAK": {
+        "SECRET": "<secret token for the client>"
     }
 }
 ```
