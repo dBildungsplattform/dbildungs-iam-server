@@ -35,4 +35,12 @@ export class OrganisationRepo {
         await this.em.persistAndFlush(organisation);
         return this.mapper.map(organisation, OrganisationEntity, OrganisationDo);
     }
+
+    public async findById(id: string): Promise<Option<OrganisationDo<true>>> {
+        const organisation: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
+        if (organisation) {
+            return this.mapper.map(organisation, OrganisationEntity, OrganisationDo);
+        }
+        return null;
+    }
 }

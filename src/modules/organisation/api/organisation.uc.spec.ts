@@ -6,6 +6,8 @@ import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
 import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
+import { OrganisationDo } from '../domain/organisation.do.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 
 describe('OrganisationUc', () => {
     let module: TestingModule;
@@ -56,6 +58,28 @@ describe('OrganisationUc', () => {
             });
             await expect(organisationUc.createOrganisation({} as CreateOrganisationDto)).rejects.toThrowError(
                 EntityCouldNotBeCreated,
+            );
+        });
+    });
+
+    describe('findOrganisationById', () => {
+        it('should find an organisation by its id', async () => {
+            const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+            organisationServiceMock.findOrganisationById.mockResolvedValue({
+                ok: true,
+                value: organisation,
+            });
+            await expect(organisationUc.findOrganisationById(organisation.id)).resolves.not.toThrow();
+        });
+
+        it('should throw an error', async () => {
+            const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+            organisationServiceMock.findOrganisationById.mockResolvedValue({
+                ok: false,
+                error: new EntityNotFoundError(''),
+            });
+            await expect(organisationUc.findOrganisationById(organisation.id)).rejects.toThrowError(
+                EntityNotFoundError,
             );
         });
     });
