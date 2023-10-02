@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LoginService } from './login.service.js';
-import { errors, Issuer, TokenSet } from 'openid-client';
+import { errors, Issuer } from 'openid-client';
 import { createMock } from '@golevelup/ts-jest';
 import { KeycloakClientError, UserAuthenticationFailedError } from '../../../shared/error/index.js';
 import OPError = errors.OPError;
@@ -32,15 +32,14 @@ describe('LoginService', () => {
     });
 
     describe('should execute getTokenForUser', () => {
-        it('expect success when Keycloak is mocked', () => {
-            const expectedValue = Promise.resolve(createMock(TokenSet));
+        it('expect no exceptions when Keycloak is mocked', async () => {
             issuerDiscoverMock.mockResolvedValueOnce(createMock(Issuer));
-            expect(loginService.getTokenForUser('u', 'p')).toEqual(expectedValue);
+            await expect(loginService.getTokenForUser('u', 'p')).resolves.not.toThrow();
             expect(issuerDiscoverMock).toHaveBeenCalledTimes(1);
         });
     });
 
-    describe('should fail during execute getTokenForUser', () => {
+    describe('should fail during execution of getTokenForUser', () => {
         it('expect KeycloakClientError', async () => {
             const expectedError: KeycloakClientError = new KeycloakClientError('KeyCloak service did not respond.');
             issuerDiscoverMock.mockRejectedValueOnce(expectedError);

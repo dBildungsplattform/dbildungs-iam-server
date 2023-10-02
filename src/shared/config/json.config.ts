@@ -16,4 +16,8 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => KeycloakConfig)
     public readonly KEYCLOAK!: KeycloakConfig;
+
+    @ValidateNested()
+    @Type(() => KeycloakConfig)
+    public readonly SCHULPORTAL!: KeycloakConfig;
 }
