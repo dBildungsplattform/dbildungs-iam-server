@@ -7,8 +7,10 @@ import {
     MikroOrmHealthIndicator,
 } from '@nestjs/terminus';
 import { EntityManager } from '@mikro-orm/postgresql';
+import { ApiExcludeController } from '@nestjs/swagger';
 
 @Controller('health')
+@ApiExcludeController()
 export class HealthController {
     public constructor(
         private health: HealthCheckService,
