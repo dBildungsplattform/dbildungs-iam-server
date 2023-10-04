@@ -1,26 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UiBackendExceptionFilter } from './ui-backend-exception-filter.js';
 import { KeycloakClientError } from '../../../shared/error/index.js';
+import Mock = jest.Mock;
+import { ArgumentsHost } from '@nestjs/common';
 
-const mockJson = jest.fn();
-const mockUrl = jest.fn().mockImplementation(() => ({
+const mockJson: Mock = jest.fn();
+const mockUrl: Mock = jest.fn().mockImplementation(() => ({
     url: mockUrl,
 }));
-const mockStatus = jest.fn().mockImplementation(() => ({
+const mockStatus: Mock = jest.fn().mockImplementation(() => ({
     json: mockJson,
 }));
-const mockGetRequest = jest.fn().mockImplementation(() => ({
+const mockGetRequest: Mock = jest.fn().mockImplementation(() => ({
     url: mockUrl,
 }));
-const mockGetResponse = jest.fn().mockImplementation(() => ({
+const mockGetResponse: Mock = jest.fn().mockImplementation(() => ({
     status: mockStatus,
 }));
-const mockHttpArgumentsHost = jest.fn().mockImplementation(() => ({
+const mockHttpArgumentsHost: Mock = jest.fn().mockImplementation(() => ({
     getResponse: mockGetResponse,
     getRequest: mockGetRequest,
 }));
 
-const mockArgumentsHost = {
+const mockArgumentsHost: ArgumentsHost = {
     switchToHttp: mockHttpArgumentsHost,
     getArgByIndex: jest.fn(),
     getArgs: jest.fn(),
