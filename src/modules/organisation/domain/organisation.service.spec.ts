@@ -9,6 +9,7 @@ import { Dictionary } from '@mikro-orm/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -66,6 +67,30 @@ describe('OrganisationService', () => {
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: false,
                 error: new EntityCouldNotBeCreated(`Organization could not be created`),
+            });
+        });
+    });
+
+    describe('findOrganisationById', () => {
+        it('should find an organization by its ID', async () => {
+            const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true);
+            organisationRepoMock.findById.mockResolvedValue(organisationDo);
+            const result: Result<OrganisationDo<true>> = await organisationService.findOrganisationById(
+                organisationDo.id,
+            );
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: true,
+                value: organisationDo,
+            });
+        });
+
+        it('should return a domain error', async () => {
+            organisationRepoMock.findById.mockResolvedValue(null);
+            const organisationId: string = faker.string.uuid();
+            const result: Result<OrganisationDo<true>> = await organisationService.findOrganisationById(organisationId);
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new EntityNotFoundError('Organization', organisationId),
             });
         });
     });
