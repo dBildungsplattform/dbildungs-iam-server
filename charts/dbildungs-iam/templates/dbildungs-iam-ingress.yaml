@@ -4,12 +4,10 @@ metadata:
   name: {{.Release.Name}}-backend
   labels:
     app.kubernetes.io/name: dbildungs-iam
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{.Values.dbildungsIamBackendHost}}
+    - host: {{.Values.backendHostname}}
       http:
         paths:
           - path: /api
@@ -19,4 +17,10 @@ spec:
                 name: dbiam
                 port:
                   number: 80
-                
+          - path: /docs
+            pathType: Prefix
+            backend:
+              service:
+                name: dbiam
+                port:
+                  number: 80
