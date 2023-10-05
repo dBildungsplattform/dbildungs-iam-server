@@ -19,6 +19,9 @@ export class DbInitConsole extends CommandRunner {
         if (!(await this.orm.getSchemaGenerator().ensureDatabase())) {
             await this.orm.getSchemaGenerator().createDatabase(this.configService.getOrThrow<DbConfig>('DB').DB_NAME);
         }
+        this.logger.info('Dropping Schema');
+        await this.orm.getSchemaGenerator().dropSchema();
+        this.logger.info('Creating Schema');
         await this.orm.getSchemaGenerator().createSchema();
         this.logger.info('Initialized database');
     }
