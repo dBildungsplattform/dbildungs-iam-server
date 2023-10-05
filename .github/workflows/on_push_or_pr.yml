@@ -13,3 +13,5 @@ jobs:
   nest_test_and_sonarcloud:
     uses: ./.github/workflows/reusable_job_nest_test_sonarcloud.yml
     secrets: inherit
+  image_to_ghcr:
+    uses: ./.github/workflows/reusable_job_image_to_ghcr.yml
