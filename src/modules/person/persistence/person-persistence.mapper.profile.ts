@@ -1,8 +1,10 @@
-import { Mapper, MappingProfile, createMap, forMember, mapFrom } from '@automapper/core';
+import { Mapper, MappingProfile, createMap, forMember, ignore, mapFrom } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonEntity } from '../persistence/person.entity.js';
+import { PersonenkontextDo } from '../domain/personenkontext.do.js';
+import { PersonenkontextEntity } from './personenkontext.entity.js';
 
 @Injectable()
 export class PersonPersistenceMapperProfile extends AutomapperProfile {
@@ -41,6 +43,22 @@ export class PersonPersistenceMapperProfile extends AutomapperProfile {
                     (dest: PersonDo<boolean>) => dest.nameSuffix,
                     mapFrom((src: PersonEntity) => src.nameSuffix),
                 ),
+            );
+
+            createMap(mapper, PersonenkontextDo, PersonenkontextEntity);
+            createMap(
+                mapper,
+                PersonenkontextEntity,
+                PersonenkontextDo,
+                forMember(
+                    (dest: PersonenkontextDo<boolean>) => dest.personId,
+                    mapFrom((src: PersonenkontextEntity) => src.person.id),
+                ),
+                forMember(
+                    (dest: PersonenkontextDo<boolean>) => dest.id,
+                    mapFrom((src: PersonenkontextEntity) => src.id),
+                ),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.organisation, ignore()),
             );
         };
     }
