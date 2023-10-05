@@ -1,4 +1,4 @@
-dbildungsIamContainer: "ghcr.io/dbildungsplattform/dbildungs-iam-server:a59604be74b4eacfddc4325c861a4ddb88db50d3"
+dbildungsIamContainer: "ghcr.io/dbildungsplattform/dbildungs-iam-server/feature/helm-integration:latest"
 
 dbildungsIamExternalPort: 80
 dbildungsIamCpuMax: 2
