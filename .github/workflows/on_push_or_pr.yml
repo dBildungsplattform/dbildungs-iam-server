@@ -3,7 +3,7 @@ name: 'All static tests on every push'
 on:
   push:
     branches:
-      - '*'
+      - '**'
 
 jobs:
   codeql_analyze:
