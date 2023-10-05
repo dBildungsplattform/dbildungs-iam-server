@@ -1,10 +1,17 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonEntity } from './person.entity.js';
-import { Loaded } from '@mikro-orm/core';
+import { Loaded, QueryOrderMap } from '@mikro-orm/core';
+import { IFindOptions, IPagination, SortOrder } from '../../../shared/interface/find-options.js';
+import { Page } from '../../../shared/interface/page.js';
+import { Scope } from '../../../shared/repo/scope.js';
+import { PersonScope } from './person.scope.js';
+import { PersonSortingMapper } from './person-sorting.mapper.js';
 @Injectable()
 export class PersonRepo {
     public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
@@ -58,21 +65,50 @@ export class PersonRepo {
         return this.mapper.map(person, PersonEntity, PersonDo);
     }
 
-    public async findAll(personDo: PersonDo<false>): Promise<PersonDo<true>[]> {
-        const query: Record<string, unknown> = {};
+    public async findAll(
+        personDo: PersonDo<false>,
+        options?: IFindOptions<PersonDo<true>[]>,
+    ): Promise<PersonDo<true>[]> {
+        const pagination: IPagination = options?.pagination || {};
+        const order: QueryOrderMap<PersonEntity> = PersonSortingMapper.mapDOSortOrderToQueryOrder(options?.order || {});
+        const scope: Scope<PersonEntity> = new PersonScope()
+            .byFirstName(personDo.firstName)
+            .byLastName(personDo.lastName)
+            .byBirthDate(personDo.birthDate)
+            .allowEmptyQuery(true);
 
-        if (personDo.firstName) {
-            query['firstName'] = { $ilike: personDo.firstName };
+        if (order.id == null) {
+            order.firstName = SortOrder.asc;
         }
 
-        if (personDo.lastName) {
-            query['lastName'] = { $ilike: personDo.lastName };
-        }
+        // if (personDo.firstName) {
+        //     query['firstName'] = { $ilike: personDo.firstName };
+        // }
 
-        if (personDo.referrer) {
-            query['referrer'] = personDo.referrer;
-        }
-        const result: PersonEntity[] = await this.em.find(PersonEntity, query);
-        return result.map((person: PersonEntity) => this.mapper.map(person, PersonEntity, PersonDo));
+        // if (personDo.lastName) {
+        //     query['lastName'] = { $ilike: personDo.lastName };
+        // }
+
+        // if (personDo.referrer) {
+        //     query['referrer'] = personDo.referrer;
+        // }
+
+        const [entities, total]: [PersonEntity[], number] = await this.em.findAndCount(PersonEntity, scope.personDo, {
+            offset: pagination?.skip,
+            limit: pagination?.limit,
+        });
+
+        const entityDos: PersonDo<true>[] = entities.map((person: PersonEntity) =>
+            this.mapper.map(person, PersonEntity, PersonDo),
+        );
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const page: Page<PersonDo<true>[]> = new Page<PersonDo<true>>(entityDos, total);
+        // return result.map((person: PersonEntity) => this.mapper.map(person, PersonEntity, PersonDo));
+        return page;
     }
+    // mapEntityToDO(entity: PersonEntity): PersonDo {
+    //     const domainObject = PersonRepo.mapEntityToDO(entity);
+
+    //     return domainObject;
+    // }
 }
