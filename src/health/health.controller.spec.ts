@@ -21,9 +21,8 @@ describe('HealthController', () => {
     let httpHealthIndicator: DeepMocked<HttpHealthIndicator>;
     const keycloakConfig: KeycloakConfig = {
         CLIENT_ID: '',
-        PASSWORD: '',
+        SECRET: '',
         REALM_NAME: '',
-        USERNAME: '',
         BASE_URL: 'http://keycloak.test',
     };
     let configService: DeepMocked<ConfigService>;
