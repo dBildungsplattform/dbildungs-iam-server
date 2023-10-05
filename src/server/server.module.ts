@@ -11,7 +11,8 @@ import { PersonApiModule } from '../modules/person/person-api.module.js';
 import { HealthModule } from '../health/health.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
-import { KeycloakConnectModule } from 'nest-keycloak-connect';
+import { AuthGuard, KeycloakConnectModule, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
     imports: [
@@ -61,6 +62,20 @@ import { KeycloakConnectModule } from 'nest-keycloak-connect';
         OrganisationApiModule,
         KeycloakAdministrationModule,
         HealthModule,
+    ],
+    providers: [
+        {
+            provide: APP_GUARD,
+            useClass: AuthGuard,
+        },
+        {
+            provide: APP_GUARD,
+            useClass: RoleGuard,
+        },
+        {
+            provide: APP_GUARD,
+            useClass: ResourceGuard,
+        },
     ],
 })
 export class ServerModule {}

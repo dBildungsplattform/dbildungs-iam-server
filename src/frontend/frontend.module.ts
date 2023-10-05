@@ -5,8 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
-import { AuthGuard, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
 
 import { FrontendApiModule } from '../modules/frontend/frontend-api.module.js';
 import { DbConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../shared/config/index.js';
@@ -39,20 +37,6 @@ import { HealthModule } from '../health/health.module.js';
         }),
         FrontendApiModule,
         HealthModule,
-    ],
-    providers: [
-        {
-            provide: APP_GUARD,
-            useClass: AuthGuard,
-        },
-        {
-            provide: APP_GUARD,
-            useClass: RoleGuard,
-        },
-        {
-            provide: APP_GUARD,
-            useClass: ResourceGuard,
-        },
     ],
 })
 export class FrontendModule {}
