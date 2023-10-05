@@ -11,7 +11,9 @@ import { FrontendModule } from './frontend.module.js';
 async function bootstrap(): Promise<void> {
     const app: INestApplication = await NestFactory.create(FrontendModule);
     app.useGlobalPipes(new GlobalValidationPipe());
-
+    app.setGlobalPrefix('api', {
+        exclude: ['health'],
+    });
     const swagger: Omit<OpenAPIObject, 'paths'> = new DocumentBuilder()
         .setTitle('dBildungs IAM')
         .setDescription('The dBildungs IAM server API description')

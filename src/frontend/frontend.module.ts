@@ -9,8 +9,9 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard, KeycloakConnectModule, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
 
 import { FrontendApiModule } from '../modules/frontend/frontend-api.module.js';
-import { DbConfig, KeycloakConfig, ServerConfig, loadConfigFiles, loadEnvConfig } from '../shared/config/index.js';
+import { DbConfig, KeycloakConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../shared/config/index.js';
 import { mappingErrorHandler } from '../shared/error/mapping.error.js';
+import { HealthModule } from '../health/health.module.js';
 
 @Module({
     imports: [
@@ -50,6 +51,7 @@ import { mappingErrorHandler } from '../shared/error/mapping.error.js';
             inject: [ConfigService],
         }),
         FrontendApiModule,
+        HealthModule,
     ],
     providers: [
         {
