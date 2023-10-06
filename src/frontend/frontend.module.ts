@@ -31,6 +31,13 @@ import { HealthModule } from '../health/health.module.js';
                     dbName: dbConfig.DB_NAME,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
+                    // Needed for HealthCheck
+                    type: 'postgresql',
+                    driverOptions: {
+                        connection: {
+                            ssl: true,
+                        },
+                    },
                 });
             },
             inject: [ConfigService],
