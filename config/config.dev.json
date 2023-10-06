@@ -12,6 +12,7 @@
     "KEYCLOAK": {
         "BASE_URL": "http://127.0.0.1:8080",
         "REALM_NAME": "master",
-        "CLIENT_ID": "admin-cli"
+        "CLIENT_ID": "admin-cli",
+        "SECRET": "secret"
     }
 }
