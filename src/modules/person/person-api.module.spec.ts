@@ -3,6 +3,7 @@ import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../..
 import { PersonController } from './api/person.controller.js';
 import { PersonUc } from './api/person.uc.js';
 import { PersonApiModule } from './person-api.module.js';
+import { PersonenkontextUc } from './api/personenkontext.uc.js';
 
 describe('PersonApiModule', () => {
     let module: TestingModule;
@@ -28,6 +29,10 @@ describe('PersonApiModule', () => {
 
         it('should resolve PersonUc', () => {
             expect(module.get(PersonUc)).toBeInstanceOf(PersonUc);
+        });
+
+        it('should resolve PersonenkontextUc', () => {
+            expect(module.get(PersonenkontextUc)).toBeInstanceOf(PersonenkontextUc);
         });
     });
 });

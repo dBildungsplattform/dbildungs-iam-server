@@ -29,7 +29,7 @@ export class PersonenkontextDo<WasPersisted extends boolean> implements DoBase<W
     public mandant!: string;
 
     @AutoMap()
-    public organisation!: OrganisationDo<WasPersisted>;
+    public organisation!: OrganisationDo<true>;
 
     @AutoMap()
     public rolle!: Rolle;

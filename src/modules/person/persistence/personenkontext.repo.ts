@@ -37,8 +37,14 @@ export class PersonenkontextRepo {
         );
         if (personenkontext) {
             personenkontext.assign(this.mapper.map(personenkontextDo, PersonenkontextDo, PersonenkontextEntity));
+            personenkontext.person = await this.em.findOneOrFail(PersonEntity, {
+                id: personenkontextDo.personId,
+            });
         } else {
             personenkontext = this.mapper.map(personenkontextDo, PersonenkontextDo, PersonenkontextEntity);
+            personenkontext.person = await this.em.findOneOrFail(PersonEntity, {
+                id: personenkontextDo.personId,
+            });
         }
         await this.em.persistAndFlush(personenkontext);
         return this.mapper.map(personenkontext, PersonenkontextEntity, PersonenkontextDo);

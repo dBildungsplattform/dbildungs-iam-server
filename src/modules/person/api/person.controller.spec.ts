@@ -13,11 +13,16 @@ import { PersonenQueryParam } from './personen-query.param.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { TrustLevel } from '../domain/person.enums.js';
 import { PersonenDatensatz } from './personendatensatz.js';
+import { PersonenkontextUc } from './personenkontext.uc.js';
+import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
+import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { Jahrgangsstufe, Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
     let personController: PersonController;
     let personUcMock: DeepMocked<PersonUc>;
+    let personenkontextUcMock: DeepMocked<PersonenkontextUc>;
     const mockBirthParams: PersonBirthParams = {
         datum: faker.date.anytime(),
         geburtsort: faker.string.alpha(),
@@ -33,10 +38,15 @@ describe('PersonController', () => {
                     provide: PersonUc,
                     useValue: createMock<PersonUc>(),
                 },
+                {
+                    provide: PersonenkontextUc,
+                    useValue: createMock<PersonenkontextUc>(),
+                },
             ],
         }).compile();
         personController = module.get(PersonController);
         personUcMock = module.get(PersonUc);
+        personenkontextUcMock = module.get(PersonenkontextUc);
     });
 
     afterAll(async () => {
@@ -172,6 +182,36 @@ describe('PersonController', () => {
             expect(result.at(0)?.person.name.vorname).toEqual(queryParams.vorname);
             expect(result.at(0)?.person.name.familienname).toEqual(queryParams.familienname);
             expect(result).toEqual(mockPersondatensatz);
+        });
+    });
+
+    describe('when creating a personenkontext', () => {
+        it('should not throw', async () => {
+            const pathParams: PersonByIdParams = {
+                personId: faker.string.uuid(),
+            };
+            const body: CreatePersonenkontextBodyParams = {
+                rolle: Rolle.Lehrender,
+                jahrgangsstufe: Jahrgangsstufe.Jahrgangsstufe1,
+                personenstatus: Personenstatus.Aktiv,
+                referrer: 'referrer',
+            };
+            const ucResult: CreatedPersonenkontextDto = {
+                id: faker.string.uuid(),
+                mandant: faker.string.uuid(),
+                organisation: {
+                    id: faker.string.uuid(),
+                },
+                revision: '1',
+                rolle: Rolle.Lehrender,
+                jahrgangsstufe: Jahrgangsstufe.Jahrgangsstufe1,
+                personenstatus: Personenstatus.Aktiv,
+                referrer: 'referrer',
+            };
+            personenkontextUcMock.createPersonenkontext.mockResolvedValue(ucResult);
+
+            await expect(personController.createPersonenkontext(pathParams, body)).resolves.not.toThrow();
+            expect(personenkontextUcMock.createPersonenkontext).toHaveBeenCalledTimes(1);
         });
     });
 });

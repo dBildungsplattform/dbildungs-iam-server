@@ -15,6 +15,6 @@ export class PersonenkontextService {
         if (personenkontext) {
             return { ok: true, value: personenkontext };
         }
-        return { ok: false, error: new EntityCouldNotBeCreated(`Personenkontext could not be created`) };
+        return { ok: false, error: new EntityCouldNotBeCreated(`Personenkontext`) };
     }
 }
