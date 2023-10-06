@@ -6,15 +6,20 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonEntity } from './person.entity.js';
-import { Loaded, QueryOrderMap } from '@mikro-orm/core';
+import { EntityName, Loaded, QueryOrderMap } from '@mikro-orm/core';
 import { IFindOptions, IPagination, SortOrder } from '../../../shared/interface/find-options.js';
 import { Page } from '../../../shared/interface/page.js';
 import { Scope } from '../../../shared/repo/scope.js';
 import { PersonScope } from './person.scope.js';
 import { PersonSortingMapper } from './person-sorting.mapper.js';
+import { PersonSearchQuery } from '../../../shared/interface/person-search-query.js';
 @Injectable()
 export class PersonRepo {
     public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
+
+    public get entityName(): EntityName<PersonEntity> {
+        return PersonEntity;
+    }
 
     public async findById(id: string): Promise<Option<PersonDo<true>>> {
         const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { id });
@@ -66,20 +71,25 @@ export class PersonRepo {
     }
 
     public async findAll(
-        personDo: PersonDo<false>,
-        options?: IFindOptions<PersonDo<true>[]>,
-    ): Promise<PersonDo<true>[]> {
+        query: PersonSearchQuery,
+        options?: IFindOptions<PersonDo<boolean>>,
+    ): Promise<Page<PersonDo<boolean>>> {
         const pagination: IPagination = options?.pagination || {};
         const order: QueryOrderMap<PersonEntity> = PersonSortingMapper.mapDOSortOrderToQueryOrder(options?.order || {});
         const scope: Scope<PersonEntity> = new PersonScope()
-            .byFirstName(personDo.firstName)
-            .byLastName(personDo.lastName)
-            .byBirthDate(personDo.birthDate)
+            .byFirstName(query.firstName)
+            .byLastName(query.lastName)
+            .byBirthDate(query.birthDate)
             .allowEmptyQuery(true);
 
-        if (order.id == null) {
+        if (order.firstName == null) {
             order.firstName = SortOrder.asc;
         }
+
+        const [entities, total]: [PersonEntity[], number] = await this.em.findAndCount(PersonEntity, scope.query, {
+            ...pagination,
+            orderBy: order,
+        });
 
         // if (personDo.firstName) {
         //     query['firstName'] = { $ilike: personDo.firstName };
@@ -93,22 +103,12 @@ export class PersonRepo {
         //     query['referrer'] = personDo.referrer;
         // }
 
-        const [entities, total]: [PersonEntity[], number] = await this.em.findAndCount(PersonEntity, scope.personDo, {
-            offset: pagination?.skip,
-            limit: pagination?.limit,
-        });
-
-        const entityDos: PersonDo<true>[] = entities.map((person: PersonEntity) =>
+        const entityDos: PersonDo<boolean>[] = entities.map((person: PersonEntity) =>
             this.mapper.map(person, PersonEntity, PersonDo),
         );
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const page: Page<PersonDo<true>[]> = new Page<PersonDo<true>>(entityDos, total);
+        const page: Page<PersonDo<boolean>> = new Page<PersonDo<boolean>>(entityDos, total);
         // return result.map((person: PersonEntity) => this.mapper.map(person, PersonEntity, PersonDo));
         return page;
     }
-    // mapEntityToDO(entity: PersonEntity): PersonDo {
-    //     const domainObject = PersonRepo.mapEntityToDO(entity);
-
-    //     return domainObject;
-    // }
 }
