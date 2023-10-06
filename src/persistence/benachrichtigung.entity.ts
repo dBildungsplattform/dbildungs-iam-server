@@ -1,6 +1,5 @@
 import { TimestampedEntity } from './timestamped.entity.js';
-import { Entity, ManyToOne, Rel } from '@mikro-orm/core';
-import { PersonEntity } from '../modules/person/persistence/person.entity.js';
+import { Entity, Property } from '@mikro-orm/core';
 
 @Entity({ tableName: 'benachrichtigung' })
 export class BenachrichtigungEntity extends TimestampedEntity<BenachrichtigungEntity, 'id'> {
@@ -8,9 +7,15 @@ export class BenachrichtigungEntity extends TimestampedEntity<BenachrichtigungEn
         super();
     }
 
-    @ManyToOne(() => PersonEntity)
-    public source!: Rel<PersonEntity>;
+    /**
+     * Links to Person
+     */
+    @Property()
+    public source!: string;
 
-    @ManyToOne(() => PersonEntity)
-    public target!: Rel<PersonEntity>;
+    /**
+     * Links to Person
+     */
+    @Property()
+    public target!: string;
 }
