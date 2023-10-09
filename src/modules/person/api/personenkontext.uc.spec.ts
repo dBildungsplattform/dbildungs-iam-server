@@ -58,6 +58,7 @@ describe('PersonenkontextUc', () => {
                 await expect(createPersonPromise).resolves.not.toThrow();
             });
         });
+
         describe('when creation of personenkontext is not successful', () => {
             it('should throw Error', async () => {
                 const error: EntityCouldNotBeCreated = new EntityCouldNotBeCreated('Personenkontext');

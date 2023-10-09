@@ -1,3 +1,3 @@
-export class CreatedPersonenkontextDtoOrganisation {
+export class CreatedPersonenkontextOrganisationDto {
     public readonly id!: string;
 }

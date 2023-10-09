@@ -144,31 +144,34 @@ describe('PersonApiMapperProfile', () => {
 
         it('should map CreatePersonenkontextBodyParams to CreatePersonenkontextDto', () => {
             const body: CreatePersonenkontextBodyParams = {
-                rolle: Rolle.Lehrender,
-                jahrgangsstufe: Jahrgangsstufe.Jahrgangsstufe1,
-                personenstatus: Personenstatus.Aktiv,
+                rolle: Rolle.LEHRENDER,
+                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                personenstatus: Personenstatus.AKTIV,
                 referrer: 'referrer',
             };
             expect(() => sut.map(body, CreatePersonenkontextBodyParams, CreatePersonenkontextDto)).not.toThrowError(
                 MappingError,
             );
         });
+
         it('should map CreatePersonenkontextDto to PersonenkontextDo', () => {
             const dto: CreatePersonenkontextDto = {
                 personId: faker.string.uuid(),
-                rolle: Rolle.Lehrender,
-                jahrgangsstufe: Jahrgangsstufe.Jahrgangsstufe1,
-                personenstatus: Personenstatus.Aktiv,
+                rolle: Rolle.LEHRENDER,
+                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                personenstatus: Personenstatus.AKTIV,
                 referrer: 'referrer',
             };
             expect(() => sut.map(dto, CreatePersonenkontextDto, PersonenkontextDo)).not.toThrowError(MappingError);
         });
+
         it('should map PersonenkontextDo to CreatedPersonenkontextDto', () => {
             const personDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
             expect(() => sut.map(personDo, PersonenkontextDo, CreatedPersonenkontextDto)).not.toThrowError(
                 MappingError,
             );
         });
+
         it('should map CreatedPersonenkontextDto to PersonenkontextResponse', () => {
             const dto: CreatedPersonenkontextDto = {
                 id: faker.string.uuid(),
@@ -177,9 +180,9 @@ describe('PersonApiMapperProfile', () => {
                     id: faker.string.uuid(),
                 },
                 revision: '1',
-                rolle: Rolle.Lehrender,
-                jahrgangsstufe: Jahrgangsstufe.Jahrgangsstufe1,
-                personenstatus: Personenstatus.Aktiv,
+                rolle: Rolle.LEHRENDER,
+                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                personenstatus: Personenstatus.AKTIV,
                 referrer: 'referrer',
             };
             expect(() => sut.map(dto, CreatedPersonenkontextDto, PersonenkontextResponse)).not.toThrowError(

@@ -1,6 +1,5 @@
 import { Dictionary, Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
@@ -65,7 +64,6 @@ describe('PersonenkontextService', () => {
         describe('when personenkontext is not saved successfully', () => {
             it('should return a domain error', async () => {
                 const personenkontextDo: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false);
-                personenkontextDo.id = faker.string.uuid();
                 const result: Result<PersonenkontextDo<true>> = await personenkontextService.createPersonenkontext(
                     personenkontextDo,
                 );

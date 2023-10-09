@@ -1,12 +1,13 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus, Query } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus, Query, HttpCode } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
+    ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -60,7 +61,8 @@ export class PersonController {
     }
 
     @Post(':personId/personenkontexte')
-    @ApiCreatedResponse({ description: 'The personenkontext was successfully created.' })
+    @HttpCode(200)
+    @ApiOkResponse({ description: 'The personenkontext was successfully created.' })
     @ApiBadRequestResponse({ description: 'The personenkontext already exists.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the personenkontext.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the personenkontext.' })

@@ -25,7 +25,7 @@ import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { CreatedPersonenkontextDtoOrganisation } from './created-personenkontext-org.dto.js';
+import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-org.dto.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
     convert(source: PersonGender): Gender {
@@ -301,7 +301,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     mapFrom((src: PersonenkontextDo<true>) => src.id),
                 ),
             );
-            createMap(mapper, OrganisationDo, CreatedPersonenkontextDtoOrganisation);
+            createMap(mapper, OrganisationDo, CreatedPersonenkontextOrganisationDto);
             createMap(mapper, CreatedPersonenkontextDto, PersonenkontextResponse);
         };
     }

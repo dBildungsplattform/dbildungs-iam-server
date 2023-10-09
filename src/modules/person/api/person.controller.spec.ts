@@ -191,9 +191,9 @@ describe('PersonController', () => {
                 personId: faker.string.uuid(),
             };
             const body: CreatePersonenkontextBodyParams = {
-                rolle: Rolle.Lehrender,
-                jahrgangsstufe: Jahrgangsstufe.Jahrgangsstufe1,
-                personenstatus: Personenstatus.Aktiv,
+                rolle: Rolle.LEHRENDER,
+                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                personenstatus: Personenstatus.AKTIV,
                 referrer: 'referrer',
             };
             const ucResult: CreatedPersonenkontextDto = {
@@ -203,9 +203,9 @@ describe('PersonController', () => {
                     id: faker.string.uuid(),
                 },
                 revision: '1',
-                rolle: Rolle.Lehrender,
-                jahrgangsstufe: Jahrgangsstufe.Jahrgangsstufe1,
-                personenstatus: Personenstatus.Aktiv,
+                rolle: Rolle.LEHRENDER,
+                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                personenstatus: Personenstatus.AKTIV,
                 referrer: 'referrer',
             };
             personenkontextUcMock.createPersonenkontext.mockResolvedValue(ucResult);
