@@ -1,13 +1,9 @@
 import { Body, Controller, HttpStatus, Post, UseFilters } from '@nestjs/common';
 import {
-    ApiBadRequestResponse,
-    ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
-    ApiOkResponse,
     ApiServiceUnavailableResponse,
     ApiTags,
-    ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { UserParams } from './user.params.js';
 import { LoginService } from '../domain/login.service.js';
@@ -27,10 +23,6 @@ export class LoginController {
         new KeyCloakExceptionFilter(HttpStatus.SERVICE_UNAVAILABLE),
         new UserAuthenticationFailedExceptionFilter(HttpStatus.NOT_FOUND),
     )
-    @ApiOkResponse({ description: 'Request successful, returning token.' })
-    @ApiBadRequestResponse({ description: 'Bad request for retrieving token.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve token.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to retrieve token.' })
     @ApiNotFoundResponse({
         description: 'USER_AUTHENTICATION_FAILED_ERROR: User could not be authenticated successfully.',
     })
@@ -45,10 +37,6 @@ export class LoginController {
         new KeyCloakExceptionFilter(HttpStatus.SERVICE_UNAVAILABLE),
         new UserAuthenticationFailedExceptionFilter(HttpStatus.NOT_FOUND),
     )
-    @ApiOkResponse({ description: 'Request successful, returning token.' })
-    @ApiBadRequestResponse({ description: 'Bad request for retrieving token.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve token.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to retrieve token.' })
     @ApiNotFoundResponse({
         description: 'USER_AUTHENTICATION_FAILED_ERROR: User could not be authenticated successfully.',
     })
