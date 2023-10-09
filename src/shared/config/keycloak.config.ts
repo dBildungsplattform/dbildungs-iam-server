@@ -15,9 +15,5 @@ export class KeycloakConfig {
 
     @IsString()
     @IsNotEmpty()
-    public readonly USERNAME!: string;
-
-    @IsString()
-    @IsNotEmpty()
-    public readonly PASSWORD!: string;
+    public readonly SECRET!: string;
 }

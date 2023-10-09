@@ -5,7 +5,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DbConfig, ServerConfig, loadConfigFiles, loadEnvConfig } from '../shared/config/index.js';
+import { DbConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../shared/config/index.js';
 import { mappingErrorHandler } from '../shared/error/index.js';
 import { LoggingModule } from '../shared/logging/index.js';
 import { DbConsole } from './db.console.js';
@@ -31,6 +31,11 @@ import { DbInitConsole } from './db-init.console.js';
                     dbName: config.getOrThrow<DbConfig>('DB').DB_NAME,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
+                    driverOptions: {
+                        connection: {
+                            ssl: true,
+                        },
+                    },
                 });
             },
             inject: [ConfigService],

@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-keycloak-deployment
+  labels:
+    app.kubernetes.io/name: dbildungs-iam
+spec:
+  selector:
+    matchLabels:
+      layer: dbildungs-iam-keycloak
+  replicas: 1
+  template:
+    metadata:
+      name: dbildungs-iam-keycloak
+      labels:
+        layer: dbildungs-iam-keycloak
+    spec:
+      containers:
+        - name: dbildungs-iam-keycloak
+          image: quay.io/keycloak/keycloak:22.0.3
+          args:
+            - start-dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: web
+              containerPort: 8080
+          env:
+            - name: KEYCLOAK_ADMIN
+              value: admin
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: admin
+      restartPolicy: Always
+      

@@ -108,7 +108,7 @@ describe('PersonController', () => {
         it('should throw an Http not found exception', async () => {
             const mockError: Error = new Error('person does not exist.');
             personUcMock.findPersonById.mockRejectedValue(mockError);
-            await expect(personController.findPersonById(params)).resolves.toThrow(HttpException);
+            await expect(personController.findPersonById(params)).rejects.toThrowError(HttpException);
             expect(personUcMock.findPersonById).toHaveBeenCalledTimes(1);
         });
     });

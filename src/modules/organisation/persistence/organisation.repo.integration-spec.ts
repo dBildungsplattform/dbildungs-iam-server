@@ -5,6 +5,7 @@ import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } fro
 import { OrganisationPersistenceMapperProfile } from './organisation-persistence.mapper.profile.js';
 import { OrganisationDo } from '../domain/organisation.do.js';
 import { OrganisationEntity } from './organisation.entity.js';
+import { faker } from '@faker-js/faker';
 
 describe('OgranisationRepo', () => {
     let module: TestingModule;
@@ -54,6 +55,20 @@ describe('OgranisationRepo', () => {
             await expect(em.find(OrganisationEntity, {})).resolves.toHaveLength(1);
             await sut.save(savedOrganisation);
             await expect(em.find(OrganisationEntity, {})).resolves.toHaveLength(1);
+        });
+    });
+
+    describe('findById', () => {
+        it('should find an organization by ID', async () => {
+            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
+            const organisation: OrganisationDo<boolean> = await sut.save(organisationDo);
+            const foundOrganisation: Option<OrganisationDo<true>> = await sut.findById(organisation.id as string);
+            expect(foundOrganisation).toBeInstanceOf(OrganisationDo);
+        });
+
+        it('should return null', async () => {
+            const foundOrganisation: Option<OrganisationDo<true>> = await sut.findById(faker.string.uuid());
+            expect(foundOrganisation).toBeNull();
         });
     });
 });

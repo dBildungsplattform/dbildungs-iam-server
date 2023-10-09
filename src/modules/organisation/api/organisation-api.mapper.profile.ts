@@ -27,6 +27,15 @@ export class OrganisationApiMapperProfile extends AutomapperProfile {
                 ),
             );
             createMap(mapper, CreatedOrganisationDto, OrganisationResponse);
+            createMap(
+                mapper,
+                OrganisationDo,
+                OrganisationResponse,
+                forMember(
+                    (dest: OrganisationResponse) => dest.id,
+                    mapFrom((src: OrganisationDo<true>) => src.id),
+                ),
+            );
         };
     }
 }

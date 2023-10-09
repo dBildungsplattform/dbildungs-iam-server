@@ -1,0 +1,6 @@
+apiVersion: v2
+name: dbildungs-iam
+version: 0.1.0
+
+description: dBildungs-IAM
+type: application

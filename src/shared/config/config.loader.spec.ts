@@ -40,13 +40,12 @@ describe('configloader', () => {
                     BASE_URL: 'localhost:8080',
                     CLIENT_ID: 'admin-cli',
                     REALM_NAME: 'master',
-                    USERNAME: 'admin',
                 },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
                 DB: { SECRET: 'SuperSecretSecret' },
-                KEYCLOAK: { PASSWORD: 'admin' },
+                KEYCLOAK: { SECRET: 'ClientSecret' },
             };
 
             beforeAll(() => {
@@ -83,7 +82,6 @@ describe('configloader', () => {
                     BASE_URL: '',
                     CLIENT_ID: '',
                     REALM_NAME: '',
-                    USERNAME: '',
                 },
             };
 

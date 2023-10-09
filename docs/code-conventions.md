@@ -13,22 +13,22 @@ Our Domain Language is **German**. This has been decided on the basis that we
 However, everything else we produce, from code to documentation,
 will be handled in **English**.
 
-| Type                | Allowed Languages |
-|:--------------------|:-----------------:|
-| Entity              |      German       |
-| Entity Fields       |      German       |
-| Domainobject        |      German       |
-| Domainobject Fields |      German       |
-| Service/Uc methods  | English / German  |
-| Controller methods  | English / German  |
-| Controller DTOs     |      German       |
+| Type                 | Allowed Languages |
+|:---------------------|:-----------------:|
+| Entity               |      German       |
+| Entity Fields        |      German       |
+| Domain Object        |      German       |
+| Domain Object Fields |      German       |
+| Service/Uc methods   | English / German  |
+| Controller methods   | English / German  |
+| Controller DTOs      |      German       |
 
 An overview of all Domain and Entity names is found [here](https://docs.dbildungscloud.de/x/fAMGDw).
 
 ## Examples
 
-These examples are taken directly from our codebase and
-should represent the currently allowed code style and languages.
+These code snippets are taken directly from our codebase and
+gives an example for the currently allowed code style and languages.
 
 #### Entity
 ```typescript
@@ -54,7 +54,7 @@ export class OrganisationEntity extends TimestampedEntity<OrganisationEntity, 'i
 }
 ```
 
-#### Domainobject
+#### Domain Object
 ```typescript
 export class OrganisationDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
 
@@ -131,7 +131,7 @@ export class OrganisationController {
     @ApiCreatedResponse({ description: 'The organisation was successfully created.' })
     @ApiBadRequestResponse({ description: 'The organisation already exists.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to create the organisation.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
     public async createOrganisation(@Body() params: CreateOrganisationBodyParams): Promise<OrganisationResponse> {
         const organisationDto: CreateOrganisationDto = this.mapper.map(
