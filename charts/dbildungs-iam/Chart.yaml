@@ -4,3 +4,8 @@ version: 0.1.0
 
 description: dBildungs-IAM
 type: application
+
+dependencies:
+  - name: dbildungs-iam-keycloak-dev
+    version: latest
+    condition: keycloakEnabled
