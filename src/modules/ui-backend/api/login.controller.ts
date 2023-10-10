@@ -14,7 +14,7 @@ import { NewLoginService } from '../domain/new-login.service.js';
 import { DomainError } from '../../../shared/error/index.js';
 
 @ApiTags('api/login')
-@Controller({ path: 'login'})
+@Controller({ path: 'login' })
 export class LoginController {
     public constructor(private loginService: LoginService, private someService: NewLoginService) {}
 

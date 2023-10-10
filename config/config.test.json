@@ -18,6 +18,8 @@
         "BASE_URL": "http://127.0.0.1:8080",
         "REALM_NAME": "schulportal",
         "CLIENT_ID": "schulportal",
-        "USERNAME": "dummy"
+        "USERNAME": "dummy",
+        "PASSWORD": "dummy",
+        "SECRET": "dummy"
     }
 }
