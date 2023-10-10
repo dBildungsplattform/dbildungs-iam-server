@@ -14,7 +14,15 @@ export class PersonPersistenceMapperProfile extends AutomapperProfile {
 
     public override get profile(): MappingProfile {
         return (mapper: Mapper) => {
-            createMap(mapper, PersonDo, PersonEntity);
+            createMap(
+                mapper,
+                PersonDo,
+                PersonEntity,
+                forMember(
+                    (dest: PersonEntity) => dest.id,
+                    mapFrom((src: PersonDo<boolean>) => src.id),
+                ),
+            );
             createMap(
                 mapper,
                 PersonEntity,

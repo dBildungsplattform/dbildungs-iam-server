@@ -17,14 +17,14 @@ export class PersonenkontextEntity extends TimestampedEntity<PersonenkontextEnti
     @Property({ nullable: true })
     public referrer?: string;
 
-    // TODO nullable: false
+    // TODO EW-636: mandant is related to organizations so it is not set for now. When implemented should be set to nullable: false
     @AutoMap()
     @Property({ nullable: true })
     public mandant!: string;
 
-    // TODO get from access_token, see SchulConneX (Version 1.003.003.000) page 91
+    // TODO EW-636: get from access_token, see SchulConneX (Version 1.003.003.000) page 91
     // @AutoMap()
-    // @ManyToOne({ nullable: true })
+    // @ManyToOne()
     // public organisation!: OrganisationEntity;
 
     @AutoMap()

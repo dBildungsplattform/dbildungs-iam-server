@@ -25,7 +25,7 @@ import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-org.dto.js';
+import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-organisation.dto.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
     convert(source: PersonGender): Gender {

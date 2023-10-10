@@ -3,15 +3,20 @@ import { getMapperToken } from '@automapper/nestjs';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
+import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonenkontextRepo } from '../persistence/personenkontext.repo.js';
 import { PersonenkontextDo } from './personenkontext.do.js';
 import { PersonenkontextService } from './personenkontext.service.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { PersonDo } from './person.do.js';
 
 describe('PersonenkontextService', () => {
     let module: TestingModule;
     let personenkontextService: PersonenkontextService;
     let personenkontextRepoMock: DeepMocked<PersonenkontextRepo>;
+    let personRepoMock: DeepMocked<PersonRepo>;
     let mapperMock: DeepMocked<Mapper>;
 
     beforeAll(async () => {
@@ -23,6 +28,10 @@ describe('PersonenkontextService', () => {
                     useValue: createMock<PersonenkontextRepo>(),
                 },
                 {
+                    provide: PersonRepo,
+                    useValue: createMock<PersonRepo>(),
+                },
+                {
                     provide: getMapperToken(),
                     useValue: createMock<Mapper>(),
                 },
@@ -30,6 +39,7 @@ describe('PersonenkontextService', () => {
         }).compile();
         personenkontextService = module.get(PersonenkontextService);
         personenkontextRepoMock = module.get(PersonenkontextRepo);
+        personRepoMock = module.get(PersonRepo);
         mapperMock = module.get(getMapperToken());
     });
 
@@ -46,9 +56,29 @@ describe('PersonenkontextService', () => {
     });
 
     describe('createPersonenkontext', () => {
-        describe('when personenkontext is saved successfully', () => {
-            it('should create an Personenkontext', async () => {
+        describe('when person does not exist', () => {
+            it('should return EntityNotFoundError', async () => {
                 const personenkontextDo: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false);
+
+                personRepoMock.findById.mockResolvedValueOnce(null);
+
+                const result: Result<
+                    PersonenkontextDo<true>,
+                    DomainError
+                > = await personenkontextService.createPersonenkontext(personenkontextDo);
+                expect(result).toEqual<Result<PersonenkontextDo<true>, DomainError>>({
+                    ok: false,
+                    error: new EntityNotFoundError('Person'),
+                });
+            });
+        });
+
+        describe('when personenkontext is saved successfully', () => {
+            it('should return PersonenkontextDo in result', async () => {
+                const personDo: PersonDo<true> = DoFactory.createPerson(true);
+                const personenkontextDo: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false);
+
+                personRepoMock.findById.mockResolvedValueOnce(personDo);
                 personenkontextRepoMock.save.mockResolvedValue(personenkontextDo as unknown as PersonenkontextDo<true>);
                 mapperMock.map.mockReturnValue(personenkontextDo as unknown as Dictionary<unknown>);
                 const result: Result<PersonenkontextDo<true>> = await personenkontextService.createPersonenkontext(
@@ -62,12 +92,17 @@ describe('PersonenkontextService', () => {
         });
 
         describe('when personenkontext is not saved successfully', () => {
-            it('should return a domain error', async () => {
+            it('should return a EntityCouldNotBeCreated error', async () => {
+                const personDo: PersonDo<true> = DoFactory.createPerson(true);
                 const personenkontextDo: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false);
-                const result: Result<PersonenkontextDo<true>> = await personenkontextService.createPersonenkontext(
-                    personenkontextDo,
-                );
-                expect(result).toEqual<Result<PersonenkontextDo<true>>>({
+
+                personRepoMock.findById.mockResolvedValueOnce(personDo);
+
+                const result: Result<
+                    PersonenkontextDo<true>,
+                    DomainError
+                > = await personenkontextService.createPersonenkontext(personenkontextDo);
+                expect(result).toEqual<Result<PersonenkontextDo<true>, DomainError>>({
                     ok: false,
                     error: new EntityCouldNotBeCreated(`Personenkontext`),
                 });
