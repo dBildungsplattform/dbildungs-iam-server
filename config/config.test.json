@@ -13,5 +13,11 @@
         "BASE_URL": "http://127.0.0.1:8080",
         "REALM_NAME": "master",
         "CLIENT_ID": "admin-cli"
+    },
+    "SCHULPORTAL": {
+        "BASE_URL": "http://127.0.0.1:8080",
+        "REALM_NAME": "schulportal",
+        "CLIENT_ID": "schulportal",
+        "USERNAME": "dummy"
     }
 }

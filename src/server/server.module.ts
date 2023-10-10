@@ -11,6 +11,7 @@ import { PersonApiModule } from '../modules/person/person-api.module.js';
 import { HealthModule } from '../health/health.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
+import { UiBackendApiModule } from '../modules/ui-backend/ui-backend-api.module.js';
 
 @Module({
     imports: [
@@ -47,6 +48,7 @@ import { OrganisationApiModule } from '../modules/organisation/organisation-api.
         OrganisationApiModule,
         KeycloakAdministrationModule,
         HealthModule,
+        UiBackendApiModule,
     ],
 })
 export class ServerModule {}
