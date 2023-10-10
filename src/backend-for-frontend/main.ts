@@ -6,10 +6,10 @@ import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 
 import { FrontendConfig, ServerConfig } from '../shared/config/index.js';
 import { GlobalValidationPipe } from '../shared/validation/index.js';
-import { FrontendModule } from './frontend.module.js';
+import { BackendForFrontendModule } from './backend-for-frontend.module.js';
 
 async function bootstrap(): Promise<void> {
-    const app: INestApplication = await NestFactory.create(FrontendModule);
+    const app: INestApplication = await NestFactory.create(BackendForFrontendModule);
     app.useGlobalPipes(new GlobalValidationPipe());
     const swagger: Omit<OpenAPIObject, 'paths'> = new DocumentBuilder()
         .setTitle('dBildungs IAM')

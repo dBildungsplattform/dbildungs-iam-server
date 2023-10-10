@@ -19,7 +19,7 @@ spec:
         - name: dbildungs-iam-bff
           image: {{.Values.dbildungsIamContainer}}
           imagePullPolicy: Always
-          command: ["node", "dist/src/frontend/main.js"]
+          command: ["node", "dist/src/backend-for-frontend/main.js"]
           ports:
              - name: web
                containerPort: 8080
