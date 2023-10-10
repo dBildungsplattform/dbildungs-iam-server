@@ -91,24 +91,10 @@ export class PersonRepo {
             orderBy: order,
         });
 
-        // if (personDo.firstName) {
-        //     query['firstName'] = { $ilike: personDo.firstName };
-        // }
-
-        // if (personDo.lastName) {
-        //     query['lastName'] = { $ilike: personDo.lastName };
-        // }
-
-        // if (personDo.referrer) {
-        //     query['referrer'] = personDo.referrer;
-        // }
-
         const entityDos: PersonDo<boolean>[] = entities.map((person: PersonEntity) =>
             this.mapper.map(person, PersonEntity, PersonDo),
         );
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const page: Page<PersonDo<boolean>> = new Page<PersonDo<boolean>>(entityDos, total);
-        // return result.map((person: PersonEntity) => this.mapper.map(person, PersonEntity, PersonDo));
         return page;
     }
 }
