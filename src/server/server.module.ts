@@ -8,11 +8,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DbConfig, KeycloakConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../shared/config/index.js';
 import { mappingErrorHandler } from '../shared/error/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
-import { HealthModule } from '../health/health.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
 import { AuthGuard, KeycloakConnectModule, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
 import { APP_GUARD } from '@nestjs/core';
+import { HealthModule } from '../modules/health/health.module.js';
 
 @Module({
     imports: [
