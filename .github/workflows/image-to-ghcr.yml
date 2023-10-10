@@ -24,7 +24,7 @@ jobs:
             echo "branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
             echo "sha=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
           else
-            echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+            echo "branch=${GITHUB_REF#refs/heads/,,}" >> $GITHUB_OUTPUT
             echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
 
