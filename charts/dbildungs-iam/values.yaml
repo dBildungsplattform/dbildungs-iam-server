@@ -22,5 +22,6 @@ secrets:
 # If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
 enableServiceMonitor: false
 
-keycloakEnabled: true
-keycloakPublic: true
+# Both of these are disabled as to make them intentional
+keycloakEnabled: false
+keycloakPublic: false
