@@ -9,8 +9,8 @@ import {
 } from '@nestjs/terminus';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { SqlEntityManager } from '@mikro-orm/postgresql';
-import { KeycloakConfig } from '../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
+import { KeycloakConfig } from '../../shared/config/index.js';
 
 describe('HealthController', () => {
     let controller: HealthController;
