@@ -10,7 +10,7 @@ spec:
   ports:
     - protocol: TCP
       name: web
-      port: {{.Values.dbildungsIamExternalPort}}80
+      port: 80
       targetPort: web
   type: ClusterIP
   

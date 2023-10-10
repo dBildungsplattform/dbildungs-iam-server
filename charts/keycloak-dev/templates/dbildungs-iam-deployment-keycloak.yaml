@@ -29,5 +29,7 @@ spec:
               value: admin
             - name: KEYCLOAK_ADMIN_PASSWORD
               value: admin
+            - name: KC_PROXY
+              value: "edge"
       restartPolicy: Always
       
