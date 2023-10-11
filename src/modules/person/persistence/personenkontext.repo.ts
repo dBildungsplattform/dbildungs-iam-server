@@ -4,7 +4,6 @@ import { Loaded } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
-import { PersonEntity } from './person.entity.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 
 @Injectable()
@@ -24,7 +23,7 @@ export class PersonenkontextRepo {
             PersonenkontextDo,
             PersonenkontextEntity,
         );
-        personenkontext.person = this.em.getReference(PersonEntity, personenkontextDo.personId);
+
         await this.em.persistAndFlush(personenkontext);
 
         return this.mapper.map(personenkontext, PersonenkontextEntity, PersonenkontextDo);
@@ -39,10 +38,8 @@ export class PersonenkontextRepo {
         );
         if (personenkontext) {
             personenkontext.assign(this.mapper.map(personenkontextDo, PersonenkontextDo, PersonenkontextEntity));
-            personenkontext.person = this.em.getReference(PersonEntity, personenkontextDo.personId);
         } else {
             personenkontext = this.mapper.map(personenkontextDo, PersonenkontextDo, PersonenkontextEntity);
-            personenkontext.person = this.em.getReference(PersonEntity, personenkontextDo.personId);
         }
 
         await this.em.persistAndFlush(personenkontext);

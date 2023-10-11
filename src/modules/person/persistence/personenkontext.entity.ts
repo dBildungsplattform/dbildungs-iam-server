@@ -1,8 +1,7 @@
 import { AutoMap } from '@automapper/classes';
-import { DateTimeType, Entity, Enum, ManyToOne, Property } from '@mikro-orm/core';
+import { DateTimeType, Entity, Enum, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { Rolle, Personenstatus, Jahrgangsstufe } from '../domain/personenkontext.enums.js';
-import { PersonEntity } from './person.entity.js';
 
 @Entity({ tableName: 'personenkontext' })
 export class PersonenkontextEntity extends TimestampedEntity<PersonenkontextEntity, 'id'> {
@@ -10,8 +9,9 @@ export class PersonenkontextEntity extends TimestampedEntity<PersonenkontextEnti
         super();
     }
 
-    @ManyToOne()
-    public person!: PersonEntity;
+    @AutoMap()
+    @Property({ nullable: false })
+    public personId!: string;
 
     @AutoMap()
     @Property({ nullable: true })
@@ -23,9 +23,9 @@ export class PersonenkontextEntity extends TimestampedEntity<PersonenkontextEnti
     public mandant!: string;
 
     // TODO EW-636: get from access_token, see SchulConneX (Version 1.003.003.000) page 91
-    // @AutoMap()
-    // @ManyToOne()
-    // public organisation!: OrganisationEntity;
+    @AutoMap()
+    @Property({ nullable: true })
+    public organisationId!: string;
 
     @AutoMap()
     @Enum({ nullable: false, items: () => Rolle })

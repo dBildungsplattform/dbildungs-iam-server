@@ -49,7 +49,6 @@ describe('PersonPersistenceMapperProfile', () => {
 
         it('should map PersonenkontextEntity to PersonenkontextDo', () => {
             const personenkontext: PersonenkontextEntity = new PersonenkontextEntity();
-            personenkontext.person = new PersonEntity();
             expect(() => sut.map(personenkontext, PersonenkontextEntity, PersonenkontextDo<true>)).not.toThrowError(
                 MappingError,
             );
