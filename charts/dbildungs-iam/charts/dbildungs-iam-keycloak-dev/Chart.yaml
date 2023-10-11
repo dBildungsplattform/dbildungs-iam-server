@@ -1,0 +1,6 @@
+apiVersion: v2
+name: dbildungs-iam-keycloak-dev
+version: 0.1.0
+
+description: dBildungs-IAM Keycloak for local deployment
+type: application

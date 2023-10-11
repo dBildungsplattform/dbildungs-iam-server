@@ -56,7 +56,7 @@ export class PersonController {
             const person: PersonenDatensatz = await this.personUc.findPersonById(params.personId);
             return person;
         } catch (error) {
-            return new HttpException('Requested entity does not exist', HttpStatus.NOT_FOUND);
+            throw new HttpException('Requested entity does not exist', HttpStatus.NOT_FOUND);
         }
     }
 

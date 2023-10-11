@@ -1,6 +1,6 @@
 export enum OrganisationsTyp {
-    SCHULE = 'Schule',
-    ANBIETER = 'Anbieter',
-    SONSTIGE = 'Sonstige Organisation / Einrichtung',
-    UNBEST = 'Unbestaetigt',
+    SCHULE = 'SCHULE',
+    ANBIETER = 'ANBIETER',
+    SONSTIGE = 'SONSTIGE ORGANISATION / EINRICHTUNG',
+    UNBEST = 'UNBESTAETIGT',
 }

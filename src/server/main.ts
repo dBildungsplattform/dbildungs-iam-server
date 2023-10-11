@@ -17,7 +17,11 @@ async function bootstrap(): Promise<void> {
         .build();
     const configService: ConfigService<ServerConfig, true> = app.get(ConfigService<ServerConfig, true>);
     const port: number = configService.getOrThrow<HostConfig>('HOST').PORT;
+    app.setGlobalPrefix('api', {
+        exclude: ['health'],
+    });
     SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger));
+
     await app.listen(port);
     console.info(`\nListening on: http://127.0.0.1:${port}`);
     console.info(`API documentation can be found on: http://127.0.0.1:${port}/docs`);
