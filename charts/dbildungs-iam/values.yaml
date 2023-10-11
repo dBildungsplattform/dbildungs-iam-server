@@ -24,4 +24,5 @@ enableServiceMonitor: false
 
 # Both of these are disabled as to make them intentional
 keycloakEnabled: false
-keycloakPublic: false
+dbildungs-iam-keycloak-dev:
+  keycloakPublic: false
