@@ -36,7 +36,7 @@ import { OrganisationApiModule } from '../modules/organisation/organisation-api.
                     type: 'postgresql',
                     driverOptions: {
                         connection: {
-                            ssl: true,
+                            ssl: dbConfig.USE_SSL,
                         },
                     },
                 });

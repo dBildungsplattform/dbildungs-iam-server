@@ -14,6 +14,7 @@ import { DbInitConsole } from './db-init.console.js';
 @Module({
     imports: [
         LoggingModule,
+
         ConfigModule.forRoot({
             isGlobal: true,
             validate: loadEnvConfig,
@@ -33,7 +34,7 @@ import { DbInitConsole } from './db-init.console.js';
                     entitiesTs: ['./src/**/*.entity.ts'],
                     driverOptions: {
                         connection: {
-                            ssl: true,
+                            ssl: config.getOrThrow<DbConfig>('DB').USE_SSL,
                         },
                     },
                 });
