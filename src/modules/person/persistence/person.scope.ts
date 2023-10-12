@@ -1,34 +1,28 @@
-/* eslint-disable @typescript-eslint/explicit-member-accessibility */
-
-// TODO should Refactor with german
-import { Scope } from '../../../shared/repo/scope.js';
+import { EntityName } from '@mikro-orm/core';
+import { ScopeBase, ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonEntity } from './person.entity.js';
-export class PersonScope extends Scope<PersonEntity> {
-    byFirstName(firstName: string | undefined): this {
-        if (firstName) {
-            this.addQuery({ firstName: { $re: firstName } });
-        }
-        return this;
+
+type SearchProps = {
+    firstName?: string;
+    lastName?: string;
+    birthDate?: Date;
+};
+
+export class PersonScope extends ScopeBase<PersonEntity> {
+    public override get entityName(): EntityName<PersonEntity> {
+        return PersonEntity;
     }
 
-    byLastName(lastName: string | undefined): this {
-        if (lastName) {
-            this.addQuery({ lastName: { $re: lastName } });
-        }
+    public searchBy(searchProps: SearchProps): this {
+        this.findBy(
+            {
+                firstName: searchProps.firstName,
+                lastName: searchProps.lastName,
+                birthDate: searchProps.birthDate,
+            },
+            ScopeOperator.AND,
+        );
+
         return this;
     }
-
-    byBirthDate(birthDate: Date | undefined): this {
-        if (birthDate) {
-            this.addQuery({ birthDate });
-        }
-        return this;
-    }
-
-    /* byBirthPlace(birthPlace: string | undefined): this {
-        if (birthPlace) {
-            this.addQuery({ birthPlace });
-        }
-        return this;
-    } */
 }

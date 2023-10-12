@@ -7,6 +7,7 @@ import {
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
+    ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -35,7 +36,7 @@ export class PersonController {
     }
 
     @Get(':personId')
-    @ApiCreatedResponse({ description: 'The person was successfully pulled.' })
+    @ApiOkResponse({ description: 'The person was successfully returned.' })
     @ApiBadRequestResponse({ description: 'Person ID is required' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the person.' })
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
@@ -51,7 +52,7 @@ export class PersonController {
     }
 
     @Get()
-    @ApiCreatedResponse({ description: 'The persons were successfully pulled.' })
+    @ApiOkResponse({ description: 'The persons were successfully returned.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })

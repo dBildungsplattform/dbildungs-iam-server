@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
 import { IsOptional, IsString } from 'class-validator';
 import { AutoMap } from '@automapper/classes';
 
@@ -21,7 +20,6 @@ export class PersonenQueryParam {
     @AutoMap()
     @IsOptional()
     @IsString()
-    @Expose({ name: 'familienname' })
     @ApiProperty({
         name: 'familienname',
         required: false,
@@ -32,7 +30,6 @@ export class PersonenQueryParam {
     @AutoMap()
     @IsOptional()
     @IsString()
-    @Expose({ name: 'vorname' })
     @ApiProperty({
         name: 'vorname',
         required: false,
@@ -44,7 +41,6 @@ export class PersonenQueryParam {
     /* @AutoMap()
     @IsOptional()
     @IsEnum(SichtfreigabeType)
-    @Expose({ name: 'sichtfreigabe' })
     @ApiProperty({
         name: 'sichtfreigabe',
         enum: SichtfreigabeType,
@@ -53,4 +49,22 @@ export class PersonenQueryParam {
         nullable: true,
     })
     public readonly sichtfreigabe: SichtfreigabeType = SichtfreigabeType.NEIN;*/
+
+    @AutoMap()
+    @IsOptional({})
+    @ApiProperty({
+        default: 0,
+        required: false,
+        nullable: false,
+    })
+    public readonly offset: number = 0;
+
+    @AutoMap()
+    @IsOptional({})
+    @ApiProperty({
+        default: 0,
+        required: false,
+        nullable: false,
+    })
+    public readonly limit: number = 100;
 }
