@@ -1,6 +1,18 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus, Query, HttpCode } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Inject,
+    Post,
+    Param,
+    HttpException,
+    HttpStatus,
+    Query,
+    HttpCode,
+    NotFoundException,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -23,6 +35,8 @@ import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
+import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
+import { FindePersonenkontextDto } from './finde-personenkontext.dto.js';
 
 @ApiTags('person')
 @Controller({ path: 'person' })
@@ -82,6 +96,33 @@ export class PersonController {
             personenkontextDto,
         );
         return this.mapper.map(createdPersonenkontext, CreatedPersonenkontextDto, PersonenkontextResponse);
+    }
+
+    @Get(':personId/personenkontexte')
+    @ApiOkResponse({ description: 'The personenkontexte were successfully pulled.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get personenkontexte.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get personenkontexte.' })
+    @ApiNotFoundResponse({ description: 'No personenkontexte were found.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all personenkontexte.' })
+    public async findPersonenkontexte(
+        @Param() pathParams: PersonByIdParams,
+        @Query() queryParams: PersonenkontextQueryParams,
+    ): Promise<PersonenkontextResponse[]> {
+        const findePersonenkontextDto: FindePersonenkontextDto = this.mapper.map(
+            queryParams,
+            PersonenkontextQueryParams,
+            FindePersonenkontextDto,
+        );
+        findePersonenkontextDto.personId = pathParams.personId;
+
+        const personenkontexte: PersonenkontextResponse[] = await this.personenkontextUc.findAll(
+            findePersonenkontextDto,
+        );
+        if (personenkontexte.length === 0) {
+            throw new NotFoundException();
+        }
+
+        return personenkontexte;
     }
 
     @Get()

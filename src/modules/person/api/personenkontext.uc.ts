@@ -5,6 +5,8 @@ import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { PersonenkontextService } from '../domain/personenkontext.service.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { FindePersonenkontextDto } from './finde-personenkontext.dto.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -28,5 +30,23 @@ export class PersonenkontextUc {
             return this.mapper.map(result.value, PersonenkontextDo, CreatedPersonenkontextDto);
         }
         throw result.error;
+    }
+
+    public async findAll(findePersonenkontextDto: FindePersonenkontextDto): Promise<PersonenkontextResponse[]> {
+        const personenkontextDo: PersonenkontextDo<false> = this.mapper.map(
+            findePersonenkontextDto,
+            FindePersonenkontextDto,
+            PersonenkontextDo,
+        );
+        const result: PersonenkontextDo<true>[] = await this.personenkontextService.findAllPersonenkontexte(
+            personenkontextDo,
+        );
+        if (result.length !== 0) {
+            const personenkontexte: PersonenkontextResponse[] = result.map((personenkontext: PersonenkontextDo<true>) =>
+                this.mapper.map(personenkontext, PersonenkontextDo, PersonenkontextResponse),
+            );
+            return personenkontexte;
+        }
+        return [];
     }
 }

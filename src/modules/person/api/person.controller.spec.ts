@@ -8,8 +8,8 @@ import { PersonController } from './person.controller.js';
 import { PersonUc } from './person.uc.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonResponse } from './person.response.js';
-import { HttpException } from '@nestjs/common';
-import { PersonenQueryParam } from './personen-query.param.js';
+import { HttpException, NotFoundException } from '@nestjs/common';
+import { PersonenQueryParam, SichtfreigabeType } from './personen-query.param.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { TrustLevel } from '../domain/person.enums.js';
 import { PersonenDatensatz } from './personendatensatz.js';
@@ -17,6 +17,8 @@ import { PersonenkontextUc } from './personenkontext.uc.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { Jahrgangsstufe, Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
+import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -185,33 +187,95 @@ describe('PersonController', () => {
         });
     });
 
-    describe('when creating a personenkontext', () => {
-        it('should not throw', async () => {
-            const pathParams: PersonByIdParams = {
-                personId: faker.string.uuid(),
-            };
-            const body: CreatePersonenkontextBodyParams = {
-                rolle: Rolle.LEHRENDER,
-                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                personenstatus: Personenstatus.AKTIV,
-                referrer: 'referrer',
-            };
-            const ucResult: CreatedPersonenkontextDto = {
-                id: faker.string.uuid(),
-                mandant: faker.string.uuid(),
-                organisation: {
+    describe('createPersonenkontext', () => {
+        describe('when creating a personenkontext', () => {
+            it('should not throw', async () => {
+                const pathParams: PersonByIdParams = {
+                    personId: faker.string.uuid(),
+                };
+                const body: CreatePersonenkontextBodyParams = {
+                    rolle: Rolle.LEHRENDER,
+                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                    personenstatus: Personenstatus.AKTIV,
+                    referrer: 'referrer',
+                };
+                const ucResult: CreatedPersonenkontextDto = {
                     id: faker.string.uuid(),
-                },
-                revision: '1',
-                rolle: Rolle.LEHRENDER,
-                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                personenstatus: Personenstatus.AKTIV,
-                referrer: 'referrer',
-            };
-            personenkontextUcMock.createPersonenkontext.mockResolvedValue(ucResult);
+                    mandant: faker.string.uuid(),
+                    organisation: {
+                        id: faker.string.uuid(),
+                    },
+                    revision: '1',
+                    rolle: Rolle.LEHRENDER,
+                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                    personenstatus: Personenstatus.AKTIV,
+                    referrer: 'referrer',
+                };
+                personenkontextUcMock.createPersonenkontext.mockResolvedValue(ucResult);
 
-            await expect(personController.createPersonenkontext(pathParams, body)).resolves.not.toThrow();
-            expect(personenkontextUcMock.createPersonenkontext).toHaveBeenCalledTimes(1);
+                await expect(personController.createPersonenkontext(pathParams, body)).resolves.not.toThrow();
+                expect(personenkontextUcMock.createPersonenkontext).toHaveBeenCalledTimes(1);
+            });
+        });
+    });
+
+    describe('findPersonenkontexte', () => {
+        describe('When fetching personenkontexte is successful', () => {
+            it('should get all personenkontexte', async () => {
+                const pathParams: PersonByIdParams = {
+                    personId: faker.string.uuid(),
+                };
+                const queryParams: PersonenkontextQueryParams = {
+                    referrer: 'referrer',
+                    sichtfreigabe: SichtfreigabeType.NEIN,
+                    personenstatus: Personenstatus.AKTIV,
+                    rolle: Rolle.LERNENDER,
+                };
+
+                const personenkontextResponse: PersonenkontextResponse = {
+                    id: faker.string.uuid(),
+                    organisation: {
+                        id: faker.string.uuid(),
+                    },
+                    revision: '1',
+                    mandant: faker.string.uuid(),
+                    rolle: Rolle.LERNENDER,
+                    referrer: 'referrer',
+                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                    personenstatus: Personenstatus.AKTIV,
+                };
+                const personenkontextResponseArray: PersonenkontextResponse[] = [personenkontextResponse];
+                personenkontextUcMock.findAll.mockResolvedValue(personenkontextResponseArray);
+
+                const result: PersonenkontextResponse[] = await personController.findPersonenkontexte(
+                    pathParams,
+                    queryParams,
+                );
+
+                expect(personenkontextUcMock.findAll).toHaveBeenCalledTimes(1);
+                expect(result.length).toBe(1);
+                expect(result[0]?.id).toBe(personenkontextResponseArray[0]?.id);
+            });
+        });
+        describe('When no personenkontexte are found', () => {
+            it('should throw NotFoundException', async () => {
+                const pathParams: PersonByIdParams = {
+                    personId: faker.string.uuid(),
+                };
+                const queryParams: PersonenkontextQueryParams = {
+                    referrer: 'referrer',
+                    sichtfreigabe: SichtfreigabeType.NEIN,
+                    personenstatus: Personenstatus.AKTIV,
+                    rolle: Rolle.LERNENDER,
+                };
+
+                const personenkontextResponseArray: PersonenkontextResponse[] = [];
+                personenkontextUcMock.findAll.mockResolvedValue(personenkontextResponseArray);
+
+                await expect(personController.findPersonenkontexte(pathParams, queryParams)).rejects.toThrow(
+                    NotFoundException,
+                );
+            });
         });
     });
 });
