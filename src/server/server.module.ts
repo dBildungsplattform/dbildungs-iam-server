@@ -5,12 +5,14 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DbConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../shared/config/index.js';
+import { DbConfig, KeycloakConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../shared/config/index.js';
 import { mappingErrorHandler } from '../shared/error/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
-import { HealthModule } from '../health/health.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
+import { AuthGuard, KeycloakConnectModule, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
+import { APP_GUARD } from '@nestjs/core';
+import { HealthModule } from '../modules/health/health.module.js';
 
 @Module({
     imports: [
@@ -43,10 +45,37 @@ import { OrganisationApiModule } from '../modules/organisation/organisation-api.
             },
             inject: [ConfigService],
         }),
+        KeycloakConnectModule.registerAsync({
+            useFactory: (config: ConfigService<ServerConfig, true>) => {
+                const keycloakConfig: KeycloakConfig = config.getOrThrow<KeycloakConfig>('KEYCLOAK');
+
+                return {
+                    authServerUrl: keycloakConfig.BASE_URL,
+                    realm: keycloakConfig.REALM_NAME,
+                    clientId: keycloakConfig.CLIENT_ID,
+                    secret: keycloakConfig.SECRET,
+                };
+            },
+            inject: [ConfigService],
+        }),
         PersonApiModule,
         OrganisationApiModule,
         KeycloakAdministrationModule,
         HealthModule,
+    ],
+    providers: [
+        {
+            provide: APP_GUARD,
+            useClass: AuthGuard,
+        },
+        {
+            provide: APP_GUARD,
+            useClass: RoleGuard,
+        },
+        {
+            provide: APP_GUARD,
+            useClass: ResourceGuard,
+        },
     ],
 })
 export class ServerModule {}
