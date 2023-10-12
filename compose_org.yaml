@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:15.3-alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=dbildungs-iam
+  dbiam-server:
+    image: dbildungs-iam/dev:latest
+    ports:
+      - 9090:9090
+      - 8443:8443
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin

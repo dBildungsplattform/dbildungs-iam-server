@@ -11,6 +11,7 @@ import { PersonApiModule } from '../modules/person/person-api.module.js';
 import { HealthModule } from '../health/health.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
+import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
 
 @Module({
     imports: [
@@ -36,7 +37,7 @@ import { OrganisationApiModule } from '../modules/organisation/organisation-api.
                     type: 'postgresql',
                     driverOptions: {
                         connection: {
-                            ssl: true,
+                            ssl: false,
                         },
                     },
                 });
@@ -47,6 +48,7 @@ import { OrganisationApiModule } from '../modules/organisation/organisation-api.
         OrganisationApiModule,
         KeycloakAdministrationModule,
         HealthModule,
+        RolleApiModule,
     ],
 })
 export class ServerModule {}

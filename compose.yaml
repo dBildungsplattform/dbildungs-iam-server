@@ -1,19 +1,37 @@
 version: '3'
 
+volumes:
+  postgres_data:
+    driver: local
+
 services:
   db:
-    image: postgres:15.3-alpine
+    image: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: dbildungs-iam
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
     ports:
       - 5432:5432
+
+  idm:
+    image: ghcr.io/hpi-schul-cloud/erwin-idm/dev:latest
+    restart: always
     environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=dbildungs-iam
-  dbiam-server:
-    image: dbildungs-iam/dev:latest
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://db:5432/dbildungs-iam
+      KC_DB_USERNAME: admin
+      KC_DB_PASSWORD: password
+      KC_HTTP_ENABLED: "true"
     ports:
-      - 9090:9090
+      - 8181:8080
       - 8443:8443
-    environment:
-      - KEYCLOAK_ADMIN=admin
-      - KEYCLOAK_ADMIN_PASSWORD=admin
+    command:
+      - '&& /opt/keycloak/bin/kc.sh import --dir /tmp/realms'
+    volumes:
+      - ./backup/idm/keycloak:/tmp/realms
+      - ./src/themes/:/opt/keycloak/themes/
