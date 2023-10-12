@@ -35,7 +35,7 @@ import { HealthModule } from '../modules/health/health.module.js';
                     type: 'postgresql',
                     driverOptions: {
                         connection: {
-                            ssl: true,
+                            ssl: dbConfig.USE_SSL,
                         },
                     },
                 });
