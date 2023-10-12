@@ -3,6 +3,8 @@ import { PersonDo } from '../../src/modules/person/domain/person.do.js';
 import { OrganisationDo } from '../../src/modules/organisation/domain/organisation.do.js';
 import { OrganisationsTyp } from '../../src/modules/organisation/domain/organisation.enum.js';
 import { UserDo } from '../../src/modules/keycloak-administration/domain/user.do.js';
+import { PersonenkontextDo } from '../../src/modules/person/domain/personenkontext.do.js';
+import { Rolle, Jahrgangsstufe, Personenstatus } from '../../src/modules/person/domain/personenkontext.enums.js';
 
 export class DoFactory {
     public static createPerson<WasPersisted extends boolean>(
@@ -50,5 +52,28 @@ export class DoFactory {
         };
 
         return Object.assign(new UserDo<WasPersisted>(), user, props);
+    }
+
+    public static createPersonenkontext<WasPersisted extends boolean>(
+        withId: WasPersisted,
+        props?: Partial<PersonenkontextDo<WasPersisted>>,
+    ): PersonenkontextDo<WasPersisted> {
+        const user: PersonenkontextDo<false> = {
+            id: withId ? faker.string.uuid() : undefined,
+            mandant: faker.string.uuid(),
+            personId: faker.string.uuid(),
+            createdAt: withId ? faker.date.past() : undefined,
+            updatedAt: withId ? faker.date.recent() : undefined,
+            organisation: DoFactory.createOrganisation(true),
+            revision: '1',
+            rolle: Rolle.LEHRENDER,
+            jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+            personenstatus: Personenstatus.AKTIV,
+            referrer: 'referrer',
+            sichtfreigabe: true,
+            loeschungZeitpunkt: faker.date.anytime(),
+        };
+
+        return Object.assign(new PersonenkontextDo<WasPersisted>(), user, props);
     }
 }
