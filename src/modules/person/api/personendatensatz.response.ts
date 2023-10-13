@@ -5,7 +5,7 @@ import { ValidateNested } from 'class-validator';
 import { PersonResponse } from './person.response.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 
-export class PersonenDatensatz {
+export class PersonendatensatzResponse {
     @AutoMap(() => PersonResponse)
     @ValidateNested()
     @Type(() => PersonResponse)

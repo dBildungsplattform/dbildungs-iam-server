@@ -2,7 +2,7 @@ import { AutoMap } from '@automapper/classes';
 import { Rolle, Personenstatus } from '../domain/personenkontext.enums.js';
 import { SichtfreigabeType } from './personen-query.param.js';
 
-export class FindePersonenkontextDto {
+export class FindPersonenkontextDto {
     @AutoMap()
     public personId!: string;
 

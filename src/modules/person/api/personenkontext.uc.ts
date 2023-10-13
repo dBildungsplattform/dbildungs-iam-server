@@ -1,11 +1,12 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
+import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { PersonenkontextService } from '../domain/personenkontext.service.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
-import { FindePersonenkontextDto } from './finde-personenkontext.dto.js';
+import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 
 @Injectable()
@@ -32,21 +33,24 @@ export class PersonenkontextUc {
         throw result.error;
     }
 
-    public async findAll(findePersonenkontextDto: FindePersonenkontextDto): Promise<PersonenkontextResponse[]> {
+    // TODO refactor after EW-561 is done
+    public async findAll(findePersonenkontextDto: FindPersonenkontextDto): Promise<PersonenkontextResponse[]> {
         const personenkontextDo: PersonenkontextDo<false> = this.mapper.map(
             findePersonenkontextDto,
-            FindePersonenkontextDto,
+            FindPersonenkontextDto,
             PersonenkontextDo,
         );
-        const result: PersonenkontextDo<true>[] = await this.personenkontextService.findAllPersonenkontexte(
-            personenkontextDo,
-        );
-        if (result.length !== 0) {
-            const personenkontexte: PersonenkontextResponse[] = result.map((personenkontext: PersonenkontextDo<true>) =>
-                this.mapper.map(personenkontext, PersonenkontextDo, PersonenkontextResponse),
-            );
-            return personenkontexte;
+        const result: Result<PersonenkontextDo<true>[], DomainError> =
+            await this.personenkontextService.findAllPersonenkontexte(personenkontextDo);
+
+        if (!result.ok) {
+            throw result.error;
         }
-        return [];
+
+        const personenkontexte: PersonenkontextResponse[] = result.value.map(
+            (personenkontext: PersonenkontextDo<true>) =>
+                this.mapper.map(personenkontext, PersonenkontextDo, PersonenkontextResponse),
+        );
+        return personenkontexte;
     }
 }

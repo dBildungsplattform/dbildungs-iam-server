@@ -1,18 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import {
-    Body,
-    Controller,
-    Get,
-    Inject,
-    Post,
-    Param,
-    HttpException,
-    HttpStatus,
-    Query,
-    HttpCode,
-    NotFoundException,
-} from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus, Query, HttpCode } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -28,15 +16,15 @@ import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonenQueryParam } from './personen-query.param.js';
-import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
-import { PersonenDatensatz } from './personendatensatz.js';
+import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
-import { FindePersonenkontextDto } from './finde-personenkontext.dto.js';
+import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 
 @ApiTags('person')
 @Controller({ path: 'person' })
@@ -65,9 +53,9 @@ export class PersonController {
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the person.' })
-    public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonenDatensatz | HttpException> {
+    public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonendatensatzResponse | HttpException> {
         try {
-            const person: PersonenDatensatz = await this.personUc.findPersonById(params.personId);
+            const person: PersonendatensatzResponse = await this.personUc.findPersonById(params.personId);
             return person;
         } catch (error) {
             throw new HttpException('Requested entity does not exist', HttpStatus.NOT_FOUND);
@@ -108,19 +96,16 @@ export class PersonController {
         @Param() pathParams: PersonByIdParams,
         @Query() queryParams: PersonenkontextQueryParams,
     ): Promise<PersonenkontextResponse[]> {
-        const findePersonenkontextDto: FindePersonenkontextDto = this.mapper.map(
+        const findePersonenkontextDto: FindPersonenkontextDto = this.mapper.map(
             queryParams,
             PersonenkontextQueryParams,
-            FindePersonenkontextDto,
+            FindPersonenkontextDto,
         );
         findePersonenkontextDto.personId = pathParams.personId;
 
         const personenkontexte: PersonenkontextResponse[] = await this.personenkontextUc.findAll(
             findePersonenkontextDto,
         );
-        if (personenkontexte.length === 0) {
-            throw new NotFoundException();
-        }
 
         return personenkontexte;
     }
@@ -130,13 +115,13 @@ export class PersonController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
-    public async findPersons(@Query() queryParams: PersonenQueryParam): Promise<PersonenDatensatz[]> {
-        const persondatensatzDTO: FindPersonDatensatzDTO = this.mapper.map(
+    public async findPersons(@Query() queryParams: PersonenQueryParam): Promise<PersonendatensatzResponse[]> {
+        const persondatensatzDTO: FindPersonendatensatzDto = this.mapper.map(
             queryParams,
             PersonenQueryParam,
-            FindPersonDatensatzDTO,
+            FindPersonendatensatzDto,
         );
-        const persons: PersonenDatensatz[] = await this.personUc.findAll(persondatensatzDTO);
+        const persons: PersonendatensatzResponse[] = await this.personUc.findAll(persondatensatzDTO);
         return persons;
     }
 }

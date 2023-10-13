@@ -23,7 +23,7 @@ import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
-import { FindePersonenkontextDto } from './finde-personenkontext.dto.js';
+import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 
 describe('PersonApiMapperProfile', () => {
     let module: TestingModule;
@@ -199,20 +199,20 @@ describe('PersonApiMapperProfile', () => {
                 referrer: 'referrer',
                 rolle: Rolle.LERNENDER,
             };
-            expect(() => sut.map(params, PersonenkontextQueryParams, FindePersonenkontextDto)).not.toThrowError(
+            expect(() => sut.map(params, PersonenkontextQueryParams, FindPersonenkontextDto)).not.toThrowError(
                 MappingError,
             );
         });
 
         it('should map FindePersonenkontextDto to PersonenkontextDo', () => {
-            const dto: FindePersonenkontextDto = {
+            const dto: FindPersonenkontextDto = {
                 personId: faker.string.uuid(),
                 sichtfreigabe: SichtfreigabeType.JA,
                 personenstatus: Personenstatus.AKTIV,
                 referrer: 'referrer',
                 rolle: Rolle.LERNENDER,
             };
-            expect(() => sut.map(dto, FindePersonenkontextDto, PersonenkontextDo)).not.toThrowError(MappingError);
+            expect(() => sut.map(dto, FindPersonenkontextDto, PersonenkontextDo)).not.toThrowError(MappingError);
         });
 
         it('should map PersonenkontextDo to PersonenkontextResponse', () => {

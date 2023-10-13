@@ -17,6 +17,7 @@ export class PersonenkontextRepo {
         return this.create(personenkontextDo);
     }
 
+    // TODO refactor after EW-561 is done
     public async findAll(personenkontextDo: PersonenkontextDo<false>): Promise<PersonenkontextDo<true>[]> {
         const query: Record<string, unknown> = {};
 

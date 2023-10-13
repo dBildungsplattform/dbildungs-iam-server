@@ -1,7 +1,7 @@
 import { AutoMap } from '@automapper/classes';
 import { SichtfreigabeType } from './personen-query.param.js';
 
-export class FindPersonDatensatzDTO {
+export class FindPersonendatensatzDto {
     @AutoMap()
     public referrer?: string;
 

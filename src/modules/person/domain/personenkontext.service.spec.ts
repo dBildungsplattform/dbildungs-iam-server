@@ -123,23 +123,27 @@ describe('PersonenkontextService', () => {
                 mapperMock.map.mockReturnValue(personenkontexte as unknown as Dictionary<unknown>);
                 const personenkontextDoWithQueryParam: PersonenkontextDo<false> =
                     DoFactory.createPersonenkontext(false);
-                const result: PersonenkontextDo<true>[] = await personenkontextService.findAllPersonenkontexte(
-                    personenkontextDoWithQueryParam,
-                );
-                expect(result).toHaveLength(2);
+
+                const result: Result<PersonenkontextDo<true>[], DomainError> =
+                    await personenkontextService.findAllPersonenkontexte(personenkontextDoWithQueryParam);
+                expect(result).toEqual<Result<PersonenkontextDo<true>[], DomainError>>({
+                    ok: true,
+                    value: personenkontexte,
+                });
             });
         });
 
         describe('When no personenkontexte are found', () => {
-            it('should return an empty array', async () => {
+            it('should return a result with domain error', async () => {
                 const personenkontext: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false);
                 personenkontextRepoMock.findAll.mockResolvedValue([]);
                 mapperMock.map.mockReturnValue(personenkontext as unknown as Dictionary<unknown>);
-                const result: PersonenkontextDo<true>[] = await personenkontextService.findAllPersonenkontexte(
-                    personenkontext,
-                );
-                expect(result).toBeInstanceOf(Array);
-                expect(result).toHaveLength(0);
+                const result: Result<PersonenkontextDo<true>[], DomainError> =
+                    await personenkontextService.findAllPersonenkontexte(personenkontext);
+                expect(result).toEqual<Result<PersonenkontextDo<true>, DomainError>>({
+                    ok: false,
+                    error: new EntityNotFoundError('Personenkontext'),
+                });
             });
         });
     });
