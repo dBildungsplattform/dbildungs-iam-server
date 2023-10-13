@@ -17,7 +17,7 @@ jobs:
           uses: checkmarx/kics-github-action@v1.7.0
           with:
             path: ./charts
-            platform_type: helm
+            platform_type: Kubernetes
             output_path: .github/kics-results/
         - name: display kics results
           run: |
