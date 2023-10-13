@@ -1,8 +1,7 @@
-import { AutoMap } from '@automapper/classes';
 import { DoBase } from '../../../shared/types/index.js';
-import { RolleEntity } from '../persistence/rolle.entity.js';
+import { AutoMap } from '@automapper/classes';
 
-export class PersonRollenZuweisungDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
+export class RolleRechtDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
     /**
      * @deprecated This constructor is for automapper only.
      */
@@ -17,13 +16,4 @@ export class PersonRollenZuweisungDo<WasPersisted extends boolean> implements Do
 
     @AutoMap()
     public updatedAt!: Persisted<Date, WasPersisted>;
-
-    @AutoMap()
-    public person!: string;
-
-    @AutoMap()
-    public role!: RolleEntity;
-
-    @AutoMap()
-    public schoolStructureNode!: string;
 }

@@ -2,8 +2,8 @@ import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
-import { RolleEntity } from '../../../persistence/rolle.entity.js';
-import { RolleBerechtigungsZuweisungEntity } from '../../../persistence/rolle-berechtigungs-zuweisung.entity.js';
+import { RolleEntity } from './rolle.entity.js';
+import { RolleBerechtigungsZuweisungEntity } from './rolle-berechtigungs-zuweisung.entity.js';
 import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuweisung.do.js';
 
 @Injectable()
@@ -20,6 +20,7 @@ export class RollenBerechtigungsZuweisungRepo {
             query,
             { populate: ['rolePermission'] },
         );
+
         return result.map((rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungEntity) =>
             this.mapper.map(
                 rolleBerechtigungsZuweisung,

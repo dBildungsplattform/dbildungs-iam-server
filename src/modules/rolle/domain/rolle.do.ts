@@ -1,8 +1,8 @@
 import { AutoMap } from '@automapper/classes';
+import { Property } from '@mikro-orm/core';
 import { DoBase } from '../../../shared/types/index.js';
-import { RolleEntity } from '../persistence/rolle.entity.js';
 
-export class PersonRollenZuweisungDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
+export class RolleDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
     /**
      * @deprecated This constructor is for automapper only.
      */
@@ -19,11 +19,6 @@ export class PersonRollenZuweisungDo<WasPersisted extends boolean> implements Do
     public updatedAt!: Persisted<Date, WasPersisted>;
 
     @AutoMap()
-    public person!: string;
-
-    @AutoMap()
-    public role!: RolleEntity;
-
-    @AutoMap()
-    public schoolStructureNode!: string;
+    @Property()
+    public administeredBySchulstrukturknoten!: string;
 }

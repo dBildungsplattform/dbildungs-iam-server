@@ -1,6 +1,6 @@
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { Entity, ManyToOne, Property } from '@mikro-orm/core';
-import { RolleEntity } from '../../../persistence/rolle.entity.js';
+import { RolleEntity } from './rolle.entity.js';
 import { AutoMap } from '@automapper/classes';
 
 @Entity({ tableName: 'person_rollenzuweisung' })

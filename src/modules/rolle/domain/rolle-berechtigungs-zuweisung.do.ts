@@ -1,7 +1,7 @@
 import { AutoMap } from '@automapper/classes';
 import { DoBase } from '../../../shared/types/index.js';
-import { RolleRechtEntity } from '../../../persistence/rolle-recht.entity.js';
-import { RolleEntity } from '../../../persistence/rolle.entity.js';
+import { RolleRechtDo } from './rolle-recht.do.js';
+import { RolleDo } from './rolle.do.js';
 
 export class RolleBerechtigungsZuweisungDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
     /**
@@ -26,10 +26,10 @@ export class RolleBerechtigungsZuweisungDo<WasPersisted extends boolean> impleme
     public validForAdministrativeParents!: boolean;
 
     @AutoMap()
-    public rolePermission!: RolleRechtEntity;
+    public rolePermission!: RolleRechtDo<true>;
 
     @AutoMap()
-    public role!: RolleEntity;
+    public role!: RolleDo<true>;
 
     /**
      * Points to Schulstrukturknoten

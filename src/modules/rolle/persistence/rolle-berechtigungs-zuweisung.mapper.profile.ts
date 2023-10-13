@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { createMap, forMember, mapFrom, Mapper, MappingProfile } from '@automapper/core';
 import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuweisung.do.js';
-import { RolleBerechtigungsZuweisungEntity } from '../../../persistence/rolle-berechtigungs-zuweisung.entity.js';
+import { RolleBerechtigungsZuweisungEntity } from './rolle-berechtigungs-zuweisung.entity.js';
 
 @Injectable()
 export class RolleBerechtigungsZuweisungMapperProfile extends AutomapperProfile {
@@ -20,6 +20,10 @@ export class RolleBerechtigungsZuweisungMapperProfile extends AutomapperProfile 
                 forMember(
                     (dest: RolleBerechtigungsZuweisungDo<true>) => dest.id,
                     mapFrom((src: RolleBerechtigungsZuweisungEntity) => src.id),
+                ),
+                forMember(
+                    (dest: RolleBerechtigungsZuweisungDo<true>) => dest.rolePermission,
+                    mapFrom((src: RolleBerechtigungsZuweisungEntity) => src.rolePermission),
                 ),
             );
         };
