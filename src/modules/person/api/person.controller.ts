@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus, Query } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -18,6 +18,8 @@ import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonenQueryParam } from './personen-query.param.js';
 import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
 import { PersonenDatensatz } from './personendatensatz.js';
+import { Paged, setPaginationHeaders } from '../../../shared/paging/index.js';
+import { Response } from 'express';
 
 @ApiTags('person')
 @Controller({ path: 'person' })
@@ -56,13 +58,19 @@ export class PersonController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
-    public async findPersons(@Query() queryParams: PersonenQueryParam): Promise<PersonenDatensatz[]> {
+    public async findPersons(
+        @Query() queryParams: PersonenQueryParam,
+        @Res() res: Response,
+    ): Promise<PersonenDatensatz[]> {
         const persondatensatzDTO: FindPersonDatensatzDTO = this.mapper.map(
             queryParams,
             PersonenQueryParam,
             FindPersonDatensatzDTO,
         );
-        const persons: PersonenDatensatz[] = await this.uc.findAll(persondatensatzDTO);
-        return persons;
+        const persons: Paged<PersonenDatensatz> = await this.uc.findAll(persondatensatzDTO);
+
+        setPaginationHeaders(res, persons);
+
+        return persons.items;
     }
 }

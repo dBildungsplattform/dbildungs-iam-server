@@ -2,7 +2,7 @@ import { EntityName } from '@mikro-orm/core';
 import { ScopeBase, ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonEntity } from './person.entity.js';
 
-type SearchProps = {
+type FindProps = {
     firstName?: string;
     lastName?: string;
     birthDate?: Date;
@@ -13,14 +13,14 @@ export class PersonScope extends ScopeBase<PersonEntity> {
         return PersonEntity;
     }
 
-    public searchBy(searchProps: SearchProps): this {
-        this.findBy(
+    public findBy(findProps: FindProps, operator: ScopeOperator = ScopeOperator.AND): this {
+        this.findByInternal(
             {
-                firstName: searchProps.firstName,
-                lastName: searchProps.lastName,
-                birthDate: searchProps.birthDate,
+                firstName: findProps.firstName,
+                lastName: findProps.lastName,
+                birthDate: findProps.birthDate,
             },
-            ScopeOperator.AND,
+            operator,
         );
 
         return this;

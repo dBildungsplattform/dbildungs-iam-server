@@ -7,20 +7,20 @@ export abstract class ScopeBase<T extends AnyEntity> {
 
     private readonly queryOrderMaps: QBQueryOrderMap<T>[] = [];
 
-    private offset: number | undefined;
+    private offset: Option<number>;
 
-    private limit: number | undefined;
+    private limit: Option<number>;
 
     public abstract get entityName(): EntityName<T>;
 
-    public async executeQuery(em: EntityManager): Promise<[T[], number]> {
+    public async executeQuery(em: EntityManager): Promise<Counted<T>> {
         const qb: QueryBuilder<T> = em.createQueryBuilder(this.entityName);
-        const result: [T[], number] = await qb
+        const result: Counted<T> = await qb
             .select('*')
             .where(this.queryFilters)
             .orderBy(this.queryOrderMaps)
-            .offset(this.offset)
-            .limit(this.limit)
+            .offset(this.offset ?? undefined)
+            .limit(this.limit ?? undefined)
             .getResultAndCount();
 
         return result;
@@ -34,14 +34,14 @@ export abstract class ScopeBase<T extends AnyEntity> {
         return this;
     }
 
-    public paged(offset: number, limit: number): this {
+    public paged(offset: Option<number>, limit: Option<number>): this {
         this.offset = offset;
         this.limit = limit;
 
         return this;
     }
 
-    protected findBy(props: Partial<T>, operator: ScopeOperator): this {
+    protected findByInternal(props: Partial<T>, operator: ScopeOperator): this {
         const query: QBFilterQuery<T> = {
             [operator]: Object.keys(props)
                 .filter((key: string) => props[key] !== undefined)

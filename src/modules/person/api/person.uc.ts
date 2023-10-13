@@ -5,8 +5,9 @@ import { KeycloakUserService, UserDo } from '../../keycloak-administration/index
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonDo } from '../domain/person.do.js';
-import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
+import { FindPersonDatensatzDTO as FindPersonDatensatzDto } from './finde-persondatensatz-dto.js';
 import { PersonenDatensatz } from './personendatensatz.js';
+import { Paged } from '../../../shared/paging/index.js';
 
 @Injectable()
 export class PersonUc {
@@ -51,15 +52,28 @@ export class PersonUc {
         throw result.error;
     }
 
-    public async findAll(personDto: FindPersonDatensatzDTO): Promise<PersonenDatensatz[]> {
-        const personDo: PersonDo<false> = this.mapper.map(personDto, FindPersonDatensatzDTO, PersonDo);
-        const result: PersonDo<true>[] = await this.personService.findAllPersons(personDo);
-        if (result.length !== 0) {
-            const persons: PersonenDatensatz[] = result.map((person: PersonDo<true>) =>
-                this.mapper.map(person, PersonDo, PersonenDatensatz),
-            );
-            return persons;
+    public async findAll(personDto: FindPersonDatensatzDto): Promise<Paged<PersonenDatensatz>> {
+        const personDo: PersonDo<false> = this.mapper.map(personDto, FindPersonDatensatzDto, PersonDo);
+        const result: Paged<PersonDo<true>> = await this.personService.findAllPersons(undefined, undefined, personDo);
+
+        if (result.total === 0) {
+            return {
+                total: result.total,
+                offset: result.offset,
+                limit: result.limit,
+                items: [],
+            };
         }
-        return [];
+
+        const persons: PersonenDatensatz[] = result.items.map((person: PersonDo<true>) =>
+            this.mapper.map(person, PersonDo, PersonenDatensatz),
+        );
+
+        return {
+            total: result.total,
+            offset: result.offset,
+            limit: result.limit,
+            items: persons,
+        };
     }
 }

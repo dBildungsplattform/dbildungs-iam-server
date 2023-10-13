@@ -29,21 +29,25 @@ export class PersonService {
         return { ok: false, error: new EntityNotFoundError(`Person with the following ID ${id} does not exist`) };
     }
 
-    public async findAllPersons(personDto: PersonDo<false>): Promise<Paged<PersonDo<true>>> {
+    public async findAllPersons(
+        offset: Option<number>,
+        limit: Option<number>,
+        personDo: Partial<PersonDo<false>>,
+    ): Promise<Paged<PersonDo<true>>> {
         const scope: PersonScope = new PersonScope()
-            .searchBy({
-                firstName: personDto.firstName,
-                lastName: personDto.lastName,
-                birthDate: personDto.birthDate,
+            .findBy({
+                firstName: personDo.firstName,
+                lastName: personDo.lastName,
+                birthDate: personDo.birthDate,
             })
             .sortBy('firstName', ScopeOrder.ASC)
-            .paged(0, 100);
+            .paged(offset, limit);
         const [persons, total]: Counted<PersonDo<true>> = await this.personRepo.findBy(scope);
 
         return {
             total,
-            offset: 0,
-            limit: 100,
+            offset: offset ?? 0,
+            limit: limit ?? total,
             items: persons,
         };
     }
