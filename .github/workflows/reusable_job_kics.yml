@@ -1,0 +1,24 @@
+name: 'Kics helm - reusable job'
+
+on:
+  workflow_call:
+
+jobs:
+    scan:
+      name: Run kics Helm Chart Scan
+      runs-on: ubuntu-latest
+      permissions:
+        contents: read
+
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v3
+        - name: Scan with kics
+          uses: checkmarx/kics-github-action@v1.7.0
+          with:
+            path: ./charts
+            platform_type: helm
+            output_path: .github/kics-results/
+        - name: display kics results
+          run: |
+            cat .github/kics-results/results.json
