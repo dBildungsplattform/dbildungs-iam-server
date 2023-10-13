@@ -13,5 +13,7 @@ jobs:
   nest_test_and_sonarcloud:
     uses: ./.github/workflows/reusable_job_nest_test_sonarcloud.yml
     secrets: inherit
-  checkov_helm:
-    uses: ./.github/workflows/reusable_job_checkov.yml
+  # checkov_helm:
+  #   uses: ./.github/workflows/reusable_job_checkov.yml
+  kics_helm:
+    uses: ./.github/workflows/reusable_job_kics.yml
