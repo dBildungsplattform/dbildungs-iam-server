@@ -37,6 +37,9 @@ The config file contains all static, non-secret information we need to start and
     "BASE_URL": "<URL of keycloak>",
     "REALM_NAME": "<name of the realm>",
     "CLIENT_ID": "<id of the client>"
+  },
+  "FRONTEND": {
+    "PORT": "<this is the bff port>"
   }
 }
 ```
@@ -60,6 +63,9 @@ There are however a few special rules applied to them:
     },
     "KEYCLOAK": {
         "SECRET": "<secret token for the client>"
+    },
+    "FRONTEND": {
+        "SESSION_SECRET": "<is used to encrypt the session cookie>"
     }
 }
 ```
