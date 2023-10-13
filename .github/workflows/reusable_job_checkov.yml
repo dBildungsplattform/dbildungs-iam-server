@@ -18,5 +18,7 @@ jobs:
         with:
           directory: ./charts
           framework: helm
+          hard_fail_on: HIGH
+          soft_fail_on: LOW,MEDIUM
           output_format: cli
           output_file_path: console
