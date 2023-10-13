@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
+import session from 'express-session';
 
 import { FrontendConfig, ServerConfig } from '../shared/config/index.js';
 import { GlobalValidationPipe } from '../shared/validation/index.js';
@@ -23,7 +24,17 @@ async function bootstrap(): Promise<void> {
     SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger));
 
     const configService: ConfigService<ServerConfig, true> = app.get(ConfigService<ServerConfig, true>);
-    const port: number = configService.getOrThrow<FrontendConfig>('FRONTEND').PORT;
+    const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
+
+    app.use(
+        session({
+            secret: frontendConfig.SESSION_SECRET,
+            resave: false,
+            saveUninitialized: false,
+        }),
+    );
+
+    const port: number = frontendConfig.PORT;
     await app.listen(port);
 
     console.info(`\nListening on: http://127.0.0.1:${port}`);
