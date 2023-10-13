@@ -60,6 +60,11 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 * Test conventions can be found [here](./docs/tests.md)
 * Configuration conventions can be found [here](./docs/config.md)
 
+## Package (Create Docker Image )
+If you push a tag upstream a container will be created for you. (Check Github under Packages)
+
+ghcr.io/dbildungsplattform/dbildungs-iam-server:*tag*
+
 ## License
 
 The software is licensed under the [AGPL-3.0 license](./LICENSE).
