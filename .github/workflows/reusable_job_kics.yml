@@ -19,6 +19,7 @@ jobs:
             path: ./charts
             platform_type: Kubernetes
             output_path: .github/kics-results/
+            fail_on: high,medium
         - name: display kics results
           run: |
             cat .github/kics-results/results.json
