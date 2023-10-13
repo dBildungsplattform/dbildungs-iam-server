@@ -11,11 +11,14 @@ import { faker } from '@faker-js/faker';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenDatensatz } from './personendatensatz.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { SichtfreigabeType } from './personen-query.param.js';
+import { PersonenkontextService } from '../domain/personenkontext.service.js';
 
 describe('PersonUc', () => {
     let module: TestingModule;
     let personUc: PersonUc;
     let personServiceMock: DeepMocked<PersonService>;
+    let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
     let userServiceMock: DeepMocked<KeycloakUserService>;
 
     beforeAll(async () => {
@@ -29,6 +32,10 @@ describe('PersonUc', () => {
                     useValue: createMock<PersonService>(),
                 },
                 {
+                    provide: PersonenkontextService,
+                    useValue: createMock<PersonenkontextService>(),
+                },
+                {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),
                 },
@@ -36,6 +43,7 @@ describe('PersonUc', () => {
         }).compile();
         personUc = module.get(PersonUc);
         personServiceMock = module.get(PersonService);
+        personenkontextServiceMock = module.get(PersonenkontextService);
         userServiceMock = module.get(KeycloakUserService);
     });
 
@@ -120,6 +128,8 @@ describe('PersonUc', () => {
                     ok: true,
                     value: DoFactory.createPerson(true),
                 });
+
+                personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue([]);
                 await expect(personUc.findPersonById(id)).resolves.not.toThrow();
             });
         });
@@ -140,6 +150,7 @@ describe('PersonUc', () => {
             referrer: '',
             familienname: '',
             vorname: '',
+            sichtfreigabe: SichtfreigabeType.NEIN,
         };
 
         it('should find all persons that match with query param', async () => {
@@ -147,6 +158,7 @@ describe('PersonUc', () => {
             const secondPerson: PersonDo<true> = DoFactory.createPerson(true);
             const persons: PersonDo<true>[] = [firstPerson, secondPerson];
             personServiceMock.findAllPersons.mockResolvedValue(persons);
+            personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue([]);
             const result: PersonenDatensatz[] = await personUc.findAll(personDTO);
             expect(result).toHaveLength(2);
             expect(result.at(0)?.person.name.vorname).toEqual(firstPerson.firstName);

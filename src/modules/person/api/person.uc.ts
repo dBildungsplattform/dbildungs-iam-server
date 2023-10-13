@@ -7,11 +7,17 @@ import { PersonService } from '../domain/person.service.js';
 import { PersonDo } from '../domain/person.do.js';
 import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
 import { PersonenDatensatz } from './personendatensatz.js';
+import { PersonenkontextService } from '../domain/personenkontext.service.js';
+import { SichtfreigabeType } from './personen-query.param.js';
+import { FindePersonenkontextDto } from './finde-personenkontext.dto.js';
+import { PersonenkontextDo } from '../domain/personenkontext.do.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
 
 @Injectable()
 export class PersonUc {
     public constructor(
         private readonly personService: PersonService,
+        private readonly personenkontextService: PersonenkontextService,
         private readonly userService: KeycloakUserService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
@@ -46,6 +52,8 @@ export class PersonUc {
         const result: Result<PersonDo<true>> = await this.personService.findPersonById(id);
         if (result.ok) {
             const person: PersonenDatensatz = this.mapper.map(result.value, PersonDo, PersonenDatensatz);
+            person.personenkontexte = await this.findPersonenkontexteForPerson(id, SichtfreigabeType.NEIN);
+
             return person;
         }
         throw result.error;
@@ -58,8 +66,35 @@ export class PersonUc {
             const persons: PersonenDatensatz[] = result.map((person: PersonDo<true>) =>
                 this.mapper.map(person, PersonDo, PersonenDatensatz),
             );
+
+            for (const person of persons) {
+                person.personenkontexte = await this.findPersonenkontexteForPerson(
+                    person.person.id,
+                    personDto.sichtfreigabe,
+                );
+            }
             return persons;
         }
         return [];
+    }
+
+    private async findPersonenkontexteForPerson(
+        personId: string,
+        sichtfreigabe: SichtfreigabeType,
+    ): Promise<PersonenkontextResponse[]> {
+        const personenkontextFilter: FindePersonenkontextDto = {
+            personId: personId,
+            sichtfreigabe: sichtfreigabe,
+        };
+
+        const personenkontexte: PersonenkontextDo<true>[] = await this.personenkontextService.findAllPersonenkontexte(
+            this.mapper.map(personenkontextFilter, FindePersonenkontextDto, PersonenkontextDo),
+        );
+
+        const personenkontextResponses: PersonenkontextResponse[] = personenkontexte.map(
+            (personenkontext: PersonenkontextDo<true>) =>
+                this.mapper.map(personenkontext, PersonenkontextDo, PersonenkontextResponse),
+        );
+        return personenkontextResponses;
     }
 }

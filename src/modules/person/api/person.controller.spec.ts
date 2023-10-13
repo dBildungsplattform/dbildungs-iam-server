@@ -111,6 +111,7 @@ describe('PersonController', () => {
             };
             const persondatensatz: PersonenDatensatz = {
                 person: personResponse,
+                personenkontexte: [],
             };
             personUcMock.findPersonById.mockResolvedValue(persondatensatz);
             await expect(personController.findPersonById(params)).resolves.not.toThrow();
@@ -139,6 +140,7 @@ describe('PersonController', () => {
             referrer: options.referrer,
             familienname: options.lastName,
             vorname: options.firstName,
+            sichtfreigabe: SichtfreigabeType.NEIN,
         };
 
         it('should get all persons', async () => {
@@ -172,9 +174,11 @@ describe('PersonController', () => {
 
             const mockPersondatensatz1: PersonenDatensatz = {
                 person: person1,
+                personenkontexte: [],
             };
             const mockPersondatensatz2: PersonenDatensatz = {
                 person: person2,
+                personenkontexte: [],
             };
             const mockPersondatensatz: PersonenDatensatz[] = [mockPersondatensatz1, mockPersondatensatz2];
             personUcMock.findAll.mockResolvedValue(mockPersondatensatz);

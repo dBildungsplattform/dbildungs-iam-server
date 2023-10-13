@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { AutoMap } from '@automapper/classes';
 
 export enum SichtfreigabeType {
@@ -40,8 +40,7 @@ export class PersonenQueryParam {
     })
     public readonly vorname?: string;
 
-    // this property would be needed for person context.
-    /* @AutoMap()
+    @AutoMap()
     @IsOptional()
     @IsEnum(SichtfreigabeType)
     @Expose({ name: 'sichtfreigabe' })
@@ -52,5 +51,5 @@ export class PersonenQueryParam {
         required: false,
         nullable: true,
     })
-    public readonly sichtfreigabe: SichtfreigabeType = SichtfreigabeType.NEIN;*/
+    public readonly sichtfreigabe: SichtfreigabeType = SichtfreigabeType.NEIN;
 }

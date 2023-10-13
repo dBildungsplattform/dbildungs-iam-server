@@ -1,4 +1,5 @@
 import { AutoMap } from '@automapper/classes';
+import { SichtfreigabeType } from './personen-query.param.js';
 
 export class FindPersonDatensatzDTO {
     @AutoMap()
@@ -9,4 +10,7 @@ export class FindPersonDatensatzDTO {
 
     @AutoMap()
     public vorname?: string;
+
+    @AutoMap()
+    public sichtfreigabe!: SichtfreigabeType;
 }
