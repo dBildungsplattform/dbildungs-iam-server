@@ -7,11 +7,13 @@
     },
     "DB": {
         "CLIENT_URL": "postgres://admin:password@127.0.0.1:5432",
-        "DB_NAME": "dbildungs-iam"
+        "DB_NAME": "dbildungs-iam",
+        "USE_SSL": false
     },
     "KEYCLOAK": {
         "BASE_URL": "http://127.0.0.1:8080",
         "REALM_NAME": "master",
-        "CLIENT_ID": "admin-cli"
+        "CLIENT_ID": "admin-cli",
+        "SECRET": "topsecret"
     }
 }

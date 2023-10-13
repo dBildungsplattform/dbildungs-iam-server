@@ -4,7 +4,8 @@
     },
     "DB": {
         "CLIENT_URL": "<here goes your connection string>",
-        "DB_NAME": "<here goes your db name>"
+        "DB_NAME": "<here goes your db name>",
+        "USE_SSL": true
     },
     "KEYCLOAK": {
         "BASE_URL": "<URL to keycloak>",

@@ -8,8 +8,10 @@ import {
 } from '@nestjs/terminus';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { Unprotected } from 'nest-keycloak-connect';
 
 @Controller('health')
+@Unprotected()
 @ApiExcludeController()
 export class HealthController {
     public constructor(
