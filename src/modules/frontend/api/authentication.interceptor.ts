@@ -1,0 +1,24 @@
+import { HttpService } from '@nestjs/axios';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import { HttpArgumentsHost } from '@nestjs/common/interfaces';
+import { Observable } from 'rxjs';
+
+import { SessionData } from './session.js';
+
+@Injectable()
+export class AuthenticationInterceptor implements NestInterceptor {
+    public constructor(private httpService: HttpService) {}
+
+    public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+        const ctx: HttpArgumentsHost = context.switchToHttp();
+        const session: SessionData = ctx.getRequest<Express.Request>().session as SessionData;
+
+        const token: string | undefined = session.access_token;
+
+        if (token) {
+            this.httpService.axiosRef.defaults.headers.common.Authorization = `Bearer ${token}`;
+        }
+
+        return next.handle().pipe();
+    }
+}

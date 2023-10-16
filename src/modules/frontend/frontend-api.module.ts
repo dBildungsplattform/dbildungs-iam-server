@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { FrontendController } from './api/frontend.controller.js';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-    imports: [],
+    imports: [HttpModule],
     providers: [],
     controllers: [FrontendController],
 })

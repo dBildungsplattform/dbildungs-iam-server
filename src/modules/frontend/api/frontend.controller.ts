@@ -1,24 +1,33 @@
-import { Controller, Post } from '@nestjs/common';
+import { Controller, Post, Res, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiAcceptedResponse, ApiTags } from '@nestjs/swagger';
-import { AuthenticatedUser, Public, Resource } from 'nest-keycloak-connect';
+import { Response } from 'express';
+
+import { AuthenticatedGuard } from './authentication.guard.js';
+import { AuthenticationInterceptor } from './authentication.interceptor.js';
+import { SessionData } from './session.js';
 
 @ApiTags('frontend')
 @Controller({ path: 'frontend' })
+@UseInterceptors(AuthenticationInterceptor)
 export class FrontendController {
-    // Endpoints decorated with @Public are accessible to everyone
-    @Public()
-    @Resource('test')
     @Post('login')
     @ApiAcceptedResponse({ description: 'The person was successfully logged in.' })
-    public login(): string {
+    public login(@Session() session: SessionData): string {
+        session.user_id = '';
+
         return 'Login!';
     }
 
-    // Endpoints without @Public decorator automatically verify user
+    @UseGuards(AuthenticatedGuard)
     @Post('logout')
     @ApiAcceptedResponse({ description: 'The person was successfully logged out.' })
-    public logout(@AuthenticatedUser() user: unknown): string {
-        // Can get logged in user with @AuthenticatedUser (technically any-type, is the JSON response from keycloak)
-        return `Logout! ${JSON.stringify(user)}`;
+    public logout(@Session() session: SessionData, @Res() res: Response): void {
+        session.destroy((err: unknown) => {
+            if (err) {
+                res.status(400).send('Error while logging out');
+            } else {
+                res.status(200).send('Logged out');
+            }
+        });
     }
 }
