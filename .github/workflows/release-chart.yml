@@ -2,8 +2,8 @@ name: Push Charts to helm-charts-registry
 
 on:
   push:
-    # tags:
-      # - 'dbildungs-iam-*'
+    tags:
+      - 'dbildungs-iam-*'
 
 jobs:
   scan:
