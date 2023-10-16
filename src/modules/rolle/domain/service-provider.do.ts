@@ -22,4 +22,7 @@ export class ServiceProviderDo<WasPersisted extends boolean> implements DoBase<W
 
     @AutoMap()
     public url!: string;
+
+    @AutoMap()
+    public providedOnSchulstrukturknoten!: string;
 }

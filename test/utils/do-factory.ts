@@ -5,6 +5,8 @@ import { OrganisationsTyp } from '../../src/modules/organisation/domain/organisa
 import { UserDo } from '../../src/modules/keycloak-administration/domain/user.do.js';
 import { PersonenkontextDo } from '../../src/modules/person/domain/personenkontext.do.js';
 import { Rolle, Jahrgangsstufe, Personenstatus } from '../../src/modules/person/domain/personenkontext.enums.js';
+import {ServiceProviderZugriffDo} from "../../src/modules/rolle/domain/service-provider-zugriff.do";
+import {ServiceProviderDo} from "../../src/modules/rolle/domain/service-provider.do";
 
 export class DoFactory {
     public static createPerson<WasPersisted extends boolean>(
@@ -75,5 +77,33 @@ export class DoFactory {
         };
 
         return Object.assign(new PersonenkontextDo<WasPersisted>(), user, props);
+    }
+
+    public static createServiceProvider<WasPersisted extends boolean>(
+        withId: WasPersisted,
+        props?: Partial<ServiceProviderDo<WasPersisted>>,
+    ): ServiceProviderDo<WasPersisted> {
+        const serviceProvider: ServiceProviderDo<false> = {
+            name: faker.internet.domainWord(),
+            url: faker.internet.url(),
+            providedOnSchulstrukturknoten: faker.string.numeric(),
+            id: '1',
+            createdAt: withId ? faker.date.past() : undefined,
+            updatedAt: withId ? faker.date.recent() : undefined,
+        };
+        return Object.assign(new ServiceProviderDo<WasPersisted>(), serviceProvider, props);
+    }
+
+    public static createServiceProviderZugriff<WasPersisted extends boolean>(
+        withId: WasPersisted,
+        props?: Partial<ServiceProviderZugriffDo<WasPersisted>>,
+    ): ServiceProviderZugriffDo<WasPersisted> {
+        const serviceProviderZugriff: ServiceProviderZugriffDo<false> = {
+            serviceProvider: faker.string.numeric(),
+            id: withId ? faker.string.uuid() : undefined,
+            createdAt: withId ? faker.date.past() : undefined,
+            updatedAt: withId ? faker.date.recent() : undefined,
+        };
+        return Object.assign(new ServiceProviderZugriffDo<WasPersisted>(), serviceProviderZugriff, props);
     }
 }

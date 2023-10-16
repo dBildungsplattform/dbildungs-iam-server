@@ -10,7 +10,7 @@ import { ServiceProviderEntity } from './service-provider.entity.js';
 export class ServiceProviderRepo {
     public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
 
-    public async findAll(serviceProviderZugriff: ServiceProviderZugriffDo<true>): Promise<ServiceProviderDo<true>[]> {
+    public async findAll(serviceProviderZugriff: ServiceProviderZugriffDo<boolean>): Promise<ServiceProviderDo<true>[]> {
         const query: Record<string, unknown> = {};
         if (serviceProviderZugriff.serviceProvider) {
             query['id'] = { $ilike: serviceProviderZugriff.serviceProvider };
