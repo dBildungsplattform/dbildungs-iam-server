@@ -40,6 +40,8 @@ describe('configloader', () => {
                     BASE_URL: 'localhost:8080',
                     CLIENT_ID: 'admin-cli',
                     REALM_NAME: 'master',
+                    SCHULPORTAL_REALM_NAME: 'schulportal',
+                    SCHULPORTAL_CLIENT_ID: 'schulportal',
                 },
             };
 
@@ -82,6 +84,8 @@ describe('configloader', () => {
                     BASE_URL: '',
                     CLIENT_ID: '',
                     REALM_NAME: '',
+                    SCHULPORTAL_REALM_NAME: '',
+                    SCHULPORTAL_CLIENT_ID: '',
                 },
             };
 

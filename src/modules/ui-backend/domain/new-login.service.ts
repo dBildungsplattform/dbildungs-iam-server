@@ -9,10 +9,10 @@ export class NewLoginService {
     private kcConfig: KeycloakConfig;
 
     public constructor(private readonly kcAdminClient: KeycloakAdminClient, private readonly config: ConfigService) {
-        this.kcConfig = this.config.getOrThrow<KeycloakConfig>('SCHULPORTAL');
+        this.kcConfig = this.config.getOrThrow<KeycloakConfig>('KEYCLOAK');
         this.kcAdminClient.setConfig({
             baseUrl: this.kcConfig.BASE_URL,
-            realmName: this.kcConfig.REALM_NAME,
+            realmName: this.kcConfig.SCHULPORTAL_REALM_NAME,
         });
     }
 
@@ -20,7 +20,7 @@ export class NewLoginService {
         try {
             const credentials: Credentials = {
                 grantType: 'password',
-                clientId: this.kcConfig.CLIENT_ID,
+                clientId: this.kcConfig.SCHULPORTAL_CLIENT_ID,
                 username: username,
                 password: password,
             };

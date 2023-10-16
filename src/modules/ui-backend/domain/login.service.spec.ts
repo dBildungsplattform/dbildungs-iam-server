@@ -4,6 +4,7 @@ import { errors, Issuer } from 'openid-client';
 import { createMock } from '@golevelup/ts-jest';
 import { KeycloakClientError, UserAuthenticationFailedError } from '../../../shared/error/index.js';
 import OPError = errors.OPError;
+import { ConfigTestModule } from '../../../../test/utils/index.js';
 
 const issuerDiscoverMock: jest.Mock = jest.fn();
 Issuer.discover = issuerDiscoverMock;
@@ -14,6 +15,7 @@ describe('LoginService', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [ConfigTestModule],
             providers: [LoginService],
         }).compile();
         loginService = module.get(LoginService);
