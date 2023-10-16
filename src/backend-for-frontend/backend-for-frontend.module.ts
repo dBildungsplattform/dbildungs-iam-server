@@ -5,12 +5,11 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
-import { AuthGuard, KeycloakConnectModule, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
 
 import { FrontendApiModule } from '../modules/frontend/frontend-api.module.js';
-import { DbConfig, KeycloakConfig, ServerConfig, loadConfigFiles, loadEnvConfig } from '../shared/config/index.js';
+import { DbConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../shared/config/index.js';
 import { mappingErrorHandler } from '../shared/error/mapping.error.js';
+import { HealthModule } from '../modules/health/health.module.js';
 
 @Module({
     imports: [
@@ -32,38 +31,19 @@ import { mappingErrorHandler } from '../shared/error/mapping.error.js';
                     dbName: dbConfig.DB_NAME,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
+                    // Needed for HealthCheck
+                    type: 'postgresql',
+                    driverOptions: {
+                        connection: {
+                            ssl: dbConfig.USE_SSL,
+                        },
+                    },
                 });
             },
             inject: [ConfigService],
         }),
-        KeycloakConnectModule.registerAsync({
-            useFactory: (config: ConfigService<ServerConfig, true>) => {
-                const keycloakConfig: KeycloakConfig = config.getOrThrow<KeycloakConfig>('KEYCLOAK');
-
-                return {
-                    authServerUrl: keycloakConfig.BASE_URL,
-                    realm: keycloakConfig.REALM_NAME,
-                    clientId: keycloakConfig.CLIENT_ID,
-                    secret: keycloakConfig.SECRET,
-                };
-            },
-            inject: [ConfigService],
-        }),
         FrontendApiModule,
-    ],
-    providers: [
-        {
-            provide: APP_GUARD,
-            useClass: AuthGuard,
-        },
-        {
-            provide: APP_GUARD,
-            useClass: RoleGuard,
-        },
-        {
-            provide: APP_GUARD,
-            useClass: ResourceGuard,
-        },
+        HealthModule,
     ],
 })
-export class FrontendModule {}
+export class BackendForFrontendModule {}

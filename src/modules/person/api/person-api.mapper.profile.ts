@@ -19,6 +19,13 @@ import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
 import { PersonenQueryParams, SichtfreigabeType } from './personen-query.param.js';
 import { PersonenDatensatz } from './personendatensatz.js';
+import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
+import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
+import { PersonenkontextDo } from '../domain/personenkontext.do.js';
+import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
+import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-organisation.dto.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
     convert(source: PersonGender): Gender {
@@ -267,6 +274,35 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<false>) => dest.isInformationBlocked, ignore()),
             );
             createMap(mapper, CreatePersonDto, UserDo);
+
+            createMap(
+                mapper,
+                CreatePersonenkontextBodyParams,
+                CreatePersonenkontextDto,
+                forMember((dest: CreatePersonenkontextDto) => dest.personId, ignore()),
+            );
+            createMap(
+                mapper,
+                CreatePersonenkontextDto,
+                PersonenkontextDo<false>,
+                forMember((dest: PersonenkontextDo<false>) => dest.mandant, ignore()),
+                forMember((dest: PersonenkontextDo<false>) => dest.organisation, ignore()),
+                forMember((dest: PersonenkontextDo<false>) => dest.loeschungZeitpunkt, ignore()),
+                forMember((dest: PersonenkontextDo<false>) => dest.revision, ignore()),
+            );
+
+            createMap(
+                mapper,
+                PersonenkontextDo,
+                CreatedPersonenkontextDto,
+
+                forMember(
+                    (dest: CreatedPersonenkontextDto) => dest.id,
+                    mapFrom((src: PersonenkontextDo<true>) => src.id),
+                ),
+            );
+            createMap(mapper, OrganisationDo, CreatedPersonenkontextOrganisationDto);
+            createMap(mapper, CreatedPersonenkontextDto, PersonenkontextResponse);
         };
     }
 }
