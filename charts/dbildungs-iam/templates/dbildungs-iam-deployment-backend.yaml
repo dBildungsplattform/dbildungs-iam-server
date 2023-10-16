@@ -19,8 +19,6 @@ spec:
         - name: dbildungs-iam-backend
           image: {{.Values.dbildungsIamContainer}}
           imagePullPolicy: Always
-          securityContext:
-            allowPrivilegeEscalation: false
           ports:
              - name: web
                containerPort: 8080
