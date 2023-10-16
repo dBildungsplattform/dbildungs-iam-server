@@ -1,4 +1,4 @@
-dbildungsIamContainer: "ghcr.io/dbildungsplattform/dbildungs-iam-server/feature/helm-integration:latest"
+dbildungsIamContainer: "ghcr.io/dbildungsplattform/dbildungs-iam-server/feature/bff_to_helm:latest"
 
 dbildungsIamExternalPort: 80
 dbildungsIamCpuMax: 2
@@ -21,3 +21,8 @@ secrets:
   name: spsh-config
 # If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
 enableServiceMonitor: false
+
+# Both of these are disabled as to make them intentional
+keycloakEnabled: false
+dbildungs-iam-keycloak-dev:
+  keycloakPublic: false

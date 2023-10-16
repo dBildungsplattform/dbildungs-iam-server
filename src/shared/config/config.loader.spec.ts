@@ -1,6 +1,6 @@
 import 'reflect-metadata'; // some decorators use reflect-metadata in the background
 import fs from 'fs';
-import { EnvConfig, JsonConfig, DeployStage, loadConfigFiles, loadEnvConfig } from './index.js';
+import { DeployStage, EnvConfig, JsonConfig, loadConfigFiles, loadEnvConfig } from './index.js';
 import { DeepPartial } from '../../../test/utils/index.js';
 
 describe('configloader', () => {
@@ -35,6 +35,7 @@ describe('configloader', () => {
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
                     DB_NAME: 'test-db',
+                    USE_SSL: false,
                 },
                 KEYCLOAK: {
                     BASE_URL: 'localhost:8080',

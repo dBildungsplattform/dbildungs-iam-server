@@ -12,6 +12,7 @@ import { KeyCloakExceptionFilter } from './keycloak-exception-filter.js';
 import { UserAuthenticationFailedExceptionFilter } from './user-authentication-failed-exception-filter.js';
 import { NewLoginService } from '../domain/new-login.service.js';
 import { DomainError } from '../../../shared/error/index.js';
+import { Public } from 'nest-keycloak-connect';
 
 @ApiTags('api/login')
 @Controller({ path: 'login' })
@@ -28,6 +29,7 @@ export class LoginController {
     })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while retrieving token.' })
     @ApiServiceUnavailableResponse({ description: 'KEYCLOAK_CLIENT_ERROR: KeyCloak service did not respond.' })
+    @Public()
     public async loginUser(@Body() params: UserParams): Promise<TokenSet> {
         return this.loginService.getTokenForUser(params.username, params.password);
     }
@@ -41,6 +43,7 @@ export class LoginController {
         description: 'USER_AUTHENTICATION_FAILED_ERROR: User could not be authenticated successfully.',
     })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while retrieving token.' })
+    @Public()
     public async loginUserResult(@Body() params: UserParams): Promise<Result<string, DomainError>> {
         return this.someService.auth(params.username, params.password);
     }
