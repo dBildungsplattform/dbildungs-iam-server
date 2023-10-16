@@ -1,4 +1,4 @@
-import { Body, Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from "@nestjs/common";
 import { RolleService } from '../domain/rolle.service.js';
 import { ApiTags } from '@nestjs/swagger';
 import { ServiceProviderDo } from '../domain/service-provider.do.js';
@@ -10,9 +10,7 @@ export class ProviderController {
     public constructor(private readonly rolleService: RolleService) {}
 
     @Get()
-    public async getServiceProvidersByPersonId(
-        @Body() params: ServiceProviderByPersonIdBodyParams,
-    ): Promise<ServiceProviderDo<true>[]> {
+    public async getServiceProvidersByPersonId(@Query() params: ServiceProviderByPersonIdBodyParams): Promise<ServiceProviderDo<true>[]> {
         return this.rolleService.getAvailableServiceProviders(params.personId);
     }
 }
