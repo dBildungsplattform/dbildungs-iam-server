@@ -6,7 +6,12 @@ on:
       # - 'dbildungs-iam-*'
 
 jobs:
+  scan:
+    uses: ./.github/workflows/reusable_job_kics.yml
+
   release:
+    if: ${{ !failure() }}
+    needs: [scan]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
