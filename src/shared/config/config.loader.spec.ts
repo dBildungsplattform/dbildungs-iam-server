@@ -39,14 +39,16 @@ describe('configloader', () => {
                 },
                 KEYCLOAK: {
                     BASE_URL: 'localhost:8080',
-                    CLIENT_ID: 'admin-cli',
-                    REALM_NAME: 'master',
+                    ADMIN_CLIENT_ID: 'admin-cli',
+                    ADMIN_REALM_NAME: 'master',
+                    REALM_NAME: 'schulportal',
+                    CLIENT_ID: 'schulportal',
                 },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
                 DB: { SECRET: 'SuperSecretSecret' },
-                KEYCLOAK: { SECRET: 'ClientSecret' },
+                KEYCLOAK: { ADMIN_SECRET: 'ClientSecret' },
                 FRONTEND: { SESSION_SECRET: 'SessionSecret' },
             };
 
@@ -82,8 +84,10 @@ describe('configloader', () => {
                 },
                 KEYCLOAK: {
                     BASE_URL: '',
-                    CLIENT_ID: '',
+                    ADMIN_CLIENT_ID: '',
+                    ADMIN_REALM_NAME: '',
                     REALM_NAME: '',
+                    CLIENT_ID: '',
                 },
             };
 

@@ -13,8 +13,9 @@
     },
     "KEYCLOAK": {
         "BASE_URL": "http://127.0.0.1:8080",
-        "REALM_NAME": "master",
-        "CLIENT_ID": "admin-cli",
-        "SECRET": "topsecret"
+        "ADMIN_REALM_NAME": "master",
+        "ADMIN_CLIENT_ID": "admin-cli",
+        "REALM_NAME": "schulportal",
+        "CLIENT_ID": "schulportal"
     }
 }
