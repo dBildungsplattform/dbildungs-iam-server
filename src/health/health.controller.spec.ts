@@ -20,12 +20,12 @@ describe('HealthController', () => {
     let entityManager: SqlEntityManager;
     let httpHealthIndicator: DeepMocked<HttpHealthIndicator>;
     const keycloakConfig: KeycloakConfig = {
-        CLIENT_ID: '',
-        SECRET: '',
-        REALM_NAME: '',
+        ADMIN_CLIENT_ID: '',
+        ADMIN_SECRET: '',
+        ADMIN_REALM_NAME: '',
         BASE_URL: 'http://keycloak.test',
-        SCHULPORTAL_REALM_NAME: '',
-        SCHULPORTAL_CLIENT_ID: '',
+        REALM_NAME: '',
+        CLIENT_ID: '',
     };
     let configService: DeepMocked<ConfigService>;
 

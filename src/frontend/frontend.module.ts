@@ -42,9 +42,9 @@ import { mappingErrorHandler } from '../shared/error/mapping.error.js';
 
                 return {
                     authServerUrl: keycloakConfig.BASE_URL,
-                    realm: keycloakConfig.REALM_NAME,
-                    clientId: keycloakConfig.CLIENT_ID,
-                    secret: keycloakConfig.SECRET,
+                    realm: keycloakConfig.ADMIN_REALM_NAME,
+                    clientId: keycloakConfig.ADMIN_CLIENT_ID,
+                    secret: keycloakConfig.ADMIN_SECRET,
                 };
             },
             inject: [ConfigService],

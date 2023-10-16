@@ -17,10 +17,10 @@ export class LoginService {
     public async getTokenForUser(username: string, password: string): Promise<TokenSet> {
         try {
             const keycloakIssuer: Issuer = await Issuer.discover(
-                this.kcConfig.BASE_URL + '/realms/' + this.kcConfig.SCHULPORTAL_REALM_NAME,
+                this.kcConfig.BASE_URL + '/realms/' + this.kcConfig.REALM_NAME,
             );
             const client: Client = new keycloakIssuer.Client({
-                client_id: this.kcConfig.SCHULPORTAL_CLIENT_ID,
+                client_id: this.kcConfig.CLIENT_ID,
                 token_endpoint_auth_method: 'none',
             });
             return await client.grant({

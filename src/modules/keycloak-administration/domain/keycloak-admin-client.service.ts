@@ -18,7 +18,7 @@ export class KeycloakAdministrationService {
 
         this.kcAdminClient.setConfig({
             baseUrl: this.kcConfig.BASE_URL,
-            realmName: this.kcConfig.REALM_NAME,
+            realmName: this.kcConfig.ADMIN_REALM_NAME,
         });
     }
 
@@ -45,8 +45,8 @@ export class KeycloakAdministrationService {
             try {
                 const credentials: Credentials = {
                     grantType: 'client_credentials',
-                    clientId: this.kcConfig.CLIENT_ID,
-                    clientSecret: this.kcConfig.SECRET,
+                    clientId: this.kcConfig.ADMIN_CLIENT_ID,
+                    clientSecret: this.kcConfig.ADMIN_SECRET,
                 };
 
                 await this.kcAdminClient.auth(credentials);

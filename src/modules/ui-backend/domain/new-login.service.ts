@@ -12,7 +12,7 @@ export class NewLoginService {
         this.kcConfig = this.config.getOrThrow<KeycloakConfig>('KEYCLOAK');
         this.kcAdminClient.setConfig({
             baseUrl: this.kcConfig.BASE_URL,
-            realmName: this.kcConfig.SCHULPORTAL_REALM_NAME,
+            realmName: this.kcConfig.REALM_NAME,
         });
     }
 
@@ -20,7 +20,7 @@ export class NewLoginService {
         try {
             const credentials: Credentials = {
                 grantType: 'password',
-                clientId: this.kcConfig.SCHULPORTAL_CLIENT_ID,
+                clientId: this.kcConfig.CLIENT_ID,
                 username: username,
                 password: password,
             };
