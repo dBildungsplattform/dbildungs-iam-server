@@ -33,10 +33,6 @@ export class PersonenkontextService {
     ): Promise<Result<PersonenkontextDo<true>[], DomainError>> {
         const personenkontexte: PersonenkontextDo<true>[] = await this.personenkontextRepo.findAll(personenkontextDo);
 
-        if (personenkontexte.length === 0) {
-            return { ok: false, error: new EntityNotFoundError('Personenkontext') };
-        }
-
         return { ok: true, value: personenkontexte };
     }
 }

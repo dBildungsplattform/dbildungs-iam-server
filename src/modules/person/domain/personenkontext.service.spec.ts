@@ -134,15 +134,15 @@ describe('PersonenkontextService', () => {
         });
 
         describe('When no personenkontexte are found', () => {
-            it('should return a result with domain error', async () => {
+            it('should return a result with an empty array', async () => {
                 const personenkontext: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false);
                 personenkontextRepoMock.findAll.mockResolvedValue([]);
                 mapperMock.map.mockReturnValue(personenkontext as unknown as Dictionary<unknown>);
                 const result: Result<PersonenkontextDo<true>[], DomainError> =
                     await personenkontextService.findAllPersonenkontexte(personenkontext);
-                expect(result).toEqual<Result<PersonenkontextDo<true>, DomainError>>({
-                    ok: false,
-                    error: new EntityNotFoundError('Personenkontext'),
+                expect(result).toEqual<Result<PersonenkontextDo<true>[], DomainError>>({
+                    ok: true,
+                    value: [],
                 });
             });
         });
