@@ -33,7 +33,7 @@ import { DbInitConsole } from './db-init.console.js';
                     entitiesTs: ['./src/**/*.entity.ts'],
                     driverOptions: {
                         connection: {
-                            ssl: false,
+                            ssl: true,
                         },
                     },
                 });
