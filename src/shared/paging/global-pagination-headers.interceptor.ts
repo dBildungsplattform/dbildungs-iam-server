@@ -21,8 +21,8 @@ export class GlobalPaginationHeadersInterceptor implements NestInterceptor {
     }
 
     private static setPaginationHeaders<T>(response: Response, payload: PagedResponse<T>): void {
-        response.setHeader('Pagination-Total', payload.total);
-        response.setHeader('Pagination-Offset', payload.offset);
-        response.setHeader('Pagination-Limit', payload.limit);
+        response.setHeader('pagination-total', payload.total);
+        response.setHeader('pagination-offset', payload.offset);
+        response.setHeader('pagination-limit', payload.limit);
     }
 }
