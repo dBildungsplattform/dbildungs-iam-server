@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus, Query } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -18,8 +18,7 @@ import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonenQueryParam } from './personen-query.param.js';
 import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
 import { PersonenDatensatz } from './personendatensatz.js';
-import { Paged, setPaginationHeaders } from '../../../shared/paging/index.js';
-import { Response } from 'express';
+import { Paged, PagedResponse } from '../../../shared/paging/index.js';
 
 @ApiTags('person')
 @Controller({ path: 'person' })
@@ -58,19 +57,15 @@ export class PersonController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
-    public async findPersons(
-        @Query() queryParams: PersonenQueryParam,
-        @Res() res: Response,
-    ): Promise<PersonenDatensatz[]> {
-        const persondatensatzDTO: FindPersonDatensatzDTO = this.mapper.map(
+    public async findPersons(@Query() queryParams: PersonenQueryParam): Promise<PagedResponse<PersonenDatensatz>> {
+        const personDatensatzDTO: FindPersonDatensatzDTO = this.mapper.map(
             queryParams,
             PersonenQueryParam,
             FindPersonDatensatzDTO,
         );
-        const persons: Paged<PersonenDatensatz> = await this.uc.findAll(persondatensatzDTO);
+        const persons: Paged<PersonenDatensatz> = await this.uc.findAll(personDatensatzDTO);
+        const response: PagedResponse<PersonenDatensatz> = new PagedResponse(persons);
 
-        setPaginationHeaders(res, persons);
-
-        return persons.items;
+        return response;
     }
 }
