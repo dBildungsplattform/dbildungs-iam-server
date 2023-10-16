@@ -17,7 +17,7 @@ import { Gender, TrustLevel } from '../domain/person.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
-import { PersonenQueryParam, SichtfreigabeType } from './personen-query.param.js';
+import { PersonenQueryParams, SichtfreigabeType } from './personen-query.param.js';
 import { PersonenDatensatz } from './personendatensatz.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
@@ -215,19 +215,19 @@ export class PersonApiMapperProfile extends AutomapperProfile {
             );
             createMap(
                 mapper,
-                PersonenQueryParam,
+                PersonenQueryParams,
                 FindPersonDatensatzDTO,
                 forMember(
                     (dest: FindPersonDatensatzDTO) => dest.vorname,
-                    mapFrom((src: PersonenQueryParam) => src.vorname),
+                    mapFrom((src: PersonenQueryParams) => src.vorname),
                 ),
                 forMember(
                     (dest: FindPersonDatensatzDTO) => dest.familienname,
-                    mapFrom((src: PersonenQueryParam) => src.familienname),
+                    mapFrom((src: PersonenQueryParams) => src.familienname),
                 ),
                 forMember(
                     (dest: FindPersonDatensatzDTO) => dest.referrer,
-                    mapFrom((src: PersonenQueryParam) => src.referrer),
+                    mapFrom((src: PersonenQueryParams) => src.referrer),
                 ),
             );
             createMap(

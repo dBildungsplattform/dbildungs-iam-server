@@ -54,7 +54,11 @@ export class PersonUc {
 
     public async findAll(personDto: FindPersonDatensatzDto): Promise<Paged<PersonenDatensatz>> {
         const personDo: PersonDo<false> = this.mapper.map(personDto, FindPersonDatensatzDto, PersonDo);
-        const result: Paged<PersonDo<true>> = await this.personService.findAllPersons(undefined, undefined, personDo);
+        const result: Paged<PersonDo<true>> = await this.personService.findAllPersons(
+            personDto.offset,
+            personDto.limit,
+            personDo,
+        );
 
         if (result.total === 0) {
             return {

@@ -9,7 +9,7 @@ import { PersonUc } from './person.uc.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonResponse } from './person.response.js';
 import { HttpException } from '@nestjs/common';
-import { PersonenQueryParam } from './personen-query.param.js';
+import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { TrustLevel } from '../domain/person.enums.js';
 import { PersonenDatensatz } from './personendatensatz.js';
@@ -123,7 +123,7 @@ describe('PersonController', () => {
             lastName: faker.person.lastName(),
             firstName: faker.person.firstName(),
         };
-        const queryParams: PersonenQueryParam = {
+        const queryParams: PersonenQueryParams = {
             referrer: options.referrer,
             familienname: options.lastName,
             vorname: options.firstName,

@@ -15,7 +15,7 @@ import { PersonUc } from '../api/person.uc.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
-import { PersonenQueryParam } from './personen-query.param.js';
+import { PersonenQueryParams } from './personen-query.param.js';
 import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
 import { PersonenDatensatz } from './personendatensatz.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
@@ -57,10 +57,10 @@ export class PersonController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
-    public async findPersons(@Query() queryParams: PersonenQueryParam): Promise<PagedResponse<PersonenDatensatz>> {
+    public async findPersons(@Query() queryParams: PersonenQueryParams): Promise<PagedResponse<PersonenDatensatz>> {
         const personDatensatzDTO: FindPersonDatensatzDTO = this.mapper.map(
             queryParams,
-            PersonenQueryParam,
+            PersonenQueryParams,
             FindPersonDatensatzDTO,
         );
         const persons: Paged<PersonenDatensatz> = await this.uc.findAll(personDatensatzDTO);
