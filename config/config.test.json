@@ -3,7 +3,8 @@
         "PORT": 8080
     },
     "FRONTEND": {
-        "PORT": 8081
+        "PORT": 8081,
+        "BACKEND_ADDRESS": "http://127.0.0.1:8080"
     },
     "DB": {
         "CLIENT_URL": "postgres://127.0.0.1:5432",

@@ -31,6 +31,7 @@ describe('configloader', () => {
                 },
                 FRONTEND: {
                     PORT: 8081,
+                    BACKEND_ADDRESS: 'http://localhost:8080',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',

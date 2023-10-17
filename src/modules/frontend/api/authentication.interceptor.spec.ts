@@ -1,11 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { AuthenticationInterceptor } from './authentication.interceptor.js';
-import { HttpService } from '@nestjs/axios';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { HttpService } from '@nestjs/axios';
 import { CallHandler, ExecutionContext } from '@nestjs/common';
-import { AxiosInstance } from 'axios';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
-import { SessionData } from './session.js';
+import { Test, TestingModule } from '@nestjs/testing';
+import { AxiosInstance } from 'axios';
+import { AuthenticationInterceptor } from './authentication.interceptor.js';
+import { SessionData } from './frontend.controller.js';
 
 describe('AuthenticatedGuard', () => {
     let module: TestingModule;

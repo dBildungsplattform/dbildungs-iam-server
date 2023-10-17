@@ -9,4 +9,8 @@ export class FrontendConfig {
     @IsString()
     @IsNotEmpty()
     public readonly SESSION_SECRET!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    public readonly BACKEND_ADDRESS!: string;
 }

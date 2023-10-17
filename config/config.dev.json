@@ -4,7 +4,8 @@
     },
     "FRONTEND": {
         "PORT": 9091,
-        "SESSION_SECRET": "DevelopmentSecret"
+        "SESSION_SECRET": "DevelopmentSecret",
+        "BACKEND_ADDRESS": "http://127.0.0.1:9090"
     },
     "DB": {
         "CLIENT_URL": "postgres://admin:password@127.0.0.1:5432",

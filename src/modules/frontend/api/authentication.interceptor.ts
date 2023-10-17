@@ -3,7 +3,7 @@ import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nes
 import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import { Observable } from 'rxjs';
 
-import { SessionData } from './session.js';
+import { SessionData } from './frontend.controller.js';
 
 @Injectable()
 export class AuthenticationInterceptor implements NestInterceptor {
