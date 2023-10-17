@@ -63,8 +63,8 @@ jobs:
         with:
           images: ghcr.io/${{ env.LOWERCASE_REPO }}
           tags: |
-            type=ref,event=branch,enable=false,priority=600
-            type=sha,enable=true,priority=600,prefix=
+            type=ref,enable=true,event=branch
+          # type=sha,enable=true,priority=600,prefix=
 
       - name: Show github context
         run: echo "$GITHUB_CONTEXT"
