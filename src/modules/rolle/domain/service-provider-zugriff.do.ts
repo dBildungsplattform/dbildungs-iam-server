@@ -1,21 +1,24 @@
 import { AutoMap } from '@automapper/classes';
-import { DoBase } from '../../../shared/types/index.js';
+import { RolleRechtDo } from './rolle-recht.do.js';
 
-export class ServiceProviderZugriffDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
+//export class ServiceProviderZugriffDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
+export class ServiceProviderZugriffDo<WasPersisted extends boolean> extends RolleRechtDo<WasPersisted> {
     /**
      * @deprecated This constructor is for automapper only.
      */
     // eslint-disable-next-line @typescript-eslint/no-useless-constructor, @typescript-eslint/no-empty-function
-    public constructor() {}
+    public constructor() {
+        super();
+    }
 
-    @AutoMap()
+    /*    @AutoMap()
     public id!: Persisted<string, WasPersisted>;
 
     @AutoMap()
     public createdAt!: Persisted<Date, WasPersisted>;
 
     @AutoMap()
-    public updatedAt!: Persisted<Date, WasPersisted>;
+    public updatedAt!: Persisted<Date, WasPersisted>;*/
 
     @AutoMap()
     public serviceProvider!: string;

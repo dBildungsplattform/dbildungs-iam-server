@@ -26,10 +26,10 @@ export class RolleBerechtigungsZuweisungDo<WasPersisted extends boolean> impleme
     public validForAdministrativeParents!: boolean;
 
     @AutoMap()
-    public rolePermission!: RolleRechtDo<true>;
+    public rolleRecht!: RolleRechtDo<boolean>;
 
     @AutoMap()
-    public role!: RolleDo<true>;
+    public rolle!: RolleDo<boolean>;
 
     /**
      * Points to Schulstrukturknoten

@@ -1,10 +1,10 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import { ProviderController } from "./provider.controller";
-import {createMock, DeepMocked} from "@golevelup/ts-jest";
-import {RolleService} from "../domain/rolle.service";
-import {ServiceProviderByPersonIdBodyParams} from "./service-provider-by-person-id.body.params";
-import {faker} from "@faker-js/faker";
-import {ServiceProviderDo} from "../domain/service-provider.do";
+import { Test, TestingModule } from '@nestjs/testing';
+import { ProviderController } from './provider.controller.js';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { RolleService } from '../domain/rolle.service.js';
+import { ServiceProviderByPersonIdBodyParams } from './service-provider-by-person-id.body.params.js';
+import { faker } from '@faker-js/faker';
+import { ServiceProviderDo } from '../domain/service-provider.do.js';
 
 describe('ProviderController', () => {
     let module: TestingModule;

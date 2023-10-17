@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { createMap, forMember, mapFrom, Mapper, MappingProfile } from '@automapper/core';
 import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
-import { ServiceProviderZugriffEntity } from './service-provider-zugriff.entity.js';
+import { ServiceProviderZugriffEntity } from '../entity/service-provider-zugriff.entity.js';
 
 @Injectable()
 export class ServiceProviderZugriffMapperProfile extends AutomapperProfile {

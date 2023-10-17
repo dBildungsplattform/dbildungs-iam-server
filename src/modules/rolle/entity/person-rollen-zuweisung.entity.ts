@@ -14,12 +14,12 @@ export class PersonRollenZuweisungEntity extends TimestampedEntity<PersonRollenZ
 
     @AutoMap()
     @ManyToOne()
-    public role!: RolleEntity;
+    public rolle!: RolleEntity;
 
     /**
      * Points to Schulstrukturknoten
      */
     @AutoMap()
     @Property({ nullable: false })
-    public schoolStructureNode!: string;
+    public schulstrukturknoten!: string;
 }

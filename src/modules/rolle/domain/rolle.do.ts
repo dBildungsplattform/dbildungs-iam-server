@@ -1,5 +1,4 @@
 import { AutoMap } from '@automapper/classes';
-import { Property } from '@mikro-orm/core';
 import { DoBase } from '../../../shared/types/index.js';
 
 export class RolleDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
@@ -19,6 +18,5 @@ export class RolleDo<WasPersisted extends boolean> implements DoBase<WasPersiste
     public updatedAt!: Persisted<Date, WasPersisted>;
 
     @AutoMap()
-    @Property()
     public administeredBySchulstrukturknoten!: string;
 }

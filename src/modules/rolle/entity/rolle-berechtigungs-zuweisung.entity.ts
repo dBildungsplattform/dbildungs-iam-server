@@ -16,11 +16,11 @@ export class RolleBerechtigungsZuweisungEntity extends TimestampedEntity<RolleBe
 
     @AutoMap()
     @ManyToOne()
-    public rolePermission!: RolleRechtEntity;
+    public rolleRecht!: RolleRechtEntity;
 
     @AutoMap()
     @ManyToOne()
-    public role!: RolleEntity;
+    public rolle!: RolleEntity;
 
     /**
      * Points to Schulstrukturknoten

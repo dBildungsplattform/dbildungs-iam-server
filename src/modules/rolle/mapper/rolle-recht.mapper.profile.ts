@@ -1,25 +1,25 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { createMap, forMember, mapFrom, Mapper, MappingProfile } from '@automapper/core';
-import { RolleDo } from '../domain/rolle.do.js';
-import { RolleEntity } from './rolle.entity.js';
+import { RolleRechtDo } from '../domain/rolle-recht.do.js';
+import { RolleRechtEntity } from '../../../persistence/rolle-recht.entity.js';
 
 @Injectable()
-export class RolleMapperProfile extends AutomapperProfile {
+export class RolleRechtMapperProfile extends AutomapperProfile {
     public constructor(@Inject(getMapperToken()) mapper: Mapper) {
         super(mapper);
     }
 
     public override get profile(): MappingProfile {
         return (mapper: Mapper) => {
-            createMap(mapper, RolleDo, RolleEntity);
+            createMap(mapper, RolleRechtDo, RolleRechtEntity);
             createMap(
                 mapper,
-                RolleEntity,
-                RolleDo,
+                RolleRechtEntity,
+                RolleRechtDo,
                 forMember(
-                    (dest: RolleDo<true>) => dest.id,
-                    mapFrom((src: RolleEntity) => src.id),
+                    (dest: RolleRechtDo<boolean>) => dest.id,
+                    mapFrom((src: RolleRechtEntity) => src.id),
                 ),
             );
         };
