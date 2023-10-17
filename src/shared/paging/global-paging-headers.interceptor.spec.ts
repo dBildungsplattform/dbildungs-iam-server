@@ -1,13 +1,14 @@
 import { Observable, from, lastValueFrom } from 'rxjs';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { CallHandler, ExecutionContext } from '@nestjs/common';
-import { GlobalPaginationHeadersInterceptor } from './global-pagination-headers.interceptor.js';
+import { GlobalPagingHeadersInterceptor } from './global-paging-headers.interceptor.js';
 import { Response } from 'express';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { PagedResponse } from './paged.response.js';
+import { PagingHeaders } from './paging.enums.js';
 
-describe('GlobalPaginationHeadersInterceptor', () => {
-    const sut: GlobalPaginationHeadersInterceptor = new GlobalPaginationHeadersInterceptor();
+describe('GlobalPagingHeadersInterceptor', () => {
+    const sut: GlobalPagingHeadersInterceptor = new GlobalPagingHeadersInterceptor();
     let responseMock: DeepMocked<Response>;
     let contextMock: DeepMocked<ExecutionContext>;
     let callHandlerMock: DeepMocked<CallHandler>;
@@ -34,9 +35,9 @@ describe('GlobalPaginationHeadersInterceptor', () => {
                 await lastValueFrom(observable);
 
                 expect(responseMock.setHeader).toBeCalledTimes(3);
-                expect(responseMock.setHeader).toBeCalledWith('pagination-offset', 0);
-                expect(responseMock.setHeader).toBeCalledWith('pagination-limit', 0);
-                expect(responseMock.setHeader).toBeCalledWith('pagination-total', 0);
+                expect(responseMock.setHeader).toBeCalledWith(PagingHeaders.OFFSET, 0);
+                expect(responseMock.setHeader).toBeCalledWith(PagingHeaders.LIMIT, 0);
+                expect(responseMock.setHeader).toBeCalledWith(PagingHeaders.TOTAL, 0);
             });
 
             it('should change response type to list', async () => {

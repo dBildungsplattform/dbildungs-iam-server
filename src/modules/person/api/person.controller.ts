@@ -18,7 +18,7 @@ import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
 import { PersonenDatensatz } from './personendatensatz.js';
-import { Paged, PagedResponse } from '../../../shared/paging/index.js';
+import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
@@ -86,7 +86,11 @@ export class PersonController {
     }
 
     @Get()
-    @ApiOkResponse({ description: 'The persons were successfully returned.', type: Array<PersonenDatensatz> })
+    @ApiOkResponse({
+        description: 'The persons were successfully returned.',
+        type: [PersonenDatensatz],
+        headers: PagingHeadersObject,
+    })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })

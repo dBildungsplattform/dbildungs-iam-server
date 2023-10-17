@@ -6,7 +6,7 @@ import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { HostConfig, ServerConfig } from '../shared/config/index.js';
 import { GlobalValidationPipe } from '../shared/validation/index.js';
 import { ServerModule } from './server.module.js';
-import { GlobalPaginationHeadersInterceptor } from '../shared/paging/index.js';
+import { GlobalPagingHeadersInterceptor } from '../shared/paging/index.js';
 
 async function bootstrap(): Promise<void> {
     const app: INestApplication = await NestFactory.create(ServerModule);
@@ -18,7 +18,7 @@ async function bootstrap(): Promise<void> {
         .setVersion('1.0')
         .build();
 
-    app.useGlobalInterceptors(new GlobalPaginationHeadersInterceptor());
+    app.useGlobalInterceptors(new GlobalPagingHeadersInterceptor());
     app.useGlobalPipes(new GlobalValidationPipe());
     app.setGlobalPrefix('api', {
         exclude: ['health'],
