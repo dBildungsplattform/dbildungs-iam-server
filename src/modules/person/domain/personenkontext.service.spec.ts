@@ -109,4 +109,42 @@ describe('PersonenkontextService', () => {
             });
         });
     });
+
+    describe('findAllPersonenkontexte', () => {
+        describe('When personenkontexte are found', () => {
+            it('should get all personenkontexte that match', async () => {
+                const personenkontext1: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false);
+                const personenkontext2: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false);
+                const personenkontexte: PersonenkontextDo<true>[] = [
+                    personenkontext1 as unknown as PersonenkontextDo<true>,
+                    personenkontext2 as unknown as PersonenkontextDo<true>,
+                ];
+                personenkontextRepoMock.findAll.mockResolvedValue(personenkontexte);
+                mapperMock.map.mockReturnValue(personenkontexte as unknown as Dictionary<unknown>);
+                const personenkontextDoWithQueryParam: PersonenkontextDo<false> =
+                    DoFactory.createPersonenkontext(false);
+
+                const result: Result<PersonenkontextDo<true>[], DomainError> =
+                    await personenkontextService.findAllPersonenkontexte(personenkontextDoWithQueryParam);
+                expect(result).toEqual<Result<PersonenkontextDo<true>[], DomainError>>({
+                    ok: true,
+                    value: personenkontexte,
+                });
+            });
+        });
+
+        describe('When no personenkontexte are found', () => {
+            it('should return a result with an empty array', async () => {
+                const personenkontext: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false);
+                personenkontextRepoMock.findAll.mockResolvedValue([]);
+                mapperMock.map.mockReturnValue(personenkontext as unknown as Dictionary<unknown>);
+                const result: Result<PersonenkontextDo<true>[], DomainError> =
+                    await personenkontextService.findAllPersonenkontexte(personenkontext);
+                expect(result).toEqual<Result<PersonenkontextDo<true>[], DomainError>>({
+                    ok: true,
+                    value: [],
+                });
+            });
+        });
+    });
 });

@@ -22,6 +22,8 @@ import { Jahrgangsstufe, Personenstatus, Rolle } from '../domain/personenkontext
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
+import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
+import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 
 describe('PersonApiMapperProfile', () => {
     let module: TestingModule;
@@ -166,8 +168,8 @@ describe('PersonApiMapperProfile', () => {
         });
 
         it('should map PersonenkontextDo to CreatedPersonenkontextDto', () => {
-            const personDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
-            expect(() => sut.map(personDo, PersonenkontextDo, CreatedPersonenkontextDto)).not.toThrowError(
+            const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+            expect(() => sut.map(personenkontextDo, PersonenkontextDo, CreatedPersonenkontextDto)).not.toThrowError(
                 MappingError,
             );
         });
@@ -186,6 +188,36 @@ describe('PersonApiMapperProfile', () => {
                 referrer: 'referrer',
             };
             expect(() => sut.map(dto, CreatedPersonenkontextDto, PersonenkontextResponse)).not.toThrowError(
+                MappingError,
+            );
+        });
+
+        it('should map PersonenkontextQueryParams to FindePersonenkontextDto', () => {
+            const params: PersonenkontextQueryParams = {
+                sichtfreigabe: SichtfreigabeType.JA,
+                personenstatus: Personenstatus.AKTIV,
+                referrer: 'referrer',
+                rolle: Rolle.LERNENDER,
+            };
+            expect(() => sut.map(params, PersonenkontextQueryParams, FindPersonenkontextDto)).not.toThrowError(
+                MappingError,
+            );
+        });
+
+        it('should map FindePersonenkontextDto to PersonenkontextDo', () => {
+            const dto: FindPersonenkontextDto = {
+                personId: faker.string.uuid(),
+                sichtfreigabe: SichtfreigabeType.JA,
+                personenstatus: Personenstatus.AKTIV,
+                referrer: 'referrer',
+                rolle: Rolle.LERNENDER,
+            };
+            expect(() => sut.map(dto, FindPersonenkontextDto, PersonenkontextDo)).not.toThrowError(MappingError);
+        });
+
+        it('should map PersonenkontextDo to PersonenkontextResponse', () => {
+            const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+            expect(() => sut.map(personenkontextDo, PersonenkontextDo, PersonenkontextResponse)).not.toThrowError(
                 MappingError,
             );
         });

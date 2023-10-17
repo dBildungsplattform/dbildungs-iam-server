@@ -27,4 +27,12 @@ export class PersonenkontextService {
         }
         return { ok: false, error: new EntityCouldNotBeCreated(`Personenkontext`) };
     }
+
+    public async findAllPersonenkontexte(
+        personenkontextDo: PersonenkontextDo<false>,
+    ): Promise<Result<PersonenkontextDo<true>[], DomainError>> {
+        const personenkontexte: PersonenkontextDo<true>[] = await this.personenkontextRepo.findAll(personenkontextDo);
+
+        return { ok: true, value: personenkontexte };
+    }
 }
