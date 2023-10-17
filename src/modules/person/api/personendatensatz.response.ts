@@ -3,13 +3,14 @@ import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { ValidateNested } from 'class-validator';
 import { PersonResponse } from './person.response.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
 
-export class PersonenDatensatz {
+export class PersonendatensatzResponse {
     @AutoMap(() => PersonResponse)
     @ValidateNested()
     @Type(() => PersonResponse)
     @ApiProperty({ name: 'person', type: PersonResponse, required: true })
     public person!: PersonResponse;
 
-    // personKontext wird spaeter hier hinzugefuegt.
+    public personenkontexte!: PersonenkontextResponse[];
 }
