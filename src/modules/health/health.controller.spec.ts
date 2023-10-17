@@ -9,8 +9,8 @@ import {
 } from '@nestjs/terminus';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { SqlEntityManager } from '@mikro-orm/postgresql';
-import { KeycloakConfig } from '../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
+import { KeycloakConfig } from '../../shared/config/index.js';
 
 describe('HealthController', () => {
     let controller: HealthController;
@@ -20,10 +20,12 @@ describe('HealthController', () => {
     let entityManager: SqlEntityManager;
     let httpHealthIndicator: DeepMocked<HttpHealthIndicator>;
     const keycloakConfig: KeycloakConfig = {
-        CLIENT_ID: '',
-        SECRET: '',
-        REALM_NAME: '',
+        ADMIN_CLIENT_ID: '',
+        ADMIN_SECRET: '',
+        ADMIN_REALM_NAME: '',
         BASE_URL: 'http://keycloak.test',
+        REALM_NAME: '',
+        CLIENT_ID: '',
     };
     let configService: DeepMocked<ConfigService>;
 

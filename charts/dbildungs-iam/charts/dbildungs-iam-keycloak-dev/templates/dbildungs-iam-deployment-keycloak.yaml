@@ -20,6 +20,7 @@ spec:
           image: quay.io/keycloak/keycloak:22.0.3
           args:
             - start-dev
+            - "--import-realm"
           imagePullPolicy: IfNotPresent
           ports:
             - name: web
@@ -29,5 +30,15 @@ spec:
               value: admin
             - name: KEYCLOAK_ADMIN_PASSWORD
               value: admin
+            - name: KC_PROXY
+              value: "edge"
+          volumeMounts:
+           - mountPath: "/opt/keycloak/data/import"
+             name: "realm-config"
+             readOnly: true
       restartPolicy: Always
+      volumes:
+        - name: realm-config
+          secret:
+            secretName: realm-config-secret
       

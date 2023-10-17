@@ -1,7 +1,7 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Test, TestingModule } from '@nestjs/testing';
-import { MapperTestModule } from '../../../../test/utils/index.js';
+import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { MappingError } from '../../../shared/error/index.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
@@ -16,6 +16,12 @@ import { faker } from '@faker-js/faker';
 import { Gender, TrustLevel } from '../domain/person.enums.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
 import { SichtfreigabeType } from './personen-query.param.js';
+import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
+import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
+import { Jahrgangsstufe, Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
+import { PersonenkontextDo } from '../domain/personenkontext.do.js';
+import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
 
 describe('PersonApiMapperProfile', () => {
     let module: TestingModule;
@@ -134,6 +140,54 @@ describe('PersonApiMapperProfile', () => {
                 referrer: 'referrer',
             };
             expect(() => sut.map(dto, CreatePersonDto, PersonDo)).not.toThrowError(MappingError);
+        });
+
+        it('should map CreatePersonenkontextBodyParams to CreatePersonenkontextDto', () => {
+            const body: CreatePersonenkontextBodyParams = {
+                rolle: Rolle.LEHRENDER,
+                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                personenstatus: Personenstatus.AKTIV,
+                referrer: 'referrer',
+            };
+            expect(() => sut.map(body, CreatePersonenkontextBodyParams, CreatePersonenkontextDto)).not.toThrowError(
+                MappingError,
+            );
+        });
+
+        it('should map CreatePersonenkontextDto to PersonenkontextDo', () => {
+            const dto: CreatePersonenkontextDto = {
+                personId: faker.string.uuid(),
+                rolle: Rolle.LEHRENDER,
+                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                personenstatus: Personenstatus.AKTIV,
+                referrer: 'referrer',
+            };
+            expect(() => sut.map(dto, CreatePersonenkontextDto, PersonenkontextDo)).not.toThrowError(MappingError);
+        });
+
+        it('should map PersonenkontextDo to CreatedPersonenkontextDto', () => {
+            const personDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+            expect(() => sut.map(personDo, PersonenkontextDo, CreatedPersonenkontextDto)).not.toThrowError(
+                MappingError,
+            );
+        });
+
+        it('should map CreatedPersonenkontextDto to PersonenkontextResponse', () => {
+            const dto: CreatedPersonenkontextDto = {
+                id: faker.string.uuid(),
+                mandant: faker.string.uuid(),
+                organisation: {
+                    id: faker.string.uuid(),
+                },
+                revision: '1',
+                rolle: Rolle.LEHRENDER,
+                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                personenstatus: Personenstatus.AKTIV,
+                referrer: 'referrer',
+            };
+            expect(() => sut.map(dto, CreatedPersonenkontextDto, PersonenkontextResponse)).not.toThrowError(
+                MappingError,
+            );
         });
     });
 });

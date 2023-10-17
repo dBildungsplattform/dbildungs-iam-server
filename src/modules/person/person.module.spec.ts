@@ -4,6 +4,8 @@ import { PersonService } from './domain/person.service.js';
 import { PersonRepo } from './persistence/person.repo.js';
 import { PersonModule } from './person.module.js';
 import { PersonPersistenceMapperProfile } from './persistence/person-persistence.mapper.profile.js';
+import { PersonenkontextService } from './domain/personenkontext.service.js';
+import { PersonenkontextRepo } from './persistence/personenkontext.repo.js';
 
 describe('PersonModule', () => {
     let module: TestingModule;
@@ -33,6 +35,14 @@ describe('PersonModule', () => {
 
         it('should resolve PersonService', () => {
             expect(module.get(PersonService)).toBeInstanceOf(PersonService);
+        });
+
+        it('should resolve PersonenkontextRepo', () => {
+            expect(module.get(PersonenkontextRepo)).toBeInstanceOf(PersonenkontextRepo);
+        });
+
+        it('should resolve PersonenkontextService', () => {
+            expect(module.get(PersonenkontextService)).toBeInstanceOf(PersonenkontextService);
         });
     });
 });

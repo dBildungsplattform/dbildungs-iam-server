@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
 
 export class DbConfig {
     @IsString()
@@ -12,4 +12,8 @@ export class DbConfig {
     @IsString()
     @IsNotEmpty()
     public readonly SECRET!: string;
+
+    @IsBoolean()
+    @IsNotEmpty()
+    public readonly USE_SSL!: boolean;
 }

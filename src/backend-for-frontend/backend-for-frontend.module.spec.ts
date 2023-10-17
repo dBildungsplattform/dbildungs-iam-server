@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { FrontendModule } from './frontend.module.js';
+import { BackendForFrontendModule } from './backend-for-frontend.module.js';
 
 describe('FrontendModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [FrontendModule],
+            imports: [BackendForFrontendModule],
         }).compile();
     });
 

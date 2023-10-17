@@ -1,24 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-deployment
+  name: dbiam-deployment-bff
   labels:
     app.kubernetes.io/name: dbildungs-iam
 spec:
   selector:
     matchLabels:
-      layer: dbildungs-iam-backend
+      layer: dbildungs-iam-bff
   replicas: {{.Values.dbildungsIamReplications}}
   template:
     metadata:
       name: dbildungs-iam
       labels:
-        layer: dbildungs-iam-backend
+        layer: dbildungs-iam-bff
     spec:
       containers:
-        - name: dbildungs-iam
+        - name: dbildungs-iam-bff
           image: {{.Values.dbildungsIamContainer}}
           imagePullPolicy: Always
+          command: ["node", "dist/src/backend-for-frontend/main.js"]
           ports:
              - name: web
                containerPort: 8080
