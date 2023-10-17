@@ -30,9 +30,9 @@ export class PersonService {
     }
 
     public async findAllPersons(
-        offset: Option<number>,
-        limit: Option<number>,
         personDo: Partial<PersonDo<false>>,
+        offset?: number,
+        limit?: number,
     ): Promise<Paged<PersonDo<true>>> {
         const scope: PersonScope = new PersonScope()
             .findBy({

@@ -17,6 +17,7 @@ import { PersonenkontextUc } from './personenkontext.uc.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { Jahrgangsstufe, Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
+import { PagedResponse } from '../../../shared/paging/index.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -153,7 +154,6 @@ describe('PersonController', () => {
                 lokalisierung: '',
                 vertrauensstufe: TrustLevel.TRUSTED,
             };
-
             const person2: PersonResponse = {
                 id: faker.string.uuid(),
                 name: {
@@ -167,20 +167,27 @@ describe('PersonController', () => {
                 lokalisierung: '',
                 vertrauensstufe: TrustLevel.TRUSTED,
             };
-
             const mockPersondatensatz1: PersonenDatensatz = {
                 person: person1,
             };
             const mockPersondatensatz2: PersonenDatensatz = {
                 person: person2,
             };
-            const mockPersondatensatz: PersonenDatensatz[] = [mockPersondatensatz1, mockPersondatensatz2];
+            const mockPersondatensatz: PagedResponse<PersonenDatensatz> = new PagedResponse({
+                offset: 0,
+                limit: 10,
+                total: 2,
+                items: [mockPersondatensatz1, mockPersondatensatz2],
+            });
+
             personUcMock.findAll.mockResolvedValue(mockPersondatensatz);
-            const result: PersonenDatensatz[] = await personController.findPersons(queryParams);
+
+            const result: PagedResponse<PersonenDatensatz> = await personController.findPersons(queryParams);
+
             expect(personUcMock.findAll).toHaveBeenCalledTimes(1);
-            expect(result.at(0)?.person.referrer).toEqual(queryParams.referrer);
-            expect(result.at(0)?.person.name.vorname).toEqual(queryParams.vorname);
-            expect(result.at(0)?.person.name.familienname).toEqual(queryParams.familienname);
+            expect(result.items.at(0)?.person.referrer).toEqual(queryParams.referrer);
+            expect(result.items.at(0)?.person.name.vorname).toEqual(queryParams.vorname);
+            expect(result.items.at(0)?.person.name.familienname).toEqual(queryParams.familienname);
             expect(result).toEqual(mockPersondatensatz);
         });
     });

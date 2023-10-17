@@ -11,7 +11,7 @@ export abstract class ScopeBase<T extends AnyEntity> {
 
     private limit: Option<number>;
 
-    public abstract get entityName(): EntityName<T>;
+    protected abstract get entityName(): EntityName<T>;
 
     public async executeQuery(em: EntityManager): Promise<Counted<T>> {
         const qb: QueryBuilder<T> = em.createQueryBuilder(this.entityName);
@@ -41,7 +41,7 @@ export abstract class ScopeBase<T extends AnyEntity> {
         return this;
     }
 
-    protected findByInternal(props: Partial<T>, operator: ScopeOperator): this {
+    protected findByInternal(props: Findable<T>, operator: ScopeOperator): this {
         const query: QBFilterQuery<T> = {
             [operator]: Object.keys(props)
                 .filter((key: string) => props[key] !== undefined)

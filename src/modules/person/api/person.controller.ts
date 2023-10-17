@@ -86,7 +86,7 @@ export class PersonController {
     }
 
     @Get()
-    @ApiOkResponse({ description: 'The persons were successfully returned.' })
+    @ApiOkResponse({ description: 'The persons were successfully returned.', type: Array<PersonenDatensatz> })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
@@ -96,7 +96,7 @@ export class PersonController {
             PersonenQueryParams,
             FindPersonDatensatzDTO,
         );
-        const persons: Paged<PersonenDatensatz> = await this.uc.findAll(personDatensatzDTO);
+        const persons: Paged<PersonenDatensatz> = await this.personUc.findAll(personDatensatzDTO);
         const response: PagedResponse<PersonenDatensatz> = new PagedResponse(persons);
 
         return response;

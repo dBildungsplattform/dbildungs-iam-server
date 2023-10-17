@@ -25,7 +25,7 @@ export class PersonRepo {
     }
 
     public async findById(id: string): Promise<Option<PersonDo<true>>> {
-        const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { id });
+        const person: Option<PersonEntity> = await this.em.findOne(this.entityName, { id });
         if (person) {
             return this.mapper.map(person, PersonEntity, PersonDo);
         }
@@ -33,7 +33,7 @@ export class PersonRepo {
     }
 
     public async findByReferrer(referrer: string): Promise<Option<PersonDo<true>>> {
-        const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { referrer });
+        const person: Option<PersonEntity> = await this.em.findOne(this.entityName, { referrer });
         if (person) {
             return this.mapper.map(person, PersonEntity, PersonDo);
         }
@@ -63,7 +63,7 @@ export class PersonRepo {
     }
 
     private async update(personDo: PersonDo<true>): Promise<PersonDo<true>> {
-        let person: Option<Loaded<PersonEntity, never>> = await this.em.findOne(PersonEntity, { id: personDo.id });
+        let person: Option<Loaded<PersonEntity, never>> = await this.em.findOne(this.entityName, { id: personDo.id });
         if (person) {
             person.assign(this.mapper.map(personDo, PersonDo, PersonEntity));
         } else {
