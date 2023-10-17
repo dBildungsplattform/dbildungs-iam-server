@@ -2,8 +2,7 @@ name: 'Image to GHCR on push'
 
 on:
   workflow_run:
-    workflows: ['All static tests on every push']
-    types: [completed]
+    workflows: ["All static tests on every push"]
     branches-ignore:
         - 'main'
 
