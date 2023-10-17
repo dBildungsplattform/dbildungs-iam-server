@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: ["All static tests on every push"]
     branches-ignore:
-        - 'main'
+      - 'main'
 
 permissions:
     contents: read
