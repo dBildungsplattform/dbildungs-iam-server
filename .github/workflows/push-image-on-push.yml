@@ -1,8 +1,7 @@
 name: 'Image to GHCR on push'
 
 on:
-  workflow_run:
-    workflows: ["All static tests on every push"]
+  push:
     branches-ignore:
       - 'main'
 
@@ -10,21 +9,62 @@ permissions:
     contents: read
 
 jobs:
-    branch_meta:
-        runs-on: ubuntu-latest
-        outputs:
-          branch: ${{ steps.extract_branch_meta.outputs.branch }}
-          sha: ${{ steps.extract_branch_meta.outputs.sha }}
-        steps:
-          - name: Extract branch meta
-            shell: bash
-            id: extract_branch_meta
-            run: |
-              echo "lowercase_repo=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
-              if [ "${{ github.event_name }}" == 'pull_request' ]; then
-                echo "branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
-                echo "sha=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
-              else
-                echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
-                echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
-              fi
+#   codeql_analyze:
+#     uses: ./.github/workflows/reusable_job_codeql.yml
+#   nest_lint:
+#     uses: ./.github/workflows/reusable_job_nest_lint.yml
+#   nest_test_and_sonarcloud:
+#     uses: ./.github/workflows/reusable_job_nest_test_sonarcloud.yml
+#     secrets: inherit
+
+  branch_meta:
+      runs-on: ubuntu-latest
+      outputs:
+        branch: ${{ steps.extract_branch_meta.outputs.branch }}
+        sha: ${{ steps.extract_branch_meta.outputs.sha }}
+      steps:
+        - name: Extract branch meta
+          shell: bash
+          id: extract_branch_meta
+          run: |
+            echo "lowercase_repo=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
+            echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+
+  build_and_push:
+    if: ${{ !failure() }}
+    needs:
+    #   - codeql_analyze
+    #   - nest_lint
+    #   - nest_test_and_sonarcloud
+      - branch_meta
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Login to registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lowercase REPO name
+        run: |
+          echo "LOWERCASE_REPO=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      - name: Docker meta Service Name
+        id: docker_meta_img
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.LOWERCASE_REPO }}
+          tags: |
+            type=ref,event=branch,enable=false,priority=600
+            type=sha,enable=true,priority=600,prefix=
+
+      - name: Show github context
+        run: echo "$GITHUB_CONTEXT"
