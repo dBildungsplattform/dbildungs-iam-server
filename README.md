@@ -15,6 +15,7 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 1. Run `npm ci` to install all dependencies
 2. Start the required services from the `compose.yaml` file
    * db
+   * keycloak
 3. Create a `.env` file and set the required environment variables from `env.config.ts`
 4. run `npm run setup` to initialize the DB
 5. Run `npm run start:debug` to start the server
