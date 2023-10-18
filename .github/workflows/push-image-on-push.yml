@@ -16,20 +16,6 @@ jobs:
 #   nest_test_and_sonarcloud:
 #     uses: ./.github/workflows/reusable_job_nest_test_sonarcloud.yml
 #     secrets: inherit
-#464a113d92f71479294351f078ee83aeb68b2694
-  # branch_meta:
-  #     runs-on: ubuntu-latest
-  #     outputs:
-  #       branch: ${{ steps.extract_branch_meta.outputs.branch }}
-  #       sha: ${{ steps.extract_branch_meta.outputs.sha }}
-  #     steps:
-  #       - name: Extract branch meta
-  #         shell: bash
-  #         id: extract_branch_meta
-  #         run: |
-  #           echo "lowercase_repo=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
-  #           echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
-  #           echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
 
   build_and_push:
     # if: ${{ !failure() }}
@@ -37,7 +23,10 @@ jobs:
     #   - codeql_analyze
     #   - nest_lint
     #   - nest_test_and_sonarcloud
-    #   - branch_meta
+    permissions:
+      actions: read
+      packages: write
+      security-events: write
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-to-ghcr-trivy-on-push.yaml@464a113d92f71479294351f078ee83aeb68b2694
     with:
       image_name: dbildungsplattform/dbildungs-iam-server
