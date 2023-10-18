@@ -54,7 +54,7 @@ import { UiBackendApiModule } from '../modules/ui-backend/ui-backend-api.module.
                     authServerUrl: keycloakConfig.BASE_URL,
                     realm: keycloakConfig.REALM_NAME,
                     clientId: keycloakConfig.CLIENT_ID,
-                    secret: keycloakConfig.ADMIN_SECRET,
+                    secret: keycloakConfig.CLIENT_SECRET,
                 };
             },
             inject: [ConfigService],
