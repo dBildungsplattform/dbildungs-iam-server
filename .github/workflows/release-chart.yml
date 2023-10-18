@@ -7,7 +7,9 @@ on:
 
 jobs:
   scan:
-    uses: ./.github/workflows/reusable_job_kics.yml
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@88f7e543c2f33d8aea6e250b91ec1a02f218af76
+    permissions:
+      contents: read
 
   release:
     if: ${{ !failure() }}
