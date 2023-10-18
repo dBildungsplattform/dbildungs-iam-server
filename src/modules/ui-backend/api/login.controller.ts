@@ -15,11 +15,11 @@ import { DomainError } from '../../../shared/error/index.js';
 import { Public } from 'nest-keycloak-connect';
 
 @ApiTags('api/login')
-@Controller({ path: 'login' })
+@Controller({ path: 'frontend' })
 export class LoginController {
     public constructor(private loginService: LoginService, private someService: NewLoginService) {}
 
-    @Post()
+    @Post('login')
     @UseFilters(
         new KeyCloakExceptionFilter(HttpStatus.SERVICE_UNAVAILABLE),
         new UserAuthenticationFailedExceptionFilter(HttpStatus.NOT_FOUND),
@@ -30,7 +30,7 @@ export class LoginController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while retrieving token.' })
     @ApiServiceUnavailableResponse({ description: 'KEYCLOAK_CLIENT_ERROR: KeyCloak service did not respond.' })
     @Public()
-    public async loginUser(@Body() params: UserParams): Promise<TokenSet> {
+    public async login(@Body() params: UserParams): Promise<TokenSet> {
         return this.loginService.getTokenForUser(params.username, params.password);
     }
 

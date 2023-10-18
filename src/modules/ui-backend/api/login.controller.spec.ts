@@ -59,7 +59,7 @@ describe('LoginController', () => {
                 password: faker.string.alpha(),
             };
             loginServiceMock.getTokenForUser.mockResolvedValue(tokenSet);
-            await expect(loginController.loginUser(userParams)).resolves.not.toThrow();
+            await expect(loginController.login(userParams)).resolves.not.toThrow();
             expect(loginServiceMock.getTokenForUser).toHaveBeenCalledTimes(1);
         });
     });
@@ -74,7 +74,7 @@ describe('LoginController', () => {
             loginServiceMock.getTokenForUser.mockImplementation(() => {
                 throw new KeycloakClientError(errorMsg);
             });
-            await expect(loginController.loginUser(userParams)).rejects.toThrow(errorMsg);
+            await expect(loginController.login(userParams)).rejects.toThrow(errorMsg);
             expect(loginServiceMock.getTokenForUser).toHaveBeenCalledTimes(1);
         });
     });
@@ -89,7 +89,7 @@ describe('LoginController', () => {
             loginServiceMock.getTokenForUser.mockImplementation(() => {
                 throw new UserAuthenticationFailedError(errorMsg);
             });
-            await expect(loginController.loginUser(userParams)).rejects.toThrow(errorMsg);
+            await expect(loginController.login(userParams)).rejects.toThrow(errorMsg);
             expect(loginServiceMock.getTokenForUser).toHaveBeenCalledTimes(1);
         });
     });
