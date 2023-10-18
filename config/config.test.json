@@ -7,7 +7,8 @@
     },
     "DB": {
         "CLIENT_URL": "postgres://127.0.0.1:5432",
-        "DB_NAME": "dbildungs-iam"
+        "DB_NAME": "dbildungs-iam",
+        "USE_SSL": true
     },
     "KEYCLOAK": {
         "BASE_URL": "http://127.0.0.1:8080",

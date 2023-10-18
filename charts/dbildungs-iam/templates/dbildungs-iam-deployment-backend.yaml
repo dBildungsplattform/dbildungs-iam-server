@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dbiam-deployment-backend
+  labels:
+    app.kubernetes.io/name: dbildungs-iam
+spec:
+  selector:
+    matchLabels:
+      layer: dbildungs-iam-backend
+  replicas: {{.Values.dbildungsIamReplications}}
+  template:
+    metadata:
+      name: dbildungs-iam
+      labels:
+        layer: dbildungs-iam-backend
+    spec:
+      containers:
+        - name: dbildungs-iam-backend
+          image: {{.Values.dbildungsIamContainer}}
+          imagePullPolicy: Always
+          ports:
+             - name: web
+               containerPort: 8080
+          env:
+            - name: NODE_ENV
+              value: {{.Values.environment}}
+            - name: DEPLOY_STAGE
+              value: {{.Values.environment}}
+          volumeMounts:
+            - mountPath: /app/config/
+              name: config
+              readOnly: true
+          resources:
+            limits:
+              cpu: {{.Values.dbildungsIamCpuMax}}
+              memory: {{.Values.dbildungsIamMemMax}}
+          livenessProbe:
+            initialDelaySeconds: 10
+            httpGet:
+              port: 8080
+              scheme: 'HTTP'
+              path: '/health'
+          readinessProbe:
+            initialDelaySeconds: 10
+            httpGet:
+              port: 8080
+              scheme: 'HTTP'
+              path: '/health'
+      restartPolicy: Always
+      volumes:
+        - name: config
+          secret:
+            secretName: {{.Values.secrets.name | default (print .Release.Name "-secret")}}
+      
