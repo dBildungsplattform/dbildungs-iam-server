@@ -30,4 +30,4 @@ jobs:
       contents: read
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-to-ghcr-trivy-on-push.yaml@464a113d92f71479294351f078ee83aeb68b2694
     with:
-      image_name: dbildungsplattform/dbildungs-iam-server
+      image_name: dbildungs-iam-server
