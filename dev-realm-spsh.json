@@ -67,6 +67,22 @@
         "attributes": {}
       },
       {
+        "id": "73e11c10-4d3a-4772-9cc2-7f4aeabd144a",
+        "name": "admin",
+        "description": "Admin role for SPSH",
+        "composite": true,
+        "composites": {
+          "client": {
+            "realm-management": [
+              "manage-users"
+            ]
+          }
+        },
+        "clientRole": false,
+        "containerId": "17bbe7b0-1ce8-44c3-b326-dafea397e270",
+        "attributes": {}
+      },
+      {
         "id": "4e8df461-0777-4036-ae35-a32d279558e9",
         "name": "offline_access",
         "description": "${role_offline-access}",
@@ -453,6 +469,23 @@
   "webAuthnPolicyPasswordlessAcceptableAaguids": [],
   "users": [
     {
+      "id": "f3cf6895-d74e-4011-a846-5f19be8543d9",
+      "createdTimestamp": 1697619074892,
+      "username": "service-account-admin-cli",
+      "enabled": true,
+      "totp": false,
+      "emailVerified": false,
+      "serviceAccountClientId": "admin-cli",
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "realmRoles": [
+        "default-roles-spsh",
+        "admin"
+      ],
+      "notBefore": 0,
+      "groups": []
+    },
+    {
       "id": "9e30e22d-2f7b-47cf-a82a-a6e82cf8c5de",
       "createdTimestamp": 1697087666332,
       "username": "service-account-spsh",
@@ -596,6 +629,7 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
+      "secret": "A4Py4nxWuFRfv0s7ElMc9JflIJWBQeMR",
       "redirectUris": [],
       "webOrigins": [],
       "notBefore": 0,
@@ -603,9 +637,9 @@
       "consentRequired": false,
       "standardFlowEnabled": false,
       "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": true,
-      "serviceAccountsEnabled": false,
-      "publicClient": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
       "frontchannelLogout": false,
       "protocol": "openid-connect",
       "attributes": {},
