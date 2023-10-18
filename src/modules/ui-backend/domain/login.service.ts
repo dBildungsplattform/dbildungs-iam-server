@@ -21,7 +21,8 @@ export class LoginService {
             );
             const client: Client = new keycloakIssuer.Client({
                 client_id: this.kcConfig.CLIENT_ID,
-                token_endpoint_auth_method: 'none',
+                client_secret: this.kcConfig.CLIENT_SECRET,
+                token_endpoint_auth_method: 'client_secret_basic',
             });
             return await client.grant({
                 grant_type: 'password',

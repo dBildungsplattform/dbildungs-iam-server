@@ -26,6 +26,7 @@ describe('HealthController', () => {
         BASE_URL: 'http://keycloak.test',
         REALM_NAME: '',
         CLIENT_ID: '',
+        CLIENT_SECRET: '',
     };
     let configService: DeepMocked<ConfigService>;
 

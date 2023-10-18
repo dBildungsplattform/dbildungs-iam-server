@@ -10,7 +10,7 @@ import { mappingErrorHandler } from '../shared/error/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
-import { AuthGuard, KeycloakConnectModule, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
+import { AuthGuard, KeycloakConnectModule, RoleGuard } from 'nest-keycloak-connect';
 import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from '../modules/health/health.module.js';
 import { UiBackendApiModule } from '../modules/ui-backend/ui-backend-api.module.js';
@@ -54,7 +54,7 @@ import { UiBackendApiModule } from '../modules/ui-backend/ui-backend-api.module.
                     authServerUrl: keycloakConfig.BASE_URL,
                     realm: keycloakConfig.REALM_NAME,
                     clientId: keycloakConfig.CLIENT_ID,
-                    secret: keycloakConfig.ADMIN_SECRET,
+                    secret: keycloakConfig.CLIENT_SECRET,
                 };
             },
             inject: [ConfigService],
@@ -73,10 +73,6 @@ import { UiBackendApiModule } from '../modules/ui-backend/ui-backend-api.module.
         {
             provide: APP_GUARD,
             useClass: RoleGuard,
-        },
-        {
-            provide: APP_GUARD,
-            useClass: ResourceGuard,
         },
     ],
 })
