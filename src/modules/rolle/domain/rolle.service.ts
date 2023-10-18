@@ -19,14 +19,16 @@ export class RolleService {
     ) {}
 
     public async getPersonRollenZuweisung(personId: string): Promise<PersonRollenZuweisungDo<true>[]> {
-        return await this.personRollenZuweisungRepo.findAllByPersonId(personId);
+        return this.personRollenZuweisungRepo.findAllByPersonId(personId);
     }
 
     public async getRolleBerechtigungsZuweisung(rolle: RolleDo<true>): Promise<RolleBerechtigungsZuweisungDo<true>[]> {
-        return await this.rolleBerechtigungsZuweisungRepo.findAllRolleBerechtigungsZuweisungByRolle(rolle);
+        return this.rolleBerechtigungsZuweisungRepo.findAllRolleBerechtigungsZuweisungByRolle(rolle);
     }
 
-    public async getRolleBerechtigungsZuweisungByPersonId(personId: string): Promise<RolleBerechtigungsZuweisungDo<true>[]> {
+    public async getRolleBerechtigungsZuweisungByPersonId(
+        personId: string,
+    ): Promise<RolleBerechtigungsZuweisungDo<true>[]> {
         let rolleBerechtigungsZuweisungList: RolleBerechtigungsZuweisungDo<true>[] = [];
         const personRollenZuweisungen: PersonRollenZuweisungDo<true>[] = await this.getPersonRollenZuweisung(personId);
         for (const personRollenZuweisung of personRollenZuweisungen) {
@@ -35,6 +37,12 @@ export class RolleService {
             rolleBerechtigungsZuweisungList = rolleBerechtigungsZuweisungList.concat(rolleBerechtigungsZuweisungen);
         }
         return rolleBerechtigungsZuweisungList;
+    }
+
+    public async getServiceProvider(
+        serviceProviderZugriff: ServiceProviderZugriffDo<true>,
+    ): Promise<ServiceProviderDo<true>[]> {
+        return this.serviceProviderRepo.findAll(serviceProviderZugriff);
     }
 
     public async getServiceProviderZugriffList(personId: string): Promise<ServiceProviderZugriffDo<true>[]> {
@@ -51,12 +59,10 @@ export class RolleService {
         return serviceProviderZugriffList;
     }
 
-    public async getServiceProvider(serviceProviderZugriff: ServiceProviderZugriffDo<true>): Promise<ServiceProviderDo<true>[]> {
-        return this.serviceProviderRepo.findAll(serviceProviderZugriff);
-    }
-
     public async getAvailableServiceProviders(personId: string): Promise<ServiceProviderDo<true>[]> {
-        const serviceProviderZugriffList: ServiceProviderZugriffDo<true>[] = await this.getServiceProviderZugriffList(personId);
+        const serviceProviderZugriffList: ServiceProviderZugriffDo<true>[] = await this.getServiceProviderZugriffList(
+            personId,
+        );
         let serviceProviderList: ServiceProviderDo<true>[] = [];
         for (const serviceProviderZugriff of serviceProviderZugriffList) {
             const serviceProviderForServiceProviderZugriff: ServiceProviderDo<true>[] = await this.getServiceProvider(
