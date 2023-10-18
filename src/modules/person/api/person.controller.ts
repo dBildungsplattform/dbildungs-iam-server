@@ -11,7 +11,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Unprotected } from 'nest-keycloak-connect';
 import { PersonUc } from '../api/person.uc.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
@@ -29,7 +28,6 @@ import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 
 @ApiTags('person')
 @Controller({ path: 'person' })
-@Unprotected()
 export class PersonController {
     public constructor(
         private readonly personUc: PersonUc,
