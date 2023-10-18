@@ -8,10 +8,16 @@ import { ServiceProviderZugriffDo } from './service-provider-zugriff.do.js';
 import { ServiceProviderDo } from './service-provider.do.js';
 import { RolleRechtRepo } from '../repo/rolle-recht.repo.js';
 import { RolleDo } from './rolle.do.js';
+import {PersonRepo} from "../../person/persistence/person.repo.js";
+
+export interface KeyCloakUser {
+    sub: string;
+}
 
 @Injectable()
 export class RolleService {
     public constructor(
+        private readonly personRepo: PersonRepo,
         private readonly personRollenZuweisungRepo: PersonRollenZuweisungRepo,
         private readonly rolleBerechtigungsZuweisungRepo: RollenBerechtigungsZuweisungRepo,
         private readonly rolleRechtRepo: RolleRechtRepo,
@@ -71,5 +77,18 @@ export class RolleService {
             serviceProviderList = serviceProviderList.concat(serviceProviderForServiceProviderZugriff);
         }
         return serviceProviderList;
+    }
+
+    public async getAvailableServiceProvidersByUserSub(keycloakSub: string): Promise<ServiceProviderDo<true>[]> {
+         return await this.personRepo.findByKeycloakUserId(keycloakSub).then((person) => {
+            if (person) {
+                return this.getAvailableServiceProviders(person.id);
+            }
+            return [];
+        });
+    }
+
+    public hasKeycloakUserSub(obj: unknown): obj is KeyCloakUser {
+        return (obj as KeyCloakUser)?.sub !== undefined;
     }
 }

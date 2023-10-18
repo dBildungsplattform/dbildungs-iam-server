@@ -10,9 +10,11 @@ import { ServiceProviderZugriffMapperProfile } from './mapper/service-provider-z
 import { ServiceProviderRepo } from './repo/service-provider.repo.js';
 import { RolleRechtRepo } from './repo/rolle-recht.repo.js';
 import { ServiceProviderMapperProfile } from './mapper/service-provider.mapper.profile.js';
+import {PersonRepo} from "../person/persistence/person.repo.js";
 
 @Module({
     providers: [
+        PersonRepo,
         PersonRollenZuweisungMapperProfile,
         RolleBerechtigungsZuweisungMapperProfile,
         RolleRechtMapperProfile,
@@ -25,6 +27,6 @@ import { ServiceProviderMapperProfile } from './mapper/service-provider.mapper.p
         RolleRechtRepo,
         RolleService,
     ],
-    exports: [RolleService],
+    exports: [RolleService, PersonRepo],
 })
 export class RolleModule {}

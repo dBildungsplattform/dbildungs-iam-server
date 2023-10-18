@@ -25,6 +25,14 @@ export class PersonRepo {
         return null;
     }
 
+    public async findByKeycloakUserId(keycloakUserId: string): Promise<Option<PersonDo<true>>> {
+        const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { keycloakUserId });
+        if (person) {
+            return this.mapper.map(person, PersonEntity, PersonDo);
+        }
+        return null;
+    }
+
     public async save(personDo: PersonDo<boolean>): Promise<PersonDo<true>> {
         if (personDo.id) {
             return this.update(personDo);

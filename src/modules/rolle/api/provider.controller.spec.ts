@@ -1,10 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProviderController } from './provider.controller.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { RolleService } from '../domain/rolle.service.js';
-import { ServiceProviderByPersonIdBodyParams } from './service-provider-by-person-id.body.params.js';
-import { faker } from '@faker-js/faker';
+import {KeyCloakUser, RolleService} from '../domain/rolle.service.js';
 import { ServiceProviderDo } from '../domain/service-provider.do.js';
+import {faker} from "@faker-js/faker";
 
 describe('ProviderController', () => {
     let module: TestingModule;
@@ -46,12 +45,20 @@ describe('ProviderController', () => {
 
     describe('when getting result from service', () => {
         it('should not throw', async () => {
-            const persondId: ServiceProviderByPersonIdBodyParams = {
-                personId: faker.string.alpha(),
-            };
+            const user: KeyCloakUser = {
+                sub: faker.string.uuid(),
+            }
             rolleServiceMock.getAvailableServiceProviders.mockResolvedValue(serviceProviderDo);
-            await expect(providerController.getServiceProvidersByPersonId(persondId)).resolves.not.toThrow();
-            expect(rolleServiceMock.getAvailableServiceProviders).toHaveBeenCalledTimes(1);
+            await expect(providerController.getServiceProvidersByPersonId(user)).resolves.not.toThrow();
+            expect(rolleServiceMock.getAvailableServiceProvidersByUserSub).toHaveBeenCalledTimes(1);
+        });
+
+        it('should throw', async () => {
+            const user: unknown = {
+            }
+            rolleServiceMock.getAvailableServiceProviders.mockResolvedValue(serviceProviderDo);
+            await expect(providerController.getServiceProvidersByPersonId(user)).rejects.toThrow();
+            expect(rolleServiceMock.getAvailableServiceProvidersByUserSub).toHaveBeenCalledTimes(0);
         });
     });
 });

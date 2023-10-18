@@ -110,6 +110,24 @@ describe('PersonRepo', () => {
         });
     });
 
+    describe('findByKeycloakUserId', () => {
+        describe('when found by keycloakUserId', () => {
+            it('should return found person', async () => {
+                const person: PersonDo<true> = DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() });
+                await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
+                const foundPerson: Option<PersonDo<true>> = await sut.findByKeycloakUserId(person.keycloakUserId as string);
+                expect(foundPerson).toBeInstanceOf(PersonDo);
+            });
+        });
+
+        describe('when not found by keycloakUserId', () => {
+            it('should return null', async () => {
+                const foundPerson: Option<PersonDo<true>> = await sut.findByKeycloakUserId(faker.string.uuid());
+                expect(foundPerson).toBeNull();
+            });
+        });
+    });
+
     describe('deleteById', () => {
         describe('when person exists', () => {
             it('should delete person from database', async () => {
