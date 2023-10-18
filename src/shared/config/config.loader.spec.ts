@@ -48,7 +48,7 @@ describe('configloader', () => {
 
             const secrets: DeepPartial<JsonConfig> = {
                 DB: { SECRET: 'SuperSecretSecret' },
-                KEYCLOAK: { ADMIN_SECRET: 'ClientSecret' },
+                KEYCLOAK: { ADMIN_SECRET: 'AdminClientSecret', CLIENT_SECRET: 'ClientSecret' },
             };
 
             beforeAll(() => {
