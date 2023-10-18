@@ -9,20 +9,20 @@ permissions:
     contents: read
 
 jobs:
-#   codeql_analyze:
-#     uses: ./.github/workflows/reusable_job_codeql.yml
-#   nest_lint:
-#     uses: ./.github/workflows/reusable_job_nest_lint.yml
-#   nest_test_and_sonarcloud:
-#     uses: ./.github/workflows/reusable_job_nest_test_sonarcloud.yml
-#     secrets: inherit
+  codeql_analyze:
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@0213b3a46bd4c9dce62d340029bb6d07e8310791
+  nest_lint:
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@0213b3a46bd4c9dce62d340029bb6d07e8310791
+  nest_test_and_sonarcloud:
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@0213b3a46bd4c9dce62d340029bb6d07e8310791
+    secrets: inherit
 
   build_and_push:
-    # if: ${{ !failure() }}
-    # needs:
-    #   - codeql_analyze
-    #   - nest_lint
-    #   - nest_test_and_sonarcloud
+    if: ${{ !failure() }}
+    needs:
+      - codeql_analyze
+      - nest_lint
+      - nest_test_and_sonarcloud
     permissions:
       actions: read
       packages: write
