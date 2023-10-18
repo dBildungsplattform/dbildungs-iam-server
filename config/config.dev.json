@@ -4,6 +4,7 @@
     },
     "FRONTEND": {
         "PORT": 9091,
+        "SECURE_COOKIE": false,
         "SESSION_SECRET": "DevelopmentSecret",
         "BACKEND_ADDRESS": "http://127.0.0.1:9090"
     },

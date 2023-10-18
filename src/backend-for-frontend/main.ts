@@ -31,6 +31,7 @@ async function bootstrap(): Promise<void> {
             secret: frontendConfig.SESSION_SECRET,
             resave: false,
             saveUninitialized: false,
+            cookie: { secure: frontendConfig.SECURE_COOKIE, httpOnly: true },
         }),
     );
 

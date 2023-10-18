@@ -4,6 +4,7 @@
     },
     "FRONTEND": {
         "PORT": 8081,
+        "SECURE_COOKIE": false,
         "BACKEND_ADDRESS": "http://127.0.0.1:8080"
     },
     "DB": {
