@@ -193,7 +193,7 @@ describe('PersonUc', () => {
             const result: Paged<PersonendatensatzResponse> = await personUc.findAll(personDTO);
 
             expect(personenkontextServiceMock.findAllPersonenkontexte).toHaveBeenCalledTimes(2);
-            expect(result).toHaveLength(2);
+            expect(result.items).toHaveLength(2);
             expect(result.items.at(0)?.person.name.vorname).toEqual(firstPerson.firstName);
             expect(result.items.at(0)?.person.name.familienname).toEqual(firstPerson.lastName);
             expect(result.items.at(1)?.person.name.vorname).toEqual(secondPerson.firstName);
