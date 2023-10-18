@@ -17,6 +17,34 @@ export class PersonenkontextRepo {
         return this.create(personenkontextDo);
     }
 
+    // TODO refactor after EW-561 is done, use Scope
+    public async findAll(personenkontextDo: PersonenkontextDo<false>): Promise<PersonenkontextDo<true>[]> {
+        const query: Record<string, unknown> = {};
+
+        query['personId'] = personenkontextDo.personId;
+
+        if (personenkontextDo.referrer) {
+            query['referrer'] = personenkontextDo.referrer;
+        }
+
+        if (personenkontextDo.rolle) {
+            query['rolle'] = personenkontextDo.rolle;
+        }
+
+        if (personenkontextDo.personenstatus) {
+            query['personenstatus'] = personenkontextDo.personenstatus;
+        }
+
+        if (personenkontextDo.sichtfreigabe !== undefined) {
+            query['sichtfreigabe'] = personenkontextDo.sichtfreigabe;
+        }
+
+        const result: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, query);
+        return result.map((person: PersonenkontextEntity) =>
+            this.mapper.map(person, PersonenkontextEntity, PersonenkontextDo),
+        );
+    }
+
     private async create(personenkontextDo: PersonenkontextDo<false>): Promise<Option<PersonenkontextDo<true>>> {
         const personenkontext: PersonenkontextEntity = this.mapper.map(
             personenkontextDo,
