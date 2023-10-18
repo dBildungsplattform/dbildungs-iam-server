@@ -8,6 +8,13 @@ import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
+import { SichtfreigabeType } from './personen-query.param.js';
+import { Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
+import { faker } from '@faker-js/faker';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 
 describe('PersonenkontextUc', () => {
     let module: TestingModule;
@@ -72,6 +79,48 @@ describe('PersonenkontextUc', () => {
                 );
 
                 await expect(createPersonPromise).rejects.toThrow(error);
+            });
+        });
+    });
+
+    describe('findAll', () => {
+        describe('When searching for personenkontexte', () => {
+            it('should find all persons that match with query param', async () => {
+                const findPersonenkontextDto: FindPersonenkontextDto = {
+                    personId: faker.string.uuid(),
+                    referrer: 'referrer',
+                    sichtfreigabe: SichtfreigabeType.NEIN,
+                    personenstatus: Personenstatus.AKTIV,
+                    rolle: Rolle.LERNENDER,
+                };
+
+                const firstPersonenkontext: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+                const secondPersonenkontext: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+                const personenkontexte: PersonenkontextDo<true>[] = [firstPersonenkontext, secondPersonenkontext];
+                personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue({
+                    ok: true,
+                    value: personenkontexte,
+                });
+
+                const result: PersonenkontextResponse[] = await personenkontextUc.findAll(findPersonenkontextDto);
+                expect(result).toHaveLength(2);
+            });
+
+            it('should throw EntityNotFoundError when no matching persons are found', async () => {
+                const findPersonenkontextDto: FindPersonenkontextDto = {
+                    personId: faker.string.uuid(),
+                    referrer: 'referrer',
+                    sichtfreigabe: SichtfreigabeType.NEIN,
+                    personenstatus: Personenstatus.AKTIV,
+                    rolle: Rolle.LERNENDER,
+                };
+
+                const emptyResult: Result<PersonenkontextDo<true>[], DomainError> = {
+                    ok: false,
+                    error: new EntityNotFoundError('Personenkontext'),
+                };
+                personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue(emptyResult);
+                await expect(personenkontextUc.findAll(findPersonenkontextDto)).rejects.toThrow(EntityNotFoundError);
             });
         });
     });

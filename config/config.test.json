@@ -12,7 +12,9 @@
     },
     "KEYCLOAK": {
         "BASE_URL": "http://127.0.0.1:8080",
-        "REALM_NAME": "master",
-        "CLIENT_ID": "admin-cli"
+        "ADMIN_REALM_NAME": "SPSH",
+        "ADMIN_CLIENT_ID": "spsh-admin",
+        "REALM_NAME": "SPSH",
+        "CLIENT_ID": "spsh"
     }
 }

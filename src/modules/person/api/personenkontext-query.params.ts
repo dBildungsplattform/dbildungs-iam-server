@@ -1,18 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { AutoMap } from '@automapper/classes';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
+import { SichtfreigabeType } from './personen-query.param.js';
 
-export enum SichtfreigabeType {
-    JA = 'ja',
-    NEIN = 'nein',
-}
-
-export class PersonenQueryParam {
+export class PersonenkontextQueryParams {
     @AutoMap()
     @IsOptional()
     @IsString()
     @ApiProperty({
+        name: 'referrer',
         required: false,
         nullable: true,
     })
@@ -20,30 +17,27 @@ export class PersonenQueryParam {
 
     @AutoMap()
     @IsOptional()
-    @IsString()
-    @Expose({ name: 'familienname' })
+    @IsEnum(Rolle)
     @ApiProperty({
-        name: 'familienname',
+        name: 'rolle',
         required: false,
         nullable: true,
     })
-    public readonly familienname?: string;
+    public readonly rolle?: Rolle;
 
     @AutoMap()
     @IsOptional()
-    @IsString()
-    @Expose({ name: 'vorname' })
+    @IsEnum(Personenstatus)
     @ApiProperty({
-        name: 'vorname',
+        name: 'personenstatus',
         required: false,
         nullable: true,
     })
-    public readonly vorname?: string;
+    public readonly personenstatus?: Personenstatus;
 
     @AutoMap()
     @IsOptional()
     @IsEnum(SichtfreigabeType)
-    @Expose({ name: 'sichtfreigabe' })
     @ApiProperty({
         name: 'sichtfreigabe',
         enum: SichtfreigabeType,

@@ -12,8 +12,11 @@
     },
     "KEYCLOAK": {
         "BASE_URL": "http://127.0.0.1:8080",
-        "REALM_NAME": "master",
-        "CLIENT_ID": "admin-cli",
-        "SECRET": "topsecret"
+        "ADMIN_REALM_NAME": "SPSH",
+        "ADMIN_CLIENT_ID": "spsh-admin",
+        "REALM_NAME": "SPSH",
+        "CLIENT_ID": "spsh",
+        "ADMIN_SECRET": "44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R",
+        "CLIENT_SECRET": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M"
     }
 }

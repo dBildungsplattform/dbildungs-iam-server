@@ -13,6 +13,7 @@ import { OrganisationApiModule } from '../modules/organisation/organisation-api.
 import { AuthGuard, KeycloakConnectModule, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
 import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from '../modules/health/health.module.js';
+import { UiBackendApiModule } from '../modules/ui-backend/ui-backend-api.module.js';
 import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
 
 @Module({
@@ -54,7 +55,7 @@ import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
                     authServerUrl: keycloakConfig.BASE_URL,
                     realm: keycloakConfig.REALM_NAME,
                     clientId: keycloakConfig.CLIENT_ID,
-                    secret: keycloakConfig.SECRET,
+                    secret: keycloakConfig.CLIENT_SECRET,
                 };
             },
             inject: [ConfigService],
@@ -63,6 +64,7 @@ import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
         OrganisationApiModule,
         KeycloakAdministrationModule,
         HealthModule,
+        UiBackendApiModule,
         RolleApiModule,
     ],
     providers: [
