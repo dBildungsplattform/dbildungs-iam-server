@@ -11,14 +11,14 @@ export class ServiceProviderZugriffDo<WasPersisted extends boolean> extends Roll
         super();
     }
 
-    /*    @AutoMap()
-    public id!: Persisted<string, WasPersisted>;
+    /*@AutoMap()
+    public override id!: Persisted<string, WasPersisted>;
 
     @AutoMap()
-    public createdAt!: Persisted<Date, WasPersisted>;
+    public override createdAt!: Persisted<Date, WasPersisted>;
 
     @AutoMap()
-    public updatedAt!: Persisted<Date, WasPersisted>;*/
+    public override updatedAt!: Persisted<Date, WasPersisted>;*/
 
     @AutoMap()
     public serviceProvider!: string;

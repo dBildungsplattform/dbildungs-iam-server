@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
-import { createMap, forMember, mapFrom, Mapper, MappingProfile } from '@automapper/core';
+import { createMap, Mapper, MappingProfile } from '@automapper/core';
 import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
 import { ServiceProviderZugriffEntity } from '../entity/service-provider-zugriff.entity.js';
 
@@ -13,15 +13,7 @@ export class ServiceProviderZugriffMapperProfile extends AutomapperProfile {
     public override get profile(): MappingProfile {
         return (mapper: Mapper) => {
             createMap(mapper, ServiceProviderZugriffDo, ServiceProviderZugriffEntity);
-            createMap(
-                mapper,
-                ServiceProviderZugriffEntity,
-                ServiceProviderZugriffDo,
-                forMember(
-                    (dest: ServiceProviderZugriffDo<true>) => dest.serviceProvider,
-                    mapFrom((src: ServiceProviderZugriffEntity) => src.serviceProvider),
-                ),
-            );
+            createMap(mapper, ServiceProviderZugriffEntity, ServiceProviderZugriffDo);
         };
     }
 }

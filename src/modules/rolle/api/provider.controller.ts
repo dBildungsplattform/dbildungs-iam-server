@@ -1,8 +1,8 @@
-import {Controller, Get, HttpException, HttpStatus} from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
 import { RolleService } from '../domain/rolle.service.js';
-import {ApiTags, ApiUnauthorizedResponse} from '@nestjs/swagger';
+import { ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { ServiceProviderDo } from '../domain/service-provider.do.js';
-import {AuthenticatedUser} from "nest-keycloak-connect";
+import { AuthenticatedUser } from 'nest-keycloak-connect';
 
 @ApiTags('rolle')
 @Controller({ path: 'provider' })

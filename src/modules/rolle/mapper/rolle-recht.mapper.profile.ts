@@ -12,7 +12,12 @@ export class RolleRechtMapperProfile extends AutomapperProfile {
 
     public override get profile(): MappingProfile {
         return (mapper: Mapper) => {
-            createMap(mapper, RolleRechtDo, RolleRechtEntity);
+            createMap(mapper, RolleRechtDo, RolleRechtEntity,
+                //new
+                forMember(
+                    (dest: RolleRechtEntity) => dest.id,
+                    mapFrom((src: RolleRechtDo<boolean>) => src.id),
+                ),);
             createMap(
                 mapper,
                 RolleRechtEntity,

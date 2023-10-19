@@ -124,6 +124,18 @@ export class DoFactory {
         return Object.assign(new RolleDo<WasPersisted>(), rolle, props);
     }
 
+    public static createRolleRecht<WasPersisted extends boolean>(
+        withId: WasPersisted,
+        props?: Partial<RolleRechtDo<WasPersisted>>,
+    ): RolleRechtDo<WasPersisted> {
+        const rolleRecht: RolleRechtDo<false> = {
+            id: withId ? faker.string.uuid() : undefined,
+            createdAt: withId ? faker.date.past() : undefined,
+            updatedAt: withId ? faker.date.recent() : undefined,
+        };
+        return Object.assign(new RolleRechtDo<WasPersisted>(), rolleRecht, props);
+    }
+
     public static createPersonRollenZuweisung<WasPersisted extends boolean>(
         personId: string,
         rolle: RolleDo<boolean>,

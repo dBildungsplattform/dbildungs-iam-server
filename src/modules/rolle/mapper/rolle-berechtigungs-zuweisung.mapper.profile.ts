@@ -12,16 +12,18 @@ export class RolleBerechtigungsZuweisungMapperProfile extends AutomapperProfile 
 
     public override get profile(): MappingProfile {
         return (mapper: Mapper) => {
-            createMap(mapper, RolleBerechtigungsZuweisungDo, RolleBerechtigungsZuweisungEntity);
-            /* createMap(
+            createMap(
                 mapper,
                 RolleBerechtigungsZuweisungDo,
                 RolleBerechtigungsZuweisungEntity,
+                /*    forMember(
+                    (dest: RolleBerechtigungsZuweisungEntity) => dest.rolleRecht,
+                    ignore()));*/
                 forMember(
-                    (destination) => destination.rolle,
-                    mapWith(RolleRechtEntity, RolleRechtDo, (source) => source.id)
-                )
-            );*/
+                    (dest: RolleBerechtigungsZuweisungEntity) => dest.rolleRecht,
+                    mapFrom((src: RolleBerechtigungsZuweisungDo<boolean>) => src.rolleRecht),
+                ),
+            );
             createMap(
                 mapper,
                 RolleBerechtigungsZuweisungEntity,

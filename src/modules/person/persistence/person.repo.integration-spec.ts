@@ -115,7 +115,7 @@ describe('PersonRepo', () => {
             it('should return found person', async () => {
                 const person: PersonDo<true> = DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() });
                 await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
-                const foundPerson: Option<PersonDo<true>> = await sut.findByKeycloakUserId(person.keycloakUserId as string);
+                const foundPerson: Option<PersonDo<true>> = await sut.findByKeycloakUserId(person.keycloakUserId);
                 expect(foundPerson).toBeInstanceOf(PersonDo);
             });
         });

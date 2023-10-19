@@ -64,17 +64,17 @@ describe('RollenBerechtigungsZuweisungRepo', () => {
                 const rolle: RolleEntity[] = await em.find(RolleEntity, {});
                 expect(rolle).not.toBeNull();
                 expect(rolle).toHaveLength(1);
-
                 const serviceProviderDo: ServiceProviderDo<false> = DoFactory.createServiceProvider(false);
                 await em.persistAndFlush(mapper.map(serviceProviderDo, ServiceProviderDo, ServiceProviderEntity));
                 const serviceProvider: ServiceProviderEntity[] = await em.find(ServiceProviderEntity, {});
                 expect(serviceProvider).not.toBeNull();
                 expect(serviceProvider).toHaveLength(1);
-
                 const serviceProviderZugriffDo: ServiceProviderZugriffDo<false> =
                     DoFactory.createServiceProviderZugriff(false, {
+                        id: '1',
                         serviceProvider: serviceProvider[0] ? serviceProvider[0].id : '1',
                     });
+                serviceProviderZugriffDo.id = '1';
                 await em.persistAndFlush(
                     mapper.map(serviceProviderZugriffDo, ServiceProviderZugriffDo, ServiceProviderZugriffEntity),
                 );
@@ -84,24 +84,20 @@ describe('RollenBerechtigungsZuweisungRepo', () => {
                 );
                 expect(serviceProviderZugriff).not.toBeNull();
                 expect(serviceProviderZugriff).toHaveLength(1);
-
                 const rolleBerechtigungsZuweisungDo: RolleBerechtigungsZuweisungDo<false> =
                     DoFactory.createRolleBerechtigungsZuweisung(rolleDo, serviceProviderZugriffDo, false);
-
-                await em.persistAndFlush(
-                    mapper.map(
-                        rolleBerechtigungsZuweisungDo,
-                        RolleBerechtigungsZuweisungDo,
-                        RolleBerechtigungsZuweisungEntity,
-                    ),
+                const map: RolleBerechtigungsZuweisungEntity = mapper.map(
+                    rolleBerechtigungsZuweisungDo,
+                    RolleBerechtigungsZuweisungDo,
+                    RolleBerechtigungsZuweisungEntity,
                 );
+                await em.persistAndFlush(map);
                 const rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungEntity[] = await em.find(
                     RolleBerechtigungsZuweisungEntity,
                     {},
                 );
                 expect(rolleBerechtigungsZuweisung).not.toBeNull();
                 expect(rolleBerechtigungsZuweisung).toHaveLength(1);
-
                 const foundRolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<true>[] =
                     await sut.findAllRolleBerechtigungsZuweisungByRolle(rolleDo);
                 expect(foundRolleBerechtigungsZuweisung).not.toBeNull();

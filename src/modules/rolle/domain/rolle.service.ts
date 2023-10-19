@@ -8,7 +8,8 @@ import { ServiceProviderZugriffDo } from './service-provider-zugriff.do.js';
 import { ServiceProviderDo } from './service-provider.do.js';
 import { RolleRechtRepo } from '../repo/rolle-recht.repo.js';
 import { RolleDo } from './rolle.do.js';
-import {PersonRepo} from "../../person/persistence/person.repo.js";
+import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { PersonDo } from '../../person/domain/person.do.js';
 
 export interface KeyCloakUser {
     sub: string;
@@ -80,7 +81,7 @@ export class RolleService {
     }
 
     public async getAvailableServiceProvidersByUserSub(keycloakSub: string): Promise<ServiceProviderDo<true>[]> {
-         return await this.personRepo.findByKeycloakUserId(keycloakSub).then((person) => {
+        return this.personRepo.findByKeycloakUserId(keycloakSub).then((person: Option<PersonDo<true>>) => {
             if (person) {
                 return this.getAvailableServiceProviders(person.id);
             }

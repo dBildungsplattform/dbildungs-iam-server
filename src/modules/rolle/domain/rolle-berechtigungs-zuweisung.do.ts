@@ -2,6 +2,7 @@ import { AutoMap } from '@automapper/classes';
 import { DoBase } from '../../../shared/types/index.js';
 import { RolleRechtDo } from './rolle-recht.do.js';
 import { RolleDo } from './rolle.do.js';
+import { ServiceProviderZugriffDo } from './service-provider-zugriff.do.js';
 
 export class RolleBerechtigungsZuweisungDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
     /**
@@ -25,7 +26,7 @@ export class RolleBerechtigungsZuweisungDo<WasPersisted extends boolean> impleme
     @AutoMap()
     public validForAdministrativeParents!: boolean;
 
-    @AutoMap()
+    @AutoMap(() => ServiceProviderZugriffDo<boolean>)
     public rolleRecht!: RolleRechtDo<boolean>;
 
     @AutoMap()

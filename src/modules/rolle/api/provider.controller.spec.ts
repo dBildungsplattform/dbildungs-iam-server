@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProviderController } from './provider.controller.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import {KeyCloakUser, RolleService} from '../domain/rolle.service.js';
+import { KeyCloakUser, RolleService } from '../domain/rolle.service.js';
 import { ServiceProviderDo } from '../domain/service-provider.do.js';
-import {faker} from "@faker-js/faker";
+import { faker } from '@faker-js/faker';
 
 describe('ProviderController', () => {
     let module: TestingModule;
@@ -47,15 +47,14 @@ describe('ProviderController', () => {
         it('should not throw', async () => {
             const user: KeyCloakUser = {
                 sub: faker.string.uuid(),
-            }
+            };
             rolleServiceMock.getAvailableServiceProviders.mockResolvedValue(serviceProviderDo);
             await expect(providerController.getServiceProvidersByPersonId(user)).resolves.not.toThrow();
             expect(rolleServiceMock.getAvailableServiceProvidersByUserSub).toHaveBeenCalledTimes(1);
         });
 
         it('should throw', async () => {
-            const user: unknown = {
-            }
+            const user: unknown = {};
             rolleServiceMock.getAvailableServiceProviders.mockResolvedValue(serviceProviderDo);
             await expect(providerController.getServiceProvidersByPersonId(user)).rejects.toThrow();
             expect(rolleServiceMock.getAvailableServiceProvidersByUserSub).toHaveBeenCalledTimes(0);

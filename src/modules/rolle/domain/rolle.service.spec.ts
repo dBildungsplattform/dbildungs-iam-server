@@ -3,7 +3,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Dictionary, Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { DoFactory } from '../../../../test/utils/index.js';
-import {KeyCloakUser, RolleService} from './rolle.service.js';
+import { KeyCloakUser, RolleService } from './rolle.service.js';
 import { PersonRollenZuweisungRepo } from '../repo/person-rollen-zuweisung.repo.js';
 import { RollenBerechtigungsZuweisungRepo } from '../repo/rollen-berechtigungs-zuweisung.repo.js';
 import { RolleRechtRepo } from '../repo/rolle-recht.repo.js';
@@ -13,9 +13,9 @@ import { RolleDo } from './rolle.do.js';
 import { RolleBerechtigungsZuweisungDo } from './rolle-berechtigungs-zuweisung.do.js';
 import { ServiceProviderZugriffDo } from './service-provider-zugriff.do.js';
 import { ServiceProviderDo } from './service-provider.do.js';
-import {PersonRepo} from "../../person/persistence/person.repo";
-import {faker} from "@faker-js/faker";
-import {PersonDo} from "../../person/domain/person.do";
+import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { faker } from '@faker-js/faker';
+import { PersonDo } from '../../person/domain/person.do.js';
 
 describe('RolleService', () => {
     let module: TestingModule;
@@ -26,7 +26,7 @@ describe('RolleService', () => {
     let rolleRechtRepo: DeepMocked<RolleRechtRepo>;
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
     let mapperMock: DeepMocked<Mapper>;
-    const PERSON_ID = '1';
+    const PERSON_ID: string = '1';
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -81,15 +81,15 @@ describe('RolleService', () => {
 
     describe('hasKeycloakUserSub', () => {
         describe('when user has property sub', () => {
-            it('should be truthy', async () => {
+            it('should be truthy', () => {
                 const user: KeyCloakUser = {
-                    sub: faker.string.uuid()
-                }
+                    sub: faker.string.uuid(),
+                };
                 expect(rolleService.hasKeycloakUserSub(user)).toBeTruthy();
             });
             describe('when obj has no property sub', () => {
-                it('should be falsy', async () => {
-                    const user: unknown = {}
+                it('should be falsy', () => {
+                    const user: unknown = {};
                     expect(rolleService.hasKeycloakUserSub(user)).toBeFalsy();
                 });
             });
@@ -276,14 +276,18 @@ describe('RolleService', () => {
         describe('when ServiceProviderZugriff exists', () => {
             it('should get a ServiceProviderZugriff ', async () => {
                 initServiceProviderTestSuccessEssentials();
-                const result: ServiceProviderZugriffDo<true>[] = await rolleService.getServiceProviderZugriffList(PERSON_ID);
+                const result: ServiceProviderZugriffDo<true>[] = await rolleService.getServiceProviderZugriffList(
+                    PERSON_ID,
+                );
                 expect(result).not.toBeNull();
             });
         });
         describe('when ServiceProviderZugriff does not exist', () => {
             it('should get an empty array ', async () => {
                 initServiceProviderTestFailEssentials();
-                const result: ServiceProviderZugriffDo<true>[] = await rolleService.getServiceProviderZugriffList(PERSON_ID);
+                const result: ServiceProviderZugriffDo<true>[] = await rolleService.getServiceProviderZugriffList(
+                    PERSON_ID,
+                );
                 expect(result).toHaveLength(0);
             });
         });
@@ -312,7 +316,9 @@ describe('RolleService', () => {
                 initServiceProviderTestSuccessEssentials();
                 const person: PersonDo<true> = DoFactory.createPerson(true);
                 personRepo.findByKeycloakUserId.mockResolvedValue(person);
-                const result: ServiceProviderDo<true>[] = await rolleService.getAvailableServiceProvidersByUserSub(PERSON_ID);
+                const result: ServiceProviderDo<true>[] = await rolleService.getAvailableServiceProvidersByUserSub(
+                    PERSON_ID,
+                );
                 expect(result).not.toBeNull();
             });
         });
@@ -320,7 +326,9 @@ describe('RolleService', () => {
             it('should get an empty array ', async () => {
                 initServiceProviderTestFailEssentials();
                 personRepo.findByKeycloakUserId.mockResolvedValue(null);
-                const result: ServiceProviderDo<true>[] = await rolleService.getAvailableServiceProvidersByUserSub(PERSON_ID);
+                const result: ServiceProviderDo<true>[] = await rolleService.getAvailableServiceProvidersByUserSub(
+                    PERSON_ID,
+                );
                 expect(result).toHaveLength(0);
             });
         });
