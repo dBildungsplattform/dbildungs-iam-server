@@ -35,4 +35,8 @@ export class PersonenkontextService {
 
         return { ok: true, value: personenkontexte };
     }
+
+    public async findPersonenkontexteById(id: string): Promise<Result<PersonenkontextDo<true>, DomainError>> {
+
+    }
 }

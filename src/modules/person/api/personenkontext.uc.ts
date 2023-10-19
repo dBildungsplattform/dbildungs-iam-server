@@ -53,4 +53,8 @@ export class PersonenkontextUc {
         );
         return personenkontexte;
     }
+
+    public findById(_id: string): Promise<Result<unknown, DomainError>> {
+        throw new Error('Method not implemented.');
+    }
 }
