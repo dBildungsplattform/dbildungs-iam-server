@@ -11,6 +11,7 @@ import {
 import { Public } from 'nest-keycloak-connect';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextByIdParams } from './personenkontext-by-id.params.js';
+import { PersonenkontextDetailedResponse } from './personenkontext-detailed.response.js';
 
 @Public()
 @ApiTags('personenkontexte')
@@ -25,8 +26,8 @@ export class PersonenkontextController {
     @ApiNotFoundResponse({ description: 'The personenkontext was not found.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
-    public async findById(@Param() params: PersonenkontextByIdParams): Promise<unknown> {
-        const result: unknown = await this.personenkontextUc.findById(params.personenKontextId);
+    public async findById(@Param() params: PersonenkontextByIdParams): Promise<PersonenkontextDetailedResponse> {
+        const result: PersonenkontextDetailedResponse = await this.personenkontextUc.findById(params.personenKontextId);
 
         return result;
     }
