@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BaseClient, Client, errors, Issuer, TokenSet } from 'openid-client';
+import { BaseClient, errors, Issuer, TokenSet } from 'openid-client';
 import { KeycloakClientError } from '../../../shared/error/index.js';
 import { UserAuthenticationFailedError } from '../../../shared/error/user-authentication-failed.error.js';
 import { KeycloakConfig } from '../../../shared/config/index.js';
@@ -16,7 +16,7 @@ export class LoginService {
 
     public async getTokenForUser(username: string, password: string): Promise<TokenSet> {
         try {
-            const client = await this.createKcClient();
+            const client: BaseClient = await this.createKcClient();
             return await client.grant({
                 grant_type: 'password',
                 username: username,
@@ -34,11 +34,10 @@ export class LoginService {
         const keycloakIssuer: Issuer = await Issuer.discover(
             this.kcConfig.BASE_URL + '/realms/' + this.kcConfig.REALM_NAME,
         );
-        const client: Client = new keycloakIssuer.Client({
+        return new keycloakIssuer.Client({
             client_id: this.kcConfig.CLIENT_ID,
             client_secret: this.kcConfig.CLIENT_SECRET,
             token_endpoint_auth_method: 'client_secret_basic',
         });
-        return client;
     }
 }

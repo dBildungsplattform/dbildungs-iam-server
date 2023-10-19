@@ -1,6 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HealthController } from './health.controller.js';
-import { HealthCheckService, HttpHealthIndicator, MikroOrmHealthIndicator } from '@nestjs/terminus';
+import {
+    HealthCheckService,
+    HealthIndicatorFunction,
+    HttpHealthIndicator,
+    MikroOrmHealthIndicator,
+} from '@nestjs/terminus';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { SqlEntityManager } from '@mikro-orm/postgresql';
 import { ConfigService } from '@nestjs/config';
@@ -60,9 +65,12 @@ describe('HealthController', () => {
         await controller.check();
 
         expect(healthCheckService.check).toHaveBeenCalled();
-        expect(healthCheckService.check.mock.lastCall![0]).toBeDefined();
+        const lastCallArguments: HealthIndicatorFunction[] | undefined = healthCheckService.check.mock.lastCall?.[0];
+        expect(lastCallArguments).toBeDefined();
 
-        await Promise.all(healthCheckService.check.mock.lastCall![0].map((hif) => hif.call(hif)));
+        if (lastCallArguments) {
+            await Promise.all(lastCallArguments.map((hif: HealthIndicatorFunction) => hif.call(hif)));
+        }
 
         expect(mikroOrmHealthIndicator.pingCheck).toHaveBeenCalled();
         expect(keycloakHealthIndicator.check).toHaveBeenCalled();
