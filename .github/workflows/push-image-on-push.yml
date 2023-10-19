@@ -41,6 +41,9 @@ jobs:
       packages: write
       security-events: write
       contents: read
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-to-ghcr-trivy-on-push.yaml@464a113d92f71479294351f078ee83aeb68b2694
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@1.0.0
     with:
-      image_name: dbildungs-iam-server
+      image_name: "dbildungs-iam-server"
+      container_registry: "ghcr.io"
+      tag_generation: "ticket_from_branch"
+      run_trivy_scan: true
