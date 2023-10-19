@@ -124,4 +124,27 @@ describe('PersonenkontextUc', () => {
             });
         });
     });
+
+    describe('findById', () => {
+        describe('when finding personenkontext with id', () => {
+            it('should return personenkontext', async () => {
+                const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+
+                personenkontextServiceMock.findById.mockResolvedValue({ ok: true, value: personenkontextDo });
+
+                await expect(personenkontextUc.findById(personenkontextDo.id)).resolves.not.toThrow();
+            });
+        });
+
+        describe('when NOT finding personenkontext with id', () => {
+            it('should throw domain error', async () => {
+                personenkontextServiceMock.findById.mockResolvedValue({
+                    ok: false,
+                    error: new EntityNotFoundError('Personenkontext'),
+                });
+
+                await expect(personenkontextUc.findById(faker.string.uuid())).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+    });
 });

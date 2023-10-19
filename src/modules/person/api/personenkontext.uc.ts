@@ -8,6 +8,7 @@ import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
+import { PersonenkontextDetailedResponse } from './personenkontext-detailed.response.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -54,7 +55,13 @@ export class PersonenkontextUc {
         return personenkontexte;
     }
 
-    public findById(_id: string): Promise<Result<unknown, DomainError>> {
-        throw new Error('Method not implemented.');
+    public async findById(id: string): Promise<PersonenkontextDetailedResponse> {
+        const result: Result<PersonenkontextDo<true>> = await this.personenkontextService.findById(id);
+
+        if (!result.ok) {
+            throw result.error;
+        }
+
+        return this.mapper.map(result.value, PersonenkontextDo, PersonenkontextDetailedResponse);
     }
 }
