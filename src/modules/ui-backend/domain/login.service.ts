@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Client, errors, Issuer, TokenSet } from 'openid-client';
+import {BaseClient, Client, errors, Issuer, TokenSet} from 'openid-client';
 import OPError = errors.OPError;
 import { KeycloakClientError } from '../../../shared/error/index.js';
 import { UserAuthenticationFailedError } from '../../../shared/error/user-authentication-failed.error.js';
@@ -16,14 +16,7 @@ export class LoginService {
 
     public async getTokenForUser(username: string, password: string): Promise<TokenSet> {
         try {
-            const keycloakIssuer: Issuer = await Issuer.discover(
-                this.kcConfig.BASE_URL + '/realms/' + this.kcConfig.REALM_NAME,
-            );
-            const client: Client = new keycloakIssuer.Client({
-                client_id: this.kcConfig.CLIENT_ID,
-                client_secret: this.kcConfig.CLIENT_SECRET,
-                token_endpoint_auth_method: 'client_secret_basic',
-            });
+            const client = await this.createKcClient();
             return await client.grant({
                 grant_type: 'password',
                 username: username,
@@ -35,5 +28,17 @@ export class LoginService {
             }
             throw new KeycloakClientError('KeyCloak service did not respond.');
         }
+    }
+
+    public async createKcClient(): Promise<BaseClient> {
+        const keycloakIssuer: Issuer = await Issuer.discover(
+            this.kcConfig.BASE_URL + '/realms/' + this.kcConfig.REALM_NAME,
+        );
+        const client: Client = new keycloakIssuer.Client({
+            client_id: this.kcConfig.CLIENT_ID,
+            client_secret: this.kcConfig.CLIENT_SECRET,
+            token_endpoint_auth_method: 'client_secret_basic',
+        });
+        return client;
     }
 }
