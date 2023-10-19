@@ -20,11 +20,15 @@ jobs:
     with:
       node_version: '18'
       deploy_stage: 'dev'
+    permissions:
+      contents: read
   nest_test_and_sonarcloud:
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@a38667227bf6db55e0b2d3ec49022e069a1615d7
     with:
       node_version: '18'
       deploy_stage: 'dev'
+    permissions:
+      contents: read
     secrets: inherit
 
   build_and_push:
