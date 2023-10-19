@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import {BaseClient, Client, errors, Issuer, TokenSet} from 'openid-client';
-import OPError = errors.OPError;
+import { BaseClient, Client, errors, Issuer, TokenSet } from 'openid-client';
 import { KeycloakClientError } from '../../../shared/error/index.js';
 import { UserAuthenticationFailedError } from '../../../shared/error/user-authentication-failed.error.js';
 import { KeycloakConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
+import OPError = errors.OPError;
 
 @Injectable()
 export class LoginService {
