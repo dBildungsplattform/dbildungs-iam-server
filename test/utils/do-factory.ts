@@ -5,8 +5,18 @@ import { OrganisationsTyp } from '../../src/modules/organisation/domain/organisa
 import { UserDo } from '../../src/modules/keycloak-administration/domain/user.do.js';
 import { PersonenkontextDo } from '../../src/modules/person/domain/personenkontext.do.js';
 import { Rolle, Jahrgangsstufe, Personenstatus } from '../../src/modules/person/domain/personenkontext.enums.js';
+import { DoBase } from '../../src/shared/types/do-base.js';
 
 export class DoFactory {
+    public static createMany<T extends DoBase<boolean>>(
+        n: number,
+        generator: (withId: boolean, props?: Partial<T>) => T,
+        withId?: P,
+        props?: Partial<T>,
+    ): T[] {
+        return Array.from({ length: n }, (_v: unknown, _k: number) => generator(withId, props));
+    }
+
     public static createPerson<WasPersisted extends boolean>(
         withId: WasPersisted,
         props?: Partial<PersonDo<false>>,

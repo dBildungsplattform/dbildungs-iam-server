@@ -152,4 +152,12 @@ describe('PersonenkontextRepo', () => {
             });
         });
     });
+
+    describe('findById', () => {
+        describe('when finding personenkontext by id', () => {
+            it('should return personenkontext', () => {
+                const entities: PersonenkontextEntity[] = DoFactory.createMany(10, DoFactory.createPersonenkontext);
+            })
+        })
+    })
 });

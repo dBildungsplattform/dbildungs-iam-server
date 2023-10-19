@@ -28,6 +28,7 @@ import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-organisation.dto.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
+import { PersonenkontextDetailedResponse } from './personenkontext-detailed.response.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
     convert(source: PersonGender): Gender {
@@ -283,10 +284,12 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 CreatePersonenkontextDto,
                 forMember((dest: CreatePersonenkontextDto) => dest.personId, ignore()),
             );
+
             createMap(
                 mapper,
                 CreatePersonenkontextDto,
                 PersonenkontextDo<false>,
+                forMember((dest: PersonenkontextDo<false>) => dest.id, ignore()),
                 forMember((dest: PersonenkontextDo<false>) => dest.mandant, ignore()),
                 forMember((dest: PersonenkontextDo<false>) => dest.organisation, ignore()),
                 forMember((dest: PersonenkontextDo<false>) => dest.loeschungZeitpunkt, ignore()),
@@ -322,6 +325,10 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonenkontextDo<boolean>) => dest.loeschungZeitpunkt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.revision, ignore()),
                 forMember(
+                    (dest: PersonenkontextDo<boolean>) => dest.id,
+                    mapFrom((src: FindPersonenkontextDto) => src.personId),
+                ),
+                forMember(
                     (dest: PersonenkontextDo<boolean>) => dest.sichtfreigabe,
                     convertUsing(
                         personVisibilityToBooleanConverter,
@@ -337,6 +344,13 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     (dest: PersonenkontextResponse) => dest.id,
                     mapFrom((src: PersonenkontextDo<true>) => src.id),
                 ),
+            );
+
+            createMap(
+                mapper,
+                PersonenkontextDo,
+                PersonenkontextDetailedResponse,
+                forMember((dest: PersonenkontextDetailedResponse) => dest.loeschung, ignore()),
             );
         };
     }

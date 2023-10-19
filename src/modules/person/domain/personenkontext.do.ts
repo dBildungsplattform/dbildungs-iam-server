@@ -16,7 +16,7 @@ export class PersonenkontextDo<WasPersisted extends boolean> implements DoBase<W
     @AutoMap()
     public updatedAt!: Persisted<Date, WasPersisted>;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public id!: Persisted<string, WasPersisted>;
 
     @AutoMap()
