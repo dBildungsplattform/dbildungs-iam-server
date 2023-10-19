@@ -6,6 +6,7 @@ import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
+    exports: [LoginService],
     imports: [],
     providers: [KeycloakAdminClient, ConfigService, LoginService, NewLoginService],
     controllers: [LoginController],
