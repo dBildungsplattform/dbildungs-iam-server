@@ -3,7 +3,7 @@ import { LoginService } from '../ui-backend/domain/login.service.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { BaseClient } from 'openid-client';
 import { KeycloakHealthIndictor } from './keycloak.health-indicator.js';
-import {HealthIndicatorResult, HealthIndicatorStatus} from '@nestjs/terminus';
+import { HealthIndicatorResult, HealthIndicatorStatus } from '@nestjs/terminus';
 
 describe('Keycloak health indicator', () => {
     const loginService: DeepMocked<LoginService> = createMock<LoginService>();
@@ -31,11 +31,13 @@ describe('Keycloak health indicator', () => {
     });
 
     it('should report a failed acquisition of a KC-Client as the service being down and showing the error message in the status', async () => {
-        loginService.createKcClient.mockRejectedValueOnce(new Error("Because reasons"));
+        loginService.createKcClient.mockRejectedValueOnce(new Error('Because reasons'));
 
         const kchi = module.get<KeycloakHealthIndictor>(KeycloakHealthIndictor);
 
-        const checkResult: { status: HealthIndicatorStatus, [options:string]: any } | undefined = await kchi.check().then(r => r['Keycloak']);
+        const checkResult: { status: HealthIndicatorStatus; [options: string]: any } | undefined = await kchi
+            .check()
+            .then((r) => r['Keycloak']);
         expect(checkResult).toBeDefined();
         expect(checkResult!.status).toBe('down');
         expect(checkResult!['message']).toBe('Keycloak does not seem to be up: Because reasons');
@@ -46,7 +48,9 @@ describe('Keycloak health indicator', () => {
 
         const kchi = module.get<KeycloakHealthIndictor>(KeycloakHealthIndictor);
 
-        const checkResult: { status: HealthIndicatorStatus, [options:string]: any } | undefined = await kchi.check().then(r => r['Keycloak']);
+        const checkResult: { status: HealthIndicatorStatus; [options: string]: any } | undefined = await kchi
+            .check()
+            .then((r) => r['Keycloak']);
         expect(checkResult).toBeDefined();
         expect(checkResult!.status).toBe('down');
         expect(checkResult!['message']).toBe('Keycloak does not seem to be up and there is no error message available');
