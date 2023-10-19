@@ -5,9 +5,6 @@ on:
     branches-ignore:
       - 'main'
 
-permissions:
-    contents: read
-
 jobs:
   codeql_analyze:
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@3e2c4d2d0277d5621dcb60d85273a358dac9ac90
@@ -37,7 +34,6 @@ jobs:
       - nest_lint
       - nest_test_and_sonarcloud
     permissions:
-      actions: read
       packages: write
       security-events: write
       contents: read
