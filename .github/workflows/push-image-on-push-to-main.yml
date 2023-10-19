@@ -1,0 +1,20 @@
+name: 'Image to GHCR on push to main'
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  build_and_push:
+    permissions:
+      packages: write
+      security-events: write
+      contents: read
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@1.0.0
+    with:
+      image_name: "dbildungs-iam-server"
+      container_registry: "ghcr.io"
+      tag_generation: "commit_hash"
+      add_latest_tag: true
+      run_trivy_scan: false
