@@ -17,9 +17,11 @@ import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { OrganisationByIdParams } from './organisation-by-id.params.js';
+import { Public } from 'nest-keycloak-connect';
 
 @ApiTags('organisation')
 @Controller({ path: 'organisation' })
+@Public()
 export class OrganisationController {
     public constructor(
         private readonly uc: OrganisationUc,

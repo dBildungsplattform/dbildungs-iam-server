@@ -26,9 +26,11 @@ import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
+import { Public } from 'nest-keycloak-connect';
 
 @ApiTags('person')
 @Controller({ path: 'person' })
+@Public()
 export class PersonController {
     public constructor(
         private readonly personUc: PersonUc,
