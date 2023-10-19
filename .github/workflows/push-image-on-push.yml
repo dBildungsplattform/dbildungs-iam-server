@@ -10,15 +10,15 @@ permissions:
 
 jobs:
   codeql_analyze:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@0213b3a46bd4c9dce62d340029bb6d07e8310791
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@715caa7b10a13dd70c951239a67c29d1512cff3d
     permissions:
       actions: read
       contents: read
       security-events: write
   nest_lint:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@0213b3a46bd4c9dce62d340029bb6d07e8310791
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@715caa7b10a13dd70c951239a67c29d1512cff3d
   nest_test_and_sonarcloud:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@0213b3a46bd4c9dce62d340029bb6d07e8310791
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@715caa7b10a13dd70c951239a67c29d1512cff3d
     secrets: inherit
 
   build_and_push:
