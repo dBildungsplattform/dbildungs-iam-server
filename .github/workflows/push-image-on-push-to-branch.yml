@@ -7,19 +7,19 @@ on:
 
 jobs:
   codeql_analyze:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@3e2c4d2d0277d5621dcb60d85273a358dac9ac90
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@1.1.0
     permissions:
       actions: read
       contents: read
       security-events: write
   nest_lint:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@3e2c4d2d0277d5621dcb60d85273a358dac9ac90
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@1.1.0
     with:
       node_version: '18'
     permissions:
       contents: read
   nest_test_and_sonarcloud:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@3e2c4d2d0277d5621dcb60d85273a358dac9ac90
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@1.1.0
     with:
       node_version: '18'
       deploy_stage: 'dev'
