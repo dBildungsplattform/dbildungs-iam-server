@@ -1,4 +1,4 @@
-name: 'Image to GHCR on push'
+name: 'Image to GHCR on push to branch'
 
 on:
   push:
