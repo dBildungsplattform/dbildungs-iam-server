@@ -15,7 +15,8 @@ import { PersonUc } from '../api/person.uc.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
-import { PersonenQueryParam } from './personen-query.param.js';
+import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { PersonenQueryParams } from './personen-query.param.js';
 import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
@@ -49,7 +50,7 @@ export class PersonController {
     }
 
     @Get(':personId')
-    @ApiCreatedResponse({ description: 'The person was successfully pulled.' })
+    @ApiOkResponse({ description: 'The person was successfully returned.' })
     @ApiBadRequestResponse({ description: 'Person ID is required' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the person.' })
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
@@ -98,32 +99,41 @@ export class PersonController {
         @Param() pathParams: PersonByIdParams,
         @Query() queryParams: PersonenkontextQueryParams,
     ): Promise<PersonenkontextResponse[]> {
-        const findePersonenkontextDto: FindPersonenkontextDto = this.mapper.map(
+        const findPersonenkontextDto: FindPersonenkontextDto = this.mapper.map(
             queryParams,
             PersonenkontextQueryParams,
             FindPersonenkontextDto,
         );
-        findePersonenkontextDto.personId = pathParams.personId;
+
+        findPersonenkontextDto.personId = pathParams.personId;
 
         const personenkontexte: PersonenkontextResponse[] = await this.personenkontextUc.findAll(
-            findePersonenkontextDto,
+            findPersonenkontextDto,
         );
 
         return personenkontexte;
     }
 
     @Get()
-    @ApiCreatedResponse({ description: 'The persons were successfully pulled.' })
+    @ApiOkResponse({
+        description: 'The persons were successfully returned.',
+        type: [PersonendatensatzResponse],
+        headers: PagingHeadersObject,
+    })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
-    public async findPersons(@Query() queryParams: PersonenQueryParam): Promise<PersonendatensatzResponse[]> {
-        const personendatensatzDto: FindPersonendatensatzDto = this.mapper.map(
+    public async findPersons(
+        @Query() queryParams: PersonenQueryParams,
+    ): Promise<PagedResponse<PersonendatensatzResponse>> {
+        const personDatensatzDTO: FindPersonendatensatzDto = this.mapper.map(
             queryParams,
-            PersonenQueryParam,
+            PersonenQueryParams,
             FindPersonendatensatzDto,
         );
-        const persons: PersonendatensatzResponse[] = await this.personUc.findAll(personendatensatzDto);
-        return persons;
+        const persons: Paged<PersonendatensatzResponse> = await this.personUc.findAll(personDatensatzDTO);
+        const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse(persons);
+
+        return response;
     }
 }

@@ -1,10 +1,10 @@
 import { plainToInstance } from 'class-transformer';
 import 'reflect-metadata';
-import { PersonenQueryParam, SichtfreigabeType } from './personen-query.param.js';
+import { PersonenQueryParams, SichtfreigabeType } from './personen-query.param.js';
 import { faker } from '@faker-js/faker';
 
 describe('PersonenQueryParam', () => {
-    const referenceParams: PersonenQueryParam = {
+    const referenceParams: PersonenQueryParams = {
         sichtfreigabe: SichtfreigabeType.JA,
         familienname: faker.person.lastName(),
         referrer: 'referrer',
@@ -18,8 +18,9 @@ describe('PersonenQueryParam', () => {
             referrer: referenceParams.referrer,
             vorname: referenceParams.vorname,
         };
-        const mappedParams: PersonenQueryParam = plainToInstance(PersonenQueryParam, incomingParams, {});
-        expect(mappedParams).toBeInstanceOf(PersonenQueryParam);
+        const mappedParams: PersonenQueryParams = plainToInstance(PersonenQueryParams, incomingParams, {});
+
+        expect(mappedParams).toBeInstanceOf(PersonenQueryParams);
         expect(mappedParams).toEqual(referenceParams);
     });
 });
