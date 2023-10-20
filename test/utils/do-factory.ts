@@ -103,7 +103,7 @@ export class DoFactory {
         props?: Partial<ServiceProviderZugriffDo<WasPersisted>>,
     ): ServiceProviderZugriffDo<WasPersisted> {
         const serviceProviderZugriff: ServiceProviderZugriffDo<false> = {
-            serviceProvider: faker.string.numeric(),
+            serviceProvider: faker.lorem.word(),
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,

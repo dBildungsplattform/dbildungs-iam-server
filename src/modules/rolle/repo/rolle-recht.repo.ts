@@ -3,7 +3,7 @@ import { getMapperToken } from '@automapper/nestjs';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuweisung.do.js';
-import { RolleRechtEntity } from '../../../persistence/rolle-recht.entity.js';
+import { RolleRechtEntity } from '../entity/rolle-recht.entity.js';
 import { RolleRechtDo } from '../domain/rolle-recht.do.js';
 import { ServiceProviderZugriffEntity } from '../entity/service-provider-zugriff.entity.js';
 import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';

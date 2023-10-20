@@ -49,6 +49,12 @@ describe('RolleBerechtigungsZuweisungMapperProfile', () => {
             expect(() =>
                 sut.map(rbz, RolleBerechtigungsZuweisungDo, RolleBerechtigungsZuweisungEntity),
             ).not.toThrowError(MappingError);
+            const rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungEntity = sut.map(
+                rbz,
+                RolleBerechtigungsZuweisungDo,
+                RolleBerechtigungsZuweisungEntity,
+            );
+            expect(rolleBerechtigungsZuweisung.rolleRecht).not.toBeNull();
         });
     });
 });

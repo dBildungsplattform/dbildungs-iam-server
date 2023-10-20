@@ -1,8 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
-import { createMap, forMember, mapFrom, Mapper, MappingProfile } from '@automapper/core';
+import { convertUsing, createMap, forMember, Mapper, MappingProfile } from '@automapper/core';
 import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuweisung.do.js';
 import { RolleBerechtigungsZuweisungEntity } from '../entity/rolle-berechtigungs-zuweisung.entity.js';
+import { SpzdoRollerechtentityConverter } from './spzdo-rollerechtentity.converter.js';
 
 @Injectable()
 export class RolleBerechtigungsZuweisungMapperProfile extends AutomapperProfile {
@@ -16,27 +17,15 @@ export class RolleBerechtigungsZuweisungMapperProfile extends AutomapperProfile 
                 mapper,
                 RolleBerechtigungsZuweisungDo,
                 RolleBerechtigungsZuweisungEntity,
-                /*    forMember(
-                    (dest: RolleBerechtigungsZuweisungEntity) => dest.rolleRecht,
-                    ignore()));*/
                 forMember(
                     (dest: RolleBerechtigungsZuweisungEntity) => dest.rolleRecht,
-                    mapFrom((src: RolleBerechtigungsZuweisungDo<boolean>) => src.rolleRecht),
+                    convertUsing(
+                        new SpzdoRollerechtentityConverter(),
+                        (source: RolleBerechtigungsZuweisungDo<boolean>) => source.rolleRecht,
+                    ),
                 ),
             );
-            createMap(
-                mapper,
-                RolleBerechtigungsZuweisungEntity,
-                RolleBerechtigungsZuweisungDo,
-                forMember(
-                    (dest: RolleBerechtigungsZuweisungDo<boolean>) => dest.id,
-                    mapFrom((src: RolleBerechtigungsZuweisungEntity) => src.id),
-                ),
-                forMember(
-                    (dest: RolleBerechtigungsZuweisungDo<boolean>) => dest.rolleRecht,
-                    mapFrom((src: RolleBerechtigungsZuweisungEntity) => src.rolleRecht),
-                ),
-            );
+            createMap(mapper, RolleBerechtigungsZuweisungEntity, RolleBerechtigungsZuweisungDo);
         };
     }
 }

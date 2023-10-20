@@ -2,7 +2,6 @@ import { AutoMap } from '@automapper/classes';
 import { DoBase } from '../../../shared/types/index.js';
 import { RolleRechtDo } from './rolle-recht.do.js';
 import { RolleDo } from './rolle.do.js';
-import { ServiceProviderZugriffDo } from './service-provider-zugriff.do.js';
 
 export class RolleBerechtigungsZuweisungDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
     /**
@@ -11,13 +10,13 @@ export class RolleBerechtigungsZuweisungDo<WasPersisted extends boolean> impleme
     // eslint-disable-next-line @typescript-eslint/no-useless-constructor, @typescript-eslint/no-empty-function
     public constructor() {}
 
-    @AutoMap()
+    @AutoMap(() => String)
     public id!: Persisted<string, WasPersisted>;
 
-    @AutoMap()
+    @AutoMap(() => Date)
     public createdAt!: Persisted<Date, WasPersisted>;
 
-    @AutoMap()
+    @AutoMap(() => Date)
     public updatedAt!: Persisted<Date, WasPersisted>;
 
     @AutoMap()
@@ -26,10 +25,10 @@ export class RolleBerechtigungsZuweisungDo<WasPersisted extends boolean> impleme
     @AutoMap()
     public validForAdministrativeParents!: boolean;
 
-    @AutoMap(() => ServiceProviderZugriffDo<boolean>)
+    @AutoMap(() => RolleRechtDo)
     public rolleRecht!: RolleRechtDo<boolean>;
 
-    @AutoMap()
+    @AutoMap(() => RolleDo)
     public rolle!: RolleDo<boolean>;
 
     /**

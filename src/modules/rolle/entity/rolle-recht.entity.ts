@@ -1,4 +1,4 @@
-import { TimestampedEntity } from './timestamped.entity.js';
+import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { Entity } from '@mikro-orm/core';
 
 @Entity({

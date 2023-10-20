@@ -1,5 +1,5 @@
 import { Entity, Property } from '@mikro-orm/core';
-import { RolleRechtEntity } from '../../../persistence/rolle-recht.entity.js';
+import { RolleRechtEntity } from './rolle-recht.entity.js';
 import { AutoMap } from '@automapper/classes';
 
 @Entity({ discriminatorColumn: 'type', discriminatorValue: 'serviceProviderZugriff' })
