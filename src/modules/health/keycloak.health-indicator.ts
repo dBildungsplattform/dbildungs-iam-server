@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { LoginService } from '../ui-backend/domain/login.service.js';
 
 @Injectable()
-export class KeycloakHealthIndictor extends HealthIndicator {
+export class KeycloakHealthIndicator extends HealthIndicator {
     public constructor(private loginService: LoginService) {
         super();
     }
