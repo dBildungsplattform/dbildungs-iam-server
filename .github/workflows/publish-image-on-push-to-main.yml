@@ -5,15 +5,16 @@ on:
     branches:
       - 'main'
 
+concurrency:
+  group: environment-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build_and_push:
     permissions:
       packages: write
       security-events: write
       contents: read
-    concurrency:
-      group: environment-${{ github.ref }}
-      cancel-in-progress: true
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@1.0.0
     with:
       image_name: "dbildungs-iam-server"
