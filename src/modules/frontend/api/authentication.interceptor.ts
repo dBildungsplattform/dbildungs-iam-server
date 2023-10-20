@@ -14,7 +14,7 @@ export class AuthenticationInterceptor implements NestInterceptor {
         const ctx: HttpArgumentsHost = context.switchToHttp();
         const session: SessionData = ctx.getRequest<FastifyRequest>().session as SessionData;
 
-        const token: string | undefined = session.access_token;
+        const token: string | undefined = session.get('access_token');
 
         if (token) {
             this.httpService.axiosRef.defaults.headers.common.Authorization = `Bearer ${token}`;

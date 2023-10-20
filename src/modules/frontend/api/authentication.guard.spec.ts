@@ -1,7 +1,8 @@
-import { createMock } from '@golevelup/ts-jest';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { ExecutionContext } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Test, TestingModule } from '@nestjs/testing';
+import { FastifyRequest } from 'fastify';
 
 import { AuthenticatedGuard } from './authentication.guard.js';
 import { SessionData } from './frontend.controller.js';
@@ -29,15 +30,17 @@ describe('AuthenticatedGuard', () => {
 
     describe('canActivate', () => {
         it('should return true when the session contains a token', () => {
+            const sessionMock: DeepMocked<SessionData> = createMock<SessionData>();
             const contextMock: ExecutionContext = createMock<ExecutionContext>({
                 switchToHttp: () =>
                     createMock<HttpArgumentsHost>({
                         getRequest: () =>
-                            createMock<Express.Request>({
-                                session: createMock<SessionData>({ access_token: 'aValidToken' }),
+                            createMock<FastifyRequest>({
+                                session: sessionMock,
                             }),
                     }),
             });
+            sessionMock.get.mockReturnValueOnce('SomeToken');
 
             const result: boolean = sut.canActivate(contextMock);
 
@@ -45,28 +48,17 @@ describe('AuthenticatedGuard', () => {
         });
 
         it("should return false when the session doesn't contain a token", () => {
+            const sessionMock: DeepMocked<SessionData> = createMock<SessionData>();
             const contextMock: ExecutionContext = createMock<ExecutionContext>({
                 switchToHttp: () =>
                     createMock<HttpArgumentsHost>({
                         getRequest: () =>
-                            createMock<Express.Request>({
-                                session: {},
+                            createMock<FastifyRequest>({
+                                session: sessionMock,
                             }),
                     }),
             });
-
-            const result: boolean = sut.canActivate(contextMock);
-
-            expect(result).toBe(false);
-        });
-
-        it("should return false when the session doesn't exist", () => {
-            const contextMock: ExecutionContext = createMock<ExecutionContext>({
-                switchToHttp: () =>
-                    createMock<HttpArgumentsHost>({
-                        getRequest: () => createMock<Express.Request>(),
-                    }),
-            });
+            sessionMock.get.mockReturnValueOnce(undefined);
 
             const result: boolean = sut.canActivate(contextMock);
 

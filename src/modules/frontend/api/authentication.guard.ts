@@ -9,6 +9,6 @@ export class AuthenticatedGuard implements CanActivate {
     public canActivate(context: ExecutionContext): boolean {
         const request: FastifyRequest = context.switchToHttp().getRequest<FastifyRequest>();
         const session: SessionData = request.session as SessionData;
-        return !!session?.access_token;
+        return !!session.get('access_token');
     }
 }

@@ -1,5 +1,14 @@
 import { Session as FastifySession } from '@fastify/secure-session';
-import { Body, Controller, HttpException, Post, Session, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    HttpException,
+    InternalServerErrorException,
+    Post,
+    Session,
+    UseGuards,
+    UseInterceptors,
+} from '@nestjs/common';
 import { ApiAcceptedResponse, ApiTags } from '@nestjs/swagger';
 import { AxiosError, AxiosResponse } from 'axios';
 import { TokenSet } from 'openid-client';
@@ -28,8 +37,11 @@ export class FrontendController {
             tap((response: AxiosResponse<TokenSet>): void => {
                 session.set('access_token', response.data.access_token);
             }),
-            catchError((e: AxiosError) => {
-                throw new HttpException(e.response?.data ?? {}, e.response?.status ?? 500);
+            catchError((e: AxiosError<string | Record<string, unknown>>) => {
+                if (e.response) {
+                    throw new HttpException(e.response.data, e.response.status);
+                }
+                throw new InternalServerErrorException(e);
             }),
             map(() => undefined),
         );

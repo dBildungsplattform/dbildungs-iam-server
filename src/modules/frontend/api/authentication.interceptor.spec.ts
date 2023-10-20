@@ -4,6 +4,7 @@ import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosInstance } from 'axios';
+import { FastifyRequest } from 'fastify';
 import { AuthenticationInterceptor } from './authentication.interceptor.js';
 import { SessionData } from './frontend.controller.js';
 
@@ -48,17 +49,18 @@ describe('AuthenticatedGuard', () => {
     describe('intercept', () => {
         it('should set the default authorization header', () => {
             const dummyToken: string = 'JWT_Token_Dummy';
-
+            const sessionMock: DeepMocked<SessionData> = createMock<SessionData>();
             const contextMock: ExecutionContext = createMock<ExecutionContext>({
                 switchToHttp: () =>
                     createMock<HttpArgumentsHost>({
                         getRequest: () =>
-                            createMock<Express.Request>({
-                                session: createMock<SessionData>({ access_token: dummyToken }),
+                            createMock<FastifyRequest>({
+                                session: sessionMock,
                             }),
                     }),
             });
             const next: CallHandler = createMock<CallHandler>();
+            sessionMock.get.mockReturnValueOnce(dummyToken);
 
             sut.intercept(contextMock, next);
 
