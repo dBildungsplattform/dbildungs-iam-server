@@ -12,12 +12,18 @@ jobs:
       actions: read
       contents: read
       security-events: write
+    concurrency:
+      group: environment-${{ github.ref }}
+      cancel-in-progress: true
   nest_lint:
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@1.1.0
     with:
       node_version: '18'
     permissions:
       contents: read
+    concurrency:
+      group: environment-${{ github.ref }}
+      cancel-in-progress: true
   nest_test_and_sonarcloud:
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@1.1.0
     with:
@@ -25,6 +31,9 @@ jobs:
       deploy_stage: 'dev'
     permissions:
       contents: read
+    concurrency:
+      group: environment-${{ github.ref }}
+      cancel-in-progress: true
     secrets: inherit
 
   build_and_push:
@@ -37,6 +46,9 @@ jobs:
       packages: write
       security-events: write
       contents: read
+    concurrency:
+      group: environment-${{ github.ref }}
+      cancel-in-progress: true
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@1.0.0
     with:
       image_name: "dbildungs-iam-server"
