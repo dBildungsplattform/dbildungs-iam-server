@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { DomainError, EntityNotFoundError, PersonAlreadyExistsError } from '../../../shared/error/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonRepo } from '../persistence/person.repo.js';
+import { PersonScope } from '../persistence/person.scope.js';
+import { Paged } from '../../../shared/paging/paged.js';
+import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 
 @Injectable()
 export class PersonService {
@@ -26,8 +29,26 @@ export class PersonService {
         return { ok: false, error: new EntityNotFoundError(`Person with the following ID ${id} does not exist`) };
     }
 
-    public async findAllPersons(personDo: PersonDo<false>): Promise<PersonDo<true>[]> {
-        const persons: PersonDo<true>[] = await this.personRepo.findAll(personDo);
-        return persons;
+    public async findAllPersons(
+        personDo: Partial<PersonDo<false>>,
+        offset?: number,
+        limit?: number,
+    ): Promise<Paged<PersonDo<true>>> {
+        const scope: PersonScope = new PersonScope()
+            .findBy({
+                firstName: personDo.firstName,
+                lastName: personDo.lastName,
+                birthDate: personDo.birthDate,
+            })
+            .sortBy('firstName', ScopeOrder.ASC)
+            .paged(offset, limit);
+        const [persons, total]: Counted<PersonDo<true>> = await this.personRepo.findBy(scope);
+
+        return {
+            total,
+            offset: offset ?? 0,
+            limit: limit ?? total,
+            items: persons,
+        };
     }
 }
