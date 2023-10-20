@@ -8,7 +8,7 @@ on:
 concurrency:
   group: environment-${{ github.ref }}
   cancel-in-progress: true
-
+#concurrency test
 jobs:
   codeql_analyze:
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@1.1.0
