@@ -1,6 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces';
+import { FastifyRequest } from 'fastify';
 import { Observable } from 'rxjs';
 
 import { SessionData } from './frontend.controller.js';
@@ -11,7 +12,7 @@ export class AuthenticationInterceptor implements NestInterceptor {
 
     public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
         const ctx: HttpArgumentsHost = context.switchToHttp();
-        const session: SessionData = ctx.getRequest<Express.Request>().session as SessionData;
+        const session: SessionData = ctx.getRequest<FastifyRequest>().session as SessionData;
 
         const token: string | undefined = session.access_token;
 
