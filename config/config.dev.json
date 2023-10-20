@@ -5,7 +5,7 @@
     "FRONTEND": {
         "PORT": 9091,
         "SECURE_COOKIE": false,
-        "SESSION_SECRET": "DevelopmentSecret",
+        "SESSION_KEY": "0000000000000000000000000000000000000000000000000000000000000000",
         "BACKEND_ADDRESS": "http://127.0.0.1:9090"
     },
     "DB": {

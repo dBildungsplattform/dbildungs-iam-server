@@ -30,8 +30,7 @@ async function bootstrap(): Promise<void> {
     const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
 
     await app.register(secureSession, {
-        secret: 'averylogphrasebiggerthanthirtytwochars',
-        salt: 'mq9hDxBVDbspDR6n',
+        key: Buffer.from(frontendConfig.SESSION_KEY, 'hex'),
         cookie: {
             secure: frontendConfig.SECURE_COOKIE,
         },
