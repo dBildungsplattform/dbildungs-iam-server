@@ -23,7 +23,7 @@ jobs:
           fileName: 'secrets.json'
           fileDir: './config/'
           # These are placeholder secrets without any significance
-          encodedString: ewogICAgIkRCIjogewogICAgICAgICJTRUNSRVQiOiAiVmVyeSBoaWRkZW4gc2VjcmV0IgogICAgfSwKICAgICJLRVlDTE9BSyI6IHsKICAgICAgICAiQURNSU5fU0VDUkVUIjogIkFkbWluLUNsaWVudCBTZWNyZXQiLAogICAgICAgICJDTElFTlRfU0VDUkVUIjogIkNsaWVudCBTZWNyZXQiCiAgICB9LAogICAgIkZST05URU5EIjogewogICAgICAgICJTRVNTSU9OX1NFQ1JFVCI6ICJUZXN0aW5nU2VjcmV0IgogICAgfQp9
+          encodedString: ewogICAgIkRCIjogewogICAgICAgICJTRUNSRVQiOiAiVmVyeSBoaWRkZW4gc2VjcmV0IgogICAgfSwKICAgICJLRVlDTE9BSyI6IHsKICAgICAgICAiQURNSU5fU0VDUkVUIjogIkFkbWluLUNsaWVudCBTZWNyZXQiLAogICAgICAgICJDTElFTlRfU0VDUkVUIjogIkNsaWVudCBTZWNyZXQiCiAgICB9Cn0=
       - name: Setup node
         uses: actions/setup-node@v3
         with:
