@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { AutoMap } from '@automapper/classes';
+import { PagedQueryParams } from '../../../shared/paging/index.js';
 
 export enum SichtfreigabeType {
     JA = 'ja',
     NEIN = 'nein',
 }
 
-export class PersonenQueryParam {
+export class PersonenQueryParams extends PagedQueryParams {
     @AutoMap()
     @IsOptional()
     @IsString()
@@ -21,7 +21,6 @@ export class PersonenQueryParam {
     @AutoMap()
     @IsOptional()
     @IsString()
-    @Expose({ name: 'familienname' })
     @ApiProperty({
         name: 'familienname',
         required: false,
@@ -32,7 +31,6 @@ export class PersonenQueryParam {
     @AutoMap()
     @IsOptional()
     @IsString()
-    @Expose({ name: 'vorname' })
     @ApiProperty({
         name: 'vorname',
         required: false,
@@ -43,7 +41,6 @@ export class PersonenQueryParam {
     @AutoMap()
     @IsOptional()
     @IsEnum(SichtfreigabeType)
-    @Expose({ name: 'sichtfreigabe' })
     @ApiProperty({
         name: 'sichtfreigabe',
         enum: SichtfreigabeType,

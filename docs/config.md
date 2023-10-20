@@ -35,8 +35,10 @@ The config file contains all static, non-secret information we need to start and
   },
   "KEYCLOAK": {
     "BASE_URL": "<URL of keycloak>",
-    "REALM_NAME": "<name of the realm>",
-    "CLIENT_ID": "<id of the client>"
+    "ADMIN_REALM_NAME": "<name of the admin realm>",
+    "ADMIN_CLIENT_ID": "<id of the admin client>",
+    "REALM_NAME": "<name of the client realm>",
+    "CLIENT_ID": "<id of the client>",
   }
 }
 ```
@@ -59,7 +61,8 @@ There are however a few special rules applied to them:
         "SECRET": "<here goes your secret>"
     },
     "KEYCLOAK": {
-        "SECRET": "<secret token for the client>"
+        "ADMIN_SECRET": "<secret token for the admin client>",
+        "CLIENT_SECRET": "<secret token for the client>",
     }
 }
 ```
