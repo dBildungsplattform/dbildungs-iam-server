@@ -32,7 +32,6 @@ jobs:
     secrets: inherit
 
   build_and_push:
-    if: ${{ !failure() }}
     needs:
       - codeql_analyze
       - nest_lint
