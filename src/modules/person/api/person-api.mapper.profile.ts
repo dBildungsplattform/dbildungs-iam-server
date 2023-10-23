@@ -17,7 +17,7 @@ import { Gender, TrustLevel } from '../domain/person.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
-import { PersonenQueryParam, SichtfreigabeType } from './personen-query.param.js';
+import { PersonenQueryParams, SichtfreigabeType } from './personen-query.param.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
@@ -227,19 +227,19 @@ export class PersonApiMapperProfile extends AutomapperProfile {
             );
             createMap(
                 mapper,
-                PersonenQueryParam,
+                PersonenQueryParams,
                 FindPersonendatensatzDto,
                 forMember(
                     (dest: FindPersonendatensatzDto) => dest.vorname,
-                    mapFrom((src: PersonenQueryParam) => src.vorname),
+                    mapFrom((src: PersonenQueryParams) => src.vorname),
                 ),
                 forMember(
                     (dest: FindPersonendatensatzDto) => dest.familienname,
-                    mapFrom((src: PersonenQueryParam) => src.familienname),
+                    mapFrom((src: PersonenQueryParams) => src.familienname),
                 ),
                 forMember(
                     (dest: FindPersonendatensatzDto) => dest.referrer,
-                    mapFrom((src: PersonenQueryParam) => src.referrer),
+                    mapFrom((src: PersonenQueryParams) => src.referrer),
                 ),
             );
             createMap(

@@ -9,7 +9,7 @@ import { PersonUc } from './person.uc.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonResponse } from './person.response.js';
 import { HttpException } from '@nestjs/common';
-import { PersonenQueryParam, SichtfreigabeType } from './personen-query.param.js';
+import { PersonenQueryParams, SichtfreigabeType } from './personen-query.param.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { TrustLevel } from '../domain/person.enums.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
@@ -17,6 +17,7 @@ import { PersonenkontextUc } from './personenkontext.uc.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { Jahrgangsstufe, Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
+import { PagedResponse } from '../../../shared/paging/index.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 
@@ -136,7 +137,7 @@ describe('PersonController', () => {
             lastName: faker.person.lastName(),
             firstName: faker.person.firstName(),
         };
-        const queryParams: PersonenQueryParam = {
+        const queryParams: PersonenQueryParams = {
             referrer: options.referrer,
             familienname: options.lastName,
             vorname: options.firstName,
@@ -157,7 +158,6 @@ describe('PersonController', () => {
                 lokalisierung: '',
                 vertrauensstufe: TrustLevel.TRUSTED,
             };
-
             const person2: PersonResponse = {
                 id: faker.string.uuid(),
                 name: {
@@ -180,13 +180,21 @@ describe('PersonController', () => {
                 person: person2,
                 personenkontexte: [],
             };
-            const mockPersondatensatz: PersonendatensatzResponse[] = [mockPersondatensatz1, mockPersondatensatz2];
+            const mockPersondatensatz: PagedResponse<PersonendatensatzResponse> = new PagedResponse({
+                offset: 0,
+                limit: 10,
+                total: 2,
+                items: [mockPersondatensatz1, mockPersondatensatz2],
+            });
+
             personUcMock.findAll.mockResolvedValue(mockPersondatensatz);
-            const result: PersonendatensatzResponse[] = await personController.findPersons(queryParams);
+
+            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(queryParams);
+
             expect(personUcMock.findAll).toHaveBeenCalledTimes(1);
-            expect(result.at(0)?.person.referrer).toEqual(queryParams.referrer);
-            expect(result.at(0)?.person.name.vorname).toEqual(queryParams.vorname);
-            expect(result.at(0)?.person.name.familienname).toEqual(queryParams.familienname);
+            expect(result.items.at(0)?.person.referrer).toEqual(queryParams.referrer);
+            expect(result.items.at(0)?.person.name.vorname).toEqual(queryParams.vorname);
+            expect(result.items.at(0)?.person.name.familienname).toEqual(queryParams.familienname);
             expect(result).toEqual(mockPersondatensatz);
         });
     });
@@ -235,7 +243,6 @@ describe('PersonController', () => {
                     personenstatus: Personenstatus.AKTIV,
                     rolle: Rolle.LERNENDER,
                 };
-
                 const personenkontextResponse: PersonenkontextResponse = {
                     id: faker.string.uuid(),
                     organisation: {
@@ -249,6 +256,7 @@ describe('PersonController', () => {
                     personenstatus: Personenstatus.AKTIV,
                 };
                 const personenkontextResponseArray: PersonenkontextResponse[] = [personenkontextResponse];
+
                 personenkontextUcMock.findAll.mockResolvedValue(personenkontextResponseArray);
 
                 const result: PersonenkontextResponse[] = await personController.findPersonenkontexte(
