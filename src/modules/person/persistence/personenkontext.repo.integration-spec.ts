@@ -177,17 +177,20 @@ describe('PersonenkontextRepo', () => {
                     PersonenkontextEntity,
                     {},
                 );
-                const result: Option<PersonenkontextDo<true>> = await sut.findById(personenkontextEntity!.id);
 
-                expect(result).toBeTruthy();
+                expect(personenkontextEntity?.id).toBeDefined();
+
+                const result: Option<PersonenkontextDo<true>> = await sut.findById(personenkontextEntity?.id as string);
+
+                expect(result).toBeInstanceOf(PersonenkontextDo);
             });
         });
 
-        describe('when no personenkontext matches', () => {
+        describe('when NOT finding a personenkontext', () => {
             it('should return null', async () => {
                 const result: Option<PersonenkontextDo<true>> = await sut.findById(faker.string.uuid());
 
-                expect(result).toBeFalsy();
+                expect(result).toBeNull();
             });
         });
     });

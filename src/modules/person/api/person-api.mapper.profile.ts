@@ -140,12 +140,17 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     ),
                 ),
             );
+
             createMap(
                 mapper,
                 CreatePersonDto,
-                PersonDo,
+                PersonDo<boolean>,
+                forMember((dest: PersonDo<boolean>) => dest.id, ignore()),
+                forMember((dest: PersonDo<boolean>) => dest.createdAt, ignore()),
+                forMember((dest: PersonDo<boolean>) => dest.updatedAt, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.keycloakUserId, ignore()),
             );
+
             createMap(
                 mapper,
                 PersonDo,
@@ -223,6 +228,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     mapFrom((src: PersonDo<true>) => src.namePrefix),
                 ),
             );
+
             createMap(
                 mapper,
                 PersonenQueryParams,
@@ -240,6 +246,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     mapFrom((src: PersonenQueryParams) => src.referrer),
                 ),
             );
+
             createMap(
                 mapper,
                 FindPersonendatensatzDto,
@@ -268,6 +275,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<false>) => dest.nameTitle, ignore()),
                 forMember((dest: PersonDo<false>) => dest.nameSalutation, ignore()),
                 forMember((dest: PersonDo<false>) => dest.namePrefix, ignore()),
+                forMember((dest: PersonDo<false>) => dest.nameSuffix, ignore()),
                 forMember((dest: PersonDo<false>) => dest.nameSortIndex, ignore()),
                 forMember((dest: PersonDo<false>) => dest.birthDate, ignore()),
                 forMember((dest: PersonDo<false>) => dest.birthPlace, ignore()),
@@ -276,6 +284,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<false>) => dest.trustLevel, ignore()),
                 forMember((dest: PersonDo<false>) => dest.isInformationBlocked, ignore()),
             );
+
             createMap(mapper, CreatePersonDto, UserDo);
 
             createMap(
@@ -288,25 +297,28 @@ export class PersonApiMapperProfile extends AutomapperProfile {
             createMap(
                 mapper,
                 CreatePersonenkontextDto,
-                PersonenkontextDo<false>,
-                forMember((dest: PersonenkontextDo<false>) => dest.id, ignore()),
-                forMember((dest: PersonenkontextDo<false>) => dest.mandant, ignore()),
-                forMember((dest: PersonenkontextDo<false>) => dest.organisation, ignore()),
-                forMember((dest: PersonenkontextDo<false>) => dest.loeschungZeitpunkt, ignore()),
-                forMember((dest: PersonenkontextDo<false>) => dest.revision, ignore()),
+                PersonenkontextDo<boolean>,
+                forMember((dest: PersonenkontextDo<boolean>) => dest.id, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.createdAt, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.updatedAt, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.mandant, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.organisation, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.loeschungZeitpunkt, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.revision, ignore()),
             );
 
             createMap(
                 mapper,
                 PersonenkontextDo,
                 CreatedPersonenkontextDto,
-
                 forMember(
                     (dest: CreatedPersonenkontextDto) => dest.id,
                     mapFrom((src: PersonenkontextDo<true>) => src.id),
                 ),
             );
+
             createMap(mapper, OrganisationDo, CreatedPersonenkontextOrganisationDto);
+
             createMap(mapper, CreatedPersonenkontextDto, PersonenkontextResponse);
 
             createMap(
@@ -315,10 +327,13 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 FindPersonenkontextDto,
                 forMember((dest: FindPersonenkontextDto) => dest.personId, ignore()),
             );
+
             createMap(
                 mapper,
                 FindPersonenkontextDto,
                 PersonenkontextDo,
+                forMember((dest: PersonenkontextDo<boolean>) => dest.createdAt, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.updatedAt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.mandant, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.organisation, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.jahrgangsstufe, ignore()),
@@ -336,6 +351,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     ),
                 ),
             );
+
             createMap(
                 mapper,
                 PersonenkontextDo,

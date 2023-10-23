@@ -12,6 +12,6 @@ export class FindPersonendatensatzDto extends PagedDto {
     @AutoMap()
     public vorname?: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public sichtfreigabe!: SichtfreigabeType;
 }

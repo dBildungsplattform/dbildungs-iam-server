@@ -1,4 +1,4 @@
-import { Mapper, MappingProfile, createMap, forMember, mapFrom } from '@automapper/core';
+import { Mapper, MappingProfile, createMap, forMember, ignore, mapFrom } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
@@ -16,7 +16,16 @@ export class OrganisationApiMapperProfile extends AutomapperProfile {
     public override get profile(): MappingProfile {
         return (mapper: Mapper) => {
             createMap(mapper, CreateOrganisationBodyParams, CreateOrganisationDto);
-            createMap(mapper, CreateOrganisationDto, OrganisationDo<false>);
+
+            createMap(
+                mapper,
+                CreateOrganisationDto,
+                OrganisationDo<boolean>,
+                forMember((dest: OrganisationDo<boolean>) => dest.id, ignore()),
+                forMember((dest: OrganisationDo<boolean>) => dest.createdAt, ignore()),
+                forMember((dest: OrganisationDo<boolean>) => dest.updatedAt, ignore()),
+            );
+
             createMap(
                 mapper,
                 OrganisationDo<true>,
@@ -26,7 +35,9 @@ export class OrganisationApiMapperProfile extends AutomapperProfile {
                     mapFrom((src: OrganisationDo<true>) => src.id),
                 ),
             );
+
             createMap(mapper, CreatedOrganisationDto, OrganisationResponse);
+
             createMap(
                 mapper,
                 OrganisationDo,

@@ -59,6 +59,7 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 * Test conventions can be found [here](./docs/tests.md)
 * Configuration conventions can be found [here](./docs/config.md)
 * Authentication guides can be found [here](./docs/auth.md)
+* Developer notes can be found [here](./docs/developer-notes.md)
 
 ## Package (Create Docker Image )
 If you push a tag upstream a container will be created for you. (Check Github under Packages)

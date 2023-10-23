@@ -10,14 +10,14 @@ export class PersonenkontextDo<WasPersisted extends boolean> implements DoBase<W
     // eslint-disable-next-line @typescript-eslint/no-useless-constructor, @typescript-eslint/no-empty-function
     public constructor() {}
 
-    @AutoMap()
-    public createdAt!: Persisted<Date, WasPersisted>;
-
-    @AutoMap()
-    public updatedAt!: Persisted<Date, WasPersisted>;
-
     @AutoMap(() => String)
     public id!: Persisted<string, WasPersisted>;
+
+    @AutoMap(() => Date)
+    public createdAt!: Persisted<Date, WasPersisted>;
+
+    @AutoMap(() => Date)
+    public updatedAt!: Persisted<Date, WasPersisted>;
 
     @AutoMap()
     public personId!: string;
@@ -28,22 +28,22 @@ export class PersonenkontextDo<WasPersisted extends boolean> implements DoBase<W
     @AutoMap()
     public mandant!: string;
 
-    @AutoMap()
+    @AutoMap(() => OrganisationDo)
     public organisation!: OrganisationDo<true>;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public rolle!: Rolle;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public personenstatus?: Personenstatus;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public jahrgangsstufe?: Jahrgangsstufe;
 
     @AutoMap()
     public sichtfreigabe?: boolean = false;
 
-    @AutoMap()
+    @AutoMap(() => Date)
     public loeschungZeitpunkt?: Date;
 
     @AutoMap()

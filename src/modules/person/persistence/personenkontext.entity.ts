@@ -27,15 +27,15 @@ export class PersonenkontextEntity extends TimestampedEntity<PersonenkontextEnti
     @Property({ nullable: true })
     public organisationId!: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     @Enum({ nullable: false, items: () => Rolle })
     public rolle!: Rolle;
 
-    @AutoMap()
+    @AutoMap(() => String)
     @Enum({ nullable: true, items: () => Personenstatus })
     public personenstatus?: Personenstatus;
 
-    @AutoMap()
+    @AutoMap(() => String)
     @Enum({ nullable: true, items: () => Jahrgangsstufe })
     public jahrgangsstufe?: Jahrgangsstufe;
 
@@ -43,7 +43,7 @@ export class PersonenkontextEntity extends TimestampedEntity<PersonenkontextEnti
     @Property({ nullable: true })
     public sichtfreigabe?: boolean = false;
 
-    @AutoMap()
+    @AutoMap(() => Date)
     @Property({ nullable: true, type: DateTimeType })
     public loeschungZeitpunkt?: Date;
 

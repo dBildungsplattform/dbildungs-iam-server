@@ -18,7 +18,7 @@ export class PersonenkontextDetailedResponse {
     @ApiProperty()
     public readonly mandant!: string;
 
-    @AutoMap()
+    @AutoMap(() => CreatedPersonenkontextOrganisationDto)
     @ApiProperty()
     public readonly organisation!: CreatedPersonenkontextOrganisationDto;
 
