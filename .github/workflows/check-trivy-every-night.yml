@@ -1,0 +1,13 @@
+name: Check latest GHCR image with trivy every night
+on:
+  schedule:
+    - cron:  '0 2 * * *'
+
+jobs:
+  trivy_scan:
+    permissions:
+      packages: read
+      security-events: write
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@1.2.0
+    with:
+      image_ref: 'ghcr.io/${{ github.repository_owner }}/dbildungs-iam-server:latest'
