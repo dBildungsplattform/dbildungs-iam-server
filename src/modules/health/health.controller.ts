@@ -9,7 +9,7 @@ import {
 import { EntityManager } from '@mikro-orm/postgresql';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { Unprotected } from 'nest-keycloak-connect';
-import { KeycloakHealthIndictor } from './keycloak.health-indicator.js';
+import { KeycloakHealthIndicator } from './keycloak.health-indicator.js';
 
 @Controller('health')
 @Unprotected()
@@ -19,7 +19,7 @@ export class HealthController {
         private health: HealthCheckService,
         private mikroOrm: MikroOrmHealthIndicator,
         private em: EntityManager,
-        private keycloak: KeycloakHealthIndictor,
+        private keycloak: KeycloakHealthIndicator,
     ) {}
 
     @Get()

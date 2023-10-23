@@ -10,7 +10,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { SqlEntityManager } from '@mikro-orm/postgresql';
 import { ConfigService } from '@nestjs/config';
 import { KeycloakConfig } from '../../shared/config/index.js';
-import { KeycloakHealthIndictor } from './keycloak.health-indicator.js';
+import { KeycloakHealthIndicator } from './keycloak.health-indicator.js';
 
 describe('HealthController', () => {
     let controller: HealthController;
@@ -19,7 +19,7 @@ describe('HealthController', () => {
     let mikroOrmHealthIndicator: MikroOrmHealthIndicator;
     let entityManager: SqlEntityManager;
     let httpHealthIndicator: DeepMocked<HttpHealthIndicator>;
-    let keycloakHealthIndicator: DeepMocked<KeycloakHealthIndictor>;
+    let keycloakHealthIndicator: DeepMocked<KeycloakHealthIndicator>;
     const keycloakConfig: KeycloakConfig = {
         ADMIN_CLIENT_ID: '',
         ADMIN_SECRET: '',
@@ -37,7 +37,7 @@ describe('HealthController', () => {
         entityManager = createMock<SqlEntityManager>();
         httpHealthIndicator = createMock<HttpHealthIndicator>();
         configService = createMock<ConfigService>();
-        keycloakHealthIndicator = createMock<KeycloakHealthIndictor>();
+        keycloakHealthIndicator = createMock<KeycloakHealthIndicator>();
 
         configService.getOrThrow.mockReturnValue(keycloakConfig);
 
@@ -50,7 +50,7 @@ describe('HealthController', () => {
                 { provide: HttpHealthIndicator, useValue: httpHealthIndicator },
                 { provide: KeycloakConfig, useValue: keycloakConfig },
                 { provide: ConfigService, useValue: configService },
-                { provide: KeycloakHealthIndictor, useValue: keycloakHealthIndicator },
+                { provide: KeycloakHealthIndicator, useValue: keycloakHealthIndicator },
             ],
         }).compile();
 
