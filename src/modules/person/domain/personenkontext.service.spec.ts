@@ -155,10 +155,9 @@ describe('PersonenkontextService', () => {
 
                 personenkontextRepoMock.findById.mockResolvedValue(personenkontext);
 
-                const result: Result<
-                    PersonenkontextDo<true>,
-                    DomainError
-                > = await personenkontextService.findById(personenkontext.id);
+                const result: Result<PersonenkontextDo<true>, DomainError> = await personenkontextService.findById(
+                    personenkontext.id,
+                );
 
                 expect(result).toStrictEqual({ ok: true, value: personenkontext });
             });
@@ -170,10 +169,9 @@ describe('PersonenkontextService', () => {
 
                 personenkontextRepoMock.findById.mockResolvedValue(null);
 
-                const result: Result<
-                    PersonenkontextDo<true>,
-                    DomainError
-                > = await personenkontextService.findById(personenkontext.id);
+                const result: Result<PersonenkontextDo<true>, DomainError> = await personenkontextService.findById(
+                    personenkontext.id,
+                );
 
                 expect(result).toStrictEqual({
                     ok: false,

@@ -2,7 +2,14 @@ import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DatabaseTestModule,
+    DoFactory,
+    MapperTestModule,
+    createMany,
+    createPersonenkontextTemp,
+} from '../../../../test/utils/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
@@ -154,10 +161,34 @@ describe('PersonenkontextRepo', () => {
     });
 
     describe('findById', () => {
+        beforeEach(async () => {
+            const personenkontextDos: PersonenkontextDo<false>[] = createMany(10, false, createPersonenkontextTemp);
+
+            await em.persistAndFlush(
+                personenkontextDos.map((entity: PersonenkontextDo<false>) =>
+                    mapper.map(entity, PersonenkontextDo, PersonenkontextEntity),
+                ),
+            );
+        });
+
         describe('when finding personenkontext by id', () => {
-            it('should return personenkontext', () => {
-                const entities: PersonenkontextEntity[] = DoFactory.createMany(10, DoFactory.createPersonenkontext);
-            })
-        })
-    })
+            it('should return personenkontext', async () => {
+                const [personenkontextEntity]: PersonenkontextEntity[] = await em.find<PersonenkontextEntity>(
+                    PersonenkontextEntity,
+                    {},
+                );
+                const result: Option<PersonenkontextDo<true>> = await sut.findById(personenkontextEntity!.id);
+
+                expect(result).toBeTruthy();
+            });
+        });
+
+        describe('when no personenkontext matches', () => {
+            it('should return null', async () => {
+                const result: Option<PersonenkontextDo<true>> = await sut.findById(faker.string.uuid());
+
+                expect(result).toBeFalsy();
+            });
+        });
+    });
 });
