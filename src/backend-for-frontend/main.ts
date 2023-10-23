@@ -32,6 +32,7 @@ async function bootstrap(): Promise<void> {
     await app.register(secureSession, {
         key: Buffer.from(frontendConfig.SESSION_KEY, 'hex'),
         cookie: {
+            path: '/',
             secure: frontendConfig.SECURE_COOKIE,
         },
     });
