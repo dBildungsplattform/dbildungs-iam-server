@@ -11,6 +11,7 @@ import { faker } from '@faker-js/faker';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { Paged } from '../../../shared/paging/index.js';
 import { SichtfreigabeType } from './personen-query.param.js';
 import { PersonenkontextService } from '../domain/personenkontext.service.js';
 
@@ -176,28 +177,37 @@ describe('PersonUc', () => {
         it('should find all persons that match with query param', async () => {
             const firstPerson: PersonDo<true> = DoFactory.createPerson(true);
             const secondPerson: PersonDo<true> = DoFactory.createPerson(true);
-            const persons: PersonDo<true>[] = [firstPerson, secondPerson];
+            const persons: Paged<PersonDo<true>> = {
+                offset: 0,
+                limit: 10,
+                total: 2,
+                items: [firstPerson, secondPerson],
+            };
+
             personServiceMock.findAllPersons.mockResolvedValue(persons);
             personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue({
                 ok: true,
                 value: [DoFactory.createPersonenkontext(true)],
             });
-            const result: PersonendatensatzResponse[] = await personUc.findAll(personDTO);
+
+            const result: Paged<PersonendatensatzResponse> = await personUc.findAll(personDTO);
 
             expect(personenkontextServiceMock.findAllPersonenkontexte).toHaveBeenCalledTimes(2);
-
-            expect(result).toHaveLength(2);
-            expect(result.at(0)?.person.name.vorname).toEqual(firstPerson.firstName);
-            expect(result.at(0)?.person.name.familienname).toEqual(firstPerson.lastName);
-            expect(result.at(1)?.person.name.vorname).toEqual(secondPerson.firstName);
-            expect(result.at(1)?.person.name.familienname).toEqual(secondPerson.lastName);
+            expect(result.items).toHaveLength(2);
+            expect(result.items.at(0)?.person.name.vorname).toEqual(firstPerson.firstName);
+            expect(result.items.at(0)?.person.name.familienname).toEqual(firstPerson.lastName);
+            expect(result.items.at(1)?.person.name.vorname).toEqual(secondPerson.firstName);
+            expect(result.items.at(1)?.person.name.familienname).toEqual(secondPerson.lastName);
         });
 
         it('should return an empty array when no matching persons are found', async () => {
-            const emptyResult: PersonDo<true>[] = [];
+            const emptyResult: Paged<PersonDo<true>> = { offset: 0, limit: 0, total: 0, items: [] };
+
             personServiceMock.findAllPersons.mockResolvedValue(emptyResult);
-            const result: PersonendatensatzResponse[] = await personUc.findAll(personDTO);
-            expect(result).toEqual([]);
+
+            const result: Paged<PersonendatensatzResponse> = await personUc.findAll(personDTO);
+
+            expect(result.items).toEqual([]);
         });
     });
 });

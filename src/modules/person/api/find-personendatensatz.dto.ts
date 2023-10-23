@@ -1,7 +1,8 @@
 import { AutoMap } from '@automapper/classes';
+import { PagedDto } from '../../../shared/paging/index.js';
 import { SichtfreigabeType } from './personen-query.param.js';
 
-export class FindPersonendatensatzDto {
+export class FindPersonendatensatzDto extends PagedDto {
     @AutoMap()
     public referrer?: string;
 

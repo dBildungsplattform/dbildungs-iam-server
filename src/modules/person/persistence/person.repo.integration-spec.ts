@@ -8,6 +8,8 @@ import { PersonDo } from '../domain/person.do.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
+import { PersonScope } from './person.scope.js';
+import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 
 describe('PersonRepo', () => {
     let module: TestingModule;
@@ -132,31 +134,45 @@ describe('PersonRepo', () => {
     });
 
     describe('findAll', () => {
-        it('should find all persons from database', async () => {
-            const props: Partial<PersonDo<false>> = {
-                referrer: 'referrer_value',
-                firstName: 'first name',
-                lastName: 'last name',
-                isInformationBlocked: false,
-            };
-            const personDo1: PersonDo<false> = DoFactory.createPerson(false, props);
-            const personDo2: PersonDo<false> = DoFactory.createPerson(false, props);
-            await em.persistAndFlush(mapper.map(personDo1, PersonDo, PersonEntity));
-            await em.persistAndFlush(mapper.map(personDo2, PersonDo, PersonEntity));
-            const personDoFromQueryParam: PersonDo<false> = DoFactory.createPerson(false, props);
-            const result: PersonDo<true>[] = await sut.findAll(personDoFromQueryParam);
-            expect(result).not.toBeNull();
-            expect(result).toHaveLength(2);
-            await expect(em.find(PersonEntity, {})).resolves.toHaveLength(2);
+        describe('when persons match the query', () => {
+            it('should return all matching persons', async () => {
+                const props: Partial<PersonDo<false>> = {
+                    referrer: 'referrer_value',
+                    firstName: 'first name',
+                    lastName: 'last name',
+                    isInformationBlocked: false,
+                };
+                const personDo1: PersonDo<false> = DoFactory.createPerson(false, props);
+                const personDo2: PersonDo<false> = DoFactory.createPerson(false, props);
+
+                await em.persistAndFlush(mapper.map(personDo1, PersonDo, PersonEntity));
+                await em.persistAndFlush(mapper.map(personDo2, PersonDo, PersonEntity));
+
+                const [result]: Counted<PersonDo<true>> = await sut.findBy(
+                    new PersonScope().findBy(
+                        {
+                            firstName: props.firstName,
+                            lastName: props.lastName,
+                        },
+                        ScopeOperator.AND,
+                    ),
+                );
+
+                expect(result).not.toBeNull();
+                expect(result).toHaveLength(2);
+                await expect(em.find(PersonEntity, {})).resolves.toHaveLength(2);
+            });
         });
 
-        it('should return an empty list', async () => {
-            const props: Partial<PersonDo<false>> = {};
-            const personDoFromQueryParam: PersonDo<false> = DoFactory.createPerson(false, props);
-            const result: PersonDo<true>[] = await sut.findAll(personDoFromQueryParam);
-            expect(result).not.toBeNull();
-            expect(result).toHaveLength(0);
-            await expect(em.find(PersonEntity, {})).resolves.toHaveLength(0);
+        describe('when no person matches the query', () => {
+            it('should return an empty list', async () => {
+                const [result]: Counted<PersonDo<true>> = await sut.findBy(new PersonScope());
+
+                expect(result).not.toBeNull();
+                expect(result).toHaveLength(0);
+
+                await expect(em.find(PersonEntity, {})).resolves.toHaveLength(0);
+            });
         });
     });
 });
