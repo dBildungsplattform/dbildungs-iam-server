@@ -2,14 +2,7 @@ import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    DoFactory,
-    MapperTestModule,
-    createMany,
-    createPersonenkontextTemp,
-} from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
@@ -162,7 +155,11 @@ describe('PersonenkontextRepo', () => {
 
     describe('findById', () => {
         beforeEach(async () => {
-            const personenkontextDos: PersonenkontextDo<false>[] = createMany(10, false, createPersonenkontextTemp);
+            const personenkontextDos: PersonenkontextDo<false>[] = DoFactory.createMany(
+                10,
+                false,
+                DoFactory.createPersonenkontext,
+            );
 
             await em.persistAndFlush(
                 personenkontextDos.map((entity: PersonenkontextDo<false>) =>

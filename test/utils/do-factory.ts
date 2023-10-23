@@ -7,17 +7,19 @@ import { PersonenkontextDo } from '../../src/modules/person/domain/personenkonte
 import { Rolle, Jahrgangsstufe, Personenstatus } from '../../src/modules/person/domain/personenkontext.enums.js';
 import { DoBase } from '../../src/shared/types/do-base.js';
 
-export function createMany<T extends DoBase<boolean>>(
-    n: number,
-    withId: T extends DoBase<true> ? true : false,
-    generate: (withId: T extends DoBase<true> ? true : false, props?: Partial<T>) => T,
-    props?: Partial<T>,
-): T[] {
-    return Array.from({ length: n }, (_v: unknown, _k: number) => generate(withId, props));
-}
-
 export class DoFactory {
+    public static createMany<T extends DoBase<boolean>>(
+        this: void,
+        n: number,
+        withId: T extends DoBase<true> ? true : false,
+        generate: (withId: T extends DoBase<true> ? true : false, props?: Partial<T>) => T,
+        props?: Partial<T>,
+    ): T[] {
+        return Array.from({ length: n }, (_v: unknown, _k: number) => generate(withId, props));
+    }
+
     public static createPerson<WasPersisted extends boolean>(
+        this: void,
         withId: WasPersisted,
         props?: Partial<PersonDo<false>>,
     ): PersonDo<WasPersisted> {
@@ -34,6 +36,7 @@ export class DoFactory {
     }
 
     public static createOrganisation<WasPersisted extends boolean>(
+        this: void,
         withId: WasPersisted,
         props?: Partial<OrganisationDo<false>>,
     ): OrganisationDo<WasPersisted> {
@@ -51,6 +54,7 @@ export class DoFactory {
     }
 
     public static createUser<WasPersisted extends boolean>(
+        this: void,
         withId: WasPersisted,
         props?: Partial<UserDo<WasPersisted>>,
     ): UserDo<WasPersisted> {
@@ -65,6 +69,7 @@ export class DoFactory {
     }
 
     public static createPersonenkontext<WasPersisted extends boolean>(
+        this: void,
         withId: WasPersisted,
         props?: Partial<PersonenkontextDo<WasPersisted>>,
     ): PersonenkontextDo<WasPersisted> {
@@ -86,27 +91,4 @@ export class DoFactory {
 
         return Object.assign(new PersonenkontextDo<WasPersisted>(), user, props);
     }
-}
-
-export function createPersonenkontextTemp<P extends boolean>(
-    withId: P,
-    props?: Partial<PersonenkontextDo<P>>,
-): PersonenkontextDo<P> {
-    const user: PersonenkontextDo<false> = {
-        id: withId ? faker.string.uuid() : undefined,
-        mandant: faker.string.uuid(),
-        personId: faker.string.uuid(),
-        createdAt: withId ? faker.date.past() : undefined,
-        updatedAt: withId ? faker.date.recent() : undefined,
-        organisation: DoFactory.createOrganisation(true),
-        revision: '1',
-        rolle: Rolle.LEHRENDER,
-        jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-        personenstatus: Personenstatus.AKTIV,
-        referrer: 'referrer',
-        sichtfreigabe: true,
-        loeschungZeitpunkt: faker.date.anytime(),
-    };
-
-    return Object.assign(new PersonenkontextDo<P>(), user, props);
 }
