@@ -31,6 +31,8 @@ describe('configloader', () => {
                 },
                 FRONTEND: {
                     PORT: 8081,
+                    BACKEND_ADDRESS: 'http://localhost:8080',
+                    SECURE_COOKIE: false,
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -49,6 +51,7 @@ describe('configloader', () => {
             const secrets: DeepPartial<JsonConfig> = {
                 DB: { SECRET: 'SuperSecretSecret' },
                 KEYCLOAK: { ADMIN_SECRET: 'AdminClientSecret', CLIENT_SECRET: 'ClientSecret' },
+                FRONTEND: { SESSION_KEY: '0000000000000000000000000000000000000000000000000000000000000000' },
             };
 
             beforeAll(() => {

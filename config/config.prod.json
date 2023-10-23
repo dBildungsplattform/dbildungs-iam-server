@@ -2,6 +2,9 @@
     "HOST": {
         "PORT": 8080
     },
+    "FRONTEND": {
+        "SECURE_COOKIE": true
+    },
     "DB": {
         "CLIENT_URL": "<here goes your connection string>",
         "DB_NAME": "<here goes your db name>",
