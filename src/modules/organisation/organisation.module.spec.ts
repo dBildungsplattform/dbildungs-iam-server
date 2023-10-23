@@ -18,7 +18,7 @@ describe('OrganisationModule', () => {
         await module.close();
     });
 
-    it('schould be defined', () => {
+    it('should be defined', () => {
         expect(module).toBeDefined();
     });
 

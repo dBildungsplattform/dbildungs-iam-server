@@ -6,16 +6,20 @@ import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonUc } from './person.uc.js';
-import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
+import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
 import { faker } from '@faker-js/faker';
 import { PersonDo } from '../domain/person.do.js';
-import { PersonenDatensatz } from './personendatensatz.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { Paged } from '../../../shared/paging/index.js';
+import { SichtfreigabeType } from './personen-query.param.js';
+import { PersonenkontextService } from '../domain/personenkontext.service.js';
 
 describe('PersonUc', () => {
     let module: TestingModule;
     let personUc: PersonUc;
     let personServiceMock: DeepMocked<PersonService>;
+    let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
     let userServiceMock: DeepMocked<KeycloakUserService>;
 
     beforeAll(async () => {
@@ -29,6 +33,10 @@ describe('PersonUc', () => {
                     useValue: createMock<PersonService>(),
                 },
                 {
+                    provide: PersonenkontextService,
+                    useValue: createMock<PersonenkontextService>(),
+                },
+                {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),
                 },
@@ -36,6 +44,7 @@ describe('PersonUc', () => {
         }).compile();
         personUc = module.get(PersonUc);
         personServiceMock = module.get(PersonService);
+        personenkontextServiceMock = module.get(PersonenkontextService);
         userServiceMock = module.get(KeycloakUserService);
     });
 
@@ -120,7 +129,13 @@ describe('PersonUc', () => {
                     ok: true,
                     value: DoFactory.createPerson(true),
                 });
+
+                personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue({
+                    ok: true,
+                    value: [DoFactory.createPersonenkontext(true)],
+                });
                 await expect(personUc.findPersonById(id)).resolves.not.toThrow();
+                expect(personenkontextServiceMock.findAllPersonenkontexte).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -133,33 +148,66 @@ describe('PersonUc', () => {
                 await expect(personUc.findPersonById(id)).rejects.toThrowError(EntityNotFoundError);
             });
         });
+
+        describe('When no personenkontexte are found', () => {
+            it('should not throw', async () => {
+                personServiceMock.findPersonById.mockResolvedValue({
+                    ok: true,
+                    value: DoFactory.createPerson(true),
+                });
+
+                personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue({
+                    ok: false,
+                    error: new EntityNotFoundError('Personenkontext'),
+                });
+                await expect(personUc.findPersonById(id)).resolves.not.toThrow();
+                expect(personenkontextServiceMock.findAllPersonenkontexte).toHaveBeenCalledTimes(1);
+            });
+        });
     });
 
     describe('findAll', () => {
-        const personDTO: FindPersonDatensatzDTO = {
+        const personDTO: FindPersonendatensatzDto = {
             referrer: '',
             familienname: '',
             vorname: '',
+            sichtfreigabe: SichtfreigabeType.NEIN,
         };
 
         it('should find all persons that match with query param', async () => {
             const firstPerson: PersonDo<true> = DoFactory.createPerson(true);
             const secondPerson: PersonDo<true> = DoFactory.createPerson(true);
-            const persons: PersonDo<true>[] = [firstPerson, secondPerson];
+            const persons: Paged<PersonDo<true>> = {
+                offset: 0,
+                limit: 10,
+                total: 2,
+                items: [firstPerson, secondPerson],
+            };
+
             personServiceMock.findAllPersons.mockResolvedValue(persons);
-            const result: PersonenDatensatz[] = await personUc.findAll(personDTO);
-            expect(result).toHaveLength(2);
-            expect(result.at(0)?.person.name.vorname).toEqual(firstPerson.firstName);
-            expect(result.at(0)?.person.name.familienname).toEqual(firstPerson.lastName);
-            expect(result.at(1)?.person.name.vorname).toEqual(secondPerson.firstName);
-            expect(result.at(1)?.person.name.familienname).toEqual(secondPerson.lastName);
+            personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue({
+                ok: true,
+                value: [DoFactory.createPersonenkontext(true)],
+            });
+
+            const result: Paged<PersonendatensatzResponse> = await personUc.findAll(personDTO);
+
+            expect(personenkontextServiceMock.findAllPersonenkontexte).toHaveBeenCalledTimes(2);
+            expect(result.items).toHaveLength(2);
+            expect(result.items.at(0)?.person.name.vorname).toEqual(firstPerson.firstName);
+            expect(result.items.at(0)?.person.name.familienname).toEqual(firstPerson.lastName);
+            expect(result.items.at(1)?.person.name.vorname).toEqual(secondPerson.firstName);
+            expect(result.items.at(1)?.person.name.familienname).toEqual(secondPerson.lastName);
         });
 
         it('should return an empty array when no matching persons are found', async () => {
-            const emptyResult: PersonDo<true>[] = [];
+            const emptyResult: Paged<PersonDo<true>> = { offset: 0, limit: 0, total: 0, items: [] };
+
             personServiceMock.findAllPersons.mockResolvedValue(emptyResult);
-            const result: PersonenDatensatz[] = await personUc.findAll(personDTO);
-            expect(result).toEqual([]);
+
+            const result: Paged<PersonendatensatzResponse> = await personUc.findAll(personDTO);
+
+            expect(result.items).toEqual([]);
         });
     });
 });

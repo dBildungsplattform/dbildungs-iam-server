@@ -1,10 +1,13 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
+import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { PersonenkontextService } from '../domain/personenkontext.service.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -28,5 +31,26 @@ export class PersonenkontextUc {
             return this.mapper.map(result.value, PersonenkontextDo, CreatedPersonenkontextDto);
         }
         throw result.error;
+    }
+
+    // TODO refactor after EW-561 is done
+    public async findAll(findePersonenkontextDto: FindPersonenkontextDto): Promise<PersonenkontextResponse[]> {
+        const personenkontextDo: PersonenkontextDo<false> = this.mapper.map(
+            findePersonenkontextDto,
+            FindPersonenkontextDto,
+            PersonenkontextDo,
+        );
+        const result: Result<PersonenkontextDo<true>[], DomainError> =
+            await this.personenkontextService.findAllPersonenkontexte(personenkontextDo);
+
+        if (!result.ok) {
+            throw result.error;
+        }
+
+        const personenkontexte: PersonenkontextResponse[] = result.value.map(
+            (personenkontext: PersonenkontextDo<true>) =>
+                this.mapper.map(personenkontext, PersonenkontextDo, PersonenkontextResponse),
+        );
+        return personenkontexte;
     }
 }

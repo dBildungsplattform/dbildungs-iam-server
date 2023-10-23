@@ -15,6 +15,7 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 1. Run `npm ci` to install all dependencies
 2. Start the required services from the `compose.yaml` file
    * db
+   * keycloak
 3. Create a `.env` file and set the required environment variables from `env.config.ts`
 4. run `npm run setup` to initialize the DB
 5. Run `npm run start:debug` to start the server
@@ -59,6 +60,12 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 * Git conventions can be found [here](./docs/git.md)
 * Test conventions can be found [here](./docs/tests.md)
 * Configuration conventions can be found [here](./docs/config.md)
+* Authentication guides can be found [here](./docs/auth.md)
+
+## Package (Create Docker Image )
+If you push a tag upstream a container will be created for you. (Check Github under Packages)
+
+ghcr.io/dbildungsplattform/dbildungs-iam-server:*tag*
 
 ## License
 

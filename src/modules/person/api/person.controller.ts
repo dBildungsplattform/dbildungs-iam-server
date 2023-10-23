@@ -15,17 +15,22 @@ import { PersonUc } from '../api/person.uc.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
-import { PersonenQueryParam } from './personen-query.param.js';
-import { FindPersonDatensatzDTO } from './finde-persondatensatz-dto.js';
-import { PersonenDatensatz } from './personendatensatz.js';
+import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { PersonenQueryParams } from './personen-query.param.js';
+import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
+import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
+import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
+import { Public } from 'nest-keycloak-connect';
 
 @ApiTags('person')
 @Controller({ path: 'person' })
+@Public()
 export class PersonController {
     public constructor(
         private readonly personUc: PersonUc,
@@ -45,15 +50,15 @@ export class PersonController {
     }
 
     @Get(':personId')
-    @ApiCreatedResponse({ description: 'The person was successfully pulled.' })
+    @ApiOkResponse({ description: 'The person was successfully returned.' })
     @ApiBadRequestResponse({ description: 'Person ID is required' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the person.' })
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the person.' })
-    public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonenDatensatz | HttpException> {
+    public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonendatensatzResponse | HttpException> {
         try {
-            const person: PersonenDatensatz = await this.personUc.findPersonById(params.personId);
+            const person: PersonendatensatzResponse = await this.personUc.findPersonById(params.personId);
             return person;
         } catch (error) {
             throw new HttpException('Requested entity does not exist', HttpStatus.NOT_FOUND);
@@ -84,18 +89,51 @@ export class PersonController {
         return this.mapper.map(createdPersonenkontext, CreatedPersonenkontextDto, PersonenkontextResponse);
     }
 
+    @Get(':personId/personenkontexte')
+    @ApiOkResponse({ description: 'The personenkontexte were successfully pulled.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get personenkontexte.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get personenkontexte.' })
+    @ApiNotFoundResponse({ description: 'No personenkontexte were found.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all personenkontexte.' })
+    public async findPersonenkontexte(
+        @Param() pathParams: PersonByIdParams,
+        @Query() queryParams: PersonenkontextQueryParams,
+    ): Promise<PersonenkontextResponse[]> {
+        const findPersonenkontextDto: FindPersonenkontextDto = this.mapper.map(
+            queryParams,
+            PersonenkontextQueryParams,
+            FindPersonenkontextDto,
+        );
+
+        findPersonenkontextDto.personId = pathParams.personId;
+
+        const personenkontexte: PersonenkontextResponse[] = await this.personenkontextUc.findAll(
+            findPersonenkontextDto,
+        );
+
+        return personenkontexte;
+    }
+
     @Get()
-    @ApiCreatedResponse({ description: 'The persons were successfully pulled.' })
+    @ApiOkResponse({
+        description: 'The persons were successfully returned.',
+        type: [PersonendatensatzResponse],
+        headers: PagingHeadersObject,
+    })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get persons.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
-    public async findPersons(@Query() queryParams: PersonenQueryParam): Promise<PersonenDatensatz[]> {
-        const persondatensatzDTO: FindPersonDatensatzDTO = this.mapper.map(
+    public async findPersons(
+        @Query() queryParams: PersonenQueryParams,
+    ): Promise<PagedResponse<PersonendatensatzResponse>> {
+        const personDatensatzDTO: FindPersonendatensatzDto = this.mapper.map(
             queryParams,
-            PersonenQueryParam,
-            FindPersonDatensatzDTO,
+            PersonenQueryParams,
+            FindPersonendatensatzDto,
         );
-        const persons: PersonenDatensatz[] = await this.personUc.findAll(persondatensatzDTO);
-        return persons;
+        const persons: Paged<PersonendatensatzResponse> = await this.personUc.findAll(personDatensatzDTO);
+        const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse(persons);
+
+        return response;
     }
 }

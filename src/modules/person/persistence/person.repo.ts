@@ -4,13 +4,28 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonEntity } from './person.entity.js';
-import { Loaded } from '@mikro-orm/core';
+import { EntityName, Loaded } from '@mikro-orm/core';
+import { PersonScope } from './person.scope.js';
+
 @Injectable()
 export class PersonRepo {
     public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
 
+    public get entityName(): EntityName<PersonEntity> {
+        return PersonEntity;
+    }
+
+    public async findBy(scope: PersonScope): Promise<Counted<PersonDo<true>>> {
+        const [entities, total]: Counted<PersonEntity> = await scope.executeQuery(this.em);
+        const dos: PersonDo<true>[] = entities.map((entity: PersonEntity) =>
+            this.mapper.map(entity, PersonEntity, PersonDo),
+        );
+
+        return [dos, total];
+    }
+
     public async findById(id: string): Promise<Option<PersonDo<true>>> {
-        const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { id });
+        const person: Option<PersonEntity> = await this.em.findOne(this.entityName, { id });
         if (person) {
             return this.mapper.map(person, PersonEntity, PersonDo);
         }
@@ -18,7 +33,15 @@ export class PersonRepo {
     }
 
     public async findByReferrer(referrer: string): Promise<Option<PersonDo<true>>> {
-        const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { referrer });
+        const person: Option<PersonEntity> = await this.em.findOne(this.entityName, { referrer });
+        if (person) {
+            return this.mapper.map(person, PersonEntity, PersonDo);
+        }
+        return null;
+    }
+
+    public async findByKeycloakUserId(keycloakUserId: string): Promise<Option<PersonDo<true>>> {
+        const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { keycloakUserId });
         if (person) {
             return this.mapper.map(person, PersonEntity, PersonDo);
         }
@@ -48,7 +71,7 @@ export class PersonRepo {
     }
 
     private async update(personDo: PersonDo<true>): Promise<PersonDo<true>> {
-        let person: Option<Loaded<PersonEntity, never>> = await this.em.findOne(PersonEntity, { id: personDo.id });
+        let person: Option<Loaded<PersonEntity, never>> = await this.em.findOne(this.entityName, { id: personDo.id });
         if (person) {
             person.assign(this.mapper.map(personDo, PersonDo, PersonEntity));
         } else {
@@ -56,23 +79,5 @@ export class PersonRepo {
         }
         await this.em.persistAndFlush(person);
         return this.mapper.map(person, PersonEntity, PersonDo);
-    }
-
-    public async findAll(personDo: PersonDo<false>): Promise<PersonDo<true>[]> {
-        const query: Record<string, unknown> = {};
-
-        if (personDo.firstName) {
-            query['firstName'] = { $ilike: personDo.firstName };
-        }
-
-        if (personDo.lastName) {
-            query['lastName'] = { $ilike: personDo.lastName };
-        }
-
-        if (personDo.referrer) {
-            query['referrer'] = personDo.referrer;
-        }
-        const result: PersonEntity[] = await this.em.find(PersonEntity, query);
-        return result.map((person: PersonEntity) => this.mapper.map(person, PersonEntity, PersonDo));
     }
 }

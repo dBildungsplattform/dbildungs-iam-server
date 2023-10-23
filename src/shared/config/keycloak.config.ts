@@ -7,6 +7,18 @@ export class KeycloakConfig {
 
     @IsString()
     @IsNotEmpty()
+    public readonly ADMIN_REALM_NAME!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    public readonly ADMIN_CLIENT_ID!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    public readonly ADMIN_SECRET!: string;
+
+    @IsString()
+    @IsNotEmpty()
     public readonly REALM_NAME!: string;
 
     @IsString()
@@ -15,5 +27,5 @@ export class KeycloakConfig {
 
     @IsString()
     @IsNotEmpty()
-    public readonly SECRET!: string;
+    public readonly CLIENT_SECRET!: string;
 }
