@@ -50,14 +50,14 @@ describe('ProviderController', () => {
             };
             rolleServiceMock.getAvailableServiceProviders.mockResolvedValue(serviceProviderDo);
             await expect(providerController.getServiceProvidersByPersonId(user)).resolves.not.toThrow();
-            expect(rolleServiceMock.getAvailableServiceProvidersByUserSub).toHaveBeenCalledTimes(1);
+            expect(rolleServiceMock.getServiceProviderInfoListByUserSub).toHaveBeenCalledTimes(1);
         });
 
         it('should throw', async () => {
             const user: unknown = {};
             rolleServiceMock.getAvailableServiceProviders.mockResolvedValue(serviceProviderDo);
             await expect(providerController.getServiceProvidersByPersonId(user)).rejects.toThrow();
-            expect(rolleServiceMock.getAvailableServiceProvidersByUserSub).toHaveBeenCalledTimes(0);
+            expect(rolleServiceMock.getServiceProviderInfoListByUserSub).toHaveBeenCalledTimes(0);
         });
     });
 });

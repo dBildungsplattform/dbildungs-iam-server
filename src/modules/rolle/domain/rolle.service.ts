@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PersonRollenZuweisungRepo } from '../repo/person-rollen-zuweisung.repo.js';
 import { PersonRollenZuweisungDo } from './person-rollen-zuweisung.do.js';
 import { RolleBerechtigungsZuweisungDo } from './rolle-berechtigungs-zuweisung.do.js';
@@ -10,6 +10,9 @@ import { RolleRechtRepo } from '../repo/rolle-recht.repo.js';
 import { RolleDo } from './rolle.do.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { PersonDo } from '../../person/domain/person.do.js';
+import { GetServiceProviderInfoDo } from './get-service-provider-info.do.js';
+import { getMapperToken } from '@automapper/nestjs';
+import { Mapper } from '@automapper/core';
 
 export interface KeyCloakUser {
     sub: string;
@@ -23,6 +26,7 @@ export class RolleService {
         private readonly rolleBerechtigungsZuweisungRepo: RollenBerechtigungsZuweisungRepo,
         private readonly rolleRechtRepo: RolleRechtRepo,
         private readonly serviceProviderRepo: ServiceProviderRepo,
+        @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
     public async getPersonRollenZuweisung(personId: string): Promise<PersonRollenZuweisungDo<true>[]> {
@@ -87,6 +91,18 @@ export class RolleService {
             }
             return [];
         });
+    }
+
+    private convertServiceProviderDoList(serviceProviderDoList: ServiceProviderDo<true>[]): GetServiceProviderInfoDo[] {
+        return serviceProviderDoList.map((serviceProviderDo: ServiceProviderDo<true>) =>
+            this.mapper.map(serviceProviderDo, ServiceProviderDo, GetServiceProviderInfoDo),
+        );
+    }
+
+    public async getServiceProviderInfoListByUserSub(keycloakSub: string): Promise<GetServiceProviderInfoDo[]> {
+        const serviceProviderZugriffDoList: ServiceProviderDo<true>[] =
+            await this.getAvailableServiceProvidersByUserSub(keycloakSub);
+        return this.convertServiceProviderDoList(serviceProviderZugriffDoList);
     }
 
     public hasKeycloakUserSub(obj: unknown): obj is KeyCloakUser {

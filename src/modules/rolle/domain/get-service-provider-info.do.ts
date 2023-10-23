@@ -1,15 +1,15 @@
 import { AutoMap } from '@automapper/classes';
-import { RolleRechtDo } from './rolle-recht.do.js';
 
-export class ServiceProviderZugriffDo<WasPersisted extends boolean> extends RolleRechtDo<WasPersisted> {
+export class GetServiceProviderInfoDo {
     /**
      * @deprecated This constructor is for automapper only.
      */
     // eslint-disable-next-line @typescript-eslint/no-useless-constructor, @typescript-eslint/no-empty-function
-    public constructor() {
-        super();
-    }
+    public constructor() {}
 
     @AutoMap()
-    public serviceProvider!: string;
+    public name!: string;
+
+    @AutoMap()
+    public url!: string;
 }

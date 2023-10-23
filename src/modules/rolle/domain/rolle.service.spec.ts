@@ -16,6 +16,7 @@ import { ServiceProviderDo } from './service-provider.do.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { faker } from '@faker-js/faker';
 import { PersonDo } from '../../person/domain/person.do.js';
+import { GetServiceProviderInfoDo } from './get-service-provider-info.do.js';
 
 describe('RolleService', () => {
     let module: TestingModule;
@@ -327,6 +328,31 @@ describe('RolleService', () => {
                 initServiceProviderTestFailEssentials();
                 personRepo.findByKeycloakUserId.mockResolvedValue(null);
                 const result: ServiceProviderDo<true>[] = await rolleService.getAvailableServiceProvidersByUserSub(
+                    PERSON_ID,
+                );
+                expect(result).toHaveLength(0);
+            });
+        });
+    });
+
+    describe('getServiceProviderInfoListByUserSub', () => {
+        describe('when person with keycloakUserId exists', () => {
+            it('should get a ServiceProvider ', async () => {
+                initServiceProviderTestSuccessEssentials();
+                const person: PersonDo<true> = DoFactory.createPerson(true);
+                personRepo.findByKeycloakUserId.mockResolvedValue(person);
+                const result: GetServiceProviderInfoDo[] = await rolleService.getServiceProviderInfoListByUserSub(
+                    PERSON_ID,
+                );
+                expect(result).not.toBeNull();
+                expect(result).not.toHaveLength(0);
+            });
+        });
+        describe('when person with keycloakUserId does not exist', () => {
+            it('should get an empty array ', async () => {
+                initServiceProviderTestFailEssentials();
+                personRepo.findByKeycloakUserId.mockResolvedValue(null);
+                const result: GetServiceProviderInfoDo[] = await rolleService.getServiceProviderInfoListByUserSub(
                     PERSON_ID,
                 );
                 expect(result).toHaveLength(0);
