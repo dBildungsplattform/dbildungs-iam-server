@@ -1,0 +1,60 @@
+import { Mapper } from '@automapper/core';
+import { getMapperToken } from '@automapper/nestjs';
+import { Test, TestingModule } from '@nestjs/testing';
+import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import { MappingError } from '../../../shared/error/index.js';
+import { ServiceProviderZugriffMapperProfile } from './service-provider-zugriff.mapper.profile.js';
+import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
+import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuweisung.do.js';
+import { RolleBerechtigungsZuweisungEntity } from '../entity/rolle-berechtigungs-zuweisung.entity.js';
+import { RolleDo } from '../domain/rolle.do.js';
+import { RolleBerechtigungsZuweisungMapperProfile } from './rolle-berechtigungs-zuweisung.mapper.profile.js';
+import { RolleMapperProfile } from './rolle.mapper.profile.js';
+
+describe('RolleBerechtigungsZuweisungMapperProfile', () => {
+    let module: TestingModule;
+    let sut: Mapper;
+
+    beforeAll(async () => {
+        module = await Test.createTestingModule({
+            imports: [MapperTestModule],
+            providers: [
+                ServiceProviderZugriffMapperProfile,
+                RolleBerechtigungsZuweisungMapperProfile,
+                RolleMapperProfile,
+            ],
+        }).compile();
+        sut = module.get(getMapperToken());
+    });
+
+    afterAll(async () => {
+        await module.close();
+    });
+
+    it('should be defined', () => {
+        expect(sut).toBeDefined();
+    });
+
+    describe('when mapper is initialized', () => {
+        it('should map RolleBerechtigungsZuweisungDo to RolleBerechtigungsZuweisungEntity', () => {
+            const rolleDo: RolleDo<false> = DoFactory.createRolle(false);
+            const serviceProviderZugriffDo: ServiceProviderZugriffDo<false> =
+                DoFactory.createServiceProviderZugriff(false);
+            const rbz: RolleBerechtigungsZuweisungDo<true> = DoFactory.createRolleBerechtigungsZuweisung(
+                rolleDo,
+                serviceProviderZugriffDo,
+                true,
+            );
+            expect(rbz.rolleRecht).not.toBeFalsy();
+            expect(() =>
+                sut.map(rbz, RolleBerechtigungsZuweisungDo, RolleBerechtigungsZuweisungEntity),
+            ).not.toThrowError(MappingError);
+            const rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungEntity = sut.map(
+                rbz,
+                RolleBerechtigungsZuweisungDo,
+                RolleBerechtigungsZuweisungEntity,
+            );
+            expect(rolleBerechtigungsZuweisung.rolleRecht).not.toBeNull();
+        });
+    });
+});

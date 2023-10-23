@@ -14,6 +14,7 @@ import { AuthGuard, KeycloakConnectModule, RoleGuard } from 'nest-keycloak-conne
 import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from '../modules/health/health.module.js';
 import { UiBackendApiModule } from '../modules/ui-backend/ui-backend-api.module.js';
+import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
 
 @Module({
     imports: [
@@ -64,6 +65,7 @@ import { UiBackendApiModule } from '../modules/ui-backend/ui-backend-api.module.
         KeycloakAdministrationModule,
         HealthModule,
         UiBackendApiModule,
+        RolleApiModule,
     ],
     providers: [
         {
