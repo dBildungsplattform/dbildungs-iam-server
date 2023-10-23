@@ -4,7 +4,9 @@ import { RolleRechtDo } from '../domain/rolle-recht.do.js';
 import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
 import { ServiceProviderZugriffEntity } from '../entity/service-provider-zugriff.entity.js';
 
-export class SpzdoRollerechtentityConverter implements Converter<RolleRechtDo<boolean>, RolleRechtEntity> {
+export class ServiceProviderZugriffDoRolleRechtEntityConverter
+    implements Converter<RolleRechtDo<boolean>, RolleRechtEntity>
+{
     public convert(source: RolleRechtDo<boolean>): RolleRechtEntity {
         if (source instanceof ServiceProviderZugriffDo) {
             const spzEntity: Partial<ServiceProviderZugriffEntity> = {
@@ -12,6 +14,7 @@ export class SpzdoRollerechtentityConverter implements Converter<RolleRechtDo<bo
             };
             return Object.assign(new ServiceProviderZugriffEntity(), spzEntity);
         }
-        throw new Error('no mapping found for RolleRechtDo to RolleRechtEntity');
+        const spzEntity: Partial<RolleRechtEntity> = {};
+        return Object.assign(new RolleRechtEntity(), spzEntity);
     }
 }

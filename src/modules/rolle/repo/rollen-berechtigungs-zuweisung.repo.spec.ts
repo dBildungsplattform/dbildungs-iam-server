@@ -66,13 +66,11 @@ describe('RollenBerechtigungsZuweisungRepo', () => {
                     ServiceProviderZugriffDo,
                     ServiceProviderZugriffEntity,
                 );
-
                 const rolleBerechtigungsZuweisung: Partial<RolleBerechtigungsZuweisungEntity> = {
                     rolle: rolleEntity,
                     rolleRecht: spzEntity,
                 };
                 expect(rolleBerechtigungsZuweisung).toBeDefined();
-
                 const rbzDo: RolleBerechtigungsZuweisungDo<false> = DoFactory.createRolleBerechtigungsZuweisung(
                     rolleDo,
                     spzDo,
@@ -83,12 +81,9 @@ describe('RollenBerechtigungsZuweisungRepo', () => {
                     RolleBerechtigungsZuweisungDo,
                     RolleBerechtigungsZuweisungEntity,
                 );
-                //expect(rbzEntity).toStrictEqual(rolleBerechtigungsZuweisung);
                 await em.persistAndFlush(rbzEntity);
-
                 const [insertedRolleEntity]: RolleEntity[] = await em.find(RolleEntity, {});
                 const insertedRolleDo: RolleDo<boolean> = mapper.map(insertedRolleEntity, RolleEntity, RolleDo);
-
                 const foundRolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<true>[] =
                     await sut.findAllRolleBerechtigungsZuweisungByRolle(insertedRolleDo);
                 expect(foundRolleBerechtigungsZuweisung).not.toBeNull();

@@ -3,7 +3,7 @@ import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { convertUsing, createMap, forMember, Mapper, MappingProfile } from '@automapper/core';
 import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuweisung.do.js';
 import { RolleBerechtigungsZuweisungEntity } from '../entity/rolle-berechtigungs-zuweisung.entity.js';
-import { SpzdoRollerechtentityConverter } from './spzdo-rollerechtentity.converter.js';
+import { ServiceProviderZugriffDoRolleRechtEntityConverter } from './service-provider-zugriff-do-rolle-recht-entity.converter.js';
 
 @Injectable()
 export class RolleBerechtigungsZuweisungMapperProfile extends AutomapperProfile {
@@ -20,7 +20,7 @@ export class RolleBerechtigungsZuweisungMapperProfile extends AutomapperProfile 
                 forMember(
                     (dest: RolleBerechtigungsZuweisungEntity) => dest.rolleRecht,
                     convertUsing(
-                        new SpzdoRollerechtentityConverter(),
+                        new ServiceProviderZugriffDoRolleRechtEntityConverter(),
                         (source: RolleBerechtigungsZuweisungDo<boolean>) => source.rolleRecht,
                     ),
                 ),
