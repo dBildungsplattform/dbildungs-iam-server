@@ -7,4 +7,6 @@ type: application
 
 dependencies:
   - name: dbildungs-iam-keycloak-dev
+    version: "*"
+    repository: "file://charts/dbildungs-iam-keycloak-dev"
     condition: keycloakEnabled
