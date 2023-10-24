@@ -29,6 +29,8 @@ import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonenkontextDetailedResponse } from './personenkontext-detailed.response.js';
+import { PersonenkontextDto } from './personenkontext.dto.js';
+import { LoeschungDto } from './loeschung.dto.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
     convert(source: PersonGender): Gender {
@@ -362,11 +364,18 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 ),
             );
 
+            createMap(mapper, PersonenkontextDo, PersonenkontextDto);
+
             createMap(
                 mapper,
-                PersonenkontextDo,
+                PersonenkontextDto,
                 PersonenkontextDetailedResponse,
-                forMember((dest: PersonenkontextDetailedResponse) => dest.loeschung, ignore()),
+                forMember(
+                    (dest: PersonenkontextDetailedResponse) => dest.loeschung,
+                    mapFrom((src: PersonenkontextDto) =>
+                        src.loeschungZeitpunkt ? new LoeschungDto({ zeitpunkt: src.loeschungZeitpunkt }) : undefined,
+                    ),
+                ),
             );
         };
     }

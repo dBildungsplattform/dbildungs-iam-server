@@ -25,6 +25,7 @@ import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonenkontextDetailedResponse } from './personenkontext-detailed.response.js';
+import { PersonenkontextDto } from './personenkontext.dto.js';
 
 describe('PersonApiMapperProfile', () => {
     let module: TestingModule;
@@ -223,10 +224,22 @@ describe('PersonApiMapperProfile', () => {
             );
         });
 
-        it('should map PersonenkontextDo to PersonenkontextDetailedResponse', () => {
+        it('should map PersonenkontextDo to PersonenkontextDo', () => {
             const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
 
-            expect(() => sut.map(personenkontextDo, PersonenkontextDo, PersonenkontextDetailedResponse)).not.toThrow();
+            expect(() => sut.map(personenkontextDo, PersonenkontextDo, PersonenkontextDto)).not.toThrow();
+        });
+
+        it('should map PersonenkontextDto to PersonenkontextDetailedResponse', () => {
+            const personenkontextDto: PersonenkontextDto = sut.map(
+                DoFactory.createPersonenkontext(true),
+                PersonenkontextDo,
+                PersonenkontextDto,
+            );
+
+            expect(() =>
+                sut.map(personenkontextDto, PersonenkontextDto, PersonenkontextDetailedResponse),
+            ).not.toThrow();
         });
     });
 });
