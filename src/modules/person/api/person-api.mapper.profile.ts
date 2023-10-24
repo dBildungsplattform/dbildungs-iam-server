@@ -23,14 +23,13 @@ import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.p
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
-import { PersonenkontextResponse } from './personenkontext.response.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-organisation.dto.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
-import { PersonenkontextDetailedResponse } from './personenkontext-detailed.response.js';
-import { PersonenkontextDto } from './personenkontext.dto.js';
-import { LoeschungDto } from './loeschung.dto.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
+import { PersonenkontextDto } from '../domain/personenkontext.dto.js';
+import { LoeschungDto } from '../domain/loeschung.dto.js';
 
 export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
     convert(source: PersonGender): Gender {
@@ -369,9 +368,9 @@ export class PersonApiMapperProfile extends AutomapperProfile {
             createMap(
                 mapper,
                 PersonenkontextDto,
-                PersonenkontextDetailedResponse,
+                PersonenkontextResponse,
                 forMember(
-                    (dest: PersonenkontextDetailedResponse) => dest.loeschung,
+                    (dest: PersonenkontextResponse) => dest.loeschung,
                     mapFrom((src: PersonenkontextDto) =>
                         src.loeschungZeitpunkt ? new LoeschungDto({ zeitpunkt: src.loeschungZeitpunkt }) : undefined,
                     ),

@@ -8,7 +8,7 @@ import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
-import { PersonenkontextDetailedResponse } from './personenkontext-detailed.response.js';
+import { PersonenkontextDto } from '../domain/personenkontext.dto.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -55,13 +55,13 @@ export class PersonenkontextUc {
         return personenkontexte;
     }
 
-    public async findById(id: string): Promise<PersonenkontextDetailedResponse> {
+    public async findById(id: string): Promise<PersonenkontextDto> {
         const result: Result<PersonenkontextDo<true>> = await this.personenkontextService.findById(id);
 
         if (!result.ok) {
             throw result.error;
         }
 
-        return this.mapper.map(result.value, PersonenkontextDo, PersonenkontextDetailedResponse);
+        return this.mapper.map(result.value, PersonenkontextDo, PersonenkontextResponse);
     }
 }

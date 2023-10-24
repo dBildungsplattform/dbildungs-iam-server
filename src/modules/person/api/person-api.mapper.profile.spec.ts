@@ -24,8 +24,8 @@ import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
-import { PersonenkontextDetailedResponse } from './personenkontext-detailed.response.js';
-import { PersonenkontextDto } from './personenkontext.dto.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
+import { PersonenkontextDto } from '../domain/personenkontext.dto.js';
 
 describe('PersonApiMapperProfile', () => {
     let module: TestingModule;
@@ -238,7 +238,7 @@ describe('PersonApiMapperProfile', () => {
             );
 
             expect(() =>
-                sut.map(personenkontextDto, PersonenkontextDto, PersonenkontextDetailedResponse),
+                sut.map(personenkontextDto, PersonenkontextDto, PersonenkontextResponse),
             ).not.toThrow();
         });
     });

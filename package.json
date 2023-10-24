@@ -13,7 +13,7 @@
         "build": "nest build",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
         "start": "nest start server ",
-        "start:debug": "nest start server --debug",
+        "start:debug": "nest start server --debug --watch",
         "start:prod": "node dist/src/server/main.js",
         "start:bff": "nest start backend-for-frontend",
         "start:bff:debug": "nest start backend-for-frontend --debug",

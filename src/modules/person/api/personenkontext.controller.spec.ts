@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Rolle } from '../domain/personenkontext.enums.js';
-import { PersonenkontextDetailedResponse } from './personenkontext-detailed.response.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextController } from './personenkontext.controller.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextByIdParams } from './personenkontext-by-id.params.js';
@@ -44,7 +44,7 @@ describe('PersonenkontextController', () => {
                 const params: PersonenkontextByIdParams = {
                     personenkontextId: faker.string.uuid(),
                 };
-                const responseMock: PersonenkontextDetailedResponse = {
+                const responseMock: PersonenkontextResponse = {
                     id: params.personenkontextId,
                     mandant: faker.company.name(),
                     organisation: {
@@ -56,7 +56,7 @@ describe('PersonenkontextController', () => {
 
                 personenkontextUcMock.findById.mockResolvedValue(responseMock);
 
-                const response: PersonenkontextDetailedResponse = await sut.findById(params);
+                const response: PersonenkontextResponse = await sut.findById(params);
 
                 expect(response).toStrictEqual(responseMock);
                 expect(personenkontextUcMock.findById).toBeCalledTimes(1);
