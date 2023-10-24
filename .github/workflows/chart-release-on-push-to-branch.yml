@@ -14,24 +14,28 @@ jobs:
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@1.2.0
     permissions:
       contents: read
-  extract_ticket:
+  get_ticket_sha:
     runs-on: ubuntu-latest
     outputs:
       ticket_number: ${{ steps.extract_ticket_number.outputs.output }}
+      short_commit_hash: ${{ steps.trim_hash.outputs.output }}
     steps:
       - name: Extract ticket from branch
         id: extract_ticket_number
-        env:
-          branch_name: ${{ github.ref_name }}
         run: |
           regex='^([[:alpha:]]+?-[[:digit:]]+)'
-          [[ $branch_name =~ $regex ]]
+          [[ $GITHUB_REF_NAME =~ $regex ]]
           echo "output=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+      - name: Trim commit hash
+        id: trim_hash
+        run: |
+          short_sha=`echo ${GITHUB_SHA} | cut -c1-8`
+          echo "output=${short_sha}" >> $GITHUB_OUTPUT
   release:
     if: ${{ !failure() }}
-    needs: [scan, extract_ticket]
+    needs: [scan, get_ticket_sha]
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@DBP-282-workflow-release-helm-chart
     secrets: inherit
     with:
       chart_name: dbildungs-iam
-      chart_version: "0.0.0-${{ needs.extract_ticket.outputs.ticket_number }}"
+      chart_version: "0.0.0-${{ needs.get_ticket_sha.outputs.ticket_number }}-${{ needs.get_ticket_sha.outputs.short_commit_hash }}"
