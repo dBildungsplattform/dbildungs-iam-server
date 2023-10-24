@@ -30,8 +30,8 @@ jobs:
   release:
     if: ${{ !failure() }}
     needs: [scan, extract_ticket]
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@1.2.0
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@DBP-282-workflow-release-helm-chart
     secrets: inherit
     with:
       chart_name: dbildungs-iam
-      chart_version: "0.0.0-${{ github.ref_name }}"
+      chart_version: "0.0.0-${{ needs.extract_ticket.outputs.ticket_number }}"
