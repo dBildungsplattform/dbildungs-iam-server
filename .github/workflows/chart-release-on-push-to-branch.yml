@@ -1,0 +1,37 @@
+name: Push Charts to helm-charts-registry
+
+on:
+  push:
+    branches-ignore:
+      - 'main'
+
+concurrency:
+  group: dbildungs-iam-server-chart-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@1.2.0
+    permissions:
+      contents: read
+  extract_ticket:
+    runs-on: ubuntu-latest
+    outputs:
+      ticket_number: ${{ steps.extract_ticket_number.outputs.output }}
+    steps:
+      - name: Extract ticket from branch
+        id: extract_ticket_number
+        env:
+          branch_name: ${{ github.ref_name }}
+        run: |
+          regex='^([[:alpha:]]+?-[[:digit:]]+)'
+          [[ $branch_name =~ $regex ]]
+          echo "output=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+  release:
+    if: ${{ !failure() }}
+    needs: [scan, extract_ticket]
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@1.2.0
+    secrets: inherit
+    with:
+      chart_name: dbildungs-iam
+      chart_version: "0.0.0-${{ github.ref_name }}"
