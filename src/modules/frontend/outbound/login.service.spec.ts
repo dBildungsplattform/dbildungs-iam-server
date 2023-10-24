@@ -1,24 +1,30 @@
 import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigTestModule } from '../../../../test/utils/index.js';
+import { BackendHttpService } from './backend-http.service.js';
 import { LoginService } from './login.service.js';
 
 describe('LoginService', () => {
     let module: TestingModule;
     let sut: LoginService;
-    let httpService: DeepMocked<HttpService>;
+    let backendHttpService: DeepMocked<BackendHttpService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule],
-            providers: [LoginService, { provide: HttpService, useValue: createMock<HttpService>() }],
+            providers: [
+                LoginService,
+                {
+                    provide: BackendHttpService,
+                    useValue: createMock<BackendHttpService>(),
+                },
+            ],
         }).compile();
 
         sut = module.get(LoginService);
-        httpService = module.get(HttpService);
+        backendHttpService = module.get(BackendHttpService);
     });
 
     afterAll(async () => {
@@ -36,7 +42,7 @@ describe('LoginService', () => {
 
             sut.login(username, password);
 
-            expect(httpService.post).toHaveBeenCalledWith(expect.stringContaining('/api/login'), {
+            expect(backendHttpService.post).toHaveBeenCalledWith(expect.stringContaining('/api/login'), {
                 username,
                 password,
             });
