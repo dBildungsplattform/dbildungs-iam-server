@@ -24,8 +24,8 @@ import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
-import { PersonenkontextResponse } from './personenkontext.response.js';
-import { PersonenkontextDto } from '../domain/personenkontext.dto.js';
+import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
+import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
 
 describe('PersonApiMapperProfile', () => {
     let module: TestingModule;
@@ -217,29 +217,14 @@ describe('PersonApiMapperProfile', () => {
             expect(() => sut.map(dto, FindPersonenkontextDto, PersonenkontextDo)).not.toThrowError(MappingError);
         });
 
-        it('should map PersonenkontextDo to PersonenkontextResponse', () => {
-            const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
-            expect(() => sut.map(personenkontextDo, PersonenkontextDo, PersonenkontextResponse)).not.toThrowError(
+        it('should map FindPersonenkontextByIdParams to FindPersonenkontextByIdDto', () => {
+            const params: FindPersonenkontextByIdParams = {
+                personenkontextId: faker.string.uuid(),
+            };
+
+            expect(() => sut.map(params, FindPersonenkontextByIdParams, FindPersonenkontextByIdDto)).not.toThrowError(
                 MappingError,
             );
-        });
-
-        it('should map PersonenkontextDo to PersonenkontextDo', () => {
-            const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
-
-            expect(() => sut.map(personenkontextDo, PersonenkontextDo, PersonenkontextDto)).not.toThrow();
-        });
-
-        it('should map PersonenkontextDto to PersonenkontextDetailedResponse', () => {
-            const personenkontextDto: PersonenkontextDto = sut.map(
-                DoFactory.createPersonenkontext(true),
-                PersonenkontextDo,
-                PersonenkontextDto,
-            );
-
-            expect(() =>
-                sut.map(personenkontextDto, PersonenkontextDto, PersonenkontextResponse),
-            ).not.toThrow();
         });
     });
 });
