@@ -9,6 +9,9 @@ import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { UserRepresentationDto } from './keycloak-client/user-representation.dto.js';
 import { UserDo } from './user.do.js';
+import { PersonService } from '../../person/domain/person.service.js';
+import { PersonDo } from '../../person/domain/person.do.js';
+import { faker } from '@faker-js/faker';
 
 export type FindUserFilter = {
     username?: string;
@@ -19,6 +22,7 @@ export type FindUserFilter = {
 export class KeycloakUserService {
     public constructor(
         private readonly kcAdminService: KeycloakAdministrationService,
+        private readonly personService: PersonService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -101,7 +105,6 @@ export class KeycloakUserService {
         if (!userResult.ok) {
             return userResult;
         }
-
         if (userResult.value) {
             const mappedUserResult: Result<UserDo<true>, DomainError> = await this.mapResponseToDto(userResult.value);
             return mappedUserResult;
@@ -139,6 +142,54 @@ export class KeycloakUserService {
             ok: false,
             error: new EntityNotFoundError(`Keycloak User could not be found`),
         };
+    }
+
+    public async resetPasswordByPersonId(personId: string): Promise<Result<string, DomainError>> {
+        const user: Result<UserDo<true>, DomainError> = await this.findByPersonId(personId);
+        if (user.ok) {
+            const generatedPassword: string = this.generatePassword();
+            await this.resetPassword(user.value.id, generatedPassword);
+            return { ok: true, value: generatedPassword };
+        } else {
+            return user;
+        }
+    }
+
+    public async resetPassword(userId: string, password: string): Promise<Result<string, DomainError>> {
+        try {
+            // Get authed client
+            const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+                await this.kcAdminService.getAuthedKcAdminClient();
+            if (!kcAdminClientResult.ok) {
+                return kcAdminClientResult;
+            }
+            await kcAdminClientResult.value.users.resetPassword({
+                id: userId,
+                credential: {
+                    temporary: false,
+                    type: 'password',
+                    value: password,
+                },
+            });
+            return { ok: true, value: password };
+        } catch (err) {
+            return { ok: false, error: new KeycloakClientError('Could not authorize with Keycloak') };
+        }
+    }
+
+    private async findByPersonId(personId: string): Promise<Result<UserDo<true>, DomainError>> {
+        const person: Result<PersonDo<true>> = await this.personService.findPersonById(personId);
+        if (person.ok) {
+            return this.findById(person.value.keycloakUserId);
+        }
+        return {
+            ok: false,
+            error: new EntityNotFoundError(),
+        };
+    }
+
+    private generatePassword(): string {
+        return faker.string.alphanumeric({ length: { min: 10, max: 10 }, casing: 'mixed' });
     }
 
     private async wrapClientResponse<T>(promise: Promise<T>): Promise<Result<T, DomainError>> {

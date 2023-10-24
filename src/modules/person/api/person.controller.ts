@@ -1,6 +1,18 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus, Query, HttpCode } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Inject,
+    Post,
+    Param,
+    HttpException,
+    HttpStatus,
+    Query,
+    HttpCode,
+    Patch,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -135,5 +147,13 @@ export class PersonController {
         const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse(persons);
 
         return response;
+    }
+
+    @Patch(':personId/password')
+    @ApiOkResponse({ description: 'Password for person was successfully reset.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to reset password for the person.' })
+    @ApiNotFoundResponse({ description: 'The person does not exist.' })
+    public async resetPasswordByPersonId(@Param() params: PersonByIdParams): Promise<Result<string>> {
+        return this.personUc.resetPassword(params.personId);
     }
 }

@@ -1,17 +1,27 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, MapperTestModule } from '../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
 import { KeycloakUserService } from './domain/keycloak-user.service.js';
 import { KeycloakAdministrationModule } from './keycloak-administration.module.js';
 import { UserMapperProfile } from './domain/keycloak-client/user.mapper.profile.js';
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 import { KeycloakAdministrationService } from './domain/keycloak-admin-client.service.js';
+import { PersonService } from '../person/domain/person.service.js';
+import { PersonModule } from '../person/person.module.js';
+import { PersonRepo } from '../person/persistence/person.repo.js';
 
 describe('KeycloakAdministrationModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, MapperTestModule, KeycloakAdministrationModule],
+            imports: [
+                ConfigTestModule,
+                MapperTestModule,
+                KeycloakAdministrationModule,
+                DatabaseTestModule.forRoot(),
+                PersonModule,
+            ],
+            providers: [PersonService, PersonRepo],
         }).compile();
     });
 
@@ -38,6 +48,14 @@ describe('KeycloakAdministrationModule', () => {
 
         it('should resolve KeycloakAdministrationService', () => {
             expect(module.get(KeycloakAdministrationService)).toBeInstanceOf(KeycloakAdministrationService);
+        });
+
+        it('should resolve PersonService', () => {
+            expect(module.get(PersonService)).toBeInstanceOf(PersonService);
+        });
+
+        it('should resolve PersonRepo', () => {
+            expect(module.get(PersonRepo)).toBeInstanceOf(PersonRepo);
         });
     });
 });
