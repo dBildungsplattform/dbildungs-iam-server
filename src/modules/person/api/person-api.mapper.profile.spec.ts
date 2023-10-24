@@ -1,31 +1,38 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
+import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { MappingError } from '../../../shared/error/index.js';
-import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonDo } from '../domain/person.do.js';
+import { Gender, TrustLevel } from '../domain/person.enums.js';
+import { PersonenkontextDo } from '../domain/personenkontext.do.js';
+import { Jahrgangsstufe, Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
+import { CreatePersonBodyParams } from './create-person.body.params.js';
+import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
+import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
+import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
+import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
+import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
+import { LoeschungDto } from './loeschung.dto.js';
+import { LoeschungResponse } from './loeschung.response.js';
 import {
     PersonApiMapperProfile,
     personGenderToGenderConverter,
     personTrustLevelToTrustLevelConverter,
     personVisibilityToBooleanConverter,
 } from './person-api.mapper.profile.js';
-import { faker } from '@faker-js/faker';
-import { Gender, TrustLevel } from '../domain/person.enums.js';
+import { PersonDto } from './person.dto.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
+import { PersonResponse } from './person.response.js';
 import { SichtfreigabeType } from './personen-query.param.js';
-import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
-import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
-import { Jahrgangsstufe, Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
-import { PersonenkontextDo } from '../domain/personenkontext.do.js';
-import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
-import { PersonenkontextResponse } from './personenkontext.response.js';
+import { PersonendatensatzDto } from './personendatensatz.dto.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
-import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
-import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
-import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
+import { PersonenkontextDto } from './personenkontext.dto.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
 
 describe('PersonApiMapperProfile', () => {
     let module: TestingModule;
@@ -218,13 +225,46 @@ describe('PersonApiMapperProfile', () => {
         });
 
         it('should map FindPersonenkontextByIdParams to FindPersonenkontextByIdDto', () => {
-            const params: FindPersonenkontextByIdParams = {
-                personenkontextId: faker.string.uuid(),
-            };
+            expect(() =>
+                sut.map({} as FindPersonenkontextByIdParams, FindPersonenkontextByIdParams, FindPersonenkontextByIdDto),
+            ).not.toThrowError(MappingError);
+        });
 
-            expect(() => sut.map(params, FindPersonenkontextByIdParams, FindPersonenkontextByIdDto)).not.toThrowError(
-                MappingError,
-            );
+        it('should map PersonenkontextDo to PersonenkontextDto', () => {
+            expect(() =>
+                sut.map({} as PersonenkontextDo<boolean>, PersonenkontextDo, PersonenkontextDto),
+            ).not.toThrowError(MappingError);
+        });
+
+        it('should map PersonDo to PersonDto', () => {
+            expect(() => sut.map({} as PersonDo<boolean>, PersonDo, PersonDto)).not.toThrowError(MappingError);
+        });
+
+        it.skip('should map ??? to PersonendatensatzDto', () => {
+            // TODO: implement test
+            expect(() =>
+                sut.map({} as PersonenkontextDto, PersonenkontextDto, PersonenkontextResponse),
+            ).not.toThrowError(MappingError);
+        });
+
+        it('should map LoeschungDto to LoeschungResponse', () => {
+            expect(() => sut.map({} as LoeschungDto, LoeschungDto, LoeschungResponse)).not.toThrowError(MappingError);
+        });
+
+        it('should map PersonenkontextDto to PersonenkontextResponse', () => {
+            expect(() =>
+                sut.map({} as PersonenkontextDto, PersonenkontextDto, PersonenkontextResponse),
+            ).not.toThrowError(MappingError);
+        });
+
+        it('should map PersonDto to PersonResponse', () => {
+            expect(() => sut.map({} as PersonDto, PersonDto, PersonResponse)).not.toThrowError(MappingError);
+        });
+
+        it('should map PersonendatensatzDto to PersonendatensatzResponse', () => {
+            expect(() =>
+                sut.map({} as PersonendatensatzDto, PersonendatensatzDto, PersonendatensatzResponse),
+            ).not.toThrowError(MappingError);
         });
     });
 });
