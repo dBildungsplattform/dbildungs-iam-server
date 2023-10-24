@@ -28,8 +28,8 @@ import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { Public } from 'nest-keycloak-connect';
 
-@ApiTags('person')
-@Controller({ path: 'person' })
+@ApiTags('personen')
+@Controller({ path: 'personen' })
 @Public()
 export class PersonController {
     public constructor(
@@ -116,7 +116,8 @@ export class PersonController {
 
     @Get()
     @ApiOkResponse({
-        description: 'The persons were successfully returned.',
+        description:
+            'The persons were successfully returned. WARNING: This endpoint returns all persons as default when no paging parameters were set.',
         type: [PersonendatensatzResponse],
         headers: PagingHeadersObject,
     })
