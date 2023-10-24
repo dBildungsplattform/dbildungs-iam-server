@@ -20,14 +20,17 @@ export class PersonenkontextController {
     public constructor(private readonly personenkontextUc: PersonenkontextUc) {}
 
     @Get(':personenkontextId')
-    @ApiOkResponse({ description: 'The personenkontext was successfully returned.' })
+    @ApiOkResponse({
+        description: 'The personenkontext was successfully returned.',
+        type: PersonenkontextDetailedResponse,
+    })
     @ApiBadRequestResponse({ description: 'Request has wrong format.' })
     @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
     @ApiNotFoundResponse({ description: 'The personenkontext was not found.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
     public async findById(@Param() params: PersonenkontextByIdParams): Promise<PersonenkontextDetailedResponse> {
-        const result: PersonenkontextDetailedResponse = await this.personenkontextUc.findById(params.personenKontextId);
+        const result: PersonenkontextDetailedResponse = await this.personenkontextUc.findById(params.personenkontextId);
 
         return result;
     }
