@@ -9,12 +9,12 @@ on:
       - '.github/workflows/**'
 
 concurrency:
-  group: dbildungs-iam-server-chart-${{ github.ref }}
+  group: dbildungs-iam-server-chart-main
   cancel-in-progress: true
 
 jobs:
   release:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@DBP-282-workflow-release-helm-chart
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@1.3.0
     secrets: inherit
     with:
       chart_name: dbildungs-iam

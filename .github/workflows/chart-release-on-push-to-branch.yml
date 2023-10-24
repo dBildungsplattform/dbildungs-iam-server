@@ -18,7 +18,7 @@ jobs:
     permissions:
       contents: read
   release:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@DBP-282-workflow-release-helm-chart
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@DBP-282-workflow-release-helm-chart #TODO: change reference after merge
     secrets: inherit
     with:
       chart_name: dbildungs-iam
