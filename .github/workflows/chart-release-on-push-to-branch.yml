@@ -1,9 +1,11 @@
-name: Push Charts to helm-charts-registry
+name: Push Charts to helm-charts-registry on push to branch
 
 on:
   push:
     branches-ignore:
       - 'main'
+    paths:
+      - 'charts/**'
 
 concurrency:
   group: dbildungs-iam-server-chart-${{ github.ref }}
@@ -33,7 +35,7 @@ jobs:
           echo "output=${short_sha}" >> $GITHUB_OUTPUT
   release:
     if: ${{ !failure() }}
-    needs: [scan, get_ticket_sha]
+    needs: get_ticket_sha
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@DBP-282-workflow-release-helm-chart
     secrets: inherit
     with:
