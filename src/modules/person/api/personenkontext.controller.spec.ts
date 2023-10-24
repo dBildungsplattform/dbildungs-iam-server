@@ -42,10 +42,10 @@ describe('PersonenkontextController', () => {
         describe('when finding personenkontext with id', () => {
             it('should return personenkontext response', async () => {
                 const params: PersonenkontextByIdParams = {
-                    personenKontextId: faker.string.uuid(),
+                    personenkontextId: faker.string.uuid(),
                 };
                 const responseMock: PersonenkontextDetailedResponse = {
-                    id: params.personenKontextId,
+                    id: params.personenkontextId,
                     mandant: faker.company.name(),
                     organisation: {
                         id: faker.string.uuid(),

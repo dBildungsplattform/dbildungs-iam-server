@@ -8,5 +8,5 @@ export class PersonenkontextByIdParams {
         required: true,
         nullable: false,
     })
-    public readonly personenKontextId!: string;
+    public readonly personenkontextId!: string;
 }
