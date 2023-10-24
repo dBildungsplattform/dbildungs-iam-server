@@ -6,27 +6,16 @@ on:
       - 'main'
     paths:
       - 'charts/**'
+      - '.github/workflows/**'
 
 concurrency:
   group: dbildungs-iam-server-chart-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  get_sha:
-    runs-on: ubuntu-latest
-    outputs:
-      short_commit_hash: ${{ steps.trim_hash.outputs.output }}
-    steps:
-      - name: Trim commit hash
-        id: trim_hash
-        run: |
-          short_sha=`echo ${GITHUB_SHA} | cut -c1-8`
-          echo "output=${short_sha}" >> $GITHUB_OUTPUT
   release:
-    if: ${{ !failure() }}
-    needs: get_sha
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@DBP-282-workflow-release-helm-chart
     secrets: inherit
     with:
       chart_name: dbildungs-iam
-      chart_version: "0.0.1-${{ needs.get_sha.outputs.short_commit_hash }}"
+      version_generation: short_hash
