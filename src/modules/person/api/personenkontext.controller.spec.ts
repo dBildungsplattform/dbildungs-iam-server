@@ -1,11 +1,14 @@
 import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Rolle } from '../domain/personenkontext.enums.js';
-import { PersonenkontextResponse } from './personenkontext.response.js';
+import { MapperTestModule } from '../../../../test/utils/index.js';
 import { PersonenkontextController } from './personenkontext.controller.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
-import { PersonenkontextByIdParams } from './personenkontext-by-id.params.js';
+import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
+import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { PersonendatensatzDto } from './personendatensatz.dto.js';
+import { PersonDto } from './person.dto.js';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
@@ -14,8 +17,10 @@ describe('PersonenkontextController', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [MapperTestModule],
             providers: [
                 PersonenkontextController,
+                PersonApiMapperProfile,
                 {
                     provide: PersonenkontextUc,
                     useValue: createMock<PersonenkontextUc>(),
@@ -41,24 +46,19 @@ describe('PersonenkontextController', () => {
     describe('findById', () => {
         describe('when finding personenkontext with id', () => {
             it('should return personenkontext response', async () => {
-                const params: PersonenkontextByIdParams = {
+                const params: FindPersonenkontextByIdParams = {
                     personenkontextId: faker.string.uuid(),
                 };
-                const responseMock: PersonenkontextResponse = {
-                    id: params.personenkontextId,
-                    mandant: faker.company.name(),
-                    organisation: {
-                        id: faker.string.uuid(),
-                    },
-                    revision: faker.string.numeric(),
-                    rolle: Rolle.EXTERNE_PERSON,
+                const dtoMock: PersonendatensatzDto = {
+                    person: new PersonDto(),
+                    personenkontexte: [],
                 };
 
-                personenkontextUcMock.findById.mockResolvedValue(responseMock);
+                personenkontextUcMock.findById.mockResolvedValue(dtoMock);
 
-                const response: PersonenkontextResponse = await sut.findById(params);
+                const response: PersonendatensatzResponse = await sut.findById(params);
 
-                expect(response).toStrictEqual(responseMock);
+                expect(response).toStrictEqual(dtoMock);
                 expect(personenkontextUcMock.findById).toBeCalledTimes(1);
             });
         });

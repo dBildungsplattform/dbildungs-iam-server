@@ -8,4 +8,8 @@ export class PersonendatensatzDto {
 
     @AutoMap(() => [PersonenkontextDto])
     public readonly personenkontexte!: PersonenkontextDto[];
+
+    public constructor(props: Readonly<PersonendatensatzDto>) {
+        Object.assign(this, props);
+    }
 }

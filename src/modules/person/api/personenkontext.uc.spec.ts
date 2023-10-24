@@ -1,24 +1,28 @@
+import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { PersonService } from '../domain/person.service.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
+import { Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
 import { PersonenkontextService } from '../domain/personenkontext.service.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
-import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
-import { PersonenkontextUc } from './personenkontext.uc.js';
-import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
+import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { SichtfreigabeType } from './personen-query.param.js';
-import { Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
-import { faker } from '@faker-js/faker';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { PersonenkontextUc } from './personenkontext.uc.js';
+import { PersonDo } from '../domain/person.do.js';
 
 describe('PersonenkontextUc', () => {
     let module: TestingModule;
-    let personenkontextUc: PersonenkontextUc;
+    let sut: PersonenkontextUc;
+    let personServiceMock: DeepMocked<PersonService>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
 
     beforeAll(async () => {
@@ -28,12 +32,17 @@ describe('PersonenkontextUc', () => {
                 PersonenkontextUc,
                 PersonApiMapperProfile,
                 {
+                    provide: PersonService,
+                    useValue: createMock<PersonService>(),
+                },
+                {
                     provide: PersonenkontextService,
                     useValue: createMock<PersonenkontextService>(),
                 },
             ],
         }).compile();
-        personenkontextUc = module.get(PersonenkontextUc);
+        sut = module.get(PersonenkontextUc);
+        personServiceMock = module.get(PersonService);
         personenkontextServiceMock = module.get(PersonenkontextService);
     });
 
@@ -46,7 +55,7 @@ describe('PersonenkontextUc', () => {
     });
 
     it('should be defined', () => {
-        expect(personenkontextUc).toBeDefined();
+        expect(sut).toBeDefined();
     });
 
     describe('createPersonenkontext', () => {
@@ -58,7 +67,7 @@ describe('PersonenkontextUc', () => {
                     value: personenkontextDo,
                 });
 
-                const createPersonPromise: Promise<CreatedPersonenkontextDto> = personenkontextUc.createPersonenkontext(
+                const createPersonPromise: Promise<CreatedPersonenkontextDto> = sut.createPersonenkontext(
                     {} as CreatePersonenkontextDto,
                 );
 
@@ -74,7 +83,7 @@ describe('PersonenkontextUc', () => {
                     error: error,
                 });
 
-                const createPersonPromise: Promise<CreatedPersonenkontextDto> = personenkontextUc.createPersonenkontext(
+                const createPersonPromise: Promise<CreatedPersonenkontextDto> = sut.createPersonenkontext(
                     {} as CreatePersonenkontextDto,
                 );
 
@@ -102,7 +111,7 @@ describe('PersonenkontextUc', () => {
                     value: personenkontexte,
                 });
 
-                const result: PersonenkontextResponse[] = await personenkontextUc.findAll(findPersonenkontextDto);
+                const result: PersonenkontextResponse[] = await sut.findAll(findPersonenkontextDto);
                 expect(result).toHaveLength(2);
             });
 
@@ -120,7 +129,7 @@ describe('PersonenkontextUc', () => {
                     error: new EntityNotFoundError('Personenkontext'),
                 };
                 personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue(emptyResult);
-                await expect(personenkontextUc.findAll(findPersonenkontextDto)).rejects.toThrow(EntityNotFoundError);
+                await expect(sut.findAll(findPersonenkontextDto)).rejects.toThrow(EntityNotFoundError);
             });
         });
     });
@@ -128,22 +137,31 @@ describe('PersonenkontextUc', () => {
     describe('findById', () => {
         describe('when finding personenkontext with id', () => {
             it('should return personenkontext', async () => {
+                const personDo: PersonDo<true> = DoFactory.createPerson(true);
                 const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+                const dto: FindPersonenkontextByIdDto = {
+                    personenkontextId: personenkontextDo.id,
+                };
 
+                personServiceMock.findPersonById.mockResolvedValue({ ok: true, value: personDo });
                 personenkontextServiceMock.findById.mockResolvedValue({ ok: true, value: personenkontextDo });
 
-                await expect(personenkontextUc.findById(personenkontextDo.id)).resolves.not.toThrow();
+                await expect(sut.findById(dto)).resolves.not.toThrow();
             });
         });
 
         describe('when NOT finding personenkontext with id', () => {
             it('should throw domain error', async () => {
+                const dto: FindPersonenkontextByIdDto = {
+                    personenkontextId: faker.string.uuid(),
+                };
+
                 personenkontextServiceMock.findById.mockResolvedValue({
                     ok: false,
                     error: new EntityNotFoundError('Personenkontext'),
                 });
 
-                await expect(personenkontextUc.findById(faker.string.uuid())).rejects.toThrow(EntityNotFoundError);
+                await expect(sut.findById(dto)).rejects.toThrow(EntityNotFoundError);
             });
         });
     });

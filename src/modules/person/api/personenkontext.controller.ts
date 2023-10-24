@@ -1,4 +1,5 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { getMapperToken } from '@automapper/nestjs';
+import { Controller, Get, Inject, Param } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiForbiddenResponse,
@@ -9,15 +10,21 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Public } from 'nest-keycloak-connect';
-// import { PersonenkontextUc } from './personenkontext.uc.js';
-import { PersonenkontextByIdParams } from './personenkontext-by-id.params.js';
+import { PersonendatensatzDto } from './personendatensatz.dto.js';
+import { PersonenkontextUc } from './personenkontext.uc.js';
+import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { Mapper } from '@automapper/core';
+import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
 
 @Public()
 @ApiTags('personenkontexte')
 @Controller({ path: 'personenkontexte' })
 export class PersonenkontextController {
-    // public constructor(private readonly personenkontextUc: PersonenkontextUc) {}
+    public constructor(
+        private readonly personenkontextUc: PersonenkontextUc,
+        @Inject(getMapperToken()) private readonly mapper: Mapper,
+    ) {}
 
     @Get(':personenkontextId')
     @ApiOkResponse({
@@ -29,11 +36,19 @@ export class PersonenkontextController {
     @ApiNotFoundResponse({ description: 'The personenkontext was not found.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
-    public findById(@Param() _params: PersonenkontextByIdParams): Promise<PersonendatensatzResponse> {
-        // const result: PersonenkontextDetailedResponse = await this.personenkontextUc.findById(params.personenkontextId);
+    public async findById(@Param() params: FindPersonenkontextByIdParams): Promise<PersonendatensatzResponse> {
+        const dto: FindPersonenkontextByIdDto = this.mapper.map(
+            params,
+            FindPersonenkontextByIdParams,
+            FindPersonenkontextByIdDto,
+        );
+        const result: PersonendatensatzDto = await this.personenkontextUc.findById(dto);
+        const response: PersonendatensatzResponse = this.mapper.map(
+            result,
+            PersonendatensatzDto,
+            PersonendatensatzResponse,
+        );
 
-        // return result;
-
-        throw new Error('Not implemented yet.');
+        return response;
     }
 }
