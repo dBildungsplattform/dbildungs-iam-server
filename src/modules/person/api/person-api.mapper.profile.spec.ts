@@ -24,6 +24,10 @@ import {
     personTrustLevelToTrustLevelConverter,
     personVisibilityToBooleanConverter,
 } from './person-api.mapper.profile.js';
+import { PersonBirthParams } from './person-birth.params.js';
+import { PersonGeburtDto } from './person-geburt.dto.js';
+import { PersonNameDto } from './person-name.dto.js';
+import { PersonNameParams } from './person-name.params.js';
 import { PersonDto } from './person.dto.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
 import { PersonResponse } from './person.response.js';
@@ -184,24 +188,12 @@ describe('PersonApiMapperProfile', () => {
         });
 
         it('should map CreatedPersonenkontextDto to PersonenkontextResponse', () => {
-            const dto: CreatedPersonenkontextDto = {
-                id: faker.string.uuid(),
-                mandant: faker.string.uuid(),
-                organisation: {
-                    id: faker.string.uuid(),
-                },
-                revision: '1',
-                rolle: Rolle.LEHRENDER,
-                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                personenstatus: Personenstatus.AKTIV,
-                referrer: 'referrer',
-            };
-            expect(() => sut.map(dto, CreatedPersonenkontextDto, PersonenkontextResponse)).not.toThrowError(
-                MappingError,
-            );
+            expect(() =>
+                sut.map({} as CreatedPersonenkontextDto, CreatedPersonenkontextDto, PersonenkontextResponse),
+            ).not.toThrowError(MappingError);
         });
 
-        it('should map PersonenkontextQueryParams to FindePersonenkontextDto', () => {
+        it('should map PersonenkontextQueryParams to FindPersonenkontextDto', () => {
             const params: PersonenkontextQueryParams = {
                 sichtfreigabe: SichtfreigabeType.JA,
                 personenstatus: Personenstatus.AKTIV,
@@ -213,7 +205,7 @@ describe('PersonApiMapperProfile', () => {
             );
         });
 
-        it('should map FindePersonenkontextDto to PersonenkontextDo', () => {
+        it('should map FindPersonenkontextDto to PersonenkontextDo', () => {
             const dto: FindPersonenkontextDto = {
                 personId: faker.string.uuid(),
                 sichtfreigabe: SichtfreigabeType.JA,
@@ -240,13 +232,6 @@ describe('PersonApiMapperProfile', () => {
             expect(() => sut.map({} as PersonDo<boolean>, PersonDo, PersonDto)).not.toThrowError(MappingError);
         });
 
-        it.skip('should map ??? to PersonendatensatzDto', () => {
-            // TODO: implement test
-            expect(() =>
-                sut.map({} as PersonenkontextDto, PersonenkontextDto, PersonenkontextResponse),
-            ).not.toThrowError(MappingError);
-        });
-
         it('should map LoeschungDto to LoeschungResponse', () => {
             expect(() => sut.map({} as LoeschungDto, LoeschungDto, LoeschungResponse)).not.toThrowError(MappingError);
         });
@@ -259,6 +244,16 @@ describe('PersonApiMapperProfile', () => {
 
         it('should map PersonDto to PersonResponse', () => {
             expect(() => sut.map({} as PersonDto, PersonDto, PersonResponse)).not.toThrowError(MappingError);
+        });
+
+        it('should map PersonNameDto to PersonNameParams', () => {
+            expect(() => sut.map({} as PersonNameDto, PersonNameDto, PersonNameParams)).not.toThrowError(MappingError);
+        });
+
+        it('should map PersonGeburtDto to PersonBirthParams', () => {
+            expect(() => sut.map({} as PersonGeburtDto, PersonGeburtDto, PersonBirthParams)).not.toThrowError(
+                MappingError,
+            );
         });
 
         it('should map PersonendatensatzDto to PersonendatensatzResponse', () => {

@@ -21,6 +21,7 @@ import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonDto } from './person.dto.js';
+import { PersonenkontextDto } from './personenkontext.dto.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -201,6 +202,7 @@ describe('PersonController', () => {
                     jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
                     personenstatus: Personenstatus.AKTIV,
                     referrer: 'referrer',
+                    loeschung: {},
                 };
                 personenkontextUcMock.createPersonenkontext.mockResolvedValue(ucResult);
 
@@ -222,7 +224,7 @@ describe('PersonController', () => {
                     personenstatus: Personenstatus.AKTIV,
                     rolle: Rolle.LERNENDER,
                 };
-                const personenkontextResponse: PersonenkontextResponse = {
+                const personenkontextResponse: PersonenkontextDto = {
                     id: faker.string.uuid(),
                     organisation: {
                         id: faker.string.uuid(),
@@ -233,10 +235,11 @@ describe('PersonController', () => {
                     referrer: 'referrer',
                     jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
                     personenstatus: Personenstatus.AKTIV,
+                    loeschung: {},
                 };
-                const personenkontextResponseArray: PersonenkontextResponse[] = [personenkontextResponse];
+                const personenkontextDtos: PersonenkontextDto[] = [personenkontextResponse];
 
-                personenkontextUcMock.findAll.mockResolvedValue(personenkontextResponseArray);
+                personenkontextUcMock.findAll.mockResolvedValue(personenkontextDtos);
 
                 const result: PersonenkontextResponse[] = await personController.findPersonenkontexte(
                     pathParams,
@@ -245,7 +248,7 @@ describe('PersonController', () => {
 
                 expect(personenkontextUcMock.findAll).toHaveBeenCalledTimes(1);
                 expect(result.length).toBe(1);
-                expect(result[0]?.id).toBe(personenkontextResponseArray[0]?.id);
+                expect(result[0]?.id).toBe(personenkontextDtos[0]?.id);
             });
         });
     });

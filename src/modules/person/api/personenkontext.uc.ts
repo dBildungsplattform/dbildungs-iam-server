@@ -13,7 +13,6 @@ import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonDto } from './person.dto.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
-import { PersonenkontextResponse } from './personenkontext.response.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -41,9 +40,9 @@ export class PersonenkontextUc {
     }
 
     // TODO refactor after EW-561 is done
-    public async findAll(findePersonenkontextDto: FindPersonenkontextDto): Promise<PersonenkontextResponse[]> {
+    public async findAll(findPersonenkontextDto: FindPersonenkontextDto): Promise<PersonenkontextDto[]> {
         const personenkontextDo: PersonenkontextDo<false> = this.mapper.map(
-            findePersonenkontextDto,
+            findPersonenkontextDto,
             FindPersonenkontextDto,
             PersonenkontextDo,
         );
@@ -54,9 +53,8 @@ export class PersonenkontextUc {
             throw result.error;
         }
 
-        const personenkontexte: PersonenkontextResponse[] = result.value.map(
-            (personenkontext: PersonenkontextDo<true>) =>
-                this.mapper.map(personenkontext, PersonenkontextDo, PersonenkontextResponse),
+        const personenkontexte: PersonenkontextDto[] = result.value.map((personenkontext: PersonenkontextDo<true>) =>
+            this.mapper.map(personenkontext, PersonenkontextDo, PersonenkontextDto),
         );
         return personenkontexte;
     }

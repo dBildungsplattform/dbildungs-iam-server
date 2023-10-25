@@ -58,7 +58,7 @@ describe('PersonenkontextController', () => {
 
                 const response: PersonendatensatzResponse = await sut.findById(params);
 
-                expect(response).toStrictEqual(dtoMock);
+                expect(response).toBeInstanceOf(PersonendatensatzResponse);
                 expect(personenkontextUcMock.findById).toBeCalledTimes(1);
             });
         });

@@ -17,7 +17,7 @@ export class PersonNameDto {
     public rufname?: string;
 
     @AutoMap()
-    public titel?: string;
+    public title?: string;
 
     @AutoMap(() => [String])
     public anrede?: string[];
@@ -30,4 +30,8 @@ export class PersonNameDto {
 
     @AutoMap()
     public sortierindex?: string;
+
+    public constructor(props: Readonly<PersonNameDto>) {
+        Object.assign(this, props);
+    }
 }

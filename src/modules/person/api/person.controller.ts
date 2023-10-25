@@ -28,6 +28,7 @@ import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
+import { PersonenkontextDto } from './personenkontext.dto.js';
 
 @ApiTags('personen')
 @Controller({ path: 'personen' })
@@ -113,11 +114,15 @@ export class PersonController {
 
         findPersonenkontextDto.personId = pathParams.personId;
 
-        const personenkontexte: PersonenkontextResponse[] = await this.personenkontextUc.findAll(
-            findPersonenkontextDto,
+        const personenkontextDtos: PersonenkontextDto[] = await this.personenkontextUc.findAll(findPersonenkontextDto);
+        // AI next 5 line
+        const response: PersonenkontextResponse[] = this.mapper.mapArray(
+            personenkontextDtos,
+            PersonenkontextDto,
+            PersonenkontextResponse,
         );
 
-        return personenkontexte;
+        return response;
     }
 
     @Get()

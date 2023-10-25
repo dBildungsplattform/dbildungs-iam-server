@@ -27,6 +27,10 @@ import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.para
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { LoeschungDto } from './loeschung.dto.js';
 import { LoeschungResponse } from './loeschung.response.js';
+import { PersonBirthParams } from './person-birth.params.js';
+import { PersonGeburtDto } from './person-geburt.dto.js';
+import { PersonNameDto } from './person-name.dto.js';
+import { PersonNameParams } from './person-name.params.js';
 import { PersonDto } from './person.dto.js';
 import { PersonGender, PersonTrustLevel } from './person.enums.js';
 import { PersonResponse } from './person.response.js';
@@ -320,8 +324,8 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 CreatedPersonenkontextDto,
                 forMember(
                     (dest: PersonenkontextDto) => dest.loeschung,
-                    mapFrom((src: PersonenkontextDo<boolean>) =>
-                        src.loeschungZeitpunkt ? new LoeschungDto({ zeitpunkt: src.loeschungZeitpunkt }) : undefined,
+                    mapFrom(
+                        (src: PersonenkontextDo<boolean>) => new LoeschungDto({ zeitpunkt: src.loeschungZeitpunkt }),
                     ),
                 ),
             );
@@ -375,23 +379,62 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 ),
             );
 
-            createMap(mapper, PersonDo, PersonDto);
+            createMap(
+                mapper,
+                PersonDo,
+                PersonDto,
+                forMember(
+                    (dest: PersonDto) => dest.name,
+                    mapFrom(
+                        (src: PersonDo<boolean>) =>
+                            new PersonNameDto({
+                                vorname: src.firstName,
+                                familienname: src.lastName,
+                                initialenfamilienname: src.initialsLastName,
+                                initialenvorname: src.initialsFirstName,
+                                rufname: src.nickName,
+                                title: src.nameTitle,
+                                anrede: src.nameSalutation,
+                                namenspraefix: src.namePrefix,
+                                namenssuffix: src.nameSuffix,
+                                sortierindex: src.nameSortIndex,
+                            }),
+                    ),
+                ),
+                forMember(
+                    (dest: PersonDto) => dest.geburt,
+                    mapFrom(
+                        (src: PersonDo<boolean>) =>
+                            new PersonGeburtDto({ datum: src.birthDate, geburtsort: src.birthPlace }),
+                    ),
+                ),
+                forMember(
+                    (dest: PersonDto) => dest.geschlecht,
+                    mapFrom((src: PersonDo<boolean>) => src.gender),
+                ),
+                forMember(
+                    (dest: PersonDto) => dest.stammorganisation,
+                    mapFrom((src: PersonDo<boolean>) => src.mainOrganization),
+                ),
+                forMember(
+                    (dest: PersonDto) => dest.lokalisierung,
+                    mapFrom((src: PersonDo<boolean>) => src.localization),
+                ),
+                forMember(
+                    (dest: PersonDto) => dest.vertrauensstufe,
+                    mapFrom((src: PersonDo<boolean>) => src.trustLevel),
+                ),
+            );
 
             createMap(mapper, LoeschungDto, LoeschungResponse);
 
             createMap(mapper, PersonenkontextDto, PersonenkontextResponse);
 
-            createMap(
-                mapper,
-                PersonDto,
-                PersonResponse,
-                forMember((dest: PersonResponse) => dest.name, ignore()),
-                forMember((dest: PersonResponse) => dest.geburt, ignore()),
-                forMember((dest: PersonResponse) => dest.stammorganisation, ignore()),
-                forMember((dest: PersonResponse) => dest.geschlecht, ignore()),
-                forMember((dest: PersonResponse) => dest.lokalisierung, ignore()),
-                forMember((dest: PersonResponse) => dest.vertrauensstufe, ignore()),
-            );
+            createMap(mapper, PersonDto, PersonResponse);
+
+            createMap(mapper, PersonNameDto, PersonNameParams);
+
+            createMap(mapper, PersonGeburtDto, PersonBirthParams);
 
             createMap(mapper, PersonendatensatzDto, PersonendatensatzResponse);
         };

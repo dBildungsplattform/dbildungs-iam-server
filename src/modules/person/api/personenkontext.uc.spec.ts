@@ -5,6 +5,7 @@ import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
@@ -15,9 +16,8 @@ import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js'
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { SichtfreigabeType } from './personen-query.param.js';
-import { PersonenkontextResponse } from './personenkontext.response.js';
+import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
-import { PersonDo } from '../domain/person.do.js';
 
 describe('PersonenkontextUc', () => {
     let module: TestingModule;
@@ -111,7 +111,7 @@ describe('PersonenkontextUc', () => {
                     value: personenkontexte,
                 });
 
-                const result: PersonenkontextResponse[] = await sut.findAll(findPersonenkontextDto);
+                const result: PersonenkontextDto[] = await sut.findAll(findPersonenkontextDto);
                 expect(result).toHaveLength(2);
             });
 

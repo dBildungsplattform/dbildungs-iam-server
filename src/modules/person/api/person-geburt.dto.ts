@@ -6,4 +6,8 @@ export class PersonGeburtDto {
 
     @AutoMap(() => Date)
     public datum?: Date;
+
+    public constructor(props: Readonly<PersonGeburtDto>) {
+        Object.assign(this, props);
+    }
 }

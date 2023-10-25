@@ -2,8 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
 import { PersonController } from './api/person.controller.js';
 import { PersonUc } from './api/person.uc.js';
-import { PersonApiModule } from './person-api.module.js';
+import { PersonenkontextController } from './api/personenkontext.controller.js';
 import { PersonenkontextUc } from './api/personenkontext.uc.js';
+import { PersonApiModule } from './person-api.module.js';
 
 describe('PersonApiModule', () => {
     let module: TestingModule;
@@ -33,6 +34,11 @@ describe('PersonApiModule', () => {
 
         it('should resolve PersonenkontextUc', () => {
             expect(module.get(PersonenkontextUc)).toBeInstanceOf(PersonenkontextUc);
+        });
+
+        it('should resolve PersonenkontextController', () => {
+            // AI next 1 line
+            expect(module.get(PersonenkontextController)).toBeInstanceOf(PersonenkontextController);
         });
     });
 });
