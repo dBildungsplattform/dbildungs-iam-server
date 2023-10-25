@@ -22,3 +22,8 @@ services:
       - 8443:8443
     volumes:
       - ./dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
+  redis:
+    image: redis:7.2.2
+    ports:
+      - 6379:6379
+    command: redis-server --requirepass password
