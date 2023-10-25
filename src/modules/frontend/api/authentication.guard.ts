@@ -13,6 +13,6 @@ export class AuthenticatedGuard implements CanActivate {
 
         const tokens: TokenSet | undefined = session.get('keycloak_tokens');
 
-        return !!tokens && !tokens.expired();
+        return !!tokens && !new TokenSet(tokens).expired();
     }
 }
