@@ -1,12 +1,14 @@
 import { AutoMap } from '@automapper/classes';
 import { Gender, TrustLevel } from '../domain/person.enums.js';
+import { PersonNameDto } from './person-name.dto.js';
+import { PersonGeburtDto } from './person-geburt.dto.js';
 
 export class PersonDto {
     @AutoMap()
-    public id?: string;
+    public id!: string;
 
     @AutoMap(() => Date)
-    public createdAt?: Date;
+    public createdAt!: Date;
 
     @AutoMap(() => Date)
     public updatedAt!: Date;
@@ -18,55 +20,25 @@ export class PersonDto {
     public referrer?: string;
 
     @AutoMap()
-    public client: string = '';
+    public mandant: string = '';
 
     @AutoMap()
-    public readonly mainOrganization?: string;
+    public stammorganisation?: string;
 
-    @AutoMap()
-    public lastName: string = '';
+    @AutoMap(() => PersonNameDto)
+    public name!: PersonNameDto;
 
-    @AutoMap()
-    public firstName: string = '';
-
-    @AutoMap()
-    public initialsLastName?: string;
-
-    @AutoMap()
-    public initialsFirstName?: string;
-
-    @AutoMap()
-    public nickName?: string;
-
-    @AutoMap()
-    public nameTitle?: string;
-
-    @AutoMap(() => [String])
-    public nameSalutation?: string[];
-
-    @AutoMap(() => [String])
-    public namePrefix?: string[];
-
-    @AutoMap(() => [String])
-    public nameSuffix?: string[];
-
-    @AutoMap()
-    public nameSortIndex?: string;
-
-    @AutoMap(() => Date)
-    public birthDate?: Date;
-
-    @AutoMap()
-    public birthPlace?: string;
+    @AutoMap(() => PersonGeburtDto)
+    public geburt!: PersonGeburtDto;
 
     @AutoMap(() => String)
-    public gender?: Gender;
+    public geschlecht?: string | Gender;
 
     @AutoMap()
-    public localization?: string = 'de-DE';
+    public lokalisierung?: string = 'de-DE';
 
     @AutoMap(() => String)
-    public trustLevel?: TrustLevel;
+    public vertrauensstufe?: TrustLevel;
 
     @AutoMap()
     public isInformationBlocked?: boolean;
