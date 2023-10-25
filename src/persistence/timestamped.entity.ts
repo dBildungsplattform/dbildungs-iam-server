@@ -7,6 +7,7 @@ export abstract class TimestampedEntity<
     Populate extends string = string,
 > extends BaseEntity<Entity, 'id', Populate> {
     @AutoMap()
+    @AutoMap(() => String)
     @PrimaryKey({ onCreate: () => randomUUID() })
     public readonly id!: string;
 

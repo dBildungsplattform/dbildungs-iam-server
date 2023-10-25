@@ -160,6 +160,9 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<boolean>) => dest.createdAt, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.updatedAt, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.keycloakUserId, ignore()),
+                forMember((dest: PersonDo<boolean>) => dest.id, ignore()),
+                forMember((dest: PersonDo<boolean>) => dest.createdAt, ignore()),
+                forMember((dest: PersonDo<boolean>) => dest.updatedAt, ignore()),
             );
 
             createMap(
@@ -308,7 +311,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
             createMap(
                 mapper,
                 CreatePersonenkontextDto,
-                PersonenkontextDo<boolean>,
+                PersonenkontextDo,
                 forMember((dest: PersonenkontextDo<boolean>) => dest.id, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.createdAt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.updatedAt, ignore()),
@@ -352,6 +355,9 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonenkontextDo<boolean>) => dest.jahrgangsstufe, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.loeschungZeitpunkt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.revision, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.id, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.createdAt, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.updatedAt, ignore()),
                 forMember(
                     (dest: PersonenkontextDo<boolean>) => dest.id,
                     mapFrom((src: FindPersonenkontextDto) => src.personId),
