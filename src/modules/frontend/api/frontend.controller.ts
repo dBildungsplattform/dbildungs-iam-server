@@ -41,9 +41,7 @@ export class FrontendController {
     @UseGuards(AuthenticatedGuard)
     @Patch('user/:personId/password')
     @ApiAcceptedResponse({ description: 'Password for person was successfully reset.' })
-    public resetPasswordByPersonId(
-        @Param() params: PersonByIdParams,
-    ): Observable<ResetPasswordResponse> {
+    public resetPasswordByPersonId(@Param() params: PersonByIdParams): Observable<ResetPasswordResponse> {
         return this.userService
             .resetPasswordForUserByUserId(params.personId)
             .pipe(map((res: AxiosResponse<ResetPasswordResponse>) => res.data));
