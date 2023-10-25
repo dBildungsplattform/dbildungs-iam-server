@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus, Query, HttpCode } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Inject, Param, Post, Query } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -11,22 +11,23 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { PersonUc } from '../api/person.uc.js';
-import { CreatePersonBodyParams } from './create-person.body.params.js';
-import { CreatePersonDto } from '../domain/create-person.dto.js';
-import { PersonByIdParams } from './person-by-id.param.js';
+import { Public } from 'nest-keycloak-connect';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
-import { PersonenQueryParams } from './personen-query.param.js';
-import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { PersonUc } from '../api/person.uc.js';
+import { CreatePersonDto } from '../domain/create-person.dto.js';
+import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
+import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
+import { PersonByIdParams } from './person-by-id.param.js';
+import { PersonenQueryParams } from './personen-query.param.js';
+import { PersonendatensatzDto } from './personendatensatz.dto.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
-import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
-import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
-import { Public } from 'nest-keycloak-connect';
 
 @ApiTags('personen')
 @Controller({ path: 'personen' })
@@ -50,7 +51,7 @@ export class PersonController {
     }
 
     @Get(':personId')
-    @ApiOkResponse({ description: 'The person was successfully returned.' })
+    @ApiOkResponse({ description: 'The person was successfully returned.', type: PersonendatensatzResponse })
     @ApiBadRequestResponse({ description: 'Person ID is required' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the person.' })
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
@@ -58,8 +59,13 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the person.' })
     public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonendatensatzResponse | HttpException> {
         try {
-            const person: PersonendatensatzResponse = await this.personUc.findPersonById(params.personId);
-            return person;
+            const dto: PersonendatensatzDto = await this.personUc.findPersonById(params.personId);
+            const response: PersonendatensatzResponse = this.mapper.map(
+                dto,
+                PersonendatensatzDto,
+                PersonendatensatzResponse,
+            );
+            return response;
         } catch (error) {
             throw new HttpException('Requested entity does not exist', HttpStatus.NOT_FOUND);
         }
@@ -127,13 +133,18 @@ export class PersonController {
     public async findPersons(
         @Query() queryParams: PersonenQueryParams,
     ): Promise<PagedResponse<PersonendatensatzResponse>> {
-        const personDatensatzDTO: FindPersonendatensatzDto = this.mapper.map(
+        const findDto: FindPersonendatensatzDto = this.mapper.map(
             queryParams,
             PersonenQueryParams,
             FindPersonendatensatzDto,
         );
-        const persons: Paged<PersonendatensatzResponse> = await this.personUc.findAll(personDatensatzDTO);
-        const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse(persons);
+        const pagedDtos: Paged<PersonendatensatzDto> = await this.personUc.findAll(findDto);
+        const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse({
+            offset: pagedDtos.offset,
+            limit: pagedDtos.limit,
+            total: pagedDtos.total,
+            items: this.mapper.mapArray(pagedDtos.items, PersonendatensatzDto, PersonendatensatzResponse),
+        });
 
         return response;
     }

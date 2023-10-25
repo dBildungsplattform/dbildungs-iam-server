@@ -13,7 +13,7 @@ import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonUc } from './person.uc.js';
 import { SichtfreigabeType } from './personen-query.param.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { PersonendatensatzDto } from './personendatensatz.dto.js';
 
 describe('PersonUc', () => {
     let module: TestingModule;
@@ -190,7 +190,7 @@ describe('PersonUc', () => {
                 value: [DoFactory.createPersonenkontext(true)],
             });
 
-            const result: Paged<PersonendatensatzResponse> = await personUc.findAll(personDTO);
+            const result: Paged<PersonendatensatzDto> = await personUc.findAll(personDTO);
 
             expect(personenkontextServiceMock.findAllPersonenkontexte).toHaveBeenCalledTimes(2);
             expect(result.items).toHaveLength(2);
@@ -205,7 +205,7 @@ describe('PersonUc', () => {
 
             personServiceMock.findAllPersons.mockResolvedValue(emptyResult);
 
-            const result: Paged<PersonendatensatzResponse> = await personUc.findAll(personDTO);
+            const result: Paged<PersonendatensatzDto> = await personUc.findAll(personDTO);
 
             expect(result.items).toEqual([]);
         });
