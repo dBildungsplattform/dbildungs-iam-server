@@ -19,7 +19,8 @@ spec:
         - name: redis
           image: redis:7.2.2
           ports:
-            - containerPort: 6379
+            - name: redis-port
+              containerPort: 6379
               hostPort: 6379
           command:
             - redis-server
