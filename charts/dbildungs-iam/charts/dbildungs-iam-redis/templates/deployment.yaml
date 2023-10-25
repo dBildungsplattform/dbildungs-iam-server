@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  labels:
+    app.kubernetes.io/name: dbildungs-iam
+spec:
+  selector:
+    matchLabels:
+      layer: dbildungs-iam-redis
+  replicas: 1
+  template:
+    metadata:
+      name: dbildungs-iam-redis
+      labels:
+        layer: dbildungs-iam-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.2.2
+          ports:
+            - containerPort: 6379
+              hostPort: 6379
+          command:
+            - redis-server
+          args:
+            - --requirepass
+            - {{.Values.password}}

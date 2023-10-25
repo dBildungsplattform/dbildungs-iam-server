@@ -9,3 +9,6 @@ dependencies:
   - name: dbildungs-iam-keycloak-dev
     version: "*"
     condition: keycloakEnabled
+  - name: dbildungs-iam-redis
+    version: latest
+    condition: redisEnabled
