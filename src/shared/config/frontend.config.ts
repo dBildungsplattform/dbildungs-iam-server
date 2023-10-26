@@ -1,4 +1,4 @@
-import { IsBoolean, IsHexadecimal, IsInt, IsNotEmpty, IsString, Max, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsNotEmpty, IsPositive, IsString, IsUrl, Max, Min } from 'class-validator';
 
 export class FrontendConfig {
     @IsInt()
@@ -6,16 +6,25 @@ export class FrontendConfig {
     @Max(10000)
     public readonly PORT!: number;
 
+    @IsString()
+    @IsUrl()
+    @IsNotEmpty()
+    public readonly HOST!: string;
+
     @IsBoolean()
     @IsNotEmpty()
     public readonly SECURE_COOKIE!: boolean;
 
     @IsString()
-    @IsHexadecimal()
     @IsNotEmpty()
-    public readonly SESSION_KEY!: string;
+    public readonly SESSION_SECRET!: string;
 
     @IsString()
     @IsNotEmpty()
     public readonly BACKEND_ADDRESS!: string;
+
+    @IsInt()
+    @IsPositive()
+    @IsNotEmpty()
+    public readonly SESSION_TTL_MS!: number;
 }

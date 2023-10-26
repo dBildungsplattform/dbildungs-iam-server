@@ -1,38 +1,40 @@
-import { Session as FastifySession } from '@fastify/secure-session';
-import { Body, Controller, Post, Session, UseGuards } from '@nestjs/common';
-import { ApiAcceptedResponse, ApiTags } from '@nestjs/swagger';
-import { AxiosResponse } from 'axios';
-import { TokenSet } from 'openid-client';
-import { Observable, map, tap } from 'rxjs';
+import { Controller, Get, Post, Redirect, Req, UseGuards } from '@nestjs/common';
+import {
+    ApiAcceptedResponse,
+    ApiForbiddenResponse,
+    ApiOkResponse,
+    ApiOperation,
+    ApiResponse,
+    ApiTags,
+} from '@nestjs/swagger';
+import { Request } from 'express';
+import { UserinfoResponse } from 'openid-client';
 
-import { LoginService } from '../outbound/login.service.js';
-import { AuthenticatedGuard } from './authentication.guard.js';
-import { LoginParams } from './user.params.js';
-
-export type SessionData = FastifySession<{
-    keycloak_tokens: TokenSet;
-}>;
+import { AuthenticatedGuard, CurrentUser, LoginGuard, User } from '../auth/index.js';
 
 @ApiTags('frontend')
 @Controller({ path: 'frontend' })
 export class FrontendController {
-    public constructor(private loginService: LoginService) {}
-
-    @Post('login')
-    @ApiAcceptedResponse({ description: 'The person was successfully logged in.' })
-    public login(@Body() loginParams: LoginParams, @Session() session: SessionData): Observable<void> {
-        return this.loginService.login(loginParams.username, loginParams.password).pipe(
-            tap(({ data }: AxiosResponse<TokenSet>): void => {
-                session.set('keycloak_tokens', new TokenSet(data));
-            }),
-            map(() => undefined),
-        );
-    }
+    @UseGuards(LoginGuard)
+    @Get('login')
+    @ApiOperation({ summary: 'Used to start OIDC authentication.' })
+    @ApiResponse({ status: 302, description: 'Redirection to orchestrate OIDC flow.' })
+    @Redirect('/api/frontend/logininfo', 302)
+    public login(): void {}
 
     @UseGuards(AuthenticatedGuard)
     @Post('logout')
     @ApiAcceptedResponse({ description: 'The person was successfully logged out.' })
-    public logout(@Session() session: SessionData): void {
-        session.delete();
+    public logout(@Req() req: Request): void {
+        req.session.destroy(() => {});
+    }
+
+    @Get('logininfo')
+    @UseGuards(AuthenticatedGuard)
+    @ApiOperation({ summary: 'Info about logged in user.' })
+    @ApiForbiddenResponse({ description: 'User is not logged in.' })
+    @ApiOkResponse({ description: 'Returns info about the logged in user.' })
+    public info(@CurrentUser() user: User): UserinfoResponse {
+        return user.userinfo;
     }
 }
