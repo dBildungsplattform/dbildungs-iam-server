@@ -166,7 +166,7 @@ export class KeycloakUserService {
             await kcAdminClientResult.value.users.resetPassword({
                 id: userId,
                 credential: {
-                    temporary: false,
+                    temporary: true,
                     type: 'password',
                     value: password,
                 },
