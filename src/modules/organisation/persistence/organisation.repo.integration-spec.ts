@@ -17,7 +17,6 @@ describe('OgranisationRepo', () => {
     let em: EntityManager;
     let mapper: Mapper;
 
-
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
