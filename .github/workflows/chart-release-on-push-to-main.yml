@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   release:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@1.3.0
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@1.3.1
     secrets: inherit
     with:
       chart_name: dbildungs-iam
