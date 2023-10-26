@@ -46,7 +46,16 @@ export class OrganisationApiMapperProfile extends AutomapperProfile {
                 ),
             );
             createMap(mapper, OrganizationQueryParams, FindOrganisationDto);
-            createMap(mapper, FindOrganisationDto, OrganisationDo);
+            createMap(
+                mapper,
+                FindOrganisationDto,
+                OrganisationDo,
+                forMember((dest: OrganisationDo<boolean>) => dest.id, ignore()),
+                forMember((dest: OrganisationDo<boolean>) => dest.createdAt, ignore()),
+                forMember((dest: OrganisationDo<boolean>) => dest.updatedAt, ignore()),
+                forMember((dest: OrganisationDo<boolean>) => dest.namensergaenzung, ignore()),
+                forMember((dest: OrganisationDo<boolean>) => dest.kuerzel, ignore()),
+            );
         };
     }
 }
