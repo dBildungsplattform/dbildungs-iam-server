@@ -3,9 +3,7 @@ import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrganisationsTyp } from '../domain/organisation.enum.js';
-
 export class OrganizationQueryParams extends PagedQueryParams {
-
     @AutoMap()
     @IsString()
     @IsOptional()

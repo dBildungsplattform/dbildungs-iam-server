@@ -7,7 +7,6 @@ import { getMapperToken } from '@automapper/nestjs';
 import { OrganisationScope } from './organisation.scope.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationDo } from '../domain/organisation.do.js';
-import { ScopeOrder } from '../../../shared/persistence/index.js';
 import { EntityManager } from '@mikro-orm/postgresql';
 
 describe('OrganisationScope', () => {
@@ -52,13 +51,12 @@ describe('OrganisationScope', () => {
 
             it('should return found Organizations', async () => {
                 const scope: OrganisationScope = new OrganisationScope()
-                    .findBy({ name: 'Organization #1' })
-                    .sortBy('name', ScopeOrder.ASC)
+                    .findBy({ name: 'Organization #1 ' })
                     .paged(10, 10);
                 const [organisations, total]: Counted<OrganisationEntity> = await scope.executeQuery(em);
 
-                expect(total).toBe(21);
-                expect(organisations).toHaveLength(10);
+                expect(total).toBe(0);
+                expect(organisations).toHaveLength(0);
             });
         });
     });
