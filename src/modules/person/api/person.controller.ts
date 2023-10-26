@@ -14,6 +14,7 @@ import {
     Patch,
 } from '@nestjs/common';
 import {
+    ApiAcceptedResponse,
     ApiBadRequestResponse,
     ApiCreatedResponse,
     ApiForbiddenResponse,
@@ -39,6 +40,7 @@ import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { Public } from 'nest-keycloak-connect';
+import { ResultHttpService } from '../../../shared/util/result-http.service.js';
 
 @ApiTags('person')
 @Controller({ path: 'person' })
@@ -47,6 +49,7 @@ export class PersonController {
     public constructor(
         private readonly personUc: PersonUc,
         private readonly personenkontextUc: PersonenkontextUc,
+        private readonly resultHttpService: ResultHttpService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -150,10 +153,12 @@ export class PersonController {
     }
 
     @Patch(':personId/password')
-    @ApiOkResponse({ description: 'Password for person was successfully reset.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to reset password for the person.' })
+    @HttpCode(HttpStatus.ACCEPTED)
+    @ApiAcceptedResponse({ description: 'Password for person was successfully reset.' })
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
-    public async resetPasswordByPersonId(@Param() params: PersonByIdParams): Promise<Result<string>> {
-        return this.personUc.resetPassword(params.personId);
+    @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
+    public async resetPasswordByPersonId(@Param() params: PersonByIdParams): Promise<string | HttpException> {
+        const result: Result<string> = await this.personUc.resetPassword(params.personId);
+        return this.resultHttpService.createHttpResponseFromResult(result);
     }
 }
