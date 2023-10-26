@@ -20,7 +20,6 @@ import { Jahrgangsstufe, Personenstatus, Rolle } from '../domain/personenkontext
 import { PagedResponse } from '../../../shared/paging/index.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
-import {ResultHttpService} from "../../../shared/util/result-http.service.js";
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -36,7 +35,6 @@ describe('PersonController', () => {
         module = await Test.createTestingModule({
             imports: [MapperTestModule],
             providers: [
-                ResultHttpService,
                 PersonController,
                 PersonApiMapperProfile,
                 {

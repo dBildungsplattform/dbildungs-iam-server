@@ -12,6 +12,7 @@ import {
     Query,
     HttpCode,
     Patch,
+    UseInterceptors,
 } from '@nestjs/common';
 import {
     ApiAcceptedResponse,
@@ -40,7 +41,7 @@ import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { Public } from 'nest-keycloak-connect';
-import { ResultHttpService } from '../../../shared/util/result-http.service.js';
+import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
 
 @ApiTags('person')
 @Controller({ path: 'person' })
@@ -49,7 +50,6 @@ export class PersonController {
     public constructor(
         private readonly personUc: PersonUc,
         private readonly personenkontextUc: PersonenkontextUc,
-        private readonly resultHttpService: ResultHttpService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -157,8 +157,8 @@ export class PersonController {
     @ApiAcceptedResponse({ description: 'Password for person was successfully reset.' })
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
-    public async resetPasswordByPersonId(@Param() params: PersonByIdParams): Promise<string | HttpException> {
-        const result: Result<string> = await this.personUc.resetPassword(params.personId);
-        return this.resultHttpService.createHttpResponseFromResult(result);
+    @UseInterceptors(ResultInterceptor)
+    public async resetPasswordByPersonId(@Param() params: PersonByIdParams): Promise<Result<string> | HttpException> {
+        return this.personUc.resetPassword(params.personId);
     }
 }

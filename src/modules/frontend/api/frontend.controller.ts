@@ -1,6 +1,12 @@
 import { Session as FastifySession } from '@fastify/secure-session';
 import { Body, Controller, HttpCode, HttpStatus, Param, Patch, Post, Session, UseGuards } from '@nestjs/common';
-import { ApiAcceptedResponse, ApiInternalServerErrorResponse, ApiNotFoundResponse, ApiTags } from '@nestjs/swagger';
+import {
+    ApiAcceptedResponse,
+    ApiInternalServerErrorResponse,
+    ApiNotFoundResponse,
+    ApiTags,
+    ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { AxiosResponse } from 'axios';
 import { TokenSet } from 'openid-client';
 import { Observable, map, tap } from 'rxjs';
@@ -42,6 +48,7 @@ export class FrontendController {
     @Patch('user/:personId/password')
     @HttpCode(HttpStatus.ACCEPTED)
     @ApiAcceptedResponse({ description: 'Password for person was successfully reset.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to reset password for user.' })
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
     public resetPasswordByPersonId(@Param() params: PersonByIdParams): Observable<ResetPasswordResponse> {

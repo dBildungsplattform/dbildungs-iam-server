@@ -5,11 +5,10 @@ import { PersonUc } from './api/person.uc.js';
 import { PersonModule } from './person.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { PersonenkontextUc } from './api/personenkontext.uc.js';
-import { ResultHttpService } from '../../shared/util/result-http.service.js';
 
 @Module({
     imports: [PersonModule, KeycloakAdministrationModule],
-    providers: [PersonApiMapperProfile, PersonUc, PersonenkontextUc, ResultHttpService],
+    providers: [PersonApiMapperProfile, PersonUc, PersonenkontextUc],
     controllers: [PersonController],
 })
 export class PersonApiModule {}
