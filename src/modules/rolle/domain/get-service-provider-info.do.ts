@@ -8,6 +8,9 @@ export class GetServiceProviderInfoDo {
     public constructor() {}
 
     @AutoMap()
+    public id!: string;
+
+    @AutoMap()
     public name!: string;
 
     @AutoMap()
