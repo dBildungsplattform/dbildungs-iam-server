@@ -151,7 +151,7 @@ describe('PersonenkontextUc', () => {
         });
 
         describe('when NOT finding personenkontext with id', () => {
-            it('should throw domain error', async () => {
+            it('should throw domain error for personenkontext not found', async () => {
                 const dto: FindPersonenkontextByIdDto = {
                     personenkontextId: faker.string.uuid(),
                 };
@@ -159,6 +159,22 @@ describe('PersonenkontextUc', () => {
                 personenkontextServiceMock.findById.mockResolvedValue({
                     ok: false,
                     error: new EntityNotFoundError('Personenkontext'),
+                });
+
+                await expect(sut.findById(dto)).rejects.toThrow(EntityNotFoundError);
+            });
+
+            // AI next 13 lines
+            it('should throw domain error for person not found', async () => {
+                const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+                const dto: FindPersonenkontextByIdDto = {
+                    personenkontextId: personenkontextDo.id,
+                };
+
+                personenkontextServiceMock.findById.mockResolvedValue({ ok: true, value: personenkontextDo });
+                personServiceMock.findPersonById.mockResolvedValue({
+                    ok: false,
+                    error: new EntityNotFoundError('Person'),
                 });
 
                 await expect(sut.findById(dto)).rejects.toThrow(EntityNotFoundError);

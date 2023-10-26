@@ -1,16 +1,22 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
+import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DatabaseTestModule,
+    DoFactory,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
+import { Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextRepo } from './personenkontext.repo.js';
-import { Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
-import { faker } from '@faker-js/faker';
 
 describe('PersonenkontextRepo', () => {
     let module: TestingModule;
@@ -29,11 +35,11 @@ describe('PersonenkontextRepo', () => {
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
         await DatabaseTestModule.setupDatabase(orm);
-    }, 30 * 1_000);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await module.close();
-    }, 30 * 1_000);
+    });
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);

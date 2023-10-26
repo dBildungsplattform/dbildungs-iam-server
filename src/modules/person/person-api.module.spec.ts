@@ -37,7 +37,7 @@ describe('PersonApiModule', () => {
         });
 
         it('should resolve PersonenkontextController', () => {
-            // AI next 1 line
+            // AI next 1 lines
             expect(module.get(PersonenkontextController)).toBeInstanceOf(PersonenkontextController);
         });
     });

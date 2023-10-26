@@ -115,7 +115,7 @@ export class PersonController {
         findPersonenkontextDto.personId = pathParams.personId;
 
         const personenkontextDtos: PersonenkontextDto[] = await this.personenkontextUc.findAll(findPersonenkontextDto);
-        // AI next 5 line
+        // AI next 5 lines
         const response: PersonenkontextResponse[] = this.mapper.mapArray(
             personenkontextDtos,
             PersonenkontextDto,

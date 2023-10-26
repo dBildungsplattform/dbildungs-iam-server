@@ -1,14 +1,20 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Mapper } from '@automapper/core';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { getMapperToken } from '@automapper/nestjs';
-import { RolleDo } from '../domain/rolle.do.js';
-import { PersonRollenZuweisungRepo } from './person-rollen-zuweisung.repo.js';
+import { EntityManager, MikroORM } from '@mikro-orm/core';
+import { Test, TestingModule } from '@nestjs/testing';
+import {
+    ConfigTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DatabaseTestModule,
+    DoFactory,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
 import { PersonRollenZuweisungDo } from '../domain/person-rollen-zuweisung.do.js';
+import { RolleDo } from '../domain/rolle.do.js';
 import { PersonRollenZuweisungEntity } from '../entity/person-rollen-zuweisung.entity.js';
 import { PersonRollenZuweisungMapperProfile } from '../mapper/person-rollen-zuweisung.mapper.profile.js';
 import { RolleMapperProfile } from '../mapper/rolle.mapper.profile.js';
+import { PersonRollenZuweisungRepo } from './person-rollen-zuweisung.repo.js';
 
 describe('PersonRollenZuweisungRepo', () => {
     let module: TestingModule;
@@ -27,11 +33,11 @@ describe('PersonRollenZuweisungRepo', () => {
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
         await DatabaseTestModule.setupDatabase(orm);
-    }, 30 * 1_000);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await module.close();
-    }, 30 * 1_000);
+    });
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);

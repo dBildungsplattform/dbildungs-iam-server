@@ -4,7 +4,7 @@ import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FastifyRequest } from 'fastify';
 import { TokenSet } from 'openid-client';
-
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/index.js';
 import { AuthenticatedGuard } from './authentication.guard.js';
 import { SessionData } from './frontend.controller.js';
 
@@ -19,11 +19,11 @@ describe('AuthenticatedGuard', () => {
         }).compile();
 
         sut = module.get(AuthenticatedGuard);
-    }, 30 * 1_000);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await module.close();
-    }, 30 * 1_000);
+    });
 
     it('should be defined', () => {
         expect(sut).toBeDefined();

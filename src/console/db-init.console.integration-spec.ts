@@ -1,9 +1,14 @@
 import { MikroORM } from '@mikro-orm/core';
-import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../test/utils/index.js';
-import { DbInitConsole } from './db-init.console.js';
 import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
+import {
+    ConfigTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DatabaseTestModule,
+    LoggingTestModule,
+} from '../../test/utils/index.js';
 import { DbConfig, ServerConfig } from '../shared/config/index.js';
+import { DbInitConsole } from './db-init.console.js';
 
 describe('DbInitConsole', () => {
     let module: TestingModule;
@@ -19,11 +24,11 @@ describe('DbInitConsole', () => {
         sut = module.get(DbInitConsole);
         orm = module.get(MikroORM);
         configService = module.get(ConfigService);
-    }, 30 * 1_000);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await module.close();
-    }, 30 * 1_000);
+    });
 
     it('should be defined', () => {
         expect(sut).toBeDefined();
