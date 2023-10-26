@@ -4,16 +4,12 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganisationDo } from '../domain/organisation.do.js';
 import { OrganisationEntity } from './organisation.entity.js';
-import { EntityName, Loaded } from '@mikro-orm/core';
+import { Loaded } from '@mikro-orm/core';
 import { OrganisationScope } from './organisation.scope.js';
 
 @Injectable()
 export class OrganisationRepo {
     public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
-
-    public get entityName(): EntityName<OrganisationEntity> {
-        return OrganisationEntity;
-    }
 
     private async create(organisationDo: OrganisationDo<false>): Promise<OrganisationDo<true>> {
         const organisation: OrganisationEntity = this.mapper.map(organisationDo, OrganisationDo, OrganisationEntity);

@@ -80,7 +80,6 @@ describe('OgranisationRepo', () => {
 
     describe('findBy', () => {
         it('should find an organization by scope', async () => {
-            // create props of Partial<OrganisationDo<true>>
             const props: Partial<OrganisationDo<true>> = {
                 kennung: faker.lorem.word(),
                 name: faker.lorem.word(),
