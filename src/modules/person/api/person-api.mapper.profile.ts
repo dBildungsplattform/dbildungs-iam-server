@@ -151,20 +151,15 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     ),
                 ),
             );
-
             createMap(
                 mapper,
                 CreatePersonDto,
-                PersonDo<boolean>,
-                forMember((dest: PersonDo<boolean>) => dest.id, ignore()),
-                forMember((dest: PersonDo<boolean>) => dest.createdAt, ignore()),
-                forMember((dest: PersonDo<boolean>) => dest.updatedAt, ignore()),
+                PersonDo,
                 forMember((dest: PersonDo<boolean>) => dest.keycloakUserId, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.id, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.createdAt, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.updatedAt, ignore()),
             );
-
             createMap(
                 mapper,
                 PersonDo,

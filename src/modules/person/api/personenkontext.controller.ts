@@ -37,12 +37,12 @@ export class PersonenkontextController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
     public async findById(@Param() params: FindPersonenkontextByIdParams): Promise<PersonendatensatzResponse> {
-        const dto: FindPersonenkontextByIdDto = this.mapper.map(
+        const request: FindPersonenkontextByIdDto = this.mapper.map(
             params,
             FindPersonenkontextByIdParams,
             FindPersonenkontextByIdDto,
         );
-        const result: PersonendatensatzDto = await this.personenkontextUc.findById(dto);
+        const result: PersonendatensatzDto = await this.personenkontextUc.findById(request);
         const response: PersonendatensatzResponse = this.mapper.map(
             result,
             PersonendatensatzDto,
