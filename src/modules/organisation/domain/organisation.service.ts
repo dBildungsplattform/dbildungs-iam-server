@@ -5,7 +5,6 @@ import { OrganisationDo } from './organisation.do.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
-import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 
 @Injectable()
 export class OrganisationService {
@@ -40,7 +39,6 @@ export class OrganisationService {
                 name: organisationDo.name,
                 typ: organisationDo.typ,
             })
-            .sortBy('kennung', ScopeOrder.ASC)
             .paged(offset, limit);
         const [organisations, total]: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);
 
