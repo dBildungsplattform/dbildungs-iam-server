@@ -33,9 +33,7 @@ export class OrganisationApiMapperProfile extends AutomapperProfile {
                     mapFrom((src: OrganisationDo<true>) => src.id),
                 ),
             );
-
             createMap(mapper, CreatedOrganisationDto, OrganisationResponse);
-
             createMap(
                 mapper,
                 OrganisationDo,
