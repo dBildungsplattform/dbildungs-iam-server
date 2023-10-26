@@ -23,16 +23,7 @@ export class ServiceProviderMapperProfile extends AutomapperProfile {
                     mapFrom((src: ServiceProviderEntity) => src.id),
                 ),
             );
-            //
-            createMap(
-                mapper,
-                ServiceProviderDo,
-                GetServiceProviderInfoDo,
-                forMember(
-                    (dest: GetServiceProviderInfoDo) => dest.url,
-                    mapFrom((src: ServiceProviderDo<true>) => src.url),
-                ),
-            );
+            createMap(mapper, ServiceProviderDo, GetServiceProviderInfoDo);
         };
     }
 }

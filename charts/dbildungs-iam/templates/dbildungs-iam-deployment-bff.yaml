@@ -19,6 +19,8 @@ spec:
         - name: dbildungs-iam-bff
           image: {{.Values.dbildungsIamContainer}}
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
           command: ["node", "dist/src/backend-for-frontend/main.js"]
           ports:
              - name: web
