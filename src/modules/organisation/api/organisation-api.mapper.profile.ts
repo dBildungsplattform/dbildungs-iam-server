@@ -6,6 +6,8 @@ import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { OrganisationDo } from '../domain/organisation.do.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
+import { OrganizationQueryParams } from './organisation-query.param.js';
+import { FindOrganisationDto } from './find-organisation.dto.js';
 
 @Injectable()
 export class OrganisationApiMapperProfile extends AutomapperProfile {
@@ -43,6 +45,8 @@ export class OrganisationApiMapperProfile extends AutomapperProfile {
                     mapFrom((src: OrganisationDo<true>) => src.id),
                 ),
             );
+            createMap(mapper, OrganizationQueryParams, FindOrganisationDto);
+            createMap(mapper, FindOrganisationDto, OrganisationDo);
         };
     }
 }

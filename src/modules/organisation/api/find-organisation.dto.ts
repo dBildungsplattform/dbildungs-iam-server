@@ -1,0 +1,14 @@
+import { AutoMap } from '@automapper/classes';
+import { PagedDto } from '../../../shared/paging/index.js';
+import { OrganisationsTyp } from '../domain/organisation.enum.js';
+
+export class FindOrganisationDto extends PagedDto {
+    @AutoMap()
+    public kennung?: string;
+
+    @AutoMap()
+    public name?: string;
+
+    @AutoMap()
+    public typ?: OrganisationsTyp;
+}
