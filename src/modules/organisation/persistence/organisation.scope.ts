@@ -4,9 +4,9 @@ import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationsTyp } from '../domain/organisation.enum.js';
 
 type FindProps = {
-    kennung?: string;
-    name?: string;
-    typ?: OrganisationsTyp;
+    kennung: string;
+    name: string;
+    typ: OrganisationsTyp;
 };
 export class OrganisationScope extends ScopeBase<OrganisationEntity> {
     protected override get entityName(): EntityName<OrganisationEntity> {

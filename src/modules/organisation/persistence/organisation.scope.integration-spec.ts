@@ -8,6 +8,7 @@ import { OrganisationScope } from './organisation.scope.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationDo } from '../domain/organisation.do.js';
 import { EntityManager } from '@mikro-orm/postgresql';
+import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 
 describe('OrganisationScope', () => {
     let module: TestingModule;
@@ -38,7 +39,7 @@ describe('OrganisationScope', () => {
     describe('findBy', () => {
         describe('when filtering for organizations', () => {
             beforeEach(async () => {
-                const organisations: OrganisationEntity[] = Array.from({ length: 110 }, (_v: unknown, i: number) =>
+                const organisations: OrganisationEntity[] = Array.from({ length: 100 }, (_v: unknown, i: number) =>
                     mapper.map(
                         DoFactory.createOrganisation(false, { name: `Organization #${i}` }),
                         OrganisationDo,
@@ -51,12 +52,14 @@ describe('OrganisationScope', () => {
 
             it('should return found Organizations', async () => {
                 const scope: OrganisationScope = new OrganisationScope()
-                    .findBy({ name: 'Organization #1 ' })
-                    .paged(10, 10);
+                    .findBy({ name: new RegExp('Organization #1') })
+                    .sortBy('name', ScopeOrder.ASC)
+                    .paged(5, 10);
+
                 const [organisations, total]: Counted<OrganisationEntity> = await scope.executeQuery(em);
 
-                expect(total).toBe(0);
-                expect(organisations).toHaveLength(0);
+                expect(total).toBe(11);
+                expect(organisations).toHaveLength(6);
             });
         });
     });
