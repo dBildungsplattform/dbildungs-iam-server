@@ -4,10 +4,10 @@ import { HttpService } from '@nestjs/axios';
 import { HttpException, InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosError } from 'axios';
-import { TokenSet } from 'openid-client';
 import { firstValueFrom, throwError } from 'rxjs';
 
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { User } from '../auth/user.decorator.js';
 import { BackendHttpService } from './backend-http.service.js';
 
 describe('BackendHttpService', () => {
@@ -37,9 +37,9 @@ describe('BackendHttpService', () => {
         it('should call HttpService.get with correct arguments', () => {
             const endpoint: string = faker.string.alphanumeric(32);
             const accessToken: string = faker.string.alphanumeric(32);
-            const tokens: TokenSet = new TokenSet({ access_token: accessToken });
+            const user: User = createMock<User>({ access_token: accessToken });
 
-            sut.get(endpoint, tokens);
+            sut.get(endpoint, user);
 
             expect(httpServiceMock.get).toHaveBeenCalledWith(
                 expect.stringContaining(endpoint),
@@ -53,9 +53,9 @@ describe('BackendHttpService', () => {
             const endpoint: string = faker.string.alphanumeric(32);
             const accessToken: string = faker.string.alphanumeric(32);
             const data: unknown = {};
-            const tokens: TokenSet = new TokenSet({ access_token: accessToken });
+            const user: User = createMock<User>({ access_token: accessToken });
 
-            sut.post(endpoint, data, tokens);
+            sut.post(endpoint, data, user);
 
             expect(httpServiceMock.post).toHaveBeenCalledWith(
                 expect.stringContaining(endpoint),
@@ -70,9 +70,9 @@ describe('BackendHttpService', () => {
             const endpoint: string = faker.string.alphanumeric(32);
             const accessToken: string = faker.string.alphanumeric(32);
             const data: unknown = {};
-            const tokens: TokenSet = new TokenSet({ access_token: accessToken });
+            const user: User = createMock<User>({ access_token: accessToken });
 
-            sut.patch(endpoint, data, tokens);
+            sut.patch(endpoint, data, user);
 
             expect(httpServiceMock.patch).toHaveBeenCalledWith(
                 expect.stringContaining(endpoint),
@@ -86,9 +86,9 @@ describe('BackendHttpService', () => {
         it('should call HttpService.delete with correct arguments', () => {
             const endpoint: string = faker.string.alphanumeric(32);
             const accessToken: string = faker.string.alphanumeric(32);
-            const tokens: TokenSet = new TokenSet({ access_token: accessToken });
+            const user: User = createMock<User>({ access_token: accessToken });
 
-            sut.delete(endpoint, tokens);
+            sut.delete(endpoint, user);
 
             expect(httpServiceMock.delete).toHaveBeenCalledWith(
                 expect.stringContaining(endpoint),
@@ -102,9 +102,9 @@ describe('BackendHttpService', () => {
             const endpoint: string = faker.string.alphanumeric(32);
             const accessToken: string = faker.string.alphanumeric(32);
             const data: unknown = {};
-            const tokens: TokenSet = new TokenSet({ access_token: accessToken });
+            const user: User = createMock<User>({ access_token: accessToken });
 
-            sut.put(endpoint, data, tokens);
+            sut.put(endpoint, data, user);
 
             expect(httpServiceMock.put).toHaveBeenCalledWith(
                 expect.stringContaining(endpoint),
@@ -118,9 +118,9 @@ describe('BackendHttpService', () => {
         it('should call HttpService.head with correct arguments', () => {
             const endpoint: string = faker.string.alphanumeric(32);
             const accessToken: string = faker.string.alphanumeric(32);
-            const tokens: TokenSet = new TokenSet({ access_token: accessToken });
+            const user: User = createMock<User>({ access_token: accessToken });
 
-            sut.head(endpoint, tokens);
+            sut.head(endpoint, user);
 
             expect(httpServiceMock.head).toHaveBeenCalledWith(
                 expect.stringContaining(endpoint),
@@ -136,7 +136,7 @@ describe('BackendHttpService', () => {
             });
             httpServiceMock.get.mockReturnValueOnce(throwError(() => errorMock));
 
-            await expect(firstValueFrom(sut.get('', createMock<TokenSet>()))).rejects.toThrow(HttpException);
+            await expect(firstValueFrom(sut.get('', createMock<User>()))).rejects.toThrow(HttpException);
         });
 
         it('should transform AxiosError without response to InternalServerErrorException', async () => {
@@ -145,9 +145,7 @@ describe('BackendHttpService', () => {
             });
             httpServiceMock.get.mockReturnValueOnce(throwError(() => errorMock));
 
-            await expect(firstValueFrom(sut.get('', createMock<TokenSet>()))).rejects.toThrow(
-                InternalServerErrorException,
-            );
+            await expect(firstValueFrom(sut.get('', createMock<User>()))).rejects.toThrow(InternalServerErrorException);
         });
     });
 });

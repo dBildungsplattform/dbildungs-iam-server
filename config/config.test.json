@@ -3,9 +3,10 @@
         "PORT": 8080
     },
     "FRONTEND": {
+        "HOST": "http://localhost:9091/",
         "PORT": 8081,
         "SECURE_COOKIE": false,
-        "SESSION_KEY": "0000000000000000000000000000000000000000000000000000000000000000",
+        "SESSION_SECRET": "SessionSecretForDevelopment",
         "BACKEND_ADDRESS": "http://127.0.0.1:8080"
     },
     "DB": {
@@ -19,5 +20,12 @@
         "ADMIN_CLIENT_ID": "spsh-admin",
         "REALM_NAME": "SPSH",
         "CLIENT_ID": "spsh"
+    },
+    "REDIS": {
+        "HOST": "localhost",
+        "PORT": 6379,
+        "USERNAME": "default",
+        "PASSWORD": "password",
+        "USE_TLS": false
     }
 }

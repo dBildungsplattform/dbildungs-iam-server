@@ -3,11 +3,11 @@
         "PORT": 9090
     },
     "FRONTEND": {
-        "HOST": "http://localhost:9091",
+        "HOST": "http://localhost:9091/",
         "PORT": 9091,
         "SECURE_COOKIE": false,
         "SESSION_SECRET": "SessionSecretForDevelopment",
-        "SESSION_TTL_MS": 60000,
+        "SESSION_TTL_MS": 3600000,
         "BACKEND_ADDRESS": "http://127.0.0.1:9090"
     },
     "DB": {

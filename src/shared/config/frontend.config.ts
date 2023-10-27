@@ -1,4 +1,4 @@
-import { IsBoolean, IsInt, IsNotEmpty, IsPositive, IsString, IsUrl, Max, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsNotEmpty, IsPositive, IsString, Max, Min } from 'class-validator';
 
 export class FrontendConfig {
     @IsInt()
@@ -7,7 +7,6 @@ export class FrontendConfig {
     public readonly PORT!: number;
 
     @IsString()
-    @IsUrl()
     @IsNotEmpty()
     public readonly HOST!: string;
 
