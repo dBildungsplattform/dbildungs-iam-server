@@ -23,7 +23,7 @@ jobs:
     permissions:
       contents: read
   nest_test_and_sonarcloud:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@1.3.1
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@DBP-332-sonarcloud
     with:
       node_version: '18'
       deploy_stage: 'dev'

@@ -10,6 +10,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  nest_test_and_sonarcloud:
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@DBP-332-sonarcloud
+    with:
+      node_version: '18'
+      deploy_stage: 'dev'
+    permissions:
+      contents: read
+    secrets: inherit
   build_and_push:
     permissions:
       packages: write
