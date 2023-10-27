@@ -1,29 +1,39 @@
 import { faker } from '@faker-js/faker';
-import { createMock } from '@golevelup/ts-jest';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthorizationParameters, Client, TokenSet, UserinfoResponse } from 'openid-client';
 
 import { ConfigTestModule } from '../../../../test/utils/index.js';
-import { OIDCClientProvider, OIDC_CLIENT } from './oidc-client.service.js';
+import { OIDC_CLIENT } from './oidc-client.service.js';
 import { OpenIdConnectStrategy } from './oidc.strategy.js';
+
+jest.mock('@nestjs/passport', () => ({
+    PassportStrategy: jest.fn(() => Object),
+}));
 
 describe('OpenIdConnectStrategy', () => {
     let module: TestingModule;
     let sut: OpenIdConnectStrategy;
-    let openIdClient: Client;
+    let openIdClientMock: DeepMocked<Client>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule],
-            providers: [OpenIdConnectStrategy, OIDCClientProvider],
+            providers: [
+                OpenIdConnectStrategy,
+                {
+                    provide: OIDC_CLIENT,
+                    useValue: createMock<Client>(),
+                },
+            ],
         }).compile();
 
         sut = module.get(OpenIdConnectStrategy);
-        openIdClient = module.get(OIDC_CLIENT);
+        openIdClientMock = module.get(OIDC_CLIENT);
     });
 
-    beforeEach(() => {
+    afterEach(() => {
         jest.resetAllMocks();
     });
 
@@ -33,11 +43,11 @@ describe('OpenIdConnectStrategy', () => {
 
     describe('validate', () => {
         it('should call client.userinfo', async () => {
-            jest.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createMock<UserinfoResponse>());
+            openIdClientMock.userinfo.mockResolvedValueOnce(createMock<UserinfoResponse>());
 
             await sut.validate(new TokenSet());
 
-            expect(openIdClient.userinfo).toHaveBeenCalled();
+            expect(openIdClientMock.userinfo).toHaveBeenCalled();
         });
 
         it('should call client.userinfo', async () => {
@@ -47,7 +57,7 @@ describe('OpenIdConnectStrategy', () => {
                 refresh_token: faker.string.alpha(32),
             });
             const userinfo: UserinfoResponse = createMock<UserinfoResponse>();
-            jest.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(userinfo);
+            openIdClientMock.userinfo.mockResolvedValueOnce(userinfo);
 
             const result: AuthorizationParameters = await sut.validate(tokenSet);
 
@@ -55,7 +65,7 @@ describe('OpenIdConnectStrategy', () => {
         });
 
         it('should throw UnauthorizedException if userinfo fails', async () => {
-            jest.spyOn(openIdClient, 'userinfo').mockRejectedValueOnce(new Error());
+            openIdClientMock.userinfo.mockRejectedValueOnce(new Error());
 
             await expect(sut.validate(new TokenSet())).rejects.toThrow(UnauthorizedException);
         });

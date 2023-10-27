@@ -59,7 +59,7 @@ describe('configloader', () => {
             const secrets: DeepPartial<JsonConfig> = {
                 DB: { SECRET: 'SuperSecretSecret' },
                 KEYCLOAK: { ADMIN_SECRET: 'AdminClientSecret', CLIENT_SECRET: 'ClientSecret' },
-                FRONTEND: { SESSION_SECRET: '0000000000000000000000000000000000000000000000000000000000000000' },
+                FRONTEND: { SESSION_SECRET: 'SessionSecret' },
                 REDIS: { PASSWORD: 'password' },
             };
 

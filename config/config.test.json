@@ -6,7 +6,7 @@
         "HOST": "http://localhost:9091/",
         "PORT": 8081,
         "SECURE_COOKIE": false,
-        "SESSION_SECRET": "SessionSecretForDevelopment",
+        "SESSION_SECRET": "SessionSecretForTesting",
         "BACKEND_ADDRESS": "http://127.0.0.1:8080"
     },
     "DB": {
