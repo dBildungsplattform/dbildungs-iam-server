@@ -8,6 +8,7 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonDo } from './person.do.js';
 import { PersonService } from './person.service.js';
+import { Paged } from '../../../shared/paging/index.js';
 
 describe('PersonService', () => {
     let module: TestingModule;
@@ -123,26 +124,29 @@ describe('PersonService', () => {
 
     describe('findAllPersons', () => {
         it('should get all persons that match', async () => {
-            const firstPerson: PersonDo<false> = DoFactory.createPerson(false);
-            const secondPerson: PersonDo<false> = DoFactory.createPerson(false);
-            const persons: PersonDo<true>[] = [
-                firstPerson as unknown as PersonDo<true>,
-                secondPerson as unknown as PersonDo<true>,
-            ];
-            personRepoMock.findAll.mockResolvedValue(persons);
+            const firstPerson: PersonDo<true> = DoFactory.createPerson(true);
+            const secondPerson: PersonDo<true> = DoFactory.createPerson(true);
+            const persons: Counted<PersonDo<true>> = [[firstPerson, secondPerson], 2];
+
+            personRepoMock.findBy.mockResolvedValue(persons);
             mapperMock.map.mockReturnValue(persons as unknown as Dictionary<unknown>);
+
             const personDoWithQueryParam: PersonDo<false> = DoFactory.createPerson(false);
-            const result: PersonDo<true>[] = await personService.findAllPersons(personDoWithQueryParam);
-            expect(result).toHaveLength(2);
+            const result: Paged<PersonDo<true>> = await personService.findAllPersons(personDoWithQueryParam, 0, 10);
+
+            expect(result.items).toHaveLength(2);
         });
 
         it('should return an empty list of persons ', async () => {
             const person: PersonDo<false> = DoFactory.createPerson(false);
-            personRepoMock.findAll.mockResolvedValue([]);
+
+            personRepoMock.findBy.mockResolvedValue([[], 0]);
             mapperMock.map.mockReturnValue(person as unknown as Dictionary<unknown>);
-            const result: PersonDo<true>[] = await personService.findAllPersons(person);
-            expect(result).toBeInstanceOf(Array);
-            expect(result).toHaveLength(0);
+
+            const result: Paged<PersonDo<true>> = await personService.findAllPersons(person);
+
+            expect(result.items).toBeInstanceOf(Array);
+            expect(result.items).toHaveLength(0);
         });
     });
 });

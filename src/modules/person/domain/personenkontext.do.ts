@@ -10,13 +10,13 @@ export class PersonenkontextDo<WasPersisted extends boolean> implements DoBase<W
     // eslint-disable-next-line @typescript-eslint/no-useless-constructor, @typescript-eslint/no-empty-function
     public constructor() {}
 
-    @AutoMap()
+    @AutoMap(() => Date)
     public createdAt!: Persisted<Date, WasPersisted>;
 
-    @AutoMap()
+    @AutoMap(() => Date)
     public updatedAt!: Persisted<Date, WasPersisted>;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public id!: Persisted<string, WasPersisted>;
 
     @AutoMap()
