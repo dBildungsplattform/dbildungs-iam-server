@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
+import { NestLogger } from '../core/logging/nest-logger.js';
 import { HostConfig, ServerConfig } from '../shared/config/index.js';
 import { GlobalValidationPipe } from '../shared/validation/index.js';
 import { ServerModule } from './server.module.js';
@@ -17,7 +18,7 @@ async function bootstrap(): Promise<void> {
         .setDescription('The dBildungs IAM server API description')
         .setVersion('1.0')
         .build();
-
+    app.useLogger(app.get(NestLogger));
     app.useGlobalInterceptors(new GlobalPagingHeadersInterceptor());
     app.useGlobalPipes(new GlobalValidationPipe());
     app.setGlobalPrefix('api', {
