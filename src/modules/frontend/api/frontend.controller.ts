@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Redirect, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
     ApiAcceptedResponse,
     ApiForbiddenResponse,
@@ -7,20 +8,28 @@ import {
     ApiResponse,
     ApiTags,
 } from '@nestjs/swagger';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { UserinfoResponse } from 'openid-client';
 
+import { FrontendConfig, ServerConfig } from '../../../shared/config/index.js';
 import { AuthenticatedGuard, CurrentUser, LoginGuard, User } from '../auth/index.js';
 
 @ApiTags('frontend')
 @Controller({ path: 'frontend' })
 export class FrontendController {
+    private redirect: string;
+
+    public constructor(configService: ConfigService<ServerConfig>) {
+        this.redirect = configService.getOrThrow<FrontendConfig>('FRONTEND').REDIRECT_AFTER_AUTH;
+    }
+
     @UseGuards(LoginGuard)
     @Get('login')
     @ApiOperation({ summary: 'Used to start OIDC authentication.' })
     @ApiResponse({ status: 302, description: 'Redirection to orchestrate OIDC flow.' })
-    @Redirect('/api/frontend/logininfo', 302)
-    public login(): void {}
+    public login(@Res() res: Response): void {
+        res.redirect(this.redirect);
+    }
 
     @UseGuards(AuthenticatedGuard)
     @Post('logout')

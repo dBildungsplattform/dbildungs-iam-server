@@ -3,11 +3,12 @@
         "PORT": 8080
     },
     "FRONTEND": {
-        "HOST": "http://localhost:9091/",
         "PORT": 8081,
         "SECURE_COOKIE": false,
         "SESSION_SECRET": "SessionSecretForTesting",
-        "BACKEND_ADDRESS": "http://127.0.0.1:8080"
+        "BACKEND_ADDRESS": "http://127.0.0.1:8080",
+        "OIDC_CALLBACK_URL": "http://localhost:9091/api/frontend/login",
+        "REDIRECT_AFTER_AUTH": "/login?done"
     },
     "DB": {
         "CLIENT_URL": "postgres://127.0.0.1:5432",

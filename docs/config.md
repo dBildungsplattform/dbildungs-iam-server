@@ -44,11 +44,12 @@ The config file contains all static, non-secret information we need to start and
     "CLIENT_ID": "<id of the client>",
   },
   "FRONTEND": {
-    "HOST": "<host of the frontend to enable redirection from keycloak>",
     "PORT": "<this is the bff port>",
     "SECURE_COOKIE": <Enables/Disables HTTPS for cookie>,
     "BACKEND_ADDRESS": "<address of backend server>",
-    "SESSION_TTL_MS": <Time in milliseconds after which the session expires>
+    "SESSION_TTL_MS": <Time in milliseconds after which the session expires>,
+    "OIDC_CALLBACK_URL": "<callback that is passed to keycloak>",
+    "REDIRECT_AFTER_AUTH": "<redirect after auth is complete>"
   },
   "REDIS": {
     "HOST": "<host of the redis server>",

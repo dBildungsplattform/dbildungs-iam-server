@@ -6,10 +6,6 @@ export class FrontendConfig {
     @Max(10000)
     public readonly PORT!: number;
 
-    @IsString()
-    @IsNotEmpty()
-    public readonly HOST!: string;
-
     @IsBoolean()
     @IsNotEmpty()
     public readonly SECURE_COOKIE!: boolean;
@@ -26,4 +22,12 @@ export class FrontendConfig {
     @IsPositive()
     @IsNotEmpty()
     public readonly SESSION_TTL_MS!: number;
+
+    @IsString()
+    @IsNotEmpty()
+    public readonly OIDC_CALLBACK_URL!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    public readonly REDIRECT_AFTER_AUTH!: string;
 }

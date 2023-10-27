@@ -1,9 +1,10 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { SessionData } from 'express-session';
 import { UserinfoResponse } from 'openid-client';
 
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { User } from '../auth/user.decorator.js';
 import { FrontendController } from './frontend.controller.js';
 
@@ -13,6 +14,7 @@ describe('FrontendController', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [ConfigTestModule],
             providers: [FrontendController],
         }).compile();
 
@@ -32,8 +34,12 @@ describe('FrontendController', () => {
     });
 
     describe('Login', () => {
-        it('should not throw', () => {
-            frontendController.login();
+        it('should redirect', () => {
+            const responseMock: Response = createMock<Response>();
+
+            frontendController.login(responseMock);
+
+            expect(responseMock.redirect).toHaveBeenCalled();
         });
     });
 

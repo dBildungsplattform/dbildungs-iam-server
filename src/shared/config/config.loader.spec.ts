@@ -30,11 +30,12 @@ describe('configloader', () => {
                     PORT: 8080,
                 },
                 FRONTEND: {
-                    HOST: 'http://localhost:9091',
                     PORT: 8081,
                     BACKEND_ADDRESS: 'http://localhost:8080',
                     SECURE_COOKIE: false,
                     SESSION_TTL_MS: 1000,
+                    OIDC_CALLBACK_URL: 'http://localhost:9091/api/frontend/login',
+                    REDIRECT_AFTER_AUTH: '/login?done',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
