@@ -11,10 +11,12 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
     public constructor(@Inject(OIDC_CLIENT) private client: Client, configService: ConfigService<ServerConfig>) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
 
+        const redirectUri: string = new URL('/api/frontend/login', frontendConfig.HOST).href;
+
         super({
             client,
-            usePKCE: false,
-            params: { redirect_uri: new URL('/api/frontend/login', frontendConfig.HOST).href },
+            usePKCE: true,
+            params: { redirect_uri: redirectUri },
             passReqToCallback: false,
         } satisfies StrategyOptions);
     }

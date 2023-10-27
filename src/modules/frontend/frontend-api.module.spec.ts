@@ -1,11 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Issuer } from 'openid-client';
 
-import { createMock } from '@golevelup/ts-jest';
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
 import { FrontendController } from './api/frontend.controller.js';
 import { OIDC_CLIENT } from './auth/oidc-client.service.js';
 import { FrontendApiModule } from './frontend-api.module.js';
-import { OpenIdConnectStrategy } from './auth/oidc.strategy.js';
 
 describe('FrontendApiModule', () => {
     let module: TestingModule;
@@ -15,9 +14,7 @@ describe('FrontendApiModule', () => {
             imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, FrontendApiModule],
         })
             .overrideProvider(OIDC_CLIENT)
-            .useValue(createMock())
-            .overrideProvider(OpenIdConnectStrategy)
-            .useValue(createMock())
+            .useValue(new new Issuer({ issuer: 'oidc' }).Client({ client_id: 'DummyId' }))
             .compile();
     });
 
