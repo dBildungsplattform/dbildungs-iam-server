@@ -29,5 +29,5 @@ export class FrontendConfig {
 
     @IsString()
     @IsNotEmpty()
-    public readonly REDIRECT_AFTER_AUTH!: string;
+    public readonly DEFAULT_AUTH_REDIRECT!: string;
 }

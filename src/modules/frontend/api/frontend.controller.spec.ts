@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker/';
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
@@ -36,10 +37,29 @@ describe('FrontendController', () => {
     describe('Login', () => {
         it('should redirect', () => {
             const responseMock: Response = createMock<Response>();
+            const session: SessionData = { cookie: { originalMaxAge: 0 } };
 
-            frontendController.login(responseMock);
+            frontendController.login(responseMock, session);
 
             expect(responseMock.redirect).toHaveBeenCalled();
+        });
+
+        it('should redirect to saved redirectUrl', () => {
+            const responseMock: Response = createMock<Response>();
+            const sessionMock: SessionData = createMock<SessionData>({ redirectUrl: faker.internet.url() });
+
+            frontendController.login(responseMock, sessionMock);
+
+            expect(responseMock.redirect).toHaveBeenCalledWith(sessionMock.redirectUrl);
+        });
+
+        it('should clear redirectUrl from session', () => {
+            const responseMock: Response = createMock<Response>();
+            const session: SessionData = { redirectUrl: faker.internet.url(), cookie: { originalMaxAge: 0 } };
+
+            frontendController.login(responseMock, session);
+
+            expect(session.redirectUrl).toBeUndefined();
         });
     });
 

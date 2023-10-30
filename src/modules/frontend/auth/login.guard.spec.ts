@@ -1,7 +1,9 @@
+import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { ExecutionContext } from '@nestjs/common';
 import { AuthGuard, IAuthGuard } from '@nestjs/passport';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Request } from 'express';
 
 import { LoginGuard } from './login.guard.js';
 
@@ -57,6 +59,18 @@ describe('LoginGuard', () => {
             const result: boolean = await sut.canActivate(contextMock);
 
             expect(result).toBe(true);
+        });
+
+        it('should save returnUrl to session if it exists', async () => {
+            canActivateSpy.mockResolvedValueOnce(true);
+            logInSpy.mockResolvedValueOnce(undefined);
+            const contextMock: DeepMocked<ExecutionContext> = createMock();
+            const redirectUrl: string = faker.internet.url();
+            contextMock.switchToHttp().getRequest<Request>().query = { redirectUrl };
+
+            await sut.canActivate(contextMock);
+
+            expect(contextMock.switchToHttp().getRequest<Request>().session.redirectUrl).toBe(redirectUrl);
         });
     });
 });

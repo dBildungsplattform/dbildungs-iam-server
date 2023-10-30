@@ -49,7 +49,7 @@ The config file contains all static, non-secret information we need to start and
     "BACKEND_ADDRESS": "<address of backend server>",
     "SESSION_TTL_MS": <Time in milliseconds after which the session expires>,
     "OIDC_CALLBACK_URL": "<callback that is passed to keycloak>",
-    "REDIRECT_AFTER_AUTH": "<redirect after auth is complete>"
+    "DEFAULT_AUTH_REDIRECT": "<default redirect after auth is complete>"
   },
   "REDIS": {
     "HOST": "<host of the redis server>",

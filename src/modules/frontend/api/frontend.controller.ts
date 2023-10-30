@@ -1,14 +1,16 @@
-import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, Session, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
     ApiAcceptedResponse,
     ApiForbiddenResponse,
     ApiOkResponse,
     ApiOperation,
+    ApiQuery,
     ApiResponse,
     ApiTags,
 } from '@nestjs/swagger';
 import { Request, Response } from 'express';
+import { SessionData } from 'express-session';
 import { UserinfoResponse } from 'openid-client';
 
 import { FrontendConfig, ServerConfig } from '../../../shared/config/index.js';
@@ -17,18 +19,26 @@ import { AuthenticatedGuard, CurrentUser, LoginGuard, User } from '../auth/index
 @ApiTags('frontend')
 @Controller({ path: 'frontend' })
 export class FrontendController {
-    private redirect: string;
+    private defaultRedirect: string;
 
     public constructor(configService: ConfigService<ServerConfig>) {
-        this.redirect = configService.getOrThrow<FrontendConfig>('FRONTEND').REDIRECT_AFTER_AUTH;
+        this.defaultRedirect = configService.getOrThrow<FrontendConfig>('FRONTEND').DEFAULT_AUTH_REDIRECT;
     }
 
     @UseGuards(LoginGuard)
     @Get('login')
     @ApiOperation({ summary: 'Used to start OIDC authentication.' })
     @ApiResponse({ status: 302, description: 'Redirection to orchestrate OIDC flow.' })
-    public login(@Res() res: Response): void {
-        res.redirect(this.redirect);
+    @ApiQuery({
+        name: 'redirectUrl',
+        required: false,
+        type: 'string',
+        description: 'User will be redirected here after login',
+    })
+    public login(@Res() res: Response, @Session() session: SessionData): void {
+        const target: string = session.redirectUrl ?? this.defaultRedirect;
+        session.redirectUrl = undefined;
+        res.redirect(target);
     }
 
     @UseGuards(AuthenticatedGuard)

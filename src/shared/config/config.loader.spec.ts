@@ -35,7 +35,7 @@ describe('configloader', () => {
                     SECURE_COOKIE: false,
                     SESSION_TTL_MS: 1000,
                     OIDC_CALLBACK_URL: 'http://localhost:9091/api/frontend/login',
-                    REDIRECT_AFTER_AUTH: '/login?done',
+                    DEFAULT_AUTH_REDIRECT: '/login?done',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
