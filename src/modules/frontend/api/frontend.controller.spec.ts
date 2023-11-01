@@ -94,6 +94,7 @@ describe('FrontendController', () => {
 
         it('should call request.logout', () => {
             const requestMock: Request = setupRequest();
+            oidcClient.issuer.metadata = createMock<IssuerMetadata>({});
 
             frontendController.logout(requestMock, createMock(), {});
 
@@ -102,13 +103,14 @@ describe('FrontendController', () => {
 
         it('should call session.destroy', () => {
             const requestMock: Request = setupRequest();
+            oidcClient.issuer.metadata = createMock<IssuerMetadata>({});
 
             frontendController.logout(requestMock, createMock(), {});
 
             expect(requestMock.logout).toHaveBeenCalled();
         });
 
-        describe('when user is logged in', () => {
+        describe('when end_session_endpoint is defined', () => {
             it('should call endSessionUrl with correct params', () => {
                 const user: User = createMock<User>({ id_token: faker.string.alphanumeric(32) });
                 const requestMock: Request = setupRequest(user);
@@ -138,14 +140,16 @@ describe('FrontendController', () => {
             });
         });
 
-        describe('when user is not logged in', () => {
-            it('should redirect to return value of endSessionUrl', () => {
+        describe('when end_session_endpoint is not defined', () => {
+            it('should return to redirectUrl param', () => {
                 const requestMock: Request = setupRequest();
                 const responseMock: Response = createMock<Response>();
+                oidcClient.issuer.metadata = createMock<IssuerMetadata>({ end_session_endpoint: undefined });
+                const redirectUrl: string = faker.internet.url();
 
-                frontendController.logout(requestMock, responseMock, {});
+                frontendController.logout(requestMock, responseMock, { redirectUrl });
 
-                expect(responseMock.redirect).toHaveBeenCalled();
+                expect(responseMock.redirect).toHaveBeenCalledWith(redirectUrl);
             });
         });
 

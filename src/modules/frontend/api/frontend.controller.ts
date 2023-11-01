@@ -3,6 +3,7 @@ import {
     Get,
     Inject,
     InternalServerErrorException,
+    Post,
     Query,
     Req,
     Res,
@@ -11,8 +12,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
-    ApiAcceptedResponse,
     ApiForbiddenResponse,
+    ApiInternalServerErrorResponse,
     ApiOkResponse,
     ApiOperation,
     ApiQuery,
@@ -47,8 +48,10 @@ export class FrontendController {
         res.redirect(target);
     }
 
-    @Get('logout')
-    @ApiAcceptedResponse({ description: 'The person was successfully logged out.' })
+    @Post('logout')
+    @ApiOperation({ summary: 'Used to log out the current user.' })
+    @ApiResponse({ status: 302, description: 'Redirect to logout.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to log out.' })
     public logout(@Req() req: Request, @Res() res: Response, @Query() query: RedirectQueryParams): void {
         const user: User | undefined = req.user as User | undefined;
         const idToken: string | undefined = user?.id_token;
@@ -65,7 +68,7 @@ export class FrontendController {
 
                 const redirectUrl: string = query.redirectUrl ?? this.defaultRedirect;
 
-                if (idToken && this.client.issuer.metadata.end_session_endpoint) {
+                if (this.client.issuer.metadata.end_session_endpoint) {
                     const endSessionUrl: string = this.client.endSessionUrl({
                         id_token_hint: idToken,
                         post_logout_redirect_uri: redirectUrl,
