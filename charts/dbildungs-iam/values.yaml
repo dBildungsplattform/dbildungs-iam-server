@@ -29,5 +29,3 @@ dbildungs-iam-keycloak-dev:
 
 # do we use a development redis?
 redisEnabled: false
-dbildungs-iam-redis:
-  password: password
