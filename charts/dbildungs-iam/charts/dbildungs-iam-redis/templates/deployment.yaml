@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis
+  name: dbiam-server-redis-deployment
   labels:
     app.kubernetes.io/name: dbildungs-iam
 spec:
