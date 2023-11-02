@@ -144,7 +144,10 @@ describe('PersonenkontextUc', () => {
                 };
 
                 personServiceMock.findPersonById.mockResolvedValue({ ok: true, value: personDo });
-                personenkontextServiceMock.findPersonenkontextById.mockResolvedValue({ ok: true, value: personenkontextDo });
+                personenkontextServiceMock.findPersonenkontextById.mockResolvedValue({
+                    ok: true,
+                    value: personenkontextDo,
+                });
 
                 await expect(sut.findPersonenkontextById(dto)).resolves.not.toThrow();
             });
@@ -171,7 +174,10 @@ describe('PersonenkontextUc', () => {
                     personenkontextId: personenkontextDo.id,
                 };
 
-                personenkontextServiceMock.findPersonenkontextById.mockResolvedValue({ ok: true, value: personenkontextDo });
+                personenkontextServiceMock.findPersonenkontextById.mockResolvedValue({
+                    ok: true,
+                    value: personenkontextDo,
+                });
                 personServiceMock.findPersonById.mockResolvedValue({
                     ok: false,
                     error: new EntityNotFoundError('Person'),
