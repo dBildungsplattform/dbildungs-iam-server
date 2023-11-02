@@ -9,14 +9,14 @@ export class OrganisationDo<WasPersisted extends boolean> implements DoBase<WasP
     // eslint-disable-next-line @typescript-eslint/no-useless-constructor, @typescript-eslint/no-empty-function
     public constructor() {}
 
+    @AutoMap(() => String)
+    public id!: Persisted<string, WasPersisted>;
+
     @AutoMap(() => Date)
     public createdAt!: Persisted<Date, WasPersisted>;
 
     @AutoMap(() => Date)
     public updatedAt!: Persisted<Date, WasPersisted>;
-
-    @AutoMap(() => String)
-    public id!: Persisted<string, WasPersisted>;
 
     @AutoMap()
     public kennung?: string;
@@ -30,6 +30,6 @@ export class OrganisationDo<WasPersisted extends boolean> implements DoBase<WasP
     @AutoMap()
     public kuerzel?: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public typ?: OrganisationsTyp;
 }

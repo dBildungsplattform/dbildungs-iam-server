@@ -1,0 +1,45 @@
+import { AutoMap } from '@automapper/classes';
+import { Gender, TrustLevel } from '../domain/person.enums.js';
+import { PersonNameDto } from './person-name.dto.js';
+import { PersonGeburtDto } from './person-geburt.dto.js';
+
+export class PersonDto {
+    @AutoMap()
+    public id!: string;
+
+    @AutoMap(() => Date)
+    public createdAt!: Date;
+
+    @AutoMap(() => Date)
+    public updatedAt!: Date;
+
+    @AutoMap()
+    public keycloakUserId!: string;
+
+    @AutoMap()
+    public referrer?: string;
+
+    @AutoMap()
+    public mandant: string = '';
+
+    @AutoMap()
+    public stammorganisation?: string;
+
+    @AutoMap(() => PersonNameDto)
+    public name!: PersonNameDto;
+
+    @AutoMap(() => PersonGeburtDto)
+    public geburt!: PersonGeburtDto;
+
+    @AutoMap(() => String)
+    public geschlecht?: string | Gender;
+
+    @AutoMap()
+    public lokalisierung?: string = 'de-DE';
+
+    @AutoMap(() => String)
+    public vertrauensstufe?: TrustLevel;
+
+    @AutoMap()
+    public isInformationBlocked?: boolean;
+}
