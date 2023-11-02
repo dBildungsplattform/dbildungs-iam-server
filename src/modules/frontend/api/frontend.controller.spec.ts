@@ -1,26 +1,25 @@
-import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { faker } from '@faker-js/faker/';
+import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AxiosResponse } from 'axios';
-import { TokenSet } from 'openid-client';
-import { Observable, firstValueFrom, of } from 'rxjs';
+import { Request, Response } from 'express';
+import { SessionData } from 'express-session';
+import { UserinfoResponse } from 'openid-client';
 
-import { LoginService } from '../outbound/login.service.js';
-import { FrontendController, SessionData } from './frontend.controller.js';
-import { LoginParams } from './user.params.js';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { User } from '../auth/user.decorator.js';
+import { FrontendController } from './frontend.controller.js';
 
 describe('FrontendController', () => {
     let module: TestingModule;
     let frontendController: FrontendController;
-    let loginService: DeepMocked<LoginService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            providers: [FrontendController, { provide: LoginService, useValue: createMock<LoginService>() }],
+            imports: [ConfigTestModule],
+            providers: [FrontendController],
         }).compile();
 
         frontendController = module.get(FrontendController);
-        loginService = module.get(LoginService);
     });
 
     afterEach(() => {
@@ -36,64 +35,51 @@ describe('FrontendController', () => {
     });
 
     describe('Login', () => {
-        it('should not throw', async () => {
-            const loginData: LoginParams = {
-                username: faker.internet.userName(),
-                password: faker.internet.password(),
-            };
-            loginService.login.mockReturnValueOnce(
-                of({
-                    data: new TokenSet(),
-                } as AxiosResponse<TokenSet>),
-            );
+        it('should redirect', () => {
+            const responseMock: Response = createMock<Response>();
+            const session: SessionData = { cookie: { originalMaxAge: 0 } };
 
-            const loginResponse: Observable<void> = frontendController.login(loginData, createMock());
+            frontendController.login(responseMock, session);
 
-            await expect(firstValueFrom(loginResponse)).resolves.toBeUndefined();
+            expect(responseMock.redirect).toHaveBeenCalled();
         });
 
-        it('should call login-service with username and password', async () => {
-            const loginData: LoginParams = {
-                username: faker.internet.userName(),
-                password: faker.internet.password(),
-            };
-            loginService.login.mockReturnValueOnce(
-                of({
-                    data: new TokenSet(),
-                } as AxiosResponse<TokenSet>),
-            );
+        it('should redirect to saved redirectUrl', () => {
+            const responseMock: Response = createMock<Response>();
+            const sessionMock: SessionData = createMock<SessionData>({ redirectUrl: faker.internet.url() });
 
-            await firstValueFrom(frontendController.login(loginData, createMock()));
+            frontendController.login(responseMock, sessionMock);
 
-            expect(loginService.login).toHaveBeenCalledWith(loginData.username, loginData.password);
+            expect(responseMock.redirect).toHaveBeenCalledWith(sessionMock.redirectUrl);
         });
 
-        it('should set- tokens on session', async () => {
-            const loginData: LoginParams = {
-                username: faker.internet.userName(),
-                password: faker.internet.password(),
-            };
-            const tokenSet: TokenSet = new TokenSet();
-            loginService.login.mockReturnValueOnce(
-                of({
-                    data: tokenSet,
-                } as AxiosResponse<TokenSet>),
-            );
-            const sessionMock: SessionData = createMock<SessionData>();
+        it('should clear redirectUrl from session', () => {
+            const responseMock: Response = createMock<Response>();
+            const session: SessionData = { redirectUrl: faker.internet.url(), cookie: { originalMaxAge: 0 } };
 
-            await firstValueFrom(frontendController.login(loginData, sessionMock));
+            frontendController.login(responseMock, session);
 
-            expect(sessionMock.set).toHaveBeenCalledWith('keycloak_tokens', tokenSet);
+            expect(session.redirectUrl).toBeUndefined();
         });
     });
 
     describe('Logout', () => {
         it('should delete session', () => {
-            const sessionMock: SessionData = createMock<SessionData>();
+            const requestMock: Request = createMock<Request>({ session: createMock<SessionData>() });
 
-            frontendController.logout(sessionMock);
+            frontendController.logout(requestMock);
 
-            expect(sessionMock.delete).toHaveBeenCalled();
+            expect(requestMock.session.destroy).toHaveBeenCalled();
+        });
+    });
+
+    describe('info', () => {
+        it('should return user info', () => {
+            const user: User = createMock<User>({ userinfo: createMock<UserinfoResponse>() });
+
+            const result: UserinfoResponse = frontendController.info(user);
+
+            expect(result).toBe(user.userinfo);
         });
     });
 });

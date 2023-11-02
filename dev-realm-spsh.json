@@ -828,6 +828,7 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M",
       "redirectUris": [
+        "http://localhost:9091/*",
         "/*"
       ],
       "webOrigins": [
