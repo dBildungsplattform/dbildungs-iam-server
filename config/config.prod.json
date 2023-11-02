@@ -14,5 +14,14 @@
         "BASE_URL": "<URL to keycloak>",
         "REALM_NAME": "<name of the used realm>",
         "CLIENT_ID": "<id of the client>"
+    },
+    "LOGGING": {
+        "DEFAULT_LOG_LEVEL": "info",
+        "PERSON_LOG_LEVEL": "info",
+        "ORGANISATION_LOG_LEVEL":  "info",
+        "ROLLE_LOG_LEVEL": "info",
+        "KEYCLOAK_LOG_LEVEL":  "info",
+        "BACKEND_FOR_FRONTEND_LOG_LEVEL": "info",
+        "UI_BACKEND_LOG_LEVEL":  "info"
     }
 }

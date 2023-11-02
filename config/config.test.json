@@ -19,5 +19,14 @@
         "ADMIN_CLIENT_ID": "spsh-admin",
         "REALM_NAME": "SPSH",
         "CLIENT_ID": "spsh"
+    },
+    "LOGGING": {
+        "DEFAULT_LOG_LEVEL": "debug",
+        "PERSON_LOG_LEVEL": "debug",
+        "ORGANISATION_LOG_LEVEL":  "debug",
+        "ROLLE_LOG_LEVEL": "debug",
+        "KEYCLOAK_LOG_LEVEL":  "debug",
+        "BACKEND_FOR_FRONTEND_LOG_LEVEL": "debug",
+        "UI_BACKEND_LOG_LEVEL":  "debug"
     }
 }

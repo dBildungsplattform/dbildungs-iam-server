@@ -23,6 +23,12 @@
         "CLIENT_SECRET": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M"
     },
     "LOGGING": {
-
+        "DEFAULT_LOG_LEVEL": "debug",
+        "PERSON_LOG_LEVEL": "debug",
+        "ORGANISATION_LOG_LEVEL":  "debug",
+        "ROLLE_LOG_LEVEL": "debug",
+        "KEYCLOAK_LOG_LEVEL":  "debug",
+        "BACKEND_FOR_FRONTEND_LOG_LEVEL": "debug",
+        "UI_BACKEND_LOG_LEVEL":  "debug"
     }
 }

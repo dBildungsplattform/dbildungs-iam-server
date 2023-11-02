@@ -4,6 +4,7 @@ import { DbConfig } from './db.config.js';
 import { FrontendConfig } from './frontend.config.js';
 import { HostConfig } from './host.config.js';
 import { KeycloakConfig } from './keycloak.config.js';
+import { LoggingConfig } from './logging.config.js';
 
 export class JsonConfig {
     @ValidateNested()
@@ -21,4 +22,8 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => KeycloakConfig)
     public readonly KEYCLOAK!: KeycloakConfig;
+
+    @ValidateNested()
+    @Type(() => LoggingConfig)
+    public readonly LOGGING!: LoggingConfig;
 }

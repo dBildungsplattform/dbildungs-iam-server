@@ -2,7 +2,7 @@ import winston, { format, Logger } from 'winston';
 import { ConfigService } from '@nestjs/config';
 import { Inject } from '@nestjs/common';
 import util from 'util';
-import { EnvConfig } from '../../shared/config/index.js';
+import { LoggingConfig } from '../../shared/config/logging.config.js';
 import { MODULE_NAME } from './module-name.symbol.js';
 
 export const localFormatter: (info: winston.Logform.TransformableInfo) => string = (
@@ -35,18 +35,12 @@ export class ModuleLogger {
 
     private moduleNameInternal: string;
 
-    public constructor(@Inject(MODULE_NAME) moduleName: string, configService: ConfigService<EnvConfig>) {
+    public constructor(@Inject(MODULE_NAME) moduleName: string, configService: ConfigService<LoggingConfig>) {
         this.moduleNameInternal = moduleName;
-        let level: Option<string> = configService.get<string>(`${moduleName}.LOG_LEVEL`);
-        // TODO exchange this with correct config and document how to configure
-        if (moduleName === 'PersonApiModule') {
-            level = 'debug';
-        }
-        if (moduleName === 'PersonModule') {
-            level = 'notice';
-        }
+        let level: Option<string> = configService.get<string>(`${moduleName}_LOG_LEVEL` as keyof LoggingConfig);
+
         if (!level) {
-            level = configService.get<string>('NEST_LOG_LEVEL', 'info');
+            level = configService.get<string>('DEFAULT_LOG_LEVEL', 'info');
         }
 
         const loggerFormat = format.combine(
