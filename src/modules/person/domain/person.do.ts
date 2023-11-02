@@ -60,7 +60,7 @@ export class PersonDo<WasPersisted extends boolean> implements DoBase<WasPersist
     @AutoMap()
     public nameSortierindex?: string;
 
-    @AutoMap()
+    @AutoMap(() => Date)
     public geburtsdatum?: Date;
 
     @AutoMap()

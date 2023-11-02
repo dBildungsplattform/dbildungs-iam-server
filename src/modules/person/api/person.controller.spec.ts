@@ -7,7 +7,6 @@ import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonController } from './person.controller.js';
 import { PersonUc } from './person.uc.js';
 import { PersonByIdParams } from './person-by-id.param.js';
-import { PersonResponse } from './person.response.js';
 import { HttpException } from '@nestjs/common';
 import { PersonenQueryParams, SichtfreigabeType } from './personen-query.param.js';
 import { PersonBirthParams } from './person-birth.params.js';
@@ -20,6 +19,9 @@ import { Jahrgangsstufe, Personenstatus, Rolle } from '../domain/personenkontext
 import { PagedResponse } from '../../../shared/paging/index.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
+import { PersonendatensatzDto } from './personendatensatz.dto.js';
+import { PersonDto } from './person.dto.js';
+import { PersonenkontextDto } from './personenkontext.dto.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -86,36 +88,16 @@ describe('PersonController', () => {
         };
 
         it('should get a person', async () => {
-            const personResponse: PersonResponse = {
-                id: faker.string.uuid(),
-                name: {
-                    vorname: faker.person.firstName(),
-                    familienname: faker.person.lastName(),
-                    initialenfamilienname: faker.person.lastName(),
-                    initialenvorname: faker.person.firstName(),
-                    rufname: faker.person.middleName(),
-                    titel: faker.string.alpha(),
-                    anrede: [faker.string.alpha(), faker.string.alpha()],
-                    namenssuffix: [],
-                    namenspraefix: [],
-                    sortierindex: 'sortierindex',
-                },
-                mandant: faker.string.uuid(),
-                referrer: faker.string.uuid(),
-                geburt: {
-                    datum: new Date('2022.02.02'),
-                    geburtsort: faker.location.country(),
-                },
-                geschlecht: faker.person.gender(),
-                lokalisierung: faker.location.country(),
-                vertrauensstufe: Vertrauensstufe.VOLL,
-            };
-            const persondatensatz: PersonendatensatzResponse = {
-                person: personResponse,
+            const personDto: PersonDto = {} as PersonDto;
+            const persondatensatzDto: PersonendatensatzDto = {
+                person: personDto,
                 personenkontexte: [],
             };
-            personUcMock.findPersonById.mockResolvedValue(persondatensatz);
+
+            personUcMock.findPersonById.mockResolvedValue(persondatensatzDto);
+
             await expect(personController.findPersonById(params)).resolves.not.toThrow();
+
             expect(personUcMock.findPersonById).toHaveBeenCalledTimes(1);
         });
 
@@ -145,42 +127,40 @@ describe('PersonController', () => {
         };
 
         it('should get all persons', async () => {
-            const person1: PersonResponse = {
+            const person1: PersonDto = {
                 id: faker.string.uuid(),
                 name: {
                     familienname: options.lastName,
                     vorname: options.firstName,
                 },
-                mandant: '',
                 referrer: options.referrer,
                 geburt: mockBirthParams,
                 geschlecht: '',
                 lokalisierung: '',
                 vertrauensstufe: Vertrauensstufe.VOLL,
-            };
-            const person2: PersonResponse = {
+            } as PersonDto;
+            const person2: PersonDto = {
                 id: faker.string.uuid(),
                 name: {
                     familienname: options.lastName,
                     vorname: options.firstName,
                 },
-                mandant: '',
                 referrer: options.referrer,
                 geburt: mockBirthParams,
                 geschlecht: '',
                 lokalisierung: '',
                 vertrauensstufe: Vertrauensstufe.VOLL,
-            };
+            } as PersonDto;
 
-            const mockPersondatensatz1: PersonendatensatzResponse = {
+            const mockPersondatensatz1: PersonendatensatzDto = {
                 person: person1,
                 personenkontexte: [],
             };
-            const mockPersondatensatz2: PersonendatensatzResponse = {
+            const mockPersondatensatz2: PersonendatensatzDto = {
                 person: person2,
                 personenkontexte: [],
             };
-            const mockPersondatensatz: PagedResponse<PersonendatensatzResponse> = new PagedResponse({
+            const mockPersondatensatz: PagedResponse<PersonendatensatzDto> = new PagedResponse({
                 offset: 0,
                 limit: 10,
                 total: 2,
@@ -222,6 +202,7 @@ describe('PersonController', () => {
                     jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
                     personenstatus: Personenstatus.AKTIV,
                     referrer: 'referrer',
+                    loeschung: {},
                 };
                 personenkontextUcMock.createPersonenkontext.mockResolvedValue(ucResult);
 
@@ -243,7 +224,7 @@ describe('PersonController', () => {
                     personenstatus: Personenstatus.AKTIV,
                     rolle: Rolle.LERNENDER,
                 };
-                const personenkontextResponse: PersonenkontextResponse = {
+                const personenkontextResponse: PersonenkontextDto = {
                     id: faker.string.uuid(),
                     organisation: {
                         id: faker.string.uuid(),
@@ -254,10 +235,11 @@ describe('PersonController', () => {
                     referrer: 'referrer',
                     jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
                     personenstatus: Personenstatus.AKTIV,
+                    loeschung: {},
                 };
-                const personenkontextResponseArray: PersonenkontextResponse[] = [personenkontextResponse];
+                const personenkontextDtos: PersonenkontextDto[] = [personenkontextResponse];
 
-                personenkontextUcMock.findAll.mockResolvedValue(personenkontextResponseArray);
+                personenkontextUcMock.findAll.mockResolvedValue(personenkontextDtos);
 
                 const result: PersonenkontextResponse[] = await personController.findPersonenkontexte(
                     pathParams,
@@ -266,7 +248,7 @@ describe('PersonController', () => {
 
                 expect(personenkontextUcMock.findAll).toHaveBeenCalledTimes(1);
                 expect(result.length).toBe(1);
-                expect(result[0]?.id).toBe(personenkontextResponseArray[0]?.id);
+                expect(result[0]?.id).toBe(personenkontextDtos[0]?.id);
             });
         });
     });

@@ -1,14 +1,14 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
+import { PassportModule } from '@nestjs/passport';
 
-import { AuthenticatedGuard } from './api/authentication.guard.js';
 import { FrontendController } from './api/frontend.controller.js';
+import { AuthenticatedGuard, OIDCClientProvider, OpenIdConnectStrategy, SessionSerializer } from './auth/index.js';
 import { BackendHttpService } from './outbound/backend-http.service.js';
-import { LoginService } from './outbound/login.service.js';
 
 @Module({
-    imports: [HttpModule],
-    providers: [LoginService, AuthenticatedGuard, BackendHttpService],
+    imports: [HttpModule, PassportModule.register({ session: true, defaultStrategy: 'oidc', keepSessionInfo: true })],
+    providers: [AuthenticatedGuard, BackendHttpService, OpenIdConnectStrategy, SessionSerializer, OIDCClientProvider],
     controllers: [FrontendController],
 })
 export class FrontendApiModule {}

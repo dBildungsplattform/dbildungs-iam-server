@@ -47,7 +47,7 @@ export class CreatePersonDto {
     @AutoMap()
     public readonly nameSortierindex?: string;
 
-    @AutoMap()
+    @AutoMap(() => Date)
     public readonly geburtsdatum?: Date;
 
     @AutoMap()
