@@ -44,7 +44,18 @@ The config file contains all static, non-secret information we need to start and
     "CLIENT_ID": "<id of the client>",
   },
   "FRONTEND": {
-    "PORT": "<this is the bff port>"
+    "PORT": "<this is the bff port>",
+    "SECURE_COOKIE": <Enables/Disables HTTPS for cookie>,
+    "BACKEND_ADDRESS": "<address of backend server>",
+    "SESSION_TTL_MS": <Time in milliseconds after which the session expires>,
+    "OIDC_CALLBACK_URL": "<callback that is passed to keycloak>",
+    "DEFAULT_AUTH_REDIRECT": "<default redirect after auth is complete>"
+  },
+  "REDIS": {
+    "HOST": "<host of the redis server>",
+    "PORT": <port of the redis server>,
+    "USERNAME": "<redis username>",
+    "USE_TLS": <use TLS for connection>
   }
 }
 ```
@@ -75,6 +86,12 @@ There are however a few special rules applied to them:
     },
     "FRONTEND": {
         "SESSION_SECRET": "<is used to encrypt the session cookie>"
+    },
+    "REDIS": {
+        "PASSWORD": "<redis password>",
+        "PRIVATE_KEY": "<optional: private key in PEM format>",
+        "CERT_CHAINS": "<optional: certificate chains in PEM format>",
+        "CERTIFICATE_AUTHORITIES": "<optional: trusted certificate authorities>"
     }
 }
 ```
