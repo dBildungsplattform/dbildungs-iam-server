@@ -1,5 +1,6 @@
+import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Controller, Get, Inject, Param } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Inject, Param } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiForbiddenResponse,
@@ -10,12 +11,12 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Public } from 'nest-keycloak-connect';
-import { PersonendatensatzDto } from './personendatensatz.dto.js';
-import { PersonenkontextUc } from './personenkontext.uc.js';
-import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
-import { Mapper } from '@automapper/core';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
+import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
+import { PersonendatensatzDto } from './personendatensatz.dto.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { PersonenkontextUc } from './personenkontext.uc.js';
 
 @Public()
 @ApiTags('personenkontexte')
@@ -36,19 +37,29 @@ export class PersonenkontextController {
     @ApiNotFoundResponse({ description: 'The personenkontext was not found.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
-    public async findById(@Param() params: FindPersonenkontextByIdParams): Promise<PersonendatensatzResponse> {
-        const request: FindPersonenkontextByIdDto = this.mapper.map(
-            params,
-            FindPersonenkontextByIdParams,
-            FindPersonenkontextByIdDto,
-        );
-        const result: PersonendatensatzDto = await this.personenkontextUc.findById(request);
-        const response: PersonendatensatzResponse = this.mapper.map(
-            result,
-            PersonendatensatzDto,
-            PersonendatensatzResponse,
-        );
+    public async findPersonenkontextById(
+        @Param() params: FindPersonenkontextByIdParams,
+    ): Promise<PersonendatensatzResponse> {
+        try {
+            const request: FindPersonenkontextByIdDto = this.mapper.map(
+                params,
+                FindPersonenkontextByIdParams,
+                FindPersonenkontextByIdDto,
+            );
+            const result: PersonendatensatzDto = await this.personenkontextUc.findPersonenkontextById(request);
+            const response: PersonendatensatzResponse = this.mapper.map(
+                result,
+                PersonendatensatzDto,
+                PersonendatensatzResponse,
+            );
 
-        return response;
+            return response;
+        } catch (error: unknown) {
+            if (error instanceof EntityNotFoundError) {
+                throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+            }
+
+            throw error;
+        }
     }
 }

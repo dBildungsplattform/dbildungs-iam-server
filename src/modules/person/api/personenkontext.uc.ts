@@ -59,10 +59,9 @@ export class PersonenkontextUc {
         return personenkontexte;
     }
 
-    public async findById(dto: FindPersonenkontextByIdDto): Promise<PersonendatensatzDto> {
-        const personenkontextResult: Result<PersonenkontextDo<true>> = await this.personenkontextService.findById(
-            dto.personenkontextId,
-        );
+    public async findPersonenkontextById(dto: FindPersonenkontextByIdDto): Promise<PersonendatensatzDto> {
+        const personenkontextResult: Result<PersonenkontextDo<true>> =
+            await this.personenkontextService.findPersonenkontextById(dto.personenkontextId);
 
         if (!personenkontextResult.ok) {
             throw personenkontextResult.error;

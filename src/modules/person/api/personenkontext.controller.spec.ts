@@ -9,6 +9,8 @@ import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonDto } from './person.dto.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { HttpException } from '@nestjs/common';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
@@ -43,7 +45,7 @@ describe('PersonenkontextController', () => {
         expect(sut).toBeDefined();
     });
 
-    describe('findById', () => {
+    describe('findPersonenkontextById', () => {
         describe('when finding personenkontext with id', () => {
             it('should return personenkontext response', async () => {
                 const params: FindPersonenkontextByIdParams = {
@@ -54,12 +56,34 @@ describe('PersonenkontextController', () => {
                     personenkontexte: [],
                 };
 
-                personenkontextUcMock.findById.mockResolvedValue(dtoMock);
+                personenkontextUcMock.findPersonenkontextById.mockResolvedValue(dtoMock);
 
-                const response: PersonendatensatzResponse = await sut.findById(params);
+                const response: PersonendatensatzResponse = await sut.findPersonenkontextById(params);
 
                 expect(response).toBeInstanceOf(PersonendatensatzResponse);
-                expect(personenkontextUcMock.findById).toBeCalledTimes(1);
+                expect(personenkontextUcMock.findPersonenkontextById).toBeCalledTimes(1);
+            });
+        });
+
+        describe('when NOT finding personenkontext with id', () => {
+            it('should throw http error', async () => {
+                const params: FindPersonenkontextByIdParams = {
+                    personenkontextId: faker.string.uuid(),
+                };
+
+                personenkontextUcMock.findPersonenkontextById.mockRejectedValue(new EntityNotFoundError());
+
+                await expect(sut.findPersonenkontextById(params)).rejects.toThrowError(HttpException);
+            });
+
+            it('should throw error', async () => {
+                const params: FindPersonenkontextByIdParams = {
+                    personenkontextId: faker.string.uuid(),
+                };
+
+                personenkontextUcMock.findPersonenkontextById.mockRejectedValue(new Error());
+
+                await expect(sut.findPersonenkontextById(params)).rejects.toThrowError(Error);
             });
         });
     });
