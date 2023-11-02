@@ -4,7 +4,7 @@ import { Type } from 'class-transformer';
 import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonNameParams } from './person-name.params.js';
-import { PersonGender, PersonTrustLevel } from './person.enums.js';
+import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 
 export class CreatePersonBodyParams {
     @AutoMap()
@@ -52,9 +52,9 @@ export class CreatePersonBodyParams {
     @AutoMap()
     @IsOptional()
     @IsString()
-    @IsEnum(PersonGender)
-    @ApiProperty({ name: 'geschlecht', enum: PersonGender, required: false })
-    public readonly geschlecht?: PersonGender;
+    @IsEnum(Geschlecht)
+    @ApiProperty({ name: 'geschlecht', enum: Geschlecht, required: false })
+    public readonly geschlecht?: Geschlecht;
 
     @AutoMap()
     @IsOptional()
@@ -65,9 +65,9 @@ export class CreatePersonBodyParams {
     @AutoMap()
     @IsOptional()
     @IsString()
-    @IsEnum(PersonTrustLevel)
-    @ApiProperty({ name: 'vertrauensstufe', enum: PersonTrustLevel, required: false })
-    public readonly vertrauensstufe?: PersonTrustLevel;
+    @IsEnum(Vertrauensstufe)
+    @ApiProperty({ name: 'vertrauensstufe', enum: Vertrauensstufe, required: false })
+    public readonly vertrauensstufe?: Vertrauensstufe;
 
     @AutoMap()
     @IsOptional()

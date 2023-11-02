@@ -13,10 +13,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { UserDo } from '../../keycloak-administration/index.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { PersonDo } from '../domain/person.do.js';
-import { Gender, TrustLevel } from '../domain/person.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
-import { PersonGender, PersonTrustLevel } from './person.enums.js';
 import { PersonenQueryParams, SichtfreigabeType } from './personen-query.param.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
@@ -28,36 +26,6 @@ import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-organisation.dto.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
-
-export const personGenderToGenderConverter: Converter<PersonGender, Gender> = {
-    convert(source: PersonGender): Gender {
-        switch (source) {
-            case PersonGender.DIVERSE:
-                return Gender.DIVERSE;
-            case PersonGender.FEMALE:
-                return Gender.FEMALE;
-            case PersonGender.MALE:
-                return Gender.MALE;
-            default:
-                return Gender.UNKNOWN;
-        }
-    },
-};
-
-export const personTrustLevelToTrustLevelConverter: Converter<PersonTrustLevel, TrustLevel> = {
-    convert(source: PersonTrustLevel): TrustLevel {
-        switch (source) {
-            case PersonTrustLevel.NONE:
-                return TrustLevel.NONE;
-            case PersonTrustLevel.TRUSTED:
-                return TrustLevel.TRUSTED;
-            case PersonTrustLevel.VERIFIED:
-                return TrustLevel.VERIFIED;
-            default:
-                return TrustLevel.UNKNOWN;
-        }
-    },
-};
 
 export const personVisibilityToBooleanConverter: Converter<SichtfreigabeType, boolean> = {
     convert(source: SichtfreigabeType) {
@@ -84,59 +52,48 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 CreatePersonBodyParams,
                 CreatePersonDto,
                 forMember(
-                    (dest: CreatePersonDto) => dest.client,
-                    mapFrom((src: CreatePersonBodyParams) => src.mandant),
-                ),
-                forMember(
-                    (dest: CreatePersonDto) => dest.mainOrganization,
-                    mapFrom((src: CreatePersonBodyParams) => src.stammorganisation),
-                ),
-                forMember(
-                    (dest: CreatePersonDto) => dest.lastName,
+                    (dest: CreatePersonDto) => dest.familienname,
                     mapFrom((src: CreatePersonBodyParams) => src.name.familienname),
                 ),
                 forMember(
-                    (dest: CreatePersonDto) => dest.firstName,
+                    (dest: CreatePersonDto) => dest.vorname,
                     mapFrom((src: CreatePersonBodyParams) => src.name.vorname),
                 ),
                 forMember(
-                    (dest: CreatePersonDto) => dest.initialsLastName,
+                    (dest: CreatePersonDto) => dest.nameTitel,
+                    mapFrom((src: CreatePersonBodyParams) => src.name.titel),
+                ),
+                forMember(
+                    (dest: CreatePersonDto) => dest.nameAnrede,
+                    mapFrom((src: CreatePersonBodyParams) => src.name.anrede),
+                ),
+                forMember(
+                    (dest: CreatePersonDto) => dest.namensPraefix,
+                    mapFrom((src: CreatePersonBodyParams) => src.name.namenspraefix),
+                ),
+                forMember(
+                    (dest: CreatePersonDto) => dest.namensSuffix,
+                    mapFrom((src: CreatePersonBodyParams) => src.name.namenssuffix),
+                ),
+                forMember(
+                    (dest: CreatePersonDto) => dest.initialenFamilienname,
                     mapFrom((src: CreatePersonBodyParams) => src.name.initialenfamilienname),
                 ),
                 forMember(
-                    (dest: CreatePersonDto) => dest.initialsFirstName,
+                    (dest: CreatePersonDto) => dest.initialenVorname,
                     mapFrom((src: CreatePersonBodyParams) => src.name.initialenvorname),
                 ),
                 forMember(
-                    (dest: CreatePersonDto) => dest.nickName,
+                    (dest: CreatePersonDto) => dest.rufname,
                     mapFrom((src: CreatePersonBodyParams) => src.name.rufname),
                 ),
                 forMember(
-                    (dest: CreatePersonDto) => dest.birthDate,
+                    (dest: CreatePersonDto) => dest.geburtsdatum,
                     mapFrom((src: CreatePersonBodyParams) => src.geburt.datum),
                 ),
                 forMember(
-                    (dest: CreatePersonDto) => dest.birthPlace,
+                    (dest: CreatePersonDto) => dest.geburtsort,
                     mapFrom((src: CreatePersonBodyParams) => src.geburt.geburtsort),
-                ),
-                forMember(
-                    (dest: CreatePersonDto) => dest.localization,
-                    mapFrom((src: CreatePersonBodyParams) => src.lokalisierung),
-                ),
-                forMember(
-                    (dest: CreatePersonDto) => dest.isInformationBlocked,
-                    mapFrom((src: CreatePersonBodyParams) => src.auskunftssperre),
-                ),
-                forMember(
-                    (dest: CreatePersonDto) => dest.gender,
-                    convertUsing(personGenderToGenderConverter, (src: CreatePersonBodyParams) => src.geschlecht),
-                ),
-                forMember(
-                    (dest: CreatePersonDto) => dest.trustLevel,
-                    convertUsing(
-                        personTrustLevelToTrustLevelConverter,
-                        (src: CreatePersonBodyParams) => src.vertrauensstufe,
-                    ),
                 ),
             );
             createMap(
@@ -158,7 +115,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.mandant,
-                    mapFrom((src: PersonDo<true>) => src.client),
+                    mapFrom((src: PersonDo<true>) => src.mandant),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.referrer,
@@ -166,117 +123,90 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.name.vorname,
-                    mapFrom((src: PersonDo<true>) => src.firstName),
+                    mapFrom((src: PersonDo<true>) => src.vorname),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.name.rufname,
-                    mapFrom((src: PersonDo<true>) => src.nickName),
+                    mapFrom((src: PersonDo<true>) => src.rufname),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.name.familienname,
-                    mapFrom((src: PersonDo<true>) => src.lastName),
+                    mapFrom((src: PersonDo<true>) => src.familienname),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.name.initialenvorname,
-                    mapFrom((src: PersonDo<true>) => src.initialsFirstName),
+                    mapFrom((src: PersonDo<true>) => src.initialenVorname),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.name.initialenfamilienname,
-                    mapFrom((src: PersonDo<true>) => src.initialsLastName),
+                    mapFrom((src: PersonDo<true>) => src.initialenFamilienname),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.name.sortierindex,
-                    mapFrom((src: PersonDo<true>) => src.nameSortIndex),
+                    mapFrom((src: PersonDo<true>) => src.nameSortierindex),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.geburt.datum,
-                    mapFrom((src: PersonDo<true>) => src.birthDate),
+                    mapFrom((src: PersonDo<true>) => src.geburtsdatum),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.geburt.geburtsort,
-                    mapFrom((src: PersonDo<true>) => src.birthPlace),
+                    mapFrom((src: PersonDo<true>) => src.geburtsort),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.vertrauensstufe,
-                    mapFrom((src: PersonDo<true>) => src.trustLevel),
+                    mapFrom((src: PersonDo<true>) => src.vertrauensstufe),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.geschlecht,
-                    mapFrom((src: PersonDo<true>) => src.gender),
+                    mapFrom((src: PersonDo<true>) => src.geschlecht),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.lokalisierung,
-                    mapFrom((src: PersonDo<true>) => src.localization),
+                    mapFrom((src: PersonDo<true>) => src.lokalisierung),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.stammorganisation,
-                    mapFrom((src: PersonDo<true>) => src.mainOrganization),
+                    mapFrom((src: PersonDo<true>) => src.stammorganisation),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.name.anrede,
-                    mapFrom((src: PersonDo<true>) => src.nameSalutation),
+                    mapFrom((src: PersonDo<true>) => src.nameAnrede),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.name.namenssuffix,
-                    mapFrom((src: PersonDo<true>) => src.nameSuffix),
+                    mapFrom((src: PersonDo<true>) => src.namensSuffix),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.name.namenspraefix,
-                    mapFrom((src: PersonDo<true>) => src.namePrefix),
+                    mapFrom((src: PersonDo<true>) => src.namensPraefix),
                 ),
             );
-            createMap(
-                mapper,
-                PersonenQueryParams,
-                FindPersonendatensatzDto,
-                forMember(
-                    (dest: FindPersonendatensatzDto) => dest.vorname,
-                    mapFrom((src: PersonenQueryParams) => src.vorname),
-                ),
-                forMember(
-                    (dest: FindPersonendatensatzDto) => dest.familienname,
-                    mapFrom((src: PersonenQueryParams) => src.familienname),
-                ),
-                forMember(
-                    (dest: FindPersonendatensatzDto) => dest.referrer,
-                    mapFrom((src: PersonenQueryParams) => src.referrer),
-                ),
-            );
+            createMap(mapper, PersonenQueryParams, FindPersonendatensatzDto);
             createMap(
                 mapper,
                 FindPersonendatensatzDto,
                 PersonDo<false>,
-                forMember(
-                    (dest: PersonDo<false>) => dest.lastName,
-                    mapFrom((src: FindPersonendatensatzDto) => src.familienname),
-                ),
-                forMember(
-                    (dest: PersonDo<false>) => dest.firstName,
-                    mapFrom((src: FindPersonendatensatzDto) => src.vorname),
-                ),
-                forMember(
-                    (dest: PersonDo<false>) => dest.referrer,
-                    mapFrom((src: FindPersonendatensatzDto) => src.referrer),
-                ),
                 forMember((dest: PersonDo<false>) => dest.id, ignore()),
                 forMember((dest: PersonDo<false>) => dest.createdAt, ignore()),
                 forMember((dest: PersonDo<false>) => dest.updatedAt, ignore()),
                 forMember((dest: PersonDo<false>) => dest.keycloakUserId, ignore()),
-                forMember((dest: PersonDo<false>) => dest.client, ignore()),
-                forMember((dest: PersonDo<false>) => dest.mainOrganization, ignore()),
-                forMember((dest: PersonDo<false>) => dest.initialsLastName, ignore()),
-                forMember((dest: PersonDo<false>) => dest.initialsFirstName, ignore()),
-                forMember((dest: PersonDo<false>) => dest.nickName, ignore()),
-                forMember((dest: PersonDo<false>) => dest.nameTitle, ignore()),
-                forMember((dest: PersonDo<false>) => dest.nameSalutation, ignore()),
-                forMember((dest: PersonDo<false>) => dest.namePrefix, ignore()),
-                forMember((dest: PersonDo<false>) => dest.nameSortIndex, ignore()),
-                forMember((dest: PersonDo<false>) => dest.birthDate, ignore()),
-                forMember((dest: PersonDo<false>) => dest.birthPlace, ignore()),
-                forMember((dest: PersonDo<false>) => dest.gender, ignore()),
-                forMember((dest: PersonDo<false>) => dest.localization, ignore()),
-                forMember((dest: PersonDo<false>) => dest.trustLevel, ignore()),
-                forMember((dest: PersonDo<false>) => dest.isInformationBlocked, ignore()),
+                forMember((dest: PersonDo<false>) => dest.mandant, ignore()),
+                forMember((dest: PersonDo<false>) => dest.stammorganisation, ignore()),
+                forMember((dest: PersonDo<false>) => dest.initialenFamilienname, ignore()),
+                forMember((dest: PersonDo<false>) => dest.initialenVorname, ignore()),
+                forMember((dest: PersonDo<false>) => dest.rufname, ignore()),
+                forMember((dest: PersonDo<false>) => dest.nameTitel, ignore()),
+                forMember((dest: PersonDo<false>) => dest.nameAnrede, ignore()),
+                forMember((dest: PersonDo<false>) => dest.namensPraefix, ignore()),
+                forMember((dest: PersonDo<false>) => dest.namensSuffix, ignore()),
+                forMember((dest: PersonDo<false>) => dest.nameSortierindex, ignore()),
+                forMember((dest: PersonDo<false>) => dest.geburtsdatum, ignore()),
+                forMember((dest: PersonDo<false>) => dest.geburtsort, ignore()),
+                forMember((dest: PersonDo<false>) => dest.geschlecht, ignore()),
+                forMember((dest: PersonDo<false>) => dest.lokalisierung, ignore()),
+                forMember((dest: PersonDo<false>) => dest.vertrauensstufe, ignore()),
+                forMember((dest: PersonDo<false>) => dest.auskunftssperre, ignore()),
             );
             createMap(mapper, CreatePersonDto, UserDo);
 

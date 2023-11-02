@@ -4,7 +4,7 @@ import { IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { PersonBirthParams } from './person-birth.params.js';
-import { TrustLevel } from '../domain/person.enums.js';
+import { Vertrauensstufe } from '../domain/person.enums.js';
 
 export class PersonResponse {
     @AutoMap()
@@ -60,5 +60,5 @@ export class PersonResponse {
     @IsOptional()
     @IsString()
     @ApiProperty({ name: 'vertrauensstufe', required: true })
-    public vertrauensstufe!: TrustLevel;
+    public vertrauensstufe!: Vertrauensstufe;
 }

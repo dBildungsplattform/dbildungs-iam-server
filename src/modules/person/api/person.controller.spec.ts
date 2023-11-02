@@ -11,7 +11,7 @@ import { PersonResponse } from './person.response.js';
 import { HttpException } from '@nestjs/common';
 import { PersonenQueryParams, SichtfreigabeType } from './personen-query.param.js';
 import { PersonBirthParams } from './person-birth.params.js';
-import { TrustLevel } from '../domain/person.enums.js';
+import { Vertrauensstufe } from '../domain/person.enums.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
@@ -94,7 +94,7 @@ describe('PersonController', () => {
                     initialenfamilienname: faker.person.lastName(),
                     initialenvorname: faker.person.firstName(),
                     rufname: faker.person.middleName(),
-                    title: faker.string.alpha(),
+                    titel: faker.string.alpha(),
                     anrede: [faker.string.alpha(), faker.string.alpha()],
                     namenssuffix: [],
                     namenspraefix: [],
@@ -108,7 +108,7 @@ describe('PersonController', () => {
                 },
                 geschlecht: faker.person.gender(),
                 lokalisierung: faker.location.country(),
-                vertrauensstufe: TrustLevel.TRUSTED,
+                vertrauensstufe: Vertrauensstufe.VOLL,
             };
             const persondatensatz: PersonendatensatzResponse = {
                 person: personResponse,
@@ -156,7 +156,7 @@ describe('PersonController', () => {
                 geburt: mockBirthParams,
                 geschlecht: '',
                 lokalisierung: '',
-                vertrauensstufe: TrustLevel.TRUSTED,
+                vertrauensstufe: Vertrauensstufe.VOLL,
             };
             const person2: PersonResponse = {
                 id: faker.string.uuid(),
@@ -169,7 +169,7 @@ describe('PersonController', () => {
                 geburt: mockBirthParams,
                 geschlecht: '',
                 lokalisierung: '',
-                vertrauensstufe: TrustLevel.TRUSTED,
+                vertrauensstufe: Vertrauensstufe.VOLL,
             };
 
             const mockPersondatensatz1: PersonendatensatzResponse = {

@@ -35,21 +35,21 @@ export class PersonNameParams {
     @IsOptional()
     @IsString()
     @ApiProperty({ name: 'titel', required: false })
-    public readonly title?: string;
+    public readonly titel?: string;
 
-    @AutoMap()
+    @AutoMap(() => [String])
     @IsOptional()
     @IsArray()
     @ApiProperty({ name: 'anrede', required: false })
     public readonly anrede?: string[];
 
-    @AutoMap()
+    @AutoMap(() => [String])
     @IsOptional()
     @IsArray()
     @ApiProperty({ name: 'namenssuffix', required: false })
     public readonly namenssuffix?: string[];
 
-    @AutoMap()
+    @AutoMap(() => [String])
     @IsOptional()
     @IsArray()
     @ApiProperty({ name: 'namenspraefix' })

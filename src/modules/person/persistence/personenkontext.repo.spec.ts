@@ -50,7 +50,7 @@ describe('PersonenkontextRepo', () => {
                 await em.persistAndFlush(mapper.map(newPerson, PersonDo<false>, PersonEntity));
 
                 const personEntity: PersonEntity = await em.findOneOrFail(PersonEntity, {
-                    firstName: newPerson.firstName,
+                    vorname: newPerson.vorname,
                 });
                 const newPersonenkontext: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false, {
                     personId: personEntity.id,
@@ -68,7 +68,7 @@ describe('PersonenkontextRepo', () => {
                 await em.persistAndFlush(mapper.map(newPerson, PersonDo<false>, PersonEntity));
 
                 const personEntity: PersonEntity = await em.findOneOrFail(PersonEntity, {
-                    firstName: newPerson.firstName,
+                    vorname: newPerson.vorname,
                 });
                 const newPersonenkontext: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false, {
                     personId: personEntity.id,
@@ -88,7 +88,7 @@ describe('PersonenkontextRepo', () => {
                 await em.persistAndFlush(mapper.map(newPerson, PersonDo<false>, PersonEntity));
 
                 const personEntity: PersonEntity = await em.findOneOrFail(PersonEntity, {
-                    firstName: newPerson.firstName,
+                    vorname: newPerson.vorname,
                 });
                 const newPersonenkontext: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true, {
                     personId: personEntity.id,

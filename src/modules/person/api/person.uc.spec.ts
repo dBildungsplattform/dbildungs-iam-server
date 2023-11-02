@@ -194,10 +194,10 @@ describe('PersonUc', () => {
 
             expect(personenkontextServiceMock.findAllPersonenkontexte).toHaveBeenCalledTimes(2);
             expect(result.items).toHaveLength(2);
-            expect(result.items.at(0)?.person.name.vorname).toEqual(firstPerson.firstName);
-            expect(result.items.at(0)?.person.name.familienname).toEqual(firstPerson.lastName);
-            expect(result.items.at(1)?.person.name.vorname).toEqual(secondPerson.firstName);
-            expect(result.items.at(1)?.person.name.familienname).toEqual(secondPerson.lastName);
+            expect(result.items.at(0)?.person.name.vorname).toEqual(firstPerson.vorname);
+            expect(result.items.at(0)?.person.name.familienname).toEqual(firstPerson.familienname);
+            expect(result.items.at(1)?.person.name.vorname).toEqual(secondPerson.vorname);
+            expect(result.items.at(1)?.person.name.familienname).toEqual(secondPerson.familienname);
         });
 
         it('should return an empty array when no matching persons are found', async () => {

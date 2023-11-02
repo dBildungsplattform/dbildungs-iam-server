@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { Gender, TrustLevel } from './person.enums.js';
+import { Geschlecht, Vertrauensstufe } from './person.enums.js';
 
 export class CreatePersonDto {
     @AutoMap()
@@ -12,56 +12,56 @@ export class CreatePersonDto {
     public readonly referrer?: string;
 
     @AutoMap()
-    public readonly client!: string;
+    public readonly mandant!: string;
 
     @AutoMap()
-    public readonly mainOrganization?: string;
+    public readonly stammorganisation?: string;
 
     @AutoMap()
-    public readonly lastName!: string;
+    public readonly familienname!: string;
 
     @AutoMap()
-    public readonly firstName!: string;
+    public readonly vorname!: string;
 
     @AutoMap()
-    public readonly initialsLastName?: string;
+    public readonly initialenFamilienname?: string;
 
     @AutoMap()
-    public readonly initialsFirstName?: string;
+    public readonly initialenVorname?: string;
 
     @AutoMap()
-    public readonly nickName?: string;
+    public readonly rufname?: string;
 
     @AutoMap()
-    public readonly nameTitle?: string;
+    public readonly nameTitel?: string;
+
+    @AutoMap(() => [String])
+    public readonly nameAnrede?: string[];
+
+    @AutoMap(() => [String])
+    public readonly namensPraefix?: string[];
+
+    @AutoMap(() => [String])
+    public readonly namensSuffix?: string[];
 
     @AutoMap()
-    public readonly nameSalutation?: string[];
+    public readonly nameSortierindex?: string;
 
     @AutoMap()
-    public readonly namePrefix?: string[];
+    public readonly geburtsdatum?: Date;
 
     @AutoMap()
-    public readonly nameSuffix?: string[];
+    public readonly geburtsort?: string;
+
+    @AutoMap(() => String)
+    public readonly geschlecht?: Geschlecht;
 
     @AutoMap()
-    public readonly nameSortIndex?: string;
+    public readonly lokalisierung?: string;
+
+    @AutoMap(() => String)
+    public readonly vertrauensstufe?: Vertrauensstufe;
 
     @AutoMap()
-    public readonly birthDate?: Date;
-
-    @AutoMap()
-    public readonly birthPlace?: string;
-
-    @AutoMap()
-    public readonly gender?: Gender;
-
-    @AutoMap()
-    public readonly localization?: string;
-
-    @AutoMap()
-    public readonly trustLevel?: TrustLevel;
-
-    @AutoMap()
-    public readonly isInformationBlocked?: boolean;
+    public readonly auskunftssperre?: boolean;
 }

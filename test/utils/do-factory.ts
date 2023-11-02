@@ -19,9 +19,9 @@ export class DoFactory {
     ): PersonDo<WasPersisted> {
         const person: PersonDo<false> = {
             keycloakUserId: faker.string.uuid(),
-            client: faker.string.uuid(),
-            lastName: faker.person.lastName(),
-            firstName: faker.person.fullName(),
+            mandant: faker.string.uuid(),
+            familienname: faker.person.lastName(),
+            vorname: faker.person.fullName(),
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
