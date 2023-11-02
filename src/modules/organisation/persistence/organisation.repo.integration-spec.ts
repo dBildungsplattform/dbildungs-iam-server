@@ -1,11 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { OrganisationRepo } from './organisation.repo.js';
-import { EntityManager, MikroORM } from '@mikro-orm/core';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
-import { OrganisationPersistenceMapperProfile } from './organisation-persistence.mapper.profile.js';
-import { OrganisationDo } from '../domain/organisation.do.js';
-import { OrganisationEntity } from './organisation.entity.js';
 import { faker } from '@faker-js/faker';
+import { EntityManager, MikroORM } from '@mikro-orm/core';
+import { Test, TestingModule } from '@nestjs/testing';
+import {
+    ConfigTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DatabaseTestModule,
+    DoFactory,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
+import { OrganisationDo } from '../domain/organisation.do.js';
+import { OrganisationPersistenceMapperProfile } from './organisation-persistence.mapper.profile.js';
+import { OrganisationEntity } from './organisation.entity.js';
+import { OrganisationRepo } from './organisation.repo.js';
 import { OrganisationScope } from './organisation.scope.js';
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
@@ -27,11 +33,11 @@ describe('OgranisationRepo', () => {
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
         await DatabaseTestModule.setupDatabase(orm);
-    }, 30 * 1_000);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await module.close();
-    }, 30 * 1_000);
+    });
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);

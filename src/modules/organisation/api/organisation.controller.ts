@@ -23,8 +23,8 @@ import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { Paged, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
 
-@ApiTags('organisation')
-@Controller({ path: 'organisation' })
+@ApiTags('organisationen')
+@Controller({ path: 'organisationen' })
 @Public()
 export class OrganisationController {
     public constructor(
