@@ -30,7 +30,7 @@ describe('OrganisationScope', () => {
 
     afterAll(async () => {
         await module.close();
-    }, 30 * 1_000);
+    });
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
@@ -50,7 +50,7 @@ describe('OrganisationScope', () => {
                 await em.persistAndFlush(organisations);
             });
 
-            it('should return found Organizations', async () => {
+            it('should return found organizations', async () => {
                 const scope: OrganisationScope = new OrganisationScope()
                     .findBy({ name: new RegExp('Organization #1') })
                     .sortBy('name', ScopeOrder.ASC)

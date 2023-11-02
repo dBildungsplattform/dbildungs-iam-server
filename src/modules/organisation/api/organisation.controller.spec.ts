@@ -107,45 +107,49 @@ describe('OrganisationController', () => {
             typ: OrganisationsTyp.SONSTIGE,
         };
 
-        it('should find all organizations', async () => {
-            const organisationDto: FindOrganisationDto = {
-                kennung: queryParams.kennung,
-                name: queryParams.name,
-                typ: queryParams.typ,
-            };
+        describe('when finding organizations with given query params', () => {
+            it('should find all organizations that match', async () => {
+                const organisationDto: FindOrganisationDto = {
+                    kennung: queryParams.kennung,
+                    name: queryParams.name,
+                    typ: queryParams.typ,
+                };
 
-            const response1: OrganisationResponse = {
-                id: faker.string.uuid(),
-                kennung: queryParams.kennung ?? faker.lorem.word(),
-                name: queryParams.name ?? faker.lorem.word(),
-                namensergaenzung: faker.lorem.word(),
-                kuerzel: faker.lorem.word(),
-                typ: queryParams.typ ?? OrganisationsTyp.SONSTIGE,
-            };
+                const response1: OrganisationResponse = {
+                    id: faker.string.uuid(),
+                    kennung: queryParams.kennung ?? faker.lorem.word(),
+                    name: queryParams.name ?? faker.lorem.word(),
+                    namensergaenzung: faker.lorem.word(),
+                    kuerzel: faker.lorem.word(),
+                    typ: queryParams.typ ?? OrganisationsTyp.SONSTIGE,
+                };
 
-            const response2: OrganisationResponse = {
-                id: faker.string.uuid(),
-                kennung: queryParams.kennung ?? faker.lorem.word(),
-                name: queryParams.name ?? faker.lorem.word(),
-                namensergaenzung: faker.lorem.word(),
-                kuerzel: faker.lorem.word(),
-                typ: queryParams.typ ?? OrganisationsTyp.SONSTIGE,
-            };
+                const response2: OrganisationResponse = {
+                    id: faker.string.uuid(),
+                    kennung: queryParams.kennung ?? faker.lorem.word(),
+                    name: queryParams.name ?? faker.lorem.word(),
+                    namensergaenzung: faker.lorem.word(),
+                    kuerzel: faker.lorem.word(),
+                    typ: queryParams.typ ?? OrganisationsTyp.SONSTIGE,
+                };
 
-            const mockedPagedResponse: Paged<OrganisationResponse> = {
-                items: [response1, response2],
-                limit: 10,
-                offset: 0,
-                total: 2,
-            };
+                const mockedPagedResponse: Paged<OrganisationResponse> = {
+                    items: [response1, response2],
+                    limit: 10,
+                    offset: 0,
+                    total: 2,
+                };
 
-            organisationUcMock.findAll.mockResolvedValue(mockedPagedResponse);
+                organisationUcMock.findAll.mockResolvedValue(mockedPagedResponse);
 
-            const result: Paged<OrganisationResponse> = await organisationController.findOrganizations(organisationDto);
+                const result: Paged<OrganisationResponse> = await organisationController.findOrganizations(
+                    organisationDto,
+                );
 
-            expect(result).toEqual(mockedPagedResponse);
-            expect(organisationUcMock.findAll).toHaveBeenCalledTimes(1);
-            expect(result.items.length).toEqual(2);
+                expect(result).toEqual(mockedPagedResponse);
+                expect(organisationUcMock.findAll).toHaveBeenCalledTimes(1);
+                expect(result.items.length).toEqual(2);
+            });
         });
     });
 });

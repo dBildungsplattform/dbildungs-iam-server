@@ -86,8 +86,9 @@ describe('OgranisationRepo', () => {
             const firstOrganisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false, props);
             const secondOrganisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false, props);
 
-            await em.persistAndFlush(mapper.map(firstOrganisationDo, OrganisationDo, OrganisationEntity));
-            await em.persistAndFlush(mapper.map(secondOrganisationDo, OrganisationDo, OrganisationEntity));
+            await em.persistAndFlush(
+                mapper.mapArray([firstOrganisationDo, secondOrganisationDo], OrganisationDo, OrganisationEntity),
+            );
 
             const [result]: Counted<OrganisationDo<true>> = await sut.findBy(
                 new OrganisationScope().findBy({
@@ -105,7 +106,6 @@ describe('OgranisationRepo', () => {
             const [result]: Counted<OrganisationDo<true>> = await sut.findBy(new OrganisationScope());
 
             expect(result).toBeInstanceOf(Array);
-            expect(result).not.toBeNull();
             expect(result).toHaveLength(0);
             await expect(em.find(OrganisationEntity, {})).resolves.toHaveLength(0);
         });
