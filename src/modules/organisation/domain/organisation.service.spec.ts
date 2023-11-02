@@ -97,32 +97,40 @@ describe('OrganisationService', () => {
     });
 
     describe('findAllOrganizations', () => {
-        it('should find all organizations', async () => {
-            const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true);
-            const organisations: OrganisationDo<true>[] = [organisationDo];
-            const total: number = organisations.length;
+        describe('when organizations are found', () => {
+            it('should return all organizations', async () => {
+                const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true);
+                const organisations: OrganisationDo<true>[] = [organisationDo];
+                const total: number = organisations.length;
 
-            organisationRepoMock.findBy.mockResolvedValue([organisations, total]);
+                organisationRepoMock.findBy.mockResolvedValue([organisations, total]);
 
-            const result: Paged<OrganisationDo<true>> = await organisationService.findAllOrganizations(organisationDo);
+                const result: Paged<OrganisationDo<true>> = await organisationService.findAllOrganizations(
+                    organisationDo,
+                );
 
-            expect(result).toEqual({
-                total: total,
-                offset: 0,
-                limit: total,
-                items: organisations,
+                expect(result).toEqual({
+                    total: total,
+                    offset: 0,
+                    limit: total,
+                    items: organisations,
+                });
             });
         });
 
-        it('should return an empty list of organizations', async () => {
-            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
+        describe('when no organizations are found', () => {
+            it('should return an empty list of organizations', async () => {
+                const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
 
-            organisationRepoMock.findBy.mockResolvedValue([[], 0]);
+                organisationRepoMock.findBy.mockResolvedValue([[], 0]);
 
-            const result: Paged<OrganisationDo<true>> = await organisationService.findAllOrganizations(organisationDo);
+                const result: Paged<OrganisationDo<true>> = await organisationService.findAllOrganizations(
+                    organisationDo,
+                );
 
-            expect(result.items).toHaveLength(0);
-            expect(result.items).toBeInstanceOf(Array);
+                expect(result.items).toHaveLength(0);
+                expect(result.items).toBeInstanceOf(Array);
+            });
         });
     });
 });

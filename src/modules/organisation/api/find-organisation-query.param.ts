@@ -3,7 +3,8 @@ import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrganisationsTyp } from '../domain/organisation.enum.js';
-export class OrganizationQueryParams extends PagedQueryParams {
+
+export class FindOrganisationQueryParams extends PagedQueryParams {
     @AutoMap()
     @IsString()
     @IsOptional()
@@ -22,7 +23,7 @@ export class OrganizationQueryParams extends PagedQueryParams {
     })
     public readonly name?: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     @IsEnum(OrganisationsTyp)
     @IsOptional()
     @ApiProperty({

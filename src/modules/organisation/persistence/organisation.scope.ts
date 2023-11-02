@@ -8,6 +8,7 @@ type FindProps = {
     name: string;
     typ: OrganisationsTyp;
 };
+
 export class OrganisationScope extends ScopeBase<OrganisationEntity> {
     protected override get entityName(): EntityName<OrganisationEntity> {
         return OrganisationEntity;

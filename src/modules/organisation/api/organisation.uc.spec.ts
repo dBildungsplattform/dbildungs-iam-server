@@ -97,41 +97,45 @@ describe('OrganisationUc', () => {
             limit: 0,
         };
 
-        it('should find all organizations that match with query param', async () => {
-            const firstOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
-            const secondOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+        describe('when query params are given', () => {
+            it('should find all organizations that match', async () => {
+                const firstOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+                const secondOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
 
-            organisationServiceMock.findAllOrganizations.mockResolvedValue({
-                total: 2,
-                offset: 0,
-                limit: 0,
-                items: [firstOrganisation, secondOrganisation],
+                organisationServiceMock.findAllOrganizations.mockResolvedValue({
+                    total: 2,
+                    offset: 0,
+                    limit: 0,
+                    items: [firstOrganisation, secondOrganisation],
+                });
+
+                const result: Paged<OrganisationResponse> = await organisationUc.findAll(findOrganisationDto);
+
+                expect(result.total).toBe(2);
+                expect(result.items).toHaveLength(2);
+                expect(result.items[0]?.name).toEqual(firstOrganisation.name);
+                expect(result.items[1]?.name).toEqual(secondOrganisation.name);
+                expect(result.items[0]?.kennung).toEqual(firstOrganisation.kennung);
+                expect(result.items[1]?.kennung).toEqual(secondOrganisation.kennung);
+                expect(result.items[0]?.typ).toEqual(firstOrganisation.typ);
+                expect(result.items[1]?.typ).toEqual(secondOrganisation.typ);
             });
-
-            const result: Paged<OrganisationResponse> = await organisationUc.findAll(findOrganisationDto);
-
-            expect(result.total).toBe(2);
-            expect(result.items).toHaveLength(2);
-            expect(result.items[0]?.name).toEqual(firstOrganisation.name);
-            expect(result.items[1]?.name).toEqual(secondOrganisation.name);
-            expect(result.items[0]?.kennung).toEqual(firstOrganisation.kennung);
-            expect(result.items[1]?.kennung).toEqual(secondOrganisation.kennung);
-            expect(result.items[0]?.typ).toEqual(firstOrganisation.typ);
-            expect(result.items[1]?.typ).toEqual(secondOrganisation.typ);
         });
 
-        it('should return an empty array when no matching organizations are found', async () => {
-            organisationServiceMock.findAllOrganizations.mockResolvedValue({
-                total: 0,
-                offset: 0,
-                limit: 0,
-                items: [],
+        describe('when no- matching organizations were found', () => {
+            it('should return an empty array', async () => {
+                organisationServiceMock.findAllOrganizations.mockResolvedValue({
+                    total: 0,
+                    offset: 0,
+                    limit: 0,
+                    items: [],
+                });
+
+                const emptyResult: Paged<OrganisationResponse> = await organisationUc.findAll(findOrganisationDto);
+
+                expect(emptyResult.total).toBe(0);
+                expect(emptyResult.items).toHaveLength(0);
             });
-
-            const emptyResult: Paged<OrganisationResponse> = await organisationUc.findAll(findOrganisationDto);
-
-            expect(emptyResult.total).toBe(0);
-            expect(emptyResult.items).toHaveLength(0);
         });
     });
 });

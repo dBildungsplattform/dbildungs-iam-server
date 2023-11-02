@@ -12,7 +12,7 @@ import { OrganisationByIdParams } from './organisation-by-id.params.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { HttpException } from '@nestjs/common';
-import { OrganizationQueryParams } from './organisation-query.param.js';
+import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { FindOrganisationDto } from './find-organisation.dto.js';
 
@@ -101,11 +101,12 @@ describe('OrganisationController', () => {
     });
 
     describe('findOrganizations', () => {
-        const queryParams: OrganizationQueryParams = {
+        const queryParams: FindOrganisationQueryParams = {
             kennung: faker.lorem.word(),
             name: faker.lorem.word(),
             typ: OrganisationsTyp.SONSTIGE,
         };
+
         it('should find all organizations', async () => {
             const organisationDto: FindOrganisationDto = {
                 kennung: queryParams.kennung,
@@ -137,6 +138,7 @@ describe('OrganisationController', () => {
                 offset: 0,
                 total: 2,
             };
+
             organisationUcMock.findAll.mockResolvedValue(mockedPagedResponse);
 
             const result: Paged<OrganisationResponse> = await organisationController.findOrganizations(organisationDto);

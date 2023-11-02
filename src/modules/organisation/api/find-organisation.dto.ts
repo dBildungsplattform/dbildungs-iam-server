@@ -9,6 +9,6 @@ export class FindOrganisationDto extends PagedDto {
     @AutoMap()
     public name?: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public typ?: OrganisationsTyp;
 }

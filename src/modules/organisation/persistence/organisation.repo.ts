@@ -47,9 +47,8 @@ export class OrganisationRepo {
 
     public async findBy(scope: OrganisationScope): Promise<Counted<OrganisationDo<true>>> {
         const [entities, total]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
-        const dos: OrganisationDo<true>[] = entities.map((entity: OrganisationEntity) =>
-            this.mapper.map(entity, OrganisationEntity, OrganisationDo),
-        );
+        const dos: OrganisationDo<true>[] = this.mapper.mapArray(entities, OrganisationEntity, OrganisationDo);
+
         return [dos, total];
     }
 }

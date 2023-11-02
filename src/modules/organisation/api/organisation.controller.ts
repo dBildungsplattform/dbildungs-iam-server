@@ -21,7 +21,7 @@ import { Public } from 'nest-keycloak-connect';
 import { FindOrganisationDto } from './find-organisation.dto.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { Paged, PagingHeadersObject } from '../../../shared/paging/index.js';
-import { OrganizationQueryParams } from './organisation-query.param.js';
+import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
 
 @ApiTags('organisation')
 @Controller({ path: 'organisation' })
@@ -76,11 +76,11 @@ export class OrganisationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get organizations.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
     public async findOrganizations(
-        @Query() queryParams: OrganizationQueryParams,
+        @Query() queryParams: FindOrganisationQueryParams,
     ): Promise<PagedResponse<OrganisationResponse>> {
         const organisationDto: FindOrganisationDto = this.mapper.map(
             queryParams,
-            OrganizationQueryParams,
+            FindOrganisationQueryParams,
             FindOrganisationDto,
         );
 

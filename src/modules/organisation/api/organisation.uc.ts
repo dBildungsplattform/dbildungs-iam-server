@@ -58,8 +58,10 @@ export class OrganisationUc {
             };
         }
 
-        const organisations: OrganisationResponse[] = result.items.map((organisation: OrganisationDo<true>) =>
-            this.mapper.map(organisation, OrganisationDo, OrganisationResponse),
+        const organisations: OrganisationResponse[] = this.mapper.mapArray(
+            result.items,
+            OrganisationDo,
+            OrganisationResponse,
         );
 
         return {
