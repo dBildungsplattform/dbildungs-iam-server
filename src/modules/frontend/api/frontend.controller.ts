@@ -43,6 +43,7 @@ export class FrontendController {
     @ApiOperation({ summary: 'Used to log out the current user.' })
     @ApiResponse({ status: 302, description: 'Redirect to logout.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to log out.' })
+    @ApiQuery({ type: RedirectQueryParams })
     public logout(@Req() req: Request, @Res() res: Response, @Query() query: RedirectQueryParams): void {
         const user: User | undefined = req.user as User | undefined;
         const idToken: string | undefined = user?.id_token;
