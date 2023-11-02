@@ -147,4 +147,39 @@ describe('PersonenkontextService', () => {
             });
         });
     });
+
+    describe('findPersonenkontextById', () => {
+        describe('when finding personenkontext with given id', () => {
+            it('should return found personenkontext', async () => {
+                const personenkontext: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+
+                personenkontextRepoMock.findById.mockResolvedValue(personenkontext);
+
+                const result: Result<
+                    PersonenkontextDo<true>,
+                    DomainError
+                > = await personenkontextService.findPersonenkontextById(personenkontext.id);
+
+                expect(result).toStrictEqual({ ok: true, value: personenkontext });
+            });
+        });
+
+        describe('when NOT finding personenkontext with given id', () => {
+            it('should return domain error', async () => {
+                const personenkontext: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+
+                personenkontextRepoMock.findById.mockResolvedValue(null);
+
+                const result: Result<
+                    PersonenkontextDo<true>,
+                    DomainError
+                > = await personenkontextService.findPersonenkontextById(personenkontext.id);
+
+                expect(result).toStrictEqual({
+                    ok: false,
+                    error: new EntityNotFoundError('Personenkontext', personenkontext.id),
+                });
+            });
+        });
+    });
 });

@@ -1,16 +1,22 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
+import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DatabaseTestModule,
+    DoFactory,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
+import { Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextRepo } from './personenkontext.repo.js';
-import { Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
-import { faker } from '@faker-js/faker';
 
 describe('PersonenkontextRepo', () => {
     let module: TestingModule;
@@ -29,11 +35,11 @@ describe('PersonenkontextRepo', () => {
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
         await DatabaseTestModule.setupDatabase(orm);
-    }, 30 * 1_000);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await module.close();
-    }, 30 * 1_000);
+    });
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
@@ -149,6 +155,45 @@ describe('PersonenkontextRepo', () => {
                 expect(result).not.toBeNull();
                 expect(result).toHaveLength(0);
                 await expect(em.find(PersonenkontextEntity, {})).resolves.toHaveLength(0);
+            });
+        });
+    });
+
+    describe('findById', () => {
+        beforeEach(async () => {
+            const personenkontextDos: PersonenkontextDo<false>[] = DoFactory.createMany(
+                10,
+                false,
+                DoFactory.createPersonenkontext,
+            );
+
+            await em.persistAndFlush(
+                personenkontextDos.map((entity: PersonenkontextDo<false>) =>
+                    mapper.map(entity, PersonenkontextDo, PersonenkontextEntity),
+                ),
+            );
+        });
+
+        describe('when finding personenkontext by id', () => {
+            it('should return personenkontext', async () => {
+                const [personenkontextEntity]: PersonenkontextEntity[] = await em.find<PersonenkontextEntity>(
+                    PersonenkontextEntity,
+                    {},
+                );
+
+                expect(personenkontextEntity?.id).toBeDefined();
+
+                const result: Option<PersonenkontextDo<true>> = await sut.findById(personenkontextEntity?.id as string);
+
+                expect(result).toBeInstanceOf(PersonenkontextDo);
+            });
+        });
+
+        describe('when NOT finding a personenkontext', () => {
+            it('should return null', async () => {
+                const result: Option<PersonenkontextDo<true>> = await sut.findById(faker.string.uuid());
+
+                expect(result).toBeNull();
             });
         });
     });

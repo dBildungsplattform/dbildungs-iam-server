@@ -35,4 +35,13 @@ export class PersonenkontextService {
 
         return { ok: true, value: personenkontexte };
     }
+
+    public async findPersonenkontextById(id: string): Promise<Result<PersonenkontextDo<true>, DomainError>> {
+        const personenkontext: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.findById(id);
+        const result: Result<PersonenkontextDo<true>, DomainError> = personenkontext
+            ? { ok: true, value: personenkontext }
+            : { ok: false, error: new EntityNotFoundError('Personenkontext', id) };
+
+        return result;
+    }
 }

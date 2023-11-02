@@ -13,7 +13,6 @@ import { OrganisationApiModule } from '../modules/organisation/organisation-api.
 import { AuthGuard, KeycloakConnectModule, RoleGuard } from 'nest-keycloak-connect';
 import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from '../modules/health/health.module.js';
-import { UiBackendApiModule } from '../modules/ui-backend/ui-backend-api.module.js';
 import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
 import { LoggerModule } from "../core/logging/logger.module";
 
@@ -66,7 +65,6 @@ import { LoggerModule } from "../core/logging/logger.module";
         OrganisationApiModule,
         KeycloakAdministrationModule,
         HealthModule,
-        UiBackendApiModule,
         RolleApiModule,
     ],
     providers: [

@@ -19,8 +19,8 @@ import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { OrganisationByIdParams } from './organisation-by-id.params.js';
 import { Public } from 'nest-keycloak-connect';
 
-@ApiTags('organisation')
-@Controller({ path: 'organisation' })
+@ApiTags('organisationen')
+@Controller({ path: 'organisationen' })
 @Public()
 export class OrganisationController {
     public constructor(

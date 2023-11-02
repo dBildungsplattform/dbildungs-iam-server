@@ -14,6 +14,6 @@ export class CreateOrganisationDto {
     @AutoMap()
     public readonly kuerzel!: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public readonly typ!: OrganisationsTyp;
 }

@@ -5,6 +5,8 @@ import { FrontendConfig } from './frontend.config.js';
 import { HostConfig } from './host.config.js';
 import { KeycloakConfig } from './keycloak.config.js';
 import { LoggingConfig } from './logging.config.js';
+import { RedisConfig } from './redis.config.js';
+
 
 export class JsonConfig {
     @ValidateNested()
@@ -26,4 +28,8 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => LoggingConfig)
     public readonly LOGGING!: LoggingConfig;
+
+    @ValidateNested()
+    @Type(() => RedisConfig)
+    public readonly REDIS!: RedisConfig;
 }
