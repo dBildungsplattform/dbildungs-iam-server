@@ -1,6 +1,5 @@
 import { faker } from '@faker-js/faker/';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
 import { Session, SessionData } from 'express-session';
@@ -154,22 +153,18 @@ describe('FrontendController', () => {
         });
 
         describe('when request.logout fails', () => {
-            it('should throw InternalServerErrorException', () => {
+            it('should not throw error', () => {
                 const requestMock: Request = setupRequest(undefined, new Error());
 
-                expect(() => frontendController.logout(requestMock, createMock(), {})).toThrow(
-                    InternalServerErrorException,
-                );
+                expect(() => frontendController.logout(requestMock, createMock(), {})).not.toThrow();
             });
         });
 
         describe('when session.destroy fails', () => {
-            it('should throw InternalServerErrorException', () => {
+            it('should not throw error', () => {
                 const requestMock: Request = setupRequest(undefined, undefined, new Error());
 
-                expect(() => frontendController.logout(requestMock, createMock(), {})).toThrow(
-                    InternalServerErrorException,
-                );
+                expect(() => frontendController.logout(requestMock, createMock(), {})).not.toThrow();
             });
         });
     });

@@ -1,15 +1,4 @@
-import {
-    Controller,
-    Get,
-    Inject,
-    InternalServerErrorException,
-    Post,
-    Query,
-    Req,
-    Res,
-    Session,
-    UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Inject, Logger, Post, Query, Req, Res, Session, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
     ApiForbiddenResponse,
@@ -31,6 +20,8 @@ import { RedirectQueryParams } from './redirect.query.params.js';
 @ApiTags('frontend')
 @Controller({ path: 'frontend' })
 export class FrontendController {
+    private readonly logger: Logger = new Logger(FrontendController.name);
+
     private defaultRedirect: string;
 
     public constructor(configService: ConfigService<ServerConfig>, @Inject(OIDC_CLIENT) private client: Client) {
@@ -58,12 +49,14 @@ export class FrontendController {
 
         req.logout((logoutErr?: Error) => {
             if (logoutErr) {
-                throw new InternalServerErrorException('Could not log out', { cause: logoutErr });
+                // Error should not stop logout process
+                this.logger.log('An error occurres while trying to log out', logoutErr);
             }
 
             req.session.destroy((destroyErr?: Error) => {
                 if (destroyErr) {
-                    throw new InternalServerErrorException('Could not destroy session', { cause: destroyErr });
+                    // Error should not stop logout process
+                    this.logger.log('An error occurred while trying to destroy the session', destroyErr);
                 }
 
                 const redirectUrl: string = query.redirectUrl ?? this.defaultRedirect;
