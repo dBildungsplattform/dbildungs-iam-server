@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Logger, Post, Query, Req, Res, Session, UseGuards } from '@nestjs/common';
+import { Controller, Get, Inject, Logger, Post, Req, Res, Session, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
     ApiForbiddenResponse,
@@ -22,10 +22,14 @@ import { RedirectQueryParams } from './redirect.query.params.js';
 export class FrontendController {
     private readonly logger: Logger = new Logger(FrontendController.name);
 
-    private defaultRedirect: string;
+    private readonly defaultLoginRedirect: string;
+
+    private readonly logoutRedirect: string;
 
     public constructor(configService: ConfigService<ServerConfig>, @Inject(OIDC_CLIENT) private client: Client) {
-        this.defaultRedirect = configService.getOrThrow<FrontendConfig>('FRONTEND').DEFAULT_AUTH_REDIRECT;
+        const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
+        this.defaultLoginRedirect = frontendConfig.DEFAULT_LOGIN_REDIRECT;
+        this.logoutRedirect = frontendConfig.LOGOUT_REDIRECT;
     }
 
     @UseGuards(LoginGuard)
@@ -34,7 +38,7 @@ export class FrontendController {
     @ApiResponse({ status: 302, description: 'Redirection to orchestrate OIDC flow.' })
     @ApiQuery({ type: RedirectQueryParams })
     public login(@Res() res: Response, @Session() session: SessionData): void {
-        const target: string = session.redirectUrl ?? this.defaultRedirect;
+        const target: string = session.redirectUrl ?? this.defaultLoginRedirect;
         session.redirectUrl = undefined;
         res.redirect(target);
     }
@@ -43,8 +47,7 @@ export class FrontendController {
     @ApiOperation({ summary: 'Used to log out the current user.' })
     @ApiResponse({ status: 302, description: 'Redirect to logout.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to log out.' })
-    @ApiQuery({ type: RedirectQueryParams })
-    public logout(@Req() req: Request, @Res() res: Response, @Query() query: RedirectQueryParams): void {
+    public logout(@Req() req: Request, @Res() res: Response): void {
         const user: User | undefined = req.user as User | undefined;
         const idToken: string | undefined = user?.id_token;
 
@@ -60,18 +63,16 @@ export class FrontendController {
                     this.logger.log('An error occurred while trying to destroy the session', destroyErr);
                 }
 
-                const redirectUrl: string = query.redirectUrl ?? this.defaultRedirect;
-
                 if (this.client.issuer.metadata.end_session_endpoint) {
                     const endSessionUrl: string = this.client.endSessionUrl({
                         id_token_hint: idToken,
-                        post_logout_redirect_uri: redirectUrl,
+                        post_logout_redirect_uri: this.logoutRedirect,
                         client_id: this.client.metadata.client_id,
                     });
 
                     res.redirect(endSessionUrl);
                 } else {
-                    res.redirect(redirectUrl);
+                    res.redirect(this.logoutRedirect);
                 }
             });
         });

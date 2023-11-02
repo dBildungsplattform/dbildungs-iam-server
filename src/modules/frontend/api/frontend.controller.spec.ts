@@ -1,20 +1,22 @@
 import { faker } from '@faker-js/faker/';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
 import { Session, SessionData } from 'express-session';
 import { Client, EndSessionParameters, IssuerMetadata, UserinfoResponse } from 'openid-client';
 
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { FrontendConfig } from '../../../shared/config/frontend.config.js';
 import { OIDC_CLIENT } from '../auth/oidc-client.service.js';
 import { User } from '../auth/user.decorator.js';
 import { FrontendController } from './frontend.controller.js';
-import { RedirectQueryParams } from './redirect.query.params.js';
 
 describe('FrontendController', () => {
     let module: TestingModule;
     let frontendController: FrontendController;
     let oidcClient: DeepMocked<Client>;
+    let frontendConfig: FrontendConfig;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -30,6 +32,7 @@ describe('FrontendController', () => {
 
         frontendController = module.get(FrontendController);
         oidcClient = module.get(OIDC_CLIENT);
+        frontendConfig = module.get(ConfigService).getOrThrow<FrontendConfig>('FRONTEND');
     });
 
     afterEach(() => {
@@ -95,7 +98,7 @@ describe('FrontendController', () => {
             const requestMock: Request = setupRequest();
             oidcClient.issuer.metadata = createMock<IssuerMetadata>({});
 
-            frontendController.logout(requestMock, createMock(), {});
+            frontendController.logout(requestMock, createMock());
 
             expect(requestMock.logout).toHaveBeenCalled();
         });
@@ -104,7 +107,7 @@ describe('FrontendController', () => {
             const requestMock: Request = setupRequest();
             oidcClient.issuer.metadata = createMock<IssuerMetadata>({});
 
-            frontendController.logout(requestMock, createMock(), {});
+            frontendController.logout(requestMock, createMock());
 
             expect(requestMock.logout).toHaveBeenCalled();
         });
@@ -114,13 +117,12 @@ describe('FrontendController', () => {
                 const user: User = createMock<User>({ id_token: faker.string.alphanumeric(32) });
                 const requestMock: Request = setupRequest(user);
                 oidcClient.issuer.metadata = createMock<IssuerMetadata>({ end_session_endpoint: faker.internet.url() });
-                const redirectParams: RedirectQueryParams = { redirectUrl: faker.internet.url() };
 
-                frontendController.logout(requestMock, createMock(), redirectParams);
+                frontendController.logout(requestMock, createMock());
 
                 expect(oidcClient.endSessionUrl).toHaveBeenCalledWith<[EndSessionParameters]>({
                     id_token_hint: user.id_token,
-                    post_logout_redirect_uri: redirectParams.redirectUrl,
+                    post_logout_redirect_uri: frontendConfig.LOGOUT_REDIRECT,
                     client_id: oidcClient.metadata.client_id,
                 });
             });
@@ -133,7 +135,7 @@ describe('FrontendController', () => {
                 const endSessionUrl: string = faker.internet.url();
                 oidcClient.endSessionUrl.mockReturnValueOnce(endSessionUrl);
 
-                frontendController.logout(requestMock, responseMock, {});
+                frontendController.logout(requestMock, responseMock);
 
                 expect(responseMock.redirect).toHaveBeenCalledWith(endSessionUrl);
             });
@@ -144,11 +146,10 @@ describe('FrontendController', () => {
                 const requestMock: Request = setupRequest();
                 const responseMock: Response = createMock<Response>();
                 oidcClient.issuer.metadata = createMock<IssuerMetadata>({ end_session_endpoint: undefined });
-                const redirectUrl: string = faker.internet.url();
 
-                frontendController.logout(requestMock, responseMock, { redirectUrl });
+                frontendController.logout(requestMock, responseMock);
 
-                expect(responseMock.redirect).toHaveBeenCalledWith(redirectUrl);
+                expect(responseMock.redirect).toHaveBeenCalledWith(frontendConfig.LOGOUT_REDIRECT);
             });
         });
 
@@ -156,7 +157,7 @@ describe('FrontendController', () => {
             it('should not throw error', () => {
                 const requestMock: Request = setupRequest(undefined, new Error());
 
-                expect(() => frontendController.logout(requestMock, createMock(), {})).not.toThrow();
+                expect(() => frontendController.logout(requestMock, createMock())).not.toThrow();
             });
         });
 
@@ -164,7 +165,7 @@ describe('FrontendController', () => {
             it('should not throw error', () => {
                 const requestMock: Request = setupRequest(undefined, undefined, new Error());
 
-                expect(() => frontendController.logout(requestMock, createMock(), {})).not.toThrow();
+                expect(() => frontendController.logout(requestMock, createMock())).not.toThrow();
             });
         });
     });
