@@ -35,31 +35,31 @@ export class CreatePersonDto {
     @AutoMap()
     public readonly nameTitle?: string;
 
-    @AutoMap()
+    @AutoMap(() => [String])
     public readonly nameSalutation?: string[];
 
-    @AutoMap()
+    @AutoMap(() => [String])
     public readonly namePrefix?: string[];
 
-    @AutoMap()
+    @AutoMap(() => [String])
     public readonly nameSuffix?: string[];
 
     @AutoMap()
     public readonly nameSortIndex?: string;
 
-    @AutoMap()
+    @AutoMap(() => Date)
     public readonly birthDate?: Date;
 
     @AutoMap()
     public readonly birthPlace?: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public readonly gender?: Gender;
 
     @AutoMap()
     public readonly localization?: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public readonly trustLevel?: TrustLevel;
 
     @AutoMap()
