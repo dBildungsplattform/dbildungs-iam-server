@@ -2,8 +2,6 @@
 
 We have the strategic goal SG-02 "stand-alone system". We want to succeed this goal, therefor we need to set the ErWIn system separate to the dBC. This repository is used for the development the separate ErWIn system to achieve this goal.
 
-[![Test](https://github.com/hpi-schul-cloud/dbildungs-iam-server/actions/workflows/test.yml/badge.svg)](https://github.com/hpi-schul-cloud/dbildungs-iam-server/actions/workflows/test.yml)
-
 ## Prerequisites
 
 * Node in the version stated in the `package.json`
@@ -16,6 +14,7 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 2. Start the required services from the `compose.yaml` file
    * db
    * keycloak
+   * redis
 3. Create a `.env` file and set the required environment variables from `env.config.ts`
 4. run `npm run setup` to initialize the DB
 5. Run `npm run start:debug` to start the server
@@ -61,6 +60,7 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 * Test conventions can be found [here](./docs/tests.md)
 * Configuration conventions can be found [here](./docs/config.md)
 * Authentication guides can be found [here](./docs/auth.md)
+* Developer notes can be found [here](./docs/developer-notes.md)
 
 ## Package (Create Docker Image )
 If you push a tag upstream a container will be created for you. (Check Github under Packages)

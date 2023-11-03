@@ -9,12 +9,12 @@ export class FindPersonenkontextDto {
     @AutoMap()
     public readonly referrer?: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public readonly rolle?: Rolle;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public readonly personenstatus?: Personenstatus;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public readonly sichtfreigabe: SichtfreigabeType = SichtfreigabeType.NEIN;
 }

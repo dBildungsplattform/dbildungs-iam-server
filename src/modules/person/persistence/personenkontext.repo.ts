@@ -45,6 +45,15 @@ export class PersonenkontextRepo {
         );
     }
 
+    public async findById(id: string): Promise<Option<PersonenkontextDo<true>>> {
+        const entity: Option<Loaded<PersonenkontextEntity>> = await this.em.findOne(PersonenkontextEntity, { id });
+        const result: Option<PersonenkontextDo<true>> = entity
+            ? this.mapper.map(entity, PersonenkontextEntity, PersonenkontextDo)
+            : null;
+
+        return result;
+    }
+
     private async create(personenkontextDo: PersonenkontextDo<false>): Promise<Option<PersonenkontextDo<true>>> {
         const personenkontext: PersonenkontextEntity = this.mapper.map(
             personenkontextDo,

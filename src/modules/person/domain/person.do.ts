@@ -48,31 +48,31 @@ export class PersonDo<WasPersisted extends boolean> implements DoBase<WasPersist
     @AutoMap()
     public nameTitle?: string;
 
-    @AutoMap()
+    @AutoMap(() => [String])
     public nameSalutation?: string[];
 
-    @AutoMap()
+    @AutoMap(() => [String])
     public namePrefix?: string[];
 
-    @AutoMap()
+    @AutoMap(() => [String])
     public nameSuffix?: string[];
 
     @AutoMap()
     public nameSortIndex?: string;
 
-    @AutoMap()
+    @AutoMap(() => Date)
     public birthDate?: Date;
 
     @AutoMap()
     public birthPlace?: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public gender?: Gender;
 
     @AutoMap()
     public localization?: string = 'de-DE';
 
-    @AutoMap()
+    @AutoMap(() => String)
     public trustLevel?: TrustLevel;
 
     @AutoMap()

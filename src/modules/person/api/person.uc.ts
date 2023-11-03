@@ -1,19 +1,20 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { Paged } from '../../../shared/paging/index.js';
 import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
 import { CreatePersonDto } from '../domain/create-person.dto.js';
-import { PersonService } from '../domain/person.service.js';
 import { PersonDo } from '../domain/person.do.js';
-import { Paged } from '../../../shared/paging/index.js';
-import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
-import { PersonenkontextService } from '../domain/personenkontext.service.js';
-import { SichtfreigabeType } from './personen-query.param.js';
-import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
+import { PersonService } from '../domain/person.service.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
-import { PersonenkontextResponse } from './personenkontext.response.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
+import { PersonenkontextService } from '../domain/personenkontext.service.js';
+import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
+import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
+import { PersonDto } from './person.dto.js';
+import { SichtfreigabeType } from './personen-query.param.js';
+import { PersonendatensatzDto } from './personendatensatz.dto.js';
+import { PersonenkontextDto } from './personenkontext.dto.js';
 
 @Injectable()
 export class PersonUc {
@@ -50,22 +51,26 @@ export class PersonUc {
         }
     }
 
-    public async findPersonById(id: string): Promise<PersonendatensatzResponse> {
+    public async findPersonById(id: string): Promise<PersonendatensatzDto> {
         const result: Result<PersonDo<true>> = await this.personService.findPersonById(id);
-        if (result.ok) {
-            const person: PersonendatensatzResponse = this.mapper.map(
-                result.value,
-                PersonDo,
-                PersonendatensatzResponse,
-            );
-            person.personenkontexte = await this.findPersonenkontexteForPerson(id, SichtfreigabeType.NEIN);
 
-            return person;
+        if (!result.ok) {
+            throw result.error;
         }
-        throw result.error;
+
+        const personDto: PersonDto = this.mapper.map(result.value, PersonDo, PersonDto);
+        const personenkontexteDto: PersonenkontextDto[] = await this.findPersonenkontexteForPerson(
+            id,
+            SichtfreigabeType.NEIN,
+        );
+
+        return new PersonendatensatzDto({
+            person: personDto,
+            personenkontexte: personenkontexteDto,
+        });
     }
 
-    public async findAll(personDto: FindPersonendatensatzDto): Promise<Paged<PersonendatensatzResponse>> {
+    public async findAll(personDto: FindPersonendatensatzDto): Promise<Paged<PersonendatensatzDto>> {
         const personDo: PersonDo<false> = this.mapper.map(personDto, FindPersonendatensatzDto, PersonDo);
         const result: Paged<PersonDo<true>> = await this.personService.findAllPersons(
             personDo,
@@ -82,14 +87,22 @@ export class PersonUc {
             };
         }
 
-        const persons: PersonendatensatzResponse[] = result.items.map((person: PersonDo<true>) =>
-            this.mapper.map(person, PersonDo, PersonendatensatzResponse),
+        const personDtos: PersonDto[] = result.items.map((person: PersonDo<true>) =>
+            this.mapper.map(person, PersonDo, PersonDto),
         );
+        const personendatensatzDtos: PersonendatensatzDto[] = [];
 
-        for (const person of persons) {
-            person.personenkontexte = await this.findPersonenkontexteForPerson(
-                person.person.id,
+        for (const person of personDtos) {
+            const personenkontextDtos: PersonenkontextDto[] = await this.findPersonenkontexteForPerson(
+                person.id,
                 personDto.sichtfreigabe,
+            );
+
+            personendatensatzDtos.push(
+                new PersonendatensatzDto({
+                    person,
+                    personenkontexte: personenkontextDtos,
+                }),
             );
         }
 
@@ -97,7 +110,7 @@ export class PersonUc {
             total: result.total,
             offset: result.offset,
             limit: result.limit,
-            items: persons,
+            items: personendatensatzDtos,
         };
     }
 
@@ -108,7 +121,7 @@ export class PersonUc {
     private async findPersonenkontexteForPerson(
         personId: string,
         sichtfreigabe: SichtfreigabeType,
-    ): Promise<PersonenkontextResponse[]> {
+    ): Promise<PersonenkontextDto[]> {
         const personenkontextFilter: FindPersonenkontextDto = {
             personId: personId,
             sichtfreigabe: sichtfreigabe,
@@ -122,11 +135,10 @@ export class PersonUc {
             return [];
         }
 
-        const personenkontextResponses: PersonenkontextResponse[] = result.value.map(
-            (personenkontext: PersonenkontextDo<true>) =>
-                this.mapper.map(personenkontext, PersonenkontextDo, PersonenkontextResponse),
+        const personenkontextDtos: PersonenkontextDto[] = result.value.map((personenkontext: PersonenkontextDo<true>) =>
+            this.mapper.map(personenkontext, PersonenkontextDo, PersonenkontextDto),
         );
 
-        return personenkontextResponses;
+        return personenkontextDtos;
     }
 }

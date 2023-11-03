@@ -61,7 +61,7 @@ export class OrganisationDo<WasPersisted extends boolean> implements DoBase<WasP
   public constructor() {
   }
 
-  @AutoMap()
+  @AutoMap(() => String)
   public id!: Persisted<string, WasPersisted>;
 
   @AutoMap()

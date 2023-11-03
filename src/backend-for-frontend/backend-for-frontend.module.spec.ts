@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Issuer } from 'openid-client';
 
+import { OIDC_CLIENT } from '../modules/frontend/auth/oidc-client.service.js';
 import { BackendForFrontendModule } from './backend-for-frontend.module.js';
 
 describe('FrontendModule', () => {
@@ -8,7 +10,10 @@ describe('FrontendModule', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [BackendForFrontendModule],
-        }).compile();
+        })
+            .overrideProvider(OIDC_CLIENT)
+            .useValue(new new Issuer({ issuer: 'oidc' }).Client({ client_id: 'DummyId' }))
+            .compile();
     });
 
     afterAll(async () => {
