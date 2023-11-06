@@ -1,7 +1,13 @@
 import { Mapper } from '@automapper/core';
 import { MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DatabaseTestModule,
+    DoFactory,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
 import { OrganisationPersistenceMapperProfile } from './organisation-persistence.mapper.profile.js';
 import { getMapperToken } from '@automapper/nestjs';
 import { OrganisationScope } from './organisation.scope.js';
@@ -26,7 +32,7 @@ describe('OrganisationScope', () => {
         mapper = module.get(getMapperToken());
 
         await DatabaseTestModule.setupDatabase(orm);
-    }, 30 * 1_000);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await module.close();
