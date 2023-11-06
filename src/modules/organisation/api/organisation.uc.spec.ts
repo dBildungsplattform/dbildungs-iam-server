@@ -99,26 +99,29 @@ describe('OrganisationUc', () => {
 
         describe('when query params are given', () => {
             it('should find all organizations that match', async () => {
-                const firstOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
-                const secondOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+                const organisationDos: OrganisationDo<true>[] = DoFactory.createMany(
+                    2,
+                    true,
+                    DoFactory.createOrganisation,
+                );
 
                 organisationServiceMock.findAllOrganizations.mockResolvedValue({
                     total: 2,
                     offset: 0,
                     limit: 0,
-                    items: [firstOrganisation, secondOrganisation],
+                    items: organisationDos,
                 });
 
                 const result: Paged<OrganisationResponse> = await organisationUc.findAll(findOrganisationDto);
 
                 expect(result.total).toBe(2);
                 expect(result.items).toHaveLength(2);
-                expect(result.items[0]?.name).toEqual(firstOrganisation.name);
-                expect(result.items[1]?.name).toEqual(secondOrganisation.name);
-                expect(result.items[0]?.kennung).toEqual(firstOrganisation.kennung);
-                expect(result.items[1]?.kennung).toEqual(secondOrganisation.kennung);
-                expect(result.items[0]?.typ).toEqual(firstOrganisation.typ);
-                expect(result.items[1]?.typ).toEqual(secondOrganisation.typ);
+                expect(result.items[0]?.name).toEqual(organisationDos[0]?.name);
+                expect(result.items[1]?.name).toEqual(organisationDos[1]?.name);
+                expect(result.items[0]?.kennung).toEqual(organisationDos[0]?.kennung);
+                expect(result.items[1]?.kennung).toEqual(organisationDos[1]?.kennung);
+                expect(result.items[0]?.typ).toEqual(organisationDos[0]?.typ);
+                expect(result.items[1]?.typ).toEqual(organisationDos[1]?.typ);
             });
         });
 

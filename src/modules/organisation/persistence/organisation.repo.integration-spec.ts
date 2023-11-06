@@ -89,17 +89,19 @@ describe('OgranisationRepo', () => {
                 kennung: faker.lorem.word(),
                 name: faker.lorem.word(),
             };
-            const firstOrganisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false, props);
-            const secondOrganisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false, props);
-
-            await em.persistAndFlush(
-                mapper.mapArray([firstOrganisationDo, secondOrganisationDo], OrganisationDo, OrganisationEntity),
+            const organisationDos: OrganisationDo<true>[] = DoFactory.createMany(
+                2,
+                true,
+                DoFactory.createOrganisation,
+                props,
             );
+
+            await em.persistAndFlush(mapper.mapArray(organisationDos, OrganisationDo, OrganisationEntity));
 
             const [result]: Counted<OrganisationDo<true>> = await sut.findBy(
                 new OrganisationScope().findBy({
-                    kennung: firstOrganisationDo.kennung,
-                    name: firstOrganisationDo.name,
+                    kennung: organisationDos[0]?.kennung as string,
+                    name: organisationDos[0]?.name as string,
                 }),
             );
 
