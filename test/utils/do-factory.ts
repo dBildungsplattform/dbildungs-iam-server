@@ -1,35 +1,48 @@
 import { faker } from '@faker-js/faker';
-import { PersonDo } from '../../src/modules/person/domain/person.do.js';
+import { UserDo } from '../../src/modules/keycloak-administration/domain/user.do.js';
 import { OrganisationDo } from '../../src/modules/organisation/domain/organisation.do.js';
 import { OrganisationsTyp } from '../../src/modules/organisation/domain/organisation.enum.js';
-import { UserDo } from '../../src/modules/keycloak-administration/domain/user.do.js';
+import { PersonDo } from '../../src/modules/person/domain/person.do.js';
 import { PersonenkontextDo } from '../../src/modules/person/domain/personenkontext.do.js';
-import { Rolle, Jahrgangsstufe, Personenstatus } from '../../src/modules/person/domain/personenkontext.enums.js';
-import { ServiceProviderZugriffDo } from '../../src/modules/rolle/domain/service-provider-zugriff.do.js';
-import { ServiceProviderDo } from '../../src/modules/rolle/domain/service-provider.do.js';
-import { RolleDo } from '../../src/modules/rolle/domain/rolle.do.js';
+import { Jahrgangsstufe, Personenstatus, Rolle } from '../../src/modules/person/domain/personenkontext.enums.js';
+import { PersonRollenZuweisungDo } from '../../src/modules/rolle/domain/person-rollen-zuweisung.do.js';
 import { RolleBerechtigungsZuweisungDo } from '../../src/modules/rolle/domain/rolle-berechtigungs-zuweisung.do.js';
 import { RolleRechtDo } from '../../src/modules/rolle/domain/rolle-recht.do.js';
-import { PersonRollenZuweisungDo } from '../../src/modules/rolle/domain/person-rollen-zuweisung.do.js';
+import { RolleDo } from '../../src/modules/rolle/domain/rolle.do.js';
+import { ServiceProviderZugriffDo } from '../../src/modules/rolle/domain/service-provider-zugriff.do.js';
+import { ServiceProviderDo } from '../../src/modules/rolle/domain/service-provider.do.js';
+import { DoBase } from '../../src/shared/types/do-base.js';
 
 export class DoFactory {
+    public static createMany<T extends DoBase<boolean>>(
+        this: void,
+        n: number,
+        withId: T extends DoBase<true> ? true : false,
+        generate: (withId: T extends DoBase<true> ? true : false, props?: Partial<T>) => T,
+        props?: Partial<T>,
+    ): T[] {
+        return Array.from({ length: n }, (_v: unknown, _k: number) => generate(withId, props));
+    }
+
     public static createPerson<WasPersisted extends boolean>(
+        this: void,
         withId: WasPersisted,
         props?: Partial<PersonDo<false>>,
     ): PersonDo<WasPersisted> {
         const person: PersonDo<false> = {
             keycloakUserId: faker.string.uuid(),
-            client: faker.string.uuid(),
-            lastName: faker.person.lastName(),
-            firstName: faker.person.fullName(),
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
+            client: faker.string.uuid(),
+            lastName: faker.person.lastName(),
+            firstName: faker.person.fullName(),
         };
         return Object.assign(new PersonDo<WasPersisted>(), person, props);
     }
 
     public static createOrganisation<WasPersisted extends boolean>(
+        this: void,
         withId: WasPersisted,
         props?: Partial<OrganisationDo<false>>,
     ): OrganisationDo<WasPersisted> {
@@ -47,6 +60,7 @@ export class DoFactory {
     }
 
     public static createUser<WasPersisted extends boolean>(
+        this: void,
         withId: WasPersisted,
         props?: Partial<UserDo<WasPersisted>>,
     ): UserDo<WasPersisted> {
@@ -61,6 +75,7 @@ export class DoFactory {
     }
 
     public static createPersonenkontext<WasPersisted extends boolean>(
+        this: void,
         withId: WasPersisted,
         props?: Partial<PersonenkontextDo<WasPersisted>>,
     ): PersonenkontextDo<WasPersisted> {

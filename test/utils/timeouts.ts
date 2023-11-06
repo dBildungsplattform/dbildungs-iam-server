@@ -1,0 +1,1 @@
+export const DEFAULT_TIMEOUT_FOR_TESTCONTAINERS: number = 60 * 1_000;

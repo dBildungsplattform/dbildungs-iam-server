@@ -1,15 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Mapper } from '@automapper/core';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { getMapperToken } from '@automapper/nestjs';
-import { ServiceProviderRepo } from './service-provider.repo.js';
-import { ServiceProviderMapperProfile } from '../mapper/service-provider.mapper.profile.js';
+import { EntityManager, MikroORM } from '@mikro-orm/core';
+import { Test, TestingModule } from '@nestjs/testing';
+import {
+    ConfigTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DatabaseTestModule,
+    DoFactory,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
 import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
 import { ServiceProviderDo } from '../domain/service-provider.do.js';
-import { ServiceProviderEntity } from '../entity/service-provider.entity.js';
 import { ServiceProviderZugriffEntity } from '../entity/service-provider-zugriff.entity.js';
+import { ServiceProviderEntity } from '../entity/service-provider.entity.js';
 import { ServiceProviderZugriffMapperProfile } from '../mapper/service-provider-zugriff.mapper.profile.js';
+import { ServiceProviderMapperProfile } from '../mapper/service-provider.mapper.profile.js';
+import { ServiceProviderRepo } from './service-provider.repo.js';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
@@ -28,11 +34,11 @@ describe('ServiceProviderRepo', () => {
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
         await DatabaseTestModule.setupDatabase(orm);
-    }, 30 * 1_000);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await module.close();
-    }, 30 * 1_000);
+    });
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
