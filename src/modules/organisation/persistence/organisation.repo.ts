@@ -5,6 +5,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { OrganisationDo } from '../domain/organisation.do.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { Loaded } from '@mikro-orm/core';
+import { OrganisationScope } from './organisation.scope.js';
 
 @Injectable()
 export class OrganisationRepo {
@@ -42,5 +43,12 @@ export class OrganisationRepo {
             return this.mapper.map(organisation, OrganisationEntity, OrganisationDo);
         }
         return null;
+    }
+
+    public async findBy(scope: OrganisationScope): Promise<Counted<OrganisationDo<true>>> {
+        const [entities, total]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
+        const dos: OrganisationDo<true>[] = this.mapper.mapArray(entities, OrganisationEntity, OrganisationDo);
+
+        return [dos, total];
     }
 }

@@ -11,6 +11,7 @@ import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.
 import { OrganisationDo } from '../domain/organisation.do.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { OrganisationResponse } from './organisation.response.js';
+import { FindOrganisationDto } from './find-organisation.dto.js';
 
 describe('OrganisationApiMapperProfile', () => {
     let module: TestingModule;
@@ -84,6 +85,18 @@ describe('OrganisationApiMapperProfile', () => {
             expect(() =>
                 sut.map(createdOrganisationDto, CreatedOrganisationDto, OrganisationResponse),
             ).not.toThrowError(MappingError);
+        });
+
+        it('should map FindOrganisationDto to OrganisationDo', () => {
+            const findOrganisationDto: FindOrganisationDto = {
+                kennung: options.kennung,
+                name: options.name,
+                typ: options.typ,
+            };
+
+            expect(() => sut.map(findOrganisationDto, FindOrganisationDto, OrganisationDo<false>)).not.toThrowError(
+                MappingError,
+            );
         });
     });
 });
