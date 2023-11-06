@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, HttpException, HttpStatus, Inject, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Inject, Param, Post, Query } from '@nestjs/common';
 import { OrganisationUc } from './organisation.uc.js';
 import {
     ApiBadRequestResponse,
@@ -18,6 +18,10 @@ import { OrganisationResponse } from './organisation.response.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { OrganisationByIdParams } from './organisation-by-id.params.js';
 import { Public } from 'nest-keycloak-connect';
+import { FindOrganisationDto } from './find-organisation.dto.js';
+import { PagedResponse } from '../../../shared/paging/paged.response.js';
+import { Paged, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
 
 @ApiTags('organisationen')
 @Controller({ path: 'organisationen' })
@@ -60,5 +64,29 @@ export class OrganisationController {
         } catch (error) {
             throw new HttpException('Requested Entity does not exist', HttpStatus.NOT_FOUND);
         }
+    }
+
+    @Get()
+    @ApiOkResponse({
+        description: 'The organizations were successfully returned.',
+        type: [OrganisationResponse],
+        headers: PagingHeadersObject,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get organizations.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get organizations.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
+    public async findOrganizations(
+        @Query() queryParams: FindOrganisationQueryParams,
+    ): Promise<PagedResponse<OrganisationResponse>> {
+        const organisationDto: FindOrganisationDto = this.mapper.map(
+            queryParams,
+            FindOrganisationQueryParams,
+            FindOrganisationDto,
+        );
+
+        const organisations: Paged<OrganisationResponse> = await this.uc.findAll(organisationDto);
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
+
+        return response;
     }
 }
