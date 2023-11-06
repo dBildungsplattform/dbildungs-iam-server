@@ -5,7 +5,6 @@ import { PassportModule } from '@nestjs/passport';
 import { FrontendController } from './api/frontend.controller.js';
 import { AuthenticatedGuard, OIDCClientProvider, OpenIdConnectStrategy, SessionSerializer } from './auth/index.js';
 import { BackendHttpService } from './outbound/backend-http.service.js';
-
 @Module({
     imports: [HttpModule, PassportModule.register({ session: true, defaultStrategy: 'oidc', keepSessionInfo: true })],
     providers: [AuthenticatedGuard, BackendHttpService, OpenIdConnectStrategy, SessionSerializer, OIDCClientProvider],
