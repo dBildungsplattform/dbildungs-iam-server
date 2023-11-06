@@ -97,8 +97,8 @@ describe('OrganisationUc', () => {
             limit: 0,
         };
 
-        describe('when query params are given', () => {
-            it('should find all organizations that match', async () => {
+        describe('when matching organizations were found', () => {
+            it('should return all found organisations', async () => {
                 const organisationDos: OrganisationDo<true>[] = DoFactory.createMany(
                     2,
                     true,
@@ -125,7 +125,7 @@ describe('OrganisationUc', () => {
             });
         });
 
-        describe('when no- matching organizations were found', () => {
+        describe('when no matching organisations were found', () => {
             it('should return an empty array', async () => {
                 organisationServiceMock.findAllOrganizations.mockResolvedValue({
                     total: 0,

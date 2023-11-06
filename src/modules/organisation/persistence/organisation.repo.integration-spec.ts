@@ -84,38 +84,42 @@ describe('OgranisationRepo', () => {
     });
 
     describe('findBy', () => {
-        it('should find an organization by scope', async () => {
-            const props: Partial<OrganisationDo<true>> = {
-                kennung: faker.lorem.word(),
-                name: faker.lorem.word(),
-            };
-            const organisationDos: OrganisationDo<true>[] = DoFactory.createMany(
-                2,
-                true,
-                DoFactory.createOrganisation,
-                props,
-            );
+        describe('when matching organisations were found by scope', () => {
+            it('should return found organizations', async () => {
+                const props: Partial<OrganisationDo<true>> = {
+                    kennung: faker.lorem.word(),
+                    name: faker.lorem.word(),
+                };
+                const organisationDos: OrganisationDo<true>[] = DoFactory.createMany(
+                    2,
+                    true,
+                    DoFactory.createOrganisation,
+                    props,
+                );
 
-            await em.persistAndFlush(mapper.mapArray(organisationDos, OrganisationDo, OrganisationEntity));
+                await em.persistAndFlush(mapper.mapArray(organisationDos, OrganisationDo, OrganisationEntity));
 
-            const [result]: Counted<OrganisationDo<true>> = await sut.findBy(
-                new OrganisationScope().findBy({
-                    kennung: organisationDos[0]?.kennung as string,
-                    name: organisationDos[0]?.name as string,
-                }),
-            );
+                const [result]: Counted<OrganisationDo<true>> = await sut.findBy(
+                    new OrganisationScope().findBy({
+                        kennung: organisationDos[0]?.kennung as string,
+                        name: organisationDos[0]?.name as string,
+                    }),
+                );
 
-            expect(result).toBeInstanceOf(Array);
-            expect(result).toHaveLength(2);
-            await expect(em.find(OrganisationEntity, {})).resolves.toHaveLength(2);
+                expect(result).toBeInstanceOf(Array);
+                expect(result).toHaveLength(2);
+                await expect(em.find(OrganisationEntity, {})).resolves.toHaveLength(2);
+            });
         });
 
-        it('should return an empty array', async () => {
-            const [result]: Counted<OrganisationDo<true>> = await sut.findBy(new OrganisationScope());
+        describe('when no organisations were found', () => {
+            it('should return an empty array', async () => {
+                const [result]: Counted<OrganisationDo<true>> = await sut.findBy(new OrganisationScope());
 
-            expect(result).toBeInstanceOf(Array);
-            expect(result).toHaveLength(0);
-            await expect(em.find(OrganisationEntity, {})).resolves.toHaveLength(0);
+                expect(result).toBeInstanceOf(Array);
+                expect(result).toHaveLength(0);
+                await expect(em.find(OrganisationEntity, {})).resolves.toHaveLength(0);
+            });
         });
     });
 });
