@@ -252,4 +252,19 @@ describe('PersonController', () => {
             });
         });
     });
+
+    describe('when resetting password for a person', () => {
+        const params: PersonByIdParams = {
+            personId: faker.string.uuid(),
+        };
+        it('should reset password for person', async () => {
+            const response: Result<string> = {
+                ok: true,
+                value: faker.string.alphanumeric({ length: { min: 10, max: 10 }, casing: 'mixed' }),
+            };
+            personUcMock.resetPassword.mockResolvedValueOnce(response);
+            await expect(personController.resetPasswordByPersonId(params)).resolves.not.toThrow();
+            expect(personUcMock.resetPassword).toHaveBeenCalledTimes(1);
+        });
+    });
 });
