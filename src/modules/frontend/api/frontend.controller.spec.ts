@@ -10,28 +10,30 @@ import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { FrontendConfig } from '../../../shared/config/frontend.config.js';
 import { OIDC_CLIENT } from '../auth/oidc-client.service.js';
 import { User } from '../auth/user.decorator.js';
+import { ProviderService } from '../outbound/provider.service.js';
 import { FrontendController } from './frontend.controller.js';
+import { GetServiceProviderInfoDo } from '../../rolle/domain/get-service-provider-info.do.js';
 
 describe('FrontendController', () => {
     let module: TestingModule;
     let frontendController: FrontendController;
     let oidcClient: DeepMocked<Client>;
     let frontendConfig: FrontendConfig;
+    let providerService: DeepMocked<ProviderService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule],
             providers: [
                 FrontendController,
-                {
-                    provide: OIDC_CLIENT,
-                    useValue: createMock<Client>(),
-                },
+                { provide: ProviderService, useValue: createMock<ProviderService>() },
+                { provide: OIDC_CLIENT, useValue: createMock<Client>() },
             ],
         }).compile();
 
         frontendController = module.get(FrontendController);
         oidcClient = module.get(OIDC_CLIENT);
+        providerService = module.get(ProviderService);
         frontendConfig = module.get(ConfigService).getOrThrow<FrontendConfig>('FRONTEND');
     });
 
@@ -177,6 +179,19 @@ describe('FrontendController', () => {
             const result: UserinfoResponse = frontendController.info(user);
 
             expect(result).toBe(user.userinfo);
+        });
+    });
+
+    describe('provider', () => {
+        it('should return providers', async () => {
+            const providers: GetServiceProviderInfoDo[] = [
+                { id: faker.string.uuid(), name: faker.hacker.noun(), url: faker.internet.url() },
+            ];
+            providerService.listProviders.mockResolvedValueOnce(providers);
+
+            const result: GetServiceProviderInfoDo[] = await frontendController.provider(createMock<User>());
+
+            expect(result).toEqual(providers);
         });
     });
 });
