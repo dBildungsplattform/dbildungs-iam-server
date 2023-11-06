@@ -12,6 +12,9 @@ import { OrganisationByIdParams } from './organisation-by-id.params.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { HttpException } from '@nestjs/common';
+import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
+import { Paged } from '../../../shared/paging/paged.js';
+import { FindOrganisationDto } from './find-organisation.dto.js';
 
 describe('OrganisationController', () => {
     let module: TestingModule;
@@ -94,6 +97,59 @@ describe('OrganisationController', () => {
             organisationUcMock.findOrganisationById.mockRejectedValue(mockError);
             await expect(organisationController.findOrganisationById(params)).rejects.toThrowError(HttpException);
             expect(organisationUcMock.findOrganisationById).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('findOrganizations', () => {
+        const queryParams: FindOrganisationQueryParams = {
+            kennung: faker.lorem.word(),
+            name: faker.lorem.word(),
+            typ: OrganisationsTyp.SONSTIGE,
+        };
+
+        describe('when finding organizations with given query params', () => {
+            it('should find all organizations that match', async () => {
+                const organisationDto: FindOrganisationDto = {
+                    kennung: queryParams.kennung,
+                    name: queryParams.name,
+                    typ: queryParams.typ,
+                };
+
+                const response1: OrganisationResponse = {
+                    id: faker.string.uuid(),
+                    kennung: queryParams.kennung ?? faker.lorem.word(),
+                    name: queryParams.name ?? faker.lorem.word(),
+                    namensergaenzung: faker.lorem.word(),
+                    kuerzel: faker.lorem.word(),
+                    typ: queryParams.typ ?? OrganisationsTyp.SONSTIGE,
+                };
+
+                const response2: OrganisationResponse = {
+                    id: faker.string.uuid(),
+                    kennung: queryParams.kennung ?? faker.lorem.word(),
+                    name: queryParams.name ?? faker.lorem.word(),
+                    namensergaenzung: faker.lorem.word(),
+                    kuerzel: faker.lorem.word(),
+                    typ: queryParams.typ ?? OrganisationsTyp.SONSTIGE,
+                };
+
+                const mockedPagedResponse: Paged<OrganisationResponse> = {
+                    items: [response1, response2],
+                    limit: 10,
+                    offset: 0,
+                    total: 2,
+                };
+
+                organisationUcMock.findAll.mockResolvedValue(mockedPagedResponse);
+
+                const result: Paged<OrganisationResponse> = await organisationController.findOrganizations(
+                    organisationDto,
+                );
+
+                expect(result).toEqual(mockedPagedResponse);
+                expect(organisationUcMock.findAll).toHaveBeenCalledTimes(1);
+                expect(result.items.length).toEqual(2);
+            });
         });
     });
 });

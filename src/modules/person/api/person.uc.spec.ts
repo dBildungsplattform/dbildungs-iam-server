@@ -210,4 +210,19 @@ describe('PersonUc', () => {
             expect(result.items).toEqual([]);
         });
     });
+
+    describe('resetPassword', () => {
+        const id: string = faker.string.uuid();
+        describe('when personId is valid (person exists)', () => {
+            it('should return a generated password caused by password-reset', async () => {
+                const result: Result<string> = {
+                    ok: true,
+                    value: faker.string.alphanumeric({ length: { min: 10, max: 10 }, casing: 'mixed' }),
+                };
+                userServiceMock.resetPasswordByPersonId.mockResolvedValueOnce(result);
+                await expect(personUc.resetPassword(id)).resolves.not.toThrow();
+                expect(userServiceMock.resetPasswordByPersonId).toHaveBeenCalledTimes(1);
+            });
+        });
+    });
 });

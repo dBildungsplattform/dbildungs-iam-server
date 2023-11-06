@@ -29,5 +29,9 @@ export class FrontendConfig {
 
     @IsString()
     @IsNotEmpty()
-    public readonly DEFAULT_AUTH_REDIRECT!: string;
+    public readonly DEFAULT_LOGIN_REDIRECT!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    public readonly LOGOUT_REDIRECT!: string;
 }

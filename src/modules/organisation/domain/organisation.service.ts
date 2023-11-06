@@ -3,6 +3,8 @@ import { OrganisationRepo } from '../persistence/organisation.repo.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { OrganisationDo } from './organisation.do.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
+import { Paged } from '../../../shared/paging/paged.js';
+import { OrganisationScope } from '../persistence/organisation.scope.js';
 
 @Injectable()
 export class OrganisationService {
@@ -24,5 +26,27 @@ export class OrganisationService {
             return { ok: true, value: organisation };
         }
         return { ok: false, error: new EntityNotFoundError('Organization', id) };
+    }
+
+    public async findAllOrganizations(
+        organisationDo: Partial<OrganisationDo<false>>,
+        offset?: number,
+        limit?: number,
+    ): Promise<Paged<OrganisationDo<true>>> {
+        const scope: OrganisationScope = new OrganisationScope()
+            .findBy({
+                kennung: organisationDo.kennung,
+                name: organisationDo.name,
+                typ: organisationDo.typ,
+            })
+            .paged(offset, limit);
+        const [organisations, total]: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);
+
+        return {
+            total,
+            offset: offset ?? 0,
+            limit: limit ?? total,
+            items: organisations,
+        };
     }
 }

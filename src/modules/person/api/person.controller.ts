@@ -1,7 +1,21 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Inject, Param, Post, Query } from '@nestjs/common';
 import {
+    Body,
+    Controller,
+    Get,
+    Inject,
+    Post,
+    Param,
+    HttpException,
+    HttpStatus,
+    Query,
+    HttpCode,
+    Patch,
+    UseInterceptors,
+} from '@nestjs/common';
+import {
+    ApiAcceptedResponse,
     ApiBadRequestResponse,
     ApiCreatedResponse,
     ApiForbiddenResponse,
@@ -28,6 +42,7 @@ import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
+import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 
 @ApiTags('personen')
@@ -152,5 +167,15 @@ export class PersonController {
         });
 
         return response;
+    }
+
+    @Patch(':personId/password')
+    @HttpCode(HttpStatus.ACCEPTED)
+    @ApiAcceptedResponse({ description: 'Password for person was successfully reset.' })
+    @ApiNotFoundResponse({ description: 'The person does not exist.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
+    @UseInterceptors(ResultInterceptor)
+    public async resetPasswordByPersonId(@Param() params: PersonByIdParams): Promise<Result<string> | HttpException> {
+        return this.personUc.resetPassword(params.personId);
     }
 }

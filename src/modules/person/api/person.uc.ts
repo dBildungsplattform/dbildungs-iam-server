@@ -114,6 +114,10 @@ export class PersonUc {
         };
     }
 
+    public async resetPassword(personId: string): Promise<Result<string>> {
+        return this.userService.resetPasswordByPersonId(personId);
+    }
+
     private async findPersonenkontexteForPerson(
         personId: string,
         sichtfreigabe: SichtfreigabeType,
