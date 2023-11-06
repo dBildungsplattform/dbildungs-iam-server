@@ -1,0 +1,75 @@
+name: "Publish image to GHCR on push and (scheduled) trivy"
+
+# All triggers have to be in one file, so that the trivy results can be compared to identify introduced vulnerabilities
+# See DBP-340
+on:
+  push:
+  schedule:
+    - cron:  '0 2 * * *'
+
+concurrency:
+  group: dbildungs-iam-server-${{ github.event_name }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  codeql_analyze:
+    name: "CodeQL"
+    if: ${{ github.event_name == 'push' }}
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@2.1.0
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+  nest_lint:
+    name: "Linting"
+    if: ${{ github.event_name == 'push' }}
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@2.1.0
+    with:
+      node_version: '18'
+    permissions:
+      contents: read
+
+  tests_and_sonarcloud:
+    name: "Tests and Sonarcloud"
+    if: ${{ github.event_name == 'push' }}
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@2.1.0
+    with:
+      node_version: '18'
+      deploy_stage: 'dev'
+    permissions:
+      contents: read
+    secrets: inherit
+
+  build_image_on_push:
+    name: "Publish image and scan with trivy"
+    if: ${{ github.event_name == 'push' }}
+    needs:
+      - codeql_analyze
+      - nest_lint
+      - tests_and_sonarcloud
+    permissions:
+      packages: write
+      security-events: write
+      contents: read
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@2.1.0
+    with:
+      image_name: "dbildungs-iam-server"
+      run_trivy_scan: true
+      tag_generation: ${{ github.ref_name == 'main' && 'commit_hash' || 'ticket_from_branch' }}
+      add_latest_tag: ${{ github.ref_name == 'main' }}
+      container_registry: "ghcr.io"
+      fail_on_vulnerabilites: true
+      report_location: "Dockerfile"
+
+  scheduled_trivy_scan:
+    name: "Scheduled trivy scan of latest image"
+    if: ${{ github.event_name == 'schedule' }}
+    permissions:
+      packages: read
+      security-events: write
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@2.1.0
+    with:
+      image_ref: 'ghcr.io/${{ github.repository_owner }}/dbildungs-iam-server:latest'
+      fail_on_vulnerabilites: false
+      report_location: "Dockerfile"
