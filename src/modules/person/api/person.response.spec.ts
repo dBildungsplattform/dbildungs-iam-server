@@ -29,7 +29,7 @@ describe('PersonResponse', () => {
         vertrauensstufe: Vertrauensstufe.VOLL,
     };
 
-    it('should convert plain object of person resopne to a class of person response', () => {
+    it('should convert plain object of person response to a class of person response', () => {
         const person: object = {
             id: personResponse.id,
             name: personResponse.name,
