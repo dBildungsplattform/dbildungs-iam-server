@@ -31,7 +31,9 @@ async function bootstrap(): Promise<void> {
     const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
     const redisConfig: RedisConfig = configService.getOrThrow<RedisConfig>('REDIS');
 
-    app.set('trust proxy', frontendConfig.TRUST_PROXY);
+    if (frontendConfig.TRUST_PROXY !== undefined) {
+        app.set('trust proxy', frontendConfig.TRUST_PROXY);
+    }
 
     const redisClient: RedisClientType = createClient({
         username: redisConfig.USERNAME,
