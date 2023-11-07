@@ -49,8 +49,8 @@ describe('CreatePersonBodyParams', () => {
                 sortierindex: referenceParams.name.sortierindex,
             },
             geburt: {
-                datum: referenceParams.geburt.datum,
-                geburtsort: referenceParams.geburt.geburtsort,
+                datum: referenceParams.geburt?.datum,
+                geburtsort: referenceParams.geburt?.geburtsort,
             },
             geschlecht: referenceParams.geschlecht,
             lokalisierung: referenceParams.lokalisierung,

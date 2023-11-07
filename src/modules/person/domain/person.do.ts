@@ -52,10 +52,10 @@ export class PersonDo<WasPersisted extends boolean> implements DoBase<WasPersist
     public nameAnrede?: string[];
 
     @AutoMap(() => [String])
-    public namensPraefix?: string[];
+    public namePraefix?: string[];
 
     @AutoMap(() => [String])
-    public namensSuffix?: string[];
+    public nameSuffix?: string[];
 
     @AutoMap()
     public nameSortierindex?: string;

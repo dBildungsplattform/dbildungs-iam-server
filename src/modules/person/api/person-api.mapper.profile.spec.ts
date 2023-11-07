@@ -4,7 +4,7 @@ import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { MappingError } from '../../../shared/error/index.js';
-import { CreatePersonDto } from '../domain/create-person.dto.js';
+import { CreatePersonDto } from './create-person.dto.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { Jahrgangsstufe, Personenstatus, Rolle } from '../domain/personenkontext.enums.js';

@@ -28,13 +28,13 @@ export class CreatePersonBodyParams {
     @IsOptional()
     @IsString()
     @IsUUID()
-    @ApiProperty({ name: 'mandant', required: true })
+    @ApiProperty({ required: true })
     public readonly mandant!: string;
 
     @AutoMap()
     @IsOptional()
     @IsString()
-    @ApiProperty({ name: 'stammorganisation', required: false })
+    @ApiProperty({ required: false })
     public readonly stammorganisation?: string;
 
     @AutoMap(() => PersonNameParams)
@@ -46,32 +46,32 @@ export class CreatePersonBodyParams {
     @AutoMap(() => PersonBirthParams)
     @ValidateNested()
     @Type(() => PersonBirthParams)
-    @ApiProperty({ name: 'geburt', required: true })
-    public readonly geburt!: PersonBirthParams;
+    @ApiProperty({ type: PersonBirthParams, required: false })
+    public readonly geburt?: PersonBirthParams;
 
     @AutoMap()
     @IsOptional()
     @IsString()
     @IsEnum(Geschlecht)
-    @ApiProperty({ name: 'geschlecht', enum: Geschlecht, required: false })
+    @ApiProperty({ enum: Geschlecht, required: false })
     public readonly geschlecht?: Geschlecht;
 
     @AutoMap()
     @IsOptional()
     @IsString()
-    @ApiProperty({ name: 'lokalisierung', default: 'de-DE', required: false })
+    @ApiProperty({ default: 'de-DE', required: false })
     public readonly lokalisierung?: string = 'de-DE';
 
     @AutoMap()
     @IsOptional()
     @IsString()
     @IsEnum(Vertrauensstufe)
-    @ApiProperty({ name: 'vertrauensstufe', enum: Vertrauensstufe, required: false })
+    @ApiProperty({ enum: Vertrauensstufe, required: false })
     public readonly vertrauensstufe?: Vertrauensstufe;
 
     @AutoMap()
     @IsOptional()
     @IsBoolean()
-    @ApiProperty({ name: 'auskunftssperre', required: false })
+    @ApiProperty({ required: false })
     public readonly auskunftssperre?: boolean;
 }

@@ -5,7 +5,7 @@ import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { EntityNotFoundError, KeycloakClientError, PersonAlreadyExistsError } from '../../../shared/error/index.js';
 import { Paged } from '../../../shared/paging/index.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { CreatePersonDto } from '../domain/create-person.dto.js';
+import { CreatePersonDto } from './create-person.dto.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonenkontextService } from '../domain/personenkontext.service.js';

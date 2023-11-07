@@ -23,42 +23,42 @@ export class PersonResponse {
     @IsOptional()
     @IsString()
     @IsUUID()
-    @ApiProperty({ name: 'mandant', required: true })
+    @ApiProperty({ required: true })
     public mandant: string = '';
 
     @AutoMap(() => PersonNameParams)
     @ValidateNested()
     @Type(() => PersonNameParams)
-    @ApiProperty({ name: 'name', type: PersonNameParams, required: true })
+    @ApiProperty({ type: PersonNameParams, required: true })
     public name!: PersonNameParams;
 
     @AutoMap()
     @ValidateNested()
     @Type(() => PersonBirthParams)
-    @ApiProperty({ name: 'geburt', type: PersonBirthParams, required: true })
+    @ApiProperty({ type: PersonBirthParams, required: true })
     public geburt!: PersonBirthParams;
 
     @AutoMap()
     @IsOptional()
     @IsString()
-    @ApiProperty({ name: 'stammorganisation', required: false })
+    @ApiProperty({ required: false })
     public readonly stammorganisation?: string;
 
     @AutoMap()
     @IsOptional()
     @IsString()
-    @ApiProperty({ name: 'geschlecht', required: true })
+    @ApiProperty({ required: true })
     public geschlecht!: string;
 
     @AutoMap()
     @IsOptional()
     @IsString()
-    @ApiProperty({ name: 'lokalisierung', required: true })
+    @ApiProperty({ required: true })
     public lokalisierung!: string;
 
     @AutoMap()
     @IsOptional()
     @IsString()
-    @ApiProperty({ name: 'vertrauensstufe', required: true })
+    @ApiProperty({ enum: Vertrauensstufe, required: true })
     public vertrauensstufe!: Vertrauensstufe;
 }

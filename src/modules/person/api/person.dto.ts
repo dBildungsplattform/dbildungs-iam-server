@@ -32,7 +32,7 @@ export class PersonDto {
     public geburt!: PersonGeburtDto;
 
     @AutoMap(() => String)
-    public geschlecht?: string | Geschlecht;
+    public geschlecht?: Geschlecht;
 
     @AutoMap()
     public lokalisierung?: string = 'de-DE';

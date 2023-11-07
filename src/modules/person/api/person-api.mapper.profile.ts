@@ -12,7 +12,7 @@ import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { UserDo } from '../../keycloak-administration/index.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { CreatePersonDto } from '../domain/create-person.dto.js';
+import { CreatePersonDto } from './create-person.dto.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
@@ -80,11 +80,11 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     mapFrom((src: CreatePersonBodyParams) => src.name.anrede),
                 ),
                 forMember(
-                    (dest: CreatePersonDto) => dest.namensPraefix,
+                    (dest: CreatePersonDto) => dest.namePraefix,
                     mapFrom((src: CreatePersonBodyParams) => src.name.namenspraefix),
                 ),
                 forMember(
-                    (dest: CreatePersonDto) => dest.namensSuffix,
+                    (dest: CreatePersonDto) => dest.nameSuffix,
                     mapFrom((src: CreatePersonBodyParams) => src.name.namenssuffix),
                 ),
                 forMember(
@@ -101,11 +101,11 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 ),
                 forMember(
                     (dest: CreatePersonDto) => dest.geburtsdatum,
-                    mapFrom((src: CreatePersonBodyParams) => src.geburt.datum),
+                    mapFrom((src: CreatePersonBodyParams) => src.geburt?.datum),
                 ),
                 forMember(
                     (dest: CreatePersonDto) => dest.geburtsort,
-                    mapFrom((src: CreatePersonBodyParams) => src.geburt.geburtsort),
+                    mapFrom((src: CreatePersonBodyParams) => src.geburt?.geburtsort),
                 ),
             );
             createMap(
@@ -187,11 +187,11 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.name.namenssuffix,
-                    mapFrom((src: PersonDo<true>) => src.namensSuffix),
+                    mapFrom((src: PersonDo<true>) => src.nameSuffix),
                 ),
                 forMember(
                     (dest: PersonendatensatzResponse) => dest.person.name.namenspraefix,
-                    mapFrom((src: PersonDo<true>) => src.namensPraefix),
+                    mapFrom((src: PersonDo<true>) => src.namePraefix),
                 ),
             );
             createMap(mapper, PersonenQueryParams, FindPersonendatensatzDto);
@@ -210,8 +210,8 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<false>) => dest.rufname, ignore()),
                 forMember((dest: PersonDo<false>) => dest.nameTitel, ignore()),
                 forMember((dest: PersonDo<false>) => dest.nameAnrede, ignore()),
-                forMember((dest: PersonDo<false>) => dest.namensPraefix, ignore()),
-                forMember((dest: PersonDo<false>) => dest.namensSuffix, ignore()),
+                forMember((dest: PersonDo<false>) => dest.namePraefix, ignore()),
+                forMember((dest: PersonDo<false>) => dest.nameSuffix, ignore()),
                 forMember((dest: PersonDo<false>) => dest.nameSortierindex, ignore()),
                 forMember((dest: PersonDo<false>) => dest.geburtsdatum, ignore()),
                 forMember((dest: PersonDo<false>) => dest.geburtsort, ignore()),
@@ -323,8 +323,8 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                                 rufname: src.rufname,
                                 titel: src.nameTitel,
                                 anrede: src.nameAnrede,
-                                namenspraefix: src.namensPraefix,
-                                namenssuffix: src.namensSuffix,
+                                namenspraefix: src.namePraefix,
+                                namenssuffix: src.nameSuffix,
                                 sortierindex: src.nameSortierindex,
                             }),
                     ),

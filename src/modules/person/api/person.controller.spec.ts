@@ -10,7 +10,7 @@ import { PersonByIdParams } from './person-by-id.param.js';
 import { HttpException } from '@nestjs/common';
 import { PersonenQueryParams, SichtfreigabeType } from './personen-query.param.js';
 import { PersonBirthParams } from './person-birth.params.js';
-import { Vertrauensstufe } from '../domain/person.enums.js';
+import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
@@ -135,7 +135,7 @@ describe('PersonController', () => {
                 },
                 referrer: options.referrer,
                 geburt: mockBirthParams,
-                geschlecht: '',
+                geschlecht: Geschlecht.M,
                 lokalisierung: '',
                 vertrauensstufe: Vertrauensstufe.VOLL,
             } as PersonDto;
@@ -147,7 +147,7 @@ describe('PersonController', () => {
                 },
                 referrer: options.referrer,
                 geburt: mockBirthParams,
-                geschlecht: '',
+                geschlecht: Geschlecht.M,
                 lokalisierung: '',
                 vertrauensstufe: Vertrauensstufe.VOLL,
             } as PersonDto;

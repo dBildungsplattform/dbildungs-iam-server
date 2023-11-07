@@ -8,12 +8,12 @@ export class PersonBirthParams {
     @IsOptional()
     @IsDate()
     @Type(() => Date)
-    @ApiProperty({ name: 'datum', required: false })
+    @ApiProperty({ required: false })
     public readonly datum?: Date;
 
     @AutoMap()
     @IsOptional()
     @IsString()
-    @ApiProperty({ name: 'geburtsort', required: false })
+    @ApiProperty({ required: false })
     public readonly geburtsort?: string;
 }

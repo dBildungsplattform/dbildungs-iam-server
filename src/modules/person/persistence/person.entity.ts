@@ -59,11 +59,11 @@ export class PersonEntity extends TimestampedEntity<PersonEntity, 'id'> {
 
     @AutoMap(() => [String])
     @Property({ nullable: true, type: ArrayType })
-    public namensPraefix?: string[];
+    public namePraefix?: string[];
 
     @AutoMap(() => [String])
     @Property({ nullable: true, type: ArrayType })
-    public namensSuffix?: string[];
+    public nameSuffix?: string[];
 
     @AutoMap()
     @Property({ nullable: true })
