@@ -1,64 +1,43 @@
 import { AutoMap } from '@automapper/classes';
 import { PersonNameParams } from './person-name.params.js';
-import { IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import { PersonBirthParams } from './person-birth.params.js';
 import { Vertrauensstufe } from '../domain/person.enums.js';
 
 export class PersonResponse {
     @AutoMap()
-    @IsOptional()
-    @IsString()
     @ApiProperty()
     public id!: string;
 
     @AutoMap()
-    @IsOptional()
-    @IsString()
-    @ApiProperty({ required: false })
+    @ApiProperty()
     public referrer?: string;
 
     @AutoMap()
-    @IsOptional()
-    @IsString()
-    @IsUUID()
-    @ApiProperty({ required: true })
+    @ApiProperty()
     public mandant: string = '';
 
     @AutoMap(() => PersonNameParams)
-    @ValidateNested()
-    @Type(() => PersonNameParams)
-    @ApiProperty({ type: PersonNameParams, required: true })
+    @ApiProperty({ type: PersonNameParams })
     public name!: PersonNameParams;
 
-    @AutoMap()
-    @ValidateNested()
-    @Type(() => PersonBirthParams)
-    @ApiProperty({ type: PersonBirthParams, required: true })
+    @AutoMap(() => PersonBirthParams)
+    @ApiProperty({ type: PersonBirthParams })
     public geburt!: PersonBirthParams;
 
     @AutoMap()
-    @IsOptional()
-    @IsString()
-    @ApiProperty({ required: false })
+    @ApiProperty()
     public readonly stammorganisation?: string;
 
     @AutoMap()
-    @IsOptional()
-    @IsString()
-    @ApiProperty({ required: true })
+    @ApiProperty()
     public geschlecht!: string;
 
     @AutoMap()
-    @IsOptional()
-    @IsString()
-    @ApiProperty({ required: true })
+    @ApiProperty()
     public lokalisierung!: string;
 
     @AutoMap()
-    @IsOptional()
-    @IsString()
-    @ApiProperty({ enum: Vertrauensstufe, required: true })
+    @ApiProperty({ enum: Vertrauensstufe })
     public vertrauensstufe!: Vertrauensstufe;
 }
