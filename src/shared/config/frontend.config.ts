@@ -22,6 +22,7 @@ export class FrontendConfig {
 
     @IsOptional()
     @OneOf(isString, isInt, isBoolean)
+    // Refer to https://expressjs.com/en/guide/behind-proxies.html for more info
     public readonly TRUST_PROXY?: string | number | boolean;
 
     @IsBoolean()
