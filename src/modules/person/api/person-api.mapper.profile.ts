@@ -249,8 +249,8 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 CreatedPersonenkontextDto,
                 forMember(
                     (dest: PersonenkontextDto) => dest.loeschung,
-                    mapFrom(
-                        (src: PersonenkontextDo<boolean>) => new LoeschungDto({ zeitpunkt: src.loeschungZeitpunkt }),
+                    mapFrom((src: PersonenkontextDo<boolean>) =>
+                        src.loeschungZeitpunkt ? new LoeschungDto({ zeitpunkt: src.loeschungZeitpunkt }) : undefined,
                     ),
                 ),
             );

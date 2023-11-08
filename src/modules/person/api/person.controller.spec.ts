@@ -202,7 +202,7 @@ describe('PersonController', () => {
                     jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
                     personenstatus: Personenstatus.AKTIV,
                     referrer: 'referrer',
-                    loeschung: {},
+                    loeschung: { zeitpunkt: faker.date.past() },
                 };
                 personenkontextUcMock.createPersonenkontext.mockResolvedValue(ucResult);
 
@@ -235,7 +235,7 @@ describe('PersonController', () => {
                     referrer: 'referrer',
                     jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
                     personenstatus: Personenstatus.AKTIV,
-                    loeschung: {},
+                    loeschung: { zeitpunkt: faker.date.past() },
                 };
                 const personenkontextDtos: PersonenkontextDto[] = [personenkontextResponse];
 
