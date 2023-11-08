@@ -122,6 +122,14 @@ describe('PersonApiMapperProfile', () => {
             );
         });
 
+        it('should map PersonenkontextDo without loeschungZeitpunkt to CreatedPersonenkontextDto', () => {
+            const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+            personenkontextDo.loeschungZeitpunkt = undefined;
+            expect(() => sut.map(personenkontextDo, PersonenkontextDo, CreatedPersonenkontextDto)).not.toThrowError(
+                MappingError,
+            );
+        });
+
         it('should map CreatedPersonenkontextDto to PersonenkontextResponse', () => {
             expect(() =>
                 sut.map({} as CreatedPersonenkontextDto, CreatedPersonenkontextDto, PersonenkontextResponse),
