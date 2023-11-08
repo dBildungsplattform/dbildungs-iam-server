@@ -4,7 +4,7 @@ import { Type } from 'class-transformer';
 import { IsDate, IsOptional, IsString } from 'class-validator';
 
 export class PersonBirthParams {
-    @AutoMap()
+    @AutoMap(() => Date)
     @IsOptional()
     @IsDate()
     @Type(() => Date)

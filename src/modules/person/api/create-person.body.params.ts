@@ -49,7 +49,7 @@ export class CreatePersonBodyParams {
     @ApiProperty({ type: PersonBirthParams, required: false })
     public readonly geburt?: PersonBirthParams;
 
-    @AutoMap()
+    @AutoMap(() => String)
     @IsOptional()
     @IsString()
     @IsEnum(Geschlecht)
@@ -62,7 +62,7 @@ export class CreatePersonBodyParams {
     @ApiProperty({ default: 'de-DE', required: false })
     public readonly lokalisierung?: string = 'de-DE';
 
-    @AutoMap()
+    @AutoMap(() => String)
     @IsOptional()
     @IsString()
     @IsEnum(Vertrauensstufe)

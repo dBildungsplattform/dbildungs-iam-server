@@ -37,7 +37,7 @@ export class PersonResponse {
     @ApiProperty()
     public lokalisierung!: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     @ApiProperty({ enum: Vertrauensstufe })
     public vertrauensstufe!: Vertrauensstufe;
 }
