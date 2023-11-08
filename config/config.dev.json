@@ -8,9 +8,9 @@
         "SESSION_SECRET": "SessionSecretForDevelopment",
         "SESSION_TTL_MS": 3600000,
         "BACKEND_ADDRESS": "http://127.0.0.1:9090",
-        "OIDC_CALLBACK_URL": "http://localhost:8099/api/frontend/login",
-        "DEFAULT_LOGIN_REDIRECT": "http://localhost:8099/",
-        "LOGOUT_REDIRECT": "http://localhost:8099/"
+        "OIDC_CALLBACK_URL": "https://localhost:8099/api/frontend/login",
+        "DEFAULT_LOGIN_REDIRECT": "https://localhost:8099/",
+        "LOGOUT_REDIRECT": "https://localhost:8099/"
     },
     "DB": {
         "CLIENT_URL": "postgres://admin:password@127.0.0.1:5432",
