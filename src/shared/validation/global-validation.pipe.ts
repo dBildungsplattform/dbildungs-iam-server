@@ -1,4 +1,5 @@
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationError, ValidationPipe } from '@nestjs/common';
+import { DetailedValidationError } from './detailed-validation.error.js';
 
 /** *********************************************
  * Global Pipe setup
@@ -21,7 +22,7 @@ export class GlobalValidationPipe extends ValidationPipe {
             forbidNonWhitelisted: false, // additional params are just skipped (required when extracting multiple DTO from single query)
             forbidUnknownValues: true,
             // TODO: create types for the exception factory: EW-???
-            // exceptionFactory: (errors: ValidationError[]) => new ApiValidationError(errors),
+            exceptionFactory: (errors: ValidationError[]) => new DetailedValidationError(errors),
         });
     }
 }
