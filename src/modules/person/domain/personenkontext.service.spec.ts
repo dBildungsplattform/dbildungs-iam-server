@@ -5,12 +5,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { Paged } from '../../../shared/paging/paged.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonenkontextRepo } from '../persistence/personenkontext.repo.js';
+import { PersonDo } from './person.do.js';
 import { PersonenkontextDo } from './personenkontext.do.js';
 import { PersonenkontextService } from './personenkontext.service.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { PersonDo } from './person.do.js';
 
 describe('PersonenkontextService', () => {
     let module: TestingModule;
@@ -119,16 +120,19 @@ describe('PersonenkontextService', () => {
                     personenkontext1 as unknown as PersonenkontextDo<true>,
                     personenkontext2 as unknown as PersonenkontextDo<true>,
                 ];
-                personenkontextRepoMock.findAll.mockResolvedValue(personenkontexte);
+                personenkontextRepoMock.findBy.mockResolvedValue([personenkontexte, personenkontexte.length]);
                 mapperMock.map.mockReturnValue(personenkontexte as unknown as Dictionary<unknown>);
                 const personenkontextDoWithQueryParam: PersonenkontextDo<false> =
                     DoFactory.createPersonenkontext(false);
 
-                const result: Result<PersonenkontextDo<true>[], DomainError> =
-                    await personenkontextService.findAllPersonenkontexte(personenkontextDoWithQueryParam);
-                expect(result).toEqual<Result<PersonenkontextDo<true>[], DomainError>>({
-                    ok: true,
-                    value: personenkontexte,
+                const result: Paged<PersonenkontextDo<true>> = await personenkontextService.findAllPersonenkontexte(
+                    personenkontextDoWithQueryParam,
+                );
+                expect(result).toEqual<Paged<PersonenkontextDo<true>>>({
+                    items: personenkontexte,
+                    total: personenkontexte.length,
+                    offset: 0,
+                    limit: personenkontexte.length,
                 });
             });
         });
@@ -136,13 +140,16 @@ describe('PersonenkontextService', () => {
         describe('When no personenkontexte are found', () => {
             it('should return a result with an empty array', async () => {
                 const personenkontext: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false);
-                personenkontextRepoMock.findAll.mockResolvedValue([]);
+                personenkontextRepoMock.findBy.mockResolvedValue([[], 0]);
                 mapperMock.map.mockReturnValue(personenkontext as unknown as Dictionary<unknown>);
-                const result: Result<PersonenkontextDo<true>[], DomainError> =
-                    await personenkontextService.findAllPersonenkontexte(personenkontext);
-                expect(result).toEqual<Result<PersonenkontextDo<true>[], DomainError>>({
-                    ok: true,
-                    value: [],
+                const result: Paged<PersonenkontextDo<true>> = await personenkontextService.findAllPersonenkontexte(
+                    personenkontext,
+                );
+                expect(result).toEqual<Paged<PersonenkontextDo<true>>>({
+                    items: [],
+                    total: 0,
+                    offset: 0,
+                    limit: 0,
                 });
             });
         });
