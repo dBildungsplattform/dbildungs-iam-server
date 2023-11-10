@@ -12,92 +12,150 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
         const response: Response = ctx.getResponse<Response>();
         const status: number = exception.getStatus();
 
-        const schulConnexError: SchulConnexError = this.handleValidationErrors(exception);
+        const schulConnexError: SchulConnexError = this.handleValidationErrors(exception, status);
 
         response.status(status).json({
-            statusCode: status,
             ...schulConnexError,
         });
     }
 
-    private handleValidationErrors(validationError: DetailedValidationError): Omit<SchulConnexError, 'statusCode'> {
+    private handleValidationErrors(validationError: DetailedValidationError, statusCode?: number): SchulConnexError {
         const validationErrors: ValidationError[] = validationError.validationErrors;
+        const schulConnexError: SchulConnexError = {
+            statusCode: statusCode ?? 400,
+            subCode: '',
+            title: '',
+            description: '',
+        };
 
         if (!validationErrors[0]) {
-            return {
-                subCode: '00',
-                title: 'fehlerhafte Anfrage',
-                description: 'Die Anfrage ist fehlerhaft',
-            };
+            schulConnexError.subCode = '00';
+            schulConnexError.title = 'fehlerhafte Anfrage';
+            schulConnexError.description = 'Die Anfrage ist fehlerhaft';
+            return schulConnexError;
         }
 
         // handle the first validation error that was found
-        let currentValidationError: ValidationError = validationErrors[0];
-        let property: string = currentValidationError.property;
+        const currentValidationError: ValidationError = this.getFirstValidationError(validationErrors[0]);
+
+        if (currentValidationError.constraints) {
+            const {
+                property,
+                errorCode: errorSubCode,
+                errorMessage: errorDescription,
+            } = this.mapValidationErrorConstraints(currentValidationError);
+
+            schulConnexError.subCode = errorSubCode;
+            schulConnexError.title = errorDescription.title;
+            schulConnexError.description = ` ${errorDescription.description} '${property}'`;
+        }
+
+        return schulConnexError;
+    }
+
+    private getFirstValidationError(validationError: ValidationError): ValidationError {
+        let currentValidationError: ValidationError = validationError;
 
         while (currentValidationError?.children?.length && currentValidationError?.children[0]) {
             currentValidationError = currentValidationError.children[0];
-            property = `${property}.${currentValidationError.property}`;
         }
 
-        if (currentValidationError.constraints) {
-            if (currentValidationError.constraints['isNotEmpty']) {
-                return {
-                    subCode: '01',
-                    title: 'fehlende Eingabe',
-                    description: `Die Eingabe für '${property}' darf nicht leer sein`,
-                };
-            }
+        return currentValidationError;
+    }
 
-            if (
-                currentValidationError.constraints['isMaxLength'] ||
-                currentValidationError.constraints['isMinLength']
-            ) {
+    private mapValidationErrorConstraints(validationError: ValidationError): {
+        property: string;
+        errorCode: string;
+        errorMessage: { title: string; description: string };
+    } {
+        const property: string = this.getPropertyPath(validationError);
+        const errorCode: string = this.determineErrorCode(validationError);
+        const errorMessage: { title: string; description: string } = this.getErrorMessage(errorCode);
+
+        return { property, errorCode, errorMessage };
+    }
+
+    private getPropertyPath(validationError: ValidationError): string {
+        let property: string = validationError.property;
+
+        while (validationError?.children?.length && validationError?.children[0]) {
+            validationError = validationError.children[0];
+            property = `${property}.${validationError.property}`;
+        }
+
+        return property;
+    }
+
+    private determineErrorCode(validationError: ValidationError): string {
+        if (validationError.constraints?.['isMaxLength'] || validationError.constraints?.['isMinLength']) {
+            return '07';
+        }
+
+        if (validationError.constraints?.['isDate']) {
+            return '09';
+        }
+
+        if (validationError.constraints?.['isEnum']) {
+            return '10';
+        }
+
+        if (validationError.constraints?.['isMaxLength']) {
+            return '15';
+        }
+
+        if (
+            validationError.constraints?.['isString'] ||
+            validationError.constraints?.['isNumber'] ||
+            validationError.constraints?.['isBoolean'] ||
+            validationError.constraints?.['isEmail'] ||
+            validationError.constraints?.['isArray'] ||
+            validationError.constraints?.['isNotEmpty']
+        ) {
+            return '03';
+        }
+
+        // Default error code if no match is found
+        return '04';
+    }
+
+    private getErrorMessage(errorCode: string): { title: string; description: string } {
+        switch (errorCode) {
+            case '07':
                 return {
-                    subCode: '07',
                     title: 'Attributwerte haben eine ungültige Länge',
-                    description: `Textlänge von Attribut '${property}' ist nicht valide`,
+                    description: 'Textlänge des Attributs ist nicht valide',
                 };
-            }
 
-            if (currentValidationError.constraints['isDate']) {
+            case '09':
                 return {
-                    subCode: '09',
                     title: 'Datumsattribut hat einen ungültigen Wert',
-                    description: ` Datumsformat von Attribut '${property}' ist ungültig`,
+                    description: 'Datumsformat des Attributs ist ungültig',
                 };
-            }
 
-            if (currentValidationError.constraints['isEnum']) {
+            case '10':
                 return {
-                    subCode: '10',
-                    title: 'Attributwerte entspricht keinem der erwarteten Werte',
-                    description: `Attibute '${property}' muss einen gültigen Wert aus der Werteliste enthalten`,
+                    title: 'Attributwerte entsprechen keinem der erwarteten Werte',
+                    description: 'Attribute müssen gültige Werte enthalten',
                 };
-            }
 
-            if (currentValidationError.constraints['isMaxLength']) {
+            case '15':
                 return {
-                    subCode: '15',
                     title: 'Text ist zu lang',
-                    description: `Die Länge des übergebenen '${property}' überschreitet die in der Spezifikation angegebene Maximallänge.`,
+                    description: 'Die Länge des übergebenen Texts überschreitet die Maximallänge',
                 };
-            }
 
-            if (
-                currentValidationError.constraints['isString'] ||
-                currentValidationError.constraints['isNumber'] ||
-                currentValidationError.constraints['isBoolean'] ||
-                currentValidationError.constraints['isEmail'] ||
-                currentValidationError.constraints['isArray'] ||
-                currentValidationError.constraints['isNotEmpty']
-            ) {
+            case '03':
                 return {
-                    subCode: '03',
                     title: 'Validierungsfehler',
-                    description: `Die Anfrage konnte aufgrund invalider Eingabe für '${property}' nicht erfolgreich validiert werden `,
+                    description: 'Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden',
                 };
-            }
+
+            // Default error message if no match is found
+            default:
+                return {
+                    title: 'JSON-Struktur ist ungültig',
+                    description: 'Der Payload entspricht keiner gültigen JSON-Struktur.',
+                };
         }
     }
 }
