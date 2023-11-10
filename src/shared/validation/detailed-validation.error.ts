@@ -9,4 +9,4 @@ export class DetailedValidationError extends BadRequestException {
     ) {
         super(objectOrError ? objectOrError : 'Bad Request Exception', descriptionOrOptions);
     }
-};
+}

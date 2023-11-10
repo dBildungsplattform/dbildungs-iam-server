@@ -43,6 +43,10 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
                 property,
                 errorCode: errorSubCode,
                 errorMessage: errorDescription,
+            }: {
+                property: string;
+                errorCode: string;
+                errorMessage: { title: string; description: string };
             } = this.mapValidationErrorConstraints(currentValidationError);
 
             schulConnexError.subCode = errorSubCode;
@@ -79,8 +83,8 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
         let property: string = validationError.property;
 
         while (validationError?.children?.length && validationError?.children[0]) {
-            validationError = validationError.children[0];
-            property = `${property}.${validationError.property}`;
+            const validationErrorChild: ValidationError = validationError.children[0];
+            property = `${property}.${validationErrorChild.property}`;
         }
 
         return property;
