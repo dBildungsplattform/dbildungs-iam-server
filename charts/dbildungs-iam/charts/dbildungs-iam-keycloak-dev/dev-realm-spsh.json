@@ -471,6 +471,7 @@
     {
       "id": "22207262-196f-4995-8011-6830091ebdca",
       "username": "test",
+      "createdTimestamp": 1697087666332,
       "enabled": true,
       "emailVerified": true,
       "firstName": "Testus",
