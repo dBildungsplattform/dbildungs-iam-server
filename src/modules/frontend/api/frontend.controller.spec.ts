@@ -13,6 +13,15 @@ import { User } from '../auth/user.decorator.js';
 import { ProviderService } from '../outbound/provider.service.js';
 import { FrontendController } from './frontend.controller.js';
 import { GetServiceProviderInfoDo } from '../../rolle/domain/get-service-provider-info.do.js';
+import { PersonService } from '../outbound/person.service.js';
+import { PersonendatensatzResponse } from '../../person/api/personendatensatz.response.js';
+import { PagedResponse } from '../../../shared/paging/index.js';
+import { Geschlecht, Vertrauensstufe } from '../../person/domain/person.enums.js';
+import { PersonResponse } from '../../person/api/person.response.js';
+import { PersonenkontextResponse } from '../../person/api/personenkontext.response.js';
+import { PersonBirthParams } from '../../person/api/person-birth.params.js';
+import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 describe('FrontendController', () => {
     let module: TestingModule;
@@ -20,6 +29,7 @@ describe('FrontendController', () => {
     let oidcClient: DeepMocked<Client>;
     let frontendConfig: FrontendConfig;
     let providerService: DeepMocked<ProviderService>;
+    let personService: DeepMocked<PersonService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -27,6 +37,7 @@ describe('FrontendController', () => {
             providers: [
                 FrontendController,
                 { provide: ProviderService, useValue: createMock<ProviderService>() },
+                { provide: PersonService, useValue: createMock<PersonService>() },
                 { provide: OIDC_CLIENT, useValue: createMock<Client>() },
             ],
         }).compile();
@@ -34,6 +45,7 @@ describe('FrontendController', () => {
         frontendController = module.get(FrontendController);
         oidcClient = module.get(OIDC_CLIENT);
         providerService = module.get(ProviderService);
+        personService = module.get(PersonService);
         frontendConfig = module.get(ConfigService).getOrThrow<FrontendConfig>('FRONTEND');
     });
 
@@ -192,6 +204,94 @@ describe('FrontendController', () => {
             const result: GetServiceProviderInfoDo[] = await frontendController.provider(createMock<User>());
 
             expect(result).toEqual(providers);
+        });
+    });
+
+    describe('personen', () => {
+        describe('when personen exist', () => {
+            it('should return all persons', async () => {
+                const mockBirthParams: PersonBirthParams = {
+                    datum: faker.date.anytime(),
+                    geburtsort: faker.string.alpha(),
+                };
+                const options: {
+                    referrer: string;
+                    lastName: string;
+                    firstName: string;
+                } = {
+                    referrer: faker.string.alpha(),
+                    lastName: faker.person.lastName(),
+                    firstName: faker.person.firstName(),
+                };
+                const personResponse: PersonResponse = {
+                    id: faker.string.uuid(),
+                    name: {
+                        familienname: options.lastName,
+                        vorname: options.firstName,
+                    },
+                    referrer: options.referrer,
+                    mandant: '',
+                    geburt: mockBirthParams,
+                    geschlecht: Geschlecht.M,
+                    lokalisierung: '',
+                    vertrauensstufe: Vertrauensstufe.VOLL,
+                };
+                const personenKontextResponse: PersonenkontextResponse[] = [];
+                const response: PersonendatensatzResponse = {
+                    person: personResponse,
+                    personenkontexte: personenKontextResponse,
+                };
+
+                const pagedResponse: PagedResponse<PersonendatensatzResponse> = {
+                    limit: 10,
+                    total: 2,
+                    offset: 0,
+                    items: [response],
+                };
+                personService.getAllPersons.mockResolvedValueOnce(pagedResponse);
+                const result: PagedResponse<PersonendatensatzResponse> = await frontendController.persons();
+                expect(result).toEqual(pagedResponse);
+            });
+        });
+        describe('when error occurs', () => {
+            it('should throw exception', async () => {
+                const exception: HttpException = new HttpException(
+                    'Requested Entity does not exist',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+                personService.getAllPersons.mockRejectedValueOnce(exception);
+                await expect(frontendController.persons()).rejects.toThrowError(HttpException);
+            });
+        });
+    });
+
+    describe('passwordReset', () => {
+        describe('if personId is valid/person exists', () => {
+            it('should return a new password as string', async () => {
+                const generatedPassword: string = faker.string.alphanumeric({
+                    length: { min: 10, max: 10 },
+                    casing: 'mixed',
+                });
+                const params: PersonByIdParams = {
+                    personId: faker.string.numeric(),
+                };
+                personService.resetPassword.mockResolvedValueOnce(generatedPassword);
+                const result: string = await frontendController.passwordReset(params);
+                expect(result).toEqual(generatedPassword);
+            });
+        });
+        describe('if personId is not valid / person does not exist', () => {
+            it('should throw exception', async () => {
+                const params: PersonByIdParams = {
+                    personId: faker.string.numeric(),
+                };
+                const exception: HttpException = new HttpException(
+                    'Requested Entity does not exist',
+                    HttpStatus.NOT_FOUND,
+                );
+                personService.resetPassword.mockRejectedValueOnce(exception);
+                await expect(frontendController.passwordReset(params)).rejects.toThrowError(HttpException);
+            });
         });
     });
 });
