@@ -829,6 +829,7 @@
       "secret": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M",
       "redirectUris": [
         "http://localhost:9091/*",
+        "http://localhost:8099/*",
         "/*"
       ],
       "webOrigins": [

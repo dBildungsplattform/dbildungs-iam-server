@@ -10,7 +10,7 @@ import { PersonByIdParams } from './person-by-id.param.js';
 import { HttpException } from '@nestjs/common';
 import { PersonenQueryParams, SichtfreigabeType } from './personen-query.param.js';
 import { PersonBirthParams } from './person-birth.params.js';
-import { TrustLevel } from '../domain/person.enums.js';
+import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
@@ -135,9 +135,9 @@ describe('PersonController', () => {
                 },
                 referrer: options.referrer,
                 geburt: mockBirthParams,
-                geschlecht: '',
+                geschlecht: Geschlecht.M,
                 lokalisierung: '',
-                vertrauensstufe: TrustLevel.TRUSTED,
+                vertrauensstufe: Vertrauensstufe.VOLL,
             } as PersonDto;
             const person2: PersonDto = {
                 id: faker.string.uuid(),
@@ -147,9 +147,9 @@ describe('PersonController', () => {
                 },
                 referrer: options.referrer,
                 geburt: mockBirthParams,
-                geschlecht: '',
+                geschlecht: Geschlecht.M,
                 lokalisierung: '',
-                vertrauensstufe: TrustLevel.TRUSTED,
+                vertrauensstufe: Vertrauensstufe.VOLL,
             } as PersonDto;
 
             const mockPersondatensatz1: PersonendatensatzDto = {
@@ -202,7 +202,7 @@ describe('PersonController', () => {
                     jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
                     personenstatus: Personenstatus.AKTIV,
                     referrer: 'referrer',
-                    loeschung: {},
+                    loeschung: { zeitpunkt: faker.date.past() },
                 };
                 personenkontextUcMock.createPersonenkontext.mockResolvedValue(ucResult);
 
@@ -235,7 +235,7 @@ describe('PersonController', () => {
                     referrer: 'referrer',
                     jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
                     personenstatus: Personenstatus.AKTIV,
-                    loeschung: {},
+                    loeschung: { zeitpunkt: faker.date.past() },
                 };
                 const personenkontextDtos: PersonenkontextDto[] = [personenkontextResponse];
 
@@ -250,6 +250,21 @@ describe('PersonController', () => {
                 expect(result.length).toBe(1);
                 expect(result[0]?.id).toBe(personenkontextDtos[0]?.id);
             });
+        });
+    });
+
+    describe('when resetting password for a person', () => {
+        const params: PersonByIdParams = {
+            personId: faker.string.uuid(),
+        };
+        it('should reset password for person', async () => {
+            const response: Result<string> = {
+                ok: true,
+                value: faker.string.alphanumeric({ length: { min: 10, max: 10 }, casing: 'mixed' }),
+            };
+            personUcMock.resetPassword.mockResolvedValueOnce(response);
+            await expect(personController.resetPasswordByPersonId(params)).resolves.not.toThrow();
+            expect(personUcMock.resetPassword).toHaveBeenCalledTimes(1);
         });
     });
 });

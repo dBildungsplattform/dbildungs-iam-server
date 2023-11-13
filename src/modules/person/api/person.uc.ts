@@ -4,7 +4,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { Paged } from '../../../shared/paging/index.js';
 import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
-import { CreatePersonDto } from '../domain/create-person.dto.js';
+import { CreatePersonDto } from './create-person.dto.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
@@ -112,6 +112,10 @@ export class PersonUc {
             limit: result.limit,
             items: personendatensatzDtos,
         };
+    }
+
+    public async resetPassword(personId: string): Promise<Result<string>> {
+        return this.userService.resetPasswordByPersonId(personId);
     }
 
     private async findPersonenkontexteForPerson(

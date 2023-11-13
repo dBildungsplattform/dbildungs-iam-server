@@ -13,7 +13,10 @@ export class KeycloakAdministrationService {
 
     private kcConfig: KeycloakConfig;
 
-    public constructor(private readonly kcAdminClient: KeycloakAdminClient, private readonly config: ConfigService) {
+    public constructor(
+        private readonly kcAdminClient: KeycloakAdminClient,
+        private readonly config: ConfigService,
+    ) {
         this.kcConfig = this.config.getOrThrow<KeycloakConfig>('KEYCLOAK');
 
         this.kcAdminClient.setConfig({
