@@ -8,7 +8,10 @@ import { OIDC_CLIENT } from './oidc-client.service.js';
 
 @Injectable()
 export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
-    public constructor(@Inject(OIDC_CLIENT) private client: Client, configService: ConfigService<ServerConfig>) {
+    public constructor(
+        @Inject(OIDC_CLIENT) private client: Client,
+        configService: ConfigService<ServerConfig>,
+    ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
 
         super({

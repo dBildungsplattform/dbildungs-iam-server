@@ -7,7 +7,10 @@ import { PersonRollenZuweisungDo } from '../domain/person-rollen-zuweisung.do.js
 
 @Injectable()
 export class PersonRollenZuweisungRepo {
-    public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
+    public constructor(
+        private readonly em: EntityManager,
+        @Inject(getMapperToken()) private readonly mapper: Mapper,
+    ) {}
 
     public async findAllByPersonId(personId: string): Promise<PersonRollenZuweisungDo<true>[]> {
         const query: Record<string, unknown> = {};

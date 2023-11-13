@@ -81,9 +81,8 @@ describe('PersonenkontextService', () => {
                 personRepoMock.findById.mockResolvedValueOnce(personDo);
                 personenkontextRepoMock.save.mockResolvedValue(personenkontextDo as unknown as PersonenkontextDo<true>);
                 mapperMock.map.mockReturnValue(personenkontextDo as unknown as Dictionary<unknown>);
-                const result: Result<PersonenkontextDo<true>> = await personenkontextService.createPersonenkontext(
-                    personenkontextDo,
-                );
+                const result: Result<PersonenkontextDo<true>> =
+                    await personenkontextService.createPersonenkontext(personenkontextDo);
                 expect(result).toEqual<Result<PersonenkontextDo<true>>>({
                     ok: true,
                     value: personenkontextDo as unknown as PersonenkontextDo<true>,

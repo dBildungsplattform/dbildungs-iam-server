@@ -8,7 +8,10 @@ import { ServiceProviderEntity } from '../entity/service-provider.entity.js';
 
 @Injectable()
 export class ServiceProviderRepo {
-    public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
+    public constructor(
+        private readonly em: EntityManager,
+        @Inject(getMapperToken()) private readonly mapper: Mapper,
+    ) {}
 
     public async findAll(
         serviceProviderZugriff: ServiceProviderZugriffDo<boolean>,
