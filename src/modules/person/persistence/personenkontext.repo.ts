@@ -8,7 +8,10 @@ import { PersonenkontextEntity } from './personenkontext.entity.js';
 
 @Injectable()
 export class PersonenkontextRepo {
-    public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
+    public constructor(
+        private readonly em: EntityManager,
+        @Inject(getMapperToken()) private readonly mapper: Mapper,
+    ) {}
 
     public async save(personenkontextDo: PersonenkontextDo<boolean>): Promise<Option<PersonenkontextDo<true>>> {
         if (personenkontextDo.id) {
