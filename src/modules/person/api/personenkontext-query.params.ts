@@ -14,25 +14,27 @@ export class PersonenkontextQueryParams extends PagedQueryParams {
     })
     public readonly referrer?: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     @IsOptional()
     @IsEnum(Rolle)
     @ApiProperty({
         required: false,
         nullable: true,
+        enum: Rolle,
     })
     public readonly rolle?: Rolle;
 
-    @AutoMap()
+    @AutoMap(() => String)
     @IsOptional()
     @IsEnum(Personenstatus)
     @ApiProperty({
         required: false,
         nullable: true,
+        enum: Personenstatus,
     })
     public readonly personenstatus?: Personenstatus;
 
-    @AutoMap()
+    @AutoMap(() => String)
     @IsOptional()
     @IsEnum(SichtfreigabeType)
     @ApiProperty({

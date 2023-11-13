@@ -23,6 +23,7 @@ import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
+import { PagingHeadersObject } from '../../../shared/paging/paging.enums.js';
 
 @Public()
 @ApiTags('personenkontexte')
@@ -73,6 +74,7 @@ export class PersonenkontextController {
     @ApiOkResponse({
         description: 'The personenkontexte were successfully returned.',
         type: [PersonendatensatzResponse],
+        headers: PagingHeadersObject,
     })
     @ApiBadRequestResponse({ description: 'Request has wrong format.' })
     @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
