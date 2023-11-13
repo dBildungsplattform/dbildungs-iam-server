@@ -142,9 +142,8 @@ describe('OrganisationController', () => {
 
                 organisationUcMock.findAll.mockResolvedValue(mockedPagedResponse);
 
-                const result: Paged<OrganisationResponse> = await organisationController.findOrganizations(
-                    organisationDto,
-                );
+                const result: Paged<OrganisationResponse> =
+                    await organisationController.findOrganizations(organisationDto);
 
                 expect(result).toEqual(mockedPagedResponse);
                 expect(organisationUcMock.findAll).toHaveBeenCalledTimes(1);
