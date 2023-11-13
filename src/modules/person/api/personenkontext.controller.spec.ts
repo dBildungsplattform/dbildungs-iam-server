@@ -127,9 +127,8 @@ describe('PersonenkontextController', () => {
                 };
                 personenkontextUcMock.findAll.mockResolvedValue(personenkontexte);
 
-                const result: PagedResponse<PersonenkontextdatensatzResponse> = await sut.findPersonenkontexte(
-                    queryParams,
-                );
+                const result: PagedResponse<PersonenkontextdatensatzResponse> =
+                    await sut.findPersonenkontexte(queryParams);
 
                 expect(personenkontextUcMock.findAll).toBeCalledTimes(1);
                 expect(result.items.length).toBe(1);

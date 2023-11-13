@@ -128,9 +128,8 @@ export class PersonController {
 
         findPersonenkontextDto.personId = pathParams.personId;
 
-        const personenkontextDtos: Paged<PersonenkontextDto> = await this.personenkontextUc.findAll(
-            findPersonenkontextDto,
-        );
+        const personenkontextDtos: Paged<PersonenkontextDto> =
+            await this.personenkontextUc.findAll(findPersonenkontextDto);
         // AI next 5 lines
         const responseItems: PersonenkontextResponse[] = this.mapper.mapArray(
             personenkontextDtos.items,

@@ -47,9 +47,8 @@ export class PersonenkontextService {
             .sortBy('id', ScopeOrder.ASC)
             .paged(offset, limit);
 
-        const [personenkontexte, total]: Counted<PersonenkontextDo<true>> = await this.personenkontextRepo.findBy(
-            scope,
-        );
+        const [personenkontexte, total]: Counted<PersonenkontextDo<true>> =
+            await this.personenkontextRepo.findBy(scope);
 
         return {
             offset: offset ?? 0,

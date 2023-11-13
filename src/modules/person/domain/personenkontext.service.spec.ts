@@ -141,9 +141,8 @@ describe('PersonenkontextService', () => {
                 const personenkontext: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false);
                 personenkontextRepoMock.findBy.mockResolvedValue([[], 0]);
                 mapperMock.map.mockReturnValue(personenkontext as unknown as Dictionary<unknown>);
-                const result: Paged<PersonenkontextDo<true>> = await personenkontextService.findAllPersonenkontexte(
-                    personenkontext,
-                );
+                const result: Paged<PersonenkontextDo<true>> =
+                    await personenkontextService.findAllPersonenkontexte(personenkontext);
                 expect(result).toEqual<Paged<PersonenkontextDo<true>>>({
                     items: [],
                     total: 0,
