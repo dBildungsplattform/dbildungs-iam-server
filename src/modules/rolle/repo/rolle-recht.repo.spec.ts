@@ -88,9 +88,8 @@ describe('RolleRechtRepo', () => {
                 const rolleBerechtigungsZuweisungDo: RolleBerechtigungsZuweisungDo<false> =
                     DoFactory.createRolleBerechtigungsZuweisung(rolleDo, serviceProviderZugriffDo, false);
 
-                const foundRolleRecht: RolleRechtDo<true>[] = await sut.findAllRolleRecht(
-                    rolleBerechtigungsZuweisungDo,
-                );
+                const foundRolleRecht: RolleRechtDo<true>[] =
+                    await sut.findAllRolleRecht(rolleBerechtigungsZuweisungDo);
                 expect(foundRolleRecht).not.toBeNull();
                 expect(foundRolleRecht).toHaveLength(1);
             });
@@ -103,9 +102,8 @@ describe('RolleRechtRepo', () => {
                     DoFactory.createServiceProviderZugriff(true);
                 const rolleBerechtigungsZuweisungDo: RolleBerechtigungsZuweisungDo<false> =
                     DoFactory.createRolleBerechtigungsZuweisung(rolleDo, serviceProviderZugriffDo, false);
-                const foundRolleRecht: Option<RolleRechtDo<true>[]> = await sut.findAllRolleRecht(
-                    rolleBerechtigungsZuweisungDo,
-                );
+                const foundRolleRecht: Option<RolleRechtDo<true>[]> =
+                    await sut.findAllRolleRecht(rolleBerechtigungsZuweisungDo);
                 expect(foundRolleRecht).toHaveLength(0);
             });
         });
