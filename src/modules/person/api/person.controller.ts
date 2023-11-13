@@ -112,7 +112,7 @@ export class PersonController {
     }
 
     @Get(':personId/personenkontexte')
-    @ApiOkResponse({ description: 'The personenkontexte were successfully pulled.' })
+    @ApiOkResponse({ description: 'The personenkontexte were successfully pulled.', headers: PagingHeadersObject })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get personenkontexte.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get personenkontexte.' })
     @ApiNotFoundResponse({ description: 'No personenkontexte were found.' })
