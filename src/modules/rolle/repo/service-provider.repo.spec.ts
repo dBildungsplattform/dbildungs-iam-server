@@ -83,9 +83,8 @@ describe('ServiceProviderRepo', () => {
             it('should return null', async () => {
                 const serviceProviderZugriffDo: ServiceProviderZugriffDo<true> =
                     DoFactory.createServiceProviderZugriff(true);
-                const foundServiceProvider: Option<ServiceProviderDo<true>[]> = await sut.findAll(
-                    serviceProviderZugriffDo,
-                );
+                const foundServiceProvider: Option<ServiceProviderDo<true>[]> =
+                    await sut.findAll(serviceProviderZugriffDo);
                 expect(foundServiceProvider).toHaveLength(0);
             });
         });
