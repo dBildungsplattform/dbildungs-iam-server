@@ -8,7 +8,10 @@ import { RolleDo } from '../domain/rolle.do.js';
 
 @Injectable()
 export class RollenBerechtigungsZuweisungRepo {
-    public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
+    public constructor(
+        private readonly em: EntityManager,
+        @Inject(getMapperToken()) private readonly mapper: Mapper,
+    ) {}
 
     public async findAllRolleBerechtigungsZuweisungByRolle(
         rolle: RolleDo<boolean>,

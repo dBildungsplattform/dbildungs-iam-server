@@ -142,9 +142,8 @@ describe('RolleService', () => {
                 array.push(rolleBerechtigungsZuweisung);
                 rolleBerechtigungsZuweisungRepo.findAllRolleBerechtigungsZuweisungByRolle.mockResolvedValue(array);
                 mapperMock.map.mockReturnValue(rolleBerechtigungsZuweisung as unknown as Dictionary<unknown>);
-                const result: RolleBerechtigungsZuweisungDo<true>[] = await rolleService.getRolleBerechtigungsZuweisung(
-                    rolle,
-                );
+                const result: RolleBerechtigungsZuweisungDo<true>[] =
+                    await rolleService.getRolleBerechtigungsZuweisung(rolle);
                 expect(result).not.toBeNull();
             });
         });
@@ -157,9 +156,8 @@ describe('RolleService', () => {
                     DoFactory.createRolleBerechtigungsZuweisung(rolle, serviceProviderZugriffDo, true);
                 rolleBerechtigungsZuweisungRepo.findAllRolleBerechtigungsZuweisungByRolle.mockResolvedValue([]);
                 mapperMock.map.mockReturnValue(rolleBerechtigungsZuweisung as unknown as Dictionary<unknown>);
-                const result: RolleBerechtigungsZuweisungDo<true>[] = await rolleService.getRolleBerechtigungsZuweisung(
-                    rolle,
-                );
+                const result: RolleBerechtigungsZuweisungDo<true>[] =
+                    await rolleService.getRolleBerechtigungsZuweisung(rolle);
                 expect(result).toHaveLength(0);
             });
         });
@@ -277,18 +275,16 @@ describe('RolleService', () => {
         describe('when ServiceProviderZugriff exists', () => {
             it('should get a ServiceProviderZugriff ', async () => {
                 initServiceProviderTestSuccessEssentials();
-                const result: ServiceProviderZugriffDo<true>[] = await rolleService.getServiceProviderZugriffList(
-                    PERSON_ID,
-                );
+                const result: ServiceProviderZugriffDo<true>[] =
+                    await rolleService.getServiceProviderZugriffList(PERSON_ID);
                 expect(result).not.toBeNull();
             });
         });
         describe('when ServiceProviderZugriff does not exist', () => {
             it('should get an empty array ', async () => {
                 initServiceProviderTestFailEssentials();
-                const result: ServiceProviderZugriffDo<true>[] = await rolleService.getServiceProviderZugriffList(
-                    PERSON_ID,
-                );
+                const result: ServiceProviderZugriffDo<true>[] =
+                    await rolleService.getServiceProviderZugriffList(PERSON_ID);
                 expect(result).toHaveLength(0);
             });
         });
@@ -317,9 +313,8 @@ describe('RolleService', () => {
                 initServiceProviderTestSuccessEssentials();
                 const person: PersonDo<true> = DoFactory.createPerson(true);
                 personRepo.findByKeycloakUserId.mockResolvedValue(person);
-                const result: ServiceProviderDo<true>[] = await rolleService.getAvailableServiceProvidersByUserSub(
-                    PERSON_ID,
-                );
+                const result: ServiceProviderDo<true>[] =
+                    await rolleService.getAvailableServiceProvidersByUserSub(PERSON_ID);
                 expect(result).not.toBeNull();
             });
         });
@@ -327,9 +322,8 @@ describe('RolleService', () => {
             it('should get an empty array ', async () => {
                 initServiceProviderTestFailEssentials();
                 personRepo.findByKeycloakUserId.mockResolvedValue(null);
-                const result: ServiceProviderDo<true>[] = await rolleService.getAvailableServiceProvidersByUserSub(
-                    PERSON_ID,
-                );
+                const result: ServiceProviderDo<true>[] =
+                    await rolleService.getAvailableServiceProvidersByUserSub(PERSON_ID);
                 expect(result).toHaveLength(0);
             });
         });
@@ -341,9 +335,8 @@ describe('RolleService', () => {
                 initServiceProviderTestSuccessEssentials();
                 const person: PersonDo<true> = DoFactory.createPerson(true);
                 personRepo.findByKeycloakUserId.mockResolvedValue(person);
-                const result: GetServiceProviderInfoDo[] = await rolleService.getServiceProviderInfoListByUserSub(
-                    PERSON_ID,
-                );
+                const result: GetServiceProviderInfoDo[] =
+                    await rolleService.getServiceProviderInfoListByUserSub(PERSON_ID);
                 expect(result).not.toBeNull();
                 expect(result).not.toHaveLength(0);
             });
@@ -352,9 +345,8 @@ describe('RolleService', () => {
             it('should get an empty array ', async () => {
                 initServiceProviderTestFailEssentials();
                 personRepo.findByKeycloakUserId.mockResolvedValue(null);
-                const result: GetServiceProviderInfoDo[] = await rolleService.getServiceProviderInfoListByUserSub(
-                    PERSON_ID,
-                );
+                const result: GetServiceProviderInfoDo[] =
+                    await rolleService.getServiceProviderInfoListByUserSub(PERSON_ID);
                 expect(result).toHaveLength(0);
             });
         });
