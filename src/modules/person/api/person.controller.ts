@@ -105,9 +105,8 @@ export class PersonController {
         );
         personenkontextDto.personId = pathParams.personId;
 
-        const createdPersonenkontext: CreatedPersonenkontextDto = await this.personenkontextUc.createPersonenkontext(
-            personenkontextDto,
-        );
+        const createdPersonenkontext: CreatedPersonenkontextDto =
+            await this.personenkontextUc.createPersonenkontext(personenkontextDto);
         return this.mapper.map(createdPersonenkontext, CreatedPersonenkontextDto, PersonenkontextResponse);
     }
 

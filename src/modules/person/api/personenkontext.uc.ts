@@ -30,9 +30,8 @@ export class PersonenkontextUc {
             CreatePersonenkontextDto,
             PersonenkontextDo,
         );
-        const result: Result<PersonenkontextDo<true>> = await this.personenkontextService.createPersonenkontext(
-            personenkontextDo,
-        );
+        const result: Result<PersonenkontextDo<true>> =
+            await this.personenkontextService.createPersonenkontext(personenkontextDo);
         if (result.ok) {
             return this.mapper.map(result.value, PersonenkontextDo, CreatedPersonenkontextDto);
         }
