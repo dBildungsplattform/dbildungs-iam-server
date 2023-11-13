@@ -89,9 +89,8 @@ describe('PersonRollenZuweisungRepo', () => {
 
         describe('when not found by personId', () => {
             it('should return null', async () => {
-                const foundPersonRollenZuweisung: Option<PersonRollenZuweisungDo<true>[]> = await sut.findAllByPersonId(
-                    '1',
-                );
+                const foundPersonRollenZuweisung: Option<PersonRollenZuweisungDo<true>[]> =
+                    await sut.findAllByPersonId('1');
                 expect(foundPersonRollenZuweisung).toHaveLength(0);
             });
         });
