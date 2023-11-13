@@ -13,6 +13,7 @@ COPY src/ src/
 RUN npm run build
 
 FROM $BASE_IMAGE
+RUN apk --no-cache upgrade
 ENV NODE_ENV=prod
 
 WORKDIR /app
