@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Logger, Req, Res, Session, UseGuards } from '@nestjs/common';
+import { Controller, Get, Inject, Logger, Param, Patch, Req, Res, Session, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
     ApiInternalServerErrorResponse,
@@ -18,6 +18,10 @@ import { GetServiceProviderInfoDo } from '../../rolle/domain/get-service-provide
 import { AuthenticatedGuard, CurrentUser, LoginGuard, OIDC_CLIENT, User } from '../auth/index.js';
 import { ProviderService } from '../outbound/provider.service.js';
 import { RedirectQueryParams } from './redirect.query.params.js';
+import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
+import { PersonService } from '../outbound/person.service.js';
+import { PersonendatensatzResponse } from '../../person/api/personendatensatz.response.js';
+import { PagedResponse } from '../../../shared/paging/index.js';
 
 @ApiTags('frontend')
 @Controller({ path: 'frontend' })
@@ -32,6 +36,7 @@ export class FrontendController {
         configService: ConfigService<ServerConfig>,
         @Inject(OIDC_CLIENT) private client: Client,
         private providerService: ProviderService,
+        private personService: PersonService,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
         this.defaultLoginRedirect = frontendConfig.DEFAULT_LOGIN_REDIRECT;
@@ -99,5 +104,21 @@ export class FrontendController {
     @ApiOkResponse({ description: 'Returns the providers for the current user.' })
     public provider(@CurrentUser() user: User): Promise<GetServiceProviderInfoDo[]> {
         return this.providerService.listProviders(user);
+    }
+
+    @Get('personen')
+    @UseGuards(AuthenticatedGuard)
+    @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
+    @ApiOkResponse({ description: 'Returns all persons' })
+    public persons(): Promise<PagedResponse<PersonendatensatzResponse>> {
+        return this.personService.getAllPersons();
+    }
+
+    @Patch('personen/:personId/password')
+    @UseGuards(AuthenticatedGuard)
+    @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
+    @ApiOkResponse({ description: 'Resets password for given user' })
+    public passwordReset(@Param() params: PersonByIdParams): Promise<string> {
+        return this.personService.resetPassword(params.personId);
     }
 }
