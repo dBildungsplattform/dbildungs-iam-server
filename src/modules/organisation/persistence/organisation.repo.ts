@@ -9,7 +9,10 @@ import { OrganisationScope } from './organisation.scope.js';
 
 @Injectable()
 export class OrganisationRepo {
-    public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
+    public constructor(
+        private readonly em: EntityManager,
+        @Inject(getMapperToken()) private readonly mapper: Mapper,
+    ) {}
 
     private async create(organisationDo: OrganisationDo<false>): Promise<OrganisationDo<true>> {
         const organisation: OrganisationEntity = this.mapper.map(organisationDo, OrganisationDo, OrganisationEntity);
