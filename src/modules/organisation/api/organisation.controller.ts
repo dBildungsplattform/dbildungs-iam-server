@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, HttpException, HttpStatus, Inject, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Inject, Param, Post, Query, UseFilters } from '@nestjs/common';
 import { OrganisationUc } from './organisation.uc.js';
 import {
     ApiBadRequestResponse,
@@ -22,7 +22,9 @@ import { FindOrganisationDto } from './find-organisation.dto.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { Paged, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
+import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 
+@UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
 @Controller({ path: 'organisationen' })
 @Public()
