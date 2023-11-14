@@ -2,6 +2,7 @@ import { DynamicModule, Module } from '@nestjs/common';
 import winston, { LoggerOptions } from 'winston';
 import { ClassLogger } from './class-logger.js';
 import { ModuleLogger } from './module-logger.js';
+import { NestLogger } from './nest-logger.js';
 
 export const defaultLoggerOptions: LoggerOptions = {
     levels: winston.config.syslog.levels,
@@ -35,6 +36,7 @@ export class LoggerModule {
                 },
                 ModuleLogger,
                 ClassLogger,
+                NestLogger,
             ],
             exports: [ClassLogger],
             global: false,

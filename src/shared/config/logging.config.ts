@@ -19,11 +19,29 @@ export class LoggingConfig {
     @IsNotEmpty()
     public readonly ROLLEMODULE_LOG_LEVEL!: string;
 
+    //API Modules
+
+    @IsString()
+    @IsNotEmpty()
+    public readonly PERSONAPIMODULE_LOG_LEVEL!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    public readonly ORGANISATIONAPIMODULE_LOG_LEVEL!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    public readonly ROLLEAPIMODULE_LOG_LEVEL!: string;
+
     //Technical Modules
 
     @IsString()
     @IsNotEmpty()
-    public readonly KEYCLOAKMODULE_LOG_LEVEL!: string;
+    public readonly KEYCLOAKADMINISTRATIONMODULE_LOG_LEVEL!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    public readonly HEALTHMODULE_LOG_LEVEL!: string;
 
     //SPSH Modules
 
