@@ -1,4 +1,4 @@
-dbildungsIamContainer: "ghcr.io/dbildungsplattform/dbildungs-iam-server/feature/bff_to_helm:latest"
+dbildungsIamContainer: "ghcr.io/dbildungsplattform/dbildungs-iam-server:kc_healthprobe"
 
 dbildungsIamExternalPort: 80
 dbildungsIamCpuMax: 2
@@ -26,3 +26,6 @@ enableServiceMonitor: false
 keycloakEnabled: false
 dbildungs-iam-keycloak-dev:
   keycloakPublic: false
+
+# do we use a development redis?
+redisEnabled: false
