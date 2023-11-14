@@ -2,6 +2,7 @@ import winston, { format, Logger } from 'winston';
 import { ConfigService } from '@nestjs/config';
 import { Inject } from '@nestjs/common';
 import util from 'util';
+import { ServerConfig } from '../../shared/config/index.js';
 import { LoggingConfig } from '../../shared/config/logging.config.js';
 import { MODULE_NAME } from './module-name.symbol.js';
 
@@ -35,15 +36,14 @@ export class ModuleLogger {
 
     private moduleNameInternal: string;
 
-    public constructor(@Inject(MODULE_NAME) moduleName: string, configService: ConfigService<LoggingConfig>) {
+    public constructor(@Inject(MODULE_NAME) moduleName: string, configService: ConfigService<ServerConfig>) {
         this.moduleNameInternal = moduleName;
-        let level: Option<string> = configService.get<string>(`${moduleName}_LOG_LEVEL` as keyof LoggingConfig);
-
+        const loggerConfig: LoggingConfig = configService.getOrThrow<LoggingConfig>('LOGGING');
+        let level: Option<string> = loggerConfig[`${moduleName.toUpperCase()}_LOG_LEVEL` as keyof LoggingConfig];
         if (!level) {
-            level = configService.get<string>('DEFAULT_LOG_LEVEL', 'info');
+            level = loggerConfig.DEFAULT_LOG_LEVEL;
         }
-
-        const loggerFormat = format.combine(
+        const loggerFormat: winston.Logform.Format = format.combine(
             format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
             winston.format.ms(),
             format.colorize(),
@@ -58,6 +58,7 @@ export class ModuleLogger {
             handleRejections: true,
             transports: [new winston.transports.Console()], // transport needs to be newly created here to not share log level with other loggers
         });
+        this.logger.info(`Logger for module ${moduleName} initialized with log level ${level}`);
     }
 
     public getLogger(): Logger {

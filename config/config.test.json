@@ -30,12 +30,15 @@
         "USE_TLS": false
     },
     "LOGGING": {
-        "DEFAULT_LOG_LEVEL": "debug",
-        "PERSON_LOG_LEVEL": "debug",
-        "ORGANISATION_LOG_LEVEL":  "debug",
-        "ROLLE_LOG_LEVEL": "debug",
-        "KEYCLOAK_LOG_LEVEL":  "debug",
-        "BACKEND_FOR_FRONTEND_LOG_LEVEL": "debug",
-        "UI_BACKEND_LOG_LEVEL":  "debug"
+        "DEFAULT_LOG_LEVEL": "info",
+        "PERSONMODULE_LOG_LEVEL": "info",
+        "PERSONAPIMODULE_LOG_LEVEL": "info",
+        "ORGANISATIONMODULE_LOG_LEVEL":  "info",
+        "ORGANISATIONAPIMODULE_LOG_LEVEL": "info",
+        "ROLLEMODULE_LOG_LEVEL": "info",
+        "ROLLEAPIMODULE_LOG_LEVEL": "info",
+        "KEYCLOAKMANAGEMENTMODULE_LOG_LEVEL":  "info",
+        "BACKENDFORFRONTENDMODULE_LOG_LEVEL": "info",
+        "UIBACKENDMODULE_LOG_LEVEL":  "info"
     }
 }

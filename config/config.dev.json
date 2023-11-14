@@ -34,11 +34,14 @@
     },
     "LOGGING": {
         "DEFAULT_LOG_LEVEL": "debug",
-        "PERSON_LOG_LEVEL": "debug",
-        "ORGANISATION_LOG_LEVEL":  "debug",
-        "ROLLE_LOG_LEVEL": "debug",
-        "KEYCLOAK_LOG_LEVEL":  "debug",
-        "BACKEND_FOR_FRONTEND_LOG_LEVEL": "debug",
-        "UI_BACKEND_LOG_LEVEL":  "debug"
+        "PERSONMODULE_LOG_LEVEL": "debug",
+        "PERSONAPIMODULE_LOG_LEVEL": "debug",
+        "ORGANISATIONMODULE_LOG_LEVEL":  "debug",
+        "ORGANISATIONAPIMODULE_LOG_LEVEL": "debug",
+        "ROLLEMODULE_LOG_LEVEL": "debug",
+        "ROLLEAPIMODULE_LOG_LEVEL": "debug",
+        "KEYCLOAKMANAGEMENTMODULE_LOG_LEVEL":  "debug",
+        "BACKENDFORFRONTENDMODULE_LOG_LEVEL": "debug",
+        "UIBACKENDMODULE_LOG_LEVEL":  "debug"
     }
 }

@@ -10,30 +10,30 @@ export class LoggingConfig {
 
   @IsString()
   @IsNotEmpty()
-  public readonly PERSON_LOG_LEVEL!: string;
+  public readonly PERSONMODULE_LOG_LEVEL!: string;
 
   @IsString()
   @IsNotEmpty()
-  public readonly ORGANISATION_LOG_LEVEL!: string;
+  public readonly ORGANISATIONMODULE_LOG_LEVEL!: string;
 
   @IsString()
   @IsNotEmpty()
-  public readonly ROLLE_LOG_LEVEL!: string;
+  public readonly ROLLEMODULE_LOG_LEVEL!: string;
 
   //Technical Modules
 
   @IsString()
   @IsNotEmpty()
-  public readonly KEYCLOAK_LOG_LEVEL!: string;
+  public readonly KEYCLOAKMODULE_LOG_LEVEL!: string;
 
   //SPSH Modules
 
   @IsString()
   @IsNotEmpty()
-  public readonly BACKEND_FOR_FRONTEND_LOG_LEVEL!: string;
+  public readonly BACKENDFORFRONTENDMODULE_LOG_LEVEL!: string;
 
   @IsString()
   @IsNotEmpty()
-  public readonly UI_BACKEND_LOG_LEVEL!: string;
+  public readonly UIBACKENDMODULE_LOG_LEVEL!: string;
 
 }
