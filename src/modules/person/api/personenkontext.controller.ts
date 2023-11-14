@@ -89,9 +89,7 @@ export class PersonenkontextController {
             PersonenkontextQueryParams,
             FindPersonenkontextDto,
         );
-
         const result: Paged<PersonenkontextDto> = await this.personenkontextUc.findAll(findPersonenkontextDto);
-
         const responseItems: PersonenkontextdatensatzResponse[] = this.mapper.mapArray(
             result.items,
             PersonenkontextDto,
