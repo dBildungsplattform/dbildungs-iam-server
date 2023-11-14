@@ -3,6 +3,7 @@ export * from './db.config.js';
 export * from './env.config.js';
 export * from './frontend.config.js';
 export * from './host.config.js';
+export * from './data.config.js';
 export * from './json.config.js';
 export * from './keycloak.config.js';
 export * from './redis.config.js';

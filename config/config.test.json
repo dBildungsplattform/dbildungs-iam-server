@@ -29,5 +29,8 @@
         "USERNAME": "default",
         "PASSWORD": "password",
         "USE_TLS": false
+    },
+    "DATA": {
+        "ROOT_ORGANISATION_ID": "id-of-the-root-organisation"
     }
 }

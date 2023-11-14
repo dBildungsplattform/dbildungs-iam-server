@@ -7,6 +7,7 @@ import { AuthenticatedGuard, OIDCClientProvider, OpenIdConnectStrategy, SessionS
 import { BackendHttpService } from './outbound/backend-http.service.js';
 import { ProviderService } from './outbound/provider.service.js';
 import { PersonService } from './outbound/person.service.js';
+import { OrganisationService } from './outbound/organisation.service.js';
 @Module({
     imports: [HttpModule, PassportModule.register({ session: true, defaultStrategy: 'oidc', keepSessionInfo: true })],
     providers: [
@@ -14,6 +15,7 @@ import { PersonService } from './outbound/person.service.js';
         BackendHttpService,
         ProviderService,
         PersonService,
+        OrganisationService,
         OpenIdConnectStrategy,
         SessionSerializer,
         OIDCClientProvider,

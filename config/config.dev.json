@@ -33,5 +33,8 @@
         "USERNAME": "default",
         "PASSWORD": "password",
         "USE_TLS": false
+    },
+    "DATA": {
+        "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
     }
 }

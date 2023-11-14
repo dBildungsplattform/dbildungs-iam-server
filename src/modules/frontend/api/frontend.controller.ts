@@ -1,4 +1,17 @@
-import { Controller, Get, Inject, Logger, Param, Patch, Req, Res, Session, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Inject,
+    Logger,
+    Param,
+    Patch,
+    Post,
+    Req,
+    Res,
+    Session,
+    UseGuards,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
     ApiInternalServerErrorResponse,
@@ -22,6 +35,10 @@ import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 import { PersonService } from '../outbound/person.service.js';
 import { PersonendatensatzResponse } from '../../person/api/personendatensatz.response.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
+import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { OrganisationService } from '../outbound/organisation.service.js';
+import { OrganisationByIdParams } from '../../organisation/api/organisation-by-id.params.js';
+import { OrganisationByIdBodyParams } from '../../organisation/api/organisation-by-id.body.params.js';
 
 @ApiTags('frontend')
 @Controller({ path: 'frontend' })
@@ -37,6 +54,7 @@ export class FrontendController {
         @Inject(OIDC_CLIENT) private client: Client,
         private providerService: ProviderService,
         private personService: PersonService,
+        private organisationService: OrganisationService,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
         this.defaultLoginRedirect = frontendConfig.DEFAULT_LOGIN_REDIRECT;
@@ -120,5 +138,59 @@ export class FrontendController {
     @ApiOkResponse({ description: 'Resets password for given user' })
     public passwordReset(@Param() params: PersonByIdParams): Promise<string> {
         return this.personService.resetPassword(params.personId);
+    }
+
+    @Get('organisationen/root')
+    @UseGuards(AuthenticatedGuard)
+    @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
+    @ApiOkResponse({ description: 'Returns the root organisation' })
+    public getRootOrganisation(@CurrentUser() user: User): Promise<OrganisationResponse> {
+        return this.organisationService.getRoot(user);
+    }
+
+    @Get('organisationen/:organisationsId/verwaltet')
+    @UseGuards(AuthenticatedGuard)
+    @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
+    @ApiOkResponse({ description: 'Returns all administered organizations' })
+    public getOrganisationenVerwaltetVon(
+        @Param() params: OrganisationByIdParams,
+        @CurrentUser() user: User,
+    ): Promise<PagedResponse<OrganisationResponse>> {
+        return this.organisationService.findVerwaltetVon(params.organisationId, user);
+    }
+
+    @Get('organisationen/:organisationsId/zugehoerig')
+    @UseGuards(AuthenticatedGuard)
+    @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
+    @ApiOkResponse({ description: 'Returns all owned organizations' })
+    public getOrganisationenZugehoerigZu(
+        @Param() params: OrganisationByIdParams,
+        @CurrentUser() user: User,
+    ): Promise<PagedResponse<OrganisationResponse>> {
+        return this.organisationService.findZugehoerigZu(params.organisationId, user);
+    }
+
+    @Post('organisationen/:organisationsId/verwaltet')
+    @UseGuards(AuthenticatedGuard)
+    @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
+    @ApiOkResponse({ description: 'organisation was successfully updated' })
+    public setOrganisationVerwaltetVon(
+        @Param() params: OrganisationByIdParams,
+        @Body() body: OrganisationByIdBodyParams,
+        @CurrentUser() user: User,
+    ): Promise<void> {
+        return this.organisationService.setVerwaltetVon(params.organisationId, body.organisationId, user);
+    }
+
+    @Post('organisationen/:organisationsId/zugehoerig')
+    @UseGuards(AuthenticatedGuard)
+    @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
+    @ApiOkResponse({ description: 'organisation was successfully updated' })
+    public setOrganisationZugehoerigZu(
+        @Param() params: OrganisationByIdParams,
+        @Body() body: OrganisationByIdBodyParams,
+        @CurrentUser() user: User,
+    ): Promise<void> {
+        return this.organisationService.setZugehoerigZu(params.organisationId, body.organisationId, user);
     }
 }

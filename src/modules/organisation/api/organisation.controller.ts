@@ -22,6 +22,7 @@ import { FindOrganisationDto } from './find-organisation.dto.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { Paged, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
+import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js';
 
 @ApiTags('organisationen')
 @Controller({ path: 'organisationen' })
@@ -46,6 +47,21 @@ export class OrganisationController {
         );
         const createdOrganisation: CreatedOrganisationDto = await this.uc.createOrganisation(organisationDto);
         return this.mapper.map(createdOrganisation, CreatedOrganisationDto, OrganisationResponse);
+    }
+
+    @Get('root')
+    @ApiOkResponse({ description: 'The organization was successfully pulled.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get the organization.' })
+    @ApiNotFoundResponse({ description: 'The organization does not exist.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
+    public async getRootOrganisation(): Promise<OrganisationResponse> {
+        try {
+            const organisation: OrganisationResponse = await this.uc.findRootOrganisation();
+            return organisation;
+        } catch (error) {
+            throw new HttpException('Requested Entity does not exist', HttpStatus.NOT_FOUND);
+        }
     }
 
     @Get(':organisationId')
@@ -88,5 +104,67 @@ export class OrganisationController {
         const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
 
         return response;
+    }
+
+    @Get(':organisationId/verwaltet')
+    @ApiOkResponse({
+        description: 'The organizations were successfully returned.',
+        type: [OrganisationResponse],
+        headers: PagingHeadersObject,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get organizations.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get organizations.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
+    public async getVerwalteteOrganisationen(
+        @Param() params: OrganisationByIdParams,
+    ): Promise<PagedResponse<OrganisationResponse>> {
+        const organisations: Paged<OrganisationResponse> = await this.uc.findVerwaltetVon(params.organisationId);
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
+
+        return response;
+    }
+
+    @Post(':organisationsId/verwaltet')
+    @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
+    @ApiBadRequestResponse({ description: 'The organisation could not be modified.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
+    public async addVerwalteteOrganisation(
+        @Param() params: OrganisationByIdParams,
+        @Body() body: OrganisationByIdBodyParams,
+    ): Promise<void> {
+        await this.uc.setVerwaltetVon(params.organisationId, body.organisationId);
+    }
+
+    @Get(':organisationId/zugehoerig')
+    @ApiOkResponse({
+        description: 'The organizations were successfully returned.',
+        type: [OrganisationResponse],
+        headers: PagingHeadersObject,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get organizations.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get organizations.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
+    public async getZugehoerigeOrganisationen(
+        @Param() params: OrganisationByIdParams,
+    ): Promise<PagedResponse<OrganisationResponse>> {
+        const organisations: Paged<OrganisationResponse> = await this.uc.findZugehoerigZu(params.organisationId);
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
+
+        return response;
+    }
+
+    @Post(':organisationsId/zugehoerig')
+    @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
+    @ApiBadRequestResponse({ description: 'The organisation could not be modified.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
+    public async addZugehoerigeOrganisation(
+        @Param() params: OrganisationByIdParams,
+        @Body() body: OrganisationByIdBodyParams,
+    ): Promise<void> {
+        await this.uc.setZugehoerigZu(params.organisationId, body.organisationId);
     }
 }

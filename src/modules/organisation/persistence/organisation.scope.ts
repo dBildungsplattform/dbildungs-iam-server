@@ -1,4 +1,4 @@
-import { EntityName } from '@mikro-orm/core';
+import { EntityName, Reference } from '@mikro-orm/core';
 import { ScopeBase, ScopeOperator } from '../../../shared/persistence/index.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationsTyp } from '../domain/organisation.enum.js';
@@ -22,6 +22,28 @@ export class OrganisationScope extends ScopeBase<OrganisationEntity> {
                 typ: findProps.typ,
             },
             operator,
+        );
+
+        return this;
+    }
+
+    public findVerwalteteVon(parentOrganisationId: string): this {
+        this.findByInternal(
+            {
+                verwaltetVon: Reference.createFromPK(OrganisationEntity, parentOrganisationId),
+            },
+            ScopeOperator.AND,
+        );
+
+        return this;
+    }
+
+    public findZugehoerigeZu(parentOrganisationId: string): this {
+        this.findByInternal(
+            {
+                zugehoerigZu: Reference.createFromPK(OrganisationEntity, parentOrganisationId),
+            },
+            ScopeOperator.AND,
         );
 
         return this;

@@ -3,6 +3,12 @@ import { OrganisationsTyp } from '../domain/organisation.enum.js';
 
 export class CreateOrganisationDto {
     @AutoMap()
+    public readonly verwaltetVon?: string;
+
+    @AutoMap()
+    public readonly zugehoerigZu?: string;
+
+    @AutoMap()
     public readonly kennung!: string;
 
     @AutoMap()
