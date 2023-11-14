@@ -1,7 +1,21 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Post, Param, HttpException, HttpStatus, Query, HttpCode } from '@nestjs/common';
 import {
+    Body,
+    Controller,
+    Get,
+    HttpCode,
+    HttpException,
+    HttpStatus,
+    Inject,
+    Param,
+    Patch,
+    Post,
+    Query,
+    UseInterceptors,
+} from '@nestjs/common';
+import {
+    ApiAcceptedResponse,
     ApiBadRequestResponse,
     ApiCreatedResponse,
     ApiForbiddenResponse,
@@ -11,25 +25,28 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Public } from 'nest-keycloak-connect';
+import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
 import { PersonUc } from '../api/person.uc.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
-import { CreatePersonDto } from '../domain/create-person.dto.js';
-import { PersonByIdParams } from './person-by-id.param.js';
-import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
-import { PersonenQueryParams } from './personen-query.param.js';
-import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { CreatePersonDto } from './create-person.dto.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
+import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
+import { PersonByIdParams } from './person-by-id.param.js';
+import { PersonenQueryParams } from './personen-query.param.js';
+import { PersonendatensatzDto } from './personendatensatz.dto.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
+import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
-import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
-import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
-import { Public } from 'nest-keycloak-connect';
 
-@ApiTags('person')
-@Controller({ path: 'person' })
+@ApiTags('personen')
+@Controller({ path: 'personen' })
 @Public()
 export class PersonController {
     public constructor(
@@ -50,7 +67,7 @@ export class PersonController {
     }
 
     @Get(':personId')
-    @ApiOkResponse({ description: 'The person was successfully returned.' })
+    @ApiOkResponse({ description: 'The person was successfully returned.', type: PersonendatensatzResponse })
     @ApiBadRequestResponse({ description: 'Person ID is required' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the person.' })
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
@@ -58,8 +75,13 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the person.' })
     public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonendatensatzResponse | HttpException> {
         try {
-            const person: PersonendatensatzResponse = await this.personUc.findPersonById(params.personId);
-            return person;
+            const dto: PersonendatensatzDto = await this.personUc.findPersonById(params.personId);
+            const response: PersonendatensatzResponse = this.mapper.map(
+                dto,
+                PersonendatensatzDto,
+                PersonendatensatzResponse,
+            );
+            return response;
         } catch (error) {
             throw new HttpException('Requested entity does not exist', HttpStatus.NOT_FOUND);
         }
@@ -83,14 +105,13 @@ export class PersonController {
         );
         personenkontextDto.personId = pathParams.personId;
 
-        const createdPersonenkontext: CreatedPersonenkontextDto = await this.personenkontextUc.createPersonenkontext(
-            personenkontextDto,
-        );
+        const createdPersonenkontext: CreatedPersonenkontextDto =
+            await this.personenkontextUc.createPersonenkontext(personenkontextDto);
         return this.mapper.map(createdPersonenkontext, CreatedPersonenkontextDto, PersonenkontextResponse);
     }
 
     @Get(':personId/personenkontexte')
-    @ApiOkResponse({ description: 'The personenkontexte were successfully pulled.' })
+    @ApiOkResponse({ description: 'The personenkontexte were successfully pulled.', headers: PagingHeadersObject })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get personenkontexte.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get personenkontexte.' })
     @ApiNotFoundResponse({ description: 'No personenkontexte were found.' })
@@ -98,7 +119,7 @@ export class PersonController {
     public async findPersonenkontexte(
         @Param() pathParams: PersonByIdParams,
         @Query() queryParams: PersonenkontextQueryParams,
-    ): Promise<PersonenkontextResponse[]> {
+    ): Promise<PagedResponse<PersonenkontextResponse>> {
         const findPersonenkontextDto: FindPersonenkontextDto = this.mapper.map(
             queryParams,
             PersonenkontextQueryParams,
@@ -107,16 +128,27 @@ export class PersonController {
 
         findPersonenkontextDto.personId = pathParams.personId;
 
-        const personenkontexte: PersonenkontextResponse[] = await this.personenkontextUc.findAll(
-            findPersonenkontextDto,
+        const personenkontextDtos: Paged<PersonenkontextDto> =
+            await this.personenkontextUc.findAll(findPersonenkontextDto);
+        // AI next 5 lines
+        const responseItems: PersonenkontextResponse[] = this.mapper.mapArray(
+            personenkontextDtos.items,
+            PersonenkontextDto,
+            PersonenkontextResponse,
         );
 
-        return personenkontexte;
+        return new PagedResponse({
+            items: responseItems,
+            offset: personenkontextDtos.offset,
+            limit: personenkontextDtos.limit,
+            total: personenkontextDtos.total,
+        });
     }
 
     @Get()
     @ApiOkResponse({
-        description: 'The persons were successfully returned.',
+        description:
+            'The persons were successfully returned. WARNING: This endpoint returns all persons as default when no paging parameters were set.',
         type: [PersonendatensatzResponse],
         headers: PagingHeadersObject,
     })
@@ -126,14 +158,29 @@ export class PersonController {
     public async findPersons(
         @Query() queryParams: PersonenQueryParams,
     ): Promise<PagedResponse<PersonendatensatzResponse>> {
-        const personDatensatzDTO: FindPersonendatensatzDto = this.mapper.map(
+        const findDto: FindPersonendatensatzDto = this.mapper.map(
             queryParams,
             PersonenQueryParams,
             FindPersonendatensatzDto,
         );
-        const persons: Paged<PersonendatensatzResponse> = await this.personUc.findAll(personDatensatzDTO);
-        const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse(persons);
+        const pagedDtos: Paged<PersonendatensatzDto> = await this.personUc.findAll(findDto);
+        const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse({
+            offset: pagedDtos.offset,
+            limit: pagedDtos.limit,
+            total: pagedDtos.total,
+            items: this.mapper.mapArray(pagedDtos.items, PersonendatensatzDto, PersonendatensatzResponse),
+        });
 
         return response;
+    }
+
+    @Patch(':personId/password')
+    @HttpCode(HttpStatus.ACCEPTED)
+    @ApiAcceptedResponse({ description: 'Password for person was successfully reset.' })
+    @ApiNotFoundResponse({ description: 'The person does not exist.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
+    @UseInterceptors(ResultInterceptor)
+    public async resetPasswordByPersonId(@Param() params: PersonByIdParams): Promise<Result<string> | HttpException> {
+        return this.personUc.resetPassword(params.personId);
     }
 }

@@ -1,19 +1,20 @@
 /* eslint-disable no-console */
-import secureSession from '@fastify/secure-session';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
+import RedisStore from 'connect-redis';
+import session from 'express-session';
+import passport from 'passport';
+import { RedisClientType, createClient } from 'redis';
 
-import { FrontendConfig, ServerConfig } from '../shared/config/index.js';
+import { FrontendConfig, RedisConfig, ServerConfig } from '../shared/config/index.js';
 import { GlobalValidationPipe } from '../shared/validation/index.js';
 import { BackendForFrontendModule } from './backend-for-frontend.module.js';
 
 async function bootstrap(): Promise<void> {
-    const app: NestFastifyApplication = await NestFactory.create<NestFastifyApplication>(
-        BackendForFrontendModule,
-        new FastifyAdapter(),
-    );
+    const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(BackendForFrontendModule);
+
     app.useGlobalPipes(new GlobalValidationPipe());
     const swagger: Omit<OpenAPIObject, 'paths'> = new DocumentBuilder()
         .setTitle('dBildungs IAM')
@@ -28,14 +29,45 @@ async function bootstrap(): Promise<void> {
 
     const configService: ConfigService<ServerConfig, true> = app.get(ConfigService<ServerConfig, true>);
     const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
+    const redisConfig: RedisConfig = configService.getOrThrow<RedisConfig>('REDIS');
 
-    await app.register(secureSession, {
-        key: Buffer.from(frontendConfig.SESSION_KEY, 'hex'),
-        cookie: {
-            path: '/',
-            secure: frontendConfig.SECURE_COOKIE,
+    if (frontendConfig.TRUST_PROXY !== undefined) {
+        app.set('trust proxy', frontendConfig.TRUST_PROXY);
+    }
+
+    const redisClient: RedisClientType = createClient({
+        username: redisConfig.USERNAME,
+        password: redisConfig.PASSWORD,
+        socket: {
+            host: redisConfig.HOST,
+            port: redisConfig.PORT,
+            tls: redisConfig.USE_TLS,
+            key: redisConfig.PRIVATE_KEY,
+            cert: redisConfig.CERTIFICATE_AUTHORITIES,
         },
     });
+    await redisClient.connect();
+
+    const redisStore: RedisStore = new RedisStore({
+        client: redisClient,
+    });
+
+    app.use(
+        session({
+            store: redisStore,
+            resave: false,
+            saveUninitialized: false,
+            rolling: true,
+            cookie: {
+                maxAge: frontendConfig.SESSION_TTL_MS,
+                secure: frontendConfig.SECURE_COOKIE,
+            },
+            secret: frontendConfig.SESSION_SECRET,
+        }),
+    );
+
+    app.use(passport.initialize());
+    app.use(passport.session());
 
     const port: number = frontendConfig.PORT;
     await app.listen(port);

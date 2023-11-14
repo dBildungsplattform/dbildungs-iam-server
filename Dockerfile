@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=node:20.5.1-alpine3.17
+ARG BASE_IMAGE=node:21.1-alpine3.18
 FROM $BASE_IMAGE as deployment
 
 WORKDIR /app
@@ -13,6 +13,7 @@ COPY src/ src/
 RUN npm run build
 
 FROM $BASE_IMAGE
+RUN apk --no-cache upgrade
 ENV NODE_ENV=prod
 
 WORKDIR /app

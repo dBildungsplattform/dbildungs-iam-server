@@ -33,6 +33,10 @@ describe('configloader', () => {
                     PORT: 8081,
                     BACKEND_ADDRESS: 'http://localhost:8080',
                     SECURE_COOKIE: false,
+                    SESSION_TTL_MS: 1000,
+                    OIDC_CALLBACK_URL: 'http://localhost:9091/api/frontend/login',
+                    DEFAULT_LOGIN_REDIRECT: '/login?done',
+                    LOGOUT_REDIRECT: '/logout',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -46,12 +50,19 @@ describe('configloader', () => {
                     REALM_NAME: 'schulportal',
                     CLIENT_ID: 'schulportal',
                 },
+                REDIS: {
+                    HOST: 'localhost',
+                    PORT: 6379,
+                    USERNAME: 'default',
+                    USE_TLS: false,
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
                 DB: { SECRET: 'SuperSecretSecret' },
                 KEYCLOAK: { ADMIN_SECRET: 'AdminClientSecret', CLIENT_SECRET: 'ClientSecret' },
-                FRONTEND: { SESSION_KEY: '0000000000000000000000000000000000000000000000000000000000000000' },
+                FRONTEND: { SESSION_SECRET: 'SessionSecret' },
+                REDIS: { PASSWORD: 'password' },
             };
 
             beforeAll(() => {

@@ -10,7 +10,10 @@ import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.
 
 @Injectable()
 export class RolleRechtRepo {
-    public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
+    public constructor(
+        private readonly em: EntityManager,
+        @Inject(getMapperToken()) private readonly mapper: Mapper,
+    ) {}
 
     public async findAllRolleRecht(
         rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<boolean>,

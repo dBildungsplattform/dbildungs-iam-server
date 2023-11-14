@@ -1,7 +1,7 @@
 import { AutoMap } from '@automapper/classes';
 import { DoBase } from '../../../shared/types/index.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { Jahrgangsstufe, Personenstatus, Rolle } from './personenkontext.enums.js';
+import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from './personenkontext.enums.js';
 
 export class PersonenkontextDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
     /**
@@ -10,14 +10,14 @@ export class PersonenkontextDo<WasPersisted extends boolean> implements DoBase<W
     // eslint-disable-next-line @typescript-eslint/no-useless-constructor, @typescript-eslint/no-empty-function
     public constructor() {}
 
+    @AutoMap(() => String)
+    public id!: Persisted<string, WasPersisted>;
+
     @AutoMap(() => Date)
     public createdAt!: Persisted<Date, WasPersisted>;
 
     @AutoMap(() => Date)
     public updatedAt!: Persisted<Date, WasPersisted>;
-
-    @AutoMap(() => String)
-    public id!: Persisted<string, WasPersisted>;
 
     @AutoMap()
     public personId!: string;
@@ -28,22 +28,22 @@ export class PersonenkontextDo<WasPersisted extends boolean> implements DoBase<W
     @AutoMap()
     public mandant!: string;
 
-    @AutoMap()
+    @AutoMap(() => OrganisationDo)
     public organisation!: OrganisationDo<true>;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public rolle!: Rolle;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public personenstatus?: Personenstatus;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public jahrgangsstufe?: Jahrgangsstufe;
 
-    @AutoMap()
-    public sichtfreigabe?: boolean = false;
+    @AutoMap(() => String)
+    public sichtfreigabe?: SichtfreigabeType;
 
-    @AutoMap()
+    @AutoMap(() => Date)
     public loeschungZeitpunkt?: Date;
 
     @AutoMap()

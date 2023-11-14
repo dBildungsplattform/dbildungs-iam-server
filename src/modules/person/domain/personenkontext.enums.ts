@@ -23,3 +23,8 @@ export enum Rolle {
     ORGANISATIONSLEITUNG = 'LEIT',
     SYSTEMADMINISTRATOR = 'SYSADMIN',
 }
+
+export enum SichtfreigabeType {
+    JA = 'ja',
+    NEIN = 'nein',
+}

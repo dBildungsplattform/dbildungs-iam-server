@@ -3,13 +3,19 @@ import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DatabaseTestModule,
+    DoFactory,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
+import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
 import { PersonScope } from './person.scope.js';
-import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 
 describe('PersonRepo', () => {
     let module: TestingModule;
@@ -28,11 +34,11 @@ describe('PersonRepo', () => {
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
         await DatabaseTestModule.setupDatabase(orm);
-    }, 30 * 1_000);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await module.close();
-    }, 30 * 1_000);
+    });
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
@@ -156,9 +162,9 @@ describe('PersonRepo', () => {
             it('should return all matching persons', async () => {
                 const props: Partial<PersonDo<false>> = {
                     referrer: 'referrer_value',
-                    firstName: 'first name',
-                    lastName: 'last name',
-                    isInformationBlocked: false,
+                    vorname: 'first name',
+                    familienname: 'last name',
+                    auskunftssperre: false,
                 };
                 const personDo1: PersonDo<false> = DoFactory.createPerson(false, props);
                 const personDo2: PersonDo<false> = DoFactory.createPerson(false, props);
@@ -169,8 +175,8 @@ describe('PersonRepo', () => {
                 const [result]: Counted<PersonDo<true>> = await sut.findBy(
                     new PersonScope().findBy(
                         {
-                            firstName: props.firstName,
-                            lastName: props.lastName,
+                            vorname: props.vorname,
+                            familienname: props.familienname,
                         },
                         ScopeOperator.AND,
                     ),

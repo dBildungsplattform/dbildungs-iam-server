@@ -1,20 +1,26 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Mapper } from '@automapper/core';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { getMapperToken } from '@automapper/nestjs';
+import { EntityManager, MikroORM } from '@mikro-orm/core';
+import { Test, TestingModule } from '@nestjs/testing';
+import {
+    ConfigTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DatabaseTestModule,
+    DoFactory,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
+import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuweisung.do.js';
+import { RolleRechtDo } from '../domain/rolle-recht.do.js';
+import { RolleDo } from '../domain/rolle.do.js';
 import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
 import { ServiceProviderDo } from '../domain/service-provider.do.js';
-import { ServiceProviderEntity } from '../entity/service-provider.entity.js';
 import { ServiceProviderZugriffEntity } from '../entity/service-provider-zugriff.entity.js';
-import { ServiceProviderZugriffMapperProfile } from '../mapper/service-provider-zugriff.mapper.profile.js';
-import { RolleRechtRepo } from './rolle-recht.repo.js';
+import { ServiceProviderEntity } from '../entity/service-provider.entity.js';
 import { RolleBerechtigungsZuweisungMapperProfile } from '../mapper/rolle-berechtigungs-zuweisung.mapper.profile.js';
-import { RolleRechtDo } from '../domain/rolle-recht.do.js';
-import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuweisung.do.js';
-import { RolleDo } from '../domain/rolle.do.js';
-import { ServiceProviderMapperProfile } from '../mapper/service-provider.mapper.profile.js';
 import { RolleRechtMapperProfile } from '../mapper/rolle-recht.mapper.profile.js';
+import { ServiceProviderZugriffMapperProfile } from '../mapper/service-provider-zugriff.mapper.profile.js';
+import { ServiceProviderMapperProfile } from '../mapper/service-provider.mapper.profile.js';
+import { RolleRechtRepo } from './rolle-recht.repo.js';
 
 describe('RolleRechtRepo', () => {
     let module: TestingModule;
@@ -39,11 +45,11 @@ describe('RolleRechtRepo', () => {
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
         await DatabaseTestModule.setupDatabase(orm);
-    }, 30 * 1_000);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await module.close();
-    }, 30 * 1_000);
+    });
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
@@ -82,9 +88,8 @@ describe('RolleRechtRepo', () => {
                 const rolleBerechtigungsZuweisungDo: RolleBerechtigungsZuweisungDo<false> =
                     DoFactory.createRolleBerechtigungsZuweisung(rolleDo, serviceProviderZugriffDo, false);
 
-                const foundRolleRecht: RolleRechtDo<true>[] = await sut.findAllRolleRecht(
-                    rolleBerechtigungsZuweisungDo,
-                );
+                const foundRolleRecht: RolleRechtDo<true>[] =
+                    await sut.findAllRolleRecht(rolleBerechtigungsZuweisungDo);
                 expect(foundRolleRecht).not.toBeNull();
                 expect(foundRolleRecht).toHaveLength(1);
             });
@@ -97,9 +102,8 @@ describe('RolleRechtRepo', () => {
                     DoFactory.createServiceProviderZugriff(true);
                 const rolleBerechtigungsZuweisungDo: RolleBerechtigungsZuweisungDo<false> =
                     DoFactory.createRolleBerechtigungsZuweisung(rolleDo, serviceProviderZugriffDo, false);
-                const foundRolleRecht: Option<RolleRechtDo<true>[]> = await sut.findAllRolleRecht(
-                    rolleBerechtigungsZuweisungDo,
-                );
+                const foundRolleRecht: Option<RolleRechtDo<true>[]> =
+                    await sut.findAllRolleRecht(rolleBerechtigungsZuweisungDo);
                 expect(foundRolleRecht).toHaveLength(0);
             });
         });

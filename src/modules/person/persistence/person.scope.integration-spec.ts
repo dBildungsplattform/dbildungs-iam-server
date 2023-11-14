@@ -3,12 +3,18 @@ import { getMapperToken } from '@automapper/nestjs';
 import { MikroORM } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DatabaseTestModule,
+    DoFactory,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
+import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
-import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 
 describe('PersonScope', () => {
     let module: TestingModule;
@@ -26,11 +32,11 @@ describe('PersonScope', () => {
         mapper = module.get(getMapperToken());
 
         await DatabaseTestModule.setupDatabase(orm);
-    }, 30 * 1_000);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await module.close();
-    }, 30 * 1_000);
+    });
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
@@ -40,7 +46,7 @@ describe('PersonScope', () => {
         describe('when filtering for persons', () => {
             beforeEach(async () => {
                 const persons: PersonEntity[] = Array.from({ length: 110 }, (_v: unknown, i: number) =>
-                    mapper.map(DoFactory.createPerson(false, { firstName: `John #${i}` }), PersonDo, PersonEntity),
+                    mapper.map(DoFactory.createPerson(false, { vorname: `John #${i}` }), PersonDo, PersonEntity),
                 );
 
                 await em.persistAndFlush(persons);
@@ -48,8 +54,8 @@ describe('PersonScope', () => {
 
             it('should return found persons', async () => {
                 const scope: PersonScope = new PersonScope()
-                    .findBy({ firstName: new RegExp('John #1') })
-                    .sortBy('firstName', ScopeOrder.ASC)
+                    .findBy({ vorname: new RegExp('John #1') })
+                    .sortBy('vorname', ScopeOrder.ASC)
                     .paged(10, 10);
                 const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
 
