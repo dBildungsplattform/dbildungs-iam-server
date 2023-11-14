@@ -31,7 +31,10 @@ function wrapAxiosError<T>(observable: Observable<T>): Observable<T> {
 export class BackendHttpService {
     private backend: string;
 
-    public constructor(private httpService: HttpService, config: ConfigService<ServerConfig>) {
+    public constructor(
+        private httpService: HttpService,
+        config: ConfigService<ServerConfig>,
+    ) {
         this.backend = config.getOrThrow<FrontendConfig>('FRONTEND').BACKEND_ADDRESS;
     }
 

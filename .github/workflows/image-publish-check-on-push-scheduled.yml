@@ -56,7 +56,7 @@ jobs:
     with:
       image_name: "dbildungs-iam-server"
       run_trivy_scan: true
-      tag_generation: ${{ github.ref_name == 'main' && 'commit_hash' || 'ticket_from_branch' }}
+      tag_generation: ${{ ( github.ref_name == 'main' || startsWith(github.ref_name,'dependabot/') )  && 'commit_hash' || 'ticket_from_branch' }}
       add_latest_tag: ${{ github.ref_name == 'main' }}
       container_registry: "ghcr.io"
       fail_on_vulnerabilites: true
