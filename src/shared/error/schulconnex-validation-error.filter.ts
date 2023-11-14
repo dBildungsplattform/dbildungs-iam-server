@@ -51,7 +51,7 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
 
             schulConnexError.subCode = errorSubCode;
             schulConnexError.title = errorDescription.title;
-            schulConnexError.description = ` ${errorDescription.description} '${property}'`;
+            schulConnexError.description = `${errorDescription.description} '${property}'`;
         }
 
         return schulConnexError;
@@ -82,7 +82,7 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
     private getPropertyPath(validationError: ValidationError): string {
         let property: string = validationError.property;
 
-        while (validationError?.children?.length && validationError?.children[0]) {
+        if (validationError?.children?.length && validationError?.children[0]) {
             const validationErrorChild: ValidationError = validationError.children[0];
             property = `${property}.${validationErrorChild.property}`;
         }
@@ -91,7 +91,7 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
     }
 
     private determineErrorCode(validationError: ValidationError): string {
-        if (validationError.constraints?.['isMaxLength'] || validationError.constraints?.['isMinLength']) {
+        if (validationError.constraints?.['isMinLength']) {
             return '07';
         }
 
@@ -118,7 +118,6 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
             return '03';
         }
 
-        // Default error code if no match is found
         return '04';
     }
 
@@ -154,7 +153,6 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
                     description: 'Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden',
                 };
 
-            // Default error message if no match is found
             default:
                 return {
                     title: 'JSON-Struktur ist ungültig',
