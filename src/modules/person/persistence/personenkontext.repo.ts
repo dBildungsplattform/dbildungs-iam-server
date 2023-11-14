@@ -5,10 +5,14 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
+import { PersonenkontextScope } from './personenkontext.scope.js';
 
 @Injectable()
 export class PersonenkontextRepo {
-    public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
+    public constructor(
+        private readonly em: EntityManager,
+        @Inject(getMapperToken()) private readonly mapper: Mapper,
+    ) {}
 
     public async save(personenkontextDo: PersonenkontextDo<boolean>): Promise<Option<PersonenkontextDo<true>>> {
         if (personenkontextDo.id) {
@@ -17,32 +21,11 @@ export class PersonenkontextRepo {
         return this.create(personenkontextDo);
     }
 
-    // TODO refactor after EW-561 is done, use Scope
-    public async findAll(personenkontextDo: PersonenkontextDo<false>): Promise<PersonenkontextDo<true>[]> {
-        const query: Record<string, unknown> = {};
+    public async findBy(scope: PersonenkontextScope): Promise<Counted<PersonenkontextDo<true>>> {
+        const [entities, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(this.em);
+        const dos: PersonenkontextDo<true>[] = this.mapper.mapArray(entities, PersonenkontextEntity, PersonenkontextDo);
 
-        query['personId'] = personenkontextDo.personId;
-
-        if (personenkontextDo.referrer) {
-            query['referrer'] = personenkontextDo.referrer;
-        }
-
-        if (personenkontextDo.rolle) {
-            query['rolle'] = personenkontextDo.rolle;
-        }
-
-        if (personenkontextDo.personenstatus) {
-            query['personenstatus'] = personenkontextDo.personenstatus;
-        }
-
-        if (personenkontextDo.sichtfreigabe !== undefined) {
-            query['sichtfreigabe'] = personenkontextDo.sichtfreigabe;
-        }
-
-        const result: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, query);
-        return result.map((person: PersonenkontextEntity) =>
-            this.mapper.map(person, PersonenkontextEntity, PersonenkontextDo),
-        );
+        return [dos, total];
     }
 
     public async findById(id: string): Promise<Option<PersonenkontextDo<true>>> {

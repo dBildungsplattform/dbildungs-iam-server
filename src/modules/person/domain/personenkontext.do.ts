@@ -1,7 +1,7 @@
 import { AutoMap } from '@automapper/classes';
 import { DoBase } from '../../../shared/types/index.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { Jahrgangsstufe, Personenstatus, Rolle } from './personenkontext.enums.js';
+import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from './personenkontext.enums.js';
 
 export class PersonenkontextDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
     /**
@@ -40,8 +40,8 @@ export class PersonenkontextDo<WasPersisted extends boolean> implements DoBase<W
     @AutoMap(() => String)
     public jahrgangsstufe?: Jahrgangsstufe;
 
-    @AutoMap()
-    public sichtfreigabe?: boolean = false;
+    @AutoMap(() => String)
+    public sichtfreigabe?: SichtfreigabeType;
 
     @AutoMap(() => Date)
     public loeschungZeitpunkt?: Date;
