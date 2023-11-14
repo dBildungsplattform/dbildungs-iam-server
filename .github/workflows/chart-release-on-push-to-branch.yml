@@ -25,35 +25,20 @@ jobs:
       version_generation: ticket_from_branch_short_hash
   
   branch_meta:
-    runs-on: ubuntu-latest
-    outputs:
-      branch: ${{ steps.extract_branch_meta.outputs.branch }}
-      sha: ${{ steps.extract_branch_meta.outputs.sha }}
-    steps:
-      - name: Extract branch meta
-        shell: bash
-        id: extract_branch_meta
-        run: |
-          if [ "${{ github.event_name }}" == 'pull_request' ]; then
-            echo "branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
-            echo "sha=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
-          else
-            echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
-            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
-          fi
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@main
+
+  create_branch_identifier:
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/branch-to-namespace.yml@main
+    with:
+      branch: ${{ needs.branch_meta.outputs.branch }}
 
   deploy:
     needs:
       - branch_meta
+      - create_branch_identifier
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@main
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
+      namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
     secrets:
       DEV_KUBE_CONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
-
-  deploy-successful:
-    needs:
-      - deploy
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "deploy was successful"
