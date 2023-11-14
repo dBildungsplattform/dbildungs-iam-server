@@ -1,28 +1,40 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { LoginService } from '../ui-backend/domain/login.service.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock } from '@golevelup/ts-jest';
 import { BaseClient } from 'openid-client';
 import { KeycloakHealthIndicator } from './keycloak.health-indicator.js';
 import { HealthIndicatorResult, HealthIndicatorStatus } from '@nestjs/terminus';
+import { ConfigService } from '@nestjs/config';
+import { ServerConfig } from '../../shared/config/index.js';
+
+let error: Error | null | undefined = undefined;
+
+jest.mock('../frontend/auth/index.js', () => {
+    return {
+        tryGetClient: function (): Promise<BaseClient> {
+            if (error === undefined) {
+                return Promise.resolve(createMock<BaseClient>());
+            } else {
+                return Promise.reject(error);
+            }
+        },
+    };
+});
 
 describe('Keycloak health indicator', () => {
-    const loginService: DeepMocked<LoginService> = createMock<LoginService>();
     let module: TestingModule;
     beforeAll(async () => {
         module = await Test.createTestingModule({
             providers: [
-                {
-                    provide: LoginService,
-                    useValue: loginService,
-                },
                 KeycloakHealthIndicator,
+                {
+                    provide: ConfigService<ServerConfig>,
+                    useValue: createMock<ConfigService<ServerConfig>>(),
+                },
             ],
         }).compile();
     });
 
     it('should report a successful acquisition of a KC-Client as the service being up', async () => {
-        loginService.createKcClient.mockResolvedValueOnce(createMock<BaseClient>());
-
         const kchi: KeycloakHealthIndicator = module.get<KeycloakHealthIndicator>(KeycloakHealthIndicator);
 
         const checkResult: HealthIndicatorResult = await kchi.check();
@@ -31,8 +43,7 @@ describe('Keycloak health indicator', () => {
     });
 
     it('should report a failed acquisition of a KC-Client as the service being down and showing the error message in the status', async () => {
-        loginService.createKcClient.mockRejectedValueOnce(new Error('Because reasons'));
-
+        error = new Error('Because reasons');
         const kchi: KeycloakHealthIndicator = module.get<KeycloakHealthIndicator>(KeycloakHealthIndicator);
 
         const checkResult: { status: HealthIndicatorStatus; [options: string]: string } | undefined = await kchi
@@ -41,11 +52,11 @@ describe('Keycloak health indicator', () => {
         expect(checkResult).toBeDefined();
         expect(checkResult?.status).toBe('down');
         expect(checkResult?.['message']).toBe('Keycloak does not seem to be up: Because reasons');
+        error = undefined;
     });
 
     it('should report a failed acquisition of a KC-Client as the service being down and showing the error message in the status', async () => {
-        loginService.createKcClient.mockRejectedValueOnce({});
-
+        error = null;
         const kchi: KeycloakHealthIndicator = module.get<KeycloakHealthIndicator>(KeycloakHealthIndicator);
 
         const checkResult: { status: HealthIndicatorStatus; [options: string]: string } | undefined = await kchi
@@ -56,5 +67,6 @@ describe('Keycloak health indicator', () => {
         expect(checkResult?.['message']).toBe(
             'Keycloak does not seem to be up and there is no error message available',
         );
+        error = undefined;
     });
 });

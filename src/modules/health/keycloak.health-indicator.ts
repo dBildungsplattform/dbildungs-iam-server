@@ -1,10 +1,12 @@
 import { HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
 import { Injectable } from '@nestjs/common';
-import { LoginService } from '../ui-backend/domain/login.service.js';
+import { ConfigService } from '@nestjs/config';
+import { tryGetClient } from '../frontend/auth/index.js';
+import { ServerConfig } from '../../shared/config/index.js';
 
 @Injectable()
 export class KeycloakHealthIndicator extends HealthIndicator {
-    public constructor(private loginService: LoginService) {
+    public constructor(private configService: ConfigService<ServerConfig>) {
         super();
     }
 
@@ -12,7 +14,7 @@ export class KeycloakHealthIndicator extends HealthIndicator {
         const HealthCheckKey: string = 'Keycloak';
 
         try {
-            await this.loginService.createKcClient();
+            await tryGetClient(this.configService);
 
             return super.getStatus(HealthCheckKey, true);
         } catch (e: unknown) {

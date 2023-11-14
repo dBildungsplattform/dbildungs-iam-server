@@ -15,7 +15,6 @@ const commonConfig = {
             },
         ],
     },
-    testTimeout: 10000
 };
 
 /** @type {import('jest').Config} */
