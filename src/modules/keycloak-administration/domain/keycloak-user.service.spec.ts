@@ -9,12 +9,15 @@ import { KeycloakAdministrationService } from './keycloak-admin-client.service.j
 import { UserMapperProfile } from './keycloak-client/user.mapper.profile.js';
 import { KeycloakUserService, type FindUserFilter } from './keycloak-user.service.js';
 import { UserDo } from './user.do.js';
+import { PersonService } from '../../person/domain/person.service.js';
+import { PersonDo } from '../../person/domain/person.do.js';
 
 describe('KeycloakUserService', () => {
     let module: TestingModule;
     let service: KeycloakUserService;
     let adminService: DeepMocked<KeycloakAdministrationService>;
     let kcUsersMock: DeepMocked<KeycloakAdminClient['users']>;
+    let personService: DeepMocked<PersonService>;
 
     beforeAll(async () => {
         kcUsersMock = createMock<KeycloakAdminClient['users']>();
@@ -37,9 +40,13 @@ describe('KeycloakUserService', () => {
                         },
                     }),
                 },
+                {
+                    provide: PersonService,
+                    useValue: createMock<PersonService>(),
+                },
             ],
         }).compile();
-
+        personService = module.get(PersonService);
         service = module.get(KeycloakUserService);
         adminService = module.get(KeycloakAdministrationService);
     });
@@ -336,7 +343,6 @@ describe('KeycloakUserService', () => {
             it('should return error result', async () => {
                 kcUsersMock.find.mockRejectedValueOnce(new Error());
                 const user: UserDo<true> = DoFactory.createUser(true);
-
                 const res: Result<UserDo<true>> = await service.findOne({
                     username: user.username,
                     email: user.email,
@@ -345,6 +351,132 @@ describe('KeycloakUserService', () => {
                 expect(res).toStrictEqual<Result<UserDo<true>>>({
                     ok: false,
                     error: new KeycloakClientError('Keycloak request failed'),
+                });
+            });
+        });
+    });
+
+    describe('resetPassword', () => {
+        describe('will be executed successfully', () => {
+            it('should return result with ok:true and new password', async () => {
+                const userId: string = faker.string.numeric();
+                const generatedPassword: string = faker.string.alphanumeric({
+                    length: { min: 10, max: 10 },
+                    casing: 'mixed',
+                });
+                kcUsersMock.resetPassword.mockResolvedValueOnce();
+                const result: Result<string, DomainError> = await service.resetPassword(userId, generatedPassword);
+                expect(result).toStrictEqual({
+                    ok: true,
+                    value: generatedPassword,
+                });
+            });
+        });
+        describe('when error is thrown during password-reset', () => {
+            it('should pass error', async () => {
+                const userId: string = faker.string.numeric();
+                const generatedPassword: string = faker.string.alphanumeric({
+                    length: { min: 10, max: 10 },
+                    casing: 'mixed',
+                });
+                kcUsersMock.resetPassword.mockRejectedValueOnce(new Error());
+                const result: Result<string, DomainError> = await service.resetPassword(userId, generatedPassword);
+                expect(result).toStrictEqual({
+                    ok: false,
+                    error: new KeycloakClientError('Could not authorize with Keycloak'),
+                });
+            });
+        });
+        describe('when error thrown by getAuthedKcAdminClient', () => {
+            it('should pass error', async () => {
+                const userId: string = faker.string.numeric();
+                const generatedPassword: string = faker.lorem.word();
+                const error: Result<KeycloakAdminClient, DomainError> = {
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                };
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
+                const result: Result<string, DomainError> = await service.resetPassword(userId, generatedPassword);
+                expect(result).toStrictEqual({
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                });
+            });
+        });
+    });
+
+    describe('resetPasswordByPersonId', () => {
+        describe('when user exists', () => {
+            it('should return result with ok:true and new password', async () => {
+                const user: UserDo<true> = DoFactory.createUser(true);
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    username: user.username,
+                    email: user.email,
+                    id: user.id,
+                    createdTimestamp: user.createdDate.getTime(),
+                } as unknown as UserRepresentation);
+                kcUsersMock.resetPassword.mockResolvedValueOnce();
+                const personId: string = faker.string.numeric();
+                const result: Result<string, Error> = await service.resetPasswordByPersonId(personId);
+                expect(result.ok).toBeTruthy();
+                if (result.ok) {
+                    expect(result.value.length == 10).toBeTruthy();
+                    expect(result.value.match(/^[a-z0-9]+$/i)).toBeTruthy(); //check for isAlphanumeric
+                }
+                expect(kcUsersMock.resetPassword).toHaveBeenCalled();
+            });
+        });
+        describe('when user does not exist', () => {
+            it('should return result with ok: false and error', async () => {
+                kcUsersMock.resetPassword.mockClear();
+                const error: Result<PersonDo<true>, DomainError> = {
+                    ok: false,
+                    error: new EntityNotFoundError(),
+                };
+                personService.findPersonById.mockResolvedValueOnce(error);
+                const personId: string = faker.string.numeric();
+                const result: Result<string, Error> = await service.resetPasswordByPersonId(personId);
+                expect(result.ok).toBeFalsy();
+                expect(kcUsersMock.resetPassword).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when KeycloakAdminClient fails', () => {
+            it('should return result with ok: false and error', async () => {
+                kcUsersMock.resetPassword.mockClear();
+                kcUsersMock.findOne.mockRejectedValueOnce(new Error());
+                const personId: string = faker.string.numeric();
+                const result: Result<string, Error> = await service.resetPasswordByPersonId(personId);
+                expect(result.ok).toBeFalsy();
+                expect(kcUsersMock.resetPassword).toHaveBeenCalledTimes(0);
+                expect(result).toStrictEqual<Result<UserDo<true>>>({
+                    ok: false,
+                    error: new KeycloakClientError('Keycloak request failed'),
+                });
+            });
+        });
+
+        describe('when getAuthedKcAdminClient fails', () => {
+            it('should return result with ok: false and error', async () => {
+                kcUsersMock.resetPassword.mockClear();
+                const personDo: PersonDo<true> = DoFactory.createPerson(true, { referrer: faker.string.uuid() });
+                const person: Result<PersonDo<true>, DomainError> = {
+                    ok: true,
+                    value: personDo,
+                };
+                personService.findPersonById.mockResolvedValueOnce(person);
+                const adminClient: Result<KeycloakAdminClient, DomainError> = {
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                };
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce(adminClient);
+                const personId: string = faker.string.numeric();
+                const result: Result<string, Error> = await service.resetPasswordByPersonId(personId);
+                expect(result.ok).toBeFalsy();
+                expect(kcUsersMock.resetPassword).toHaveBeenCalledTimes(0);
+                expect(result).toStrictEqual<Result<UserDo<true>>>({
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
                 });
             });
         });

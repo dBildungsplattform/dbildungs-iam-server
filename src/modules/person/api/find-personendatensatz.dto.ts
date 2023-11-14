@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { PagedDto } from '../../../shared/paging/index.js';
-import { SichtfreigabeType } from './personen-query.param.js';
+import { SichtfreigabeType } from '../domain/personenkontext.enums.js';
 
 export class FindPersonendatensatzDto extends PagedDto {
     @AutoMap()
@@ -12,6 +12,6 @@ export class FindPersonendatensatzDto extends PagedDto {
     @AutoMap()
     public vorname?: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     public sichtfreigabe!: SichtfreigabeType;
 }

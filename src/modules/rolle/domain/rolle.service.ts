@@ -71,14 +71,12 @@ export class RolleService {
     }
 
     public async getAvailableServiceProviders(personId: string): Promise<ServiceProviderDo<true>[]> {
-        const serviceProviderZugriffList: ServiceProviderZugriffDo<true>[] = await this.getServiceProviderZugriffList(
-            personId,
-        );
+        const serviceProviderZugriffList: ServiceProviderZugriffDo<true>[] =
+            await this.getServiceProviderZugriffList(personId);
         let serviceProviderList: ServiceProviderDo<true>[] = [];
         for (const serviceProviderZugriff of serviceProviderZugriffList) {
-            const serviceProviderForServiceProviderZugriff: ServiceProviderDo<true>[] = await this.getServiceProvider(
-                serviceProviderZugriff,
-            );
+            const serviceProviderForServiceProviderZugriff: ServiceProviderDo<true>[] =
+                await this.getServiceProvider(serviceProviderZugriff);
             serviceProviderList = serviceProviderList.concat(serviceProviderForServiceProviderZugriff);
         }
         return serviceProviderList;
