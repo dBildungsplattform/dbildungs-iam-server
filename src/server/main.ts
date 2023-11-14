@@ -18,7 +18,7 @@ async function bootstrap(): Promise<void> {
         .setDescription('The dBildungs IAM server API description')
         .setVersion('1.0')
         .build();
-    app.useLogger(app.get(NestLogger, {strict: false}));
+    app.useLogger(app.get(NestLogger));
     app.useGlobalInterceptors(new GlobalPagingHeadersInterceptor());
     app.useGlobalPipes(new GlobalValidationPipe());
     app.setGlobalPrefix('api', {

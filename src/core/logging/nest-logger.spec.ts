@@ -15,7 +15,7 @@ describe('The nest Logger', () => {
     });
 
     it('should produce correct log messages', () => {
-        const nestLogger = module.get(NestLogger);
+        const nestLogger: NestLogger = module.get(NestLogger);
 
         nestLogger.log('Test');
         nestLogger.debug?.('Test');
@@ -24,8 +24,11 @@ describe('The nest Logger', () => {
         nestLogger.verbose?.('Test');
 
         expect(moduleLogger.getLogger).toHaveBeenCalledTimes(5);
-        expect(moduleLogger.getLogger().log.mock.calls
-            .every(v => v[1] as string == 'Test'))
+        expect(
+            moduleLogger
+                .getLogger()
+                .log.mock.calls.every((v: [level: string, message: unknown]): boolean => (v[1] as string) == 'Test'),
+        );
     });
 
     afterAll(async () => {

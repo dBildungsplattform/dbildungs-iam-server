@@ -6,7 +6,7 @@ import { OrganisationUc } from './api/organisation.uc.js';
 import { OrganisationApiMapperProfile } from './api/organisation-api.mapper.profile.js';
 
 @Module({
-    imports: [LoggerModule.register(OrganisationModule.name),OrganisationModule],
+    imports: [LoggerModule.register(OrganisationModule.name), OrganisationModule],
     providers: [OrganisationApiMapperProfile, OrganisationUc],
     controllers: [OrganisationController],
 })
