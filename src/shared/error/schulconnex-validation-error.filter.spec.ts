@@ -51,14 +51,12 @@ describe('SchulconnexValidationErrorFilter', () => {
         description: `Datumsformat des Attributs ist ungültig '${validationError.property}'`,
     };
 
-
     const enumError: SchulConnexError = {
         statusCode: statusCode,
         subCode: '10',
         title: 'Attributwerte entsprechen keinem der erwarteten Werte',
         description: `Attribute müssen gültige Werte enthalten '${validationError.property}'`,
     };
-
 
     const textLengthError: SchulConnexError = {
         statusCode: statusCode,
@@ -192,7 +190,6 @@ describe('SchulconnexValidationErrorFilter', () => {
                     children: [],
                 };
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
-
 
                 filter.catch(detailedValidationError, host);
 
