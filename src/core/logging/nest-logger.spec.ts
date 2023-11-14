@@ -17,15 +17,15 @@ describe('The nest Logger', () => {
     it('should produce correct log messages', () => {
         const nestLogger = module.get(NestLogger);
 
-        nestLogger.log('Blah');
-        nestLogger.debug?.('Blah');
-        nestLogger.error('Blah');
-        nestLogger.warn('Blah');
-        nestLogger.verbose?.('Blah');
+        nestLogger.log('Test');
+        nestLogger.debug?.('Test');
+        nestLogger.error('Test');
+        nestLogger.warn('Test');
+        nestLogger.verbose?.('Test');
 
         expect(moduleLogger.getLogger).toHaveBeenCalledTimes(5);
         expect(moduleLogger.getLogger().log.mock.calls
-            .every(v => v[1] as string == 'Blah'))
+            .every(v => v[1] as string == 'Test'))
     });
 
     afterAll(async () => {

@@ -9,7 +9,7 @@ import { DbConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../share
 import { mappingErrorHandler } from '../shared/error/index.js';
 import { DbConsole } from './db.console.js';
 import { DbInitConsole } from './db-init.console.js';
-import { LoggerModule } from '../core/logging/logger.module';
+import { LoggerModule } from '../core/logging/logger.module.js';
 
 @Module({
     imports: [

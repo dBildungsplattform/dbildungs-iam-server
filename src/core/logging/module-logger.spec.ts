@@ -11,7 +11,7 @@ describe('Module Logger', () => {
         it('should produce a sensible log message', () => {
             tfi.level = 'error';
             tfi.message = 'Something bad happened';
-            const formattedMessage = localFormatter(tfi);
+            const formattedMessage: string = localFormatter(tfi);
 
             expect(formattedMessage).toContain('Something bad happened');
             expect(formattedMessage).toContain('error');

@@ -7,7 +7,6 @@ import { KeycloakConfig } from './keycloak.config.js';
 import { LoggingConfig } from './logging.config.js';
 import { RedisConfig } from './redis.config.js';
 
-
 export class JsonConfig {
     @ValidateNested()
     @Type(() => HostConfig)

@@ -8,9 +8,12 @@ import { INQUIRER } from '@nestjs/core';
 export class ClassLogger extends Logger {
     private logger: LoggerWinston;
 
-    private context: string | undefined;
+    private readonly context: string | undefined;
 
-    public constructor(moduleLogger: ModuleLogger, @Inject(INQUIRER) private parentClass: object) {
+    public constructor(
+        moduleLogger: ModuleLogger,
+        @Inject(INQUIRER) private parentClass: object,
+    ) {
         super();
         this.logger = moduleLogger.getLogger();
         this.context = `${moduleLogger.moduleName}.${this.parentClass?.constructor?.name}`;
