@@ -1,21 +1,12 @@
-import {
-    Converter,
-    Mapper,
-    MappingProfile,
-    convertUsing,
-    createMap,
-    forMember,
-    ignore,
-    mapFrom,
-} from '@automapper/core';
+import { Mapper, MappingProfile, createMap, forMember, ignore, mapFrom } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { UserDo } from '../../keycloak-administration/index.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { CreatePersonDto } from './create-person.dto.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
+import { CreatePersonDto } from './create-person.dto.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-organisation.dto.js';
@@ -28,28 +19,18 @@ import { LoeschungDto } from './loeschung.dto.js';
 import { LoeschungResponse } from './loeschung.response.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonGeburtDto } from './person-geburt.dto.js';
+import { PersonIdResponse } from './person-id.response.js';
 import { PersonNameDto } from './person-name.dto.js';
 import { PersonNameParams } from './person-name.params.js';
 import { PersonDto } from './person.dto.js';
 import { PersonResponse } from './person.response.js';
-import { PersonenQueryParams, SichtfreigabeType } from './personen-query.param.js';
+import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
-
-export const personVisibilityToBooleanConverter: Converter<SichtfreigabeType, boolean> = {
-    convert(source: SichtfreigabeType) {
-        switch (source) {
-            case SichtfreigabeType.JA:
-                return true;
-            case SichtfreigabeType.NEIN:
-            default:
-                return false;
-        }
-    },
-};
+import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
 
 @Injectable()
 export class PersonApiMapperProfile extends AutomapperProfile {
@@ -241,6 +222,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonenkontextDo<boolean>) => dest.organisation, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.loeschungZeitpunkt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.revision, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.sichtfreigabe, ignore()),
             );
 
             createMap(
@@ -248,7 +230,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 PersonenkontextDo,
                 CreatedPersonenkontextDto,
                 forMember(
-                    (dest: PersonenkontextDto) => dest.loeschung,
+                    (dest: CreatedPersonenkontextDto) => dest.loeschung,
                     mapFrom((src: PersonenkontextDo<boolean>) =>
                         src.loeschungZeitpunkt ? new LoeschungDto({ zeitpunkt: src.loeschungZeitpunkt }) : undefined,
                     ),
@@ -280,17 +262,6 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonenkontextDo<boolean>) => dest.id, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.createdAt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.updatedAt, ignore()),
-                forMember(
-                    (dest: PersonenkontextDo<boolean>) => dest.id,
-                    mapFrom((src: FindPersonenkontextDto) => src.personId),
-                ),
-                forMember(
-                    (dest: PersonenkontextDo<boolean>) => dest.sichtfreigabe,
-                    convertUsing(
-                        personVisibilityToBooleanConverter,
-                        (src: FindPersonenkontextDto) => src.sichtfreigabe,
-                    ),
-                ),
             );
 
             createMap(mapper, FindPersonenkontextByIdParams, FindPersonenkontextByIdDto);
@@ -365,6 +336,22 @@ export class PersonApiMapperProfile extends AutomapperProfile {
             createMap(mapper, PersonGeburtDto, PersonBirthParams);
 
             createMap(mapper, PersonendatensatzDto, PersonendatensatzResponse);
+
+            createMap(
+                mapper,
+                PersonenkontextDto,
+                PersonenkontextdatensatzResponse,
+                forMember(
+                    (dest: PersonenkontextdatensatzResponse) => dest.person,
+                    mapFrom((src: PersonenkontextDto) => new PersonIdResponse({ id: src.personId })),
+                ),
+                forMember(
+                    (dest: PersonenkontextdatensatzResponse) => dest.personenkontexte,
+                    mapFrom((src: PersonenkontextDto) => [
+                        mapper.map(src, PersonenkontextDto, PersonenkontextResponse),
+                    ]),
+                ),
+            );
         };
     }
 }

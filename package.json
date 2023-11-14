@@ -66,6 +66,7 @@
     "devDependencies": {
         "@golevelup/ts-jest": "^0.3.7",
         "@mikro-orm/cli": "^5.7.12",
+        "@nestjs/cli": "^10.2.1",
         "@nestjs/cli": "^9.0.0",
         "@nestjs/schematics": "^10.0.3",
         "@nestjs/testing": "^9.4.2",
