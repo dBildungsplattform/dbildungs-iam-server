@@ -4,11 +4,11 @@ import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { MappingError } from '../../../shared/error/index.js';
-import { CreatePersonDto } from './create-person.dto.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
-import { Jahrgangsstufe, Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
+import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
+import { CreatePersonDto } from './create-person.dto.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
@@ -17,19 +17,19 @@ import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.para
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { LoeschungDto } from './loeschung.dto.js';
 import { LoeschungResponse } from './loeschung.response.js';
-import { PersonApiMapperProfile, personVisibilityToBooleanConverter } from './person-api.mapper.profile.js';
+import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonGeburtDto } from './person-geburt.dto.js';
 import { PersonNameDto } from './person-name.dto.js';
 import { PersonNameParams } from './person-name.params.js';
 import { PersonDto } from './person.dto.js';
 import { PersonResponse } from './person.response.js';
-import { SichtfreigabeType } from './personen-query.param.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
+import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
 
 describe('PersonApiMapperProfile', () => {
     let module: TestingModule;
@@ -49,18 +49,6 @@ describe('PersonApiMapperProfile', () => {
 
     it('should be defined', () => {
         expect(sut).toBeDefined();
-    });
-
-    describe('personVisibilityToBooleanConverter', () => {
-        describe('when converting Visibility type to boolean', () => {
-            it('should convert VisibilityType.JA to true', () => {
-                expect(personVisibilityToBooleanConverter.convert(SichtfreigabeType.JA)).toBe(true);
-            });
-
-            it('should convert VisibilityType.NEIN to false', () => {
-                expect(personVisibilityToBooleanConverter.convert(SichtfreigabeType.NEIN)).toBe(false);
-            });
-        });
     });
 
     describe('when mapper is initialized', () => {
@@ -203,6 +191,12 @@ describe('PersonApiMapperProfile', () => {
         it('should map PersonendatensatzDto to PersonendatensatzResponse', () => {
             expect(() =>
                 sut.map({} as PersonendatensatzDto, PersonendatensatzDto, PersonendatensatzResponse),
+            ).not.toThrowError(MappingError);
+        });
+
+        it('should map PersonenkontextDto to PersonenkontextdatensatzResponse', () => {
+            expect(() =>
+                sut.map({} as PersonenkontextDto, PersonenkontextDto, PersonenkontextdatensatzResponse),
             ).not.toThrowError(MappingError);
         });
     });
