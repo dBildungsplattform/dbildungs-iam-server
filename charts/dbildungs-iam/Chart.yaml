@@ -1,11 +1,16 @@
 apiVersion: v2
 name: dbildungs-iam
-version: 0.1.1
+version: 0.2.0
 
 description: dBildungs-IAM
 type: application
 
 dependencies:
+  # In non-test-deployments we expect keycloak to be provided for us thus it needs to be enabled
   - name: dbildungs-iam-keycloak-dev
     version: "*"
     condition: keycloakEnabled
+  # In non-test-deployments we expect redis to be provided for us thus it needs to be enabled
+  - name: dbildungs-iam-redis
+    version: latest
+    condition: redisEnabled
