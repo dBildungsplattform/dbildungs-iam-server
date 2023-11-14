@@ -9,7 +9,10 @@ import { PersonScope } from './person.scope.js';
 
 @Injectable()
 export class PersonRepo {
-    public constructor(private readonly em: EntityManager, @Inject(getMapperToken()) private readonly mapper: Mapper) {}
+    public constructor(
+        private readonly em: EntityManager,
+        @Inject(getMapperToken()) private readonly mapper: Mapper,
+    ) {}
 
     public get entityName(): EntityName<PersonEntity> {
         return PersonEntity;

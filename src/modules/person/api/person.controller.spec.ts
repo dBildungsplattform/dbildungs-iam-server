@@ -1,27 +1,27 @@
 import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MapperTestModule } from '../../../../test/utils/index.js';
+import { Paged, PagedResponse } from '../../../shared/paging/index.js';
+import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
+import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
-import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
-import { PersonController } from './person.controller.js';
-import { PersonUc } from './person.uc.js';
-import { PersonByIdParams } from './person-by-id.param.js';
-import { HttpException } from '@nestjs/common';
-import { PersonenQueryParams, SichtfreigabeType } from './personen-query.param.js';
-import { PersonBirthParams } from './person-birth.params.js';
-import { TrustLevel } from '../domain/person.enums.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
-import { PersonenkontextUc } from './personenkontext.uc.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
-import { Jahrgangsstufe, Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
-import { PagedResponse } from '../../../shared/paging/index.js';
-import { PersonenkontextResponse } from './personenkontext.response.js';
-import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
-import { PersonendatensatzDto } from './personendatensatz.dto.js';
+import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
+import { PersonBirthParams } from './person-birth.params.js';
+import { PersonByIdParams } from './person-by-id.param.js';
+import { PersonController } from './person.controller.js';
 import { PersonDto } from './person.dto.js';
+import { PersonUc } from './person.uc.js';
+import { PersonenQueryParams } from './personen-query.param.js';
+import { PersonendatensatzDto } from './personendatensatz.dto.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
+import { PersonenkontextUc } from './personenkontext.uc.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -135,9 +135,9 @@ describe('PersonController', () => {
                 },
                 referrer: options.referrer,
                 geburt: mockBirthParams,
-                geschlecht: '',
+                geschlecht: Geschlecht.M,
                 lokalisierung: '',
-                vertrauensstufe: TrustLevel.TRUSTED,
+                vertrauensstufe: Vertrauensstufe.VOLL,
             } as PersonDto;
             const person2: PersonDto = {
                 id: faker.string.uuid(),
@@ -147,9 +147,9 @@ describe('PersonController', () => {
                 },
                 referrer: options.referrer,
                 geburt: mockBirthParams,
-                geschlecht: '',
+                geschlecht: Geschlecht.M,
                 lokalisierung: '',
-                vertrauensstufe: TrustLevel.TRUSTED,
+                vertrauensstufe: Vertrauensstufe.VOLL,
             } as PersonDto;
 
             const mockPersondatensatz1: PersonendatensatzDto = {
@@ -202,7 +202,7 @@ describe('PersonController', () => {
                     jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
                     personenstatus: Personenstatus.AKTIV,
                     referrer: 'referrer',
-                    loeschung: {},
+                    loeschung: { zeitpunkt: faker.date.past() },
                 };
                 personenkontextUcMock.createPersonenkontext.mockResolvedValue(ucResult);
 
@@ -226,6 +226,7 @@ describe('PersonController', () => {
                 };
                 const personenkontextResponse: PersonenkontextDto = {
                     id: faker.string.uuid(),
+                    personId: faker.string.uuid(),
                     organisation: {
                         id: faker.string.uuid(),
                     },
@@ -235,21 +236,41 @@ describe('PersonController', () => {
                     referrer: 'referrer',
                     jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
                     personenstatus: Personenstatus.AKTIV,
-                    loeschung: {},
+                    loeschung: { zeitpunkt: faker.date.past() },
                 };
-                const personenkontextDtos: PersonenkontextDto[] = [personenkontextResponse];
+                const personenkontextDtos: Paged<PersonenkontextDto> = {
+                    items: [personenkontextResponse],
+                    total: 1,
+                    offset: 0,
+                    limit: 1,
+                };
 
                 personenkontextUcMock.findAll.mockResolvedValue(personenkontextDtos);
 
-                const result: PersonenkontextResponse[] = await personController.findPersonenkontexte(
+                const result: PagedResponse<PersonenkontextResponse> = await personController.findPersonenkontexte(
                     pathParams,
                     queryParams,
                 );
 
                 expect(personenkontextUcMock.findAll).toHaveBeenCalledTimes(1);
-                expect(result.length).toBe(1);
-                expect(result[0]?.id).toBe(personenkontextDtos[0]?.id);
+                expect(result.items.length).toBe(1);
+                expect(result.items[0]?.id).toBe(personenkontextDtos.items[0]?.id);
             });
+        });
+    });
+
+    describe('when resetting password for a person', () => {
+        const params: PersonByIdParams = {
+            personId: faker.string.uuid(),
+        };
+        it('should reset password for person', async () => {
+            const response: Result<string> = {
+                ok: true,
+                value: faker.string.alphanumeric({ length: { min: 10, max: 10 }, casing: 'mixed' }),
+            };
+            personUcMock.resetPassword.mockResolvedValueOnce(response);
+            await expect(personController.resetPasswordByPersonId(params)).resolves.not.toThrow();
+            expect(personUcMock.resetPassword).toHaveBeenCalledTimes(1);
         });
     });
 });

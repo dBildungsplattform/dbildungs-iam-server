@@ -7,13 +7,23 @@ import { AuthenticatedGuard, OIDCClientProvider, OpenIdConnectStrategy, SessionS
 import { BackendHttpService } from './outbound/backend-http.service.js';
 import { LoggerModule } from '../../core/logging/logger.module.js';
 
+import { ProviderService } from './outbound/provider.service.js';
+import { PersonService } from './outbound/person.service.js';
 @Module({
     imports: [
         HttpModule,
         LoggerModule.register(FrontendApiModule.name),
         PassportModule.register({ session: true, defaultStrategy: 'oidc', keepSessionInfo: true }),
     ],
-    providers: [AuthenticatedGuard, BackendHttpService, OpenIdConnectStrategy, SessionSerializer, OIDCClientProvider],
+    providers: [
+        AuthenticatedGuard,
+        BackendHttpService,
+        ProviderService,
+        PersonService,
+        OpenIdConnectStrategy,
+        SessionSerializer,
+        OIDCClientProvider,
+    ],
     controllers: [FrontendController],
 })
 export class FrontendApiModule {}

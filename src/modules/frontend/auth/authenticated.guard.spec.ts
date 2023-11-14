@@ -1,5 +1,5 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { ExecutionContext } from '@nestjs/common';
+import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request } from 'express';
 
@@ -35,13 +35,11 @@ describe('AuthenticatedGuard', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false if user is not authenticated', () => {
+        it('should throw UnauthorizedException if user is not authenticated', () => {
             const contextMock: DeepMocked<ExecutionContext> = createMock();
             contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValueOnce(false);
 
-            const result: boolean = sut.canActivate(contextMock);
-
-            expect(result).toBe(false);
+            expect(() => sut.canActivate(contextMock)).toThrow(UnauthorizedException);
         });
     });
 });

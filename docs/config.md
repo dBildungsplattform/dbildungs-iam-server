@@ -45,11 +45,13 @@ The config file contains all static, non-secret information we need to start and
   },
   "FRONTEND": {
     "PORT": "<this is the bff port>",
+    "TRUST_PROXY": "<optional, see https://expressjs.com/en/guide/behind-proxies.html>",
     "SECURE_COOKIE": <Enables/Disables HTTPS for cookie>,
     "BACKEND_ADDRESS": "<address of backend server>",
     "SESSION_TTL_MS": <Time in milliseconds after which the session expires>,
     "OIDC_CALLBACK_URL": "<callback that is passed to keycloak>",
-    "DEFAULT_AUTH_REDIRECT": "<default redirect after auth is complete>"
+    "DEFAULT_LOGIN_REDIRECT": "<default redirect after auth is complete>",
+    "LOGOUT_REDIRECT": "<where to redirect user after logout"
   },
   "REDIS": {
     "HOST": "<host of the redis server>",

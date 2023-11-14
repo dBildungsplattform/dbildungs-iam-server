@@ -1,8 +1,7 @@
 import { AutoMap } from '@automapper/classes';
-import { Jahrgangsstufe, Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
+import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-organisation.dto.js';
 import { LoeschungDto } from './loeschung.dto.js';
-import { SichtfreigabeType } from './personen-query.param.js';
 
 export class CreatedPersonenkontextDto {
     @AutoMap()
@@ -30,7 +29,7 @@ export class CreatedPersonenkontextDto {
     public readonly sichtfreigabe?: SichtfreigabeType;
 
     @AutoMap(() => LoeschungDto)
-    public readonly loeschung!: LoeschungDto;
+    public readonly loeschung?: LoeschungDto;
 
     @AutoMap()
     public readonly revision!: string;

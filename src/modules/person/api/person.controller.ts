@@ -1,7 +1,21 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Inject, Param, Post, Query } from '@nestjs/common';
 import {
+    Body,
+    Controller,
+    Get,
+    HttpCode,
+    HttpException,
+    HttpStatus,
+    Inject,
+    Param,
+    Patch,
+    Post,
+    Query,
+    UseInterceptors,
+} from '@nestjs/common';
+import {
+    ApiAcceptedResponse,
     ApiBadRequestResponse,
     ApiCreatedResponse,
     ApiForbiddenResponse,
@@ -13,9 +27,10 @@ import {
 } from '@nestjs/swagger';
 import { Public } from 'nest-keycloak-connect';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
 import { PersonUc } from '../api/person.uc.js';
-import { CreatePersonDto } from '../domain/create-person.dto.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
+import { CreatePersonDto } from './create-person.dto.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
@@ -26,9 +41,9 @@ import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
+import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
-import { PersonenkontextDto } from './personenkontext.dto.js';
 
 @ApiTags('personen')
 @Controller({ path: 'personen' })
@@ -90,14 +105,13 @@ export class PersonController {
         );
         personenkontextDto.personId = pathParams.personId;
 
-        const createdPersonenkontext: CreatedPersonenkontextDto = await this.personenkontextUc.createPersonenkontext(
-            personenkontextDto,
-        );
+        const createdPersonenkontext: CreatedPersonenkontextDto =
+            await this.personenkontextUc.createPersonenkontext(personenkontextDto);
         return this.mapper.map(createdPersonenkontext, CreatedPersonenkontextDto, PersonenkontextResponse);
     }
 
     @Get(':personId/personenkontexte')
-    @ApiOkResponse({ description: 'The personenkontexte were successfully pulled.' })
+    @ApiOkResponse({ description: 'The personenkontexte were successfully pulled.', headers: PagingHeadersObject })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get personenkontexte.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get personenkontexte.' })
     @ApiNotFoundResponse({ description: 'No personenkontexte were found.' })
@@ -105,7 +119,7 @@ export class PersonController {
     public async findPersonenkontexte(
         @Param() pathParams: PersonByIdParams,
         @Query() queryParams: PersonenkontextQueryParams,
-    ): Promise<PersonenkontextResponse[]> {
+    ): Promise<PagedResponse<PersonenkontextResponse>> {
         const findPersonenkontextDto: FindPersonenkontextDto = this.mapper.map(
             queryParams,
             PersonenkontextQueryParams,
@@ -114,15 +128,21 @@ export class PersonController {
 
         findPersonenkontextDto.personId = pathParams.personId;
 
-        const personenkontextDtos: PersonenkontextDto[] = await this.personenkontextUc.findAll(findPersonenkontextDto);
+        const personenkontextDtos: Paged<PersonenkontextDto> =
+            await this.personenkontextUc.findAll(findPersonenkontextDto);
         // AI next 5 lines
-        const response: PersonenkontextResponse[] = this.mapper.mapArray(
-            personenkontextDtos,
+        const responseItems: PersonenkontextResponse[] = this.mapper.mapArray(
+            personenkontextDtos.items,
             PersonenkontextDto,
             PersonenkontextResponse,
         );
 
-        return response;
+        return new PagedResponse({
+            items: responseItems,
+            offset: personenkontextDtos.offset,
+            limit: personenkontextDtos.limit,
+            total: personenkontextDtos.total,
+        });
     }
 
     @Get()
@@ -152,5 +172,15 @@ export class PersonController {
         });
 
         return response;
+    }
+
+    @Patch(':personId/password')
+    @HttpCode(HttpStatus.ACCEPTED)
+    @ApiAcceptedResponse({ description: 'Password for person was successfully reset.' })
+    @ApiNotFoundResponse({ description: 'The person does not exist.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
+    @UseInterceptors(ResultInterceptor)
+    public async resetPasswordByPersonId(@Param() params: PersonByIdParams): Promise<Result<string> | HttpException> {
+        return this.personUc.resetPassword(params.personId);
     }
 }
