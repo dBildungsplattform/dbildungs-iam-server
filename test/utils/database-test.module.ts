@@ -1,10 +1,11 @@
-import { randomUUID } from 'crypto';
-import { DefaultPullPolicy, PostgreSqlContainer, StartedPostgreSqlContainer } from 'testcontainers';
-import { DynamicModule, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { MikroORM } from '@mikro-orm/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
+import { DynamicModule, OnModuleDestroy } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { randomUUID } from 'crypto';
+import { PullPolicy } from 'testcontainers';
 import { DbConfig, ServerConfig } from '../../src/shared/config/index.js';
 
 type DatabaseTestModuleOptions = { isDatabaseRequired: boolean; databaseName?: string };
@@ -21,13 +22,15 @@ export class DatabaseTestModule implements OnModuleDestroy {
                         const dbName: string =
                             options?.databaseName ||
                             `${configService.getOrThrow<DbConfig>('DB').DB_NAME}-${randomUUID()}`;
+
                         if (options?.isDatabaseRequired) {
                             this.postgres = await new PostgreSqlContainer('docker.io/postgres:15.3-alpine')
                                 .withDatabase(dbName)
-                                .withPullPolicy(new DefaultPullPolicy())
+                                .withPullPolicy(PullPolicy.defaultPolicy())
                                 .withReuse()
                                 .start();
                         }
+
                         return defineConfig({
                             clientUrl:
                                 this.postgres?.getConnectionUri() ||
