@@ -116,9 +116,8 @@ export class OrganisationUc {
     }
 
     public async findVerwaltetVon(parentOrganisationId: string): Promise<Paged<OrganisationResponse>> {
-        const result: Paged<OrganisationDo<true>> = await this.organisationService.findAllVerwaltetVon(
-            parentOrganisationId,
-        );
+        const result: Paged<OrganisationDo<true>> =
+            await this.organisationService.findAllVerwaltetVon(parentOrganisationId);
 
         const organisations: OrganisationResponse[] = this.mapper.mapArray(
             result.items,
@@ -135,9 +134,8 @@ export class OrganisationUc {
     }
 
     public async findZugehoerigZu(parentOrganisationId: string): Promise<Paged<OrganisationResponse>> {
-        const result: Paged<OrganisationDo<true>> = await this.organisationService.findAllZugehoerigZu(
-            parentOrganisationId,
-        );
+        const result: Paged<OrganisationDo<true>> =
+            await this.organisationService.findAllZugehoerigZu(parentOrganisationId);
 
         const organisations: OrganisationResponse[] = this.mapper.mapArray(
             result.items,
