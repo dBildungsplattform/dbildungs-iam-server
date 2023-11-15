@@ -155,7 +155,7 @@ export class FrontendController {
     public getOrganisationenVerwaltetVon(
         @Param() params: OrganisationByIdParams,
         @CurrentUser() user: User,
-    ): Promise<PagedResponse<OrganisationResponse>> {
+    ): Promise<OrganisationResponse[]> {
         return this.organisationService.findVerwaltetVon(params.organisationId, user);
     }
 
@@ -166,7 +166,7 @@ export class FrontendController {
     public getOrganisationenZugehoerigZu(
         @Param() params: OrganisationByIdParams,
         @CurrentUser() user: User,
-    ): Promise<PagedResponse<OrganisationResponse>> {
+    ): Promise<OrganisationResponse[]> {
         return this.organisationService.findZugehoerigZu(params.organisationId, user);
     }
 

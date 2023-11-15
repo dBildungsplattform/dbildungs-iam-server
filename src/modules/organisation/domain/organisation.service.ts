@@ -92,7 +92,7 @@ export class OrganisationService {
             return { ok: true, value: undefined };
         }
 
-        return { ok: false, error: new EntityCouldNotBeUpdated('Organization', childId) };
+        return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
     }
 
     public async setZugehoerigZu(parentId: string, childId: string): Promise<Result<void, DomainError>> {
@@ -119,7 +119,7 @@ export class OrganisationService {
             return { ok: true, value: undefined };
         }
 
-        return { ok: false, error: new EntityCouldNotBeUpdated('Organization', childId) };
+        return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
     }
 
     public async findAllVerwaltetVon(

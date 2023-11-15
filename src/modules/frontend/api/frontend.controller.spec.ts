@@ -10,8 +10,12 @@ import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { FrontendConfig } from '../../../shared/config/frontend.config.js';
 import { OIDC_CLIENT } from '../auth/oidc-client.service.js';
 import { User } from '../auth/user.decorator.js';
+import { OrganisationService } from '../outbound/organisation.service.js';
 import { ProviderService } from '../outbound/provider.service.js';
 import { FrontendController } from './frontend.controller.js';
+import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { OrganisationByIdParams } from '../../organisation/api/organisation-by-id.params.js';
+import { OrganisationByIdBodyParams } from '../../organisation/api/organisation-by-id.body.params.js';
 import { GetServiceProviderInfoDo } from '../../rolle/domain/get-service-provider-info.do.js';
 import { PersonService } from '../outbound/person.service.js';
 import { PersonendatensatzResponse } from '../../person/api/personendatensatz.response.js';
@@ -30,6 +34,7 @@ describe('FrontendController', () => {
     let frontendConfig: FrontendConfig;
     let providerService: DeepMocked<ProviderService>;
     let personService: DeepMocked<PersonService>;
+    let organisationService: DeepMocked<OrganisationService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -38,6 +43,7 @@ describe('FrontendController', () => {
                 FrontendController,
                 { provide: ProviderService, useValue: createMock<ProviderService>() },
                 { provide: PersonService, useValue: createMock<PersonService>() },
+                { provide: OrganisationService, useValue: createMock<OrganisationService>() },
                 { provide: OIDC_CLIENT, useValue: createMock<Client>() },
             ],
         }).compile();
@@ -46,6 +52,7 @@ describe('FrontendController', () => {
         oidcClient = module.get(OIDC_CLIENT);
         providerService = module.get(ProviderService);
         personService = module.get(PersonService);
+        organisationService = module.get(OrganisationService);
         frontendConfig = module.get(ConfigService).getOrThrow<FrontendConfig>('FRONTEND');
     });
 
@@ -292,6 +299,81 @@ describe('FrontendController', () => {
                 personService.resetPassword.mockRejectedValueOnce(exception);
                 await expect(frontendController.passwordReset(params)).rejects.toThrowError(HttpException);
             });
+        });
+    });
+
+    describe('getRootOrganisation', () => {
+        it('should return root organisation', async () => {
+            const rootOrgMock: OrganisationResponse = createMock<OrganisationResponse>({ id: faker.string.uuid() });
+            organisationService.getRoot.mockResolvedValueOnce(rootOrgMock);
+
+            const result: OrganisationResponse = await frontendController.getRootOrganisation(createMock());
+
+            expect(result).toBe(rootOrgMock);
+        });
+    });
+
+    describe('getOrganisationenVerwaltetVon', () => {
+        it('should return matching organisationen', async () => {
+            const rootOrgMock: OrganisationResponse = createMock<OrganisationResponse>({
+                id: faker.string.uuid(),
+            });
+            organisationService.findVerwaltetVon.mockResolvedValueOnce([rootOrgMock]);
+
+            const result: OrganisationResponse[] = await frontendController.getOrganisationenVerwaltetVon(
+                createMock(),
+                createMock(),
+            );
+
+            expect(result).toEqual([rootOrgMock]);
+        });
+    });
+
+    describe('getOrganisationenZugehoerigZu', () => {
+        it('should return matching organisationen', async () => {
+            const rootOrgMock: OrganisationResponse = createMock<OrganisationResponse>({
+                id: faker.string.uuid(),
+            });
+            organisationService.findZugehoerigZu.mockResolvedValueOnce([rootOrgMock]);
+
+            const result: OrganisationResponse[] = await frontendController.getOrganisationenZugehoerigZu(
+                createMock(),
+                createMock(),
+            );
+
+            expect(result).toEqual([rootOrgMock]);
+        });
+    });
+
+    describe('setOrganisationVerwaltetVon', () => {
+        it('should call organisationService.setVerwaltetVon with params', async () => {
+            const paramMock: OrganisationByIdParams = { organisationId: faker.string.uuid() };
+            const bodyMock: OrganisationByIdBodyParams = { organisationId: faker.string.uuid() };
+            const userMock: User = createMock<User>();
+
+            await frontendController.setOrganisationVerwaltetVon(paramMock, bodyMock, userMock);
+
+            expect(organisationService.setVerwaltetVon).toHaveBeenCalledWith(
+                paramMock.organisationId,
+                bodyMock.organisationId,
+                userMock,
+            );
+        });
+    });
+
+    describe('setOrganisationZugehoerigZu', () => {
+        it('should call organisationService.setZugehoerigZu with params', async () => {
+            const paramMock: OrganisationByIdParams = { organisationId: faker.string.uuid() };
+            const bodyMock: OrganisationByIdBodyParams = { organisationId: faker.string.uuid() };
+            const userMock: User = createMock<User>();
+
+            await frontendController.setOrganisationZugehoerigZu(paramMock, bodyMock, userMock);
+
+            expect(organisationService.setZugehoerigZu).toHaveBeenCalledWith(
+                paramMock.organisationId,
+                bodyMock.organisationId,
+                userMock,
+            );
         });
     });
 });
