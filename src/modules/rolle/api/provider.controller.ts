@@ -4,7 +4,7 @@ import { ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { AuthenticatedUser } from 'nest-keycloak-connect';
 import { GetServiceProviderInfoDo } from '../domain/get-service-provider-info.do.js';
 
-@ApiTags('rolle')
+@ApiTags('provider')
 @Controller({ path: 'provider' })
 export class ProviderController {
     public constructor(private readonly rolleService: RolleService) {}
