@@ -1,8 +1,7 @@
 import { ValidationError } from 'class-validator';
 import { DetailedValidationError } from '../validation/detailed-validation.error.js';
-import { SchulConnexValidationErrorFilter } from './schulconnex-validation-error.filter.js';
+import { SchulConnexValidationErrorFilter, SchulConnexError } from './schulconnex-validation-error.filter.js';
 import { ArgumentsHost } from '@nestjs/common';
-import { SchulConnexError } from './schulconnex.error.js';
 
 describe('SchulconnexValidationErrorFilter', () => {
     let filter: SchulConnexValidationErrorFilter;

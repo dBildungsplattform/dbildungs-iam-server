@@ -12,6 +12,7 @@ import {
     Patch,
     Post,
     Query,
+    UseFilters,
     UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -44,7 +45,9 @@ import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
+import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 
+@UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
 @Controller({ path: 'personen' })
 @Public()

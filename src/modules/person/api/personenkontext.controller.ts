@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Controller, Get, HttpException, HttpStatus, Inject, Param, Query } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Inject, Param, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiForbiddenResponse,
@@ -24,7 +24,9 @@ import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
 import { PagingHeadersObject } from '../../../shared/paging/paging.enums.js';
+import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 
+@UseFilters(SchulConnexValidationErrorFilter)
 @Public()
 @ApiTags('personenkontexte')
 @Controller({ path: 'personenkontexte' })
