@@ -5,7 +5,7 @@ import { PagedResponse } from './paged.response.js';
 import { PagingHeaders } from './paging.enums.js';
 
 export class GlobalPagingHeadersInterceptor implements NestInterceptor {
-    public intercept(context: ExecutionContext, next: CallHandler<unknown>): Observable<unknown | unknown[]> {
+    public intercept(context: ExecutionContext, next: CallHandler<unknown>): Observable<unknown> {
         return next.handle().pipe(
             map((value: unknown) => {
                 if (value instanceof PagedResponse) {
