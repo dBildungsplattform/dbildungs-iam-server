@@ -95,4 +95,8 @@ export class PersonEntity extends TimestampedEntity<PersonEntity, 'id'> {
 
     @ManyToOne({ nullable: true })
     public dataProvider?: DataProviderEntity;
+
+    @AutoMap()
+    @Property({ nullable: true })
+    public reversion?: string;
 }

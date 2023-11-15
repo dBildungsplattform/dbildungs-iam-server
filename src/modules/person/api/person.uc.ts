@@ -38,7 +38,6 @@ export class PersonUc {
 
         const result: Result<PersonDo<true>> = await this.personService.createPerson(personDo);
         if (result.ok) {
-            // map to PersonDTO and return
             const resPersonDto: PersonDto = this.mapper.map(personDo, PersonDo, PersonDto);
             return resPersonDto;
         }

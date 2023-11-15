@@ -40,4 +40,8 @@ export class PersonResponse {
     @AutoMap(() => String)
     @ApiProperty({ enum: Vertrauensstufe })
     public vertrauensstufe!: Vertrauensstufe;
+
+    @AutoMap()
+    @ApiProperty({ nullable: true })
+    public reversion?: string;
 }
