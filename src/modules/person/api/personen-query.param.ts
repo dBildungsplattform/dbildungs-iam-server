@@ -1,12 +1,8 @@
+import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { AutoMap } from '@automapper/classes';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
-
-export enum SichtfreigabeType {
-    JA = 'ja',
-    NEIN = 'nein',
-}
+import { SichtfreigabeType } from '../domain/personenkontext.enums.js';
 
 export class PersonenQueryParams extends PagedQueryParams {
     @AutoMap()
@@ -36,7 +32,7 @@ export class PersonenQueryParams extends PagedQueryParams {
     })
     public readonly vorname?: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     @IsOptional()
     @IsEnum(SichtfreigabeType)
     @ApiProperty({
