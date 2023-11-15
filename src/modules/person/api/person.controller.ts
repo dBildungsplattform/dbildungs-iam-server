@@ -64,8 +64,6 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
     public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
         const dto: CreatePersonDto = this.mapper.map(params, CreatePersonBodyParams, CreatePersonDto);
-        // returned value should be a PersonDto and not a PersonDO
-        // return  at the end a PersonendatensatzDto
         const person: PersonDto = await this.personUc.createPerson(dto);
         const personendatensatzDto: PersonendatensatzDto = {
             person: person,
