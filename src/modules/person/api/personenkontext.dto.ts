@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
-import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-organisation.dto.js';
+import { SavedPersonenkontextOrganisationDto } from './saved-personenkontext-organisation.dto.js';
 import { LoeschungDto } from './loeschung.dto.js';
 
 export class PersonenkontextDto {
@@ -16,8 +16,8 @@ export class PersonenkontextDto {
     @AutoMap()
     public readonly mandant!: string;
 
-    @AutoMap(() => CreatedPersonenkontextOrganisationDto)
-    public readonly organisation!: CreatedPersonenkontextOrganisationDto;
+    @AutoMap(() => SavedPersonenkontextOrganisationDto)
+    public readonly organisation!: SavedPersonenkontextOrganisationDto;
 
     @AutoMap(() => String)
     public readonly rolle!: Rolle;

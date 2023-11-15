@@ -11,7 +11,7 @@ import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonenkontextService } from '../domain/personenkontext.service.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
-import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { SavedPersonenkontextDto } from './saved-personenkontext.dto.js';
 import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
@@ -66,7 +66,7 @@ describe('PersonenkontextUc', () => {
                     value: personenkontextDo,
                 });
 
-                const createPersonPromise: Promise<CreatedPersonenkontextDto> = sut.createPersonenkontext(
+                const createPersonPromise: Promise<SavedPersonenkontextDto> = sut.createPersonenkontext(
                     {} as CreatePersonenkontextDto,
                 );
 
@@ -82,7 +82,7 @@ describe('PersonenkontextUc', () => {
                     error: error,
                 });
 
-                const createPersonPromise: Promise<CreatedPersonenkontextDto> = sut.createPersonenkontext(
+                const createPersonPromise: Promise<SavedPersonenkontextDto> = sut.createPersonenkontext(
                     {} as CreatePersonenkontextDto,
                 );
 

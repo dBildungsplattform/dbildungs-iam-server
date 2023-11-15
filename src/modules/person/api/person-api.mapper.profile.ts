@@ -9,8 +9,8 @@ import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from './create-person.dto.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
-import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-organisation.dto.js';
-import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { SavedPersonenkontextOrganisationDto } from './saved-personenkontext-organisation.dto.js';
+import { SavedPersonenkontextDto } from './saved-personenkontext.dto.js';
 import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
 import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
 import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
@@ -31,6 +31,8 @@ import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
+import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
+import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
 
 @Injectable()
 export class PersonApiMapperProfile extends AutomapperProfile {
@@ -228,18 +230,18 @@ export class PersonApiMapperProfile extends AutomapperProfile {
             createMap(
                 mapper,
                 PersonenkontextDo,
-                CreatedPersonenkontextDto,
+                SavedPersonenkontextDto,
                 forMember(
-                    (dest: CreatedPersonenkontextDto) => dest.loeschung,
+                    (dest: SavedPersonenkontextDto) => dest.loeschung,
                     mapFrom((src: PersonenkontextDo<boolean>) =>
                         src.loeschungZeitpunkt ? new LoeschungDto({ zeitpunkt: src.loeschungZeitpunkt }) : undefined,
                     ),
                 ),
             );
 
-            createMap(mapper, OrganisationDo, CreatedPersonenkontextOrganisationDto);
+            createMap(mapper, OrganisationDo, SavedPersonenkontextOrganisationDto);
 
-            createMap(mapper, CreatedPersonenkontextDto, PersonenkontextResponse);
+            createMap(mapper, SavedPersonenkontextDto, PersonenkontextResponse);
 
             createMap(
                 mapper,
@@ -351,6 +353,27 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                         mapper.map(src, PersonenkontextDto, PersonenkontextResponse),
                     ]),
                 ),
+            );
+
+            createMap(
+                mapper,
+                UpdatePersonenkontextBodyParams,
+                UpdatePersonenkontextDto,
+                forMember((dest: UpdatePersonenkontextDto) => dest.id, ignore()),
+            );
+
+            createMap(
+                mapper,
+                UpdatePersonenkontextDto,
+                PersonenkontextDo<boolean>,
+                forMember((dest: PersonenkontextDo<boolean>) => dest.createdAt, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.updatedAt, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.personId, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.mandant, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.organisation, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.rolle, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.loeschungZeitpunkt, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.sichtfreigabe, ignore()),
             );
         };
     }

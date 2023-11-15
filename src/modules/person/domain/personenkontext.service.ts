@@ -8,6 +8,8 @@ import { PersonenkontextRepo } from '../persistence/personenkontext.repo.js';
 import { PersonenkontextScope } from '../persistence/personenkontext.scope.js';
 import { PersonDo } from './person.do.js';
 import { PersonenkontextDo } from './personenkontext.do.js';
+import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision-error.error.js';
+import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 
 @Injectable()
 export class PersonenkontextService {
@@ -65,5 +67,46 @@ export class PersonenkontextService {
             : { ok: false, error: new EntityNotFoundError('Personenkontext', id) };
 
         return result;
+    }
+
+    public async updatePersonenkontext(
+        personenkontextDo: PersonenkontextDo<true>,
+    ): Promise<Result<PersonenkontextDo<true>, DomainError>> {
+        const storedPersonenkontext: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.findById(
+            personenkontextDo.id,
+        );
+        if (!storedPersonenkontext) {
+            return { ok: false, error: new EntityNotFoundError('Personenkontext', personenkontextDo.id) };
+        }
+
+        if (personenkontextDo.revision !== storedPersonenkontext.revision) {
+            return {
+                ok: false,
+                error: new MismatchedRevisionError(
+                    `Revision ${personenkontextDo.revision} does not match revision ${storedPersonenkontext.revision} of stored personenkontext.`,
+                ),
+            };
+        }
+
+        const newRevision: string = (parseInt(storedPersonenkontext.revision) + 1).toString();
+        const newData: {
+            referrer?: string;
+            personenstatus?: string;
+            jahrgangsstufe?: string;
+            revision: string;
+        } = {
+            referrer: personenkontextDo.referrer,
+            personenstatus: personenkontextDo.personenstatus,
+            jahrgangsstufe: personenkontextDo.jahrgangsstufe,
+            revision: newRevision,
+        };
+        Object.assign(storedPersonenkontext, newData);
+
+        const saved: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.save(storedPersonenkontext);
+        if (!saved) {
+            return { ok: false, error: new EntityCouldNotBeUpdated('Personenkontext', storedPersonenkontext.id) };
+        }
+
+        return { ok: true, value: saved };
     }
 }

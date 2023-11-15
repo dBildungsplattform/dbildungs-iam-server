@@ -11,7 +11,7 @@ import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from './create-person.dto.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
-import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { SavedPersonenkontextDto } from './saved-personenkontext.dto.js';
 import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
 import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
@@ -30,6 +30,8 @@ import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
+import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
+import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
 
 describe('PersonApiMapperProfile', () => {
     let module: TestingModule;
@@ -105,7 +107,7 @@ describe('PersonApiMapperProfile', () => {
 
         it('should map PersonenkontextDo to CreatedPersonenkontextDto', () => {
             const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
-            expect(() => sut.map(personenkontextDo, PersonenkontextDo, CreatedPersonenkontextDto)).not.toThrowError(
+            expect(() => sut.map(personenkontextDo, PersonenkontextDo, SavedPersonenkontextDto)).not.toThrowError(
                 MappingError,
             );
         });
@@ -114,14 +116,14 @@ describe('PersonApiMapperProfile', () => {
             const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
             personenkontextDo.loeschungZeitpunkt = undefined;
 
-            expect(() => sut.map(personenkontextDo, PersonenkontextDo, CreatedPersonenkontextDto)).not.toThrowError(
+            expect(() => sut.map(personenkontextDo, PersonenkontextDo, SavedPersonenkontextDto)).not.toThrowError(
                 MappingError,
             );
         });
 
         it('should map CreatedPersonenkontextDto to PersonenkontextResponse', () => {
             expect(() =>
-                sut.map({} as CreatedPersonenkontextDto, CreatedPersonenkontextDto, PersonenkontextResponse),
+                sut.map({} as SavedPersonenkontextDto, SavedPersonenkontextDto, PersonenkontextResponse),
             ).not.toThrowError(MappingError);
         });
 
@@ -197,6 +199,22 @@ describe('PersonApiMapperProfile', () => {
         it('should map PersonenkontextDto to PersonenkontextdatensatzResponse', () => {
             expect(() =>
                 sut.map({} as PersonenkontextDto, PersonenkontextDto, PersonenkontextdatensatzResponse),
+            ).not.toThrowError(MappingError);
+        });
+
+        it('should map UpdatePersonenkontextBodyParams to UpdatePersonenkontextDto', () => {
+            expect(() =>
+                sut.map(
+                    {} as UpdatePersonenkontextBodyParams,
+                    UpdatePersonenkontextBodyParams,
+                    UpdatePersonenkontextDto,
+                ),
+            ).not.toThrowError(MappingError);
+        });
+
+        it('should map UpdatePersonenkontextDto to PersonenkontextDo', () => {
+            expect(() =>
+                sut.map({} as UpdatePersonenkontextDto, UpdatePersonenkontextDto, PersonenkontextDo),
             ).not.toThrowError(MappingError);
         });
     });

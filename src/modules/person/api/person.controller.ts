@@ -33,7 +33,7 @@ import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from './create-person.dto.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
-import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { SavedPersonenkontextDto } from './saved-personenkontext.dto.js';
 import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
@@ -105,9 +105,9 @@ export class PersonController {
         );
         personenkontextDto.personId = pathParams.personId;
 
-        const createdPersonenkontext: CreatedPersonenkontextDto =
+        const createdPersonenkontext: SavedPersonenkontextDto =
             await this.personenkontextUc.createPersonenkontext(personenkontextDto);
-        return this.mapper.map(createdPersonenkontext, CreatedPersonenkontextDto, PersonenkontextResponse);
+        return this.mapper.map(createdPersonenkontext, SavedPersonenkontextDto, PersonenkontextResponse);
     }
 
     @Get(':personId/personenkontexte')
