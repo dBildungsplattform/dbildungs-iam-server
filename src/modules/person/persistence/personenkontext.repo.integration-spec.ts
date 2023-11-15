@@ -12,11 +12,12 @@ import {
 } from '../../../../test/utils/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
-import { Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
+import { Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextRepo } from './personenkontext.repo.js';
+import { PersonenkontextScope } from './personenkontext.scope.js';
 
 describe('PersonenkontextRepo', () => {
     let module: TestingModule;
@@ -111,14 +112,14 @@ describe('PersonenkontextRepo', () => {
         });
     });
 
-    describe('findAll', () => {
+    describe('findBy', () => {
         describe('When personenkontext for person exists', () => {
             it('should find all personenkontexte for this person', async () => {
                 const props: Partial<PersonenkontextDo<false>> = {
                     referrer: 'referrer',
                     personenstatus: Personenstatus.AKTIV,
                     rolle: Rolle.LERNENDER,
-                    sichtfreigabe: false,
+                    sichtfreigabe: SichtfreigabeType.NEIN,
                 };
                 const person1Id: string = faker.string.uuid();
                 const personenkontextDo1: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false, {
@@ -129,15 +130,15 @@ describe('PersonenkontextRepo', () => {
                 await em.persistAndFlush(mapper.map(personenkontextDo1, PersonenkontextDo, PersonenkontextEntity));
                 await em.persistAndFlush(mapper.map(personenkontextDo2, PersonenkontextDo, PersonenkontextEntity));
 
-                const personenkontextDoFromQueryParam: PersonenkontextDo<false> = DoFactory.createPersonenkontext(
-                    false,
-                    {
-                        ...props,
+                const [result]: Counted<PersonenkontextDo<true>> = await sut.findBy(
+                    new PersonenkontextScope().findBy({
+                        referrer: 'referrer',
+                        personenstatus: Personenstatus.AKTIV,
+                        rolle: Rolle.LERNENDER,
+                        sichtfreigabe: SichtfreigabeType.NEIN,
                         personId: person1Id,
-                    },
+                    }),
                 );
-
-                const result: PersonenkontextDo<true>[] = await sut.findAll(personenkontextDoFromQueryParam);
                 expect(result).not.toBeNull();
                 expect(result).toHaveLength(1);
                 await expect(em.find(PersonenkontextEntity, {})).resolves.toHaveLength(2);
@@ -146,12 +147,8 @@ describe('PersonenkontextRepo', () => {
 
         describe('When no personenkontext matches', () => {
             it('should return an empty list', async () => {
-                const props: Partial<PersonenkontextDo<false>> = {};
-                const personenkontextDoFromQueryParam: PersonenkontextDo<false> = DoFactory.createPersonenkontext(
-                    false,
-                    props,
-                );
-                const result: PersonenkontextDo<true>[] = await sut.findAll(personenkontextDoFromQueryParam);
+                const [result]: Counted<PersonenkontextDo<true>> = await sut.findBy(new PersonenkontextScope());
+
                 expect(result).not.toBeNull();
                 expect(result).toHaveLength(0);
                 await expect(em.find(PersonenkontextEntity, {})).resolves.toHaveLength(0);

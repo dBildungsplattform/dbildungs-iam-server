@@ -1,10 +1,10 @@
 import { AutoMap } from '@automapper/classes';
-import { Rolle, Personenstatus } from '../domain/personenkontext.enums.js';
-import { SichtfreigabeType } from './personen-query.param.js';
+import { PagedDto } from '../../../shared/paging/paged.dto.js';
+import { Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 
-export class FindPersonenkontextDto {
+export class FindPersonenkontextDto extends PagedDto {
     @AutoMap()
-    public personId!: string;
+    public personId?: string;
 
     @AutoMap()
     public readonly referrer?: string;
