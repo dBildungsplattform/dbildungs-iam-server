@@ -24,7 +24,7 @@ export class PersonUc {
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
-    public async createPerson(personDto: CreatePersonDto): Promise<void> {
+    public async createPerson(personDto: CreatePersonDto): Promise<PersonDto> {
         // create user
         const userDo: UserDo<false> = this.mapper.map(personDto, CreatePersonDto, UserDo<false>);
         const userIdResult: Result<string> = await this.userService.create(userDo);
@@ -38,7 +38,9 @@ export class PersonUc {
 
         const result: Result<PersonDo<true>> = await this.personService.createPerson(personDo);
         if (result.ok) {
-            return;
+            // map to PersonDTO and return
+            const resPersonDto: PersonDto = this.mapper.map(personDo, PersonDo, PersonDto);
+            return resPersonDto;
         }
 
         // delete user if person could not be created

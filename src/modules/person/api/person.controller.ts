@@ -37,6 +37,7 @@ import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
+import { PersonDto } from './person.dto.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
@@ -61,9 +62,21 @@ export class PersonController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the person.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
-    public async createPerson(@Body() params: CreatePersonBodyParams): Promise<void> {
+    public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
         const dto: CreatePersonDto = this.mapper.map(params, CreatePersonBodyParams, CreatePersonDto);
-        await this.personUc.createPerson(dto);
+        // returned value should be a PersonDto and not a PersonDO
+        // return  at the end a PersonendatensatzDto
+        const person: PersonDto = await this.personUc.createPerson(dto);
+        const personendatensatzDto: PersonendatensatzDto = {
+            person: person,
+            personenkontexte: [],
+        };
+        const personendatensatzResponse: PersonendatensatzResponse = this.mapper.map(
+            personendatensatzDto,
+            PersonendatensatzDto,
+            PersonendatensatzResponse,
+        );
+        return personendatensatzResponse;
     }
 
     @Get(':personId')
