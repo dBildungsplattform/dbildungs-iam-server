@@ -77,4 +77,7 @@ export class PersonDo<WasPersisted extends boolean> implements DoBase<WasPersist
 
     @AutoMap()
     public auskunftssperre?: boolean;
+
+    @AutoMap()
+    public revision!: string;
 }

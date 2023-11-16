@@ -99,6 +99,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<boolean>) => dest.id, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.createdAt, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.updatedAt, ignore()),
+                forMember((dest: PersonDo<boolean>) => dest.revision, ignore()),
             );
             createMap(
                 mapper,
@@ -202,6 +203,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<false>) => dest.lokalisierung, ignore()),
                 forMember((dest: PersonDo<false>) => dest.vertrauensstufe, ignore()),
                 forMember((dest: PersonDo<false>) => dest.auskunftssperre, ignore()),
+                forMember((dest: PersonDo<false>) => dest.revision, ignore()),
             );
 
             createMap(mapper, CreatePersonDto, UserDo);
