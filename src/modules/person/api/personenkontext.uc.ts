@@ -24,7 +24,9 @@ export class PersonenkontextUc {
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
-    public async createPersonenkontext(personenkontextDto: CreatePersonenkontextDto): Promise<CreatedPersonenkontextDto> {
+    public async createPersonenkontext(
+        personenkontextDto: CreatePersonenkontextDto,
+    ): Promise<CreatedPersonenkontextDto> {
         const personenkontextDo: PersonenkontextDo<false> = this.mapper.map(
             personenkontextDto,
             CreatePersonenkontextDto,
