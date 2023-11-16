@@ -199,13 +199,18 @@ describe('OrganisationUc', () => {
     });
 
     describe('findVerwaltetVon', () => {
-        describe('when matching organizations were found', () => {
+        describe('when parent organisation exists', () => {
             it('should return all found organisations', async () => {
                 const organisationDos: OrganisationDo<true>[] = DoFactory.createMany(
                     2,
                     true,
                     DoFactory.createOrganisation,
                 );
+
+                organisationServiceMock.findOrganisationById.mockResolvedValueOnce({
+                    ok: true,
+                    value: DoFactory.createOrganisation(true),
+                });
 
                 organisationServiceMock.findAllVerwaltetVon.mockResolvedValue({
                     total: organisationDos.length,
@@ -227,31 +232,31 @@ describe('OrganisationUc', () => {
             });
         });
 
-        describe('when no matching organisations were found', () => {
-            it('should return an empty array', async () => {
-                organisationServiceMock.findAllVerwaltetVon.mockResolvedValue({
-                    total: 0,
-                    offset: 0,
-                    limit: 0,
-                    items: [],
+        describe('when no parent organisation exists', () => {
+            it('should throw error', async () => {
+                organisationServiceMock.findOrganisationById.mockResolvedValueOnce({
+                    ok: false,
+                    error: new EntityNotFoundError(),
                 });
 
-                const emptyResult: Paged<OrganisationResponse> = await organisationUc.findVerwaltetVon('');
-
-                expect(emptyResult.total).toBe(0);
-                expect(emptyResult.items).toHaveLength(0);
+                await expect(organisationUc.findVerwaltetVon('')).rejects.toThrow(EntityNotFoundError);
             });
         });
     });
 
     describe('findZugehoerigZu', () => {
-        describe('when matching organizations were found', () => {
+        describe('when parent organisation exists', () => {
             it('should return all found organisations', async () => {
                 const organisationDos: OrganisationDo<true>[] = DoFactory.createMany(
                     2,
                     true,
                     DoFactory.createOrganisation,
                 );
+
+                organisationServiceMock.findOrganisationById.mockResolvedValueOnce({
+                    ok: true,
+                    value: DoFactory.createOrganisation(true),
+                });
 
                 organisationServiceMock.findAllZugehoerigZu.mockResolvedValue({
                     total: organisationDos.length,
@@ -273,19 +278,14 @@ describe('OrganisationUc', () => {
             });
         });
 
-        describe('when no matching organisations were found', () => {
-            it('should return an empty array', async () => {
-                organisationServiceMock.findAllZugehoerigZu.mockResolvedValue({
-                    total: 0,
-                    offset: 0,
-                    limit: 0,
-                    items: [],
+        describe('when no parent organisation exists', () => {
+            it('should throw error', async () => {
+                organisationServiceMock.findOrganisationById.mockResolvedValueOnce({
+                    ok: false,
+                    error: new EntityNotFoundError(),
                 });
 
-                const emptyResult: Paged<OrganisationResponse> = await organisationUc.findZugehoerigZu('');
-
-                expect(emptyResult.total).toBe(0);
-                expect(emptyResult.items).toHaveLength(0);
+                await expect(organisationUc.findZugehoerigZu('')).rejects.toThrow(EntityNotFoundError);
             });
         });
     });
