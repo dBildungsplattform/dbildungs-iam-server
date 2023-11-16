@@ -7,7 +7,7 @@ import { PersonService } from '../domain/person.service.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { PersonenkontextService } from '../domain/personenkontext.service.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
-import { SavedPersonenkontextDto } from './saved-personenkontext.dto.js';
+import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonDto } from './person.dto.js';
@@ -24,7 +24,7 @@ export class PersonenkontextUc {
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
-    public async createPersonenkontext(personenkontextDto: CreatePersonenkontextDto): Promise<SavedPersonenkontextDto> {
+    public async createPersonenkontext(personenkontextDto: CreatePersonenkontextDto): Promise<CreatedPersonenkontextDto> {
         const personenkontextDo: PersonenkontextDo<false> = this.mapper.map(
             personenkontextDto,
             CreatePersonenkontextDto,
@@ -33,7 +33,7 @@ export class PersonenkontextUc {
         const result: Result<PersonenkontextDo<true>> =
             await this.personenkontextService.createPersonenkontext(personenkontextDo);
         if (result.ok) {
-            return this.mapper.map(result.value, PersonenkontextDo, SavedPersonenkontextDto);
+            return this.mapper.map(result.value, PersonenkontextDo, CreatedPersonenkontextDto);
         }
         throw result.error;
     }
@@ -87,7 +87,7 @@ export class PersonenkontextUc {
         });
     }
 
-    public async updatePersonenkontext(updateDto: UpdatePersonenkontextDto): Promise<SavedPersonenkontextDto> {
+    public async updatePersonenkontext(updateDto: UpdatePersonenkontextDto): Promise<PersonendatensatzDto> {
         const personenkontextDo: PersonenkontextDo<true> = this.mapper.map(
             updateDto,
             UpdatePersonenkontextDto,
@@ -102,12 +102,17 @@ export class PersonenkontextUc {
             throw result.error;
         }
 
-        const updated: SavedPersonenkontextDto = this.mapper.map(
-            result.value,
-            PersonenkontextDo,
-            SavedPersonenkontextDto,
+        const personResult: Result<PersonDo<true>, DomainError> = await this.personService.findPersonById(
+            result.value.personId,
         );
 
-        return updated;
+        if (!personResult.ok) {
+            throw personResult.error;
+        }
+
+        return new PersonendatensatzDto({
+            person: this.mapper.map(personResult.value, PersonDo, PersonDto),
+            personenkontexte: [this.mapper.map(result.value, PersonenkontextDo, PersonenkontextDto)],
+        });
     }
 }

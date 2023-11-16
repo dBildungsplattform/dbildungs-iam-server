@@ -11,7 +11,7 @@ import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from './create-person.dto.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
-import { SavedPersonenkontextDto } from './saved-personenkontext.dto.js';
+import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
 import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
@@ -107,7 +107,7 @@ describe('PersonApiMapperProfile', () => {
 
         it('should map PersonenkontextDo to CreatedPersonenkontextDto', () => {
             const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
-            expect(() => sut.map(personenkontextDo, PersonenkontextDo, SavedPersonenkontextDto)).not.toThrowError(
+            expect(() => sut.map(personenkontextDo, PersonenkontextDo, CreatedPersonenkontextDto)).not.toThrowError(
                 MappingError,
             );
         });
@@ -116,14 +116,14 @@ describe('PersonApiMapperProfile', () => {
             const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
             personenkontextDo.loeschungZeitpunkt = undefined;
 
-            expect(() => sut.map(personenkontextDo, PersonenkontextDo, SavedPersonenkontextDto)).not.toThrowError(
+            expect(() => sut.map(personenkontextDo, PersonenkontextDo, CreatedPersonenkontextDto)).not.toThrowError(
                 MappingError,
             );
         });
 
         it('should map CreatedPersonenkontextDto to PersonenkontextResponse', () => {
             expect(() =>
-                sut.map({} as SavedPersonenkontextDto, SavedPersonenkontextDto, PersonenkontextResponse),
+                sut.map({} as CreatedPersonenkontextDto, CreatedPersonenkontextDto, PersonenkontextResponse),
             ).not.toThrowError(MappingError);
         });
 

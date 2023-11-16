@@ -8,7 +8,7 @@ import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
-import { SavedPersonenkontextDto } from './saved-personenkontext.dto.js';
+import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonByIdParams } from './person-by-id.param.js';
@@ -191,7 +191,7 @@ describe('PersonController', () => {
                     personenstatus: Personenstatus.AKTIV,
                     referrer: 'referrer',
                 };
-                const ucResult: SavedPersonenkontextDto = {
+                const ucResult: CreatedPersonenkontextDto = {
                     id: faker.string.uuid(),
                     mandant: faker.string.uuid(),
                     organisation: {

@@ -1,7 +1,7 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
-import { SavedPersonenkontextOrganisationDto } from './saved-personenkontext-organisation.dto.js';
+import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-organisation.dto.js';
 import { LoeschungResponse } from './loeschung.response.js';
 
 export class PersonenkontextResponse {
@@ -17,9 +17,9 @@ export class PersonenkontextResponse {
     @ApiProperty()
     public readonly mandant!: string;
 
-    @AutoMap(() => SavedPersonenkontextOrganisationDto)
+    @AutoMap(() => CreatedPersonenkontextOrganisationDto)
     @ApiProperty()
-    public readonly organisation!: SavedPersonenkontextOrganisationDto;
+    public readonly organisation!: CreatedPersonenkontextOrganisationDto;
 
     @AutoMap(() => String)
     @ApiProperty()

@@ -27,7 +27,6 @@ import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
 import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
 import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
-import { SavedPersonenkontextDto } from './saved-personenkontext.dto.js';
 
 @Public()
 @ApiTags('personenkontexte')
@@ -122,7 +121,7 @@ export class PersonenkontextController {
     public async updatePersonenkontextWithId(
         @Param() params: FindPersonenkontextByIdParams,
         @Body() body: UpdatePersonenkontextBodyParams,
-    ): Promise<PersonenkontextResponse> {
+    ): Promise<PersonendatensatzResponse> {
         const dto: UpdatePersonenkontextDto = this.mapper.map(
             body,
             UpdatePersonenkontextBodyParams,
@@ -130,8 +129,8 @@ export class PersonenkontextController {
         );
         dto.id = params.personenkontextId;
 
-        const response: SavedPersonenkontextDto = await this.personenkontextUc.updatePersonenkontext(dto);
+        const response: PersonendatensatzDto = await this.personenkontextUc.updatePersonenkontext(dto);
 
-        return this.mapper.map(response, SavedPersonenkontextDto, PersonenkontextResponse);
+        return this.mapper.map(response, PersonendatensatzDto, PersonendatensatzResponse);
     }
 }

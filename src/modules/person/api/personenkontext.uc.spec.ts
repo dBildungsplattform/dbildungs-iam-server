@@ -11,12 +11,13 @@ import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonenkontextService } from '../domain/personenkontext.service.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
-import { SavedPersonenkontextDto } from './saved-personenkontext.dto.js';
+import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
+import { PersonendatensatzDto } from './personendatensatz.dto.js';
 
 describe('PersonenkontextUc', () => {
     let module: TestingModule;
@@ -66,7 +67,7 @@ describe('PersonenkontextUc', () => {
                     value: personenkontextDo,
                 });
 
-                const createPersonPromise: Promise<SavedPersonenkontextDto> = sut.createPersonenkontext(
+                const createPersonPromise: Promise<CreatedPersonenkontextDto> = sut.createPersonenkontext(
                     {} as CreatePersonenkontextDto,
                 );
 
@@ -82,7 +83,7 @@ describe('PersonenkontextUc', () => {
                     error: error,
                 });
 
-                const createPersonPromise: Promise<SavedPersonenkontextDto> = sut.createPersonenkontext(
+                const createPersonPromise: Promise<CreatedPersonenkontextDto> = sut.createPersonenkontext(
                     {} as CreatePersonenkontextDto,
                 );
 
@@ -195,16 +196,19 @@ describe('PersonenkontextUc', () => {
     });
 
     describe('updatePersonenkontext', () => {
-        // AI next 30 lines
+        // AI next 34 lines
         describe('when updating personenkontext is successful', () => {
             it('should not throw', async () => {
+                const personDo: PersonDo<true> = DoFactory.createPerson(true);
                 const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+
+                personServiceMock.findPersonById.mockResolvedValue({ ok: true, value: personDo });
                 personenkontextServiceMock.updatePersonenkontext.mockResolvedValue({
                     ok: true,
                     value: personenkontextDo,
                 });
 
-                const updatePersonPromise: Promise<SavedPersonenkontextDto> = sut.updatePersonenkontext(
+                const updatePersonPromise: Promise<PersonendatensatzDto> = sut.updatePersonenkontext(
                     {} as PersonenkontextDto,
                 );
 
@@ -220,7 +224,26 @@ describe('PersonenkontextUc', () => {
                     error: error,
                 });
 
-                const updatePersonPromise: Promise<SavedPersonenkontextDto> = sut.updatePersonenkontext(
+                const updatePersonPromise: Promise<PersonendatensatzDto> = sut.updatePersonenkontext(
+                    {} as PersonenkontextDto,
+                );
+
+                await expect(updatePersonPromise).rejects.toThrow(error);
+            });
+        });
+
+        describe('when person for personenkontext could not be found', () => {
+            it('should throw Error', async () => {
+                // AI next 13 lines
+                const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+                const error: EntityNotFoundError = new EntityNotFoundError('Person');
+                personenkontextServiceMock.updatePersonenkontext.mockResolvedValue({
+                    ok: true,
+                    value: personenkontextDo,
+                });
+                personServiceMock.findPersonById.mockResolvedValue({ ok: false, error: error });
+
+                const updatePersonPromise: Promise<PersonendatensatzDto> = sut.updatePersonenkontext(
                     {} as PersonenkontextDto,
                 );
 
