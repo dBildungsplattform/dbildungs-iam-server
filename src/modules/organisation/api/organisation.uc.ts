@@ -116,6 +116,12 @@ export class OrganisationUc {
     }
 
     public async findVerwaltetVon(parentOrganisationId: string): Promise<Paged<OrganisationResponse>> {
+        const parentOrg: Result<OrganisationDo<true>> =
+            await this.organisationService.findOrganisationById(parentOrganisationId);
+        if (!parentOrg.ok) {
+            throw parentOrg.error;
+        }
+
         const result: Paged<OrganisationDo<true>> =
             await this.organisationService.findAllVerwaltetVon(parentOrganisationId);
 
@@ -134,6 +140,12 @@ export class OrganisationUc {
     }
 
     public async findZugehoerigZu(parentOrganisationId: string): Promise<Paged<OrganisationResponse>> {
+        const parentOrg: Result<OrganisationDo<true>> =
+            await this.organisationService.findOrganisationById(parentOrganisationId);
+        if (!parentOrg.ok) {
+            throw parentOrg.error;
+        }
+
         const result: Paged<OrganisationDo<true>> =
             await this.organisationService.findAllZugehoerigZu(parentOrganisationId);
 
