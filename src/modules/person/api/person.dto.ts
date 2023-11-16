@@ -43,6 +43,6 @@ export class PersonDto {
     @AutoMap()
     public auskunftssperre?: boolean;
 
-    @AutoMap(() => String)
-    public reversion?: string;
+    @AutoMap()
+    public revision!: string;
 }

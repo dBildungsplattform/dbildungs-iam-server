@@ -42,6 +42,6 @@ export class PersonResponse {
     public vertrauensstufe!: Vertrauensstufe;
 
     @AutoMap()
-    @ApiProperty({ nullable: true })
-    public reversion?: string;
+    @ApiProperty()
+    public revision!: string;
 }

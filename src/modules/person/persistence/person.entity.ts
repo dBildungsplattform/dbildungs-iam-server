@@ -97,6 +97,6 @@ export class PersonEntity extends TimestampedEntity<PersonEntity, 'id'> {
     public dataProvider?: DataProviderEntity;
 
     @AutoMap()
-    @Property({ nullable: true })
-    public reversion?: string;
+    @Property({ nullable: false, default: '1' })
+    public revision!: string;
 }
