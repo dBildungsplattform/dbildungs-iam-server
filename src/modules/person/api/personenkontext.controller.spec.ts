@@ -17,6 +17,8 @@ import { PersonenkontextController } from './personenkontext.controller.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
+import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
@@ -135,6 +137,41 @@ describe('PersonenkontextController', () => {
                 expect(result.items[0]?.person.id).toBe(personenkontext.personId);
                 expect(result.items[0]?.personenkontexte.length).toBe(1);
                 expect(result.items[0]?.personenkontexte[0]?.id).toBe(personenkontext.id);
+            });
+        });
+    });
+
+    describe('updatePersonenkontextWithId', () => {
+        describe('when updating a personenkontext', () => {
+            it('should return PersonenkontextResponse', async () => {
+                const idParams: FindPersonenkontextByIdParams = {
+                    personenkontextId: faker.string.uuid(),
+                };
+                const bodyParams: UpdatePersonenkontextBodyParams = {
+                    referrer: 'referrer',
+                    personenstatus: Personenstatus.AKTIV,
+                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                    revision: '1',
+                };
+                const mockResonse: PersonenkontextResponse = {
+                    id: faker.string.uuid(),
+                    personenstatus: Personenstatus.AKTIV,
+                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                    referrer: 'referrer',
+                    revision: '1',
+                    organisation: {
+                        id: faker.string.uuid(),
+                    },
+                    mandant: faker.string.uuid(),
+                    rolle: Rolle.LERNENDER,
+                };
+
+                personenkontextUcMock.updatePersonenkontext.mockResolvedValue(mockResonse);
+
+                const response: PersonenkontextResponse = await sut.updatePersonenkontextWithId(idParams, bodyParams);
+
+                expect(response).toBeInstanceOf(PersonenkontextResponse);
+                expect(personenkontextUcMock.updatePersonenkontext).toHaveBeenCalledTimes(1);
             });
         });
     });

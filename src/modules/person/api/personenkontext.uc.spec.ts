@@ -193,4 +193,39 @@ describe('PersonenkontextUc', () => {
             });
         });
     });
+
+    describe('updatePersonenkontext', () => {
+        // AI next 30 lines
+        describe('when updating personenkontext is successful', () => {
+            it('should not throw', async () => {
+                const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+                personenkontextServiceMock.updatePersonenkontext.mockResolvedValue({
+                    ok: true,
+                    value: personenkontextDo,
+                });
+
+                const updatePersonPromise: Promise<SavedPersonenkontextDto> = sut.updatePersonenkontext(
+                    {} as PersonenkontextDto,
+                );
+
+                await expect(updatePersonPromise).resolves.not.toThrow();
+            });
+        });
+
+        describe('when updating personenkontext is not successful', () => {
+            it('should throw Error', async () => {
+                const error: EntityCouldNotBeCreated = new EntityCouldNotBeCreated('Personenkontext');
+                personenkontextServiceMock.updatePersonenkontext.mockResolvedValue({
+                    ok: false,
+                    error: error,
+                });
+
+                const updatePersonPromise: Promise<SavedPersonenkontextDto> = sut.updatePersonenkontext(
+                    {} as PersonenkontextDto,
+                );
+
+                await expect(updatePersonPromise).rejects.toThrow(error);
+            });
+        });
+    });
 });
