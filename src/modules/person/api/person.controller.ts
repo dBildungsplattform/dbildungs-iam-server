@@ -57,6 +57,7 @@ export class PersonController {
     ) {}
 
     @Post()
+    @HttpCode(200)
     @ApiCreatedResponse({ description: 'The person was successfully created.' })
     @ApiBadRequestResponse({ description: 'The person already exists.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the person.' })
