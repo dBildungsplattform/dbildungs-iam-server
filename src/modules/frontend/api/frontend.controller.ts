@@ -148,7 +148,7 @@ export class FrontendController {
         return this.organisationService.getRoot(user);
     }
 
-    @Get('organisationen/:organisationsId/verwaltet')
+    @Get('organisationen/:organisationId/verwaltet')
     @UseGuards(AuthenticatedGuard)
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
     @ApiOkResponse({ description: 'Returns all administered organizations' })
@@ -159,7 +159,7 @@ export class FrontendController {
         return this.organisationService.findVerwaltetVon(params.organisationId, user);
     }
 
-    @Get('organisationen/:organisationsId/zugehoerig')
+    @Get('organisationen/:organisationId/zugehoerig')
     @UseGuards(AuthenticatedGuard)
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
     @ApiOkResponse({ description: 'Returns all owned organizations' })
@@ -170,7 +170,7 @@ export class FrontendController {
         return this.organisationService.findZugehoerigZu(params.organisationId, user);
     }
 
-    @Post('organisationen/:organisationsId/verwaltet')
+    @Post('organisationen/:organisationId/verwaltet')
     @UseGuards(AuthenticatedGuard)
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
     @ApiOkResponse({ description: 'organisation was successfully updated' })
@@ -182,7 +182,7 @@ export class FrontendController {
         return this.organisationService.setVerwaltetVon(params.organisationId, body.organisationId, user);
     }
 
-    @Post('organisationen/:organisationsId/zugehoerig')
+    @Post('organisationen/:organisationId/zugehoerig')
     @UseGuards(AuthenticatedGuard)
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
     @ApiOkResponse({ description: 'organisation was successfully updated' })

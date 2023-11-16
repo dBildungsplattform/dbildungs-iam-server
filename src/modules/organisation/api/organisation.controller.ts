@@ -124,7 +124,7 @@ export class OrganisationController {
         return response;
     }
 
-    @Post(':organisationsId/verwaltet')
+    @Post(':organisationId/verwaltet')
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
     @ApiBadRequestResponse({ description: 'The organisation could not be modified.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
@@ -155,7 +155,7 @@ export class OrganisationController {
         return response;
     }
 
-    @Post(':organisationsId/zugehoerig')
+    @Post(':organisationId/zugehoerig')
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
     @ApiBadRequestResponse({ description: 'The organisation could not be modified.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
