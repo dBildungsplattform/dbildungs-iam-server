@@ -1,6 +1,17 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, HttpException, HttpStatus, Inject, Param, Post, Query, UseFilters } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    HttpException,
+    HttpStatus,
+    Inject,
+    Param,
+    Post,
+    Query,
+    UseFilters,
+} from '@nestjs/common';
 import { OrganisationUc } from './organisation.uc.js';
 import {
     ApiBadRequestResponse,
