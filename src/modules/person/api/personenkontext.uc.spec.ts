@@ -237,6 +237,7 @@ describe('PersonenkontextUc', () => {
                 // AI next 13 lines
                 const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
                 const error: EntityNotFoundError = new EntityNotFoundError('Person');
+
                 personenkontextServiceMock.updatePersonenkontext.mockResolvedValue({
                     ok: true,
                     value: personenkontextDo,

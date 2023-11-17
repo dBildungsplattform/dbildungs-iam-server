@@ -75,6 +75,7 @@ export class PersonenkontextService {
         const storedPersonenkontext: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.findById(
             personenkontextDo.id,
         );
+
         if (!storedPersonenkontext) {
             return { ok: false, error: new EntityNotFoundError('Personenkontext', personenkontextDo.id) };
         }
@@ -89,12 +90,7 @@ export class PersonenkontextService {
         }
 
         const newRevision: string = (parseInt(storedPersonenkontext.revision) + 1).toString();
-        const newData: {
-            referrer?: string;
-            personenstatus?: string;
-            jahrgangsstufe?: string;
-            revision: string;
-        } = {
+        const newData: Partial<PersonenkontextDo<true>> = {
             referrer: personenkontextDo.referrer,
             personenstatus: personenkontextDo.personenstatus,
             jahrgangsstufe: personenkontextDo.jahrgangsstufe,
@@ -106,7 +102,6 @@ export class PersonenkontextService {
         if (!saved) {
             return { ok: false, error: new EntityCouldNotBeUpdated('Personenkontext', updatedPersonenkontextDo.id) };
         }
-
         return { ok: true, value: saved };
     }
 }

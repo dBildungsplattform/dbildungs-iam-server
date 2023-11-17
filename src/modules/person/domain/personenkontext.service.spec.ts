@@ -200,10 +200,13 @@ describe('PersonenkontextService', () => {
                 const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true, {
                     revision: '1',
                 });
-                const personenkontextDoWithUpdatedRevision: PersonenkontextDo<true> = {
-                    ...personenkontextDo,
-                    revision: '2',
-                };
+                const personenkontextDoWithUpdatedRevision: PersonenkontextDo<true> = Object.assign(
+                    {},
+                    personenkontextDo,
+                    {
+                        revision: '2',
+                    },
+                );
 
                 personenkontextRepoMock.findById.mockResolvedValue(personenkontextDo);
                 personenkontextRepoMock.save.mockResolvedValue(personenkontextDoWithUpdatedRevision);
