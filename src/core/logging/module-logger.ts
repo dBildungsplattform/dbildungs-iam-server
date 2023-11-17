@@ -36,17 +36,16 @@ export const localFormatter: (info: winston.Logform.TransformableInfo) => string
 };
 
 export class ModuleLogger {
+
     private logger: Logger;
 
     private moduleNameInternal: string;
 
-    public constructor(@Inject(MODULE_NAME) moduleName: string, configService: ConfigService<ServerConfig,true>) {
+    public constructor(@Inject(MODULE_NAME) moduleName: string, configService: ConfigService<ServerConfig, true>) {
         this.moduleNameInternal = moduleName;
 
         const loggerConfig: LoggingConfig = configService.getOrThrow<LoggingConfig>('LOGGING');
-        console.log(loggerConfig);
         const configKey: keyof LoggingConfig = `${moduleName.toUpperCase()}_LOG_LEVEL` as keyof LoggingConfig;
-        console.log(configKey);
         const level: Option<string> = loggerConfig[configKey] ?? loggerConfig.DEFAULT_LOG_LEVEL;
         const loggerFormat: winston.Logform.Format = format.combine(
             format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),

@@ -3,9 +3,7 @@ import { createMock } from '@golevelup/ts-jest';
 import winston from 'winston';
 
 describe('Module Logger', () => {
-
     describe('when a log message is produced', () => {
-
         let tfi: winston.Logform.TransformableInfo;
 
         beforeEach(() => {
@@ -40,6 +38,5 @@ describe('Module Logger', () => {
             tfi['trace'] = 'AN IMPORTANT TRACE';
             expect(localFormatter(tfi)).toContain('AN IMPORTANT TRACE');
         });
-
     });
 });

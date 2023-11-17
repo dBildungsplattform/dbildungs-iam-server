@@ -10,4 +10,3 @@ import { OrganisationPersistenceMapperProfile } from './persistence/organisation
     exports: [OrganisationService],
 })
 export class OrganisationModule {}
-

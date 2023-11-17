@@ -25,7 +25,6 @@ describe('ClassLogger', () => {
 
             classLogger.debug('Blah');
 
-
             expect(moduleLogger.getLogger().debug).toHaveBeenCalledTimes(1);
         });
 
@@ -91,8 +90,8 @@ describe('ClassLogger', () => {
             const classLogger: ClassLogger = await loggerModule.resolve(ClassLogger);
 
             classLogger.debug('Blah2', 'TraceInfo');
+
             expect(moduleLogger.getLogger().debug).toHaveBeenCalledTimes(1);
         });
     });
-
 });
