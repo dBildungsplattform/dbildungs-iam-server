@@ -235,6 +235,7 @@ describe('FrontendController', () => {
                     geschlecht: Geschlecht.M,
                     lokalisierung: '',
                     vertrauensstufe: Vertrauensstufe.VOLL,
+                    revision: '1',
                 };
                 const personenKontextResponse: PersonenkontextResponse[] = [];
                 const response: PersonendatensatzResponse = {
