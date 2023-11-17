@@ -5,7 +5,7 @@ import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 
 export type SchulConnexError = {
-    statusCode?: number;
+    statusCode: number;
     subCode: string;
     title: string;
     description: string;
