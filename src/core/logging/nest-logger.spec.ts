@@ -14,24 +14,74 @@ describe('The nest Logger', () => {
         }).compile();
     });
 
-    it('should produce correct log messages', () => {
-        const nestLogger: NestLogger = module.get(NestLogger);
-
-        nestLogger.log('Test');
-        nestLogger.debug?.('Test');
-        nestLogger.error('Test');
-        nestLogger.warn('Test');
-        nestLogger.verbose?.('Test');
-
-        expect(moduleLogger.getLogger).toHaveBeenCalledTimes(5);
-        expect(
-            moduleLogger
-                .getLogger()
-                .log.mock.calls.every((v: [level: string, message: unknown]): boolean => (v[1] as string) == 'Test'),
-        );
-    });
-
     afterAll(async () => {
         await module.close();
+    });
+
+    describe('when a message gets logged', () => {
+        it('should produce correct log messages with level log', () => {
+            const nestLogger: NestLogger = module.get(NestLogger);
+
+            nestLogger.log('Test');
+
+            expect(moduleLogger.getLogger).toHaveBeenCalled();
+            expect(
+                moduleLogger
+                    .getLogger()
+                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] == 'log'),
+            );
+        });
+
+        it('should produce correct log messages with level debug', () => {
+            const nestLogger: NestLogger = module.get(NestLogger);
+
+            nestLogger.debug?.('Test');
+
+            expect(moduleLogger.getLogger).toHaveBeenCalled();
+            expect(
+                moduleLogger
+                    .getLogger()
+                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] == 'debug'),
+            );
+        });
+
+        it('should produce correct log messages with level error', () => {
+            const nestLogger: NestLogger = module.get(NestLogger);
+
+            nestLogger.error('Test');
+
+            expect(moduleLogger.getLogger).toHaveBeenCalled();
+            expect(
+                moduleLogger
+                    .getLogger()
+                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] == 'error'),
+            );
+        });
+
+        it('should produce correct log messages with level warn', () => {
+            const nestLogger: NestLogger = module.get(NestLogger);
+
+            nestLogger.warn('Test');
+
+            expect(moduleLogger.getLogger).toHaveBeenCalled();
+            expect(
+                moduleLogger
+                    .getLogger()
+                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[0] == 'warn'),
+            );
+        });
+
+        it('should produce correct log messages with level verbose', () => {
+            const nestLogger: NestLogger = module.get(NestLogger);
+
+            nestLogger.verbose?.('Test');
+
+            expect(moduleLogger.getLogger).toHaveBeenCalled();
+            expect(
+                moduleLogger
+                    .getLogger()
+                    .log.mock.calls.every((v: [level: string, message: unknown]): boolean => v[1] == 'verbose'),
+            );
+        });
     });
 });

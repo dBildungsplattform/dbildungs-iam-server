@@ -7,7 +7,7 @@ import { ModuleLogger } from './module-logger.js';
  */
 @Injectable()
 export class NestLogger implements LoggerService {
-    public constructor(private moduleLogger: ModuleLogger) {}
+    public constructor(private readonly moduleLogger: ModuleLogger) {}
 
     public log(message: unknown): void {
         this.moduleLogger.getLogger().info(this.stringifiedMessage(message));
@@ -31,6 +31,7 @@ export class NestLogger implements LoggerService {
 
     private stringifiedMessage(message: unknown): string {
         const stringifiedMessage: string = util.inspect(message).replace(/\n/g, '').replace(/\\n/g, '');
+
         return stringifiedMessage;
     }
 }

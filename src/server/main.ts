@@ -12,6 +12,7 @@ import { GlobalPagingHeadersInterceptor } from '../shared/paging/index.js';
 async function bootstrap(): Promise<void> {
     const app: INestApplication = await NestFactory.create(ServerModule);
     const configService: ConfigService<ServerConfig, true> = app.get(ConfigService<ServerConfig, true>);
+    console.log(configService);
     const port: number = configService.getOrThrow<HostConfig>('HOST').PORT;
     const swagger: Omit<OpenAPIObject, 'paths'> = new DocumentBuilder()
         .setTitle('dBildungs IAM')

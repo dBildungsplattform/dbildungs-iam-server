@@ -35,7 +35,7 @@
         "USE_TLS": false
     },
     "LOGGING": {
-        "DEFAULT_LOG_LEVEL": "debug",
+        "DEFAULT_LOG_LEVEL": "info",
         "PERSONMODULE_LOG_LEVEL": "debug",
         "PERSONAPIMODULE_LOG_LEVEL": "debug",
         "ORGANISATIONMODULE_LOG_LEVEL":  "debug",
@@ -44,7 +44,6 @@
         "ROLLEAPIMODULE_LOG_LEVEL": "debug",
         "KEYCLOAKADMINISTRATIONMODULE_LOG_LEVEL":  "debug",
         "HEALTHMODULE_LOG_LEVEL": "debug",
-        "BACKENDFORFRONTENDMODULE_LOG_LEVEL": "debug",
-        "UIBACKENDMODULE_LOG_LEVEL":  "debug"
+        "BACKENDFORFRONTENDMODULE_LOG_LEVEL": "debug"
     }
 }

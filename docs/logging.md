@@ -6,6 +6,16 @@
 >
 >
 
+## Log Message Format
+
+The log message format is as follows:
+
+```markdown
+info     1970-01-01 00:00:00.000 (+0ms)  [Nest] - Logger for module ServerModule initialized with log level debug
+```
+
+We log everything to
+
 ## General Structure
 
 Logging is handled by different Logger Implementations.
