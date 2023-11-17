@@ -36,7 +36,6 @@ export const localFormatter: (info: winston.Logform.TransformableInfo) => string
 };
 
 export class ModuleLogger {
-
     private logger: Logger;
 
     private moduleNameInternal: string;
