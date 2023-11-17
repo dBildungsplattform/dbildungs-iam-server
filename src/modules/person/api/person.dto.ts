@@ -42,4 +42,7 @@ export class PersonDto {
 
     @AutoMap()
     public auskunftssperre?: boolean;
+
+    @AutoMap()
+    public revision!: string;
 }
