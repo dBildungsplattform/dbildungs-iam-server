@@ -4,9 +4,9 @@ import { ValidationError } from 'class-validator';
 export class DetailedValidationError extends BadRequestException {
     public constructor(
         public readonly validationErrors: ValidationError[],
-        objectOrError?: string | object | unknown,
+        objectOrError?: string | object,
         descriptionOrOptions?: string | HttpExceptionOptions,
     ) {
-        super(objectOrError ? objectOrError : 'Bad Request Exception', descriptionOrOptions);
+        super(objectOrError, descriptionOrOptions ?? 'validation error');
     }
 }

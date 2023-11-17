@@ -1,31 +1,22 @@
-import { ValidationError } from 'class-validator';
 import { DetailedValidationError } from '../validation/detailed-validation.error.js';
 import { SchulConnexValidationErrorFilter, SchulConnexError } from './schulconnex-validation-error.filter.js';
 import { ArgumentsHost } from '@nestjs/common';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { Response } from 'express';
+import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
+import { ValidationError } from 'class-validator';
 
 describe('SchulconnexValidationErrorFilter', () => {
     let filter: SchulConnexValidationErrorFilter;
     const statusCode: number = 400;
-
-    const mockResponse: Response = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-    } as unknown as Response;
-
-    const host: ArgumentsHost = {
-        switchToHttp: jest.fn().mockReturnValue({
-            getResponse: jest.fn().mockReturnValue(mockResponse),
-        }),
-    } as unknown as ArgumentsHost;
-
-    let validationError: ValidationError = {
-        property: 'fieldName',
-    };
+    let responseMock: DeepMocked<Response>;
+    let argumentsHost: DeepMocked<ArgumentsHost>;
+    let validationError: ValidationError;
 
     const generalBadRequestError: SchulConnexError = {
         statusCode: statusCode,
         subCode: '00',
-        title: 'fehlerhafte Anfrage',
+        title: 'Fehlerhafte Anfrage',
         description: 'Die Anfrage ist fehlerhaft',
     };
 
@@ -33,167 +24,231 @@ describe('SchulconnexValidationErrorFilter', () => {
         statusCode: statusCode,
         subCode: '03',
         title: 'Validierungsfehler',
-        description: `Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden '${validationError.property}'`,
+        description: `Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden 'fieldName'`,
+    };
+
+    const complexStandardValidationError: SchulConnexError = {
+        statusCode: statusCode,
+        subCode: '03',
+        title: 'Validierungsfehler',
+        description: `Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden 'fieldName.fieldName'`,
     };
 
     const invalidLengthOfValueError: SchulConnexError = {
         statusCode: statusCode,
         subCode: '07',
         title: 'Attributwerte haben eine ungültige Länge',
-        description: `Textlänge des Attributs ist nicht valide '${validationError.property}'`,
+        description: `Textlänge des Attributs ist nicht valide 'fieldName'`,
     };
 
     const datumError: SchulConnexError = {
         statusCode: statusCode,
         subCode: '09',
         title: 'Datumsattribut hat einen ungültigen Wert',
-        description: `Datumsformat des Attributs ist ungültig '${validationError.property}'`,
+        description: `Datumsformat des Attributs ist ungültig 'fieldName'`,
     };
 
     const enumError: SchulConnexError = {
         statusCode: statusCode,
         subCode: '10',
         title: 'Attributwerte entsprechen keinem der erwarteten Werte',
-        description: `Attribute müssen gültige Werte enthalten '${validationError.property}'`,
+        description: `Attribute müssen gültige Werte enthalten 'fieldName'`,
     };
 
     const textLengthError: SchulConnexError = {
         statusCode: statusCode,
         subCode: '15',
         title: 'Text ist zu lang',
-        description: `Die Länge des übergebenen Texts überschreitet die Maximallänge '${validationError.property}'`,
-    };
-
-    const jsonStructureError: SchulConnexError = {
-        statusCode: statusCode,
-        subCode: '04',
-        title: 'JSON-Struktur ist ungültig',
-        description: `Der Payload entspricht keiner gültigen JSON-Struktur. '${validationError.property}'`,
+        description: `Die Länge des übergebenen Texts überschreitet die Maximallänge 'fieldName'`,
     };
 
     beforeEach(() => {
         filter = new SchulConnexValidationErrorFilter();
+        responseMock = createMock<Response>();
+        argumentsHost = createMock<ArgumentsHost>({
+            switchToHttp: () =>
+                createMock<HttpArgumentsHost>({
+                    getResponse: () => responseMock,
+                }),
+        });
     });
 
     describe('catch', () => {
-        describe('when calling the filter with standard validation error', () => {
-            it('should return a validation error', () => {
+        describe('when calling the filter with no validation exception', () => {
+            it('should return a general schulconnex bad request exception', () => {
+                const detailedValidationError: DetailedValidationError = new DetailedValidationError([]);
+
+                filter.catch(detailedValidationError, argumentsHost);
+
+                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
+                expect(responseMock.json).toHaveBeenCalled();
+                expect(responseMock.status).toHaveBeenCalledWith(generalBadRequestError.statusCode);
+                expect(responseMock.json).toHaveBeenCalledWith(generalBadRequestError);
+            });
+        });
+
+        describe('when calling the filter with validation exception', () => {
+            beforeEach(() => {
                 validationError = {
                     property: 'fieldName',
                     constraints: {
                         isEmail: 'Email is invalid',
                     },
-                    children: [
-                        {
-                            property: 'fieldName',
-                            constraints: {
-                                isNotEmpty: 'Field should not be empty',
-                            },
-                        },
-                    ],
                 };
-                const validationErrors: ValidationError[] = [validationError];
-                const detailedValidationError: DetailedValidationError = new DetailedValidationError(validationErrors);
+            });
 
-                filter.catch(detailedValidationError, host);
+            it('should return a validation schulconnex exception', () => {
+                const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
-                expect(mockResponse.status).toHaveBeenCalledWith(standardValidationError.statusCode);
-                expect(mockResponse.json).toHaveBeenCalledWith(standardValidationError);
+                filter.catch(detailedValidationError, argumentsHost);
+
+                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
+                expect(responseMock.json).toHaveBeenCalled();
+                expect(responseMock.status).toHaveBeenCalledWith(standardValidationError.statusCode);
+                expect(responseMock.json).toHaveBeenCalledWith(standardValidationError);
             });
         });
 
-        describe('when calling the filter with no validation errors', () => {
-            it('should return a general schulconnex bad request error', () => {
-                const detailedValidationError: DetailedValidationError = new DetailedValidationError([]);
-
-                filter.catch(detailedValidationError, host);
-
-                expect(mockResponse.status).toHaveBeenCalledWith(generalBadRequestError.statusCode);
-                expect(mockResponse.json).toHaveBeenCalledWith(generalBadRequestError);
-            });
-        });
-
-        describe('when calling the filter with invalid value error', () => {
-            it('should return a validation error', () => {
+        describe('when calling the filter with invalid value exception', () => {
+            beforeEach(() => {
                 validationError = {
                     property: 'fieldName',
                     constraints: {
-                        isMinLength: 'Text is too short',
+                        isMinLength: 'Text length is invalid',
                     },
                 };
+            });
+
+            it('should return a invalid value exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
-                filter.catch(detailedValidationError, host);
+                filter.catch(detailedValidationError, argumentsHost);
 
-                expect(mockResponse.status).toHaveBeenCalledWith(invalidLengthOfValueError.statusCode);
-                expect(mockResponse.json).toHaveBeenCalledWith(invalidLengthOfValueError);
+                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
+                expect(responseMock.status).toHaveBeenCalledWith(invalidLengthOfValueError.statusCode);
+                expect(responseMock.json).toHaveBeenCalledWith(invalidLengthOfValueError);
             });
         });
 
-        describe('when calling the filter with invalid value error', () => {
-            it('should return a validation error', () => {
+        describe('when calling the filter with invalid date value exception', () => {
+            beforeEach(() => {
                 validationError = {
                     property: 'fieldName',
                     constraints: {
                         isDate: 'Date value is invalid',
                     },
                 };
+            });
+
+            it('should return a invalid date exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
-                filter.catch(detailedValidationError, host);
+                filter.catch(detailedValidationError, argumentsHost);
 
-                expect(mockResponse.status).toHaveBeenCalledWith(datumError.statusCode);
-                expect(mockResponse.json).toHaveBeenCalledWith(datumError);
+                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
+                expect(responseMock.status).toHaveBeenCalledWith(datumError.statusCode);
+                expect(responseMock.json).toHaveBeenCalledWith(datumError);
             });
         });
 
-        describe('when calling the filter with invalid value error', () => {
-            it('should return a validation error', () => {
+        describe('when calling the filter with invalid enum value exception', () => {
+            beforeEach(() => {
                 validationError = {
                     property: 'fieldName',
                     constraints: {
                         isEnum: 'value does not match with enum',
                     },
                 };
+            });
+
+            it('should return a invalid enum exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
-                filter.catch(detailedValidationError, host);
+                filter.catch(detailedValidationError, argumentsHost);
 
-                expect(mockResponse.status).toHaveBeenCalledWith(enumError.statusCode);
-                expect(mockResponse.json).toHaveBeenCalledWith(enumError);
+                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
+                expect(responseMock.json).toHaveBeenCalled();
+                expect(responseMock.status).toHaveBeenCalledWith(enumError.statusCode);
+                expect(responseMock.json).toHaveBeenCalledWith(enumError);
             });
         });
 
-        describe('when calling the filter with invalid value error', () => {
-            it('should return a validation error', () => {
+        describe('when calling the filter with invalid length exception', () => {
+            beforeEach(() => {
                 validationError = {
                     property: 'fieldName',
                     constraints: {
                         isMaxLength: 'value does not match with enum',
                     },
                 };
+            });
+
+            it('should return a invalid length exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
-                filter.catch(detailedValidationError, host);
+                filter.catch(detailedValidationError, argumentsHost);
 
-                expect(mockResponse.status).toHaveBeenCalledWith(textLengthError.statusCode);
-                expect(mockResponse.json).toHaveBeenCalledWith(textLengthError);
+                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
+                expect(responseMock.json).toHaveBeenCalled();
+                expect(responseMock.status).toHaveBeenCalledWith(textLengthError.statusCode);
+                expect(responseMock.json).toHaveBeenCalledWith(textLengthError);
             });
         });
 
-        describe('when calling the filter with invalid value error', () => {
-            it('should return a validation error', () => {
+        describe('when calling the filter with validation exception that has a child validation exception', () => {
+            beforeEach(() => {
                 validationError = {
                     property: 'fieldName',
-                    constraints: {},
-                    children: [],
+                    constraints: {
+                        isEnum: 'enum is invalid',
+                    },
+                    children: [
+                        {
+                            property: 'fieldName',
+                            constraints: {
+                                isNotEmpty: 'value of enum is empty',
+                            },
+                            children: [
+                                {
+                                    property: 'fieldName',
+                                    constraints: {
+                                        isNumber: 'value of enum should be a number',
+                                    },
+                                },
+                            ],
+                        },
+                    ],
                 };
+            });
+
+            it('should return a child validation schulconnex exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
-                filter.catch(detailedValidationError, host);
+                filter.catch(detailedValidationError, argumentsHost);
 
-                expect(mockResponse.status).toHaveBeenCalledWith(jsonStructureError.statusCode);
-                expect(mockResponse.json).toHaveBeenCalledWith(jsonStructureError);
+                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
+                expect(responseMock.json).toHaveBeenCalled();
+                expect(responseMock.status).toHaveBeenCalledWith(complexStandardValidationError.statusCode);
+                expect(responseMock.json).toHaveBeenCalledWith(complexStandardValidationError);
+            });
+        });
+
+        describe('when calling the filter with a validation error without constraints', () => {
+            beforeEach(() => {
+                validationError = {
+                    property: 'fieldName',
+                };
+            });
+
+            it('should return a general bad bad request exception', () => {
+                const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
+
+                filter.catch(detailedValidationError, argumentsHost);
+
+                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
+                expect(responseMock.json).toHaveBeenCalled();
+                expect(responseMock.status).toHaveBeenCalledWith(generalBadRequestError.statusCode);
+                expect(responseMock.json).toHaveBeenCalledWith(generalBadRequestError);
             });
         });
     });

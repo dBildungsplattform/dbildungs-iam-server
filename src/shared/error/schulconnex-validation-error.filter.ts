@@ -5,7 +5,7 @@ import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 
 export type SchulConnexError = {
-    statusCode: number;
+    statusCode?: number;
     subCode: string;
     title: string;
     description: string;
@@ -20,28 +20,26 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
 
         const schulConnexError: SchulConnexError = this.handleValidationErrors(exception, status);
 
-        response.status(status).json({
-            ...schulConnexError,
-        });
+        response.status(status);
+        response.json(schulConnexError);
     }
 
-    private handleValidationErrors(validationError: DetailedValidationError, statusCode?: number): SchulConnexError {
+    private handleValidationErrors(
+        validationError: DetailedValidationError,
+        statusCode: number = 400,
+    ): SchulConnexError {
         const validationErrors: ValidationError[] = validationError.validationErrors;
-        const schulConnexError: SchulConnexError = {
-            statusCode: statusCode ?? 400,
-            subCode: '',
-            title: '',
-            description: '',
+        let schulConnexError: SchulConnexError = {
+            statusCode: statusCode,
+            subCode: '00',
+            title: 'Fehlerhafte Anfrage',
+            description: 'Die Anfrage ist fehlerhaft',
         };
 
         if (!validationErrors[0]) {
-            schulConnexError.subCode = '00';
-            schulConnexError.title = 'fehlerhafte Anfrage';
-            schulConnexError.description = 'Die Anfrage ist fehlerhaft';
             return schulConnexError;
         }
 
-        // handle the first validation error that was found
         const currentValidationError: ValidationError = this.getFirstValidationError(validationErrors[0]);
 
         if (currentValidationError.constraints) {
@@ -55,18 +53,21 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
                 errorMessage: { title: string; description: string };
             } = this.mapValidationErrorConstraints(currentValidationError);
 
-            schulConnexError.subCode = errorSubCode;
-            schulConnexError.title = errorDescription.title;
-            schulConnexError.description = `${errorDescription.description} '${property}'`;
+            schulConnexError = {
+                statusCode: statusCode,
+                subCode: errorSubCode,
+                title: errorDescription.title,
+                description: `${errorDescription.description} '${property}'`,
+            };
+            return schulConnexError;
         }
-
         return schulConnexError;
     }
 
     private getFirstValidationError(validationError: ValidationError): ValidationError {
         let currentValidationError: ValidationError = validationError;
 
-        while (currentValidationError?.children?.length && currentValidationError?.children[0]) {
+        if (currentValidationError?.children?.length && currentValidationError?.children[0]) {
             currentValidationError = currentValidationError.children[0];
         }
 
@@ -113,18 +114,7 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
             return '15';
         }
 
-        if (
-            validationError.constraints?.['isString'] ||
-            validationError.constraints?.['isNumber'] ||
-            validationError.constraints?.['isBoolean'] ||
-            validationError.constraints?.['isEmail'] ||
-            validationError.constraints?.['isArray'] ||
-            validationError.constraints?.['isNotEmpty']
-        ) {
-            return '03';
-        }
-
-        return '04';
+        return '03';
     }
 
     private getErrorMessage(errorCode: string): { title: string; description: string } {
@@ -153,16 +143,11 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
                     description: 'Die Länge des übergebenen Texts überschreitet die Maximallänge',
                 };
 
-            case '03':
+            // default case is '03'
+            default:
                 return {
                     title: 'Validierungsfehler',
                     description: 'Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden',
-                };
-
-            default:
-                return {
-                    title: 'JSON-Struktur ist ungültig',
-                    description: 'Der Payload entspricht keiner gültigen JSON-Struktur.',
                 };
         }
     }
