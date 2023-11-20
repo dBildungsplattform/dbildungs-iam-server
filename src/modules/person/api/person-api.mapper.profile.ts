@@ -31,6 +31,8 @@ import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
+import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
+import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
 
 @Injectable()
 export class PersonApiMapperProfile extends AutomapperProfile {
@@ -353,6 +355,27 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                         mapper.map(src, PersonenkontextDto, PersonenkontextResponse),
                     ]),
                 ),
+            );
+
+            createMap(
+                mapper,
+                UpdatePersonenkontextBodyParams,
+                UpdatePersonenkontextDto,
+                forMember((dest: UpdatePersonenkontextDto) => dest.id, ignore()),
+            );
+
+            createMap(
+                mapper,
+                UpdatePersonenkontextDto,
+                PersonenkontextDo<boolean>,
+                forMember((dest: PersonenkontextDo<boolean>) => dest.createdAt, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.updatedAt, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.personId, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.mandant, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.organisation, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.rolle, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.loeschungZeitpunkt, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.sichtfreigabe, ignore()),
             );
         };
     }

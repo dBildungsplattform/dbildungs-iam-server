@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Controller, Get, HttpException, HttpStatus, Inject, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Inject, Param, Put, Query } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiForbiddenResponse,
@@ -14,6 +14,7 @@ import { Public } from 'nest-keycloak-connect';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
+import { PagingHeadersObject } from '../../../shared/paging/paging.enums.js';
 import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
 import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
@@ -21,9 +22,11 @@ import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
+import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
-import { PagingHeadersObject } from '../../../shared/paging/paging.enums.js';
+import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
+import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
 
 @Public()
 @ApiTags('personenkontexte')
@@ -103,5 +106,31 @@ export class PersonenkontextController {
         });
 
         return response;
+    }
+
+    @Put(':personenkontextId')
+    @ApiOkResponse({
+        description: 'The personenkontext was successfully updated.',
+        type: PersonenkontextResponse,
+    })
+    @ApiBadRequestResponse({ description: 'Request has wrong format.' })
+    @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
+    @ApiNotFoundResponse({ description: 'The personenkontext was not found.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
+    @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
+    public async updatePersonenkontextWithId(
+        @Param() params: FindPersonenkontextByIdParams,
+        @Body() body: UpdatePersonenkontextBodyParams,
+    ): Promise<PersonendatensatzResponse> {
+        const dto: UpdatePersonenkontextDto = this.mapper.map(
+            body,
+            UpdatePersonenkontextBodyParams,
+            UpdatePersonenkontextDto,
+        );
+        dto.id = params.personenkontextId;
+
+        const response: PersonendatensatzDto = await this.personenkontextUc.updatePersonenkontext(dto);
+
+        return this.mapper.map(response, PersonendatensatzDto, PersonendatensatzResponse);
     }
 }
