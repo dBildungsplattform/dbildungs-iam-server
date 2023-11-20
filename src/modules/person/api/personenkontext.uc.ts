@@ -13,6 +13,8 @@ import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonDto } from './person.dto.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
+import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -84,6 +86,35 @@ export class PersonenkontextUc {
         return new PersonendatensatzDto({
             person: this.mapper.map(personResult.value, PersonDo, PersonDto),
             personenkontexte: [this.mapper.map(personenkontextResult.value, PersonenkontextDo, PersonenkontextDto)],
+        });
+    }
+
+    public async updatePersonenkontext(updateDto: UpdatePersonenkontextDto): Promise<PersonendatensatzDto> {
+        const personenkontextDo: PersonenkontextDo<true> = this.mapper.map(
+            updateDto,
+            UpdatePersonenkontextDto,
+            PersonenkontextDo,
+        );
+        const result: Result<
+            PersonenkontextDo<true>,
+            DomainError
+        > = await this.personenkontextService.updatePersonenkontext(personenkontextDo);
+
+        if (!result.ok) {
+            throw result.error;
+        }
+
+        const personResult: Result<PersonDo<true>, DomainError> = await this.personService.findPersonById(
+            result.value.personId,
+        );
+
+        if (!personResult.ok) {
+            throw personResult.error;
+        }
+
+        return new PersonendatensatzDto({
+            person: this.mapper.map(personResult.value, PersonDo, PersonDto),
+            personenkontexte: [this.mapper.map(result.value, PersonenkontextDo, PersonenkontextDto)],
         });
     }
 }

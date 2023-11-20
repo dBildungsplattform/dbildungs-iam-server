@@ -6,7 +6,7 @@ describe('EntityCouldNotBeCreated', () => {
             it('should set message and code', () => {
                 const error: EntityCouldNotBeCreated = new EntityCouldNotBeCreated('EntityName');
                 expect(error.message).toBe('EntityName could not be created');
-                expect(error.code).toBe('ENTITY_CLOUD_NOT_BE_CREATED');
+                expect(error.code).toBe('ENTITY_COULD_NOT_BE_CREATED');
             });
         });
     });
