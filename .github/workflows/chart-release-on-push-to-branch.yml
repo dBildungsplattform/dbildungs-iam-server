@@ -25,6 +25,9 @@ jobs:
       version_generation: ticket_from_branch_short_hash
   
   branch_meta:
+    needs: 
+      - scan
+      - release
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@main
 
   create_branch_identifier:
