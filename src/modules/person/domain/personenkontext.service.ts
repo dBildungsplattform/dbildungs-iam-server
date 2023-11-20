@@ -97,11 +97,12 @@ export class PersonenkontextService {
             revision: newRevision,
         };
         const updatedPersonenkontextDo: PersonenkontextDo<true> = Object.assign(storedPersonenkontext, newData);
-
         const saved: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.save(updatedPersonenkontextDo);
+
         if (!saved) {
             return { ok: false, error: new EntityCouldNotBeUpdated('Personenkontext', updatedPersonenkontextDo.id) };
         }
+
         return { ok: true, value: saved };
     }
 }
