@@ -68,7 +68,8 @@ describe('PersonController', () => {
 
     describe('when creating a person', () => {
         it('should not throw', async () => {
-            personUcMock.createPerson.mockResolvedValue();
+            const personDto: PersonDto = {} as PersonDto;
+            personUcMock.createPerson.mockResolvedValue(personDto);
             const params: CreatePersonBodyParams = {
                 username: faker.internet.userName(),
                 mandant: faker.string.uuid(),

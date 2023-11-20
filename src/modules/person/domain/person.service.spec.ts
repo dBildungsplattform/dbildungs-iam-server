@@ -62,6 +62,7 @@ describe('PersonService', () => {
                     id: undefined,
                     createdAt: undefined,
                     updatedAt: undefined,
+                    revision: '1',
                 });
                 expect(result).toEqual<Result<PersonDo<true>>>({
                     ok: true,
@@ -83,6 +84,7 @@ describe('PersonService', () => {
                     id: undefined,
                     createdAt: undefined,
                     updatedAt: undefined,
+                    revision: '1',
                 });
                 expect(result).toEqual<Result<PersonDo<true>>>({
                     ok: false,
