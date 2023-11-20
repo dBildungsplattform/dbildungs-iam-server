@@ -3,7 +3,6 @@ import { HealthController } from './health.controller.js';
 import {
     HealthCheckService,
     HealthIndicatorFunction,
-    HealthIndicatorResult,
     HttpHealthIndicator,
     MikroOrmHealthIndicator,
 } from '@nestjs/terminus';
@@ -11,6 +10,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { SqlEntityManager } from '@mikro-orm/postgresql';
 import { ConfigService } from '@nestjs/config';
 import { KeycloakConfig } from '../../shared/config/index.js';
+import { KeycloakHealthIndicator } from './keycloak.health-indicator.js';
 
 describe('HealthController', () => {
     let controller: HealthController;
@@ -19,6 +19,7 @@ describe('HealthController', () => {
     let mikroOrmHealthIndicator: MikroOrmHealthIndicator;
     let entityManager: SqlEntityManager;
     let httpHealthIndicator: DeepMocked<HttpHealthIndicator>;
+    let keycloakHealthIndicator: DeepMocked<KeycloakHealthIndicator>;
     const keycloakConfig: KeycloakConfig = {
         ADMIN_CLIENT_ID: '',
         ADMIN_SECRET: '',
@@ -36,6 +37,7 @@ describe('HealthController', () => {
         entityManager = createMock<SqlEntityManager>();
         httpHealthIndicator = createMock<HttpHealthIndicator>();
         configService = createMock<ConfigService>();
+        keycloakHealthIndicator = createMock<KeycloakHealthIndicator>();
 
         configService.getOrThrow.mockReturnValue(keycloakConfig);
 
@@ -48,6 +50,7 @@ describe('HealthController', () => {
                 { provide: HttpHealthIndicator, useValue: httpHealthIndicator },
                 { provide: KeycloakConfig, useValue: keycloakConfig },
                 { provide: ConfigService, useValue: configService },
+                { provide: KeycloakHealthIndicator, useValue: keycloakHealthIndicator },
             ],
         }).compile();
 
@@ -62,13 +65,14 @@ describe('HealthController', () => {
         await controller.check();
 
         expect(healthCheckService.check).toHaveBeenCalled();
-        const indicators: HealthIndicatorFunction[] | undefined = healthCheckService.check.mock.lastCall?.[0];
-        const firstIndicator: (() => PromiseLike<HealthIndicatorResult> | HealthIndicatorResult) | undefined =
-            indicators?.[0];
-        expect(firstIndicator).toBeDefined();
-        // Explanation: We get back the lambdas that the HealthCheck would call and call them
-        // ourselves to make sure they do the right things
-        await firstIndicator?.call(firstIndicator);
+        const lastCallArguments: HealthIndicatorFunction[] | undefined = healthCheckService.check.mock.lastCall?.[0];
+        expect(lastCallArguments).toBeDefined();
+
+        if (lastCallArguments) {
+            await Promise.all(lastCallArguments.map((hif: HealthIndicatorFunction) => hif.call(hif)));
+        }
+
         expect(mikroOrmHealthIndicator.pingCheck).toHaveBeenCalled();
+        expect(keycloakHealthIndicator.check).toHaveBeenCalled();
     });
 });
