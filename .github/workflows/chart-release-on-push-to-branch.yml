@@ -38,7 +38,9 @@ jobs:
       - create_branch_identifier
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@main
     with:
-      branch: ${{ needs.branch_meta.outputs.branch }}
+      dbildungs_iam_server_branch: ${{ needs.branch_meta.outputs.ticket }}
+      dbildungs_iam_client_branch: main
+      dbildungs_iam_keycloak_branch: main
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
     secrets:
-      DEV_KUBE_CONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
+      SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
