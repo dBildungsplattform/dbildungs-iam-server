@@ -2,22 +2,22 @@ import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { Paged } from '../../../shared/paging/paged.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
-import { Personenstatus, Rolle } from '../domain/personenkontext.enums.js';
+import { Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonenkontextService } from '../domain/personenkontext.service.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
-import { SichtfreigabeType } from './personen-query.param.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
+import { PersonendatensatzDto } from './personendatensatz.dto.js';
 
 describe('PersonenkontextUc', () => {
     let module: TestingModule;
@@ -107,15 +107,17 @@ describe('PersonenkontextUc', () => {
                 const secondPersonenkontext: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
                 const personenkontexte: PersonenkontextDo<true>[] = [firstPersonenkontext, secondPersonenkontext];
                 personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue({
-                    ok: true,
-                    value: personenkontexte,
+                    items: personenkontexte,
+                    total: personenkontexte.length,
+                    limit: personenkontexte.length,
+                    offset: 0,
                 });
 
-                const result: PersonenkontextDto[] = await sut.findAll(findPersonenkontextDto);
-                expect(result).toHaveLength(2);
+                const result: Paged<PersonenkontextDto> = await sut.findAll(findPersonenkontextDto);
+                expect(result.items).toHaveLength(2);
             });
 
-            it('should throw EntityNotFoundError when no matching persons are found', async () => {
+            it('should return empty array when no matching persons are found', async () => {
                 const findPersonenkontextDto: FindPersonenkontextDto = {
                     personId: faker.string.uuid(),
                     referrer: 'referrer',
@@ -124,12 +126,17 @@ describe('PersonenkontextUc', () => {
                     rolle: Rolle.LERNENDER,
                 };
 
-                const emptyResult: Result<PersonenkontextDo<true>[], DomainError> = {
-                    ok: false,
-                    error: new EntityNotFoundError('Personenkontext'),
+                const emptyResult: Paged<PersonenkontextDo<true>> = {
+                    items: [],
+                    total: 0,
+                    limit: 0,
+                    offset: 0,
                 };
                 personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue(emptyResult);
-                await expect(sut.findAll(findPersonenkontextDto)).rejects.toThrow(EntityNotFoundError);
+
+                const result: Paged<PersonenkontextDto> = await sut.findAll(findPersonenkontextDto);
+
+                expect(result.items).toHaveLength(0);
             });
         });
     });
@@ -184,6 +191,64 @@ describe('PersonenkontextUc', () => {
                 });
 
                 await expect(sut.findPersonenkontextById(dto)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+    });
+
+    describe('updatePersonenkontext', () => {
+        // AI next 34 lines
+        describe('when updating personenkontext is successful', () => {
+            it('should not throw', async () => {
+                const personDo: PersonDo<true> = DoFactory.createPerson(true);
+                const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+
+                personServiceMock.findPersonById.mockResolvedValue({ ok: true, value: personDo });
+                personenkontextServiceMock.updatePersonenkontext.mockResolvedValue({
+                    ok: true,
+                    value: personenkontextDo,
+                });
+
+                const updatePersonPromise: Promise<PersonendatensatzDto> = sut.updatePersonenkontext(
+                    {} as PersonenkontextDto,
+                );
+
+                await expect(updatePersonPromise).resolves.not.toThrow();
+            });
+        });
+
+        describe('when updating personenkontext is not successful', () => {
+            it('should throw Error', async () => {
+                const error: EntityCouldNotBeCreated = new EntityCouldNotBeCreated('Personenkontext');
+                personenkontextServiceMock.updatePersonenkontext.mockResolvedValue({
+                    ok: false,
+                    error: error,
+                });
+
+                const updatePersonPromise: Promise<PersonendatensatzDto> = sut.updatePersonenkontext(
+                    {} as PersonenkontextDto,
+                );
+
+                await expect(updatePersonPromise).rejects.toThrow(error);
+            });
+        });
+
+        describe('when person for personenkontext could not be found', () => {
+            it('should throw Error', async () => {
+                // AI next 13 lines
+                const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+                const error: EntityNotFoundError = new EntityNotFoundError('Person');
+
+                personenkontextServiceMock.updatePersonenkontext.mockResolvedValue({
+                    ok: true,
+                    value: personenkontextDo,
+                });
+                personServiceMock.findPersonById.mockResolvedValue({ ok: false, error: error });
+
+                const updatePersonPromise: Promise<PersonendatensatzDto> = sut.updatePersonenkontext(
+                    {} as PersonenkontextDto,
+                );
+
+                await expect(updatePersonPromise).rejects.toThrow(error);
             });
         });
     });

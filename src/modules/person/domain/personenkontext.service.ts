@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { Paged } from '../../../shared/paging/paged.js';
+import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonenkontextRepo } from '../persistence/personenkontext.repo.js';
-import { PersonenkontextDo } from './personenkontext.do.js';
+import { PersonenkontextScope } from '../persistence/personenkontext.scope.js';
 import { PersonDo } from './person.do.js';
+import { PersonenkontextDo } from './personenkontext.do.js';
+import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
+import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 
 @Injectable()
 export class PersonenkontextService {
@@ -30,10 +35,29 @@ export class PersonenkontextService {
 
     public async findAllPersonenkontexte(
         personenkontextDo: PersonenkontextDo<false>,
-    ): Promise<Result<PersonenkontextDo<true>[], DomainError>> {
-        const personenkontexte: PersonenkontextDo<true>[] = await this.personenkontextRepo.findAll(personenkontextDo);
+        offset?: number,
+        limit?: number,
+    ): Promise<Paged<PersonenkontextDo<true>>> {
+        const scope: PersonenkontextScope = new PersonenkontextScope()
+            .findBy({
+                personId: personenkontextDo.personId,
+                referrer: personenkontextDo.referrer,
+                rolle: personenkontextDo.rolle,
+                personenstatus: personenkontextDo.personenstatus,
+                sichtfreigabe: personenkontextDo.sichtfreigabe,
+            })
+            .sortBy('id', ScopeOrder.ASC)
+            .paged(offset, limit);
 
-        return { ok: true, value: personenkontexte };
+        const [personenkontexte, total]: Counted<PersonenkontextDo<true>> =
+            await this.personenkontextRepo.findBy(scope);
+
+        return {
+            offset: offset ?? 0,
+            limit: limit ?? total,
+            total,
+            items: personenkontexte,
+        };
     }
 
     public async findPersonenkontextById(id: string): Promise<Result<PersonenkontextDo<true>, DomainError>> {
@@ -43,5 +67,42 @@ export class PersonenkontextService {
             : { ok: false, error: new EntityNotFoundError('Personenkontext', id) };
 
         return result;
+    }
+
+    public async updatePersonenkontext(
+        personenkontextDo: PersonenkontextDo<true>,
+    ): Promise<Result<PersonenkontextDo<true>, DomainError>> {
+        const storedPersonenkontext: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.findById(
+            personenkontextDo.id,
+        );
+
+        if (!storedPersonenkontext) {
+            return { ok: false, error: new EntityNotFoundError('Personenkontext', personenkontextDo.id) };
+        }
+
+        if (personenkontextDo.revision !== storedPersonenkontext.revision) {
+            return {
+                ok: false,
+                error: new MismatchedRevisionError(
+                    `Revision ${personenkontextDo.revision} does not match revision ${storedPersonenkontext.revision} of stored personenkontext.`,
+                ),
+            };
+        }
+
+        const newRevision: string = (parseInt(storedPersonenkontext.revision) + 1).toString();
+        const newData: Partial<PersonenkontextDo<true>> = {
+            referrer: personenkontextDo.referrer,
+            personenstatus: personenkontextDo.personenstatus,
+            jahrgangsstufe: personenkontextDo.jahrgangsstufe,
+            revision: newRevision,
+        };
+        const updatedPersonenkontextDo: PersonenkontextDo<true> = Object.assign(storedPersonenkontext, newData);
+        const saved: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.save(updatedPersonenkontextDo);
+
+        if (!saved) {
+            return { ok: false, error: new EntityCouldNotBeUpdated('Personenkontext', updatedPersonenkontextDo.id) };
+        }
+
+        return { ok: true, value: saved };
     }
 }

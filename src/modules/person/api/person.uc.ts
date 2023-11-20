@@ -1,18 +1,17 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
-import { DomainError } from '../../../shared/error/domain.error.js';
 import { Paged } from '../../../shared/paging/index.js';
 import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
-import { CreatePersonDto } from './create-person.dto.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
+import { SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonenkontextService } from '../domain/personenkontext.service.js';
+import { CreatePersonDto } from './create-person.dto.js';
 import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonDto } from './person.dto.js';
-import { SichtfreigabeType } from './personen-query.param.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 
@@ -25,7 +24,7 @@ export class PersonUc {
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
-    public async createPerson(personDto: CreatePersonDto): Promise<void> {
+    public async createPerson(personDto: CreatePersonDto): Promise<PersonDto> {
         // create user
         const userDo: UserDo<false> = this.mapper.map(personDto, CreatePersonDto, UserDo<false>);
         const userIdResult: Result<string> = await this.userService.create(userDo);
@@ -39,7 +38,8 @@ export class PersonUc {
 
         const result: Result<PersonDo<true>> = await this.personService.createPerson(personDo);
         if (result.ok) {
-            return;
+            const resPersonDto: PersonDto = this.mapper.map(personDo, PersonDo, PersonDto);
+            return resPersonDto;
         }
 
         // delete user if person could not be created
@@ -126,17 +126,15 @@ export class PersonUc {
             personId: personId,
             sichtfreigabe: sichtfreigabe,
         };
-        const result: Result<PersonenkontextDo<true>[], DomainError> =
-            await this.personenkontextService.findAllPersonenkontexte(
-                this.mapper.map(personenkontextFilter, FindPersonenkontextDto, PersonenkontextDo),
-            );
 
-        if (!result.ok) {
-            return [];
-        }
+        const result: Paged<PersonenkontextDo<true>> = await this.personenkontextService.findAllPersonenkontexte(
+            this.mapper.map(personenkontextFilter, FindPersonenkontextDto, PersonenkontextDo),
+        );
 
-        const personenkontextDtos: PersonenkontextDto[] = result.value.map((personenkontext: PersonenkontextDo<true>) =>
-            this.mapper.map(personenkontext, PersonenkontextDo, PersonenkontextDto),
+        const personenkontextDtos: PersonenkontextDto[] = this.mapper.mapArray(
+            result.items,
+            PersonenkontextDo,
+            PersonenkontextDto,
         );
 
         return personenkontextDtos;

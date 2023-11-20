@@ -4,7 +4,12 @@ import { OrganisationDo } from '../../src/modules/organisation/domain/organisati
 import { OrganisationsTyp } from '../../src/modules/organisation/domain/organisation.enum.js';
 import { PersonDo } from '../../src/modules/person/domain/person.do.js';
 import { PersonenkontextDo } from '../../src/modules/person/domain/personenkontext.do.js';
-import { Jahrgangsstufe, Personenstatus, Rolle } from '../../src/modules/person/domain/personenkontext.enums.js';
+import {
+    Jahrgangsstufe,
+    Personenstatus,
+    Rolle,
+    SichtfreigabeType,
+} from '../../src/modules/person/domain/personenkontext.enums.js';
 import { PersonRollenZuweisungDo } from '../../src/modules/rolle/domain/person-rollen-zuweisung.do.js';
 import { RolleBerechtigungsZuweisungDo } from '../../src/modules/rolle/domain/rolle-berechtigungs-zuweisung.do.js';
 import { RolleRechtDo } from '../../src/modules/rolle/domain/rolle-recht.do.js';
@@ -37,6 +42,7 @@ export class DoFactory {
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
+            revision: '1',
         };
         return Object.assign(new PersonDo<WasPersisted>(), person, props);
     }
@@ -91,7 +97,7 @@ export class DoFactory {
             jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
             personenstatus: Personenstatus.AKTIV,
             referrer: 'referrer',
-            sichtfreigabe: true,
+            sichtfreigabe: SichtfreigabeType.JA,
             loeschungZeitpunkt: faker.date.anytime(),
         };
 

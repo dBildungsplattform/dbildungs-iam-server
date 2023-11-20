@@ -105,9 +105,8 @@ describe('OrganisationService', () => {
 
                 organisationRepoMock.findBy.mockResolvedValue([organisations, total]);
 
-                const result: Paged<OrganisationDo<true>> = await organisationService.findAllOrganizations(
-                    organisationDo,
-                );
+                const result: Paged<OrganisationDo<true>> =
+                    await organisationService.findAllOrganizations(organisationDo);
 
                 expect(result).toEqual({
                     total: total,
@@ -124,9 +123,8 @@ describe('OrganisationService', () => {
 
                 organisationRepoMock.findBy.mockResolvedValue([[], 0]);
 
-                const result: Paged<OrganisationDo<true>> = await organisationService.findAllOrganizations(
-                    organisationDo,
-                );
+                const result: Paged<OrganisationDo<true>> =
+                    await organisationService.findAllOrganizations(organisationDo);
 
                 expect(result.items).toHaveLength(0);
                 expect(result.items).toBeInstanceOf(Array);

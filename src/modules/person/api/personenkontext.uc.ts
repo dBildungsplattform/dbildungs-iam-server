@@ -1,7 +1,7 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
-import { DomainError } from '../../../shared/error/domain.error.js';
+import { Paged } from '../../../shared/paging/paged.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
@@ -13,6 +13,8 @@ import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonDto } from './person.dto.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
+import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -30,33 +32,39 @@ export class PersonenkontextUc {
             CreatePersonenkontextDto,
             PersonenkontextDo,
         );
-        const result: Result<PersonenkontextDo<true>> = await this.personenkontextService.createPersonenkontext(
-            personenkontextDo,
-        );
+        const result: Result<PersonenkontextDo<true>> =
+            await this.personenkontextService.createPersonenkontext(personenkontextDo);
         if (result.ok) {
             return this.mapper.map(result.value, PersonenkontextDo, CreatedPersonenkontextDto);
         }
         throw result.error;
     }
 
-    // TODO refactor after EW-561 is done
-    public async findAll(findPersonenkontextDto: FindPersonenkontextDto): Promise<PersonenkontextDto[]> {
+    public async findAll(findPersonenkontextDto: FindPersonenkontextDto): Promise<Paged<PersonenkontextDto>> {
         const personenkontextDo: PersonenkontextDo<false> = this.mapper.map(
             findPersonenkontextDto,
             FindPersonenkontextDto,
             PersonenkontextDo,
         );
-        const result: Result<PersonenkontextDo<true>[], DomainError> =
-            await this.personenkontextService.findAllPersonenkontexte(personenkontextDo);
 
-        if (!result.ok) {
-            throw result.error;
-        }
-
-        const personenkontexte: PersonenkontextDto[] = result.value.map((personenkontext: PersonenkontextDo<true>) =>
-            this.mapper.map(personenkontext, PersonenkontextDo, PersonenkontextDto),
+        const result: Paged<PersonenkontextDo<true>> = await this.personenkontextService.findAllPersonenkontexte(
+            personenkontextDo,
+            findPersonenkontextDto.offset,
+            findPersonenkontextDto.limit,
         );
-        return personenkontexte;
+
+        const personenkontexte: PersonenkontextDto[] = this.mapper.mapArray(
+            result.items,
+            PersonenkontextDo,
+            PersonenkontextDto,
+        );
+
+        return {
+            total: result.total,
+            offset: result.offset,
+            limit: result.limit,
+            items: personenkontexte,
+        };
     }
 
     public async findPersonenkontextById(dto: FindPersonenkontextByIdDto): Promise<PersonendatensatzDto> {
@@ -78,6 +86,35 @@ export class PersonenkontextUc {
         return new PersonendatensatzDto({
             person: this.mapper.map(personResult.value, PersonDo, PersonDto),
             personenkontexte: [this.mapper.map(personenkontextResult.value, PersonenkontextDo, PersonenkontextDto)],
+        });
+    }
+
+    public async updatePersonenkontext(updateDto: UpdatePersonenkontextDto): Promise<PersonendatensatzDto> {
+        const personenkontextDo: PersonenkontextDo<true> = this.mapper.map(
+            updateDto,
+            UpdatePersonenkontextDto,
+            PersonenkontextDo,
+        );
+        const result: Result<
+            PersonenkontextDo<true>,
+            DomainError
+        > = await this.personenkontextService.updatePersonenkontext(personenkontextDo);
+
+        if (!result.ok) {
+            throw result.error;
+        }
+
+        const personResult: Result<PersonDo<true>, DomainError> = await this.personService.findPersonById(
+            result.value.personId,
+        );
+
+        if (!personResult.ok) {
+            throw personResult.error;
+        }
+
+        return new PersonendatensatzDto({
+            person: this.mapper.map(personResult.value, PersonDo, PersonDto),
+            personenkontexte: [this.mapper.map(result.value, PersonenkontextDo, PersonenkontextDto)],
         });
     }
 }

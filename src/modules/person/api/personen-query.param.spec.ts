@@ -1,7 +1,8 @@
+import { faker } from '@faker-js/faker';
 import { plainToInstance } from 'class-transformer';
 import 'reflect-metadata';
-import { PersonenQueryParams, SichtfreigabeType } from './personen-query.param.js';
-import { faker } from '@faker-js/faker';
+import { SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { PersonenQueryParams } from './personen-query.param.js';
 
 describe('PersonenQueryParam', () => {
     const referenceParams: PersonenQueryParams = {

@@ -5,12 +5,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { Paged } from '../../../shared/paging/paged.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonenkontextRepo } from '../persistence/personenkontext.repo.js';
+import { PersonDo } from './person.do.js';
 import { PersonenkontextDo } from './personenkontext.do.js';
 import { PersonenkontextService } from './personenkontext.service.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { PersonDo } from './person.do.js';
+import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
+import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 
 describe('PersonenkontextService', () => {
     let module: TestingModule;
@@ -81,9 +84,8 @@ describe('PersonenkontextService', () => {
                 personRepoMock.findById.mockResolvedValueOnce(personDo);
                 personenkontextRepoMock.save.mockResolvedValue(personenkontextDo as unknown as PersonenkontextDo<true>);
                 mapperMock.map.mockReturnValue(personenkontextDo as unknown as Dictionary<unknown>);
-                const result: Result<PersonenkontextDo<true>> = await personenkontextService.createPersonenkontext(
-                    personenkontextDo,
-                );
+                const result: Result<PersonenkontextDo<true>> =
+                    await personenkontextService.createPersonenkontext(personenkontextDo);
                 expect(result).toEqual<Result<PersonenkontextDo<true>>>({
                     ok: true,
                     value: personenkontextDo as unknown as PersonenkontextDo<true>,
@@ -119,16 +121,20 @@ describe('PersonenkontextService', () => {
                     personenkontext1 as unknown as PersonenkontextDo<true>,
                     personenkontext2 as unknown as PersonenkontextDo<true>,
                 ];
-                personenkontextRepoMock.findAll.mockResolvedValue(personenkontexte);
+                personenkontextRepoMock.findBy.mockResolvedValue([personenkontexte, personenkontexte.length]);
                 mapperMock.map.mockReturnValue(personenkontexte as unknown as Dictionary<unknown>);
                 const personenkontextDoWithQueryParam: PersonenkontextDo<false> =
                     DoFactory.createPersonenkontext(false);
 
-                const result: Result<PersonenkontextDo<true>[], DomainError> =
-                    await personenkontextService.findAllPersonenkontexte(personenkontextDoWithQueryParam);
-                expect(result).toEqual<Result<PersonenkontextDo<true>[], DomainError>>({
-                    ok: true,
-                    value: personenkontexte,
+                const result: Paged<PersonenkontextDo<true>> = await personenkontextService.findAllPersonenkontexte(
+                    personenkontextDoWithQueryParam,
+                );
+
+                expect(result).toEqual<Paged<PersonenkontextDo<true>>>({
+                    items: personenkontexte,
+                    total: personenkontexte.length,
+                    offset: 0,
+                    limit: personenkontexte.length,
                 });
             });
         });
@@ -136,13 +142,17 @@ describe('PersonenkontextService', () => {
         describe('When no personenkontexte are found', () => {
             it('should return a result with an empty array', async () => {
                 const personenkontext: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false);
-                personenkontextRepoMock.findAll.mockResolvedValue([]);
+                personenkontextRepoMock.findBy.mockResolvedValue([[], 0]);
                 mapperMock.map.mockReturnValue(personenkontext as unknown as Dictionary<unknown>);
-                const result: Result<PersonenkontextDo<true>[], DomainError> =
+
+                const result: Paged<PersonenkontextDo<true>> =
                     await personenkontextService.findAllPersonenkontexte(personenkontext);
-                expect(result).toEqual<Result<PersonenkontextDo<true>[], DomainError>>({
-                    ok: true,
-                    value: [],
+
+                expect(result).toEqual<Paged<PersonenkontextDo<true>>>({
+                    items: [],
+                    total: 0,
+                    offset: 0,
+                    limit: 0,
                 });
             });
         });
@@ -178,6 +188,98 @@ describe('PersonenkontextService', () => {
                 expect(result).toStrictEqual({
                     ok: false,
                     error: new EntityNotFoundError('Personenkontext', personenkontext.id),
+                });
+            });
+        });
+    });
+
+    describe('updatePersonenkontext', () => {
+        describe('when personenkontext is updated successfully', () => {
+            it('should return updated personenkontext', async () => {
+                // AI next 19 lines
+                const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true, {
+                    revision: '1',
+                });
+                const personenkontextDoWithUpdatedRevision: PersonenkontextDo<true> = Object.assign(
+                    {},
+                    personenkontextDo,
+                    {
+                        revision: '2',
+                    },
+                );
+
+                personenkontextRepoMock.findById.mockResolvedValue(personenkontextDo);
+                personenkontextRepoMock.save.mockResolvedValue(personenkontextDoWithUpdatedRevision);
+
+                const result: Result<
+                    PersonenkontextDo<true>,
+                    DomainError
+                > = await personenkontextService.updatePersonenkontext(personenkontextDo);
+
+                expect(result).toEqual<Result<PersonenkontextDo<true>, DomainError>>({
+                    ok: true,
+                    value: personenkontextDoWithUpdatedRevision,
+                });
+                expect(personenkontextRepoMock.save).toHaveBeenCalledWith(personenkontextDoWithUpdatedRevision);
+            });
+        });
+
+        describe('when entity is not found', () => {
+            it('should return EntityNotFoundError', async () => {
+                const response: Result<
+                    PersonenkontextDo<true>,
+                    DomainError
+                > = await personenkontextService.updatePersonenkontext({} as PersonenkontextDo<true>);
+
+                // AI next 4 lines
+                expect(response).toEqual<Result<PersonenkontextDo<true>, DomainError>>({
+                    ok: false,
+                    error: new EntityNotFoundError('Personenkontext'),
+                });
+            });
+        });
+
+        describe('when revision does not match', () => {
+            it('should return MismatchedRevisionError', async () => {
+                // AI next 20 lines
+                const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+                const personenkontextDoWithWrongRevision: PersonenkontextDo<true> = {
+                    ...personenkontextDo,
+                    revision: 'wrongRevision',
+                };
+
+                personenkontextRepoMock.findById.mockResolvedValue(personenkontextDo);
+
+                const result: Result<
+                    PersonenkontextDo<true>,
+                    DomainError
+                > = await personenkontextService.updatePersonenkontext(personenkontextDoWithWrongRevision);
+
+                expect(result).toEqual<Result<PersonenkontextDo<true>, DomainError>>({
+                    ok: false,
+                    error: new MismatchedRevisionError(
+                        `Revision ${personenkontextDoWithWrongRevision.revision} does not match revision ${personenkontextDo.revision} of stored personenkontext.`,
+                    ),
+                });
+            });
+        });
+
+        describe('when could not be stored', () => {
+            it('should return EntityCouldNotBeUpdatedError', async () => {
+                // AI next 14 lines
+                const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+
+                personenkontextRepoMock.findById.mockResolvedValue(personenkontextDo);
+                personenkontextRepoMock.save.mockResolvedValue(null);
+
+                const result: Result<
+                    PersonenkontextDo<true>,
+                    DomainError
+                > = await personenkontextService.updatePersonenkontext(personenkontextDo);
+
+                expect(result).toEqual<Result<PersonenkontextDo<true>, DomainError>>({
+                    ok: false,
+                    error: new EntityCouldNotBeUpdated('Personenkontext', personenkontextDo.id),
                 });
             });
         });
