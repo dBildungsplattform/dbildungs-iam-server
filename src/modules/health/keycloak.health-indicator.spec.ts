@@ -6,7 +6,7 @@ import { HealthIndicatorResult, HealthIndicatorStatus } from '@nestjs/terminus';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../shared/config/index.js';
 
-let error: Error | null | undefined = undefined;
+let error: Error | string | undefined = undefined;
 
 jest.mock('../frontend/auth/index.js', () => {
     return {
@@ -55,8 +55,8 @@ describe('Keycloak health indicator', () => {
         error = undefined;
     });
 
-    it('should report a failed acquisition of a KC-Client as the service being down and showing the error message in the status', async () => {
-        error = null;
+    it('should report a failed acquisition of a KC-Client as the service being down and indicating that there is no error message', async () => {
+        error = 'something horrible happened';
         const kchi: KeycloakHealthIndicator = module.get<KeycloakHealthIndicator>(KeycloakHealthIndicator);
 
         const checkResult: { status: HealthIndicatorStatus; [options: string]: string } | undefined = await kchi
