@@ -80,7 +80,7 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
         errorMessage: { title: string; description: string };
     } {
         const property: string = this.getPropertyPath(validationError);
-        const errorCode: string = this.determineErrorCode(validationError);
+        const errorCode: string = this.determineSubErrorCode(validationError);
         const errorMessage: { title: string; description: string } = this.getErrorMessage(errorCode);
 
         return { property, errorCode, errorMessage };
@@ -97,7 +97,7 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
         return property;
     }
 
-    private determineErrorCode(validationError: ValidationError): string {
+    private determineSubErrorCode(validationError: ValidationError): string {
         if (validationError.constraints?.['isMinLength']) {
             return '07';
         }
