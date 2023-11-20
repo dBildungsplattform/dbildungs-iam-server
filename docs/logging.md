@@ -14,7 +14,7 @@ The log message format is as follows:
 info     1970-01-01 00:00:00.000 (+0ms)  [Nest] - Logger for module ServerModule initialized with log level debug
 ```
 
-We log everything to
+We log everything to the console, which is then passed to Kubernetes and handled externally.
 
 ## General Structure
 
@@ -37,6 +37,9 @@ If no entry is found, then the default loglevel is set for this module.
 The entry has to follow the naming convention of `THISMODULE_LOG_LEVEL`
 for the key where `THISMODULE` is the whole Module name in uppercase.
 The value is the log level as string. The possible log levels are:
+- `emerg`
+- `alert`
+- `crit`
 - `error`
 - `warning`
 - `notice`
