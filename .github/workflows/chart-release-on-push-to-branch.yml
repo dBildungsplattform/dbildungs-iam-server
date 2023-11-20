@@ -28,6 +28,8 @@ jobs:
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@main
 
   create_branch_identifier:
+    needs: 
+      - branch_meta
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/branch-to-namespace.yml@main
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
