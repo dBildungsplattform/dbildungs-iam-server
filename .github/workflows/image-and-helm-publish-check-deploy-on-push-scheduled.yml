@@ -1,0 +1,136 @@
+name: "Publish image and helm chart on push and (scheduled) trivy, deployment on push"
+
+# All triggers have to be in one file, so that the trivy results can be compared to identify introduced vulnerabilities
+# See DBP-340
+on:
+  push:
+  schedule:
+    - cron:  '0 2 * * *'
+
+concurrency:
+  group: dbildungs-iam-server-${{ github.event_name }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  codeql_analyze:
+    name: "CodeQL"
+    if: ${{ github.event_name == 'push' }}
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@2.1.0
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+  nest_lint:
+    name: "Linting"
+    if: ${{ github.event_name == 'push' }}
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@2.1.0
+    with:
+      node_version: '18'
+    permissions:
+      contents: read
+
+  tests_and_sonarcloud:
+    name: "Tests and Sonarcloud"
+    if: ${{ github.event_name == 'push' }}
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@2.1.0
+    with:
+      node_version: '18'
+      deploy_stage: 'dev'
+    permissions:
+      contents: read
+    secrets: inherit
+
+  build_image_on_push:
+    name: "Publish image and scan with trivy"
+    if: ${{ github.event_name == 'push' }}
+    needs:
+      - codeql_analyze
+      - nest_lint
+      - tests_and_sonarcloud
+    permissions:
+      packages: write
+      security-events: write
+      contents: read
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@2.1.0
+    with:
+      image_name: "dbildungs-iam-server"
+      run_trivy_scan: true
+      tag_generation: ${{ ( github.ref_name == 'main' || startsWith(github.ref_name,'dependabot/') )  && 'commit_hash' || 'ticket_from_branch' }}
+      add_latest_tag: ${{ github.ref_name == 'main' }}
+      container_registry: "ghcr.io"
+      fail_on_vulnerabilites: true
+      report_location: "Dockerfile"
+  
+  scheduled_trivy_scan:
+    name: "Scheduled trivy scan of latest image"
+    if: ${{ github.event_name == 'schedule' }}
+    permissions:
+      packages: read
+      security-events: write
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@2.1.0
+    with:
+      image_ref: 'ghcr.io/${{ github.repository_owner }}/dbildungs-iam-server:latest'
+      fail_on_vulnerabilites: false
+      report_location: "Dockerfile"
+
+  scan_helm:
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@1.3.1
+    permissions:
+      contents: read
+
+  select_helm_version_generation:
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
+    needs: 
+      - scan_helm
+    runs-on: ubuntu-latest
+    outputs: 
+      SELECT_HELM_VERION_GENERATION: ${{ steps.select_generation.outputs.SELECT_HELM_VERION_GENERATION }}
+    steps:
+      - id: select_generation
+        shell: bash
+        run: |
+          if [[  github.ref_name == 'main' ]]; then
+              echo "SELECT_HELM_VERION_GENERATION=short_hash" >> "$GITHUB_OUTPUT"
+          else
+              echo "SELECT_HELM_VERION_GENERATION=ticket_from_branch_short_hash" >> "$GITHUB_OUTPUT"
+          fi
+
+  release_helm:
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
+    needs: 
+      - select_helm_version_generation
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@1.3.1
+    secrets: inherit
+    with:
+      chart_name: dbildungs-iam
+      version_generation: ${{ needs.select_helm_version_generation.outputs.SELECT_HELM_VERION_GENERATION  }}
+
+  branch_meta:
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@main
+
+  create_branch_identifier:
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
+    needs: 
+      - branch_meta
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/branch-to-namespace.yml@main
+    with:
+      branch: ${{ needs.branch_meta.outputs.branch }}
+
+  deploy:
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
+    needs:
+      - branch_meta
+      - create_branch_identifier
+      - release_helm
+      - build_image_on_push
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@main
+    with:
+      dbildungs_iam_server_branch: ${{ needs.branch_meta.outputs.ticket }}
+      dbildungs_iam_client_branch: main
+      dbildungs_iam_keycloak_branch: main
+      namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
+    secrets:
+      SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
