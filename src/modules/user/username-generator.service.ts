@@ -13,9 +13,9 @@ export class UsernameGeneratorService {
     }
 
     private cleanString(name: string): string {
-        const lowerCaseInput = name.toLowerCase();
+        const lowerCaseInput: string = name.toLowerCase();
 
-        return [...lowerCaseInput]
+        const normalizedString: string = [...lowerCaseInput]
             .map((s: string) => {
                 switch (s) {
                     case 'ä':
@@ -30,6 +30,8 @@ export class UsernameGeneratorService {
                         return s;
                 }
             })
-            .join('');
+            .join('')
+            .normalize('NFKD');
+        return normalizedString.replace(new RegExp('[^\u0061-\u007a]', 'g'), '');
     }
 }

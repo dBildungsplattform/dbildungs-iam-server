@@ -30,4 +30,21 @@ describe('The UsernameGenerator Service', () => {
     it('should normalize German special characters', () => {
         expect(service.generateUsername('Öre', 'Füßenwärk')).toBe('ofuessenwaerk');
     });
+
+    it('should remove diacritics', () => {
+        expect(service.generateUsername('Èlène', 'Lunâtiz')).toBe('elunatiz');
+    });
+
+    it('should remove punctuation', () => {
+        expect(service.generateUsername('Èlène', 'L.,?unâtiz')).toBe('elunatiz');
+    });
+
+    it('should remove numbers from the names given', () => {
+        expect(service.generateUsername('Èlène', 'L.,?un344âtiz')).toBe('elunatiz');
+    });
+
+    it('should non diacritical special chars', () => {
+        expect(service.generateUsername('Ebru', 'Altınova')).toBe('ealtnova');
+        expect(service.generateUsername('Øre', 'Olsen')).toBe('oolsen');
+    });
 });
