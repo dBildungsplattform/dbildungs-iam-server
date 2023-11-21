@@ -1,15 +1,20 @@
 import { Injectable } from '@nestjs/common';
+import { UserRepository } from './user.repository.js';
 
 @Injectable()
 export class UsernameGeneratorService {
-    public generateUsername(firstname: string, lastname: string): string | Error {
+    public constructor(private repository: UserRepository) {}
+
+    public async generateUsername(firstname: string, lastname: string): Promise<string> {
         if (firstname.length == 0) {
-            return new Error('First name not given');
+            throw new Error('First name not given');
         }
         if (lastname.length == 0) {
-            return new Error('Last name not given');
+            throw new Error('Last name not given');
         }
-        return this.cleanString(firstname)[0] + this.cleanString(lastname);
+        const calculatedUsername = this.cleanString(firstname)[0] + this.cleanString(lastname);
+
+        return this.repository.getNextAvailableUsername(calculatedUsername);
     }
 
     private cleanString(name: string): string {
