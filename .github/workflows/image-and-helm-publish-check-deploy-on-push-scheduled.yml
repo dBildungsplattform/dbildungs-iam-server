@@ -8,7 +8,7 @@ on:
     - cron:  '0 2 * * *'
 
 concurrency:
-  group: dbildungs-iam-server-${{ github.event_name }}-${{ github.ref_name }}
+  group: dbildungs-iam-server-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:

@@ -4,7 +4,7 @@ on:
   delete
 
 concurrency:
-  group: dbildungs-iam-server-${{ github.event_name }}-${{ github.ref_name }}
+  group: dbildungs-iam-server-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
       - create_branch_identifier
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/delete-namespace.yml@main
     with:
-      namespace: ${{ github.event.ref }}
+      namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
     secrets:
       SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
 
