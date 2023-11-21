@@ -1,4 +1,4 @@
-name: "Publish image to GHCR on push and (scheduled) trivy"
+name: "Publish image and helm chart on push and (scheduled) trivy, deployment on push"
 
 # All triggers have to be in one file, so that the trivy results can be compared to identify introduced vulnerabilities
 # See DBP-340
