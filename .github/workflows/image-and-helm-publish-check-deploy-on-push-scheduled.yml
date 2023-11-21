@@ -124,6 +124,7 @@ jobs:
     needs:
       - branch_meta
       - create_branch_identifier
+      - release_helm
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@main
     with:
       dbildungs_iam_server_branch: ${{ needs.branch_meta.outputs.ticket }}
