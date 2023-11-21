@@ -82,7 +82,6 @@ jobs:
 
   select_helm_version_generation:
     needs: 
-      - build_image_on_push
       - scan_helm
     runs-on: ubuntu-latest
     outputs: 
@@ -101,6 +100,7 @@ jobs:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs: 
       - select_helm_version_generation
+      - build_image_on_push
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@1.3.1
     secrets: inherit
     with:
@@ -109,9 +109,6 @@ jobs:
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    needs: 
-      - scan_helm
-      - release_helm
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@main
 
   create_branch_identifier:
