@@ -3,6 +3,10 @@ name: "Clean and delete Kubernetes Namespace on branch deletion"
 on:
   delete
 
+concurrency:
+  group: dbildungs-iam-server-${{ github.event_name }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   branch_meta:
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@main
