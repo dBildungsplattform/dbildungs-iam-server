@@ -36,14 +36,14 @@
     },
     "LOGGING": {
         "DEFAULT_LOG_LEVEL": "info",
-        "PERSONMODULE_LOG_LEVEL": "debug",
-        "PERSONAPIMODULE_LOG_LEVEL": "debug",
-        "ORGANISATIONMODULE_LOG_LEVEL":  "debug",
-        "ORGANISATIONAPIMODULE_LOG_LEVEL": "debug",
-        "ROLLEMODULE_LOG_LEVEL": "debug",
-        "ROLLEAPIMODULE_LOG_LEVEL": "debug",
-        "KEYCLOAKADMINISTRATIONMODULE_LOG_LEVEL":  "debug",
-        "HEALTHMODULE_LOG_LEVEL": "debug",
-        "BACKENDFORFRONTENDMODULE_LOG_LEVEL": "debug"
+        "PERSON_MODULE_LOG_LEVEL": "debug",
+        "PERSON_API_MODULE_LOG_LEVEL": "debug",
+        "ORGANISATION_MODULE_LOG_LEVEL":  "debug",
+        "ORGANISATION_API_MODULE_LOG_LEVEL": "debug",
+        "ROLLE_MODULE_LOG_LEVEL": "debug",
+        "ROLLE_API_MODULE_LOG_LEVEL": "debug",
+        "KEYCLOAK_ADMINISTRATION_MODULE_LOG_LEVEL":  "debug",
+        "HEALTH_MODULE_LOG_LEVEL": "debug",
+        "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
     }
 }
