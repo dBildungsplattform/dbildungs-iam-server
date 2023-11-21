@@ -45,12 +45,14 @@ import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 @ApiTags('personen')
 @Controller({ path: 'personen' })
 @Public()
 export class PersonController {
     public constructor(
+        private readonly logger: ClassLogger,
         private readonly personUc: PersonUc,
         private readonly personenkontextUc: PersonenkontextUc,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
@@ -64,6 +66,14 @@ export class PersonController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
     public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
+        this.logger.emerg('This is an emerg message');
+        this.logger.alert('this is an alert message');
+        this.logger.crit('this is a crit message');
+        this.logger.error('this is an error message');
+        this.logger.warning('this is a warning message');
+        this.logger.notice('this is a notice message');
+        this.logger.info('this is an info message');
+        this.logger.debug('this is a debug message');
         const dto: CreatePersonDto = this.mapper.map(params, CreatePersonBodyParams, CreatePersonDto);
         const person: PersonDto = await this.personUc.createPerson(dto);
         const personendatensatzDto: PersonendatensatzDto = {

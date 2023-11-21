@@ -44,7 +44,7 @@ export class ModuleLogger {
         this.moduleNameInternal = moduleName;
 
         const loggerConfig: LoggingConfig = configService.getOrThrow<LoggingConfig>('LOGGING');
-        const configKey: keyof LoggingConfig = `${moduleName.toUpperCase()}_LOG_LEVEL` as keyof LoggingConfig;
+        const configKey: keyof LoggingConfig = `${moduleName.split(/(?=[A-Z])/).join('_').toUpperCase()}_LOG_LEVEL` as keyof LoggingConfig;
         const level: Option<string> = loggerConfig[configKey] ?? loggerConfig.DEFAULT_LOG_LEVEL;
         const loggerFormat: winston.Logform.Format = format.combine(
             format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),

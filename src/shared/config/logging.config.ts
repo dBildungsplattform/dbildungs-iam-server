@@ -15,7 +15,7 @@ export class LoggingConfig {
 
     //API Modules
 
-    public readonly PERSONAPIMODULE_LOG_LEVEL?: string;
+    public readonly PERSON_API_MODULE_LOG_LEVEL!: string;
 
     public readonly ORGANISATIONAPIMODULE_LOG_LEVEL?: string;
 
