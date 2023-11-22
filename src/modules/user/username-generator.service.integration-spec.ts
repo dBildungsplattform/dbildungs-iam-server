@@ -89,4 +89,15 @@ describe('The UsernameGenerator Service', () => {
         const generatedUsername: string = await service.generateUsername('Max', 'Meyer');
         expect(generatedUsername).toBe('mmeyer2');
     });
+
+    it("Should fill 'holes' in the counter if there are any", async () => {
+        kcUserService.findOne
+            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() })
+            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() })
+            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() })
+            .mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError('Not found') })
+            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() });
+        const generatedUsername: string = await service.generateUsername('Renate', 'Bergmann');
+        expect(generatedUsername).toBe('rbergmann3');
+    });
 });
