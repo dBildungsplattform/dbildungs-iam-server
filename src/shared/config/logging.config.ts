@@ -3,7 +3,6 @@ import { IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 const ALLOWED_VALUES: string[] = ['debug', 'info', 'warn', 'notice', 'warning', 'error', 'crit', 'alert', 'emerg'];
 
 export class LoggingConfig {
-
     @IsNotEmpty()
     @IsEnum(ALLOWED_VALUES)
     public readonly DEFAULT_LOG_LEVEL!: string;
