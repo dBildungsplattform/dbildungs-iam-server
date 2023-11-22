@@ -114,11 +114,21 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
             return '15';
         }
 
+        if (validationError.constraints?.['isNotEmpty']) {
+            return '01';
+        }
+
         return '03';
     }
 
     private getErrorMessage(errorCode: string): { title: string; description: string } {
         switch (errorCode) {
+            case '01':
+                return {
+                    title: 'Fehlende Parameter',
+                    description: 'Folgende Parameter fehlen',
+                };
+
             case '07':
                 return {
                     title: 'Attributwerte haben eine ungültige Länge',

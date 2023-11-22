@@ -20,6 +20,13 @@ describe('SchulconnexValidationErrorFilter', () => {
         description: 'Die Anfrage ist fehlerhaft',
     };
 
+    const isNotEmptyError: SchulConnexError = {
+        statusCode: statusCode,
+        subCode: '01',
+        title: 'Fehlende Parameter',
+        description: `Folgende Parameter fehlen 'fieldName'`,
+    };
+
     const standardValidationError: SchulConnexError = {
         statusCode: statusCode,
         subCode: '03',
@@ -74,8 +81,8 @@ describe('SchulconnexValidationErrorFilter', () => {
     });
 
     describe('catch', () => {
-        describe('when calling the filter with no validation exception', () => {
-            it('should return a general schulconnex bad request exception', () => {
+        describe('when filter catches undefined validation error', () => {
+            it('should throw a general schulconnex exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([]);
 
                 filter.catch(detailedValidationError, argumentsHost);
@@ -87,7 +94,7 @@ describe('SchulconnexValidationErrorFilter', () => {
             });
         });
 
-        describe('when calling the filter with validation exception', () => {
+        describe('when filter catches a validation error', () => {
             beforeEach(() => {
                 validationError = {
                     property: 'fieldName',
@@ -97,7 +104,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 };
             });
 
-            it('should return a validation schulconnex exception', () => {
+            it('should throw a validation schulconnex exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
                 filter.catch(detailedValidationError, argumentsHost);
@@ -109,7 +116,29 @@ describe('SchulconnexValidationErrorFilter', () => {
             });
         });
 
-        describe('when calling the filter with invalid value exception', () => {
+        describe('when filter catches a is not empty validation error ', () => {
+            beforeEach(() => {
+                validationError = {
+                    property: 'fieldName',
+                    constraints: {
+                        isNotEmpty: 'Property should not be empty',
+                    },
+                };
+            });
+
+            it('should throw a is not empty exception', () => {
+                const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
+
+                filter.catch(detailedValidationError, argumentsHost);
+
+                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
+                expect(responseMock.json).toHaveBeenCalled();
+                expect(responseMock.status).toHaveBeenCalledWith(isNotEmptyError.statusCode);
+                expect(responseMock.json).toHaveBeenCalledWith(isNotEmptyError);
+            });
+        });
+
+        describe('when filter catches an invalid value validation error', () => {
             beforeEach(() => {
                 validationError = {
                     property: 'fieldName',
@@ -119,7 +148,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 };
             });
 
-            it('should return a invalid value exception', () => {
+            it('should throw an invalid value exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
                 filter.catch(detailedValidationError, argumentsHost);
@@ -130,7 +159,7 @@ describe('SchulconnexValidationErrorFilter', () => {
             });
         });
 
-        describe('when calling the filter with invalid date value exception', () => {
+        describe('when filter catches an invalid date value validation error', () => {
             beforeEach(() => {
                 validationError = {
                     property: 'fieldName',
@@ -140,7 +169,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 };
             });
 
-            it('should return a invalid date exception', () => {
+            it('should throw an invalid date exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
                 filter.catch(detailedValidationError, argumentsHost);
@@ -151,7 +180,7 @@ describe('SchulconnexValidationErrorFilter', () => {
             });
         });
 
-        describe('when calling the filter with invalid enum value exception', () => {
+        describe('when filter catches an invalid enum value validation error', () => {
             beforeEach(() => {
                 validationError = {
                     property: 'fieldName',
@@ -161,7 +190,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 };
             });
 
-            it('should return a invalid enum exception', () => {
+            it('should throw a invalid enum exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
                 filter.catch(detailedValidationError, argumentsHost);
@@ -173,7 +202,7 @@ describe('SchulconnexValidationErrorFilter', () => {
             });
         });
 
-        describe('when calling the filter with invalid length exception', () => {
+        describe('when filter catches an invalid length validation error', () => {
             beforeEach(() => {
                 validationError = {
                     property: 'fieldName',
@@ -183,7 +212,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 };
             });
 
-            it('should return a invalid length exception', () => {
+            it('should throw a invalid length exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
                 filter.catch(detailedValidationError, argumentsHost);
@@ -195,7 +224,7 @@ describe('SchulconnexValidationErrorFilter', () => {
             });
         });
 
-        describe('when calling the filter with validation exception that has a child validation exception', () => {
+        describe('when filter catches a validation error that has a child validation error', () => {
             beforeEach(() => {
                 validationError = {
                     property: 'fieldName',
@@ -206,13 +235,13 @@ describe('SchulconnexValidationErrorFilter', () => {
                         {
                             property: 'fieldName',
                             constraints: {
-                                isNotEmpty: 'value of enum is empty',
+                                isEmail: 'value of mail is invalid',
                             },
                             children: [
                                 {
                                     property: 'fieldName',
                                     constraints: {
-                                        isNumber: 'value of enum should be a number',
+                                        isString: 'value of enum should be a string',
                                     },
                                 },
                             ],
@@ -221,7 +250,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 };
             });
 
-            it('should return a child validation schulconnex exception', () => {
+            it('should throw a child validation schulconnex exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
                 filter.catch(detailedValidationError, argumentsHost);
@@ -233,14 +262,14 @@ describe('SchulconnexValidationErrorFilter', () => {
             });
         });
 
-        describe('when calling the filter with a validation error without constraints', () => {
+        describe('when filter catches a validation error without constraints', () => {
             beforeEach(() => {
                 validationError = {
                     property: 'fieldName',
                 };
             });
 
-            it('should return a general bad bad request exception', () => {
+            it('should throw a general bad bad request exception', () => {
                 const detailedValidationError: DetailedValidationError = new DetailedValidationError([validationError]);
 
                 filter.catch(detailedValidationError, argumentsHost);
