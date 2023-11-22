@@ -1,7 +1,7 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from 'winston';
-import { ConfigTestModule } from '../../../test/utils/config-test.module.js';
+import { ConfigTestModule } from '../../../test/utils/index.js';
 import { ClassLogger } from './class-logger.js';
 import { LoggerModule } from './logger.module.js';
 import { ModuleLogger } from './module-logger.js';
