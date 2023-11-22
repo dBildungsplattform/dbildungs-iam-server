@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsernameGeneratorService } from './username-generator.service.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { KeycloakUserService, UserDo } from '../keycloak-administration/index.js';
+import { FindUserFilter, KeycloakUserService, UserDo } from '../keycloak-administration/index.js';
 import { UserRepository } from './user.repository.js';
 import { EntityNotFoundError } from '../../shared/error/index.js';
 
@@ -73,20 +73,20 @@ describe('The UsernameGenerator Service', () => {
     });
 
     it('should add a number when username already exists', async () => {
-        kcUserService.findOne.mockResolvedValueOnce({ ok: true, value: new UserDo<true>() });
-        const generatedUsername = await service.generateUsername('Max', 'Meyer');
+        kcUserService.findOne
+            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() })
+            .mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError('Not found') });
+        const generatedUsername: string = await service.generateUsername('Max', 'Meyer');
         expect(generatedUsername).toBe('mmeyer1');
     });
 
     it('should increment the counter when a username would exist more than twice', async () => {
-        /*
         kcUserService.findOne.mockImplementation((userFilter: FindUserFilter) => {
             if (userFilter.username == 'mmeyer' || userFilter.username == 'mmeyer1') {
                 return Promise.resolve({ ok: true, value: new UserDo<true>() });
             } else return Promise.resolve({ ok: false, error: new EntityNotFoundError('Not found') });
-        });*/
-        kcUserService.findOne.mockRejectedValueOnce('Blah');
-        const generatedUsername = await service.generateUsername('Max', 'Meyer');
+        });
+        const generatedUsername: string = await service.generateUsername('Max', 'Meyer');
         expect(generatedUsername).toBe('mmeyer2');
     });
 });

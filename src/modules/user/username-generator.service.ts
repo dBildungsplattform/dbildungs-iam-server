@@ -12,7 +12,7 @@ export class UsernameGeneratorService {
         if (lastname.length == 0) {
             throw new Error('Last name not given');
         }
-        const calculatedUsername = this.cleanString(firstname)[0] + this.cleanString(lastname);
+        const calculatedUsername: string = this.cleanString(firstname)[0] + this.cleanString(lastname);
 
         return this.repository.getNextAvailableUsername(calculatedUsername);
     }
