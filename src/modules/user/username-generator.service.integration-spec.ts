@@ -3,7 +3,7 @@ import { UsernameGeneratorService } from './username-generator.service.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { FindUserFilter, KeycloakUserService, UserDo } from '../keycloak-administration/index.js';
 import { UserRepository } from './user.repository.js';
-import { EntityNotFoundError } from '../../shared/error/index.js';
+import { EntityNotFoundError, KeycloakClientError } from '../../shared/error/index.js';
 
 describe('The UsernameGenerator Service', () => {
     let module: TestingModule;
@@ -99,5 +99,12 @@ describe('The UsernameGenerator Service', () => {
             .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() });
         const generatedUsername: string = await service.generateUsername('Renate', 'Bergmann');
         expect(generatedUsername).toBe('rbergmann3');
+    });
+
+    it("Should pass along an error thrown if it's not Entity not found", async () => {
+        kcUserService.findOne.mockResolvedValue({ ok: false, error: new KeycloakClientError('Could not reach') });
+        await expect(service.generateUsername('Maximilian', 'Mustermann')).rejects.toStrictEqual(
+            new KeycloakClientError('Could not reach'),
+        );
     });
 });
