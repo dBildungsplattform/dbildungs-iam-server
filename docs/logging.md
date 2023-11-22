@@ -34,8 +34,8 @@ set the log level to the one specified in the config.
 Every module has an entry in the config file to set its log level.
 If no entry is found, then the default loglevel is set for this module.
 
-The entry has to follow the naming convention of `THISMODULE_LOG_LEVEL`
-for the key where `THISMODULE` is the whole Module name in uppercase.
+The entry has to follow the naming convention of `MY_FANCY_MODULE_LOG_LEVEL`
+for the key where `MY_FANCY_MODULE` is the whole Module name in uppercase separated by underscores before each uppercase character in the original class name (e.g. `MyFancyModule`).
 The value is the log level as string. The possible log levels are:
 - `emerg`
 - `alert`
@@ -51,8 +51,8 @@ The value is the log level as string. The possible log levels are:
 ```json
 {
   "LOGGING": {
-    "PERSONMODULE_LOG_LEVEL": "debug",
-    "PERSONAPIMODULE_LOG_LEVEL": "debug"
+    "PERSON_MODULE_LOG_LEVEL": "debug",
+    "PERSON_API_MODULE_LOG_LEVEL": "debug"
   }
 }
 ```
