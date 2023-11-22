@@ -1,4 +1,4 @@
-name: "Publish image and helm chart on push and (scheduled) trivy, deployment on push"
+name: "Publish image and helm chart on push and (scheduled) trivy, deployment on push, delete namespace on branch deletion"
 
 # All triggers have to be in one file, so that the trivy results can be compared to identify introduced vulnerabilities
 # See DBP-340
@@ -6,6 +6,7 @@ on:
   push:
   schedule:
     - cron:  '0 2 * * *'
+  delete:
 
 concurrency:
   group: dbildungs-iam-server-${{ github.ref_name }}
@@ -108,11 +109,11 @@ jobs:
       version_generation: ${{ needs.select_helm_version_generation.outputs.SELECT_HELM_VERION_GENERATION  }}
 
   branch_meta:
-    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'delete' && !startsWith(github.ref_name,'dependabot/') }}
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@main
 
   create_branch_identifier:
-    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'delete' && !startsWith(github.ref_name,'dependabot/') }}
     needs: 
       - branch_meta
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/branch-to-namespace.yml@main
@@ -134,3 +135,22 @@ jobs:
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
     secrets:
       SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
+
+  delete_namespace:
+    if: ${{ github.event_name == 'delete' }}
+    needs:
+      - create_branch_identifier
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/delete-namespace.yml@main
+    with:
+      namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
+    secrets:
+      SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
+
+  delete_successful:
+    if: ${{ github.event_name == 'delete' }}
+    needs:
+      - delete_namespace
+      - create_branch_identifier
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Deletion of namespace" ${{ needs.create_branch_identifier.outputs.namespace_from_branch }} "done" 
