@@ -9,7 +9,7 @@ on:
   delete:
 
 concurrency:
-  group: dbildungs-iam-server-${{ github.ref_name }}
+  group: dbildungs-iam-server-${{ github.event.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -109,11 +109,11 @@ jobs:
       version_generation: ${{ needs.select_helm_version_generation.outputs.SELECT_HELM_VERION_GENERATION  }}
 
   branch_meta:
-    if: ${{ github.event_name == 'push' || github.event_name == 'delete' && !startsWith(github.ref_name,'dependabot/') }}
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@main
 
   create_branch_identifier:
-    if: ${{ github.event_name == 'push' || github.event_name == 'delete' && !startsWith(github.ref_name,'dependabot/') }}
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs: 
       - branch_meta
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/branch-to-namespace.yml@main
@@ -136,21 +136,27 @@ jobs:
     secrets:
       SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
 
+  create_branch_identifier_for_deletion:
+    if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/branch-to-namespace.yml@main
+    with:
+      branch: ${{ github.event.ref }}
+
   delete_namespace:
-    if: ${{ github.event_name == 'delete' }}
+    if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch'}}
     needs:
-      - create_branch_identifier
+      - create_branch_identifier_for_deletion
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/delete-namespace.yml@main
     with:
-      namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
+      namespace: ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }}
     secrets:
       SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
 
   delete_successful:
-    if: ${{ github.event_name == 'delete' }}
+    if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
     needs:
       - delete_namespace
-      - create_branch_identifier
+      - create_branch_identifier_for_deletion
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Deletion of namespace" ${{ needs.create_branch_identifier.outputs.namespace_from_branch }} "done" 
+      - run: echo "Deletion of namespace" ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }} "done" 
