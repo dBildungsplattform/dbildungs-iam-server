@@ -49,7 +49,7 @@ describe('SchulconnexValidationErrorFilter', () => {
         beschreibung: `Textlänge des Attributs ist nicht valide 'fieldName'`,
     });
 
-    const datumError: SchulConnexError = new SchulConnexError( {
+    const datumError: SchulConnexError = new SchulConnexError({
         code: statusCode,
         subcode: '09',
         titel: 'Datumsattribut hat einen ungültigen Wert',

@@ -5,7 +5,6 @@ import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { SchulConnexError } from './schul-connex.error.js';
 
-
 @Catch(DetailedValidationError)
 export class SchulConnexValidationErrorFilter implements ExceptionFilter<DetailedValidationError> {
     public catch(exception: DetailedValidationError, host: ArgumentsHost): void {
@@ -46,7 +45,7 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
                 detailedSchulConnexError: { subCode: string; title: string; description: string };
             } = this.mapValidationErrorConstraints(currentValidationError);
 
-            schulConnexError = new SchulConnexError( {
+            schulConnexError = new SchulConnexError({
                 code: statusCode,
                 subcode: detailedSchulConnexError.subCode,
                 titel: detailedSchulConnexError.title,
