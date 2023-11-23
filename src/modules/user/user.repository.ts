@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { KeycloakUserService, UserDo } from '../keycloak-administration/index.js';
 import { DomainError, EntityNotFoundError } from '../../shared/error/index.js';
+import { User } from './user.js';
 
 @Injectable()
 export class UserRepository {
@@ -28,5 +29,9 @@ export class UserRepository {
             counter = counter + 1;
         }
         return calculatedUsername + counter;
+    }
+
+    public async createUser(vorname: string, nachname: string): Promise<User> {
+        return Promise.resolve(new User('', vorname, nachname));
     }
 }
