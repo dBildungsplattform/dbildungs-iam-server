@@ -1,4 +1,4 @@
-name: "Publish image and helm chart on push and (scheduled) trivy, deployment on push"
+name: "Publish image and helm chart on push and (scheduled) trivy, deployment on push, delete namespace on branch deletion"
 
 # All triggers have to be in one file, so that the trivy results can be compared to identify introduced vulnerabilities
 # See DBP-340
@@ -6,9 +6,10 @@ on:
   push:
   schedule:
     - cron:  '0 2 * * *'
+  delete:
 
 concurrency:
-  group: dbildungs-iam-server-${{ github.event_name }}-${{ github.ref_name }}
+  group: dbildungs-iam-server-${{ github.event.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -134,3 +135,28 @@ jobs:
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
     secrets:
       SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
+
+  create_branch_identifier_for_deletion:
+    if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/branch-to-namespace.yml@main
+    with:
+      branch: ${{ github.event.ref }}
+
+  delete_namespace:
+    if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch'}}
+    needs:
+      - create_branch_identifier_for_deletion
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/delete-namespace.yml@main
+    with:
+      namespace: ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }}
+    secrets:
+      SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
+
+  delete_successful:
+    if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
+    needs:
+      - delete_namespace
+      - create_branch_identifier_for_deletion
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Deletion of namespace" ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }} "done" 
