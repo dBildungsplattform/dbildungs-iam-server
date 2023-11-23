@@ -151,3 +151,12 @@ jobs:
       namespace: ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }}
     secrets:
       SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
+
+  delete_successful:
+    if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
+    needs:
+      - delete_namespace
+      - create_branch_identifier_for_deletion
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Deletion of namespace" ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }} "done" 
