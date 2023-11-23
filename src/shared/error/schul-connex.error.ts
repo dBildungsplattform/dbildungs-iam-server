@@ -1,14 +1,20 @@
-import { HttpException } from '@nestjs/common';
-
 type SchulConnexErrorProps = {
-    statusCode: number;
+    code: number;
     subcode: string;
-    title: string;
-    description: string;
+    titel: string;
+    beschreibung: string;
 };
 
-export class SchulConnexError extends HttpException {
+export class SchulConnexError {
     public constructor(props: SchulConnexErrorProps) {
-        super(props, props.statusCode);
+        Object.assign(this, props);
     }
+
+    public readonly code!: number;
+
+    public readonly subcode!: string;
+
+    public readonly titel!: string;
+
+    public readonly beschreibung!: string;
 }
