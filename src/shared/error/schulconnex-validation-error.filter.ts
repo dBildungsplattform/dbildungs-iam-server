@@ -45,19 +45,17 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
         if (currentValidationError.constraints) {
             const {
                 property,
-                errorCode: errorSubCode,
-                errorMessage: errorDescription,
+                detailedSchulConnexError,
             }: {
                 property: string;
-                errorCode: string;
-                errorMessage: { title: string; description: string };
+                detailedSchulConnexError: { subCode: string; title: string; description: string };
             } = this.mapValidationErrorConstraints(currentValidationError);
 
             schulConnexError = {
                 statusCode: statusCode,
-                subCode: errorSubCode,
-                title: errorDescription.title,
-                description: `${errorDescription.description} '${property}'`,
+                subCode: detailedSchulConnexError.subCode,
+                title: detailedSchulConnexError.title,
+                description: `${detailedSchulConnexError.description} '${property}'`,
             };
             return schulConnexError;
         }
@@ -76,14 +74,13 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
 
     private mapValidationErrorConstraints(validationError: ValidationError): {
         property: string;
-        errorCode: string;
-        errorMessage: { title: string; description: string };
+        detailedSchulConnexError: { subCode: string; title: string; description: string };
     } {
         const property: string = this.getPropertyPath(validationError);
-        const errorCode: string = this.determineSubErrorCode(validationError);
-        const errorMessage: { title: string; description: string } = this.getErrorMessage(errorCode);
+        const schulConnexError: { subCode: string; title: string; description: string } =
+            this.determineSchulConnexError(validationError);
 
-        return { property, errorCode, errorMessage };
+        return { property, detailedSchulConnexError: schulConnexError };
     }
 
     private getPropertyPath(validationError: ValidationError): string {
@@ -97,58 +94,59 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
         return property;
     }
 
-    private determineSubErrorCode(validationError: ValidationError): string {
+    private determineSchulConnexError(validationError: ValidationError): {
+        subCode: string;
+        title: string;
+        description: string;
+    } {
+        let subCode: string;
+
         if (validationError.constraints?.['isMinLength']) {
-            return '07';
+            subCode = '07';
+        } else if (validationError.constraints?.['isDate']) {
+            subCode = '09';
+        } else if (validationError.constraints?.['isEnum']) {
+            subCode = '10';
+        } else if (validationError.constraints?.['isMaxLength']) {
+            subCode = '15';
+        } else if (validationError.constraints?.['isNotEmpty']) {
+            subCode = '01';
+        } else {
+            subCode = '03';
         }
 
-        if (validationError.constraints?.['isDate']) {
-            return '09';
-        }
-
-        if (validationError.constraints?.['isEnum']) {
-            return '10';
-        }
-
-        if (validationError.constraints?.['isMaxLength']) {
-            return '15';
-        }
-
-        if (validationError.constraints?.['isNotEmpty']) {
-            return '01';
-        }
-
-        return '03';
-    }
-
-    private getErrorMessage(errorCode: string): { title: string; description: string } {
-        switch (errorCode) {
+        switch (subCode) {
             case '01':
                 return {
+                    subCode,
                     title: 'Fehlende Parameter',
                     description: 'Folgende Parameter fehlen',
                 };
 
             case '07':
                 return {
+                    subCode,
                     title: 'Attributwerte haben eine ungültige Länge',
                     description: 'Textlänge des Attributs ist nicht valide',
                 };
 
             case '09':
                 return {
+                    subCode,
                     title: 'Datumsattribut hat einen ungültigen Wert',
                     description: 'Datumsformat des Attributs ist ungültig',
                 };
 
             case '10':
                 return {
+                    subCode,
                     title: 'Attributwerte entsprechen keinem der erwarteten Werte',
                     description: 'Attribute müssen gültige Werte enthalten',
                 };
 
             case '15':
                 return {
+                    subCode,
                     title: 'Text ist zu lang',
                     description: 'Die Länge des übergebenen Texts überschreitet die Maximallänge',
                 };
@@ -156,6 +154,7 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
             // default case is '03'
             default:
                 return {
+                    subCode,
                     title: 'Validierungsfehler',
                     description: 'Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden',
                 };

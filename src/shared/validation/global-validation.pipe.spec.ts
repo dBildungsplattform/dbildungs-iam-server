@@ -5,13 +5,13 @@ import { ValidationError } from 'class-validator';
 
 describe('GlobalValidationPipe', () => {
     let module: TestingModule;
-    let sut: GlobalValidationPipe;
+    let validationPipe: GlobalValidationPipe;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             providers: [GlobalValidationPipe],
         }).compile();
-        sut = module.get(GlobalValidationPipe);
+        validationPipe = module.get(GlobalValidationPipe);
     });
 
     afterAll(async () => {
@@ -19,14 +19,14 @@ describe('GlobalValidationPipe', () => {
     });
 
     it('should be defined', () => {
-        expect(sut).toBeDefined();
+        expect(validationPipe).toBeDefined();
     });
 
     it('should be instance of ValidationPipe', async () => {
         const validationError: ValidationError = {
             property: '',
         };
-        await sut
+        await validationPipe
             .transform(validationError, {
                 type: 'body',
                 metatype: DetailedValidationError,
@@ -42,7 +42,7 @@ describe('GlobalValidationPipe', () => {
         };
 
         await expect(
-            sut.transform(validationError, {
+            validationPipe.transform(validationError, {
                 type: 'body',
                 metatype: DetailedValidationError,
             }),

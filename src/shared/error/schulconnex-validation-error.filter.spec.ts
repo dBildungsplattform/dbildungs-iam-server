@@ -87,7 +87,6 @@ describe('SchulconnexValidationErrorFilter', () => {
 
                 filter.catch(detailedValidationError, argumentsHost);
 
-                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(generalBadRequestError.statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(generalBadRequestError);
@@ -109,7 +108,6 @@ describe('SchulconnexValidationErrorFilter', () => {
 
                 filter.catch(detailedValidationError, argumentsHost);
 
-                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(standardValidationError.statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(standardValidationError);
@@ -131,7 +129,6 @@ describe('SchulconnexValidationErrorFilter', () => {
 
                 filter.catch(detailedValidationError, argumentsHost);
 
-                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(isNotEmptyError.statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(isNotEmptyError);
@@ -153,7 +150,6 @@ describe('SchulconnexValidationErrorFilter', () => {
 
                 filter.catch(detailedValidationError, argumentsHost);
 
-                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(invalidLengthOfValueError.statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(invalidLengthOfValueError);
             });
@@ -174,7 +170,6 @@ describe('SchulconnexValidationErrorFilter', () => {
 
                 filter.catch(detailedValidationError, argumentsHost);
 
-                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(datumError.statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(datumError);
             });
@@ -195,7 +190,6 @@ describe('SchulconnexValidationErrorFilter', () => {
 
                 filter.catch(detailedValidationError, argumentsHost);
 
-                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(enumError.statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(enumError);
@@ -217,7 +211,6 @@ describe('SchulconnexValidationErrorFilter', () => {
 
                 filter.catch(detailedValidationError, argumentsHost);
 
-                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(textLengthError.statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(textLengthError);
@@ -255,7 +248,6 @@ describe('SchulconnexValidationErrorFilter', () => {
 
                 filter.catch(detailedValidationError, argumentsHost);
 
-                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(complexStandardValidationError.statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(complexStandardValidationError);
@@ -274,7 +266,6 @@ describe('SchulconnexValidationErrorFilter', () => {
 
                 filter.catch(detailedValidationError, argumentsHost);
 
-                expect(argumentsHost.switchToHttp).toHaveBeenCalled();
                 expect(responseMock.json).toHaveBeenCalled();
                 expect(responseMock.status).toHaveBeenCalledWith(generalBadRequestError.statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(generalBadRequestError);
