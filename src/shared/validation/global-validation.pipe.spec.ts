@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GlobalValidationPipe } from './global-validation.pipe.js';
 import { DetailedValidationError } from './detailed-validation.error.js';
-import { ValidationError } from 'class-validator';
+import { CreatePersonBodyParams } from '../../modules/person/api/create-person.body.params.js';
+import { PersonNameParams } from '../../modules/person/api/person-name.params.js';
+import { CreatePersonDto } from '../../modules/person/api/create-person.dto.js';
 
 describe('GlobalValidationPipe', () => {
     let module: TestingModule;
@@ -22,30 +24,22 @@ describe('GlobalValidationPipe', () => {
         expect(validationPipe).toBeDefined();
     });
 
-    it('should be instance of ValidationPipe', async () => {
-        const validationError: ValidationError = {
-            property: '',
+    it('should throw DetailedValidation error on failure', () => {
+        const person: CreatePersonBodyParams = {
+            username: 'test',
+            email: 'testgmail.com',
+            mandant: '',
+            name: new PersonNameParams(),
         };
-        await validationPipe
-            .transform(validationError, {
+
+        return validationPipe
+            .transform(person, {
                 type: 'body',
-                metatype: DetailedValidationError,
+                metatype: CreatePersonDto,
             })
-            .catch((error: ValidationError) => {
-                expect(error).toBeInstanceOf(DetailedValidationError);
+            .then(() => fail('should have thrown DetailedValidationError'))
+            .catch((error: Error) => {
+                expect(error.name).toBe(DetailedValidationError.name);
             });
-    });
-
-    it('should throw DetailedValidation error on failure', async () => {
-        const validationError: ValidationError = {
-            property: '',
-        };
-
-        await expect(
-            validationPipe.transform(validationError, {
-                type: 'body',
-                metatype: DetailedValidationError,
-            }),
-        ).rejects.toThrow(DetailedValidationError);
     });
 });

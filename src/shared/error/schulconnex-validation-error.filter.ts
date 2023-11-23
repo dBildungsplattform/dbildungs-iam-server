@@ -3,13 +3,8 @@ import { DetailedValidationError } from '../validation/detailed-validation.error
 import { ValidationError } from 'class-validator';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
+import { SchulConnexError } from './schul-connex.error.js';
 
-export type SchulConnexError = {
-    statusCode: number;
-    subCode: string;
-    title: string;
-    description: string;
-};
 
 @Catch(DetailedValidationError)
 export class SchulConnexValidationErrorFilter implements ExceptionFilter<DetailedValidationError> {
@@ -29,12 +24,12 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
         statusCode: number = 400,
     ): SchulConnexError {
         const validationErrors: ValidationError[] = validationError.validationErrors;
-        let schulConnexError: SchulConnexError = {
-            statusCode: statusCode,
-            subCode: '00',
-            title: 'Fehlerhafte Anfrage',
-            description: 'Die Anfrage ist fehlerhaft',
-        };
+        let schulConnexError: SchulConnexError = new SchulConnexError({
+            code: statusCode,
+            subcode: '00',
+            titel: 'Fehlerhafte Anfrage',
+            beschreibung: 'Die Anfrage ist fehlerhaft',
+        });
 
         if (!validationErrors[0]) {
             return schulConnexError;
@@ -51,12 +46,12 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
                 detailedSchulConnexError: { subCode: string; title: string; description: string };
             } = this.mapValidationErrorConstraints(currentValidationError);
 
-            schulConnexError = {
-                statusCode: statusCode,
-                subCode: detailedSchulConnexError.subCode,
-                title: detailedSchulConnexError.title,
-                description: `${detailedSchulConnexError.description} '${property}'`,
-            };
+            schulConnexError = new SchulConnexError( {
+                code: statusCode,
+                subcode: detailedSchulConnexError.subCode,
+                titel: detailedSchulConnexError.title,
+                beschreibung: `${detailedSchulConnexError.description} '${property}'`,
+            });
             return schulConnexError;
         }
         return schulConnexError;

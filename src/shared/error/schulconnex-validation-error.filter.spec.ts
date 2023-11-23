@@ -1,10 +1,11 @@
 import { DetailedValidationError } from '../validation/detailed-validation.error.js';
-import { SchulConnexValidationErrorFilter, SchulConnexError } from './schulconnex-validation-error.filter.js';
+import { SchulConnexValidationErrorFilter } from './schulconnex-validation-error.filter.js';
 import { ArgumentsHost } from '@nestjs/common';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Response } from 'express';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { ValidationError } from 'class-validator';
+import { SchulConnexError } from './schul-connex.error.js';
 
 describe('SchulconnexValidationErrorFilter', () => {
     let filter: SchulConnexValidationErrorFilter;
@@ -13,61 +14,61 @@ describe('SchulconnexValidationErrorFilter', () => {
     let argumentsHost: DeepMocked<ArgumentsHost>;
     let validationError: ValidationError;
 
-    const generalBadRequestError: SchulConnexError = {
-        statusCode: statusCode,
-        subCode: '00',
-        title: 'Fehlerhafte Anfrage',
-        description: 'Die Anfrage ist fehlerhaft',
-    };
+    const generalBadRequestError: SchulConnexError = new SchulConnexError({
+        code: statusCode,
+        subcode: '00',
+        titel: 'Fehlerhafte Anfrage',
+        beschreibung: 'Die Anfrage ist fehlerhaft',
+    });
 
-    const isNotEmptyError: SchulConnexError = {
-        statusCode: statusCode,
-        subCode: '01',
-        title: 'Fehlende Parameter',
-        description: `Folgende Parameter fehlen 'fieldName'`,
-    };
+    const isNotEmptyError: SchulConnexError = new SchulConnexError({
+        code: statusCode,
+        subcode: '01',
+        titel: 'Fehlende Parameter',
+        beschreibung: `Folgende Parameter fehlen 'fieldName'`,
+    });
 
-    const standardValidationError: SchulConnexError = {
-        statusCode: statusCode,
-        subCode: '03',
-        title: 'Validierungsfehler',
-        description: `Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden 'fieldName'`,
-    };
+    const standardValidationError: SchulConnexError = new SchulConnexError({
+        code: statusCode,
+        subcode: '03',
+        titel: 'Validierungsfehler',
+        beschreibung: `Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden 'fieldName'`,
+    });
 
-    const complexStandardValidationError: SchulConnexError = {
-        statusCode: statusCode,
-        subCode: '03',
-        title: 'Validierungsfehler',
-        description: `Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden 'fieldName.fieldName'`,
-    };
+    const complexStandardValidationError: SchulConnexError = new SchulConnexError({
+        code: statusCode,
+        subcode: '03',
+        titel: 'Validierungsfehler',
+        beschreibung: `Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden 'fieldName.fieldName'`,
+    });
 
-    const invalidLengthOfValueError: SchulConnexError = {
-        statusCode: statusCode,
-        subCode: '07',
-        title: 'Attributwerte haben eine ungültige Länge',
-        description: `Textlänge des Attributs ist nicht valide 'fieldName'`,
-    };
+    const invalidLengthOfValueError: SchulConnexError = new SchulConnexError({
+        code: statusCode,
+        subcode: '07',
+        titel: 'Attributwerte haben eine ungültige Länge',
+        beschreibung: `Textlänge des Attributs ist nicht valide 'fieldName'`,
+    });
 
-    const datumError: SchulConnexError = {
-        statusCode: statusCode,
-        subCode: '09',
-        title: 'Datumsattribut hat einen ungültigen Wert',
-        description: `Datumsformat des Attributs ist ungültig 'fieldName'`,
-    };
+    const datumError: SchulConnexError = new SchulConnexError( {
+        code: statusCode,
+        subcode: '09',
+        titel: 'Datumsattribut hat einen ungültigen Wert',
+        beschreibung: `Datumsformat des Attributs ist ungültig 'fieldName'`,
+    });
 
-    const enumError: SchulConnexError = {
-        statusCode: statusCode,
-        subCode: '10',
-        title: 'Attributwerte entsprechen keinem der erwarteten Werte',
-        description: `Attribute müssen gültige Werte enthalten 'fieldName'`,
-    };
+    const enumError: SchulConnexError = new SchulConnexError({
+        code: statusCode,
+        subcode: '10',
+        titel: 'Attributwerte entsprechen keinem der erwarteten Werte',
+        beschreibung: `Attribute müssen gültige Werte enthalten 'fieldName'`,
+    });
 
-    const textLengthError: SchulConnexError = {
-        statusCode: statusCode,
-        subCode: '15',
-        title: 'Text ist zu lang',
-        description: `Die Länge des übergebenen Texts überschreitet die Maximallänge 'fieldName'`,
-    };
+    const textLengthError: SchulConnexError = new SchulConnexError({
+        code: statusCode,
+        subcode: '15',
+        titel: 'Text ist zu lang',
+        beschreibung: `Die Länge des übergebenen Texts überschreitet die Maximallänge 'fieldName'`,
+    });
 
     beforeEach(() => {
         filter = new SchulConnexValidationErrorFilter();
@@ -88,7 +89,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 filter.catch(detailedValidationError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
-                expect(responseMock.status).toHaveBeenCalledWith(generalBadRequestError.statusCode);
+                expect(responseMock.status).toHaveBeenCalledWith(generalBadRequestError.getStatus());
                 expect(responseMock.json).toHaveBeenCalledWith(generalBadRequestError);
             });
         });
@@ -109,7 +110,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 filter.catch(detailedValidationError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
-                expect(responseMock.status).toHaveBeenCalledWith(standardValidationError.statusCode);
+                expect(responseMock.status).toHaveBeenCalledWith(standardValidationError.getStatus());
                 expect(responseMock.json).toHaveBeenCalledWith(standardValidationError);
             });
         });
@@ -130,7 +131,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 filter.catch(detailedValidationError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
-                expect(responseMock.status).toHaveBeenCalledWith(isNotEmptyError.statusCode);
+                expect(responseMock.status).toHaveBeenCalledWith(isNotEmptyError.getStatus());
                 expect(responseMock.json).toHaveBeenCalledWith(isNotEmptyError);
             });
         });
@@ -150,7 +151,7 @@ describe('SchulconnexValidationErrorFilter', () => {
 
                 filter.catch(detailedValidationError, argumentsHost);
 
-                expect(responseMock.status).toHaveBeenCalledWith(invalidLengthOfValueError.statusCode);
+                expect(responseMock.status).toHaveBeenCalledWith(invalidLengthOfValueError.getStatus());
                 expect(responseMock.json).toHaveBeenCalledWith(invalidLengthOfValueError);
             });
         });
@@ -170,7 +171,7 @@ describe('SchulconnexValidationErrorFilter', () => {
 
                 filter.catch(detailedValidationError, argumentsHost);
 
-                expect(responseMock.status).toHaveBeenCalledWith(datumError.statusCode);
+                expect(responseMock.status).toHaveBeenCalledWith(datumError.getStatus());
                 expect(responseMock.json).toHaveBeenCalledWith(datumError);
             });
         });
@@ -191,7 +192,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 filter.catch(detailedValidationError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
-                expect(responseMock.status).toHaveBeenCalledWith(enumError.statusCode);
+                expect(responseMock.status).toHaveBeenCalledWith(enumError.getStatus());
                 expect(responseMock.json).toHaveBeenCalledWith(enumError);
             });
         });
@@ -212,7 +213,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 filter.catch(detailedValidationError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
-                expect(responseMock.status).toHaveBeenCalledWith(textLengthError.statusCode);
+                expect(responseMock.status).toHaveBeenCalledWith(textLengthError.getStatus());
                 expect(responseMock.json).toHaveBeenCalledWith(textLengthError);
             });
         });
@@ -249,7 +250,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 filter.catch(detailedValidationError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
-                expect(responseMock.status).toHaveBeenCalledWith(complexStandardValidationError.statusCode);
+                expect(responseMock.status).toHaveBeenCalledWith(complexStandardValidationError.getStatus());
                 expect(responseMock.json).toHaveBeenCalledWith(complexStandardValidationError);
             });
         });
@@ -267,7 +268,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 filter.catch(detailedValidationError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
-                expect(responseMock.status).toHaveBeenCalledWith(generalBadRequestError.statusCode);
+                expect(responseMock.status).toHaveBeenCalledWith(generalBadRequestError.getStatus());
                 expect(responseMock.json).toHaveBeenCalledWith(generalBadRequestError);
             });
         });
