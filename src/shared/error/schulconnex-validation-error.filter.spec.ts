@@ -89,7 +89,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 filter.catch(detailedValidationError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
-                expect(responseMock.status).toHaveBeenCalledWith(generalBadRequestError.getStatus());
+                expect(responseMock.status).toHaveBeenCalledWith(statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(generalBadRequestError);
             });
         });
@@ -110,7 +110,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 filter.catch(detailedValidationError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
-                expect(responseMock.status).toHaveBeenCalledWith(standardValidationError.getStatus());
+                expect(responseMock.status).toHaveBeenCalledWith(statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(standardValidationError);
             });
         });
@@ -131,7 +131,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 filter.catch(detailedValidationError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
-                expect(responseMock.status).toHaveBeenCalledWith(isNotEmptyError.getStatus());
+                expect(responseMock.status).toHaveBeenCalledWith(statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(isNotEmptyError);
             });
         });
@@ -151,7 +151,7 @@ describe('SchulconnexValidationErrorFilter', () => {
 
                 filter.catch(detailedValidationError, argumentsHost);
 
-                expect(responseMock.status).toHaveBeenCalledWith(invalidLengthOfValueError.getStatus());
+                expect(responseMock.status).toHaveBeenCalledWith(statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(invalidLengthOfValueError);
             });
         });
@@ -171,7 +171,7 @@ describe('SchulconnexValidationErrorFilter', () => {
 
                 filter.catch(detailedValidationError, argumentsHost);
 
-                expect(responseMock.status).toHaveBeenCalledWith(datumError.getStatus());
+                expect(responseMock.status).toHaveBeenCalledWith(statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(datumError);
             });
         });
@@ -192,7 +192,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 filter.catch(detailedValidationError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
-                expect(responseMock.status).toHaveBeenCalledWith(enumError.getStatus());
+                expect(responseMock.status).toHaveBeenCalledWith(statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(enumError);
             });
         });
@@ -213,7 +213,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 filter.catch(detailedValidationError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
-                expect(responseMock.status).toHaveBeenCalledWith(textLengthError.getStatus());
+                expect(responseMock.status).toHaveBeenCalledWith(statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(textLengthError);
             });
         });
@@ -250,7 +250,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 filter.catch(detailedValidationError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
-                expect(responseMock.status).toHaveBeenCalledWith(complexStandardValidationError.getStatus());
+                expect(responseMock.status).toHaveBeenCalledWith(statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(complexStandardValidationError);
             });
         });
@@ -268,7 +268,7 @@ describe('SchulconnexValidationErrorFilter', () => {
                 filter.catch(detailedValidationError, argumentsHost);
 
                 expect(responseMock.json).toHaveBeenCalled();
-                expect(responseMock.status).toHaveBeenCalledWith(generalBadRequestError.getStatus());
+                expect(responseMock.status).toHaveBeenCalledWith(statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(generalBadRequestError);
             });
         });

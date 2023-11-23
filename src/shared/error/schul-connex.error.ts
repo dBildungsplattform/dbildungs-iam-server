@@ -1,5 +1,3 @@
-import { HttpException } from '@nestjs/common';
-
 type SchulConnexErrorProps = {
     code: number;
     subcode: string;
@@ -7,8 +5,8 @@ type SchulConnexErrorProps = {
     beschreibung: string;
 };
 
-export class SchulConnexError extends HttpException {
+export class SchulConnexError {
     public constructor(props: SchulConnexErrorProps) {
-        super(props, props.code);
+        Object.assign(this, props);
     }
 }
