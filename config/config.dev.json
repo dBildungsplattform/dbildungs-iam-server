@@ -33,5 +33,17 @@
         "USERNAME": "default",
         "PASSWORD": "password",
         "USE_TLS": false
+    },
+    "LOGGING": {
+        "DEFAULT_LOG_LEVEL": "info",
+        "PERSON_MODULE_LOG_LEVEL": "debug",
+        "PERSON_API_MODULE_LOG_LEVEL": "debug",
+        "ORGANISATION_MODULE_LOG_LEVEL":  "debug",
+        "ORGANISATION_API_MODULE_LOG_LEVEL": "debug",
+        "ROLLE_MODULE_LOG_LEVEL": "debug",
+        "ROLLE_API_MODULE_LOG_LEVEL": "debug",
+        "KEYCLOAK_ADMINISTRATION_MODULE_LOG_LEVEL":  "debug",
+        "HEALTH_MODULE_LOG_LEVEL": "debug",
+        "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
     }
 }

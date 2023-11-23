@@ -16,7 +16,7 @@ import { OrganisationScope } from './organisation.scope.js';
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 
-describe('OgranisationRepo', () => {
+describe('OrganisationRepo', () => {
     let module: TestingModule;
     let sut: OrganisationRepo;
     let orm: MikroORM;
