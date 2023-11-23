@@ -92,7 +92,7 @@ jobs:
       - id: select_generation
         shell: bash
         run: |
-          if [[  github.ref_name == 'main' ]]; then
+          if ${{ github.ref_name == 'main' }}; then
               echo "SELECT_HELM_VERION_GENERATION=short_hash" >> "$GITHUB_OUTPUT"
           else
               echo "SELECT_HELM_VERION_GENERATION=ticket_from_branch_short_hash" >> "$GITHUB_OUTPUT"

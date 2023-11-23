@@ -14,5 +14,8 @@
         "BASE_URL": "<URL to keycloak>",
         "REALM_NAME": "<name of the used realm>",
         "CLIENT_ID": "<id of the client>"
+    },
+    "LOGGING": {
+        "DEFAULT_LOG_LEVEL": "info"
     }
 }
