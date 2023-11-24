@@ -1,6 +1,7 @@
-import { Mapper, MappingProfile, createMap, forMember, fromValue } from '@automapper/core';
+import 'reflect-metadata';
+import { Mapper, MappingProfile, constructUsing, createMap, forMember, fromValue } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
-import { Inject } from '@nestjs/common';
+import { HttpException, Inject } from '@nestjs/common';
 import { EntityCouldNotBeCreated } from './entity-could-not-be-created.error.js';
 import { EntityCouldNotBeUpdated } from './entity-could-not-be-updated.error.js';
 import { EntityNotFoundError } from './entity-not-found.error.js';
@@ -16,8 +17,30 @@ export class DomainToSchulConnexErrorMapper extends AutomapperProfile {
 
     public override get profile(): MappingProfile {
         return (mapper: Mapper) => {
-            createMap(mapper, EntityCouldNotBeCreated, SchulConnexError);
-            createMap(mapper, EntityCouldNotBeUpdated, SchulConnexError);
+            createMap(
+                mapper,
+                EntityCouldNotBeCreated,
+                SchulConnexError,
+                forMember((dest: SchulConnexError) => dest.code, fromValue(500)),
+                forMember((dest: SchulConnexError) => dest.subcode, fromValue('00')),
+                forMember((dest: SchulConnexError) => dest.titel, fromValue('Interner Serverfehler')),
+                forMember(
+                    (dest: SchulConnexError) => dest.beschreibung,
+                    fromValue('Es ist ein interner Fehler aufgetreten. Entität konnte nicht erstellt werden.'),
+                ),
+            );
+            createMap(
+                mapper,
+                EntityCouldNotBeUpdated,
+                SchulConnexError,
+                forMember((dest: SchulConnexError) => dest.code, fromValue(500)),
+                forMember((dest: SchulConnexError) => dest.subcode, fromValue('00')),
+                forMember((dest: SchulConnexError) => dest.titel, fromValue('Interner Serverfehler')),
+                forMember(
+                    (dest: SchulConnexError) => dest.beschreibung,
+                    fromValue('Es ist ein interner Fehler aufgetreten. Entität konnte nicht aktualisiert werden.'),
+                ),
+            );
 
             createMap(
                 mapper,
@@ -32,7 +55,18 @@ export class DomainToSchulConnexErrorMapper extends AutomapperProfile {
                 ),
             );
 
-            createMap(mapper, KeycloakClientError, SchulConnexError);
+            createMap(
+                mapper,
+                KeycloakClientError,
+                SchulConnexError,
+                forMember((dest: SchulConnexError) => dest.code, fromValue(500)),
+                forMember((dest: SchulConnexError) => dest.subcode, fromValue('00')),
+                forMember((dest: SchulConnexError) => dest.titel, fromValue('Interner Serverfehler')),
+                forMember(
+                    (dest: SchulConnexError) => dest.beschreibung,
+                    fromValue('Es ist ein interner Fehler aufgetreten.'),
+                ),
+            );
 
             createMap(
                 mapper,
@@ -63,6 +97,13 @@ export class DomainToSchulConnexErrorMapper extends AutomapperProfile {
                     (dest: SchulConnexError) => dest.beschreibung,
                     fromValue('Die Anfrage ist fehlerhaft: Die Person existiert bereits.'),
                 ),
+            );
+
+            createMap(
+                mapper,
+                SchulConnexError,
+                HttpException,
+                constructUsing((scError: SchulConnexError) => new HttpException(scError, scError.code)),
             );
         };
     }

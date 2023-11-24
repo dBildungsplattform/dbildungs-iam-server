@@ -11,6 +11,7 @@ import { MappingError } from './mapping.error.js';
 import { MismatchedRevisionError } from './mismatched-revision.error.js';
 import { PersonAlreadyExistsError } from './person-already-exists.error.js';
 import { SchulConnexError } from './schul-connex.error.js';
+import { HttpException } from '@nestjs/common';
 
 describe('DomainToSchulConnexErrorMapper', () => {
     let module: TestingModule;
@@ -68,6 +69,10 @@ describe('DomainToSchulConnexErrorMapper', () => {
             expect(() =>
                 sut.map({} as PersonAlreadyExistsError, PersonAlreadyExistsError, SchulConnexError),
             ).not.toThrow(MappingError);
+        });
+
+        it('should map SchulConnexError to HttpException', () => {
+            expect(() => sut.map({} as SchulConnexError, SchulConnexError, HttpException)).not.toThrow(MappingError);
         });
     });
 });
