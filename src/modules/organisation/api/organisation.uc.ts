@@ -8,6 +8,8 @@ import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { FindOrganisationDto } from './find-organisation.dto.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 
 @Injectable()
 export class OrganisationUc {
@@ -16,25 +18,29 @@ export class OrganisationUc {
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
-    public async createOrganisation(organisationDto: CreateOrganisationDto): Promise<CreatedOrganisationDto> {
+    public async createOrganisation(
+        organisationDto: CreateOrganisationDto,
+    ): Promise<CreatedOrganisationDto | SchulConnexError> {
         const organisationDo: OrganisationDo<false> = this.mapper.map(
             organisationDto,
             CreateOrganisationDto,
             OrganisationDo,
         );
         const result: Result<OrganisationDo<true>> = await this.organisationService.createOrganisation(organisationDo);
+
         if (result.ok) {
             return this.mapper.map(result.value, OrganisationDo, CreatedOrganisationDto);
         }
-        throw result.error;
+
+        return this.mapper.map(result.error, EntityCouldNotBeCreated, SchulConnexError);
     }
 
-    public async findOrganisationById(id: string): Promise<OrganisationResponse> {
+    public async findOrganisationById(id: string): Promise<OrganisationResponse | SchulConnexError> {
         const result: Result<OrganisationDo<true>> = await this.organisationService.findOrganisationById(id);
         if (result.ok) {
             return this.mapper.map(result.value, OrganisationDo, OrganisationResponse);
         }
-        throw result.error;
+        return this.mapper.map(result.error, result.error.constructor.name, SchulConnexError);
     }
 
     public async findAll(organisationDto: FindOrganisationDto): Promise<Paged<OrganisationResponse>> {

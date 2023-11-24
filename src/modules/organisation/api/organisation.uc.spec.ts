@@ -12,6 +12,9 @@ import { OrganisationsTyp } from '../domain/organisation.enum.js';
 import { FindOrganisationDto } from './find-organisation.dto.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { Paged } from '../../../shared/paging/paged.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { CreatedOrganisationDto } from './created-organisation.dto.js';
+import { DomainToSchulConnexErrorMapper } from '../../../shared/error/domain-to-schulconnex-error.mapper.js';
 
 describe('OrganisationUc', () => {
     let module: TestingModule;
@@ -24,6 +27,7 @@ describe('OrganisationUc', () => {
             providers: [
                 OrganisationUc,
                 OrganisationApiMapperProfile,
+                DomainToSchulConnexErrorMapper,
                 {
                     provide: OrganisationService,
                     useValue: createMock<OrganisationService>(),
@@ -47,22 +51,32 @@ describe('OrganisationUc', () => {
     });
 
     describe('createOrganisation', () => {
-        it('should create an organisation', async () => {
-            organisationServiceMock.createOrganisation.mockResolvedValue({
-                ok: true,
-                value: DoFactory.createOrganisation(true),
+        describe('when result is ok', () => {
+            it('should create an organisation', async () => {
+                organisationServiceMock.createOrganisation.mockResolvedValue({
+                    ok: true,
+                    value: DoFactory.createOrganisation(true),
+                });
+                await expect(organisationUc.createOrganisation({} as CreateOrganisationDto)).resolves.toBeInstanceOf(
+                    CreatedOrganisationDto,
+                );
             });
-            await expect(organisationUc.createOrganisation({} as CreateOrganisationDto)).resolves.not.toThrow();
         });
 
-        it('should throw an error', async () => {
-            organisationServiceMock.createOrganisation.mockResolvedValue({
-                ok: false,
-                error: new EntityCouldNotBeCreated(''),
+        describe('when result is not ok', () => {
+            it('should return an error', async () => {
+                organisationServiceMock.createOrganisation.mockResolvedValue({
+                    ok: false,
+                    error: new EntityCouldNotBeCreated(''),
+                });
+                await expect(organisationUc.createOrganisation({} as CreateOrganisationDto)).resolves.toBeInstanceOf(
+                    SchulConnexError,
+                );
             });
-            await expect(organisationUc.createOrganisation({} as CreateOrganisationDto)).rejects.toThrowError(
-                EntityCouldNotBeCreated,
-            );
+
+            it('bla', () => {
+                expect(EntityCouldNotBeCreated.name).toEqual(new EntityCouldNotBeCreated('').constructor.name);
+            });
         });
     });
 
