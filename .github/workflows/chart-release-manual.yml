@@ -24,7 +24,7 @@ jobs:
       contents: read
   release:
     needs: scan
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@DBP-352-Set-the-correct-Docker-Image-in-the-Helm-chart-for-each-SPSH-repository
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@2.1.1
     secrets: inherit
     with:
       chart_name: dbildungs-iam

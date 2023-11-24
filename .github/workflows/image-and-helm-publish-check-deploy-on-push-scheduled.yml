@@ -106,8 +106,7 @@ jobs:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs: 
       - select_helm_version_generation
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@DBP-352-Set-the-correct-Docker-Image-in-the-Helm-chart-for-each-SPSH-repository
-    secrets: inherit
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@2.1.1
     with:
       chart_name: dbildungs-iam
       version_generation: ${{ needs.select_helm_version_generation.outputs.SELECT_HELM_VERION_GENERATION  }}
