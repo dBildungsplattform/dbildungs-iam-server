@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { LoggerModule } from '../../core/logging/logger.module.js';
 import { PersonRollenZuweisungRepo } from './repo/person-rollen-zuweisung.repo.js';
 import { RolleService } from './domain/rolle.service.js';
 import { PersonRollenZuweisungMapperProfile } from './mapper/person-rollen-zuweisung.mapper.profile.js';
@@ -13,6 +14,7 @@ import { ServiceProviderMapperProfile } from './mapper/service-provider.mapper.p
 import { PersonRepo } from '../person/persistence/person.repo.js';
 
 @Module({
+    imports: [LoggerModule.register(RolleModule.name)],
     providers: [
         PersonRepo,
         PersonRollenZuweisungMapperProfile,

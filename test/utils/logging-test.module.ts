@@ -1,15 +1,15 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Global, Module } from '@nestjs/common';
-import { LoggerService } from '../../src/shared/logging/index.js';
+import { ClassLogger } from '../../src/core/logging/class-logger.js';
 
 @Global()
 @Module({
     providers: [
         {
-            provide: LoggerService,
-            useValue: createMock<LoggerService>(),
+            provide: ClassLogger,
+            useValue: createMock<ClassLogger>(),
         },
     ],
-    exports: [LoggerService],
+    exports: [ClassLogger],
 })
 export class LoggingTestModule {}

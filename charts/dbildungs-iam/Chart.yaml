@@ -10,7 +10,3 @@ dependencies:
   - name: dbildungs-iam-keycloak-dev
     version: "*"
     condition: keycloakEnabled
-  # In non-test-deployments we expect redis to be provided for us thus it needs to be enabled
-  - name: dbildungs-iam-redis
-    version: latest
-    condition: redisEnabled

@@ -14,6 +14,7 @@ import { AuthGuard, KeycloakConnectModule, RoleGuard } from 'nest-keycloak-conne
 import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from '../modules/health/health.module.js';
 import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
+import { LoggerModule } from '../core/logging/logger.module.js';
 
 @Module({
     imports: [
@@ -59,6 +60,7 @@ import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
             },
             inject: [ConfigService],
         }),
+        LoggerModule.register(ServerModule.name),
         PersonApiModule,
         OrganisationApiModule,
         KeycloakAdministrationModule,
