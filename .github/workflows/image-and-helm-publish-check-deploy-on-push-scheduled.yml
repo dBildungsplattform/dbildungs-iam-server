@@ -113,7 +113,6 @@ jobs:
       version_generation: ${{ needs.select_helm_version_generation.outputs.SELECT_HELM_VERION_GENERATION  }}
       tag_generation: ${{ needs.select_helm_version_generation.outputs.SELECT_IMAGE_TAG_GENERATION  }}
 
-
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@main

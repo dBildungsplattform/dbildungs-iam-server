@@ -7,10 +7,11 @@ on:
         type: string
         description: "Chart version"
         required: true
-      tag_generation:
+      image_tag:
         type: string
-        description: "Tag generation"
+        description: "image tag"
         required: true
+
 
 concurrency:
   group: dbildungs-iam-server-chart-manual
@@ -27,6 +28,7 @@ jobs:
     secrets: inherit
     with:
       chart_name: dbildungs-iam
-      version_generation: specified
+      version_generation: specified 
+      tag_generation: specified 
       chart_version: ${{ inputs.chart_version }}
-      tag_generation: ${{ inputs.tag_generation }}
+      image_tag: ${{ inputs.image_tag }}
