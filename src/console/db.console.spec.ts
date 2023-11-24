@@ -1,21 +1,21 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { ClassLogger } from '../core/logging/class-logger.js';
 import { DbConsole } from './db.console.js';
-import { LoggerService } from '../shared/logging/index.js';
 
 describe('DbConsole', () => {
     let module: TestingModule;
     let sut: DbConsole;
 
-    const loggerServiceMock: DeepMocked<LoggerService> = createMock<LoggerService>();
+    const classloggerMock: DeepMocked<ClassLogger> = createMock<ClassLogger>();
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             providers: [
                 DbConsole,
                 {
-                    provide: LoggerService,
-                    useValue: loggerServiceMock,
+                    provide: ClassLogger,
+                    useValue: classloggerMock,
                 },
             ],
         }).compile();
@@ -30,7 +30,7 @@ describe('DbConsole', () => {
         describe('when running the db command', () => {
             it('should print reminder, that no sub command was provided', async () => {
                 await expect(sut.run([])).resolves.not.toThrow();
-                expect(loggerServiceMock.info).toBeCalledWith('Did you forget the sub command?');
+                expect(classloggerMock.info).toBeCalledWith('Did you forget the sub command?');
             });
         });
     });

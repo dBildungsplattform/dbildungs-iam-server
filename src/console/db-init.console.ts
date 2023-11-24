@@ -1,15 +1,15 @@
 import { MikroORM } from '@mikro-orm/core';
 import { ConfigService } from '@nestjs/config';
 import { CommandRunner, SubCommand } from 'nest-commander';
+import { ClassLogger } from '../core/logging/class-logger.js';
 import { DbConfig, ServerConfig } from '../shared/config/index.js';
-import { LoggerService } from '../shared/logging/index.js';
 
 @SubCommand({ name: 'init', description: 'initializes the database' })
 export class DbInitConsole extends CommandRunner {
     public constructor(
         private readonly orm: MikroORM,
         private readonly configService: ConfigService<ServerConfig, true>,
-        private readonly logger: LoggerService,
+        private readonly logger: ClassLogger,
     ) {
         super();
     }

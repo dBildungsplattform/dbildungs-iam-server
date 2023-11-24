@@ -29,5 +29,8 @@
         "USERNAME": "default",
         "PASSWORD": "password",
         "USE_TLS": false
+    },
+    "LOGGING": {
+        "DEFAULT_LOG_LEVEL": "info"
     }
 }
