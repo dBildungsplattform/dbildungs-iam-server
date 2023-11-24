@@ -9,7 +9,7 @@ describe('A new user', () => {
             expect(user.needsSaving);
         });
         it('should have a password set', () => {
-            expect(user.password).toHaveLength(10);
+            expect(user.newPassword).toHaveLength(10);
         });
     });
 });
@@ -19,8 +19,8 @@ describe('A user which has a password set', () => {
     describe('when resetting its password', () => {
         user.resetPassword();
         it('Should have its password changed', () => {
-            expect(user.password).not.toBe('abcdef');
-            expect(user.password).toHaveLength(10);
+            expect(user.newPassword).not.toBe('abcdef');
+            expect(user.newPassword).toHaveLength(10);
         });
         it('should set its state to needs saving', () => {
             expect(user.needsSaving);

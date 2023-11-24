@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserRepository } from './user.repository.js';
 import { UserModule } from './user.module.js';
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
-import { KeycloakUserService } from '../keycloak-administration/index.js';
+import { KeycloakUserService, UserDo } from '../keycloak-administration/index.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { EntityNotFoundError } from '../../shared/error/index.js';
 import { User } from './user.js';
@@ -29,15 +29,78 @@ describe('A User', () => {
         kcUserService.findOne.mockResolvedValue({ ok: false, error: new EntityNotFoundError('Not found') });
     });
 
-    describe('When its created', () => {
-        it('should have a random username', async () => {
-            const createdUser: Promise<User> = userRepository.createUser('Max', 'Mustermann');
-            expect((await createdUser).username).toBe('mmustermann');
+    describe('when its created', () => {
+        let createdUser: User;
+        beforeEach(async () => {
+            createdUser = await userRepository.createUser('Max', 'Mustermann');
         });
 
-        it('should have a random password', async () => {
-            const createdUser: Promise<User> = userRepository.createUser('Max', 'Mustermann');
-            expect((await createdUser).password).toHaveLength(10);
+        it('should have a derived username', () => {
+            expect(createdUser.username).toBe('mmustermann');
+        });
+
+        it('should have a random password', () => {
+            expect(createdUser.newPassword).toHaveLength(10);
+        });
+
+        it('should be pristine', () => {
+            expect(createdUser.needsSaving);
+            expect(createdUser.new);
+        });
+    });
+
+    describe("when it's loaded", () => {
+        let loadedUserMmustermann: User;
+        let loadedUserRbergmann: User;
+
+        beforeAll(() => {
+            kcUserService.findById.mockImplementation((id: string) => {
+                const result: UserDo<true> = new UserDo<true>();
+                if (id == 'abcdefghi') {
+                    result.id = 'abcdefghi';
+                    result.username = 'mmustermann';
+                    return Promise.resolve({
+                        ok: true,
+                        value: result,
+                    });
+                }
+                if (id == '1234567') {
+                    result.id = '1234567';
+                    result.username = 'rbergmann';
+                    return Promise.resolve({
+                        ok: true,
+                        value: result,
+                    });
+                }
+                return Promise.resolve({ ok: false, error: new EntityNotFoundError('Not found') });
+            });
+        });
+
+        afterAll(() => {
+            kcUserService.findById.mockReset();
+        });
+
+        beforeEach(async () => {
+            loadedUserMmustermann = await userRepository.loadUser('abcdefghi');
+            loadedUserRbergmann = await userRepository.loadUser('1234567');
+        });
+
+        it('Should have its username set correctly', () => {
+            expect(loadedUserMmustermann.username).toBe('mmustermann');
+            expect(loadedUserRbergmann.username).toBe('rbergmann');
+        });
+
+        it('should not be pristine', () => {
+            expect(loadedUserMmustermann.new).not.toBeTruthy();
+            expect(loadedUserRbergmann.new).not.toBeTruthy();
+        });
+        it('should not need saving', () => {
+            expect(loadedUserMmustermann.needsSaving).not.toBeTruthy();
+            expect(loadedUserRbergmann.needsSaving).not.toBeTruthy();
+        });
+        it('should not have a password set', () => {
+            expect(loadedUserMmustermann.newPassword).toBeFalsy();
+            expect(loadedUserRbergmann.newPassword).toBeFalsy();
         });
     });
 });

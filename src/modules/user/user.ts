@@ -12,13 +12,13 @@ export class User {
 
     private usernameInternal: string;
 
-    private passwordInternal: string;
+    private newPasswordInternal: string;
 
     public constructor(id: string, username: string, password: string) {
         this.idInternal = id;
         this.usernameInternal = username;
-        this.passwordInternal = password;
-        this.state = { pristine: true, passwordReset: false };
+        this.newPasswordInternal = password;
+        this.state = { pristine: this.idInternal.length == 0, passwordReset: false };
     }
 
     public get id(): string {
@@ -29,19 +29,23 @@ export class User {
         return this.usernameInternal;
     }
 
-    public get password(): string {
-        return this.passwordInternal;
+    public get newPassword(): string {
+        return this.newPasswordInternal;
     }
 
     public get needsSaving(): boolean {
         return this.state.passwordReset;
     }
 
+    public get new(): boolean {
+        return this.state.pristine;
+    }
+
     public resetPassword(): void {
-        this.passwordInternal = faker.string.alphanumeric({
+        this.newPasswordInternal = faker.string.alphanumeric({
             length: { min: 10, max: 10 },
             casing: 'mixed',
-        }) as string;
+        });
         this.state.passwordReset = true;
     }
 }

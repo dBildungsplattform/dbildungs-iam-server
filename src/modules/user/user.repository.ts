@@ -1,37 +1,30 @@
 import { Injectable } from '@nestjs/common';
-import { KeycloakUserService, UserDo } from '../keycloak-administration/index.js';
-import { DomainError, EntityNotFoundError } from '../../shared/error/index.js';
 import { User } from './user.js';
+import { UsernameGeneratorService } from './username-generator.service.js';
+import { KeycloakUserService, UserDo } from '../keycloak-administration/index.js';
+import { DomainError } from '../../shared/error/index.js';
 
 @Injectable()
 export class UserRepository {
-    public constructor(private kcUserService: KeycloakUserService) {}
-
-    public async usernameExists(username: string): Promise<boolean> {
-        const searchResult: Result<UserDo<true>, DomainError> | { ok: false; error: DomainError } =
-            await this.kcUserService.findOne({ username: username });
-        if (searchResult.ok) {
-            return true;
-        } else {
-            if (searchResult.error instanceof EntityNotFoundError) {
-                return false;
-            }
-        }
-        throw searchResult.error;
-    }
-
-    public async getNextAvailableUsername(calculatedUsername: string): Promise<string> {
-        if (!(await this.usernameExists(calculatedUsername))) {
-            return calculatedUsername;
-        }
-        let counter: number = 1;
-        while (await this.usernameExists(calculatedUsername + counter)) {
-            counter = counter + 1;
-        }
-        return calculatedUsername + counter;
-    }
+    public constructor(
+        private usernameGenerator: UsernameGeneratorService,
+        private kcUserService: KeycloakUserService,
+    ) {}
 
     public async createUser(vorname: string, nachname: string): Promise<User> {
-        return Promise.resolve(new User('', vorname, nachname));
+        const username: string = await this.usernameGenerator.generateUsername(vorname, nachname);
+        const newUser: User = new User('', username, 'unset');
+        newUser.resetPassword();
+        return Promise.resolve(newUser);
+    }
+
+    public async loadUser(id: string): Promise<User> {
+        const loadedKcUser: Result<UserDo<true>, DomainError> = await this.kcUserService.findById(id);
+        if (loadedKcUser.ok) {
+            const value: UserDo<true> = loadedKcUser.value;
+            return new User(value.id, value.username, '');
+        } else {
+            throw loadedKcUser.error;
+        }
     }
 }
