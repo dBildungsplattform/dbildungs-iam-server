@@ -37,7 +37,7 @@ spec:
           ports:
             - name: redis-port
               containerPort: 6379
-              hostPort: 6379
+              protocol: TCP
           args:
             - "/data/tls/redis.conf"
       volumes:
