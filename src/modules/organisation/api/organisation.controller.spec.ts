@@ -1,22 +1,22 @@
-import { MapperTestModule } from '../../../../test/utils/index.js';
-import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
-import { OrganisationController } from './organisation.controller.js';
-import { OrganisationUc } from './organisation.uc.js';
-import { Test, TestingModule } from '@nestjs/testing';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
-import { OrganisationsTyp } from '../domain/organisation.enum.js';
 import { faker } from '@faker-js/faker';
-import { CreatedOrganisationDto } from './created-organisation.dto.js';
-import { OrganisationByIdParams } from './organisation-by-id.params.js';
-import { OrganisationResponse } from './organisation.response.js';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpException } from '@nestjs/common';
-import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
-import { Paged } from '../../../shared/paging/paged.js';
-import { FindOrganisationDto } from './find-organisation.dto.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { Test, TestingModule } from '@nestjs/testing';
 import { plainToClass } from 'class-transformer';
+import { MapperTestModule } from '../../../../test/utils/index.js';
 import { ErrorModule } from '../../../shared/error/error.module.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { Paged } from '../../../shared/paging/paged.js';
+import { OrganisationsTyp } from '../domain/organisation.enum.js';
+import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
+import { CreatedOrganisationDto } from './created-organisation.dto.js';
+import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
+import { FindOrganisationDto } from './find-organisation.dto.js';
+import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
+import { OrganisationByIdParams } from './organisation-by-id.params.js';
+import { OrganisationController } from './organisation.controller.js';
+import { OrganisationResponse } from './organisation.response.js';
+import { OrganisationUc } from './organisation.uc.js';
 
 describe('OrganisationController', () => {
     let module: TestingModule;
@@ -72,6 +72,15 @@ describe('OrganisationController', () => {
                 });
                 organisationUcMock.createOrganisation.mockResolvedValue(returnedValue);
                 await expect(organisationController.createOrganisation(params)).resolves.not.toThrow();
+                expect(organisationUcMock.createOrganisation).toHaveBeenCalledTimes(1);
+            });
+        });
+        describe('when usecase returns a SchulConnexError', () => {
+            it('should return a HttpException', async () => {
+                organisationUcMock.createOrganisation.mockResolvedValue({} as SchulConnexError);
+                await expect(
+                    organisationController.createOrganisation({} as CreateOrganisationBodyParams),
+                ).resolves.toBeInstanceOf(HttpException);
                 expect(organisationUcMock.createOrganisation).toHaveBeenCalledTimes(1);
             });
         });
