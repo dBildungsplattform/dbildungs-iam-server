@@ -93,43 +93,66 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
         title: string;
         description: string;
     } {
-        let result: { subCode: string; title: string; description: string } = {
-            subCode: '03',
-            title: 'Validierungsfehler',
-            description: 'Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden',
-        };
+        let subCode: string;
 
         if (validationError.constraints?.['isMinLength']) {
-            result = {
-                subCode: '07',
-                title: 'Attributwerte haben eine ungültige Länge',
-                description: 'Textlänge des Attributs ist nicht valide',
-            };
+            subCode = '07';
         } else if (validationError.constraints?.['isDate']) {
-            result = {
-                subCode: '09',
-                title: 'Datumsattribut hat einen ungültigen Wert',
-                description: 'Datumsformat des Attributs ist ungültig',
-            };
+            subCode = '09';
         } else if (validationError.constraints?.['isEnum']) {
-            result = {
-                subCode: '10',
-                title: 'Attributwerte entsprechen keinem der erwarteten Werte',
-                description: 'Attribute müssen gültige Werte enthalten',
-            };
+            subCode = '10';
         } else if (validationError.constraints?.['isMaxLength']) {
-            result = {
-                subCode: '15',
-                title: 'Text ist zu lang',
-                description: 'Die Länge des übergebenen Texts überschreitet die Maximallänge',
-            };
+            subCode = '15';
         } else if (validationError.constraints?.['isNotEmpty']) {
-            result = {
-                subCode: '01',
-                title: 'Fehlende Parameter',
-                description: 'Folgende Parameter fehlen',
-            };
+            subCode = '01';
+        } else {
+            subCode = '03';
         }
-        return result;
+
+        // switch case is used to reduce duplicate code in sonarcloud.
+        switch (subCode) {
+            case '01':
+                return {
+                    subCode,
+                    title: 'Fehlende Parameter',
+                    description: 'Folgende Parameter fehlen',
+                };
+
+            case '07':
+                return {
+                    subCode,
+                    title: 'Attributwerte haben eine ungültige Länge',
+                    description: 'Textlänge des Attributs ist nicht valide',
+                };
+
+            case '09':
+                return {
+                    subCode,
+                    title: 'Datumsattribut hat einen ungültigen Wert',
+                    description: 'Datumsformat des Attributs ist ungültig',
+                };
+
+            case '10':
+                return {
+                    subCode,
+                    title: 'Attributwerte entsprechen keinem der erwarteten Werte',
+                    description: 'Attribute müssen gültige Werte enthalten',
+                };
+
+            case '15':
+                return {
+                    subCode,
+                    title: 'Text ist zu lang',
+                    description: 'Die Länge des übergebenen Texts überschreitet die Maximallänge',
+                };
+
+            // default case is '03'
+            default:
+                return {
+                    subCode,
+                    title: 'Validierungsfehler',
+                    description: 'Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden',
+                };
+        }
     }
 }
