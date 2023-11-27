@@ -4,7 +4,7 @@ import { UserModule } from './user.module.js';
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
 import { KeycloakUserService, UserDo } from '../keycloak-administration/index.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { EntityNotFoundError } from '../../shared/error/index.js';
+import { EntityNotFoundError, KeycloakClientError } from '../../shared/error/index.js';
 import { User } from './user.js';
 
 describe('A User', () => {
@@ -90,6 +90,11 @@ describe('A User', () => {
             expect(loadedUserRbergmann.username).toBe('rbergmann');
         });
 
+        it('should have its ID set correctly', () => {
+            expect(loadedUserMmustermann.id).toBe('abcdefghi');
+            expect(loadedUserRbergmann.id).toBe('1234567');
+        });
+
         it('should not be pristine', () => {
             expect(loadedUserMmustermann.new).not.toBeTruthy();
             expect(loadedUserRbergmann.new).not.toBeTruthy();
@@ -101,6 +106,21 @@ describe('A User', () => {
         it('should not have a password set', () => {
             expect(loadedUserMmustermann.newPassword).toBeFalsy();
             expect(loadedUserRbergmann.newPassword).toBeFalsy();
+        });
+    });
+
+    describe('when loading', () => {
+        beforeAll(() => {
+            kcUserService.findById.mockResolvedValueOnce({
+                ok: false,
+                error: new KeycloakClientError('KC could not be reached'),
+            });
+        });
+
+        it('should propagate errors nicely', async () => {
+            await expect(userRepository.loadUser('abcdefg')).rejects.toThrow(
+                new KeycloakClientError('KC could not be reached'),
+            );
         });
     });
 });
