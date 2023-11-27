@@ -93,32 +93,43 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
         title: string;
         description: string;
     } {
-        const result = (subCode: string, title: string, description: string) => ({
-            subCode,
-            title,
-            description,
-        });
+        let result: { subCode: string; title: string; description: string } = {
+            subCode: '03',
+            title: 'Validierungsfehler',
+            description: 'Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden',
+        };
 
         if (validationError.constraints?.['isMinLength']) {
-            return result('07', 'Attributwerte haben eine ungültige Länge', 'Textlänge des Attributs ist nicht valide');
+            result = {
+                subCode: '07',
+                title: 'Attributwerte haben eine ungültige Länge',
+                description: 'Textlänge des Attributs ist nicht valide',
+            };
         } else if (validationError.constraints?.['isDate']) {
-            return result('09', 'Datumsattribut hat einen ungültigen Wert', 'Datumsformat des Attributs ist ungültig');
+            result = {
+                subCode: '09',
+                title: 'Datumsattribut hat einen ungültigen Wert',
+                description: 'Datumsformat des Attributs ist ungültig',
+            };
         } else if (validationError.constraints?.['isEnum']) {
-            return result(
-                '10',
-                'Attributwerte entsprechen keinem der erwarteten Werte',
-                'Attribute müssen gültige Werte enthalten',
-            );
+            result = {
+                subCode: '10',
+                title: 'Attributwerte entsprechen keinem der erwarteten Werte',
+                description: 'Attribute müssen gültige Werte enthalten',
+            };
         } else if (validationError.constraints?.['isMaxLength']) {
-            return result('15', 'Text ist zu lang', 'Die Länge des übergebenen Texts überschreitet die Maximallänge');
+            result = {
+                subCode: '15',
+                title: 'Text ist zu lang',
+                description: 'Die Länge des übergebenen Texts überschreitet die Maximallänge',
+            };
         } else if (validationError.constraints?.['isNotEmpty']) {
-            return result('01', 'Fehlende Parameter', 'Folgende Parameter fehlen');
-        } else {
-            return result(
-                '03',
-                'Validierungsfehler',
-                'Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden',
-            );
+            result = {
+                subCode: '01',
+                title: 'Fehlende Parameter',
+                description: 'Folgende Parameter fehlen',
+            };
         }
+        return result;
     }
 }
