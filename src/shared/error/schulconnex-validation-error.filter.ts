@@ -93,42 +93,32 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
         title: string;
         description: string;
     } {
+        const result = (subCode: string, title: string, description: string) => ({
+            subCode,
+            title,
+            description,
+        });
+
         if (validationError.constraints?.['isMinLength']) {
-            return {
-                subCode: '07',
-                title: 'Attributwerte haben eine ungültige Länge',
-                description: 'Textlänge des Attributs ist nicht valide',
-            };
+            return result('07', 'Attributwerte haben eine ungültige Länge', 'Textlänge des Attributs ist nicht valide');
         } else if (validationError.constraints?.['isDate']) {
-            return {
-                subCode: '09',
-                title: 'Datumsattribut hat einen ungültigen Wert',
-                description: 'Datumsformat des Attributs ist ungültig',
-            };
+            return result('09', 'Datumsattribut hat einen ungültigen Wert', 'Datumsformat des Attributs ist ungültig');
         } else if (validationError.constraints?.['isEnum']) {
-            return {
-                subCode: '10',
-                title: 'Attributwerte entsprechen keinem der erwarteten Werte',
-                description: 'Attribute müssen gültige Werte enthalten',
-            };
+            return result(
+                '10',
+                'Attributwerte entsprechen keinem der erwarteten Werte',
+                'Attribute müssen gültige Werte enthalten',
+            );
         } else if (validationError.constraints?.['isMaxLength']) {
-            return {
-                subCode: '15',
-                title: 'Text ist zu lang',
-                description: 'Die Länge des übergebenen Texts überschreitet die Maximallänge',
-            };
+            return result('15', 'Text ist zu lang', 'Die Länge des übergebenen Texts überschreitet die Maximallänge');
         } else if (validationError.constraints?.['isNotEmpty']) {
-            return {
-                subCode: '01',
-                title: 'Fehlende Parameter',
-                description: 'Folgende Parameter fehlen',
-            };
+            return result('01', 'Fehlende Parameter', 'Folgende Parameter fehlen');
         } else {
-            return {
-                subCode: '03',
-                title: 'Validierungsfehler',
-                description: 'Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden',
-            };
+            return result(
+                '03',
+                'Validierungsfehler',
+                'Die Anfrage konnte aufgrund ungültiger Eingabe nicht erfolgreich validiert werden',
+            );
         }
     }
 }
