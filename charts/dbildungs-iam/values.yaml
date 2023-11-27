@@ -1,4 +1,4 @@
-dbildungsIamContainer: "ghcr.io/dbildungsplattform/dbildungs-iam-server:kc_healthprobe"
+dbildungsIamContainer: "ghcr.io/dbildungsplattform/dbildungs-iam-server:latest"
 
 dbildungsIamExternalPort: 80
 dbildungsIamCpuMax: 2
