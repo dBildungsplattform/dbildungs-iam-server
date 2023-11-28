@@ -1,26 +1,26 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{.Release.Name}}-backend
+  name: {{ include "dbildungs-iam.backendIngressName" . }}
   labels:
-    app.kubernetes.io/name: dbildungs-iam
+    app.kubernetes.io/name: {{ include "dbildungs-iam.name" . }}
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{.Values.backendHostname}}
+    - host: {{ include "dbildungs-iam.backendHostname" . }}
       http:
         paths:
           - path: /api
             pathType: Prefix
             backend:
               service:
-                name: dbiam-bff
+                name: {{ include "dbildungs-iam.bffServiceName" . }}
                 port:
                   number: 80
           - path: /docs
             pathType: Prefix
             backend:
               service:
-                name: dbiam-bff
+                name: {{ include "dbildungs-iam.bffServiceName" . }}
                 port:
                   number: 80

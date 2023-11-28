@@ -1,45 +1,45 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dbiam-deployment-backend
+  name: {{ include "dbildungs-iam.name" . }}-backend
   labels:
-    app.kubernetes.io/name: dbildungs-iam
+    {{- include "dbildungs-iam.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      layer: dbildungs-iam-backend
-  replicas: {{.Values.dbildungsIamReplications}}
+      {{- include "dbildungs-iam.backendLayerLabel" . | nindent 6 }}
+  replicas: {{ .Values.dbildungsIamReplications }}
   template:
     metadata:
-      name: dbildungs-iam
+      name: {{ include "dbildungs-iam.templateName" . }}
       labels:
-        layer: dbildungs-iam-backend
+        {{- include "dbildungs-iam.backendLayerLabel" . | nindent 8 }}
     spec:
       containers:
-        - name: dbildungs-iam-backend
-          image: {{.Values.dbildungsIamContainer}}
+        - name: {{ include "dbildungs-iam.name" . }}-backend
+          image: "{{ .Values.image.repository }}"
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
           ports:
-             - name: web
-               containerPort: 8080
+            - name: {{ include "dbildungs-iam.portName" . }}
+              containerPort: 8080
           env:
             - name: NODE_ENV
-              value: {{.Values.environment}}
+              value: {{ .Values.environment }}
             - name: DEPLOY_STAGE
-              value: {{.Values.environment}}
+              value: {{ .Values.environment }}
           volumeMounts:
             - mountPath: /app/config/
               name: config
               readOnly: true
           resources:
             requests:
-              cpu: {{.Values.dbildungsIamCpuRequest}}
-              memory: {{.Values.dbildungsIamMemRequest}}
+              cpu: {{ .Values.dbildungsIamCpuRequest }}
+              memory: {{ .Values.dbildungsIamMemRequest }}
             limits:
-              cpu: {{.Values.dbildungsIamCpuMax}}
-              memory: {{.Values.dbildungsIamMemMax}}
+              cpu: {{ .Values.dbildungsIamCpuMax }}
+              memory: {{ .Values.dbildungsIamMemMax }}
           livenessProbe:
             initialDelaySeconds: 10
             httpGet:
@@ -56,5 +56,4 @@ spec:
       volumes:
         - name: config
           secret:
-            secretName: {{.Values.secrets.name | default (print .Release.Name "-secret")}}
-      
+            secretName: {{ .Values.secrets.name | default (print .Release.Name "-secret") }}

@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: dbiam-backend
+  name: {{ include "dbildungs-iam.backendServiceName" . }}
   labels:
-    app.kubernetes.io/name: dbildungs-iam
+    app.kubernetes.io/name: {{ include "dbildungs-iam.name" . }}
 spec:
   selector:
-    layer: dbildungs-iam-backend
+    {{- include "dbildungs-iam.backendSelectorLabels" . | nindent 4 }}
   ports:
     - protocol: TCP
-      name: web
-      port: {{.Values.dbildungsIamExternalPort}}
-      targetPort: web
+      name: {{ include "dbildungs-iam.portName" . }}
+      port: {{ .Values.dbildungsIamExternalPort }}
+      targetPort: {{ include "dbildungs-iam.portName" . }}
   type: ClusterIP
-  
+

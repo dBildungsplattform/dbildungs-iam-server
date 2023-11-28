@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-service
+  name: {{ include "dbildungs-iam.redisServiceName" . }}
   labels:
-    app.kubernetes.io/name: dbiam-server
+    {{- include "dbildungs-iam.redisLabels" . | nindent 4 }}
 spec:
   type: ClusterIP
   ports:
     - port: 6379
-      targetPort: redis-port
+      targetPort: {{ include "dbildungs-iam.redisPortName" . }}
       protocol: TCP
-      name: redis-port
+      name: {{ include "dbildungs-iam.redisPortName" . }}
   selector:
-    layer: dbildungs-iam-redis
+    {{- include "dbildungs-iam.redisLayerLabel" . | nindent 4 }}
