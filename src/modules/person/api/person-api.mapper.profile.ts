@@ -1,4 +1,4 @@
-import { Mapper, MappingProfile, createMap, forMember, ignore, mapFrom } from '@automapper/core';
+import { createMap, forMember, ignore, mapFrom, Mapper, MappingProfile } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { UserDo } from '../../keycloak-administration/index.js';
@@ -333,13 +333,21 @@ export class PersonApiMapperProfile extends AutomapperProfile {
 
             createMap(mapper, PersonenkontextDto, PersonenkontextResponse);
 
-            createMap(mapper, PersonDto, PersonResponse);
+            createMap(
+                mapper,
+                PersonDto,
+                PersonResponse,
+                forMember(
+                    (dest: PersonResponse) => dest.startpasswort,
+                    mapFrom((src: PersonDto) => src.startpasswort),
+                ),
+            );
 
             createMap(mapper, PersonNameDto, PersonNameParams);
 
             createMap(mapper, PersonGeburtDto, PersonBirthParams);
 
-            createMap(mapper, PersonendatensatzDto, PersonendatensatzResponse);
+            createMap(this.mapper, PersonendatensatzDto, PersonendatensatzResponse);
 
             createMap(
                 mapper,

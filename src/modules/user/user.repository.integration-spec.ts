@@ -49,6 +49,15 @@ describe('A User', () => {
         });
     });
 
+    describe("when it's saved", () => {
+        it('should receive an id', async () => {
+            const user: User = new User('', 'mmustermann', 'abcdefg123');
+            await user.save(kcUserService);
+            expect(kcUserService.create).toBeCalled();
+            expect(user.id).not.toBeFalsy();
+        });
+    });
+
     describe("when it's loaded", () => {
         let loadedUserMmustermann: User;
         let loadedUserRbergmann: User;

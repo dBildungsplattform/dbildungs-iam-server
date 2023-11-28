@@ -1,4 +1,6 @@
 import { faker } from '@faker-js/faker';
+import { KeycloakUserService, UserDo } from '../keycloak-administration/index.js';
+import { DomainError } from '../../shared/error/index.js';
 
 type State = {
     pristine: boolean;
@@ -25,6 +27,10 @@ export class User {
         return this.idInternal;
     }
 
+    private set id(id: string) {
+        this.idInternal = id;
+    }
+
     public get username(): string {
         return this.usernameInternal;
     }
@@ -47,5 +53,30 @@ export class User {
             casing: 'mixed',
         });
         this.state.passwordReset = true;
+    }
+
+    public async save(kcUserService: KeycloakUserService): Promise<void> {
+        const userDo: UserDo<false> = {
+            username: this.username,
+        } as UserDo<false>;
+        const creationResult:
+            | { ok: true; value: string }
+            | {
+                  ok: false;
+                  error: DomainError;
+              } = await kcUserService.create(userDo);
+        if (!creationResult.ok) {
+            throw creationResult.error;
+        }
+        const newId: string = creationResult.value;
+        const setPasswordResult: Result<string, DomainError> = await kcUserService.resetPassword(
+            newId,
+            this.newPassword,
+        );
+        if (!setPasswordResult.ok) {
+            await kcUserService.delete(newId);
+            throw setPasswordResult.error;
+        }
+        this.id = newId;
     }
 }
