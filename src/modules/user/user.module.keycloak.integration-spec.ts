@@ -6,6 +6,7 @@ import { UserModule } from './user.module.js';
 import { PersonApiModule } from '../person/person-api.module.js';
 import { INestApplication } from '@nestjs/common';
 import supertest from 'supertest';
+import request from 'supertest';
 import { EntityManager, Loaded, MikroORM } from '@mikro-orm/core';
 import { PersonEntity } from '../person/persistence/person.entity.js';
 import { User } from './user.js';
@@ -40,7 +41,7 @@ describe('A fully integrated user module', () => {
     }, 50000);
 
     it('should create users as a reaction to the create user call', async () => {
-        const result = await supertest(app.getHttpServer())
+        const result: request.Response = await supertest(app.getHttpServer())
             .post('/personen')
             .send({
                 mandant: 'spsh',
@@ -63,7 +64,7 @@ describe('A fully integrated user module', () => {
         });
 
         const em: EntityManager = module.get(EntityManager);
-        const userDetails = result.body as { person: { referrer: string } };
+        const userDetails: { person: { referrer: string } } = result.body as { person: { referrer: string } };
         const loadedEntity: null | Loaded<PersonEntity> = await em.findOne(PersonEntity, {
             referrer: userDetails.person.referrer,
         });
