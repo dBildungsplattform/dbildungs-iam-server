@@ -125,7 +125,7 @@ describe('PersonUc', () => {
                     error: new KeycloakClientError('Could not delete user'),
                 });
                 userRepositoryMock.createUser.mockResolvedValueOnce(new User('', '', ''));
-                //userServiceMock.resetPassword.mockResolvedValueOnce({ ok: true, value: 'acbdabfsads' });
+                userServiceMock.resetPassword.mockResolvedValueOnce({ ok: true, value: 'acbdabfsads' });
                 personServiceMock.createPerson.mockResolvedValue({
                     ok: false,
                     error: new PersonAlreadyExistsError(''),

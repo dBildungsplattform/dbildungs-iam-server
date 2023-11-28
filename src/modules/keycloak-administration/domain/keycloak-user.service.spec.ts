@@ -1,4 +1,4 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { KeycloakAdminClient, UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
 
@@ -7,10 +7,11 @@ import { ConfigTestModule, DoFactory, MapperTestModule } from '../../../../test/
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { UserMapperProfile } from './keycloak-client/user.mapper.profile.js';
-import { KeycloakUserService, type FindUserFilter } from './keycloak-user.service.js';
+import { type FindUserFilter, KeycloakUserService } from './keycloak-user.service.js';
 import { UserDo } from './user.do.js';
 import { PersonService } from '../../person/domain/person.service.js';
 import { PersonDo } from '../../person/domain/person.do.js';
+import { LoggerModule } from '../../../core/logging/logger.module.js';
 
 describe('KeycloakUserService', () => {
     let module: TestingModule;
@@ -23,7 +24,7 @@ describe('KeycloakUserService', () => {
         kcUsersMock = createMock<KeycloakAdminClient['users']>();
 
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, MapperTestModule],
+            imports: [ConfigTestModule, MapperTestModule, LoggerModule.register('KeycloakUserServiceTest')],
             providers: [
                 KeycloakUserService,
                 UserMapperProfile,

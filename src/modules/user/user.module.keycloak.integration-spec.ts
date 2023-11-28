@@ -24,6 +24,7 @@ describe('A fully integrated user module', () => {
             .withExposedPorts({ container: 8080, host: 8080 })
             .withEnvironment({ KEYCLOAK_ADMIN: 'admin', KEYCLOAK_ADMIN_PASSWORD: 'admin' })
             .withCommand(['start-dev', '--import-realm'])
+            .withStartupTimeout(120000)
             .start();
         module = await Test.createTestingModule({
             imports: [
