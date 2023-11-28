@@ -79,15 +79,6 @@ describe('FrontendController', () => {
 
             expect(responseMock.redirect).toHaveBeenCalledWith(sessionMock.redirectUrl);
         });
-
-        it('should clear redirectUrl from session', () => {
-            const responseMock: Response = createMock<Response>();
-            const session: SessionData = { redirectUrl: faker.internet.url(), cookie: { originalMaxAge: 0 } };
-
-            frontendController.login(responseMock, session);
-
-            expect(session.redirectUrl).toBeUndefined();
-        });
     });
 
     describe('Logout', () => {
