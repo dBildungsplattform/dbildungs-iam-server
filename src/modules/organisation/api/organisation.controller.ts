@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, HttpException, Inject, Param, Post, Query, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Post, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -12,6 +12,7 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Public } from 'nest-keycloak-connect';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Paged, PagingHeadersObject } from '../../../shared/paging/index.js';
@@ -41,19 +42,18 @@ export class OrganisationController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
-    public async createOrganisation(
-        @Body() params: CreateOrganisationBodyParams,
-    ): Promise<OrganisationResponse | HttpException> {
+    public async createOrganisation(@Body() params: CreateOrganisationBodyParams): Promise<OrganisationResponse> {
         const organisationDto: CreateOrganisationDto = this.mapper.map(
             params,
             CreateOrganisationBodyParams,
             CreateOrganisationDto,
         );
         const result: CreatedOrganisationDto | SchulConnexError = await this.uc.createOrganisation(organisationDto);
+
         if (result instanceof CreatedOrganisationDto) {
             return this.mapper.map(result, CreatedOrganisationDto, OrganisationResponse);
         }
-        return this.mapper.map(result, SchulConnexError, HttpException);
+        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
     }
 
     @Get(':organisationId')
@@ -63,16 +63,15 @@ export class OrganisationController {
     @ApiNotFoundResponse({ description: 'The organization does not exist.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
-    public async findOrganisationById(
-        @Param() params: OrganisationByIdParams,
-    ): Promise<OrganisationResponse | HttpException> {
+    public async findOrganisationById(@Param() params: OrganisationByIdParams): Promise<OrganisationResponse> {
         const result: OrganisationResponse | SchulConnexError = await this.uc.findOrganisationById(
             params.organisationId,
         );
+
         if (result instanceof OrganisationResponse) {
             return result;
         }
-        return this.mapper.map(result, SchulConnexError, HttpException);
+        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
     }
 
     @Get()

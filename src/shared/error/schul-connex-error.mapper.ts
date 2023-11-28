@@ -74,7 +74,7 @@ export class SchulConnexErrorMapper {
         beschreibung: 'Es ist ein interner Fehler aufgetreten. Der aufgetretene Fehler konnte nicht verarbeitet werden',
     });
 
-    public static mapSchulConnexErrorToHttpExcetion(error: SchulConnexError): HttpException {
+    public static mapSchulConnexErrorToHttpException(error: SchulConnexError): HttpException {
         return new HttpException(error, error.code);
     }
 

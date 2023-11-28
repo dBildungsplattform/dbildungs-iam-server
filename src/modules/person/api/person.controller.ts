@@ -5,7 +5,6 @@ import {
     Controller,
     Get,
     HttpCode,
-    HttpException,
     HttpStatus,
     Inject,
     Param,
@@ -18,7 +17,6 @@ import {
 import {
     ApiAcceptedResponse,
     ApiBadRequestResponse,
-    ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
@@ -27,6 +25,9 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Public } from 'nest-keycloak-connect';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
 import { PersonUc } from '../api/person.uc.js';
@@ -46,7 +47,6 @@ import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -60,17 +60,22 @@ export class PersonController {
     ) {}
 
     @Post()
-    @HttpCode(200)
-    @ApiCreatedResponse({ description: 'The person was successfully created.' })
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({ description: 'The person was successfully created.' })
     @ApiBadRequestResponse({ description: 'The person already exists.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the person.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
     public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
         const dto: CreatePersonDto = this.mapper.map(params, CreatePersonBodyParams, CreatePersonDto);
-        const person: PersonDto = await this.personUc.createPerson(dto);
+        const result: PersonDto | SchulConnexError = await this.personUc.createPerson(dto);
+
+        if (result instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
+
         const personendatensatzDto: PersonendatensatzDto = {
-            person: person,
+            person: result,
             personenkontexte: [],
         };
         const personendatensatzResponse: PersonendatensatzResponse = this.mapper.map(
@@ -88,18 +93,19 @@ export class PersonController {
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the person.' })
-    public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonendatensatzResponse | HttpException> {
-        try {
-            const dto: PersonendatensatzDto = await this.personUc.findPersonById(params.personId);
-            const response: PersonendatensatzResponse = this.mapper.map(
-                dto,
-                PersonendatensatzDto,
-                PersonendatensatzResponse,
-            );
-            return response;
-        } catch (error) {
-            throw new HttpException('Requested entity does not exist', HttpStatus.NOT_FOUND);
+    public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonendatensatzResponse> {
+        const result: PersonendatensatzDto | SchulConnexError = await this.personUc.findPersonById(params.personId);
+
+        if (result instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
         }
+
+        const response: PersonendatensatzResponse = this.mapper.map(
+            result,
+            PersonendatensatzDto,
+            PersonendatensatzResponse,
+        );
+        return response;
     }
 
     @Post(':personId/personenkontexte')
@@ -120,9 +126,14 @@ export class PersonController {
         );
         personenkontextDto.personId = pathParams.personId;
 
-        const createdPersonenkontext: CreatedPersonenkontextDto =
+        const result: CreatedPersonenkontextDto | SchulConnexError =
             await this.personenkontextUc.createPersonenkontext(personenkontextDto);
-        return this.mapper.map(createdPersonenkontext, CreatedPersonenkontextDto, PersonenkontextResponse);
+
+        if (result instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
+
+        return this.mapper.map(result, CreatedPersonenkontextDto, PersonenkontextResponse);
     }
 
     @Get(':personId/personenkontexte')
@@ -195,7 +206,13 @@ export class PersonController {
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
     @UseInterceptors(ResultInterceptor)
-    public async resetPasswordByPersonId(@Param() params: PersonByIdParams): Promise<Result<string> | HttpException> {
-        return this.personUc.resetPassword(params.personId);
+    public async resetPasswordByPersonId(@Param() params: PersonByIdParams): Promise<Result<string>> {
+        const result: Result<string> | SchulConnexError = await this.personUc.resetPassword(params.personId);
+
+        if (result instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
+
+        return result;
     }
 }

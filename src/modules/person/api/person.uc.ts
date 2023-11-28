@@ -14,6 +14,9 @@ import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonDto } from './person.dto.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 
 @Injectable()
 export class PersonUc {
@@ -24,38 +27,38 @@ export class PersonUc {
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
-    public async createPerson(personDto: CreatePersonDto): Promise<PersonDto> {
+    public async createPerson(personDto: CreatePersonDto): Promise<PersonDto | SchulConnexError> {
         // create user
         const userDo: UserDo<false> = this.mapper.map(personDto, CreatePersonDto, UserDo<false>);
-        const userIdResult: Result<string> = await this.userService.create(userDo);
+        const userIdResult: Result<string, DomainError> = await this.userService.create(userDo);
         if (!userIdResult.ok) {
-            throw userIdResult.error;
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(userIdResult.error);
         }
 
         // create person
         const personDo: PersonDo<false> = this.mapper.map(personDto, CreatePersonDto, PersonDo);
         personDo.keycloakUserId = userIdResult.value;
 
-        const result: Result<PersonDo<true>> = await this.personService.createPerson(personDo);
+        const result: Result<PersonDo<true>, DomainError> = await this.personService.createPerson(personDo);
         if (result.ok) {
             const resPersonDto: PersonDto = this.mapper.map(personDo, PersonDo, PersonDto);
             return resPersonDto;
         }
 
         // delete user if person could not be created
-        const deleteUserResult: Result<void> = await this.userService.delete(userIdResult.value);
+        const deleteUserResult: Result<void, DomainError> = await this.userService.delete(userIdResult.value);
         if (deleteUserResult.ok) {
-            throw result.error;
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
         } else {
-            throw deleteUserResult.error;
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(deleteUserResult.error);
         }
     }
 
-    public async findPersonById(id: string): Promise<PersonendatensatzDto> {
-        const result: Result<PersonDo<true>> = await this.personService.findPersonById(id);
+    public async findPersonById(id: string): Promise<PersonendatensatzDto | SchulConnexError> {
+        const result: Result<PersonDo<true>, DomainError> = await this.personService.findPersonById(id);
 
         if (!result.ok) {
-            throw result.error;
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
         }
 
         const personDto: PersonDto = this.mapper.map(result.value, PersonDo, PersonDto);
@@ -114,8 +117,12 @@ export class PersonUc {
         };
     }
 
-    public async resetPassword(personId: string): Promise<Result<string>> {
-        return this.userService.resetPasswordByPersonId(personId);
+    public async resetPassword(personId: string): Promise<Result<string> | SchulConnexError> {
+        const result: Result<string, DomainError> = await this.userService.resetPasswordByPersonId(personId);
+        if (result.ok) {
+            return result;
+        }
+        return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 
     private async findPersonenkontexteForPerson(

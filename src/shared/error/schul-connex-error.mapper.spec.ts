@@ -8,7 +8,7 @@ describe('DomainToSchulConnexErrorMapper', () => {
     describe('mapSchulConnexErrorToHttpExcetion', () => {
         describe('when mapping SchulconnexError', () => {
             it('should return HttpException', () => {
-                const result: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpExcetion(
+                const result: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                     {} as SchulConnexError,
                 );
 

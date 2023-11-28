@@ -76,11 +76,11 @@ describe('OrganisationController', () => {
             });
         });
         describe('when usecase returns a SchulConnexError', () => {
-            it('should return a HttpException', async () => {
+            it('should throw a HttpException', async () => {
                 organisationUcMock.createOrganisation.mockResolvedValue({} as SchulConnexError);
                 await expect(
                     organisationController.createOrganisation({} as CreateOrganisationBodyParams),
-                ).resolves.toBeInstanceOf(HttpException);
+                ).rejects.toThrow(HttpException);
                 expect(organisationUcMock.createOrganisation).toHaveBeenCalledTimes(1);
             });
         });
@@ -108,7 +108,7 @@ describe('OrganisationController', () => {
         });
 
         describe('when usecase returns a SchulConnexError', () => {
-            it('should return HttpException', async () => {
+            it('should throw HttpException', async () => {
                 const mockError: SchulConnexError = new SchulConnexError({
                     beschreibung: 'SchulConneX',
                     code: 500,
@@ -116,9 +116,7 @@ describe('OrganisationController', () => {
                     subcode: '0',
                 });
                 organisationUcMock.findOrganisationById.mockResolvedValue(mockError);
-                await expect(organisationController.findOrganisationById(params)).resolves.toBeInstanceOf(
-                    HttpException,
-                );
+                await expect(organisationController.findOrganisationById(params)).rejects.toThrow(HttpException);
                 expect(organisationUcMock.findOrganisationById).toHaveBeenCalledTimes(1);
             });
         });
