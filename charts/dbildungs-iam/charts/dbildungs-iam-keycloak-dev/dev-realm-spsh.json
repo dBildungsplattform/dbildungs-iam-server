@@ -787,13 +787,14 @@
       "clientId": "spsh",
       "name": "Schulportal SH",
       "description": "",
-      "rootUrl": "",
+      "rootUrl": "https://helm.dev.spsh.dbildungsplattform.de",
       "adminUrl": "",
       "baseUrl": "",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
+      "secret": "1gUQE9ZsganpMBMAnFMYEVwHeB5deGk0",
       "redirectUris": [
         "/*"
       ],
