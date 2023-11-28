@@ -107,6 +107,7 @@ jobs:
     needs: 
       - select_helm_version_generation
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@3.0.1
+    secrets: inherit
     with:
       chart_name: dbildungs-iam
       version_generation: ${{ needs.select_helm_version_generation.outputs.SELECT_HELM_VERION_GENERATION  }}
