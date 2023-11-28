@@ -32,7 +32,7 @@ export class PersonUc {
             throw new Error('First name not given, needed for username generation');
         }
         if (!personDto.familienname) {
-            throw new Error('Fast name not given needed for username generation');
+            throw new Error('Last name not given, needed for username generation');
         }
         // create user
         const user: User = await this.userRepository.createUser(personDto.vorname, personDto.familienname);

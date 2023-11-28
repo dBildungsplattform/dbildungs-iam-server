@@ -56,27 +56,36 @@ export class User {
     }
 
     public async save(kcUserService: KeycloakUserService): Promise<void> {
-        const userDo: UserDo<false> = {
-            username: this.username,
-        } as UserDo<false>;
-        const creationResult:
-            | { ok: true; value: string }
-            | {
-                  ok: false;
-                  error: DomainError;
-              } = await kcUserService.create(userDo);
-        if (!creationResult.ok) {
-            throw creationResult.error;
+        if (!(this.needsSaving || this.new)) {
+            return;
         }
-        const newId: string = creationResult.value;
+
+        if (this.new) {
+            const userDo: UserDo<false> = {
+                username: this.username,
+            } as UserDo<false>;
+            const creationResult:
+                | { ok: true; value: string }
+                | {
+                      ok: false;
+                      error: DomainError;
+                  } = await kcUserService.create(userDo);
+            if (!creationResult.ok) {
+                throw creationResult.error;
+            }
+            this.id = creationResult.value;
+        }
         const setPasswordResult: Result<string, DomainError> = await kcUserService.resetPassword(
-            newId,
+            this.id,
             this.newPassword,
         );
         if (!setPasswordResult.ok) {
-            await kcUserService.delete(newId);
+            if (this.state.pristine) {
+                // This means, we couldn't set even the initial password
+                await kcUserService.delete(this.id);
+                this.id = '';
+            }
             throw setPasswordResult.error;
         }
-        this.id = newId;
     }
 }

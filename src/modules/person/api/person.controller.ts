@@ -62,7 +62,7 @@ export class PersonController {
 
     @Post()
     @HttpCode(200)
-    @ApiCreatedResponse({ description: 'The person was successfully created.' })
+    @ApiCreatedResponse({ description: 'The person was successfully created.', type: PersonendatensatzResponse })
     @ApiBadRequestResponse({ description: 'A username was given. Creation with username is not supported' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the person.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
