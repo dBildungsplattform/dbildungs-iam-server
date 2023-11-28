@@ -1,7 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, HttpException, Inject, Param, Post, Query } from '@nestjs/common';
-import { OrganisationUc } from './organisation.uc.js';
+import { Body, Controller, Get, HttpException, Inject, Param, Post, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -12,18 +11,21 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Public } from 'nest-keycloak-connect';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
+import { Paged, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
 import { CreateOrganisationDto } from './create-organisation.dto.js';
-import { OrganisationResponse } from './organisation.response.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
-import { OrganisationByIdParams } from './organisation-by-id.params.js';
-import { Public } from 'nest-keycloak-connect';
-import { FindOrganisationDto } from './find-organisation.dto.js';
-import { PagedResponse } from '../../../shared/paging/paged.response.js';
-import { Paged, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { FindOrganisationDto } from './find-organisation.dto.js';
+import { OrganisationByIdParams } from './organisation-by-id.params.js';
+import { OrganisationResponse } from './organisation.response.js';
+import { OrganisationUc } from './organisation.uc.js';
 
+@UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
 @Controller({ path: 'organisationen' })
 @Public()
