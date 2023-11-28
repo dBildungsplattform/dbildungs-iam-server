@@ -62,5 +62,21 @@ describe('LoginGuard', () => {
 
             expect(contextMock.switchToHttp().getRequest<Request>().session.redirectUrl).toBe(redirectUrl);
         });
+
+        it('should ignore errors in super.canActivate', async () => {
+            canActivateSpy.mockRejectedValueOnce(new Error());
+            logInSpy.mockResolvedValueOnce(undefined);
+            const contextMock: DeepMocked<ExecutionContext> = createMock();
+
+            await expect(sut.canActivate(contextMock)).resolves.toBe(true);
+        });
+
+        it('should ignore errors in super.logIn', async () => {
+            canActivateSpy.mockResolvedValueOnce(true);
+            logInSpy.mockRejectedValueOnce(new Error());
+            const contextMock: DeepMocked<ExecutionContext> = createMock();
+
+            await expect(sut.canActivate(contextMock)).resolves.toBe(true);
+        });
     });
 });
