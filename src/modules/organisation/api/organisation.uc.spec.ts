@@ -1,7 +1,6 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
-import { DomainToSchulConnexErrorMapper } from '../../../shared/error/domain-to-schulconnex-error.mapper.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
@@ -27,7 +26,6 @@ describe('OrganisationUc', () => {
             providers: [
                 OrganisationUc,
                 OrganisationApiMapperProfile,
-                DomainToSchulConnexErrorMapper,
                 {
                     provide: OrganisationService,
                     useValue: createMock<OrganisationService>(),

@@ -4,7 +4,6 @@ import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { plainToClass } from 'class-transformer';
 import { MapperTestModule } from '../../../../test/utils/index.js';
-import { ErrorModule } from '../../../shared/error/error.module.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationsTyp } from '../domain/organisation.enum.js';
@@ -25,7 +24,7 @@ describe('OrganisationController', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [MapperTestModule, ErrorModule],
+            imports: [MapperTestModule],
             providers: [
                 OrganisationController,
                 OrganisationApiMapperProfile,
