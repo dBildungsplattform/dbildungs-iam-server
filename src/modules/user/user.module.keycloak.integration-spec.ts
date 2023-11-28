@@ -38,7 +38,7 @@ describe('A fully integrated user module', () => {
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
-    }, 50000);
+    }, 100000);
 
     it('should create users as a reaction to the create user call', async () => {
         const result: request.Response = await supertest(app.getHttpServer())
