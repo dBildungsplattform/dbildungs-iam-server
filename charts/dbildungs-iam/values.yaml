@@ -1,3 +1,4 @@
+dbildungsIamContainer: "ghcr.io/dbildungsplattform/dbildungs-iam-server:latest"
 dbildungsIamExternalPort: 80
 dbildungsIamCpuMax: 2
 dbildungsIamMemMax: 4G
