@@ -1,4 +1,4 @@
-import { Body, Injectable, Post } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { BackendHttpService } from './backend-http.service.js';
 import { firstValueFrom, map } from 'rxjs';
 import { AxiosResponse } from 'axios/index';
@@ -26,8 +26,7 @@ export class PersonService {
         );
     }
 
-    @Post()
-    public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
+    public async createPerson(params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
         return firstValueFrom(
             this.httpService
                 .post<PersonendatensatzResponse>('/api/personen', params)
