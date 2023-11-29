@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: {{ include "dbildungs-iam.name" . }}-bff
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.appVersion }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
