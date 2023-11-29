@@ -94,19 +94,17 @@ jobs:
         shell: bash
         run: |
           if ${{ github.ref_name == 'main' }}; then
-              echo "SELECT_HELM_VERION_GENERATION=short_hash" >> "$GITHUB_OUTPUT"
-              echo "SELECT_IMAGE_TAG_GENERATION=commit_hash" >> "$GITHUB_OUTPUT"
-
+            echo "SELECT_HELM_VERION_GENERATION=timestamp" >> "$GITHUB_OUTPUT"
+            echo "SELECT_IMAGE_TAG_GENERATION=commit_hash" >> "$GITHUB_OUTPUT"
           else
-              echo "SELECT_HELM_VERION_GENERATION=ticket_from_branch_short_hash" >> "$GITHUB_OUTPUT"
-              echo "SELECT_IMAGE_TAG_GENERATION=ticket_from_branch" >> "$GITHUB_OUTPUT"
+            echo "SELECT_HELM_VERION_GENERATION=ticket_from_branch_timestamp" >> "$GITHUB_OUTPUT"
+            echo "SELECT_IMAGE_TAG_GENERATION=ticket_from_branch" >> "$GITHUB_OUTPUT"
           fi
-
   release_helm:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs: 
       - select_helm_version_generation
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@3.0.1
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@3.1.0
     secrets: inherit
     with:
       chart_name: dbildungs-iam
