@@ -3,4 +3,4 @@ name: dbildungs-iam
 version: 0.2.0
 description: dBildungs-IAM
 type: application
-AppVersion: ""
+appVersion: ""
