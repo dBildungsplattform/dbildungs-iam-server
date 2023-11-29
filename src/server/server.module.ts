@@ -15,6 +15,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from '../modules/health/health.module.js';
 import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
 import { LoggerModule } from '../core/logging/logger.module.js';
+import { ErrorModule } from '../shared/error/error.module.js';
 
 @Module({
     imports: [
@@ -66,6 +67,7 @@ import { LoggerModule } from '../core/logging/logger.module.js';
         KeycloakAdministrationModule,
         HealthModule,
         RolleApiModule,
+        ErrorModule,
     ],
     providers: [
         {
