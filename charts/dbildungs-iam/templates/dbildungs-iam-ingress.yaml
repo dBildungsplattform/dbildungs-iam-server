@@ -16,11 +16,11 @@ spec:
               service:
                 name: {{ include "dbildungs-iam.bffServiceName" . }}
                 port:
-                  number: 80
+                  number: {{ .Values.commonPortNumber }}
           - path: /docs
             pathType: Prefix
             backend:
               service:
                 name: {{ include "dbildungs-iam.bffServiceName" . }}
                 port:
-                  number: 80
+                  number: {{ .Values.commonPortNumber }}
