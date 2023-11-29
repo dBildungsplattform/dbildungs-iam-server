@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: {{ include "dbildungs-iam.name" . }}-backend
-          image: "{{ .Values.image.repository }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.appVersion }}"
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false

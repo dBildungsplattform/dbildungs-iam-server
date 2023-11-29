@@ -27,4 +27,5 @@ dbildungs-iam-keycloak-dev:
 redisEnabled: false
 # Image
 image:
-  repository: ghcr.io/dbildungsplattform/dbildungs-iam-server:{{ .Chart.AppVersion }}
+  repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
+  tag: ""
