@@ -1,3 +1,4 @@
+nameOverride: ""
 dbildungsIamExternalPort: 80
 dbildungsIamCpuMax: 2
 dbildungsIamMemMax: 4G

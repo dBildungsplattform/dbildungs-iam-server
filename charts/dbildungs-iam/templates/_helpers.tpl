@@ -1,3 +1,10 @@
+{{/*
+Full name template
+*/}}
+{{- define "dbildungs-iam.fullname" -}}
+{{- printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
 {{/* Common labels */}}
 {{- define "dbildungs-iam.labels" -}}
 app.kubernetes.io/name: {{ include "dbildungs-iam.name" . }}
