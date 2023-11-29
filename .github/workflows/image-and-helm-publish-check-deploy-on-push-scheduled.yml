@@ -93,16 +93,16 @@ jobs:
         shell: bash
         run: |
           if ${{ github.ref_name == 'main' }}; then
-              echo "SELECT_HELM_VERION_GENERATION=short_hash" >> "$GITHUB_OUTPUT"
+              echo "SELECT_HELM_VERION_GENERATION=timestamp" >> "$GITHUB_OUTPUT"
           else
-              echo "SELECT_HELM_VERION_GENERATION=ticket_from_branch_short_hash" >> "$GITHUB_OUTPUT"
+              echo "SELECT_HELM_VERION_GENERATION=ticket_from_branch_timestamp" >> "$GITHUB_OUTPUT"
           fi
 
   release_helm:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs: 
       - select_helm_version_generation
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@1.3.1
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@f6f1fdbc04d6ae0d6c068c458c6dcb9de31146ed #chart release with timestamp
     secrets: inherit
     with:
       chart_name: dbildungs-iam
