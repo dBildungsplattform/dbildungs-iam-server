@@ -9,8 +9,8 @@ spec:
     {{- include "dbildungs-iam.backendSelectorLabels" . | nindent 4 }}
   ports:
     - protocol: TCP
-      name: {{ include "dbildungs-iam.portName" . }}
+      name: {{ .Values.portName }}
       port: {{ .Values.dbildungsIamExternalPort }}
-      targetPort: {{ include "dbildungs-iam.portName" . }}
+      targetPort: {{ .Values.portName }}
   type: ClusterIP
 

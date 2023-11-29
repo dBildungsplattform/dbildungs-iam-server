@@ -23,7 +23,7 @@ spec:
             allowPrivilegeEscalation: false
           command: ["node", "dist/src/backend-for-frontend/main.js"]
           ports:
-            - name: {{ include "dbildungs-iam.portName" . }}
+            - name: {{ .Values.portName }}
               containerPort: 8080
           env:
             - name: NODE_ENV

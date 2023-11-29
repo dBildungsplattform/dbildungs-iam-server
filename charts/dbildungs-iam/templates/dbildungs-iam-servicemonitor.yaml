@@ -10,5 +10,5 @@ spec:
     matchLabels:
       app.kubernetes.io/name: {{ include "dbildungs-iam.name" . }}
   endpoints:
-    - port: {{ include "dbildungs-iam.portName" . }}
+    - port: {{ .Values.portName }}
 {{- end }}
