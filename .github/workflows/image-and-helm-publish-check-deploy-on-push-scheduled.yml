@@ -102,7 +102,7 @@ jobs:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs: 
       - select_helm_version_generation
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@f6f1fdbc04d6ae0d6c068c458c6dcb9de31146ed #chart release with timestamp
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@8943a4ba8f20ccc5d1d54569ebfe7c83c7ad1e75 #chart release with timestamp
     secrets: inherit
     with:
       chart_name: dbildungs-iam
