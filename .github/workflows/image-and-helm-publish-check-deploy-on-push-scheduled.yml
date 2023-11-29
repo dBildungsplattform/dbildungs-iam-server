@@ -110,7 +110,7 @@ jobs:
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@5a88cb0b5c9c4d645d551f8f6cd8b44e6e2e33af #with lowercase ticket number
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@main
 
   create_branch_identifier:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
