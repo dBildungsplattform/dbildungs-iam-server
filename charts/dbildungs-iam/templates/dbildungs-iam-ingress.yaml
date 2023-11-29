@@ -16,11 +16,11 @@ spec:
               service:
                 name: {{ include "dbildungs-iam.bffServiceName" . }}
                 port:
-                  number: {{ .Values.commonPortNumber }}
+                  number: {{ .Values.dbildungsIamExternalPort }}
           - path: /docs
             pathType: Prefix
             backend:
               service:
                 name: {{ include "dbildungs-iam.bffServiceName" . }}
                 port:
-                  number: {{ .Values.commonPortNumber }}
+                  number: {{ .Values.dbildungsIamExternalPort }}
