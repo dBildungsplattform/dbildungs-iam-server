@@ -10,6 +10,7 @@ import { mappingErrorHandler } from '../shared/error/index.js';
 import { DbConsole } from './db.console.js';
 import { DbInitConsole } from './db-init.console.js';
 import { LoggerModule } from '../core/logging/logger.module.js';
+import { DbSeedConsole } from './db-seed.console.js';
 
 @Module({
     imports: [
@@ -41,6 +42,6 @@ import { LoggerModule } from '../core/logging/logger.module.js';
             inject: [ConfigService],
         }),
     ],
-    providers: [DbConsole, DbInitConsole],
+    providers: [DbConsole, DbInitConsole, DbSeedConsole],
 })
 export class ConsoleModule {}

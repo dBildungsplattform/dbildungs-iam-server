@@ -1,0 +1,17 @@
+{
+    "entityName": "ServiceProvider",
+    "entities": [
+        {
+            "name": "Email",
+            "url": "https://de.wikipedia.org/wiki/E-Mail",
+            "providedOnSchulstrukturknoten": "1"
+        },
+        {
+            "name": "ItsLearning",
+            "url": "https://itslearning.com/de",
+            "providedOnSchulstrukturknoten": "1"
+        }
+    ]
+}
+
+
