@@ -66,16 +66,6 @@ describe('PersonUc', () => {
     });
 
     describe('createPerson', () => {
-        it('should fail when there is no first name given', async () => {
-            await expect(personUc.createPerson({} as CreatePersonDto)).rejects.toThrow(
-                new Error('First name not given, needed for username generation'),
-            );
-        });
-        it('should fail when there is no last name given', async () => {
-            await expect(personUc.createPerson({ vorname: 'Horst' } as CreatePersonDto)).rejects.toThrow(
-                new Error('Last name not given, needed for username generation'),
-            );
-        });
         describe('when person and user do not exist', () => {
             it('should create a new person', async () => {
                 const personDo: PersonDo<true> = DoFactory.createPerson(true);

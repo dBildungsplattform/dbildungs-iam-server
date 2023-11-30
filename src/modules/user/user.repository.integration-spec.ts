@@ -44,8 +44,8 @@ describe('A User', () => {
         });
 
         it('should be pristine', () => {
-            expect(createdUser.needsSaving);
-            expect(createdUser.new);
+            expect(createdUser.needsSaving).toBe(true);
+            expect(createdUser.new).toBe(true);
         });
     });
 

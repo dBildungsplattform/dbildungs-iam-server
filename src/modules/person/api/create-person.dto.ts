@@ -1,5 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
+import { IsNotEmpty } from 'class-validator';
 
 export class CreatePersonDto {
     @AutoMap()
@@ -18,9 +19,11 @@ export class CreatePersonDto {
     public readonly stammorganisation?: string;
 
     @AutoMap()
+    @IsNotEmpty()
     public readonly familienname!: string;
 
     @AutoMap()
+    @IsNotEmpty()
     public readonly vorname!: string;
 
     @AutoMap()

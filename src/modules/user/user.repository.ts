@@ -15,7 +15,7 @@ export class UserRepository {
         const username: string = await this.usernameGenerator.generateUsername(vorname, nachname);
         const newUser: User = new User('', username, 'unset');
         newUser.resetPassword();
-        return Promise.resolve(newUser);
+        return newUser;
     }
 
     public async loadUser(id: string): Promise<User> {

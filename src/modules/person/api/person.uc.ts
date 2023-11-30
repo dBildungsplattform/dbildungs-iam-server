@@ -28,12 +28,6 @@ export class PersonUc {
     ) {}
 
     public async createPerson(personDto: CreatePersonDto): Promise<PersonDto> {
-        if (!personDto.vorname) {
-            throw new Error('First name not given, needed for username generation');
-        }
-        if (!personDto.familienname) {
-            throw new Error('Last name not given, needed for username generation');
-        }
         // create user
         const user: User = await this.userRepository.createUser(personDto.vorname, personDto.familienname);
         await user.save(this.userService);

@@ -347,7 +347,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
 
             createMap(mapper, PersonGeburtDto, PersonBirthParams);
 
-            createMap(this.mapper, PersonendatensatzDto, PersonendatensatzResponse);
+            createMap(mapper, PersonendatensatzDto, PersonendatensatzResponse);
 
             createMap(
                 mapper,

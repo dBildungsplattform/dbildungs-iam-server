@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { KeycloakAdminClient, UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
 
 import { faker } from '@faker-js/faker';
-import { ConfigTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DoFactory, LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { UserMapperProfile } from './keycloak-client/user.mapper.profile.js';
@@ -11,7 +11,6 @@ import { type FindUserFilter, KeycloakUserService } from './keycloak-user.servic
 import { UserDo } from './user.do.js';
 import { PersonService } from '../../person/domain/person.service.js';
 import { PersonDo } from '../../person/domain/person.do.js';
-import { LoggerModule } from '../../../core/logging/logger.module.js';
 
 describe('KeycloakUserService', () => {
     let module: TestingModule;
@@ -24,7 +23,7 @@ describe('KeycloakUserService', () => {
         kcUsersMock = createMock<KeycloakAdminClient['users']>();
 
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, MapperTestModule, LoggerModule.register('KeycloakUserServiceTest')],
+            imports: [ConfigTestModule, MapperTestModule, LoggingTestModule],
             providers: [
                 KeycloakUserService,
                 UserMapperProfile,
