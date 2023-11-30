@@ -4,8 +4,9 @@ version: 0.2.0
 description: dBildungs-IAM
 type: application
 appVersion: ""
-dependencies:
+
+#dependencies:
   # In non-test-deployments we expect keycloak to be provided for us thus it needs to be enabled
-  - name: dbildungs-iam-keycloak-dev
-    version: "*"
-    condition: keycloakEnabled
+  #- name: dbildungs-iam-keycloak-dev
+  #  version: "*"
+  #  condition: keycloakEnabled
