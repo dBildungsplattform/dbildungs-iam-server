@@ -1,9 +1,10 @@
 {{/*
-Full name (e.g., release name + chart name)
+Full name (e.g., chart name)
 */}}
 {{- define "dbildungs-iam.fullname" -}}
-{{- printf "%s-%s" .Release.Name (include "dbildungs-iam.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s" (include "dbildungs-iam.name" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
 {{/*
 Template name
 */}}
