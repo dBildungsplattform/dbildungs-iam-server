@@ -1,8 +1,10 @@
-dbildungsIamContainer: "ghcr.io/dbildungsplattform/dbildungs-iam-server:kc_healthprobe"
+dbildungsIamContainer: "ghcr.io/dbildungsplattform/dbildungs-iam-server:latest"
 
 dbildungsIamExternalPort: 80
 dbildungsIamCpuMax: 2
 dbildungsIamMemMax: 4G
+dbildungsIamCpuRequest: 200m
+dbildungsIamMemRequest: 200Mi
 dbildungsIamReplications: 1
 environment: prod
 

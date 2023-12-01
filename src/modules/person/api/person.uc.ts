@@ -2,7 +2,7 @@ import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { Paged } from '../../../shared/paging/index.js';
-import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
@@ -14,6 +14,8 @@ import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonDto } from './person.dto.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
+import { UserRepository } from '../../user/user.repository.js';
+import { User } from '../../user/user.js';
 
 @Injectable()
 export class PersonUc {
@@ -21,29 +23,29 @@ export class PersonUc {
         private readonly personService: PersonService,
         private readonly personenkontextService: PersonenkontextService,
         private readonly userService: KeycloakUserService,
+        private readonly userRepository: UserRepository,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
     public async createPerson(personDto: CreatePersonDto): Promise<PersonDto> {
         // create user
-        const userDo: UserDo<false> = this.mapper.map(personDto, CreatePersonDto, UserDo<false>);
-        const userIdResult: Result<string> = await this.userService.create(userDo);
-        if (!userIdResult.ok) {
-            throw userIdResult.error;
-        }
+        const user: User = await this.userRepository.createUser(personDto.vorname, personDto.familienname);
+        await user.save(this.userService);
 
         // create person
         const personDo: PersonDo<false> = this.mapper.map(personDto, CreatePersonDto, PersonDo);
-        personDo.keycloakUserId = userIdResult.value;
+        personDo.keycloakUserId = user.id;
+        personDo.referrer = user.username;
 
         const result: Result<PersonDo<true>> = await this.personService.createPerson(personDo);
         if (result.ok) {
             const resPersonDto: PersonDto = this.mapper.map(personDo, PersonDo, PersonDto);
+            resPersonDto.startpasswort = user.newPassword;
             return resPersonDto;
         }
 
         // delete user if person could not be created
-        const deleteUserResult: Result<void> = await this.userService.delete(userIdResult.value);
+        const deleteUserResult: Result<void> = await this.userService.delete(user.id);
         if (deleteUserResult.ok) {
             throw result.error;
         } else {

@@ -7,9 +7,10 @@ import { PersonModule } from './person.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { PersonenkontextUc } from './api/personenkontext.uc.js';
 import { PersonenkontextController } from './api/personenkontext.controller.js';
+import { UserModule } from '../user/user.module.js';
 
 @Module({
-    imports: [PersonModule, KeycloakAdministrationModule, LoggerModule.register(PersonApiModule.name)],
+    imports: [PersonModule, KeycloakAdministrationModule, UserModule, LoggerModule.register(PersonApiModule.name)],
     providers: [PersonApiMapperProfile, PersonUc, PersonenkontextUc],
     controllers: [PersonController, PersonenkontextController],
 })

@@ -1,32 +1,30 @@
 import { Injectable } from '@nestjs/common';
+import { User } from './user.js';
+import { UsernameGeneratorService } from './username-generator.service.js';
 import { KeycloakUserService, UserDo } from '../keycloak-administration/index.js';
-import { DomainError, EntityNotFoundError } from '../../shared/error/index.js';
+import { DomainError } from '../../shared/error/index.js';
 
 @Injectable()
 export class UserRepository {
-    public constructor(private kcUserService: KeycloakUserService) {}
+    public constructor(
+        private usernameGenerator: UsernameGeneratorService,
+        private kcUserService: KeycloakUserService,
+    ) {}
 
-    public async usernameExists(username: string): Promise<boolean> {
-        const searchResult: Result<UserDo<true>, DomainError> | { ok: false; error: DomainError } =
-            await this.kcUserService.findOne({ username: username });
-        if (searchResult.ok) {
-            return true;
-        } else {
-            if (searchResult.error instanceof EntityNotFoundError) {
-                return false;
-            }
-        }
-        throw searchResult.error;
+    public async createUser(vorname: string, nachname: string): Promise<User> {
+        const username: string = await this.usernameGenerator.generateUsername(vorname, nachname);
+        const newUser: User = new User('', username, 'unset');
+        newUser.resetPassword();
+        return newUser;
     }
 
-    public async getNextAvailableUsername(calculatedUsername: string): Promise<string> {
-        if (!(await this.usernameExists(calculatedUsername))) {
-            return calculatedUsername;
+    public async loadUser(id: string): Promise<User> {
+        const loadedKcUser: Result<UserDo<true>, DomainError> = await this.kcUserService.findById(id);
+        if (loadedKcUser.ok) {
+            const value: UserDo<true> = loadedKcUser.value;
+            return new User(value.id, value.username, '');
+        } else {
+            throw loadedKcUser.error;
         }
-        let counter: number = 1;
-        while (await this.usernameExists(calculatedUsername + counter)) {
-            counter = counter + 1;
-        }
-        return calculatedUsername + counter;
     }
 }

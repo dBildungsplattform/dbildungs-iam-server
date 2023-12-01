@@ -1,15 +1,17 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class PersonNameParams {
     @AutoMap()
     @IsString()
+    @IsNotEmpty()
     @ApiProperty({ required: true })
     public readonly familienname!: string;
 
     @AutoMap()
     @IsString()
+    @IsNotEmpty()
     @ApiProperty({ required: true })
     public readonly vorname!: string;
 

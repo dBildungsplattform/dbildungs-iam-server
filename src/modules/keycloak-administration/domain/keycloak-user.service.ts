@@ -3,7 +3,7 @@ import { getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { KeycloakAdminClient, type UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
 import { plainToClass } from 'class-transformer';
-import { ValidationError, validate } from 'class-validator';
+import { validate, ValidationError } from 'class-validator';
 
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
@@ -12,6 +12,7 @@ import { UserDo } from './user.do.js';
 import { PersonService } from '../../person/domain/person.service.js';
 import { PersonDo } from '../../person/domain/person.do.js';
 import { faker } from '@faker-js/faker';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export type FindUserFilter = {
     username?: string;
@@ -24,6 +25,7 @@ export class KeycloakUserService {
         private readonly kcAdminService: KeycloakAdministrationService,
         private readonly personService: PersonService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
+        private readonly logger: ClassLogger,
     ) {}
 
     public async create(user: UserDo<false>, password?: string): Promise<Result<string, DomainError>> {
@@ -72,6 +74,7 @@ export class KeycloakUserService {
 
             return { ok: true, value: response.id };
         } catch (err) {
+            this.logger.error(`Could not create user, message: ${JSON.stringify(err)} `);
             return { ok: false, error: new KeycloakClientError('Could not create user') };
         }
     }
