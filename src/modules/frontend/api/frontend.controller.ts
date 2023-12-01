@@ -1,4 +1,17 @@
-import { Controller, Get, Inject, Logger, Param, Patch, Req, Res, Session, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Inject,
+    Logger,
+    Param,
+    Patch,
+    Post,
+    Req,
+    Res,
+    Session,
+    UseGuards,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
     ApiInternalServerErrorResponse,
@@ -22,6 +35,7 @@ import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 import { PersonService } from '../outbound/person.service.js';
 import { PersonendatensatzResponse } from '../../person/api/personendatensatz.response.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
+import { CreatePersonBodyParams } from '../../person/api/create-person.body.params.js';
 
 @ApiTags('frontend')
 @Controller({ path: 'frontend' })
@@ -112,6 +126,14 @@ export class FrontendController {
     @ApiOkResponse({ description: 'Returns all persons' })
     public persons(): Promise<PagedResponse<PersonendatensatzResponse>> {
         return this.personService.getAllPersons();
+    }
+
+    @Post('personen')
+    @UseGuards(AuthenticatedGuard)
+    @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
+    @ApiOkResponse({ description: 'Creates a new user' })
+    public createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
+        return this.personService.createPerson(params);
     }
 
     @Patch('personen/:personId/password')
