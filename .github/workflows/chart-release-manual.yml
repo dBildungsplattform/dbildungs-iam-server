@@ -24,7 +24,7 @@ jobs:
       contents: read
   release:
     needs: scan
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@DBP-352-input-naming-improvement
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@4.0.0
     secrets: inherit
     with:
       chart_name: dbildungs-iam
