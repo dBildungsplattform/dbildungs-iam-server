@@ -1,33 +1,33 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "dbildungs-iam.redisDeploymentName" . }}
+  name: dbiam-server-redis-deployment
   labels:
-    {{- include "dbildungs-iam.redisLabels" . | nindent 4 }}
+    app.kubernetes.io/name: dbildungs-iam
 spec:
   selector:
     matchLabels:
-      {{- include "dbildungs-iam.redisLayerLabel" . | nindent 6 }}
-  replicas: {{ .Values.redisReplications }}
+      layer: dbildungs-iam-redis
+  replicas: 1
   template:
     metadata:
-      name: {{ include "dbildungs-iam.redisMetadataName" . }}
+      name: dbildungs-iam-redis
       labels:
-        {{- include "dbildungs-iam.redisLayerLabel" . | nindent 8 }}
+        layer: dbildungs-iam-redis
     spec:
       initContainers:
         - name: copy-tls-data
           image: alpine
           securityContext:
             allowPrivilegeEscalation: false
-          command: ["/bin/sh", "-c", "apk add --no-cache openssl bash;/bin/bash /tls/copy-tls.sh"]
+          command: ["/bin/sh","-c", "apk add --no-cache openssl bash;/bin/bash /tls/copy-tls.sh"]
           volumeMounts:
             - mountPath: "/tls"
               name: tls-data
             - mountPath: "/data"
               name: data
       containers:
-        - name: {{ include "dbildungs-iam.redisContainerName" . }}
+        - name: redis
           image: redis:7.2.2
           securityContext:
             allowPrivilegeEscalation: false
@@ -35,7 +35,7 @@ spec:
             - mountPath: "/data"
               name: data
           ports:
-            - name: {{ include "dbildungs-iam.redisPortName" . }}
+            - name: redis-port
               containerPort: 6379
               protocol: TCP
           args:
@@ -43,6 +43,6 @@ spec:
       volumes:
         - name: tls-data
           configMap:
-            name: {{ include "dbildungs-iam.redisConfigMapName" . }}
+            name: dbiam-redis-tls-config
         - name: data
           emptyDir: {}

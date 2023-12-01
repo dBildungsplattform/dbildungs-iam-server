@@ -24,11 +24,11 @@ jobs:
       contents: read
   release:
     needs: scan
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@3.1.0
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@DBP-352-input-naming-improvement
     secrets: inherit
     with:
       chart_name: dbildungs-iam
-      version_generation: specified 
-      tag_generation: specified 
+      helm_chart_version_generation: specified 
+      image_tag_generation: specified 
       chart_version: ${{ inputs.chart_version }}
       image_tag: ${{ inputs.image_tag }}

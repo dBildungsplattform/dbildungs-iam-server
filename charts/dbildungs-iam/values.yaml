@@ -1,12 +1,9 @@
-nameOverride: ""
-portName: web
 dbildungsIamExternalPort: 80
 dbildungsIamCpuMax: 2
 dbildungsIamMemMax: 4G
 dbildungsIamCpuRequest: 200m
 dbildungsIamMemRequest: 200Mi
 dbildungsIamReplications: 1
-redisReplications: 1
 environment: prod
 backendHostname: helm.dev.spsh.dbildungsplattform.de
 configfile:

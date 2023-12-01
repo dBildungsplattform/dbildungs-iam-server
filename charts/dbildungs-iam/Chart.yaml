@@ -1,5 +1,5 @@
 apiVersion: v2
-name: dbildungs-iam
+name: dbildungscloud-iam-server
 version: 0.2.0
 description: dBildungs-IAM
 type: application
