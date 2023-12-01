@@ -107,7 +107,7 @@ jobs:
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@DBP-352-input-naming-improvement
     secrets: inherit
     with:
-      chart_name: dbildungscloud-iam-server
+      chart_name: dbildungs-iam
       helm_chart_version_generation: ${{ needs. select_helm_version_generation_and_image_tag_generation.outputs.SELECT_HELM_VERION_GENERATION  }}
       image_tag_generation: ${{ needs. select_helm_version_generation_and_image_tag_generation.outputs.SELECT_IMAGE_TAG_GENERATION  }}
 
