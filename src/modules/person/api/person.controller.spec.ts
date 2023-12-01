@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { HttpException } from '@nestjs/common';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { BadRequestException, HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MapperTestModule } from '../../../../test/utils/index.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
@@ -74,7 +74,7 @@ describe('PersonController', () => {
                 personUcMock.createPerson.mockResolvedValue(personDto);
 
                 const params: CreatePersonBodyParams = {
-                    username: faker.internet.userName(),
+                    username: '',
                     mandant: faker.string.uuid(),
                     name: {
                         vorname: faker.person.firstName(),
@@ -94,7 +94,7 @@ describe('PersonController', () => {
                 personUcMock.createPerson.mockResolvedValue(error);
 
                 const params: CreatePersonBodyParams = {
-                    username: faker.internet.userName(),
+                    username: '',
                     mandant: faker.string.uuid(),
                     name: {
                         vorname: faker.person.firstName(),
@@ -105,6 +105,25 @@ describe('PersonController', () => {
 
                 await expect(personController.createPerson(params)).rejects.toThrow(HttpException);
                 expect(personUcMock.createPerson).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when username is given', () => {
+            it('should throw BadRequestException', async () => {
+                const personDto: PersonDto = {} as PersonDto;
+                personUcMock.createPerson.mockResolvedValue(personDto);
+                const params: CreatePersonBodyParams = {
+                    username: faker.internet.userName(),
+                    mandant: faker.string.uuid(),
+                    name: {
+                        vorname: faker.person.firstName(),
+                        familienname: faker.person.lastName(),
+                    },
+                    geburt: {},
+                };
+                await expect(personController.createPerson(params)).rejects.toThrow(
+                    new BadRequestException('Username will be assigned and is not supported, leave empty.'),
+                );
             });
         });
     });
