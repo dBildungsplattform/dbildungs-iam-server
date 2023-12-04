@@ -52,9 +52,9 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 ## Developer Guides
 
 * Code conventions are enforced through the compile, eslint and prettier as far as possible
-    * Non enforcable conventions will be documented here. If they become enforcable we will put them into
+  * Non enforcable conventions will be documented here. If they become enforcable we will put them into
       automation.
-    * Table names will be all lowercase if the name contains multiple words they will be separated by
+  * Table names will be all lowercase if the name contains multiple words they will be separated by
         underscores.
 * Git conventions can be found [here](./docs/git.md)
 * Test conventions can be found [here](./docs/tests.md)
@@ -63,10 +63,11 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 * Developer notes can be found [here](./docs/developer-notes.md)
 
 ## Package (Create Docker Image )
+
 If you push a tag upstream a container will be created for you. (Check Github under Packages)
 
 ghcr.io/dbildungsplattform/dbildungs-iam-server:*tag*
 
 ## License
 
-The software is licensed under the [AGPL-3.0 license](./LICENSE).
+The software is licensed under the [EUPL-1.2 license](./LICENSE).
