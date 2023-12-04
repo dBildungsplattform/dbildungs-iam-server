@@ -3,12 +3,13 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpService } from '@nestjs/axios';
 import { HttpException, InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AxiosError } from 'axios';
-import { firstValueFrom, throwError } from 'rxjs';
+import { AxiosError, AxiosResponse } from 'axios';
+import { firstValueFrom, of, throwError } from 'rxjs';
 
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { User } from '../auth/user.decorator.js';
 import { BackendHttpService } from './backend-http.service.js';
+import { PaginatedResponseDto } from '../api/paginated-data.response.js';
 
 describe('BackendHttpService', () => {
     let module: TestingModule;
@@ -23,6 +24,10 @@ describe('BackendHttpService', () => {
 
         sut = module.get(BackendHttpService);
         httpServiceMock = module.get(HttpService);
+    });
+
+    afterEach(() => {
+        jest.resetAllMocks();
     });
 
     afterAll(async () => {
@@ -126,6 +131,41 @@ describe('BackendHttpService', () => {
                 expect.stringContaining(endpoint),
                 expect.objectContaining({ headers: { Authorization: `Bearer ${accessToken}` } }),
             );
+        });
+    });
+
+    describe('getPaginated', () => {
+        it('should call HttpService.get with correct arguments', () => {
+            const endpoint: string = faker.string.alphanumeric(32);
+            const accessToken: string = faker.string.alphanumeric(32);
+            const user: User = createMock<User>({ access_token: accessToken });
+            httpServiceMock.get.mockReturnValueOnce(of({} as AxiosResponse));
+
+            sut.getPaginated(endpoint, user);
+
+            expect(httpServiceMock.get).toHaveBeenCalledWith(
+                expect.stringContaining(endpoint),
+                expect.objectContaining({ headers: { Authorization: `Bearer ${accessToken}` } }),
+            );
+        });
+
+        it('should map response to PaginatedResponseDto', async () => {
+            const endpoint: string = faker.string.alphanumeric(32);
+            const accessToken: string = faker.string.alphanumeric(32);
+            const user: User = createMock<User>({ access_token: accessToken });
+            const axiosResponse: AxiosResponse = {
+                data: {},
+                headers: {
+                    'x-paging-offset': 1,
+                    'x-paging-limit': 2,
+                    'x-paging-total': 3,
+                },
+            } as unknown as AxiosResponse;
+            httpServiceMock.get.mockReturnValueOnce(of(axiosResponse));
+
+            const response: PaginatedResponseDto<unknown> = await firstValueFrom(sut.getPaginated(endpoint, user));
+
+            expect(response).toBeInstanceOf(PaginatedResponseDto);
         });
     });
 

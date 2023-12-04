@@ -9,7 +9,7 @@ import { User } from '../auth/index.js';
 import { PaginatedResponseDto } from '../api/paginated-data.response.js';
 import { PagingHeaders } from '../../../shared/paging/paging.enums.js';
 
-type AxiosConfigWithoutHeaders = Omit<AxiosRequestConfig, 'headers'>;
+export type AxiosConfigWithoutHeaders = Omit<AxiosRequestConfig, 'headers'>;
 
 function makeConfig(user?: User, config: AxiosConfigWithoutHeaders = {}): AxiosRequestConfig {
     return {
