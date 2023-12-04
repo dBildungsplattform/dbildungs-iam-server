@@ -44,4 +44,8 @@ export class PersonResponse {
     @AutoMap()
     @ApiProperty()
     public revision!: string;
+
+    @AutoMap()
+    @ApiProperty({ description: 'Initiales Benutzerpasswort, muss nach der ersten Anmeldung geändert werden' })
+    public startpasswort?: string;
 }

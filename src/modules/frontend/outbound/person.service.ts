@@ -4,6 +4,7 @@ import { firstValueFrom, map } from 'rxjs';
 import { AxiosResponse } from 'axios/index';
 import { PersonendatensatzResponse } from '../../person/api/personendatensatz.response.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
+import { CreatePersonBodyParams } from '../../person/api/create-person.body.params.js';
 
 @Injectable()
 export class PersonService {
@@ -22,6 +23,14 @@ export class PersonService {
             this.httpService
                 .patch<string>(`/api/personen/${personId}/password`)
                 .pipe(map((res: AxiosResponse<string>) => res.data)),
+        );
+    }
+
+    public async createPerson(params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
+        return firstValueFrom(
+            this.httpService
+                .post<PersonendatensatzResponse>('/api/personen', params)
+                .pipe(map((res: AxiosResponse<PersonendatensatzResponse>) => res.data)),
         );
     }
 }
