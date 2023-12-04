@@ -11,9 +11,11 @@ import { DbConsole } from './db.console.js';
 import { DbInitConsole } from './db-init.console.js';
 import { LoggerModule } from '../core/logging/logger.module.js';
 import { DbSeedConsole } from './db-seed.console.js';
+import {KeycloakAdministrationModule} from "../modules/keycloak-administration/keycloak-administration.module.js";
 
 @Module({
     imports: [
+        KeycloakAdministrationModule,
         LoggerModule.register(ConsoleModule.name),
         ConfigModule.forRoot({
             isGlobal: true,

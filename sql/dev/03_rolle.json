@@ -2,6 +2,7 @@
     "entityName": "Rolle",
     "entities": [
         {
+            "id": "9876",
             "administeredBySchulstrukturknoten": "1"
         },
         {

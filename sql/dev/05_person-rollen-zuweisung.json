@@ -1,0 +1,13 @@
+{
+    "entityName": "PersonRollenZuweisung",
+    "entities": [
+        {
+            "person": "1",
+            "foreign": {
+                "id": "9876",
+                "targetField": "rolle"
+            },
+            "schulstrukturknoten": "1"
+        }
+    ]
+}
