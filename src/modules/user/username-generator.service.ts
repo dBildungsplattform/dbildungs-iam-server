@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from './user.repository.js';
+import { KeycloakUserService, UserDo } from '../keycloak-administration/index.js';
+import { DomainError, EntityNotFoundError } from '../../shared/error/index.js';
 
 @Injectable()
 export class UsernameGeneratorService {
-    public constructor(private repository: UserRepository) {}
+    public constructor(private kcUserService: KeycloakUserService) {}
 
     public async generateUsername(firstname: string, lastname: string): Promise<string> {
         if (firstname.length == 0) {
@@ -14,7 +15,7 @@ export class UsernameGeneratorService {
         }
         const calculatedUsername: string = this.cleanString(firstname)[0] + this.cleanString(lastname);
 
-        return this.repository.getNextAvailableUsername(calculatedUsername);
+        return this.getNextAvailableUsername(calculatedUsername);
     }
 
     private cleanString(name: string): string {
@@ -38,5 +39,29 @@ export class UsernameGeneratorService {
             .join('')
             .normalize('NFKD');
         return normalizedString.replace(new RegExp('[^\u0061-\u007a]', 'g'), '');
+    }
+
+    private async getNextAvailableUsername(calculatedUsername: string): Promise<string> {
+        if (!(await this.usernameExists(calculatedUsername))) {
+            return calculatedUsername;
+        }
+        let counter: number = 1;
+        while (await this.usernameExists(calculatedUsername + counter)) {
+            counter = counter + 1;
+        }
+        return calculatedUsername + counter;
+    }
+
+    public async usernameExists(username: string): Promise<boolean> {
+        const searchResult: Result<UserDo<true>, DomainError> | { ok: false; error: DomainError } =
+            await this.kcUserService.findOne({ username: username });
+        if (searchResult.ok) {
+            return true;
+        } else {
+            if (searchResult.error instanceof EntityNotFoundError) {
+                return false;
+            }
+        }
+        throw searchResult.error;
     }
 }
