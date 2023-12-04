@@ -1,0 +1,11 @@
+{
+    "entityName": "Rolle",
+    "entities": [
+        {
+            "administeredBySchulstrukturknoten": "1"
+        },
+        {
+            "administeredBySchulstrukturknoten": "2"
+        }
+    ]
+}

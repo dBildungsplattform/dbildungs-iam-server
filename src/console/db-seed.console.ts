@@ -7,6 +7,8 @@ import { ServiceProviderEntity } from '../modules/rolle/entity/service-provider.
 import { PersonEntity } from '../modules/person/persistence/person.entity.js';
 import { OrganisationEntity } from '../modules/organisation/persistence/organisation.entity.js';
 import { RolleRechtEntity } from '../modules/rolle/entity/rolle-recht.entity.js';
+import { EntityManager, MikroORM } from '@mikro-orm/core';
+import { ServiceProviderZugriffEntity } from '../modules/rolle/entity/service-provider-zugriff.entity.js';
 
 type Entity = PersonEntity | OrganisationEntity | ServiceProviderEntity | RolleEntity | RolleRechtEntity;
 
@@ -22,10 +24,17 @@ export function createOrganisation(): OrganisationEntity {
     return new OrganisationEntity();
 }
 
+export function createRolle(): RolleEntity {
+    return new RolleEntity();
+}
+export function createServiceProviderZugriff(): ServiceProviderZugriffEntity {
+    return new ServiceProviderZugriffEntity();
+}
+
 @SubCommand({ name: 'seed', description: 'creates seed data in the database' })
 export class DbSeedConsole extends CommandRunner {
     public constructor(
-        //private readonly orm: MikroORM,
+        private readonly orm: MikroORM,
         //private readonly configService: ConfigService<ServerConfig, true>,
         private readonly logger: ClassLogger,
     ) {
@@ -39,50 +48,60 @@ export class DbSeedConsole extends CommandRunner {
         }
         this.logger.info('Create seed data in the database...');
         const entityFileNames: string[] = this.getEntityFileNames(directory);
-
+        const forkedEm: EntityManager = this.orm.em.fork();
+        let entities: Entity[] = [];
         for (const entityFileName of entityFileNames) {
             const fileContentAsStr: string = fs.readFileSync(`./sql/${directory}/${entityFileName}`, 'utf-8');
-            const seedFile: SeedFile = JSON.parse(fileContentAsStr);
-            let entities;
+            const seedFile: SeedFile = JSON.parse(fileContentAsStr) as SeedFile;
             switch (seedFile.entityName) {
                 case 'ServiceProvider':
                     entities = this.readEntityFromJSONFile<ServiceProviderEntity>(
                         fileContentAsStr,
                         createServiceProvider,
                     );
-                    entities.forEach((e) => console.log(e));
+                    //entities.forEach((e: Entity) => console.log(e));
                     break;
                 case 'Organisation':
                     entities = this.readEntityFromJSONFile<OrganisationEntity>(fileContentAsStr, createOrganisation);
-                    entities.forEach((e) => console.log(e));
+                    break;
+                case 'Person':
+                    entities = this.readEntityFromJSONFile<PersonEntity>(fileContentAsStr, createPerson);
+                    break;
+                case 'Rolle':
+                    entities = this.readEntityFromJSONFile<RolleEntity>(fileContentAsStr, createRolle);
+                    break;
+                case 'ServiceProviderZugriff':
+                    entities = this.readEntityFromJSONFile<ServiceProviderZugriffEntity>(
+                        fileContentAsStr,
+                        createServiceProviderZugriff,
+                    );
                     break;
                 default:
                     throw new Error(`Unsupported EntityName / EntityType: ${seedFile.entityName}`);
             }
+            this.logger.info(`Insert ${entities.length} entities of type ${seedFile.entityName}`);
+            for (const entity of entities) {
+                forkedEm.persist(entity);
+            }
         }
-
-        /*this.logger.info(`Found ${statements.length} statements to execute`);
-        for (const statement of statements) {
-            await this.orm.em.getConnection().execute(statement);
-        }*/
         this.logger.info('Created seed data successfully');
-        await Promise.resolve();
+        await forkedEm.flush();
     }
 
     private getEntityFileNames(directory: string): string[] {
         const fileNames: string[] = [];
-        fs.readdirSync(`./sql/${directory}`).forEach((file) => {
+        fs.readdirSync(`./sql/${directory}`).forEach((file: string) => {
             fileNames.push(file);
         });
         return fileNames;
     }
 
     private readEntityFromJSONFile<T>(fileContentAsStr: string, constructor: ConstructorCall): T[] {
-        const entityFile: EntityFile<T> = JSON.parse(fileContentAsStr);
-        const key: keyof EntityFile<any> = 'entities';
+        const entityFile: EntityFile<T> = JSON.parse(fileContentAsStr) as EntityFile<T>;
+        const key: keyof EntityFile<T> = 'entities';
         const entities: T[] = entityFile[key];
         const entityList: T[] = [];
-        entities.forEach((entity) => {
+        entities.forEach((entity: T) => {
             const newEntity: T = Object.assign(constructor(), entity);
             entityList.push(newEntity);
         });
