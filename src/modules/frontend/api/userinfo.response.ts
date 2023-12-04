@@ -1,59 +1,59 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { UserinfoResponse as OpenIdUserinfoResponse } from 'openid-client';
 
 export class UserinfoResponse {
     @ApiProperty()
     public sub: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public name?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public given_name?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public family_name?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public middle_name?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public nickname?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public preferred_username?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public profile?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public picture?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public website?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public email?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public email_verified?: boolean;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public gender?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public birthdate?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public zoneinfo?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public locale?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public phone_number?: string;
 
-    @ApiPropertyOptional()
+    @ApiProperty({ nullable: true })
     public updated_at?: number;
 
     public constructor(info: OpenIdUserinfoResponse) {
