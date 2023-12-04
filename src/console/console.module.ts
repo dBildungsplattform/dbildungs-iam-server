@@ -11,11 +11,14 @@ import { DbConsole } from './db.console.js';
 import { DbInitConsole } from './db-init.console.js';
 import { LoggerModule } from '../core/logging/logger.module.js';
 import { DbSeedConsole } from './db-seed.console.js';
-import {KeycloakAdministrationModule} from "../modules/keycloak-administration/keycloak-administration.module.js";
+import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
+import { UserModule } from '../modules/user/user.module.js';
+import { UsernameGeneratorService } from '../modules/user/username-generator.service.js';
 
 @Module({
     imports: [
         KeycloakAdministrationModule,
+        UserModule,
         LoggerModule.register(ConsoleModule.name),
         ConfigModule.forRoot({
             isGlobal: true,
@@ -44,6 +47,6 @@ import {KeycloakAdministrationModule} from "../modules/keycloak-administration/k
             inject: [ConfigService],
         }),
     ],
-    providers: [DbConsole, DbInitConsole, DbSeedConsole],
+    providers: [DbConsole, DbInitConsole, DbSeedConsole, UsernameGeneratorService],
 })
 export class ConsoleModule {}

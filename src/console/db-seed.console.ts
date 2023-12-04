@@ -7,40 +7,48 @@ import { ServiceProviderEntity } from '../modules/rolle/entity/service-provider.
 import { PersonEntity } from '../modules/person/persistence/person.entity.js';
 import { OrganisationEntity } from '../modules/organisation/persistence/organisation.entity.js';
 import { RolleRechtEntity } from '../modules/rolle/entity/rolle-recht.entity.js';
-import {EntityManager, MikroORM} from '@mikro-orm/core';
+import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { ServiceProviderZugriffEntity } from '../modules/rolle/entity/service-provider-zugriff.entity.js';
-import {PersonRollenZuweisungEntity} from "../modules/rolle/entity/person-rollen-zuweisung.entity.js";
-import {PersonRollenZuweisungDo} from "../modules/rolle/domain/person-rollen-zuweisung.do.js";
-import {Inject} from "@nestjs/common";
+import { PersonRollenZuweisungEntity } from '../modules/rolle/entity/person-rollen-zuweisung.entity.js';
+/*import {Inject} from "@nestjs/common";
 import {getMapperToken} from "@automapper/nestjs";
-import {Mapper} from "@automapper/core";
-import {KeycloakUserService, UserDo} from "../modules/keycloak-administration/index.js";
+import {Mapper} from "@automapper/core";*/
+import { KeycloakUserService, UserDo } from '../modules/keycloak-administration/index.js';
+import { UsernameGeneratorService } from '../modules/user/username-generator.service.js';
+import { DataProviderEntity } from '../persistence/data-provider.entity.js';
 
-type Entity = PersonEntity | OrganisationEntity | ServiceProviderEntity | RolleEntity | RolleRechtEntity | PersonRollenZuweisungEntity;
+type Entity =
+    | DataProviderEntity
+    | PersonEntity
+    | OrganisationEntity
+    | ServiceProviderEntity
+    | RolleEntity
+    | RolleRechtEntity
+    | PersonRollenZuweisungEntity;
 type ConstructorCall = () => Entity;
 
 export interface HasForeignKeyReference {
-    foreign: ForeignKeyReference,
+    foreign: ForeignKeyReference;
 }
 
 export interface ForeignKeyReference {
-    id: string,
-    targetField: string,
+    id: string;
+    targetField: string;
 }
 
 @SubCommand({ name: 'seed', description: 'creates seed data in the database' })
 export class DbSeedConsole extends CommandRunner {
-
-    forkedEm: EntityManager;
+    private forkedEm: EntityManager;
 
     public constructor(
         private readonly orm: MikroORM,
         private readonly logger: ClassLogger,
-        private readonly userService: KeycloakUserService,
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
-) {
+        private usernameGenerator: UsernameGeneratorService,
+        private keycloakUserService: KeycloakUserService,
+        //@Inject(getMapperToken()) private readonly mapper: Mapper,
+    ) {
         super();
-        this.forkedEm = orm.em.fork()
+        this.forkedEm = orm.em.fork();
     }
 
     public override async run(_passedParams: string[], _options?: Record<string, unknown>): Promise<void> {
@@ -55,71 +63,122 @@ export class DbSeedConsole extends CommandRunner {
         }
         this.logger.info('Create seed data in the database...');
         let entityFileNames: string[] = this.getEntityFileNames(directory);
-        entityFileNames = entityFileNames.filter(efm => !excludedFiles.includes(efm));
+        entityFileNames = entityFileNames.filter((efm: string) => !excludedFiles.includes(efm));
         let entities: Entity[] = [];
         for (const entityFileName of entityFileNames) {
             const fileContentAsStr: string = fs.readFileSync(`./sql/${directory}/${entityFileName}`, 'utf-8');
             const seedFile: SeedFile = JSON.parse(fileContentAsStr) as SeedFile;
             switch (seedFile.entityName) {
+                case 'DataProvider':
+                    entities = this.readEntityFromJSONFile<DataProviderEntity>(
+                        fileContentAsStr,
+                        () => new DataProviderEntity(),
+                    );
+                    this.handle(entities, seedFile.entityName);
+                    break;
                 case 'ServiceProvider':
                     entities = this.readEntityFromJSONFile<ServiceProviderEntity>(
                         fileContentAsStr,
                         () => new ServiceProviderEntity(),
                     );
+                    this.handle(entities, seedFile.entityName);
                     break;
                 case 'Organisation':
-                    entities = this.readEntityFromJSONFile<OrganisationEntity>(fileContentAsStr, () => new OrganisationEntity());
+                    entities = this.readEntityFromJSONFile<OrganisationEntity>(
+                        fileContentAsStr,
+                        () => new OrganisationEntity(),
+                    );
+                    this.handle(entities, seedFile.entityName);
                     break;
                 case 'Person':
-                    await this.handlePersons(fileContentAsStr);
+                    entities = this.readEntityFromJSONFile<PersonEntity>(fileContentAsStr, () => new PersonEntity());
+                    await this.handlePerson(entities, seedFile.entityName);
                     break;
                 case 'Rolle':
                     entities = this.readEntityFromJSONFile<RolleEntity>(fileContentAsStr, () => new RolleEntity());
+                    this.handle(entities, seedFile.entityName);
                     break;
                 case 'ServiceProviderZugriff':
                     entities = this.readEntityFromJSONFile<ServiceProviderZugriffEntity>(
                         fileContentAsStr,
                         () => new ServiceProviderZugriffEntity(),
                     );
+                    this.handle(entities, seedFile.entityName);
                     break;
                 case 'PersonRollenZuweisung':
-                    entities = this.readEntityFromJSONFile<PersonRollenZuweisungEntity>(
-                        fileContentAsStr,
-                        () => new PersonRollenZuweisungEntity(),
-                    );
-                    entities.forEach((e: Entity) => {
-                        console.log(e);
-                        this.getForeignEntity(e);
-                    });
+                    await this.handlePersonRollenZuweisung(fileContentAsStr, seedFile.entityName);
                     break;
                 default:
                     throw new Error(`Unsupported EntityName / EntityType: ${seedFile.entityName}`);
-            }
-            this.logger.info(`Insert ${entities.length} entities of type ${seedFile.entityName}`);
-
-            for (const entity of entities) {
-                this.forkedEm.persist(entity);
             }
         }
         this.logger.info('Created seed data successfully');
         await this.forkedEm.flush();
     }
 
-    private async handlePersons(fileContentAsStr: string): Promise<void> {
-        const entities: PersonEntity[] = this.readEntityFromJSONFile<PersonEntity>(fileContentAsStr, () => new PersonEntity());
+    private handle(entities: Entity[], entityName: string): void {
         for (const entity of entities) {
-            await this.createPerson(entity);
             this.forkedEm.persist(entity);
         }
+        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }
+
+    private async handlePerson(entities: Entity[], entityName: string): Promise<void> {
+        for (const entity of entities) {
+            await this.createPerson(entity as PersonEntity);
+            this.forkedEm.persist(entity);
+        }
+        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
+    }
+
     private async createPerson(personEntity: PersonEntity): Promise<void> {
-        // create user
-        const userDo: UserDo<false> = this.mapper.map(personEntity, PersonEntity, UserDo<false>);
-        const userIdResult: Result<string> = await this.userService.create(userDo);
+        const username: string = await this.usernameGenerator.generateUsername(
+            personEntity.vorname,
+            personEntity.familienname,
+        );
+        const userDo: UserDo<false> = {
+            username: username,
+            email: username + '@test.de',
+            id: null,
+            createdDate: null,
+        };
+        const userIdResult: Result<string> = await this.keycloakUserService.create(userDo, 'test');
         if (!userIdResult.ok) {
             throw userIdResult.error;
         }
         personEntity.keycloakUserId = userIdResult.value;
+    }
+
+    private async handlePersonRollenZuweisung(fileContentAsStr: string, entityName: string): Promise<void> {
+        const entities: PersonRollenZuweisungEntity[] = this.readEntityFromJSONFile<PersonRollenZuweisungEntity>(
+            fileContentAsStr,
+            () => new PersonRollenZuweisungEntity(),
+        );
+        for (const e of entities) {
+            await this.getForeignEntity(e);
+            this.forkedEm.persist(e);
+        }
+        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
+    }
+
+    private async getForeignEntity(entity: PersonRollenZuweisungEntity): Promise<void> {
+        if (!this.hasForeignKeyReference(entity)) {
+            return;
+        }
+        const targetField: string = entity.foreign.targetField;
+        const id: string = entity.foreign.id;
+        let foreignEntity: Option<Entity>;
+        switch (targetField) {
+            case 'rolle':
+                foreignEntity = await this.orm.em.fork().findOne(RolleEntity, { id });
+                if (foreignEntity) {
+                    entity.rolle = foreignEntity;
+                }
+        }
+    }
+
+    private hasForeignKeyReference(obj: unknown): obj is HasForeignKeyReference {
+        return (obj as HasForeignKeyReference)?.foreign !== undefined;
     }
 
     private getEntityFileNames(directory: string): string[] {
@@ -140,27 +199,5 @@ export class DbSeedConsole extends CommandRunner {
             entityList.push(newEntity);
         });
         return entityList;
-    }
-
-    private async getForeignEntity(entity: Entity): Promise<void> {
-        if (!this.hasForeignKeyReference(entity)) {
-            return;
-        }
-        const targetField: string = entity.foreign.targetField;
-        const id: string = entity.foreign.id;
-        let foreignEntity: Option<Entity>;
-        switch (targetField) {
-            case 'rolle':
-                foreignEntity = await this.orm.em.fork().findOne(RolleEntity, { id });
-                if (foreignEntity) {
-                    let prz = entity as PersonRollenZuweisungDo<false>;
-                    prz.rolle = foreignEntity;
-                }
-        }
-    }
-
-
-    private hasForeignKeyReference(obj: unknown): obj is HasForeignKeyReference {
-        return (obj as HasForeignKeyReference)?.foreign !== undefined;
     }
 }
