@@ -29,7 +29,7 @@ import {
 } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { SessionData } from 'express-session';
-import { Client, UserinfoResponse } from 'openid-client';
+import { Client } from 'openid-client';
 
 import { FrontendConfig, ServerConfig } from '../../../shared/config/index.js';
 import { GetServiceProviderInfoDo } from '../../rolle/domain/get-service-provider-info.do.js';
@@ -43,6 +43,7 @@ import { PersonendatensatzResponse } from '../../person/api/personendatensatz.re
 import { ServiceProviderInfoResponse } from '../../rolle/api/service-provider-info.response.js';
 import { CreatePersonBodyParams } from '../../person/api/create-person.body.params.js';
 import { PersonenQueryParams } from '../../person/api/personen-query.param.js';
+import { UserinfoResponse } from './userinfo.response.js';
 
 @ApiTags('frontend')
 @Controller({ path: 'frontend' })
@@ -114,9 +115,9 @@ export class FrontendController {
     @UseGuards(AuthenticatedGuard)
     @ApiOperation({ summary: 'Info about logged in user.' })
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
-    @ApiOkResponse({ description: 'Returns info about the logged in user.' })
+    @ApiOkResponse({ description: 'Returns info about the logged in user.', type: UserinfoResponse })
     public info(@CurrentUser() user: User): UserinfoResponse {
-        return user.userinfo;
+        return new UserinfoResponse(user.userinfo);
     }
 
     @Get('provider')

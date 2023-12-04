@@ -4,7 +4,12 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
 import { Session, SessionData } from 'express-session';
-import { Client, EndSessionParameters, IssuerMetadata, UserinfoResponse } from 'openid-client';
+import {
+    Client,
+    EndSessionParameters,
+    IssuerMetadata,
+    UserinfoResponse as OpenIdUserinfoResponse,
+} from 'openid-client';
 
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { FrontendConfig } from '../../../shared/config/frontend.config.js';
@@ -24,6 +29,7 @@ import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { CreatePersonBodyParams } from '../../person/api/create-person.body.params.js';
 import { PersonNameParams } from '../../person/api/person-name.params.js';
+import { UserinfoResponse } from './userinfo.response.js';
 
 function getPersonenDatensatzResponse(): PersonendatensatzResponse {
     const mockBirthParams: PersonBirthParams = {
@@ -223,11 +229,11 @@ describe('FrontendController', () => {
 
     describe('info', () => {
         it('should return user info', () => {
-            const user: User = createMock<User>({ userinfo: createMock<UserinfoResponse>() });
+            const user: User = createMock<User>({ userinfo: createMock<OpenIdUserinfoResponse>() });
 
             const result: UserinfoResponse = frontendController.info(user);
 
-            expect(result).toBe(user.userinfo);
+            expect(result).toBeInstanceOf(UserinfoResponse);
         });
     });
 
