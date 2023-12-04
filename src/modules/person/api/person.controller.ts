@@ -18,6 +18,7 @@ import {
 import {
     ApiAcceptedResponse,
     ApiBadRequestResponse,
+    ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
@@ -61,8 +62,8 @@ export class PersonController {
     ) {}
 
     @Post()
-    @HttpCode(HttpStatus.OK)
-    @ApiOkResponse({ description: 'The person was successfully created.', type: PersonendatensatzResponse })
+    @HttpCode(HttpStatus.CREATED)
+    @ApiCreatedResponse({ description: 'The person was successfully created.', type: PersonendatensatzResponse })
     @ApiBadRequestResponse({ description: 'A username was given. Creation with username is not supported' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the person.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })

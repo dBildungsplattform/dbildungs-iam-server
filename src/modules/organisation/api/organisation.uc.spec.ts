@@ -71,10 +71,6 @@ describe('OrganisationUc', () => {
                     SchulConnexError,
                 );
             });
-
-            it('bla', () => {
-                expect(EntityCouldNotBeCreated.name).toEqual(new EntityCouldNotBeCreated('').constructor.name);
-            });
         });
     });
 
