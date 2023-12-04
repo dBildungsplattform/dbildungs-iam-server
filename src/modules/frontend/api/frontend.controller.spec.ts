@@ -254,7 +254,10 @@ describe('FrontendController', () => {
                     items: [getPersonenDatensatzResponse()],
                 };
                 personService.getAllPersons.mockResolvedValueOnce(pagedResponse);
-                const result: PagedResponse<PersonendatensatzResponse> = await frontendController.persons();
+                const result: PagedResponse<PersonendatensatzResponse> = await frontendController.persons(
+                    createMock(),
+                    createMock(),
+                );
                 expect(result).toEqual(pagedResponse);
             });
         });
@@ -265,7 +268,9 @@ describe('FrontendController', () => {
                     HttpStatus.INTERNAL_SERVER_ERROR,
                 );
                 personService.getAllPersons.mockRejectedValueOnce(exception);
-                await expect(frontendController.persons()).rejects.toThrowError(HttpException);
+                await expect(frontendController.persons(createMock(), createMock())).rejects.toThrowError(
+                    HttpException,
+                );
             });
         });
     });
@@ -284,7 +289,10 @@ describe('FrontendController', () => {
                 };
                 const response: PersonendatensatzResponse = getPersonenDatensatzResponse();
                 personService.createPerson.mockResolvedValueOnce(response);
-                const result: PersonendatensatzResponse = await frontendController.createPerson(createPersonBodyParams);
+                const result: PersonendatensatzResponse = await frontendController.createPerson(
+                    createPersonBodyParams,
+                    createMock(),
+                );
                 expect(result).toEqual(response);
             });
         });
@@ -295,7 +303,9 @@ describe('FrontendController', () => {
                     HttpStatus.INTERNAL_SERVER_ERROR,
                 );
                 personService.getAllPersons.mockRejectedValueOnce(exception);
-                await expect(frontendController.persons()).rejects.toThrowError(HttpException);
+                await expect(frontendController.persons(createMock(), createMock())).rejects.toThrowError(
+                    HttpException,
+                );
             });
         });
     });
@@ -311,7 +321,7 @@ describe('FrontendController', () => {
                     personId: faker.string.numeric(),
                 };
                 personService.resetPassword.mockResolvedValueOnce(generatedPassword);
-                const result: string = await frontendController.passwordReset(params);
+                const result: string = await frontendController.passwordReset(params, createMock());
                 expect(result).toEqual(generatedPassword);
             });
         });
@@ -325,7 +335,9 @@ describe('FrontendController', () => {
                     HttpStatus.NOT_FOUND,
                 );
                 personService.resetPassword.mockRejectedValueOnce(exception);
-                await expect(frontendController.passwordReset(params)).rejects.toThrowError(HttpException);
+                await expect(frontendController.passwordReset(params, createMock())).rejects.toThrowError(
+                    HttpException,
+                );
             });
         });
     });
