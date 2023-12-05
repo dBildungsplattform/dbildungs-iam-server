@@ -102,17 +102,23 @@ private readonly organisationService: OrganisationService,
 @Inject(getMapperToken()) private readonly mapper: Mapper,
 ) {}
 
-    public async createOrganisation(organisationDto: CreateOrganisationDto): Promise<CreatedOrganisationDto> {
+    public async createOrganisation(
+        organisationDto: CreateOrganisationDto,
+    ): Promise<CreatedOrganisationDto | SchulConnexError> {
         const organisationDo: OrganisationDo<false> = this.mapper.map(
             organisationDto,
             CreateOrganisationDto,
             OrganisationDo,
         );
-        const result: Result<OrganisationDo<true>> = await this.organisationService.createOrganisation(organisationDo);
+        const result: Result<OrganisationDo<true>, DomainError> = await this.organisationService.createOrganisation(
+            organisationDo,
+        );
+
         if (result.ok) {
             return this.mapper.map(result.value, OrganisationDo, CreatedOrganisationDto);
         }
-        throw result.error;
+
+        return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 }
 ```
@@ -139,9 +145,12 @@ export class OrganisationController {
             CreateOrganisationBodyParams,
             CreateOrganisationDto,
         );
-        const createdOrganisation: CreatedOrganisationDto = await this.uc.createOrganisation(organisationDto);
-        return this.mapper.map(createdOrganisation, CreatedOrganisationDto, OrganisationResponse);
-    }
+        const result: CreatedOrganisationDto | SchulConnexError = await this.uc.createOrganisation(organisationDto);
+
+        if (result instanceof CreatedOrganisationDto) {
+            return this.mapper.map(result, CreatedOrganisationDto, OrganisationResponse);
+        }
+        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
 }
 ```
 #### Controller DTO
