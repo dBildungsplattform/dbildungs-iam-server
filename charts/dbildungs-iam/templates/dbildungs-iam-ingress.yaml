@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{.Values.backendHostname}}
+    - host: {{ required "A backend hostname (backendHostname) must be given on deployment" .Values.backendHostname }}
       http:
         paths:
           - path: /api
