@@ -22,7 +22,44 @@ import { PersonenkontextResponse } from '../../person/api/personenkontext.respon
 import { PersonBirthParams } from '../../person/api/person-birth.params.js';
 import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { CreatePersonBodyParams } from '../../person/api/create-person.body.params.js';
+import { PersonNameParams } from '../../person/api/person-name.params.js';
 
+function getPersonenDatensatzResponse(): PersonendatensatzResponse {
+    const mockBirthParams: PersonBirthParams = {
+        datum: faker.date.anytime(),
+        geburtsort: faker.string.alpha(),
+    };
+    const options: {
+        referrer: string;
+        lastName: string;
+        firstName: string;
+    } = {
+        referrer: faker.string.alpha(),
+        lastName: faker.person.lastName(),
+        firstName: faker.person.firstName(),
+    };
+    const personResponse: PersonResponse = {
+        id: faker.string.uuid(),
+        name: {
+            familienname: options.lastName,
+            vorname: options.firstName,
+        },
+        referrer: options.referrer,
+        mandant: '',
+        geburt: mockBirthParams,
+        geschlecht: Geschlecht.M,
+        lokalisierung: '',
+        vertrauensstufe: Vertrauensstufe.VOLL,
+        revision: '1',
+    };
+    const personenKontextResponse: PersonenkontextResponse[] = [];
+    const response: PersonendatensatzResponse = {
+        person: personResponse,
+        personenkontexte: personenKontextResponse,
+    };
+    return response;
+}
 describe('FrontendController', () => {
     let module: TestingModule;
     let frontendController: FrontendController;
@@ -198,51 +235,48 @@ describe('FrontendController', () => {
         });
     });
 
-    describe('personen', () => {
+    describe('get personen', () => {
         describe('when personen exist', () => {
             it('should return all persons', async () => {
-                const mockBirthParams: PersonBirthParams = {
-                    datum: faker.date.anytime(),
-                    geburtsort: faker.string.alpha(),
-                };
-                const options: {
-                    referrer: string;
-                    lastName: string;
-                    firstName: string;
-                } = {
-                    referrer: faker.string.alpha(),
-                    lastName: faker.person.lastName(),
-                    firstName: faker.person.firstName(),
-                };
-                const personResponse: PersonResponse = {
-                    id: faker.string.uuid(),
-                    name: {
-                        familienname: options.lastName,
-                        vorname: options.firstName,
-                    },
-                    referrer: options.referrer,
-                    mandant: '',
-                    geburt: mockBirthParams,
-                    geschlecht: Geschlecht.M,
-                    lokalisierung: '',
-                    vertrauensstufe: Vertrauensstufe.VOLL,
-                    revision: '1',
-                };
-                const personenKontextResponse: PersonenkontextResponse[] = [];
-                const response: PersonendatensatzResponse = {
-                    person: personResponse,
-                    personenkontexte: personenKontextResponse,
-                };
-
                 const pagedResponse: PagedResponse<PersonendatensatzResponse> = {
                     limit: 10,
                     total: 2,
                     offset: 0,
-                    items: [response],
+                    items: [getPersonenDatensatzResponse()],
                 };
                 personService.getAllPersons.mockResolvedValueOnce(pagedResponse);
                 const result: PagedResponse<PersonendatensatzResponse> = await frontendController.persons();
                 expect(result).toEqual(pagedResponse);
+            });
+        });
+        describe('when error occurs', () => {
+            it('should throw exception', async () => {
+                const exception: HttpException = new HttpException(
+                    'Requested Entity does not exist',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+                personService.getAllPersons.mockRejectedValueOnce(exception);
+                await expect(frontendController.persons()).rejects.toThrowError(HttpException);
+            });
+        });
+    });
+
+    describe('post personen', () => {
+        describe('when personen exist', () => {
+            it('should return all persons', async () => {
+                const personNameParams: PersonNameParams = {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                };
+                const createPersonBodyParams: CreatePersonBodyParams = {
+                    username: faker.string.alpha(),
+                    mandant: faker.string.alpha(),
+                    name: personNameParams,
+                };
+                const response: PersonendatensatzResponse = getPersonenDatensatzResponse();
+                personService.createPerson.mockResolvedValueOnce(response);
+                const result: PersonendatensatzResponse = await frontendController.createPerson(createPersonBodyParams);
+                expect(result).toEqual(response);
             });
         });
         describe('when error occurs', () => {

@@ -3,5 +3,9 @@ import { UsernameGeneratorService } from './username-generator.service.js';
 import { UserRepository } from './user.repository.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 
-@Module({ providers: [UsernameGeneratorService, UserRepository], imports: [KeycloakAdministrationModule] })
+@Module({
+    providers: [UsernameGeneratorService, UserRepository],
+    imports: [KeycloakAdministrationModule],
+    exports: [UserRepository],
+})
 export class UserModule {}

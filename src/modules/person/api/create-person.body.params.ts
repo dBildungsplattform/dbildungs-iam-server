@@ -44,6 +44,7 @@ export class CreatePersonBodyParams {
     public readonly name!: PersonNameParams;
 
     @AutoMap(() => PersonBirthParams)
+    @IsOptional()
     @ValidateNested()
     @Type(() => PersonBirthParams)
     @ApiProperty({ type: PersonBirthParams, required: false })
