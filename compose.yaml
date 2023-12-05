@@ -27,3 +27,40 @@ services:
     ports:
       - 6379:6379
     command: redis-server --requirepass password
+  backend:
+    profiles:
+      - full-backend
+    image: dbiam/server
+    build:
+      context: .
+    depends_on:
+      - keycloak
+      - db
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind
+  bff:
+    profiles:
+      - full-backend
+    image: dbiam/server
+    build:
+      context: .
+    depends_on:
+      - backend
+      - redis
+      - keycloak
+    restart: on-failure
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    command: ["node", "dist/src/backend-for-frontend/main.js"]
+    ports:
+      - 9091:9091
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind
