@@ -156,9 +156,9 @@ describe('BackendHttpService', () => {
             const axiosResponse: AxiosResponse = {
                 data: {},
                 headers: {
-                    'x-paging-offset': 1,
-                    'x-paging-limit': 2,
-                    'x-paging-total': 3,
+                    'x-paging-offset': '1',
+                    'x-paging-limit': '2',
+                    'x-paging-total': '3',
                 },
             } as unknown as AxiosResponse;
             httpServiceMock.get.mockReturnValueOnce(of(axiosResponse));
@@ -166,6 +166,27 @@ describe('BackendHttpService', () => {
             const response: PaginatedResponseDto<unknown> = await firstValueFrom(sut.getPaginated(endpoint, user));
 
             expect(response).toBeInstanceOf(PaginatedResponseDto);
+        });
+
+        it('should replace missing/incorrect paging headers with zero', async () => {
+            const endpoint: string = faker.string.alphanumeric(32);
+            const accessToken: string = faker.string.alphanumeric(32);
+            const user: User = createMock<User>({ access_token: accessToken });
+            const axiosResponse: AxiosResponse = {
+                data: {},
+                headers: {
+                    // x-paging-offset is missing
+                    'x-paging-limit': 'is malformed',
+                    'x-paging-total': ['is not a string'],
+                },
+            } as unknown as AxiosResponse;
+            httpServiceMock.get.mockReturnValueOnce(of(axiosResponse));
+
+            const response: PaginatedResponseDto<unknown> = await firstValueFrom(sut.getPaginated(endpoint, user));
+
+            expect(response.limit).toBe(0);
+            expect(response.offset).toBe(0);
+            expect(response.total).toBe(0);
         });
     });
 

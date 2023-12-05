@@ -106,9 +106,21 @@ export class BackendHttpService {
         return wrapAxiosError(
             this.httpService.get<T[]>(new URL(endpoint, this.backend).href, makeConfig(user, options)).pipe(
                 map((response: AxiosResponse<T[]>) => {
-                    const offset: number = parseInt(response.headers[PagingHeadersLowercase.OFFSET] as string, 10) ?? 0;
-                    const limit: number = parseInt(response.headers[PagingHeadersLowercase.LIMIT] as string, 10) ?? 0;
-                    const total: number = parseInt(response.headers[PagingHeadersLowercase.TOTAL] as string, 10) ?? 0;
+                    const parseIntOrZero = (input: unknown): number => {
+                        if (input && typeof input === 'string') {
+                            const parsed: number = parseInt(input, 10);
+
+                            if (!Number.isNaN(parsed)) {
+                                return parsed;
+                            }
+                        }
+
+                        return 0;
+                    };
+
+                    const offset: number = parseIntOrZero(response.headers[PagingHeadersLowercase.OFFSET]);
+                    const limit: number = parseIntOrZero(response.headers[PagingHeadersLowercase.LIMIT]);
+                    const total: number = parseIntOrZero(response.headers[PagingHeadersLowercase.TOTAL]);
                     return new PaginatedResponseDto<T>(offset, limit, total, response.data);
                 }),
             ),
