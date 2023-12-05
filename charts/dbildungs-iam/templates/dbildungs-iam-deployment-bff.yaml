@@ -43,7 +43,7 @@ spec:
               cpu: {{.Values.dbildungsIamCpuMax}}
               memory: {{.Values.dbildungsIamMemMax}}
           livenessProbe:
-            initialDelaySeconds: 10
+            initialDelaySeconds: 120 # Redis takes a while to get ready and we'd be getting restarts otherwise
             httpGet:
               port: 8080
               scheme: 'HTTP'
