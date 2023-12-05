@@ -32,7 +32,7 @@ function wrapAxiosError<T>(observable: Observable<T>): Observable<T> {
     );
 }
 
-const PagingHeadersLowercase = {
+const PagingHeadersLowercase: Record<'OFFSET' | 'LIMIT' | 'TOTAL', string> = {
     OFFSET: PagingHeaders.OFFSET.toLowerCase(),
     LIMIT: PagingHeaders.LIMIT.toLowerCase(),
     TOTAL: PagingHeaders.TOTAL.toLowerCase(),
