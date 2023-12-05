@@ -3,7 +3,8 @@ kind: Deployment
 metadata:
   name: dbiam-deployment-bff
   labels:
-    app.kubernetes.io/name: dbildungs-iam
+    app.kubernetes.io/name: {{.Chart.Name}}
+    app.kubernetes.io/version: {{.Chart.Version}}
 spec:
   selector:
     matchLabels:
@@ -21,10 +22,10 @@ spec:
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
-          command: ["node", "dist/src/backend-for-frontend/main.js"]
+          command: [ "node", "dist/src/backend-for-frontend/main.js" ]
           ports:
-             - name: web
-               containerPort: 8080
+            - name: web
+              containerPort: 8080
           env:
             - name: NODE_ENV
               value: {{.Values.environment}}

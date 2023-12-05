@@ -3,7 +3,8 @@ kind: Service
 metadata:
   name: redis-service
   labels:
-    app.kubernetes.io/name: dbiam-server
+    app.kubernetes.io/name: {{.Chart.Name}}
+    app.kubernetes.io/version: {{.Chart.Version}}
 spec:
   type: ClusterIP
   ports:
