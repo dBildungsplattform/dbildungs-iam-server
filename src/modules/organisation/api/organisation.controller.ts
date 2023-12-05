@@ -1,18 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import {
-    Body,
-    Controller,
-    Get,
-    HttpException,
-    HttpStatus,
-    Inject,
-    Param,
-    Post,
-    Query,
-    UseFilters,
-} from '@nestjs/common';
-import { OrganisationUc } from './organisation.uc.js';
+import { Body, Controller, Get, Inject, Param, Post, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -23,17 +11,20 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Public } from 'nest-keycloak-connect';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
+import { Paged, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
 import { CreateOrganisationDto } from './create-organisation.dto.js';
-import { OrganisationResponse } from './organisation.response.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
-import { OrganisationByIdParams } from './organisation-by-id.params.js';
-import { Public } from 'nest-keycloak-connect';
-import { FindOrganisationDto } from './find-organisation.dto.js';
-import { PagedResponse } from '../../../shared/paging/paged.response.js';
-import { Paged, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
+import { FindOrganisationDto } from './find-organisation.dto.js';
+import { OrganisationByIdParams } from './organisation-by-id.params.js';
+import { OrganisationResponse } from './organisation.response.js';
+import { OrganisationUc } from './organisation.uc.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
@@ -57,8 +48,12 @@ export class OrganisationController {
             CreateOrganisationBodyParams,
             CreateOrganisationDto,
         );
-        const createdOrganisation: CreatedOrganisationDto = await this.uc.createOrganisation(organisationDto);
-        return this.mapper.map(createdOrganisation, CreatedOrganisationDto, OrganisationResponse);
+        const result: CreatedOrganisationDto | SchulConnexError = await this.uc.createOrganisation(organisationDto);
+
+        if (result instanceof CreatedOrganisationDto) {
+            return this.mapper.map(result, CreatedOrganisationDto, OrganisationResponse);
+        }
+        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
     }
 
     @Get(':organisationId')
@@ -68,15 +63,15 @@ export class OrganisationController {
     @ApiNotFoundResponse({ description: 'The organization does not exist.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
-    public async findOrganisationById(
-        @Param() params: OrganisationByIdParams,
-    ): Promise<OrganisationResponse | HttpException> {
-        try {
-            const organisation: OrganisationResponse = await this.uc.findOrganisationById(params.organisationId);
-            return organisation;
-        } catch (error) {
-            throw new HttpException('Requested Entity does not exist', HttpStatus.NOT_FOUND);
+    public async findOrganisationById(@Param() params: OrganisationByIdParams): Promise<OrganisationResponse> {
+        const result: OrganisationResponse | SchulConnexError = await this.uc.findOrganisationById(
+            params.organisationId,
+        );
+
+        if (result instanceof OrganisationResponse) {
+            return result;
         }
+        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
     }
 
     @Get()

@@ -1,8 +1,13 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged } from '../../../shared/paging/index.js';
-import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { User } from '../../user/user.js';
+import { UserRepository } from '../../user/user.repository.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
@@ -14,6 +19,7 @@ import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonDto } from './person.dto.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
+import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
 
 @Injectable()
 export class PersonUc {
@@ -21,41 +27,46 @@ export class PersonUc {
         private readonly personService: PersonService,
         private readonly personenkontextService: PersonenkontextService,
         private readonly userService: KeycloakUserService,
+        private readonly userRepository: UserRepository,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
-    public async createPerson(personDto: CreatePersonDto): Promise<PersonDto> {
+    public async createPerson(personDto: CreatePersonDto): Promise<PersonDto | SchulConnexError> {
         // create user
-        const userDo: UserDo<false> = this.mapper.map(personDto, CreatePersonDto, UserDo<false>);
-        const userIdResult: Result<string> = await this.userService.create(userDo);
-        if (!userIdResult.ok) {
-            throw userIdResult.error;
+        let user: User;
+        try {
+            user = await this.userRepository.createUser(personDto.vorname, personDto.familienname);
+            await user.save(this.userService);
+        } catch (error) {
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new KeycloakClientError(`Can't save user`));
         }
 
         // create person
         const personDo: PersonDo<false> = this.mapper.map(personDto, CreatePersonDto, PersonDo);
-        personDo.keycloakUserId = userIdResult.value;
+        personDo.keycloakUserId = user.id;
+        personDo.referrer = user.username;
 
-        const result: Result<PersonDo<true>> = await this.personService.createPerson(personDo);
+        const result: Result<PersonDo<true>, DomainError> = await this.personService.createPerson(personDo);
         if (result.ok) {
             const resPersonDto: PersonDto = this.mapper.map(personDo, PersonDo, PersonDto);
+            resPersonDto.startpasswort = user.newPassword;
             return resPersonDto;
         }
 
         // delete user if person could not be created
-        const deleteUserResult: Result<void> = await this.userService.delete(userIdResult.value);
+        const deleteUserResult: Result<void, DomainError> = await this.userService.delete(user.id);
         if (deleteUserResult.ok) {
-            throw result.error;
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
         } else {
-            throw deleteUserResult.error;
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(deleteUserResult.error);
         }
     }
 
-    public async findPersonById(id: string): Promise<PersonendatensatzDto> {
-        const result: Result<PersonDo<true>> = await this.personService.findPersonById(id);
+    public async findPersonById(id: string): Promise<PersonendatensatzDto | SchulConnexError> {
+        const result: Result<PersonDo<true>, DomainError> = await this.personService.findPersonById(id);
 
         if (!result.ok) {
-            throw result.error;
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
         }
 
         const personDto: PersonDto = this.mapper.map(result.value, PersonDo, PersonDto);
@@ -114,8 +125,12 @@ export class PersonUc {
         };
     }
 
-    public async resetPassword(personId: string): Promise<Result<string>> {
-        return this.userService.resetPasswordByPersonId(personId);
+    public async resetPassword(personId: string): Promise<Result<string> | SchulConnexError> {
+        const result: Result<string, DomainError> = await this.userService.resetPasswordByPersonId(personId);
+        if (result.ok) {
+            return result;
+        }
+        return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 
     private async findPersonenkontexteForPerson(
