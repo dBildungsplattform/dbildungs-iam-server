@@ -32,6 +32,12 @@ function wrapAxiosError<T>(observable: Observable<T>): Observable<T> {
     );
 }
 
+const PagingHeadersLowercase = {
+    OFFSET: PagingHeaders.OFFSET.toLowerCase(),
+    LIMIT: PagingHeaders.LIMIT.toLowerCase(),
+    TOTAL: PagingHeaders.TOTAL.toLowerCase(),
+};
+
 @Injectable()
 export class BackendHttpService {
     private backend: string;
@@ -100,9 +106,9 @@ export class BackendHttpService {
         return wrapAxiosError(
             this.httpService.get<T[]>(new URL(endpoint, this.backend).href, makeConfig(user, options)).pipe(
                 map((response: AxiosResponse<T[]>) => {
-                    const offset: number = response.headers[PagingHeaders.OFFSET.toLowerCase()] as number;
-                    const limit: number = response.headers[PagingHeaders.LIMIT.toLowerCase()] as number;
-                    const total: number = response.headers[PagingHeaders.TOTAL.toLowerCase()] as number;
+                    const offset: number = parseInt(response.headers[PagingHeadersLowercase.OFFSET] as string, 10) ?? 0;
+                    const limit: number = parseInt(response.headers[PagingHeadersLowercase.LIMIT] as string, 10) ?? 0;
+                    const total: number = parseInt(response.headers[PagingHeadersLowercase.TOTAL] as string, 10) ?? 0;
                     return new PaginatedResponseDto<T>(offset, limit, total, response.data);
                 }),
             ),
