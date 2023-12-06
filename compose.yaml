@@ -21,7 +21,7 @@ services:
       - 8080:8080
       - 8443:8443
     volumes:
-      - ./dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
+      - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
   redis:
     image: redis:7.2.2
     ports:
@@ -61,6 +61,6 @@ services:
     ports:
       - 9091:9091
     volumes:
-      - source: 'config'
+      - source: 'docker-config'
         target: '/app/config'
         type: bind
