@@ -4,7 +4,7 @@ import { GenericContainer, StartedTestContainer } from 'testcontainers';
 import { UserRepository } from './user.repository.js';
 import { UserModule } from './user.module.js';
 import { PersonApiModule } from '../person/person-api.module.js';
-import { INestApplication } from '@nestjs/common';
+import { HttpStatus, INestApplication } from '@nestjs/common';
 import supertest from 'supertest';
 import request from 'supertest';
 import { EntityManager, Loaded, MikroORM } from '@mikro-orm/core';
@@ -52,7 +52,7 @@ describe('A fully integrated user module', () => {
                 },
                 username: '',
             })
-            .expect(200);
+            .expect(HttpStatus.CREATED);
         expect(result.body).toMatchObject({
             person: {
                 referrer: 'mmustermann',

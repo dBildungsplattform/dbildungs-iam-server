@@ -10,10 +10,11 @@ export class LoginGuard extends AuthGuard('oidc') {
             request.session.redirectUrl = request.query['redirectUrl'] as string;
         }
 
-        const result: boolean = (await super.canActivate(context)) as boolean;
+        try {
+            await super.canActivate(context);
+            await super.logIn(context.switchToHttp().getRequest());
+        } catch (err) {}
 
-        await super.logIn(context.switchToHttp().getRequest());
-
-        return result;
+        return true;
     }
 }
