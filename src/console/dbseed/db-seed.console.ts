@@ -27,6 +27,8 @@ import { ServiceProviderFile } from './file/service-provider-file.js';
 export class DbSeedConsole extends CommandRunner {
     private forkedEm: EntityManager;
 
+    private createdKeycloakUsers: [string, string][] = [];
+
     public constructor(
         private readonly orm: MikroORM,
         private readonly logger: ClassLogger,
@@ -63,11 +65,10 @@ export class DbSeedConsole extends CommandRunner {
         try {
             await this.forkedEm.flush();
             this.logger.info('Created seed data successfully.');
-        } catch(err) {
+        } catch (err) {
             this.logger.error('Seed data could not be created!');
-            console.log(err);
+            await this.deleteAllCreatedKeycloakUsers();
         }
-
     }
 
     private async processEntityFile(entityFileName: string, directory: string): Promise<void> {
@@ -178,7 +179,15 @@ export class DbSeedConsole extends CommandRunner {
         if (!userIdResult.ok) {
             throw userIdResult.error;
         }
+        this.createdKeycloakUsers.push([userIdResult.value, username]);
         personEntity.keycloakUserId = userIdResult.value;
+    }
+
+    private async deleteAllCreatedKeycloakUsers(): Promise<void> {
+        for (const userTuple of this.createdKeycloakUsers) {
+            this.logger.info(`Removed keycloak-user with username ${userTuple[1]}`);
+            await this.keycloakUserService.delete(userTuple[0]);
+        }
     }
 
     private async handlePersonRollenZuweisung(fileContentAsStr: string, entityName: string): Promise<void> {

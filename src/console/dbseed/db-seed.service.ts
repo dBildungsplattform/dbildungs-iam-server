@@ -21,15 +21,9 @@ export class DbSeedService {
 
     private rolleMap: Map<string, RolleEntity> = new Map<string, RolleEntity>();
 
-    private serviceProviderZugriffMap: Map<string, ServiceProviderZugriffFile> = new Map<
-        string,
-        ServiceProviderZugriffFile
-    >();
+    private spzMap: Map<string, ServiceProviderZugriffFile> = new Map<string, ServiceProviderZugriffFile>();
 
-    private personRollenZuweisungMap: Map<string, PersonRollenZuweisungFile> = new Map<
-        string,
-        PersonRollenZuweisungFile
-    >();
+    private przMap: Map<string, PersonRollenZuweisungFile> = new Map<string, PersonRollenZuweisungFile>();
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
@@ -92,7 +86,7 @@ export class DbSeedService {
             () => new ServiceProviderZugriffFile(),
         );
         for (const entity of entities) {
-            this.serviceProviderZugriffMap.set(entity.id, entity);
+            this.spzMap.set(entity.id, entity);
         }
         return entities;
     }
@@ -103,7 +97,7 @@ export class DbSeedService {
             () => new PersonRollenZuweisungFile(),
         );
         for (const entity of entities) {
-            this.personRollenZuweisungMap.set(entity.id, entity);
+            this.przMap.set(entity.id, entity);
         }
         return entities;
     }
