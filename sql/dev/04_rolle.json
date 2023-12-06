@@ -2,11 +2,8 @@
     "entityName": "Rolle",
     "entities": [
         {
-            "id": "9876",
+            "id": "1111",
             "administeredBySchulstrukturknoten": "1"
-        },
-        {
-            "administeredBySchulstrukturknoten": "2"
         }
     ]
 }

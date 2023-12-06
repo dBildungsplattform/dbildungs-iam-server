@@ -1,7 +1,7 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { ClassLogger } from '../core/logging/class-logger.js';
 import { DbInitConsole } from './db-init.console.js';
-import { DbSeedConsole } from './db-seed.console.js';
+import { DbSeedConsole } from './dbseed/db-seed.console.js';
 
 @Command({
     name: 'db',

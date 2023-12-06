@@ -10,10 +10,12 @@ import { mappingErrorHandler } from '../shared/error/index.js';
 import { DbConsole } from './db.console.js';
 import { DbInitConsole } from './db-init.console.js';
 import { LoggerModule } from '../core/logging/logger.module.js';
-import { DbSeedConsole } from './db-seed.console.js';
+import { DbSeedConsole } from './dbseed/db-seed.console.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { UserModule } from '../modules/user/user.module.js';
 import { UsernameGeneratorService } from '../modules/user/username-generator.service.js';
+import { DbSeedMapper } from './dbseed/db-seed-mapper.js';
+import { DbSeedService } from './dbseed/db-seed.service.js';
 
 @Module({
     imports: [
@@ -47,6 +49,6 @@ import { UsernameGeneratorService } from '../modules/user/username-generator.ser
             inject: [ConfigService],
         }),
     ],
-    providers: [DbConsole, DbInitConsole, DbSeedConsole, UsernameGeneratorService],
+    providers: [DbConsole, DbInitConsole, DbSeedConsole, UsernameGeneratorService, DbSeedMapper, DbSeedService],
 })
 export class ConsoleModule {}

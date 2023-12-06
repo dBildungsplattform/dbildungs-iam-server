@@ -1,0 +1,148 @@
+import { CommandRunner, SubCommand } from 'nest-commander';
+import fs from 'fs';
+import { ClassLogger } from '../../core/logging/class-logger.js';
+import { EntityManager, MikroORM } from '@mikro-orm/core';
+import { Inject } from '@nestjs/common';
+import { getMapperToken } from '@automapper/nestjs';
+import { Mapper } from '@automapper/core';
+import { KeycloakUserService, UserDo } from '../../modules/keycloak-administration/index.js';
+import { UsernameGeneratorService } from '../../modules/user/username-generator.service.js';
+import { PersonRollenZuweisungEntityFile } from './person-rollen-zuweisung-entity-file.js';
+import { DbSeedService } from './db-seed.service.js';
+import { Entity, SeedFile } from './db-seed.types.js';
+import { PersonEntityFile } from './person-entity-file.js';
+import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
+import { PersonRollenZuweisungEntity } from '../../modules/rolle/entity/person-rollen-zuweisung.entity.js';
+
+@SubCommand({ name: 'seed', description: 'creates seed data in the database' })
+export class DbSeedConsole extends CommandRunner {
+    private forkedEm: EntityManager;
+
+    public constructor(
+        private readonly orm: MikroORM,
+        private readonly logger: ClassLogger,
+        private readonly dbSeedService: DbSeedService,
+        private readonly usernameGenerator: UsernameGeneratorService,
+        private readonly keycloakUserService: KeycloakUserService,
+        @Inject(getMapperToken()) private readonly mapper: Mapper,
+    ) {
+        super();
+        this.forkedEm = orm.em.fork();
+    }
+
+    private getDirectory(_passedParams: string[]): string {
+        return _passedParams[0] !== undefined ? _passedParams[0] : 'dev';
+    }
+
+    private getExcludedFiles(_passedParams: string[]): string {
+        if (_passedParams[1] !== undefined) {
+            this.logger.info(`Following files skipped via parameter: ${_passedParams[1]}`);
+            return _passedParams[1];
+        }
+        return '';
+    }
+
+    public override async run(_passedParams: string[], _options?: Record<string, unknown>): Promise<void> {
+        const directory: string = this.getDirectory(_passedParams);
+        const excludedFiles: string = this.getExcludedFiles(_passedParams);
+        this.logger.info('Create seed data in the database...');
+        let entityFileNames: string[] = this.dbSeedService.getEntityFileNames(directory);
+        entityFileNames = entityFileNames.filter((efm: string) => !excludedFiles.includes(efm));
+        for (const entityFileName of entityFileNames) {
+            const fileContentAsStr: string = fs.readFileSync(`./sql/${directory}/${entityFileName}`, 'utf-8');
+            const seedFile: SeedFile = JSON.parse(fileContentAsStr) as SeedFile;
+            switch (seedFile.entityName) {
+                case 'DataProvider':
+                    this.handle(this.dbSeedService.readDataProvider(fileContentAsStr), seedFile.entityName);
+                    break;
+                case 'ServiceProvider':
+                    this.handle(this.dbSeedService.readServiceProvider(fileContentAsStr), seedFile.entityName);
+                    break;
+                case 'Organisation':
+                    this.handle(this.dbSeedService.readOrganisation(fileContentAsStr), seedFile.entityName);
+                    break;
+                case 'Person':
+                    await this.handlePerson(fileContentAsStr, seedFile.entityName);
+                    break;
+                case 'Rolle':
+                    this.handle(this.dbSeedService.readRolle(fileContentAsStr), seedFile.entityName);
+                    break;
+                case 'ServiceProviderZugriff':
+                    this.handle(this.dbSeedService.readServiceProviderZugriff(fileContentAsStr), seedFile.entityName);
+                    break;
+                case 'PersonRollenZuweisung':
+                    await this.handlePersonRollenZuweisung(fileContentAsStr, seedFile.entityName);
+                    break;
+                default:
+                    throw new Error(`Unsupported EntityName / EntityType: ${seedFile.entityName}`);
+            }
+        }
+        this.logger.info('Created seed data successfully');
+        await this.forkedEm.flush();
+    }
+
+    private handle(entities: Entity[], entityName: string): void {
+        for (const entity of entities) {
+            this.forkedEm.persist(entity);
+        }
+        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
+    }
+
+    private async handlePerson(fileContentAsStr: string, entityName: string): Promise<void> {
+        const entities: PersonEntityFile[] = this.dbSeedService.readPerson(fileContentAsStr);
+        for (const entity of entities) {
+            await this.createPerson(entity);
+            this.forkedEm.persist(entity);
+        }
+        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
+    }
+
+    private async createPerson(personEntity: PersonEntityFile): Promise<void> {
+        const username: string = await this.usernameGenerator.generateUsername(
+            personEntity.vorname,
+            personEntity.familienname,
+        );
+        const userDo: UserDo<false> = {
+            username: username,
+            email: username + '@test.de',
+            id: null,
+            createdDate: null,
+        };
+        const userIdResult: Result<string> = await this.keycloakUserService.create(userDo, 'test');
+        if (!userIdResult.ok) {
+            throw userIdResult.error;
+        }
+        personEntity.keycloakUserId = userIdResult.value;
+    }
+
+    private async handlePersonRollenZuweisung(fileContentAsStr: string, entityName: string): Promise<void> {
+        const entities: PersonRollenZuweisungEntityFile[] =
+            this.dbSeedService.readPersonRollenZuweisung(fileContentAsStr);
+        for (const e of entities) {
+            await this.setRolle(e);
+            const mappedEntity: PersonRollenZuweisungEntity = this.mapper.map(
+                e,
+                PersonRollenZuweisungEntityFile,
+                PersonRollenZuweisungEntity,
+            );
+            this.forkedEm.persist(mappedEntity);
+        }
+        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
+    }
+
+    private async setRolle(entity: PersonRollenZuweisungEntityFile): Promise<void> {
+        const id: string = entity.rolleReference.id;
+        if (entity.rolleReference.persisted) {
+            const foreignEntity: Option<Entity> = await this.orm.em.fork().findOne(RolleEntity, { id });
+            if (foreignEntity) {
+                entity.rolle = foreignEntity;
+            } else {
+                throw new Error(`Foreign RolleEntity with id ${id} could not be found!`);
+            }
+        } else {
+            const rolle: RolleEntity | undefined = this.dbSeedService.getRolle(id);
+            if (rolle === undefined) throw new Error(`No rolle with id ${id}`);
+            entity.rolle = rolle;
+        }
+    }
+}
