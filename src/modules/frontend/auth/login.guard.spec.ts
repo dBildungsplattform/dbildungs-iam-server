@@ -51,16 +51,6 @@ describe('LoginGuard', () => {
             expect(logInSpy).toHaveBeenCalledWith(contextMock.switchToHttp().getRequest());
         });
 
-        it('should return result of super.canActivate', async () => {
-            canActivateSpy.mockResolvedValueOnce(true);
-            logInSpy.mockResolvedValueOnce(undefined);
-            const contextMock: DeepMocked<ExecutionContext> = createMock();
-
-            const result: boolean = await sut.canActivate(contextMock);
-
-            expect(result).toBe(true);
-        });
-
         it('should save returnUrl to session if it exists', async () => {
             canActivateSpy.mockResolvedValueOnce(true);
             logInSpy.mockResolvedValueOnce(undefined);
@@ -71,6 +61,22 @@ describe('LoginGuard', () => {
             await sut.canActivate(contextMock);
 
             expect(contextMock.switchToHttp().getRequest<Request>().session.redirectUrl).toBe(redirectUrl);
+        });
+
+        it('should ignore errors in super.canActivate', async () => {
+            canActivateSpy.mockRejectedValueOnce(new Error());
+            logInSpy.mockResolvedValueOnce(undefined);
+            const contextMock: DeepMocked<ExecutionContext> = createMock();
+
+            await expect(sut.canActivate(contextMock)).resolves.toBe(true);
+        });
+
+        it('should ignore errors in super.logIn', async () => {
+            canActivateSpy.mockResolvedValueOnce(true);
+            logInSpy.mockRejectedValueOnce(new Error());
+            const contextMock: DeepMocked<ExecutionContext> = createMock();
+
+            await expect(sut.canActivate(contextMock)).resolves.toBe(true);
         });
     });
 });
