@@ -16,6 +16,14 @@
                 "persisted": false
             },
             "schulstrukturknoten": "1"
+        },
+        {
+            "person": "1",
+            "rolleReference": {
+                "id": "3333",
+                "persisted": false
+            },
+            "schulstrukturknoten": "2"
         }
     ]
 }

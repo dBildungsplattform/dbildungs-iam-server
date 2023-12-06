@@ -7,12 +7,21 @@ import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { KeycloakUserService, UserDo } from '../../modules/keycloak-administration/index.js';
 import { UsernameGeneratorService } from '../../modules/user/username-generator.service.js';
-import { PersonRollenZuweisungEntityFile } from './person-rollen-zuweisung-entity-file.js';
+import { PersonRollenZuweisungFile } from './file/person-rollen-zuweisung-file.js';
 import { DbSeedService } from './db-seed.service.js';
 import { Entity, SeedFile } from './db-seed.types.js';
-import { PersonEntityFile } from './person-entity-file.js';
+import { PersonFile } from './file/person-file.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { PersonRollenZuweisungEntity } from '../../modules/rolle/entity/person-rollen-zuweisung.entity.js';
+import { ServiceProviderZugriffFile } from './file/service-provider-zugriff-file.js';
+import { ServiceProviderZugriffEntity } from '../../modules/rolle/entity/service-provider-zugriff.entity.js';
+import { OrganisationEntity } from '../../modules/organisation/persistence/organisation.entity.js';
+import { OrganisationFile } from './file/organisation-file.js';
+import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
+import { DataProviderFile } from './file/data-provider-file.js';
+import { PersonEntity } from '../../modules/person/persistence/person.entity.js';
+import { ServiceProviderEntity } from '../../modules/rolle/entity/service-provider.entity.js';
+import { ServiceProviderFile } from './file/service-provider-file.js';
 
 @SubCommand({ name: 'seed', description: 'creates seed data in the database' })
 export class DbSeedConsole extends CommandRunner {
@@ -49,55 +58,112 @@ export class DbSeedConsole extends CommandRunner {
         let entityFileNames: string[] = this.dbSeedService.getEntityFileNames(directory);
         entityFileNames = entityFileNames.filter((efm: string) => !excludedFiles.includes(efm));
         for (const entityFileName of entityFileNames) {
-            const fileContentAsStr: string = fs.readFileSync(`./sql/${directory}/${entityFileName}`, 'utf-8');
-            const seedFile: SeedFile = JSON.parse(fileContentAsStr) as SeedFile;
-            switch (seedFile.entityName) {
-                case 'DataProvider':
-                    this.handle(this.dbSeedService.readDataProvider(fileContentAsStr), seedFile.entityName);
-                    break;
-                case 'ServiceProvider':
-                    this.handle(this.dbSeedService.readServiceProvider(fileContentAsStr), seedFile.entityName);
-                    break;
-                case 'Organisation':
-                    this.handle(this.dbSeedService.readOrganisation(fileContentAsStr), seedFile.entityName);
-                    break;
-                case 'Person':
-                    await this.handlePerson(fileContentAsStr, seedFile.entityName);
-                    break;
-                case 'Rolle':
-                    this.handle(this.dbSeedService.readRolle(fileContentAsStr), seedFile.entityName);
-                    break;
-                case 'ServiceProviderZugriff':
-                    this.handle(this.dbSeedService.readServiceProviderZugriff(fileContentAsStr), seedFile.entityName);
-                    break;
-                case 'PersonRollenZuweisung':
-                    await this.handlePersonRollenZuweisung(fileContentAsStr, seedFile.entityName);
-                    break;
-                default:
-                    throw new Error(`Unsupported EntityName / EntityType: ${seedFile.entityName}`);
-            }
+            await this.processEntityFile(entityFileName, directory);
         }
-        this.logger.info('Created seed data successfully');
-        await this.forkedEm.flush();
+        try {
+            await this.forkedEm.flush();
+            this.logger.info('Created seed data successfully.');
+        } catch(err) {
+            this.logger.error('Seed data could not be created!');
+            console.log(err);
+        }
+
     }
 
-    private handle(entities: Entity[], entityName: string): void {
+    private async processEntityFile(entityFileName: string, directory: string): Promise<void> {
+        const fileContentAsStr: string = fs.readFileSync(`./sql/${directory}/${entityFileName}`, 'utf-8');
+        const seedFile: SeedFile = JSON.parse(fileContentAsStr) as SeedFile;
+        switch (seedFile.entityName) {
+            case 'DataProvider':
+                this.handleDataProvider(this.dbSeedService.readDataProvider(fileContentAsStr), seedFile.entityName);
+                break;
+            case 'ServiceProvider':
+                this.handleServiceProvider(
+                    this.dbSeedService.readServiceProvider(fileContentAsStr),
+                    seedFile.entityName,
+                );
+                break;
+            case 'Organisation':
+                this.handleOrganisation(this.dbSeedService.readOrganisation(fileContentAsStr), seedFile.entityName);
+                break;
+            case 'Person':
+                await this.handlePerson(fileContentAsStr, seedFile.entityName);
+                break;
+            case 'Rolle':
+                this.handleRolle(this.dbSeedService.readRolle(fileContentAsStr), seedFile.entityName);
+                break;
+            case 'ServiceProviderZugriff':
+                this.handleServiceProviderZugriff(
+                    this.dbSeedService.readServiceProviderZugriff(fileContentAsStr),
+                    seedFile.entityName,
+                );
+                break;
+            case 'PersonRollenZuweisung':
+                await this.handlePersonRollenZuweisung(fileContentAsStr, seedFile.entityName);
+                break;
+            default:
+                throw new Error(`Unsupported EntityName / EntityType: ${seedFile.entityName}`);
+        }
+    }
+
+    private handleServiceProvider(entities: Entity[], entityName: string): void {
+        for (const entity of entities) {
+            const mappedEntity: ServiceProviderEntity = this.mapper.map(
+                entity,
+                ServiceProviderFile,
+                ServiceProviderEntity,
+            );
+            this.forkedEm.persist(mappedEntity);
+        }
+        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
+    }
+
+    private handleServiceProviderZugriff(entities: Entity[], entityName: string): void {
+        for (const entity of entities) {
+            const mappedEntity: ServiceProviderZugriffEntity = this.mapper.map(
+                entity,
+                ServiceProviderZugriffFile,
+                ServiceProviderZugriffEntity,
+            );
+            this.forkedEm.persist(mappedEntity);
+        }
+        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
+    }
+
+    private handleDataProvider(entities: Entity[], entityName: string): void {
+        for (const entity of entities) {
+            const mappedEntity: DataProviderEntity = this.mapper.map(entity, DataProviderFile, DataProviderEntity);
+            this.forkedEm.persist(mappedEntity);
+        }
+        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
+    }
+
+    private handleRolle(entities: Entity[], entityName: string): void {
         for (const entity of entities) {
             this.forkedEm.persist(entity);
+        }
+        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
+    }
+
+    private handleOrganisation(entities: Entity[], entityName: string): void {
+        for (const entity of entities) {
+            const mappedEntity: OrganisationEntity = this.mapper.map(entity, OrganisationFile, OrganisationEntity);
+            this.forkedEm.persist(mappedEntity);
         }
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }
 
     private async handlePerson(fileContentAsStr: string, entityName: string): Promise<void> {
-        const entities: PersonEntityFile[] = this.dbSeedService.readPerson(fileContentAsStr);
+        const entities: PersonFile[] = this.dbSeedService.readPerson(fileContentAsStr);
         for (const entity of entities) {
             await this.createPerson(entity);
-            this.forkedEm.persist(entity);
+            const mappedEntity: PersonEntity = this.mapper.map(entity, PersonFile, PersonEntity);
+            this.forkedEm.persist(mappedEntity);
         }
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }
 
-    private async createPerson(personEntity: PersonEntityFile): Promise<void> {
+    private async createPerson(personEntity: PersonFile): Promise<void> {
         const username: string = await this.usernameGenerator.generateUsername(
             personEntity.vorname,
             personEntity.familienname,
@@ -116,13 +182,12 @@ export class DbSeedConsole extends CommandRunner {
     }
 
     private async handlePersonRollenZuweisung(fileContentAsStr: string, entityName: string): Promise<void> {
-        const entities: PersonRollenZuweisungEntityFile[] =
-            this.dbSeedService.readPersonRollenZuweisung(fileContentAsStr);
+        const entities: PersonRollenZuweisungFile[] = this.dbSeedService.readPersonRollenZuweisung(fileContentAsStr);
         for (const e of entities) {
             await this.setRolle(e);
             const mappedEntity: PersonRollenZuweisungEntity = this.mapper.map(
                 e,
-                PersonRollenZuweisungEntityFile,
+                PersonRollenZuweisungFile,
                 PersonRollenZuweisungEntity,
             );
             this.forkedEm.persist(mappedEntity);
@@ -130,7 +195,7 @@ export class DbSeedConsole extends CommandRunner {
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }
 
-    private async setRolle(entity: PersonRollenZuweisungEntityFile): Promise<void> {
+    private async setRolle(entity: PersonRollenZuweisungFile): Promise<void> {
         const id: string = entity.rolleReference.id;
         if (entity.rolleReference.persisted) {
             const foreignEntity: Option<Entity> = await this.orm.em.fork().findOne(RolleEntity, { id });

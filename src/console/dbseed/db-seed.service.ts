@@ -1,40 +1,40 @@
 import { Injectable } from '@nestjs/common';
 import fs from 'fs';
-import { PersonRollenZuweisungEntityFile } from './person-rollen-zuweisung-entity-file.js';
+import { PersonRollenZuweisungFile } from './file/person-rollen-zuweisung-file.js';
 import { ConstructorCall, EntityFile } from './db-seed.types.js';
-import { DataProviderEntityFile } from './data-provider-entity-file.js';
-import { ServiceProviderEntityFile } from './service-provider-entity-file.js';
-import { OrganisationEntityFile } from './organisation-entity-file.js';
-import { PersonEntityFile } from './person-entity-file.js';
-import { RolleEntityFile } from './rolle-entity-file.js';
-import { ServiceProviderZugriffEntityFile } from './service-provider-zugriff-entity-file.js';
+import { DataProviderFile } from './file/data-provider-file.js';
+import { ServiceProviderFile } from './file/service-provider-file.js';
+import { OrganisationFile } from './file/organisation-file.js';
+import { PersonFile } from './file/person-file.js';
+import { ServiceProviderZugriffFile } from './file/service-provider-zugriff-file.js';
+import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 
 @Injectable()
 export class DbSeedService {
-    private dataProviderMap: Map<string, DataProviderEntityFile> = new Map<string, DataProviderEntityFile>();
+    private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
 
-    private serviceProviderMap: Map<string, ServiceProviderEntityFile> = new Map<string, ServiceProviderEntityFile>();
+    private serviceProviderMap: Map<string, ServiceProviderFile> = new Map<string, ServiceProviderFile>();
 
-    private organisationMap: Map<string, OrganisationEntityFile> = new Map<string, OrganisationEntityFile>();
+    private organisationMap: Map<string, OrganisationFile> = new Map<string, OrganisationFile>();
 
-    private personMap: Map<string, PersonEntityFile> = new Map<string, PersonEntityFile>();
+    private personMap: Map<string, PersonFile> = new Map<string, PersonFile>();
 
-    private rolleMap: Map<string, RolleEntityFile> = new Map<string, RolleEntityFile>();
+    private rolleMap: Map<string, RolleEntity> = new Map<string, RolleEntity>();
 
-    private serviceProviderZugriffMap: Map<string, ServiceProviderZugriffEntityFile> = new Map<
+    private serviceProviderZugriffMap: Map<string, ServiceProviderZugriffFile> = new Map<
         string,
-        ServiceProviderZugriffEntityFile
+        ServiceProviderZugriffFile
     >();
 
-    private personRollenZuweisungMap: Map<string, PersonRollenZuweisungEntityFile> = new Map<
+    private personRollenZuweisungMap: Map<string, PersonRollenZuweisungFile> = new Map<
         string,
-        PersonRollenZuweisungEntityFile
+        PersonRollenZuweisungFile
     >();
 
-    public readDataProvider(fileContentAsStr: string): DataProviderEntityFile[] {
-        const entities: DataProviderEntityFile[] = this.readEntityFromJSONFile<DataProviderEntityFile>(
+    public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
+        const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
             fileContentAsStr,
-            () => new DataProviderEntityFile(),
+            () => new DataProviderFile(),
         );
         for (const entity of entities) {
             this.dataProviderMap.set(entity.id, entity);
@@ -42,10 +42,10 @@ export class DbSeedService {
         return entities;
     }
 
-    public readServiceProvider(fileContentAsStr: string): ServiceProviderEntityFile[] {
-        const entities: ServiceProviderEntityFile[] = this.readEntityFromJSONFile<ServiceProviderEntityFile>(
+    public readServiceProvider(fileContentAsStr: string): ServiceProviderFile[] {
+        const entities: ServiceProviderFile[] = this.readEntityFromJSONFile<ServiceProviderFile>(
             fileContentAsStr,
-            () => new ServiceProviderEntityFile(),
+            () => new ServiceProviderFile(),
         );
         for (const entity of entities) {
             this.serviceProviderMap.set(entity.id, entity);
@@ -53,10 +53,10 @@ export class DbSeedService {
         return entities;
     }
 
-    public readOrganisation(fileContentAsStr: string): OrganisationEntityFile[] {
-        const entities: OrganisationEntityFile[] = this.readEntityFromJSONFile<OrganisationEntityFile>(
+    public readOrganisation(fileContentAsStr: string): OrganisationFile[] {
+        const entities: OrganisationFile[] = this.readEntityFromJSONFile<OrganisationFile>(
             fileContentAsStr,
-            () => new OrganisationEntityFile(),
+            () => new OrganisationFile(),
         );
         for (const entity of entities) {
             this.organisationMap.set(entity.id, entity);
@@ -64,10 +64,10 @@ export class DbSeedService {
         return entities;
     }
 
-    public readPerson(fileContentAsStr: string): PersonEntityFile[] {
-        const entities: PersonEntityFile[] = this.readEntityFromJSONFile<PersonEntityFile>(
+    public readPerson(fileContentAsStr: string): PersonFile[] {
+        const entities: PersonFile[] = this.readEntityFromJSONFile<PersonFile>(
             fileContentAsStr,
-            () => new PersonEntityFile(),
+            () => new PersonFile(),
         );
         for (const entity of entities) {
             this.personMap.set(entity.id, entity);
@@ -75,10 +75,10 @@ export class DbSeedService {
         return entities;
     }
 
-    public readRolle(fileContentAsStr: string): RolleEntityFile[] {
-        const entities: RolleEntityFile[] = this.readEntityFromJSONFile<RolleEntityFile>(
+    public readRolle(fileContentAsStr: string): RolleEntity[] {
+        const entities: RolleEntity[] = this.readEntityFromJSONFile<RolleEntity>(
             fileContentAsStr,
-            () => new RolleEntityFile(),
+            () => new RolleEntity(),
         );
         for (const entity of entities) {
             this.rolleMap.set(entity.id, entity);
@@ -86,31 +86,31 @@ export class DbSeedService {
         return entities;
     }
 
-    public readServiceProviderZugriff(fileContentAsStr: string): ServiceProviderZugriffEntityFile[] {
-        const entities: ServiceProviderZugriffEntityFile[] =
-            this.readEntityFromJSONFile<ServiceProviderZugriffEntityFile>(
-                fileContentAsStr,
-                () => new ServiceProviderZugriffEntityFile(),
-            );
+    public readServiceProviderZugriff(fileContentAsStr: string): ServiceProviderZugriffFile[] {
+        const entities: ServiceProviderZugriffFile[] = this.readEntityFromJSONFile<ServiceProviderZugriffFile>(
+            fileContentAsStr,
+            () => new ServiceProviderZugriffFile(),
+        );
         for (const entity of entities) {
             this.serviceProviderZugriffMap.set(entity.id, entity);
         }
         return entities;
     }
 
-    public readPersonRollenZuweisung(fileContentAsStr: string): PersonRollenZuweisungEntityFile[] {
-        const entities: PersonRollenZuweisungEntityFile[] =
-            this.readEntityFromJSONFile<PersonRollenZuweisungEntityFile>(
-                fileContentAsStr,
-                () => new PersonRollenZuweisungEntityFile(),
-            );
+    public readPersonRollenZuweisung(fileContentAsStr: string): PersonRollenZuweisungFile[] {
+        const entities: PersonRollenZuweisungFile[] = this.readEntityFromJSONFile<PersonRollenZuweisungFile>(
+            fileContentAsStr,
+            () => new PersonRollenZuweisungFile(),
+        );
         for (const entity of entities) {
             this.personRollenZuweisungMap.set(entity.id, entity);
         }
         return entities;
     }
 
-    public getRolle(id: string): RolleEntityFile | undefined {
+    /* Setting as RolleEntity is required, eg. RolleFile would not work, persisting would fail due to saving one RolleEntity and one RolleFile
+    for entitymanager it would not be the same entity */
+    public getRolle(id: string): RolleEntity | undefined {
         return this.rolleMap.get(id);
     }
 

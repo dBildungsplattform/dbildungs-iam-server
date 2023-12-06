@@ -1,17 +1,17 @@
-import { PersonRollenZuweisungEntityFile } from './person-rollen-zuweisung-entity-file.js';
-import { DataProviderEntityFile } from './data-provider-entity-file.js';
-import { PersonEntityFile } from './person-entity-file.js';
-import { OrganisationEntityFile } from './organisation-entity-file.js';
-import { ServiceProviderEntityFile } from './service-provider-entity-file.js';
-import { RolleEntityFile } from './rolle-entity-file.js';
+import { PersonRollenZuweisungFile } from './file/person-rollen-zuweisung-file.js';
+import { DataProviderFile } from './file/data-provider-file.js';
+import { PersonFile } from './file/person-file.js';
+import { OrganisationFile } from './file/organisation-file.js';
+import { ServiceProviderFile } from './file/service-provider-file.js';
+import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 
 export type Entity =
-    | DataProviderEntityFile
-    | PersonEntityFile
-    | OrganisationEntityFile
-    | ServiceProviderEntityFile
-    | RolleEntityFile
-    | PersonRollenZuweisungEntityFile;
+    | DataProviderFile
+    | PersonFile
+    | OrganisationFile
+    | ServiceProviderFile
+    | RolleEntity
+    | PersonRollenZuweisungFile;
 export type ConstructorCall = () => Entity;
 
 export interface SeedFile {
