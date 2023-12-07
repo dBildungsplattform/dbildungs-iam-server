@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
-import { GenericContainer, StartedTestContainer } from 'testcontainers';
+import {
+    ConfigTestModule,
+    DatabaseTestModule,
+    MapperTestModule,
+    KeycloakConfigTestModule,
+} from '../../../test/utils/index.js';
 import { UserRepository } from './user.repository.js';
 import { UserModule } from './user.module.js';
 import { PersonApiModule } from '../person/person-api.module.js';
@@ -13,23 +17,14 @@ import { User } from './user.js';
 
 describe('A fully integrated user module', () => {
     let module: TestingModule;
-    let kcContainer: StartedTestContainer;
     let app: INestApplication;
 
     beforeAll(async () => {
-        kcContainer = await new GenericContainer('quay.io/keycloak/keycloak:22.0.3')
-            .withCopyFilesToContainer([
-                { source: './config/dev-realm-spsh.json', target: '/opt/keycloak/data/import/realm.json' },
-            ])
-            .withExposedPorts({ container: 8080, host: 8080 })
-            .withEnvironment({ KEYCLOAK_ADMIN: 'admin', KEYCLOAK_ADMIN_PASSWORD: 'admin' })
-            .withCommand(['start-dev', '--import-realm'])
-            .withStartupTimeout(120000)
-            .start();
         module = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }),
                 MapperTestModule,
                 UserModule,
                 PersonApiModule,
@@ -82,7 +77,6 @@ describe('A fully integrated user module', () => {
     });
 
     afterAll(async () => {
-        await kcContainer.stop();
         await app.close();
     });
 });
