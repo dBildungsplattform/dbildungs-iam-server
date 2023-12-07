@@ -39,6 +39,7 @@ services:
     environment:
       NODE_ENV: dev
       DEPLOY_STAGE: dev
+    network_mode: host
     volumes:
       - source: 'config'
         target: '/app/config'
@@ -57,10 +58,9 @@ services:
     environment:
       NODE_ENV: dev
       DEPLOY_STAGE: dev
-    command: ["node", "dist/src/backend-for-frontend/main.js"]
-    ports:
-      - 9091:9091
+    command: ['node', 'dist/src/backend-for-frontend/main.js']
+    network_mode: host
     volumes:
-      - source: 'docker-config'
+      - source: 'config'
         target: '/app/config'
         type: bind
