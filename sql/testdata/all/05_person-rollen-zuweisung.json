@@ -1,0 +1,13 @@
+{
+    "entityName": "PersonRollenZuweisung",
+    "entities": [
+        {
+            "person": "1",
+            "rolleReference": {
+                "id": "1111",
+                "persisted": true
+            },
+            "schulstrukturknoten": "1"
+        }
+    ]
+}

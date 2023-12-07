@@ -1,0 +1,8 @@
+{
+    "entityName": "ServiceProviderZugriff",
+    "entities": [
+        {
+            "serviceProvider": "1"
+        }
+    ]
+}

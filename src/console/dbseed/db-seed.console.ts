@@ -9,7 +9,6 @@ import { KeycloakUserService, UserDo } from '../../modules/keycloak-administrati
 import { UsernameGeneratorService } from '../../modules/user/username-generator.service.js';
 import { PersonRollenZuweisungFile } from './file/person-rollen-zuweisung-file.js';
 import { DbSeedService } from './db-seed.service.js';
-import { Entity, SeedFile } from './db-seed.types.js';
 import { PersonFile } from './file/person-file.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { PersonRollenZuweisungEntity } from '../../modules/rolle/entity/person-rollen-zuweisung.entity.js';
@@ -22,6 +21,28 @@ import { DataProviderFile } from './file/data-provider-file.js';
 import { PersonEntity } from '../../modules/person/persistence/person.entity.js';
 import { ServiceProviderEntity } from '../../modules/rolle/entity/service-provider.entity.js';
 import { ServiceProviderFile } from './file/service-provider-file.js';
+
+export interface SeedFile {
+    entityName: string;
+}
+export interface EntityFile<T> extends SeedFile {
+    entities: T[];
+}
+
+export type Entity =
+    | DataProviderFile
+    | PersonFile
+    | OrganisationFile
+    | ServiceProviderFile
+    | RolleEntity
+    | PersonRollenZuweisungFile;
+
+export type ConstructorCall = () => Entity;
+
+export interface Reference {
+    id: string;
+    persisted: boolean;
+}
 
 @SubCommand({ name: 'seed', description: 'creates seed data in the database' })
 export class DbSeedConsole extends CommandRunner {
@@ -42,7 +63,10 @@ export class DbSeedConsole extends CommandRunner {
     }
 
     private getDirectory(_passedParams: string[]): string {
-        return _passedParams[0] !== undefined ? _passedParams[0] : 'dev';
+        if (_passedParams[0] !== undefined) {
+            return _passedParams[0];
+        }
+        throw new Error('No directory provided!');
     }
 
     private getExcludedFiles(_passedParams: string[]): string {
@@ -176,11 +200,11 @@ export class DbSeedConsole extends CommandRunner {
             createdDate: null,
         };
         const userIdResult: Result<string> = await this.keycloakUserService.create(userDo, 'test');
-        if (!userIdResult.ok) {
-            throw userIdResult.error;
+        if (userIdResult.ok) {
+            //should be always ture, because usernameGenerator.generateUsername calls getNextAvailableName
+            this.createdKeycloakUsers.push([userIdResult.value, username]);
+            personEntity.keycloakUserId = userIdResult.value;
         }
-        this.createdKeycloakUsers.push([userIdResult.value, username]);
-        personEntity.keycloakUserId = userIdResult.value;
     }
 
     private async deleteAllCreatedKeycloakUsers(): Promise<void> {

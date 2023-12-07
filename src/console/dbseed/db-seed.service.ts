@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import fs from 'fs';
 import { PersonRollenZuweisungFile } from './file/person-rollen-zuweisung-file.js';
-import { ConstructorCall, EntityFile } from './db-seed.types.js';
 import { DataProviderFile } from './file/data-provider-file.js';
 import { ServiceProviderFile } from './file/service-provider-file.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { PersonFile } from './file/person-file.js';
 import { ServiceProviderZugriffFile } from './file/service-provider-zugriff-file.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
+import { ConstructorCall, EntityFile } from './db-seed.console.js';
 
 @Injectable()
 export class DbSeedService {
