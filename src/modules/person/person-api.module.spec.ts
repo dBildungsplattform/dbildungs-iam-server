@@ -5,13 +5,20 @@ import { PersonUc } from './api/person.uc.js';
 import { PersonenkontextController } from './api/personenkontext.controller.js';
 import { PersonenkontextUc } from './api/personenkontext.uc.js';
 import { PersonApiModule } from './person-api.module.js';
+import { KeycloakConfigTestModule } from '../../../test/utils/keycloak-config-test.module.js';
 
 describe('PersonApiModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, PersonApiModule],
+            imports: [
+                ConfigTestModule,
+                DatabaseTestModule.forRoot(),
+                MapperTestModule,
+                PersonApiModule,
+                KeycloakConfigTestModule.forRoot(),
+            ],
         }).compile();
     });
 

@@ -8,6 +8,7 @@ import { KeycloakAdministrationService } from './domain/keycloak-admin-client.se
 import { PersonService } from '../person/domain/person.service.js';
 import { PersonModule } from '../person/person.module.js';
 import { PersonRepo } from '../person/persistence/person.repo.js';
+import { KeycloakConfigTestModule } from '../../../test/utils/keycloak-config-test.module.js';
 
 describe('KeycloakAdministrationModule', () => {
     let module: TestingModule;
@@ -20,6 +21,7 @@ describe('KeycloakAdministrationModule', () => {
                 KeycloakAdministrationModule,
                 DatabaseTestModule.forRoot(),
                 PersonModule,
+                KeycloakConfigTestModule.forRoot(),
             ],
             providers: [PersonService, PersonRepo],
         }).compile();

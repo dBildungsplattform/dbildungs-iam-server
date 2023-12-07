@@ -6,6 +6,7 @@ import { KeycloakUserService, UserDo } from '../keycloak-administration/index.js
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { EntityNotFoundError, KeycloakClientError } from '../../shared/error/index.js';
 import { User } from './user.js';
+import { KeycloakConfigTestModule } from '../../../test/utils/keycloak-config-test.module.js';
 
 describe('A User', () => {
     let module: TestingModule;
@@ -14,7 +15,13 @@ describe('A User', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [UserModule, ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule],
+            imports: [
+                UserModule,
+                ConfigTestModule,
+                DatabaseTestModule.forRoot(),
+                MapperTestModule,
+                KeycloakConfigTestModule.forRoot(),
+            ],
         })
             .overrideProvider(KeycloakUserService)
             .useValue(createMock<KeycloakUserService>())
