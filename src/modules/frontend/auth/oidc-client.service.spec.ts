@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Client } from 'openid-client';
 
-import { ConfigTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, KeycloakConfigTestModule } from '../../../../test/utils/index.js';
 import { OIDCClientProvider, OIDC_CLIENT } from './oidc-client.service.js';
 
 jest.mock('openid-client', () => ({
@@ -16,7 +16,7 @@ describe('OIDCClientProvider', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule],
+            imports: [KeycloakConfigTestModule.forRoot(), ConfigTestModule],
             providers: [OIDCClientProvider],
         }).compile();
 
