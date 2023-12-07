@@ -1,12 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserRepository } from './user.repository.js';
 import { UserModule } from './user.module.js';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DatabaseTestModule,
+    MapperTestModule,
+    KeycloakConfigTestModule,
+} from '../../../test/utils/index.js';
 import { KeycloakUserService, UserDo } from '../keycloak-administration/index.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { EntityNotFoundError, KeycloakClientError } from '../../shared/error/index.js';
 import { User } from './user.js';
-import { KeycloakConfigTestModule } from '../../../test/utils/keycloak-config-test.module.js';
 
 describe('A User', () => {
     let module: TestingModule;

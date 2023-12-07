@@ -2,10 +2,9 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 
-import { ConfigTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, KeycloakConfigTestModule } from '../../../../test/utils/index.js';
 import { KeycloakClientError } from '../../../shared/error/index.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
-import { KeycloakConfigTestModule } from '../../../../test/utils/keycloak-config-test.module.js';
 
 describe('KeycloakAdminClientService', () => {
     let module: TestingModule;

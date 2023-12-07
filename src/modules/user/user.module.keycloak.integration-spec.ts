@@ -1,5 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DatabaseTestModule,
+    MapperTestModule,
+    KeycloakConfigTestModule,
+} from '../../../test/utils/index.js';
 import { UserRepository } from './user.repository.js';
 import { UserModule } from './user.module.js';
 import { PersonApiModule } from '../person/person-api.module.js';
@@ -9,7 +14,6 @@ import request from 'supertest';
 import { EntityManager, Loaded, MikroORM } from '@mikro-orm/core';
 import { PersonEntity } from '../person/persistence/person.entity.js';
 import { User } from './user.js';
-import { KeycloakConfigTestModule } from '../../../test/utils/keycloak-config-test.module.js';
 
 describe('A fully integrated user module', () => {
     let module: TestingModule;

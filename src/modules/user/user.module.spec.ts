@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserModule } from './user.module.js';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
-import { KeycloakConfigTestModule } from '../../../test/utils/keycloak-config-test.module.js';
+import {
+    ConfigTestModule,
+    DatabaseTestModule,
+    MapperTestModule,
+    KeycloakConfigTestModule,
+} from '../../../test/utils/index.js';
 
 describe('The UserModule', () => {
     let module: TestingModule;

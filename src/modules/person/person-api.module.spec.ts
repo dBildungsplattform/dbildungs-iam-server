@@ -1,11 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DatabaseTestModule,
+    MapperTestModule,
+    KeycloakConfigTestModule,
+} from '../../../test/utils/index.js';
 import { PersonController } from './api/person.controller.js';
 import { PersonUc } from './api/person.uc.js';
 import { PersonenkontextController } from './api/personenkontext.controller.js';
 import { PersonenkontextUc } from './api/personenkontext.uc.js';
 import { PersonApiModule } from './person-api.module.js';
-import { KeycloakConfigTestModule } from '../../../test/utils/keycloak-config-test.module.js';
 
 describe('PersonApiModule', () => {
     let module: TestingModule;

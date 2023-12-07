@@ -1,5 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DatabaseTestModule,
+    MapperTestModule,
+    KeycloakConfigTestModule,
+} from '../../../test/utils/index.js';
 import { KeycloakUserService } from './domain/keycloak-user.service.js';
 import { KeycloakAdministrationModule } from './keycloak-administration.module.js';
 import { UserMapperProfile } from './domain/keycloak-client/user.mapper.profile.js';
@@ -8,7 +13,6 @@ import { KeycloakAdministrationService } from './domain/keycloak-admin-client.se
 import { PersonService } from '../person/domain/person.service.js';
 import { PersonModule } from '../person/person.module.js';
 import { PersonRepo } from '../person/persistence/person.repo.js';
-import { KeycloakConfigTestModule } from '../../../test/utils/keycloak-config-test.module.js';
 
 describe('KeycloakAdministrationModule', () => {
     let module: TestingModule;

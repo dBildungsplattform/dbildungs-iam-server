@@ -5,8 +5,7 @@ import { KeycloakHealthIndicator } from './keycloak.health-indicator.js';
 import { HealthIndicatorResult, HealthIndicatorStatus } from '@nestjs/terminus';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../shared/config/index.js';
-import { KeycloakConfigTestModule } from '../../../test/utils/keycloak-config-test.module.js';
-import { ConfigTestModule } from '../../../test/utils/config-test.module.js';
+import { ConfigTestModule, KeycloakConfigTestModule } from '../../../test/utils/index.js';
 
 let error: Error | string | undefined = undefined;
 
