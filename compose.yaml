@@ -64,3 +64,19 @@ services:
       - source: 'config'
         target: '/app/config'
         type: bind
+  db-init:
+    profiles:
+      - db-init
+    image: dbiam/server
+    build:
+      context: .
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    command: ['node', 'dist/src/console/main.js', 'db', 'init']
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind
