@@ -154,7 +154,7 @@ describe('BackendHttpService', () => {
             const accessToken: string = faker.string.alphanumeric(32);
             const user: User = createMock<User>({ access_token: accessToken });
             const axiosResponse: AxiosResponse = {
-                data: {},
+                data: [],
                 headers: {
                     'x-paging-offset': '1',
                     'x-paging-limit': '2',
@@ -166,6 +166,12 @@ describe('BackendHttpService', () => {
             const response: PaginatedResponseDto<unknown> = await firstValueFrom(sut.getPaginated(endpoint, user));
 
             expect(response).toBeInstanceOf(PaginatedResponseDto);
+            expect(response).toEqual<PaginatedResponseDto<unknown>>({
+                offset: 1,
+                limit: 2,
+                total: 3,
+                items: [],
+            });
         });
 
         it('should replace missing/incorrect paging headers with zero', async () => {
