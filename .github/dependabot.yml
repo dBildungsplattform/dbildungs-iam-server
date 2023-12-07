@@ -8,3 +8,6 @@ updates:
       interval: 'daily'
     labels:
       - 'dependencies'
+    ignore:
+      # Causes warnings during dependency resolution (at least in 3.12.x)
+      - dependency-name: 'nest-commander'

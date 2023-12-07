@@ -64,7 +64,6 @@ export class FrontendController {
     @ApiQuery({ type: RedirectQueryParams })
     public login(@Res() res: Response, @Session() session: SessionData): void {
         const target: string = session.redirectUrl ?? this.defaultLoginRedirect;
-        session.redirectUrl = undefined;
         res.redirect(target);
     }
 
