@@ -796,7 +796,8 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "1gUQE9ZsganpMBMAnFMYEVwHeB5deGk0",
       "redirectUris": [
-        "/*"
+        "/*",
+        "https://test.dev.spsh.dbildungsplattform.de"
       ],
       "webOrigins": [
         "/*"
@@ -808,7 +809,7 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": false,
-      "publicClient": true,
+      "publicClient": false,
       "frontchannelLogout": true,
       "protocol": "openid-connect",
       "attributes": {
