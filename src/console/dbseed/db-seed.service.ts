@@ -121,10 +121,6 @@ export class DbSeedService {
     }
 
     public getEntityFileNames(directory: string): string[] {
-        const fileNames: string[] = [];
-        fs.readdirSync(`./sql/${directory}`).forEach((file: string) => {
-            fileNames.push(file);
-        });
-        return fileNames;
+        return fs.readdirSync(`./sql/${directory}`).filter((fileName: string) => fileName.endsWith('.json'));
     }
 }
