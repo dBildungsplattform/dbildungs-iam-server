@@ -7,41 +7,32 @@ import {
     LoggingTestModule,
     MapperTestModule,
     DoFactory,
+    KeycloakConfigTestModule,
 } from '../../../test/utils/index.js';
 import { DbSeedService } from './db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
-import { GenericContainer, StartedTestContainer } from 'testcontainers';
 import { UserModule } from '../../modules/user/user.module.js';
 import { UsernameGeneratorService } from '../../modules/user/username-generator.service.js';
-import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
 import { DbSeedMapper } from './db-seed-mapper.js';
 import { RolleDo } from '../../modules/rolle/domain/rolle.do.js';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { RolleMapperProfile } from '../../modules/rolle/mapper/rolle.mapper.profile.js';
+import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
-    let kcContainer: StartedTestContainer;
     let sut: DbSeedConsole;
     let orm: MikroORM;
     let dbSeedService: DbSeedService;
     let mapper: Mapper;
 
     beforeAll(async () => {
-        kcContainer = await new GenericContainer('quay.io/keycloak/keycloak:22.0.3')
-            .withCopyFilesToContainer([
-                { source: './config/dev-realm-spsh.json', target: '/opt/keycloak/data/import/realm.json' },
-            ])
-            .withExposedPorts({ container: 8080, host: 8081 })
-            .withEnvironment({ KEYCLOAK_ADMIN: 'admin', KEYCLOAK_ADMIN_PASSWORD: 'admin' })
-            .withCommand(['start-dev', '--import-realm'])
-            .withStartupTimeout(120000)
-            .start();
         module = await Test.createTestingModule({
             imports: [
-                ConfigTestModule.forRoot('http://127.0.0.1:8081'),
+                KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }),
+                ConfigTestModule,
                 UserModule,
                 KeycloakAdministrationModule,
                 MapperTestModule,
@@ -59,7 +50,6 @@ describe('DbSeedConsole', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
-        await kcContainer.stop({ timeout: 10000 });
         await module.close();
     });
 
@@ -71,7 +61,6 @@ describe('DbSeedConsole', () => {
         expect(orm).toBeDefined();
         expect(dbSeedService).toBeDefined();
         expect(orm).toBeDefined();
-        expect(kcContainer).toBeDefined();
     });
 
     describe('run', () => {

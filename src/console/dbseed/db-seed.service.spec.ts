@@ -48,7 +48,7 @@ describe('DbSeedService', () => {
     describe('readDataProvider', () => {
         describe('readDataProvider with one entity', () => {
             it('should have length 1', () => {
-                const fileContentAsStr: string = fs.readFileSync(`./sql/testdata/00_data-provider.json`, 'utf-8');
+                const fileContentAsStr: string = fs.readFileSync(`./sql/testdata/all/00_data-provider.json`, 'utf-8');
                 const entities: DataProviderEntity[] = dbSeedService.readDataProvider(fileContentAsStr);
                 expect(entities).toHaveLength(1);
             });
@@ -58,7 +58,10 @@ describe('DbSeedService', () => {
     describe('readServiceProvider', () => {
         describe('readServiceProvider with one entity', () => {
             it('should have length 1', () => {
-                const fileContentAsStr: string = fs.readFileSync(`./sql/testdata/03_service-provider.json`, 'utf-8');
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./sql/testdata/all/03_service-provider.json`,
+                    'utf-8',
+                );
                 const entities: ServiceProviderEntity[] = dbSeedService.readServiceProvider(fileContentAsStr);
                 expect(entities).toHaveLength(1);
             });
@@ -68,7 +71,7 @@ describe('DbSeedService', () => {
     describe('readOrganisation', () => {
         describe('readOrganisation with one entity', () => {
             it('should have length 1 and be mappable', () => {
-                const fileContentAsStr: string = fs.readFileSync(`./sql/testdata/01_organisation.json`, 'utf-8');
+                const fileContentAsStr: string = fs.readFileSync(`./sql/testdata/all/01_organisation.json`, 'utf-8');
                 const entities: OrganisationFile[] = dbSeedService.readOrganisation(fileContentAsStr);
                 const entity: OrganisationFile | undefined = entities[0];
                 const organisation: Partial<OrganisationFile> = {
@@ -87,7 +90,7 @@ describe('DbSeedService', () => {
     describe('readPerson', () => {
         describe('readPerson with one entity', () => {
             it('should have length 1', () => {
-                const fileContentAsStr: string = fs.readFileSync(`./sql/testdata/02_person.json`, 'utf-8');
+                const fileContentAsStr: string = fs.readFileSync(`./sql/testdata/all/02_person.json`, 'utf-8');
                 const entities: PersonEntity[] = dbSeedService.readPerson(fileContentAsStr);
                 expect(entities).toHaveLength(1);
             });
@@ -97,7 +100,7 @@ describe('DbSeedService', () => {
     describe('readRolle', () => {
         describe('readRolle with one entity', () => {
             it('should have length 1', () => {
-                const fileContentAsStr: string = fs.readFileSync(`./sql/testdata/04_rolle.json`, 'utf-8');
+                const fileContentAsStr: string = fs.readFileSync(`./sql/testdata/all/04_rolle.json`, 'utf-8');
                 const entities: RolleEntity[] = dbSeedService.readRolle(fileContentAsStr);
                 expect(entities).toHaveLength(1);
             });
@@ -108,7 +111,7 @@ describe('DbSeedService', () => {
         describe('readServiceProviderZugriff with one entity', () => {
             it('should have length 1', () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/testdata/06_service-provider-zugriff.json`,
+                    `./sql/testdata/all/06_service-provider-zugriff.json`,
                     'utf-8',
                 );
                 const entities: ServiceProviderZugriffEntity[] =
@@ -122,7 +125,7 @@ describe('DbSeedService', () => {
         describe('readPersonRollenZuweisung with one entity', () => {
             it('should have length 1', () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/testdata/05_person-rollen-zuweisung.json`,
+                    `./sql/testdata/all/05_person-rollen-zuweisung.json`,
                     'utf-8',
                 );
                 const entities: PersonRollenZuweisungEntity[] =
@@ -135,7 +138,7 @@ describe('DbSeedService', () => {
     describe('getRolle', () => {
         describe('getRolle by id after loading test rolle', () => {
             it('should return the loaded rolle', () => {
-                const fileContentAsStr: string = fs.readFileSync(`./sql/testdata/04_rolle.json`, 'utf-8');
+                const fileContentAsStr: string = fs.readFileSync(`./sql/testdata/all/04_rolle.json`, 'utf-8');
                 const entities: RolleEntity[] = dbSeedService.readRolle(fileContentAsStr);
                 const entity: RolleEntity | undefined = entities[0];
                 const rolle: RolleEntity | undefined = dbSeedService.getRolle(entity!.id);
@@ -147,7 +150,7 @@ describe('DbSeedService', () => {
     describe('getEntityFileNames', () => {
         describe('getEntityFileNames in directory sql/testdata', () => {
             it('should return all files in directory', () => {
-                const entityFileNames: string[] = dbSeedService.getEntityFileNames('testdata');
+                const entityFileNames: string[] = dbSeedService.getEntityFileNames('testdata/all');
                 expect(entityFileNames).toHaveLength(8);
             });
         });

@@ -16,9 +16,11 @@ import { UserModule } from '../modules/user/user.module.js';
 import { UsernameGeneratorService } from '../modules/user/username-generator.service.js';
 import { DbSeedMapper } from './dbseed/db-seed-mapper.js';
 import { DbSeedService } from './dbseed/db-seed.service.js';
+import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 
 @Module({
     imports: [
+        KeycloakConfigModule,
         KeycloakAdministrationModule,
         UserModule,
         LoggerModule.register(ConsoleModule.name),

@@ -5,7 +5,6 @@ import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Inject } from '@nestjs/common';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
-import { KeycloakUserService, UserDo } from '../../modules/keycloak-administration/index.js';
 import { UsernameGeneratorService } from '../../modules/user/username-generator.service.js';
 import { PersonRollenZuweisungFile } from './file/person-rollen-zuweisung-file.js';
 import { DbSeedService } from './db-seed.service.js';
@@ -21,6 +20,8 @@ import { DataProviderFile } from './file/data-provider-file.js';
 import { PersonEntity } from '../../modules/person/persistence/person.entity.js';
 import { ServiceProviderEntity } from '../../modules/rolle/entity/service-provider.entity.js';
 import { ServiceProviderFile } from './file/service-provider-file.js';
+import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';
+import { UserDo } from '../../modules/keycloak-administration/domain/user.do.js';
 
 export interface SeedFile {
     entityName: string;
