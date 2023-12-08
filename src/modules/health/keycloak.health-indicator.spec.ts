@@ -5,6 +5,7 @@ import { KeycloakHealthIndicator } from './keycloak.health-indicator.js';
 import { HealthIndicatorResult, HealthIndicatorStatus } from '@nestjs/terminus';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../shared/config/index.js';
+import { ConfigTestModule, KeycloakConfigTestModule } from '../../../test/utils/index.js';
 
 let error: Error | string | undefined = undefined;
 
@@ -24,6 +25,7 @@ describe('Keycloak health indicator', () => {
     let module: TestingModule;
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [KeycloakConfigTestModule.forRoot(), ConfigTestModule],
             providers: [
                 KeycloakHealthIndicator,
                 {

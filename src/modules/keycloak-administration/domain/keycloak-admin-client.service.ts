@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Credentials, KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 
-import { KeycloakConfig } from '../../../shared/config/index.js';
 import { DomainError, KeycloakClientError } from '../../../shared/error/index.js';
+import { KeycloakInstanceConfig } from '../keycloak-instance-config.js';
 
 @Injectable()
 export class KeycloakAdministrationService {
@@ -11,14 +10,10 @@ export class KeycloakAdministrationService {
 
     private lastAuthorizationTime: number = 0;
 
-    private kcConfig: KeycloakConfig;
-
     public constructor(
         private readonly kcAdminClient: KeycloakAdminClient,
-        private readonly config: ConfigService,
+        private readonly kcConfig: KeycloakInstanceConfig,
     ) {
-        this.kcConfig = this.config.getOrThrow<KeycloakConfig>('KEYCLOAK');
-
         this.kcAdminClient.setConfig({
             baseUrl: this.kcConfig.BASE_URL,
             realmName: this.kcConfig.ADMIN_REALM_NAME,
