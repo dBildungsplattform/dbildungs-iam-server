@@ -2,7 +2,6 @@ import { MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     LoggingTestModule,
     MapperTestModule,
@@ -47,7 +46,7 @@ describe('DbSeedConsole', () => {
         mapper = module.get(getMapperToken());
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+    }, 100000);
 
     afterAll(async () => {
         await module.close();
