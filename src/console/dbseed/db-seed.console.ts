@@ -84,6 +84,8 @@ export class DbSeedConsole extends CommandRunner {
         this.logger.info('Create seed data in the database...');
         let entityFileNames: string[] = this.dbSeedService.getEntityFileNames(directory);
         entityFileNames = entityFileNames.filter((efm: string) => !excludedFiles.includes(efm));
+        this.logger.info('Following files will be processed:');
+        entityFileNames.forEach((n: string) => this.logger.info(n));
         for (const entityFileName of entityFileNames) {
             await this.processEntityFile(entityFileName, directory);
         }
@@ -236,11 +238,15 @@ export class DbSeedConsole extends CommandRunner {
             if (foreignEntity) {
                 entity.rolle = foreignEntity;
             } else {
-                throw new Error(`Foreign RolleEntity with id ${id} could not be found!`);
+                this.logger.error(`Foreign RolleEntity with id ${id} could not be found!`);
+                throw new Error();
             }
         } else {
             const rolle: RolleEntity | undefined = this.dbSeedService.getRolle(id);
-            if (rolle === undefined) throw new Error(`No rolle with id ${id}`);
+            if (rolle === undefined) {
+                this.logger.error(`No rolle with id ${id}`);
+                throw new Error();
+            }
             entity.rolle = rolle;
         }
     }
