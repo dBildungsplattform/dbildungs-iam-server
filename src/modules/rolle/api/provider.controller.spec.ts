@@ -4,6 +4,8 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { KeyCloakUser, RolleService } from '../domain/rolle.service.js';
 import { ServiceProviderDo } from '../domain/service-provider.do.js';
 import { faker } from '@faker-js/faker';
+import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
+import { ProviderApiMapperProfile } from './provider-api.mapper.profile.js';
 
 describe('ProviderController', () => {
     let module: TestingModule;
@@ -13,9 +15,10 @@ describe('ProviderController', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [],
+            imports: [MapperTestModule],
             providers: [
                 ProviderController,
+                ProviderApiMapperProfile,
                 {
                     provide: RolleService,
                     useValue: createMock<RolleService>(),
@@ -49,6 +52,7 @@ describe('ProviderController', () => {
                 sub: faker.string.uuid(),
             };
             rolleServiceMock.getAvailableServiceProviders.mockResolvedValue(serviceProviderDo);
+            rolleServiceMock.hasKeycloakUserSub.mockReturnValueOnce(true);
             await expect(providerController.getServiceProvidersByPersonId(user)).resolves.not.toThrow();
             expect(rolleServiceMock.getServiceProviderInfoListByUserSub).toHaveBeenCalledTimes(1);
         });

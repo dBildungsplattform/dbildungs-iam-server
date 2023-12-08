@@ -7,6 +7,7 @@ import { RollenBerechtigungsZuweisungRepo } from './repo/rollen-berechtigungs-zu
 import { ServiceProviderRepo } from './repo/service-provider.repo.js';
 import { RolleRechtRepo } from './repo/rolle-recht.repo.js';
 import { ProviderController } from './api/provider.controller.js';
+import { ProviderApiMapperProfile } from './api/provider-api.mapper.profile.js';
 
 @Module({
     imports: [RolleModule, LoggerModule.register(RolleApiModule.name)],
@@ -16,6 +17,7 @@ import { ProviderController } from './api/provider.controller.js';
         RollenBerechtigungsZuweisungRepo,
         ServiceProviderRepo,
         RolleRechtRepo,
+        ProviderApiMapperProfile,
     ],
     controllers: [ProviderController],
 })

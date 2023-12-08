@@ -2,13 +2,18 @@ import { HttpService } from '@nestjs/axios';
 import { HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { Observable, catchError } from 'rxjs';
+import { Observable, catchError, map } from 'rxjs';
 
 import { FrontendConfig, ServerConfig } from '../../../shared/config/index.js';
 import { User } from '../auth/index.js';
+import { PaginatedResponseDto } from '../api/paginated-data.response.js';
+import { PagingHeaders } from '../../../shared/paging/paging.enums.js';
 
-function makeConfig(user?: User): AxiosRequestConfig {
+export type AxiosConfigWithoutHeaders = Omit<AxiosRequestConfig, 'headers'>;
+
+function makeConfig(user?: User, config: AxiosConfigWithoutHeaders = {}): AxiosRequestConfig {
     return {
+        ...config,
         headers: {
             Authorization: user?.access_token && `Bearer ${user?.access_token}`,
         },
@@ -27,6 +32,12 @@ function wrapAxiosError<T>(observable: Observable<T>): Observable<T> {
     );
 }
 
+const PagingHeadersLowercase: Record<'OFFSET' | 'LIMIT' | 'TOTAL', string> = {
+    OFFSET: PagingHeaders.OFFSET.toLowerCase(),
+    LIMIT: PagingHeaders.LIMIT.toLowerCase(),
+    TOTAL: PagingHeaders.TOTAL.toLowerCase(),
+};
+
 @Injectable()
 export class BackendHttpService {
     private backend: string;
@@ -38,27 +49,81 @@ export class BackendHttpService {
         this.backend = config.getOrThrow<FrontendConfig>('FRONTEND').BACKEND_ADDRESS;
     }
 
-    public get<T>(endpoint: string, user?: User): Observable<AxiosResponse<T>> {
-        return wrapAxiosError(this.httpService.get<T>(new URL(endpoint, this.backend).href, makeConfig(user)));
+    public get<T>(endpoint: string, user?: User, options?: AxiosConfigWithoutHeaders): Observable<AxiosResponse<T>> {
+        return wrapAxiosError(this.httpService.get<T>(new URL(endpoint, this.backend).href, makeConfig(user, options)));
     }
 
-    public post<T>(endpoint: string, data?: unknown, user?: User): Observable<AxiosResponse<T>> {
-        return wrapAxiosError(this.httpService.post<T>(new URL(endpoint, this.backend).href, data, makeConfig(user)));
+    public post<T>(
+        endpoint: string,
+        data?: unknown,
+        user?: User,
+        options?: AxiosConfigWithoutHeaders,
+    ): Observable<AxiosResponse<T>> {
+        return wrapAxiosError(
+            this.httpService.post<T>(new URL(endpoint, this.backend).href, data, makeConfig(user, options)),
+        );
     }
 
-    public delete<T>(endpoint: string, user?: User): Observable<AxiosResponse<T>> {
-        return wrapAxiosError(this.httpService.delete<T>(new URL(endpoint, this.backend).href, makeConfig(user)));
+    public delete<T>(endpoint: string, user?: User, options?: AxiosConfigWithoutHeaders): Observable<AxiosResponse<T>> {
+        return wrapAxiosError(
+            this.httpService.delete<T>(new URL(endpoint, this.backend).href, makeConfig(user, options)),
+        );
     }
 
-    public patch<T>(endpoint: string, data?: unknown, user?: User): Observable<AxiosResponse<T>> {
-        return wrapAxiosError(this.httpService.patch<T>(new URL(endpoint, this.backend).href, data, makeConfig(user)));
+    public patch<T>(
+        endpoint: string,
+        data?: unknown,
+        user?: User,
+        options?: AxiosConfigWithoutHeaders,
+    ): Observable<AxiosResponse<T>> {
+        return wrapAxiosError(
+            this.httpService.patch<T>(new URL(endpoint, this.backend).href, data, makeConfig(user, options)),
+        );
     }
 
-    public head<T>(endpoint: string, user?: User): Observable<AxiosResponse<T>> {
-        return wrapAxiosError(this.httpService.head<T>(new URL(endpoint, this.backend).href, makeConfig(user)));
+    public head<T>(endpoint: string, user?: User, options?: AxiosConfigWithoutHeaders): Observable<AxiosResponse<T>> {
+        return wrapAxiosError(
+            this.httpService.head<T>(new URL(endpoint, this.backend).href, makeConfig(user, options)),
+        );
     }
 
-    public put<T>(endpoint: string, data?: unknown, user?: User): Observable<AxiosResponse<T>> {
-        return wrapAxiosError(this.httpService.put<T>(new URL(endpoint, this.backend).href, data, makeConfig(user)));
+    public put<T>(
+        endpoint: string,
+        data?: unknown,
+        user?: User,
+        options?: AxiosConfigWithoutHeaders,
+    ): Observable<AxiosResponse<T>> {
+        return wrapAxiosError(
+            this.httpService.put<T>(new URL(endpoint, this.backend).href, data, makeConfig(user, options)),
+        );
+    }
+
+    public getPaginated<T>(
+        endpoint: string,
+        user?: User,
+        options?: AxiosConfigWithoutHeaders,
+    ): Observable<PaginatedResponseDto<T>> {
+        return wrapAxiosError(
+            this.httpService.get<T[]>(new URL(endpoint, this.backend).href, makeConfig(user, options)).pipe(
+                map((response: AxiosResponse<T[]>) => {
+                    const parseIntOrZero = (input: unknown): number => {
+                        if (input && typeof input === 'string') {
+                            const parsed: number = parseInt(input, 10);
+
+                            if (!Number.isNaN(parsed)) {
+                                return parsed;
+                            }
+                        }
+
+                        return 0;
+                    };
+
+                    const offset: number = parseIntOrZero(response.headers[PagingHeadersLowercase.OFFSET]);
+                    const limit: number = parseIntOrZero(response.headers[PagingHeadersLowercase.LIMIT]);
+                    const total: number = parseIntOrZero(response.headers[PagingHeadersLowercase.TOTAL]);
+                    return new PaginatedResponseDto<T>(offset, limit, total, response.data);
+                }),
+            ),
+        );
     }
 }

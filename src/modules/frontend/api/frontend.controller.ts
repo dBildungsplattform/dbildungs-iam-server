@@ -2,11 +2,14 @@ import {
     Body,
     Controller,
     Get,
+    HttpCode,
+    HttpStatus,
     Inject,
     Logger,
     Param,
     Patch,
     Post,
+    Query,
     Req,
     Res,
     Session,
@@ -14,7 +17,9 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+    ApiAcceptedResponse,
     ApiInternalServerErrorResponse,
+    ApiNotFoundResponse,
     ApiOkResponse,
     ApiOperation,
     ApiQuery,
@@ -24,18 +29,21 @@ import {
 } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { SessionData } from 'express-session';
-import { Client, UserinfoResponse } from 'openid-client';
+import { Client } from 'openid-client';
 
 import { FrontendConfig, ServerConfig } from '../../../shared/config/index.js';
 import { GetServiceProviderInfoDo } from '../../rolle/domain/get-service-provider-info.do.js';
 import { AuthenticatedGuard, CurrentUser, LoginGuard, OIDC_CLIENT, User } from '../auth/index.js';
 import { ProviderService } from '../outbound/provider.service.js';
+import { ApiOkResponsePaginated, PaginatedResponseDto } from './paginated-data.response.js';
 import { RedirectQueryParams } from './redirect.query.params.js';
 import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 import { PersonService } from '../outbound/person.service.js';
 import { PersonendatensatzResponse } from '../../person/api/personendatensatz.response.js';
-import { PagedResponse } from '../../../shared/paging/index.js';
+import { ServiceProviderInfoResponse } from '../../rolle/api/service-provider-info.response.js';
 import { CreatePersonBodyParams } from '../../person/api/create-person.body.params.js';
+import { PersonenQueryParams } from '../../person/api/personen-query.param.js';
+import { UserinfoResponse } from './userinfo.response.js';
 
 @ApiTags('frontend')
 @Controller({ path: 'frontend' })
@@ -106,40 +114,52 @@ export class FrontendController {
     @UseGuards(AuthenticatedGuard)
     @ApiOperation({ summary: 'Info about logged in user.' })
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
-    @ApiOkResponse({ description: 'Returns info about the logged in user.' })
+    @ApiOkResponse({ description: 'Returns info about the logged in user.', type: UserinfoResponse })
     public info(@CurrentUser() user: User): UserinfoResponse {
-        return user.userinfo;
+        return new UserinfoResponse(user.userinfo);
     }
 
     @Get('provider')
     @UseGuards(AuthenticatedGuard)
+    @ApiOperation({ summary: 'Providers the user has access to.' })
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
-    @ApiOkResponse({ description: 'Returns the providers for the current user.' })
+    @ApiOkResponse({ description: 'Returns the providers for the current user.', type: [ServiceProviderInfoResponse] })
     public provider(@CurrentUser() user: User): Promise<GetServiceProviderInfoDo[]> {
         return this.providerService.listProviders(user);
     }
 
     @Get('personen')
     @UseGuards(AuthenticatedGuard)
+    @ApiOperation({ summary: 'Lists personen.' })
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
-    @ApiOkResponse({ description: 'Returns all persons' })
-    public persons(): Promise<PagedResponse<PersonendatensatzResponse>> {
-        return this.personService.getAllPersons();
+    @ApiOkResponsePaginated(PersonendatensatzResponse, { description: 'Paginated list of Personen' })
+    public persons(
+        @Query() params: PersonenQueryParams,
+        @CurrentUser() user: User,
+    ): Promise<PaginatedResponseDto<PersonendatensatzResponse>> {
+        return this.personService.getAllPersons(params, user);
     }
 
     @Post('personen')
     @UseGuards(AuthenticatedGuard)
+    @ApiOperation({ summary: 'Creates a new person.' })
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
-    @ApiOkResponse({ description: 'Creates a new user' })
-    public createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
-        return this.personService.createPerson(params);
+    @ApiOkResponse({ description: 'Creates a new user', type: PersonendatensatzResponse })
+    public createPerson(
+        @Body() params: CreatePersonBodyParams,
+        @CurrentUser() user: User,
+    ): Promise<PersonendatensatzResponse> {
+        return this.personService.createPerson(params, user);
     }
 
     @Patch('personen/:personId/password')
     @UseGuards(AuthenticatedGuard)
+    @HttpCode(HttpStatus.ACCEPTED)
+    @ApiOperation({ summary: 'Resets the users password.' })
+    @ApiAcceptedResponse({ description: 'Password for person was successfully reset.', type: String })
+    @ApiNotFoundResponse({ description: 'The person does not exist.' })
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
-    @ApiOkResponse({ description: 'Resets password for given user' })
-    public passwordReset(@Param() params: PersonByIdParams): Promise<string> {
-        return this.personService.resetPassword(params.personId);
+    public passwordReset(@Param() params: PersonByIdParams, @CurrentUser() user: User): Promise<string> {
+        return this.personService.resetPassword(params.personId, user);
     }
 }
