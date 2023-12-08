@@ -207,13 +207,14 @@ export class DbSeedConsole extends CommandRunner {
             //should be always ture, because usernameGenerator.generateUsername calls getNextAvailableName
             this.createdKeycloakUsers.push([userIdResult.value, username]);
             personEntity.keycloakUserId = userIdResult.value;
+            this.logger.info(`Created Keycloak-user with username ${username}`);
         }
     }
 
     private async deleteAllCreatedKeycloakUsers(): Promise<void> {
         for (const userTuple of this.createdKeycloakUsers) {
-            this.logger.info(`Removed keycloak-user with username ${userTuple[1]}`);
             await this.keycloakUserService.delete(userTuple[0]);
+            this.logger.info(`Removed keycloak-user with username ${userTuple[1]}`);
         }
     }
 
@@ -239,7 +240,7 @@ export class DbSeedConsole extends CommandRunner {
                 entity.rolle = foreignEntity;
             } else {
                 this.logger.error(`Foreign RolleEntity with id ${id} could not be found!`);
-                throw new Error();
+                throw new Error(`Foreign RolleEntity with id ${id} could not be found!`);
             }
         } else {
             const rolle: RolleEntity | undefined = this.dbSeedService.getRolle(id);

@@ -2,9 +2,6 @@
     "entityName": "Person",
     "entities": [
         {
-            "keycloakUserId": "123c68a8-83a8-487f-812e-e4662c9862e1",
-            "username": "maxmustermann",
-            "email": "maxmustermann@test.de",
             "referrer": null,
             "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
             "stammorganisation": null,
@@ -26,7 +23,7 @@
             "loaklisierung": null,
             "vertrauensstufe": null,
             "auskunftssperre": null,
-            "dataProvider": "1"
+            "dataProvider": "2"
         }
     ]
 }

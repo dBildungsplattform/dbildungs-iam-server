@@ -15,6 +15,24 @@ spec:
       labels:
         layer: dbildungs-iam-backend
     spec:
+      initContainers:
+        - name: db-seeding
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          securityContext:
+            allowPrivilegeEscalation: false
+          command: [ "node", "dist/src/console/main.js", "db", "seed", "prod", "05_person-rollen-zuweisung.json" ]
+          env:
+            - name: NODE_ENV
+              value: {{.Values.environment}}
+            - name: DEPLOY_STAGE
+              value: {{.Values.environment}}
+          volumeMounts:
+            - mountPath: /app/config/
+              name: config
+              readOnly: true
+            - mountPath: /app/sql/{{.Values.environment}}
+              name: seeding
+              readOnly: true
       containers:
         - name: dbildungs-iam-backend
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -57,4 +75,6 @@ spec:
         - name: config
           secret:
             secretName: {{.Values.secrets.name | default (print .Release.Name "-secret")}}
-      
+        - name: seeding
+          secret:
+            secretName: {{.Values.seedingData | default (print .Release.Name "-secret")}}
