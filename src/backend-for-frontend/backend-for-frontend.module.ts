@@ -10,6 +10,7 @@ import { FrontendApiModule } from '../modules/frontend/frontend-api.module.js';
 import { DbConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../shared/config/index.js';
 import { mappingErrorHandler } from '../shared/error/mapping.error.js';
 import { HealthModule } from '../modules/health/health.module.js';
+import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 
 @Module({
     imports: [
@@ -44,6 +45,7 @@ import { HealthModule } from '../modules/health/health.module.js';
         }),
         FrontendApiModule,
         HealthModule,
+        KeycloakConfigModule,
     ],
 })
 export class BackendForFrontendModule {}
