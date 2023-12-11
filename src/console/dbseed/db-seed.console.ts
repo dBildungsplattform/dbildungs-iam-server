@@ -86,10 +86,10 @@ export class DbSeedConsole extends CommandRunner {
         entityFileNames = entityFileNames.filter((efm: string) => !excludedFiles.includes(efm));
         this.logger.info('Following files will be processed:');
         entityFileNames.forEach((n: string) => this.logger.info(n));
-        for (const entityFileName of entityFileNames) {
-            await this.processEntityFile(entityFileName, directory);
-        }
         try {
+            for (const entityFileName of entityFileNames) {
+                await this.processEntityFile(entityFileName, directory);
+            }
             await this.forkedEm.flush();
             this.logger.info('Created seed data successfully.');
         } catch (err) {
@@ -208,6 +208,8 @@ export class DbSeedConsole extends CommandRunner {
             this.createdKeycloakUsers.push([userIdResult.value, username]);
             personEntity.keycloakUserId = userIdResult.value;
             this.logger.info(`Created Keycloak-user with username ${username}`);
+        } else {
+            throw userIdResult.error;
         }
     }
 
