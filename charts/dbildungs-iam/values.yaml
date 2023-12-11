@@ -5,6 +5,7 @@ dbildungsIamCpuRequest: 200m
 dbildungsIamMemRequest: 200Mi
 dbildungsIamReplications: 1
 environment: prod
+backendHostname: 'helm.dev.spsh.dbildungsplattform.de'
 configfile:
   secrets: 'config/secrets.json'
   dev: 'config/config.dev.json'

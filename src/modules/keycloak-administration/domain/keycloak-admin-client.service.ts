@@ -49,6 +49,10 @@ export class KeycloakAdministrationService {
 
                 await this.kcAdminClient.auth(credentials);
             } catch (err) {
+                // eslint-disable-next-line no-console
+                console.log(err);
+                // eslint-disable-next-line no-console
+                console.log('KAC');
                 return { ok: false, error: new KeycloakClientError('Could not authorize with Keycloak') };
             }
 

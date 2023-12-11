@@ -176,6 +176,10 @@ export class KeycloakUserService {
             });
             return { ok: true, value: password };
         } catch (err) {
+            // eslint-disable-next-line no-console
+            console.log(err);
+            // eslint-disable-next-line no-console
+            console.log('KU');
             return { ok: false, error: new KeycloakClientError('Could not authorize with Keycloak') };
         }
     }

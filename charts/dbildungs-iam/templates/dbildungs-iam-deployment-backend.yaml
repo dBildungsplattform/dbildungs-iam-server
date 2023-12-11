@@ -17,11 +17,28 @@ spec:
         layer: dbildungs-iam-backend
     spec:
       initContainers:
+        - name: db-init
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          securityContext:
+            allowPrivilegeEscalation: false
+          command: [ "node", "dist/src/console/main.js", "db", "init" ]
+          env:
+            - name: NODE_ENV
+              value: {{.Values.environment}}
+            - name: DEPLOY_STAGE
+              value: {{.Values.environment}}
+          volumeMounts:
+            - mountPath: /app/config/
+              name: config
+              readOnly: true
+            - mountPath: /app/sql/{{.Values.environment}}
+              name: seeding
+              readOnly: true
         - name: db-seeding
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           securityContext:
             allowPrivilegeEscalation: false
-          command: [ "node", "dist/src/console/main.js", "db", "seed", "prod", "05_person-rollen-zuweisung.json" ]
+          command: [ "node", "dist/src/console/main.js", "db", "seed", "prod", "" ]
           env:
             - name: NODE_ENV
               value: {{.Values.environment}}
