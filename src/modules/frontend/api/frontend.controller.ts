@@ -175,7 +175,8 @@ export class FrontendController {
 
     @Post('organisationen')
     @UseGuards(AuthenticatedGuard)
-    @ApiCreatedResponse({ description: 'The organisation was successfully created.' })
+    @ApiOperation({ summary: 'Creates an Organisation.' })
+    @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponse })
     @ApiBadRequestResponse({ description: 'The organisation already exists.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
@@ -189,7 +190,8 @@ export class FrontendController {
 
     @Get('organisationen/:organisationId')
     @UseGuards(AuthenticatedGuard)
-    @ApiOkResponse({ description: 'The organization was successfully pulled.' })
+    @ApiOperation({ summary: 'Finds an Organisation by ID.' })
+    @ApiOkResponse({ description: 'The organization was successfully pulled.', type: OrganisationResponse })
     @ApiBadRequestResponse({ description: 'Organization ID is required' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the organization.' })
     @ApiNotFoundResponse({ description: 'The organization does not exist.' })
@@ -204,6 +206,7 @@ export class FrontendController {
 
     @Get('organisationen')
     @UseGuards(AuthenticatedGuard)
+    @ApiOperation({ summary: 'Finds multiple Organisationen.' })
     @ApiOkResponsePaginated(OrganisationResponse, { description: 'The organizations were successfully returned' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get organizations.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get organizations.' })
