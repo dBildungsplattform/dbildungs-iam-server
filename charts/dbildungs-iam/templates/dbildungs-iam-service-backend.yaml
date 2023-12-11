@@ -3,7 +3,8 @@ kind: Service
 metadata:
   name: dbiam-backend
   labels:
-    app.kubernetes.io/name: dbildungs-iam
+    app.kubernetes.io/name: {{.Chart.Name}}
+    app.kubernetes.io/version: {{.Chart.Version}}
 spec:
   selector:
     layer: dbildungs-iam-backend

@@ -5,7 +5,6 @@ dbildungsIamCpuRequest: 200m
 dbildungsIamMemRequest: 200Mi
 dbildungsIamReplications: 1
 environment: prod
-backendHostname: helm.dev.spsh.dbildungsplattform.de
 configfile:
   secrets: 'config/secrets.json'
   dev: 'config/config.dev.json'
@@ -19,10 +18,6 @@ secrets:
 seedingData: spsh-seeding-data
 # If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
 enableServiceMonitor: false
-# Both of these are disabled as to make them intentional
-keycloakEnabled: false
-dbildungs-iam-keycloak-dev:
-  keycloakPublic: false
 # do we use a development redis?
 redisEnabled: false
 # Image
