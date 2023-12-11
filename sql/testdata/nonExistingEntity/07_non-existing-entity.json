@@ -1,0 +1,8 @@
+{
+    "entityName": "NonExistingEntityType",
+    "entities": [
+        {
+            "id": "1234"
+        }
+    ]
+}

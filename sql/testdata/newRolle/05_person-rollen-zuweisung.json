@@ -4,15 +4,7 @@
         {
             "person": "1",
             "rolleReference": {
-                "id": "1111",
-                "persisted": true
-            },
-            "schulstrukturknoten": "1"
-        },
-        {
-            "person": "1",
-            "rolleReference": {
-                "id": "2222",
+                "id": "9988",
                 "persisted": false
             },
             "schulstrukturknoten": "1"

@@ -48,6 +48,10 @@ describe('DbSeedConsole', () => {
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
     }, 100000);
 
+    beforeEach(async () => {
+        await DatabaseTestModule.clearDatabase(orm);
+    });
+
     afterAll(async () => {
         await module.close();
     });
@@ -80,7 +84,7 @@ describe('DbSeedConsole', () => {
 
         describe('when directory and excluded files is set via parameter', () => {
             it('should use testdata directory and fail due to non-existing entity-type', async () => {
-                const params: string[] = ['testdata/all'];
+                const params: string[] = ['testdata/nonExistingEntity'];
                 await expect(sut.run(params)).rejects.toThrow();
             });
         });
@@ -94,7 +98,7 @@ describe('DbSeedConsole', () => {
 
         describe('when foreign (persisted) rolle-entity used in PersonRollenZuweisung does not exist', () => {
             it('should fail', async () => {
-                const params: string[] = ['testdata/peristedRolleMissing'];
+                const params: string[] = ['testdata/persistedRolleMissing'];
                 await expect(sut.run(params)).rejects.toThrow();
             });
         });
