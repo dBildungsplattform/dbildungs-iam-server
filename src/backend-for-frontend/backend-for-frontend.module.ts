@@ -7,7 +7,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { FrontendApiModule } from '../modules/frontend/frontend-api.module.js';
-import { DbConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../shared/config/index.js';
+import { DbConfig, loadConfigFiles, ServerConfig } from '../shared/config/index.js';
 import { mappingErrorHandler } from '../shared/error/mapping.error.js';
 import { HealthModule } from '../modules/health/health.module.js';
 
@@ -15,7 +15,6 @@ import { HealthModule } from '../modules/health/health.module.js';
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
-            validate: loadEnvConfig,
             load: [loadConfigFiles],
         }),
         AutomapperModule.forRoot({
