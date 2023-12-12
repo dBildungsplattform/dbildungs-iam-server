@@ -2,6 +2,7 @@
     "entityName": "PersonRollenZuweisung",
     "entities": [
         {
+            "id": "1",
             "person": "1",
             "rolleReference": {
                 "id": "1111",

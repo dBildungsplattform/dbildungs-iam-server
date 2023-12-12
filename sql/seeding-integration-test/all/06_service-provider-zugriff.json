@@ -2,6 +2,7 @@
     "entityName": "ServiceProviderZugriff",
     "entities": [
         {
+            "id": "1",
             "serviceProvider": "1"
         }
     ]

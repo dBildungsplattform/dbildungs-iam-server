@@ -2,6 +2,7 @@
     "entityName": "Organisation",
     "entities": [
         {
+            "id": "1",
             "kennung": "Organisation1",
             "name": "Schule1",
             "namensergaenzung": "Keine",

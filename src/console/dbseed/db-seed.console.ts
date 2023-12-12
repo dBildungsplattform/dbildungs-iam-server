@@ -246,14 +246,12 @@ export class DbSeedConsole extends CommandRunner {
             if (foreignEntity) {
                 entity.rolle = foreignEntity;
             } else {
-                this.logger.error(`Foreign RolleEntity with id ${id} could not be found!`);
                 throw new Error(`Foreign RolleEntity with id ${id} could not be found!`);
             }
         } else {
             const rolle: RolleEntity | undefined = this.dbSeedService.getRolle(id);
             if (rolle === undefined) {
-                this.logger.error(`No rolle with id ${id}`);
-                throw new Error();
+                throw new Error(`No rolle with id ${id}`);
             }
             entity.rolle = rolle;
         }

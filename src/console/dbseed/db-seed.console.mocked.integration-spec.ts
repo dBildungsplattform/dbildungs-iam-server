@@ -66,7 +66,6 @@ describe('DbSeedConsoleMockedKeycloak', () => {
     });
 
     it('should be defined', () => {
-        expect(orm).toBeDefined();
         expect(dbSeedService).toBeDefined();
         expect(orm).toBeDefined();
     });
@@ -74,15 +73,13 @@ describe('DbSeedConsoleMockedKeycloak', () => {
     describe('run', () => {
         describe('when no parameter for directory is provided', () => {
             it('should fail with error', async () => {
-                const params: string[] = ['testdata/keycloakError'];
+                const params: string[] = ['seeding-integration-test/keycloakError'];
                 const error: KeycloakClientError = new KeycloakClientError('An error occurred!');
-                //const user = DoFactory.createUser(true);
                 const result: Result<string, DomainError> = {
                     ok: false,
                     error: error,
                 };
                 keycloakUserServiceMock.create.mockResolvedValueOnce(result);
-                //keycloakUserServiceMock.findOne.mockResolvedValueOnce(result);
                 userNameGeneratorServiceMock.generateUsername.mockResolvedValueOnce('timtester1');
                 await expect(sut.run(params)).rejects.toThrow();
             });
