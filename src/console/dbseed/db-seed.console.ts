@@ -193,6 +193,7 @@ export class DbSeedConsole extends CommandRunner {
     }
 
     private async createPerson(personEntity: PersonFile): Promise<void> {
+        this.logger.info('Start of createPerson');
         const username: string = await this.usernameGenerator.generateUsername(
             personEntity.vorname,
             personEntity.familienname,
@@ -203,7 +204,9 @@ export class DbSeedConsole extends CommandRunner {
             id: null,
             createdDate: null,
         };
+        this.logger.info('Generated Username');
         const userIdResult: Result<string> = await this.keycloakUserService.create(userDo, 'test');
+        this.logger.info('Created user');
         if (userIdResult.ok) {
             //should be always ture, because usernameGenerator.generateUsername calls getNextAvailableName
             this.createdKeycloakUsers.push([userIdResult.value, username]);
@@ -212,6 +215,7 @@ export class DbSeedConsole extends CommandRunner {
         } else {
             throw userIdResult.error;
         }
+        this.logger.info('End of createPerson');
     }
 
     private async deleteAllCreatedKeycloakUsers(): Promise<void> {

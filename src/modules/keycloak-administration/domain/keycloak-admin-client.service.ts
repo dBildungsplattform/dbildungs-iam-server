@@ -3,7 +3,6 @@ import { Credentials, KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-
 
 import { DomainError, KeycloakClientError } from '../../../shared/error/index.js';
 import { KeycloakInstanceConfig } from '../keycloak-instance-config.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 @Injectable()
 export class KeycloakAdministrationService {
@@ -14,7 +13,6 @@ export class KeycloakAdministrationService {
     public constructor(
         private readonly kcAdminClient: KeycloakAdminClient,
         private readonly kcConfig: KeycloakInstanceConfig,
-        private readonly logger: ClassLogger,
     ) {
         this.kcAdminClient.setConfig({
             baseUrl: this.kcConfig.BASE_URL,
@@ -50,7 +48,6 @@ export class KeycloakAdministrationService {
                 };
                 await this.kcAdminClient.auth(credentials);
             } catch (err) {
-                this.logger.error('KAC');
                 return { ok: false, error: new KeycloakClientError('Could not authorize with Keycloak') };
             }
 

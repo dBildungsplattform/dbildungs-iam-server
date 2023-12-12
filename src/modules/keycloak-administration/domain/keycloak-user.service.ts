@@ -176,7 +176,6 @@ export class KeycloakUserService {
             });
             return { ok: true, value: password };
         } catch (err) {
-            this.logger.error('KU');
             return { ok: false, error: new KeycloakClientError('Could not authorize with Keycloak') };
         }
     }
