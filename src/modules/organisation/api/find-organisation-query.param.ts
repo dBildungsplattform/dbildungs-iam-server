@@ -2,7 +2,7 @@ import { AutoMap } from '@automapper/classes';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { OrganisationsTyp } from '../domain/organisation.enum.js';
+import { OrganisationsTyp } from '../domain/organisation.enums.js';
 
 export class FindOrganisationQueryParams extends PagedQueryParams {
     @AutoMap()
