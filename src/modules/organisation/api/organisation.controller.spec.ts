@@ -6,7 +6,7 @@ import { plainToClass } from 'class-transformer';
 import { MapperTestModule } from '../../../../test/utils/index.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged } from '../../../shared/paging/paged.js';
-import { OrganisationsTyp } from '../domain/organisation.enum.js';
+import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
@@ -59,6 +59,7 @@ describe('OrganisationController', () => {
                     namensergaenzung: faker.lorem.word(),
                     kuerzel: faker.lorem.word(),
                     typ: OrganisationsTyp.SONSTIGE,
+                    traegerschaft: Traegerschaft.SONSTIGE,
                 };
 
                 const returnedValue: CreatedOrganisationDto = plainToClass(CreatedOrganisationDto, {
@@ -68,6 +69,7 @@ describe('OrganisationController', () => {
                     namensergaenzung: faker.lorem.word(),
                     kuerzel: faker.lorem.word(),
                     typ: OrganisationsTyp.SONSTIGE,
+                    traegerschaft: Traegerschaft.SONSTIGE,
                 });
                 organisationUcMock.createOrganisation.mockResolvedValue(returnedValue);
                 await expect(organisationController.createOrganisation(params)).resolves.not.toThrow();
@@ -96,6 +98,7 @@ describe('OrganisationController', () => {
             namensergaenzung: faker.lorem.word(),
             kuerzel: faker.lorem.word(),
             typ: OrganisationsTyp.SONSTIGE,
+            traegerschaft: Traegerschaft.SONSTIGE,
         });
 
         describe('when usecase returns an OrganisationResponse', () => {
@@ -143,6 +146,7 @@ describe('OrganisationController', () => {
                     namensergaenzung: faker.lorem.word(),
                     kuerzel: faker.lorem.word(),
                     typ: queryParams.typ ?? OrganisationsTyp.SONSTIGE,
+                    traegerschaft: Traegerschaft.SONSTIGE,
                 };
 
                 const response2: OrganisationResponse = {
@@ -152,6 +156,7 @@ describe('OrganisationController', () => {
                     namensergaenzung: faker.lorem.word(),
                     kuerzel: faker.lorem.word(),
                     typ: queryParams.typ ?? OrganisationsTyp.SONSTIGE,
+                    traegerschaft: Traegerschaft.SONSTIGE,
                 };
 
                 const mockedPagedResponse: Paged<OrganisationResponse> = {

@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { Entity, Enum, Property } from '@mikro-orm/core';
-import { OrganisationsTyp } from '../domain/organisation.enum.js';
+import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 
 @Entity({ tableName: 'organisation' })
@@ -25,7 +25,11 @@ export class OrganisationEntity extends TimestampedEntity<OrganisationEntity, 'i
     @Property({ nullable: true })
     public kuerzel?: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     @Enum({ items: () => OrganisationsTyp, nullable: true })
     public typ?: OrganisationsTyp;
+
+    @AutoMap(() => String)
+    @Enum({ items: () => Traegerschaft, nullable: true })
+    public traegerschaft?: Traegerschaft;
 }
