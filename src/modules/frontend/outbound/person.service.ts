@@ -7,10 +7,19 @@ import { CreatePersonBodyParams } from '../../person/api/create-person.body.para
 import { PersonenQueryParams } from '../../person/api/personen-query.param.js';
 import { User } from '../auth/user.decorator.js';
 import { PaginatedResponseDto } from '../api/paginated-data.response.js';
+import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 
 @Injectable()
 export class PersonService {
     public constructor(private httpService: BackendHttpService) {}
+
+    public async getPersonById(params: PersonByIdParams): Promise<PersonendatensatzResponse> {
+        return firstValueFrom(
+            this.httpService
+                .get<PersonendatensatzResponse>(`/api/personen/${params.personId}`)
+                .pipe(map((res: AxiosResponse<PersonendatensatzResponse>) => res.data)),
+        );
+    }
 
     public async getAllPersons(
         params: PersonenQueryParams,

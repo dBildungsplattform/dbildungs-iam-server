@@ -140,6 +140,16 @@ export class FrontendController {
         return this.personService.getAllPersons(params, user);
     }
 
+    @Get('personen/:personId')
+    @UseGuards(AuthenticatedGuard)
+    @ApiOperation({ summary: 'Get person by personId.' })
+    @ApiNotFoundResponse({ description: 'The requested person does not exist.' })
+    @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
+    @ApiOkResponse({ description: 'Person as PersonendatensatzResponse', type: PersonendatensatzResponse })
+    public personById(@Param() params: PersonByIdParams): Promise<PersonendatensatzResponse> {
+        return this.personService.getPersonById(params);
+    }
+
     @Post('personen')
     @UseGuards(AuthenticatedGuard)
     @ApiOperation({ summary: 'Creates a new person.' })

@@ -12,6 +12,7 @@ import { PersonNameParams } from '../../person/api/person-name.params.js';
 import { PaginatedResponseDto } from '../api/paginated-data.response.js';
 import { User } from '../auth/user.decorator.js';
 import { PersonenQueryParams } from '../../person/api/personen-query.param.js';
+import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 
 describe('PersonService', () => {
     let module: TestingModule;
@@ -41,7 +42,27 @@ describe('PersonService', () => {
         expect(sut).toBeDefined();
     });
 
-    describe('listPersons', () => {
+    describe('getPersonById', () => {
+        const personId: string = '1';
+
+        it('should call HttpService.get with params', async () => {
+            httpServiceMock.get.mockReturnValueOnce(of({ data: [] } as AxiosResponse));
+            const queryParams: PersonByIdParams = {
+                personId: personId,
+            };
+            await sut.getPersonById(queryParams);
+            expect(httpServiceMock.get).toHaveBeenCalledWith(`/api/personen/${personId}`);
+        });
+
+        it('should return response from service', async () => {
+            const personResponse: PersonendatensatzResponse = new PersonendatensatzResponse();
+            httpServiceMock.get.mockReturnValueOnce(of({ data: personResponse } as AxiosResponse));
+            const result: PersonendatensatzResponse = await sut.getPersonById({ personId: personId });
+            expect(result).toBe(personResponse);
+        });
+    });
+
+    describe('getAllPersons', () => {
         it('should call HttpService.get with params', async () => {
             httpServiceMock.getPaginated.mockReturnValueOnce(of(new PaginatedResponseDto(0, 0, 0, [])));
             const userMock: User = createMock<User>();
