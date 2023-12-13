@@ -44,20 +44,21 @@ describe('PersonService', () => {
 
     describe('getPersonById', () => {
         const personId: string = '1';
-
+        const userMock: User = createMock<User>();
+        const queryParams: PersonByIdParams = {
+            personId: personId,
+        };
         it('should call HttpService.get with params', async () => {
             httpServiceMock.get.mockReturnValueOnce(of({ data: [] } as AxiosResponse));
-            const queryParams: PersonByIdParams = {
-                personId: personId,
-            };
-            await sut.getPersonById(queryParams);
-            expect(httpServiceMock.get).toHaveBeenCalledWith(`/api/personen/${personId}`);
+
+            await sut.getPersonById(queryParams, userMock);
+            expect(httpServiceMock.get).toHaveBeenCalledWith(`/api/personen/${personId}`, userMock);
         });
 
         it('should return response from service', async () => {
             const personResponse: PersonendatensatzResponse = new PersonendatensatzResponse();
             httpServiceMock.get.mockReturnValueOnce(of({ data: personResponse } as AxiosResponse));
-            const result: PersonendatensatzResponse = await sut.getPersonById({ personId: personId });
+            const result: PersonendatensatzResponse = await sut.getPersonById(queryParams, userMock);
             expect(result).toBe(personResponse);
         });
     });

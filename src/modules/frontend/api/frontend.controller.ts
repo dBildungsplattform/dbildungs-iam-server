@@ -146,8 +146,11 @@ export class FrontendController {
     @ApiNotFoundResponse({ description: 'The requested person does not exist.' })
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
     @ApiOkResponse({ description: 'Person as PersonendatensatzResponse', type: PersonendatensatzResponse })
-    public personById(@Param() params: PersonByIdParams): Promise<PersonendatensatzResponse> {
-        return this.personService.getPersonById(params);
+    public personById(
+        @Param() params: PersonByIdParams,
+        @CurrentUser() user: User,
+    ): Promise<PersonendatensatzResponse> {
+        return this.personService.getPersonById(params, user);
     }
 
     @Post('personen')

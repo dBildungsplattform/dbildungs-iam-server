@@ -13,10 +13,10 @@ import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 export class PersonService {
     public constructor(private httpService: BackendHttpService) {}
 
-    public async getPersonById(params: PersonByIdParams): Promise<PersonendatensatzResponse> {
+    public async getPersonById(params: PersonByIdParams, user: User): Promise<PersonendatensatzResponse> {
         return firstValueFrom(
             this.httpService
-                .get<PersonendatensatzResponse>(`/api/personen/${params.personId}`)
+                .get<PersonendatensatzResponse>(`/api/personen/${params.personId}`, user)
                 .pipe(map((res: AxiosResponse<PersonendatensatzResponse>) => res.data)),
         );
     }

@@ -249,7 +249,10 @@ describe('FrontendController', () => {
             it('should return person', async () => {
                 const personenDatensatzResponse: PersonendatensatzResponse = getPersonenDatensatzResponse();
                 personService.getPersonById.mockResolvedValueOnce(personenDatensatzResponse);
-                const result: PersonendatensatzResponse = await frontendController.personById(queryParams);
+                const result: PersonendatensatzResponse = await frontendController.personById(
+                    queryParams,
+                    createMock(),
+                );
                 expect(result).toEqual(personenDatensatzResponse);
             });
         });
@@ -260,7 +263,7 @@ describe('FrontendController', () => {
                     HttpStatus.INTERNAL_SERVER_ERROR,
                 );
                 personService.getPersonById.mockRejectedValueOnce(exception);
-                await expect(frontendController.personById(queryParams)).rejects.toThrow(HttpException);
+                await expect(frontendController.personById(queryParams, createMock())).rejects.toThrow(HttpException);
             });
         });
     });
