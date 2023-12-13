@@ -11,6 +11,7 @@ import {
     Param,
     Patch,
     Post,
+    Put,
     Query,
     UseFilters,
     UseInterceptors,
@@ -49,6 +50,8 @@ import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
+import { UpdatePersonBodyParams } from './update-person.body.params.js';
+import { UpdatePersonDto } from './update-person.dto.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -203,6 +206,32 @@ export class PersonController {
         });
 
         return response;
+    }
+
+    @Put(':personId')
+    @ApiOkResponse({
+        description: 'The person was successfully updated.',
+        type: PersonendatensatzResponse,
+    })
+    @ApiBadRequestResponse({ description: 'Request has wrong format.' })
+    @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
+    @ApiNotFoundResponse({ description: 'The person was not found.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
+    @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
+    public async updatePersonenkontextWithId(
+        @Param() params: PersonByIdParams,
+        @Body() body: UpdatePersonBodyParams,
+    ): Promise<PersonendatensatzResponse> {
+        const dto: UpdatePersonDto = this.mapper.map(body, UpdatePersonBodyParams, UpdatePersonDto);
+        dto.id = params.personId;
+
+        const response: PersonendatensatzDto | SchulConnexError = await this.personUc.updatePerson(dto);
+
+        if (response instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
+        }
+
+        return this.mapper.map(response, PersonendatensatzDto, PersonendatensatzResponse);
     }
 
     @Patch(':personId/password')

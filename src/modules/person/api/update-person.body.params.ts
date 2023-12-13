@@ -1,0 +1,65 @@
+import { AutoMap } from '@automapper/classes';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsString, IsOptional, ValidateNested, IsEnum, IsBoolean } from 'class-validator';
+import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
+import { PersonBirthParams } from './person-birth.params.js';
+import { PersonNameParams } from './person-name.params.js';
+
+export class UpdatePersonBodyParams {
+    @AutoMap()
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ required: false })
+    public readonly referrer?: string;
+
+    @AutoMap()
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ required: false })
+    public readonly stammorganisation?: string;
+
+    @AutoMap(() => PersonNameParams)
+    @ValidateNested()
+    @Type(() => PersonNameParams)
+    @ApiProperty({ type: PersonNameParams, required: true })
+    public readonly name!: PersonNameParams;
+
+    @AutoMap(() => PersonBirthParams)
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => PersonBirthParams)
+    @ApiProperty({ type: PersonBirthParams, required: false })
+    public readonly geburt?: PersonBirthParams;
+
+    @AutoMap(() => String)
+    @IsOptional()
+    @IsString()
+    @IsEnum(Geschlecht)
+    @ApiProperty({ enum: Geschlecht, required: false })
+    public readonly geschlecht?: Geschlecht;
+
+    @AutoMap()
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ default: 'de-DE', required: false })
+    public readonly lokalisierung?: string = 'de-DE';
+
+    @AutoMap(() => String)
+    @IsOptional()
+    @IsString()
+    @IsEnum(Vertrauensstufe)
+    @ApiProperty({ enum: Vertrauensstufe, required: false })
+    public readonly vertrauensstufe?: Vertrauensstufe;
+
+    @AutoMap()
+    @IsOptional()
+    @IsBoolean()
+    @ApiProperty({ required: false })
+    public readonly auskunftssperre?: boolean;
+
+    @AutoMap()
+    @IsString()
+    @ApiProperty()
+    public readonly revision!: string;
+}
