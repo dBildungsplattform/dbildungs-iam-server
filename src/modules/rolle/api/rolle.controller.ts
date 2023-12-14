@@ -12,6 +12,7 @@ import {
 } from '@nestjs/swagger';
 import { Public } from 'nest-keycloak-connect';
 
+import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
@@ -23,6 +24,7 @@ import { RolleResponse } from './rolle.response.js';
 export class RolleController {
     public constructor(
         private readonly rolleRepo: RolleRepo,
+        private readonly organisationService: OrganisationService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -37,7 +39,7 @@ export class RolleController {
     public async createRolle(@Body() params: CreateRolleBodyParams): Promise<RolleResponse> {
         const rolle: Rolle = this.mapper.map(params, CreateRolleBodyParams, Rolle);
 
-        await rolle.save(this.rolleRepo);
+        await rolle.save(this.rolleRepo, this.organisationService);
 
         return this.mapper.map(rolle, Rolle, RolleResponse);
     }

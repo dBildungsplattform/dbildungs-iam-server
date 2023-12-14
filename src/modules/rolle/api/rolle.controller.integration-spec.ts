@@ -5,11 +5,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
-import { RolleMapperProfile } from '../mapper/rolle.mapper.profile.js';
-import { RolleRepo } from '../repo/rolle.repo.js';
+import { RolleApiModule } from '../rolle-api.module.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
-import { RolleController } from './rolle.controller.js';
 import { RolleResponse } from './rolle.response.js';
 
 describe('Rolle API', () => {
@@ -19,9 +18,12 @@ describe('Rolle API', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [RolleRepo, RolleMapperProfile],
-            controllers: [RolleController],
+            imports: [
+                RolleApiModule,
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                MapperTestModule,
+            ],
         }).compile();
 
         orm = module.get(MikroORM);
@@ -40,15 +42,14 @@ describe('Rolle API', () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
 
-    it('', () => {
-        expect(em).toBeDefined();
-    });
-
     describe('/POST rolle', () => {
         it('should return created rolle', async () => {
+            const organisation: OrganisationEntity = new OrganisationEntity();
+            await em.persistAndFlush(new OrganisationEntity());
+
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
-                administeredBySchulstrukturknoten: faker.string.uuid(),
+                administeredBySchulstrukturknoten: organisation.id,
             };
 
             const response: Response = await request(app.getHttpServer()).post('/rolle').send(params);
@@ -58,15 +59,29 @@ describe('Rolle API', () => {
         });
 
         it('should save rolle to db', async () => {
+            const organisation: OrganisationEntity = new OrganisationEntity();
+            await em.persistAndFlush(new OrganisationEntity());
+
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
-                administeredBySchulstrukturknoten: faker.string.uuid(),
+                administeredBySchulstrukturknoten: organisation.id,
             };
 
             const response: Response = await request(app.getHttpServer()).post('/rolle').send(params);
             const rolle: RolleResponse = response.body as RolleResponse;
 
             await em.findOneOrFail(RolleEntity, { id: rolle.id });
+        });
+
+        it('should fail if the organisation does not exist', async () => {
+            const params: CreateRolleBodyParams = {
+                name: faker.person.jobTitle(),
+                administeredBySchulstrukturknoten: faker.string.uuid(),
+            };
+
+            const response: Response = await request(app.getHttpServer()).post('/rolle').send(params);
+
+            expect(response.status).toBe(500);
         });
     });
 });
