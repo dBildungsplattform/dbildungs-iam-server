@@ -9,7 +9,7 @@ import { RollenBerechtigungsZuweisungRepo } from '../repo/rollen-berechtigungs-z
 import { RolleRechtRepo } from '../repo/rolle-recht.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { PersonRollenZuweisungDo } from './person-rollen-zuweisung.do.js';
-import { RolleDo } from './rolle.do.js';
+import { Rolle } from './rolle.js';
 import { RolleBerechtigungsZuweisungDo } from './rolle-berechtigungs-zuweisung.do.js';
 import { ServiceProviderZugriffDo } from './service-provider-zugriff.do.js';
 import { ServiceProviderDo } from './service-provider.do.js';
@@ -100,7 +100,7 @@ describe('RolleService', () => {
     describe('getPersonRollenZuweisung', () => {
         describe('when PersonRollenZuweisung exists', () => {
             it('should get a PersonRollenZuweisung ', async () => {
-                const rolle: RolleDo<true> = DoFactory.createRolle(true);
+                const rolle: Rolle = DoFactory.createRolle(true);
                 const personRollenZuweisung: PersonRollenZuweisungDo<true> = DoFactory.createPersonRollenZuweisung(
                     PERSON_ID,
                     rolle,
@@ -116,7 +116,7 @@ describe('RolleService', () => {
         });
         describe('when PersonRollenZuweisung does not exist', () => {
             it('should get an empty array ', async () => {
-                const rolle: RolleDo<true> = DoFactory.createRolle(true);
+                const rolle: Rolle = DoFactory.createRolle(true);
                 const personRollenZuweisung: PersonRollenZuweisungDo<true> = DoFactory.createPersonRollenZuweisung(
                     PERSON_ID,
                     rolle,
@@ -133,7 +133,7 @@ describe('RolleService', () => {
     describe('getRolleBerechtigungsZuweisung', () => {
         describe('when RolleBerechtigungsZuweisung exists', () => {
             it('should get a RolleBerechtigungsZuweisung ', async () => {
-                const rolle: RolleDo<true> = DoFactory.createRolle(true);
+                const rolle: Rolle = DoFactory.createRolle(true);
                 const serviceProviderZugriffDo: ServiceProviderZugriffDo<true> =
                     DoFactory.createServiceProviderZugriff(true);
                 const rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<true> =
@@ -149,7 +149,7 @@ describe('RolleService', () => {
         });
         describe('when RolleBerechtigungsZuweisung does not exist', () => {
             it('should get an empty array ', async () => {
-                const rolle: RolleDo<true> = DoFactory.createRolle(true);
+                const rolle: Rolle = DoFactory.createRolle(true);
                 const serviceProviderZugriffDo: ServiceProviderZugriffDo<true> =
                     DoFactory.createServiceProviderZugriff(true);
                 const rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<true> =
@@ -166,7 +166,7 @@ describe('RolleService', () => {
     describe('getRolleBerechtigungsZuweisungByPersonId', () => {
         describe('when RolleBerechtigungsZuweisung exists', () => {
             it('should get a RolleBerechtigungsZuweisung ', async () => {
-                const rolle: RolleDo<true> = DoFactory.createRolle(true);
+                const rolle: Rolle = DoFactory.createRolle(true);
                 const serviceProviderZugriffDo: ServiceProviderZugriffDo<true> =
                     DoFactory.createServiceProviderZugriff(true);
                 const personRollenZuweisung: PersonRollenZuweisungDo<true> = DoFactory.createPersonRollenZuweisung(
@@ -192,7 +192,7 @@ describe('RolleService', () => {
         });
         describe('when RolleBerechtigungsZuweisung does not exist', () => {
             it('should get an empty array ', async () => {
-                const rolle: RolleDo<true> = DoFactory.createRolle(true);
+                const rolle: Rolle = DoFactory.createRolle(true);
                 const serviceProviderZugriffDo: ServiceProviderZugriffDo<true> =
                     DoFactory.createServiceProviderZugriff(true);
                 const rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<true> =
@@ -235,7 +235,7 @@ describe('RolleService', () => {
     });
 
     function initServiceProviderTestSuccessEssentials(): void {
-        const rolle: RolleDo<true> = DoFactory.createRolle(true);
+        const rolle: Rolle = DoFactory.createRolle(true);
         const serviceProvider: ServiceProviderDo<true> = DoFactory.createServiceProvider(true);
         const serviceProviderZugriff: ServiceProviderZugriffDo<true> = DoFactory.createServiceProviderZugriff(true);
         const personRollenZuweisung: PersonRollenZuweisungDo<true> = DoFactory.createPersonRollenZuweisung(

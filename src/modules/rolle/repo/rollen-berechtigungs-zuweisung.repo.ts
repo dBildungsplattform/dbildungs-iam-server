@@ -4,7 +4,7 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import { RolleBerechtigungsZuweisungEntity } from '../entity/rolle-berechtigungs-zuweisung.entity.js';
 import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuweisung.do.js';
-import { RolleDo } from '../domain/rolle.do.js';
+import { Rolle } from '../domain/rolle.js';
 
 @Injectable()
 export class RollenBerechtigungsZuweisungRepo {
@@ -14,7 +14,7 @@ export class RollenBerechtigungsZuweisungRepo {
     ) {}
 
     public async findAllRolleBerechtigungsZuweisungByRolle(
-        rolle: RolleDo<boolean>,
+        rolle: Rolle,
     ): Promise<RolleBerechtigungsZuweisungDo<true>[]> {
         const query: Record<string, unknown> = {};
         query['rolle'] = { $ilike: rolle.id };
