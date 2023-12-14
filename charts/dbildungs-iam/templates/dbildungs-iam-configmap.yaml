@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dbildungs-iam-configmap
+data:
+  config.json: |-
+{{.Files.Get "config/config.json" | nindent 4}}
