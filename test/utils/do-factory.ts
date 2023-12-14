@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { UserDo } from '../../src/modules/keycloak-administration/domain/user.do.js';
 import { OrganisationDo } from '../../src/modules/organisation/domain/organisation.do.js';
-import { OrganisationsTyp } from '../../src/modules/organisation/domain/organisation.enum.js';
+import { OrganisationsTyp, Traegerschaft } from '../../src/modules/organisation/domain/organisation.enums.js';
 import { PersonDo } from '../../src/modules/person/domain/person.do.js';
 import { PersonenkontextDo } from '../../src/modules/person/domain/personenkontext.do.js';
 import {
@@ -59,6 +59,7 @@ export class DoFactory {
             namensergaenzung: faker.company.name(),
             kuerzel: faker.lorem.word(),
             typ: OrganisationsTyp.SONSTIGE,
+            traegerschaft: Traegerschaft.SONSTIGE,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
         };
