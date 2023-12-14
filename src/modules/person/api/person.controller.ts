@@ -218,7 +218,7 @@ export class PersonController {
     @ApiNotFoundResponse({ description: 'The person was not found.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
-    public async updatePersonenkontextWithId(
+    public async updatePerson(
         @Param() params: PersonByIdParams,
         @Body() body: UpdatePersonBodyParams,
     ): Promise<PersonendatensatzResponse> {
