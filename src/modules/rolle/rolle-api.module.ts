@@ -8,6 +8,7 @@ import { ServiceProviderRepo } from './repo/service-provider.repo.js';
 import { RolleRechtRepo } from './repo/rolle-recht.repo.js';
 import { ProviderController } from './api/provider.controller.js';
 import { ProviderApiMapperProfile } from './api/provider-api.mapper.profile.js';
+import { RolleController } from './api/rolle.controller.js';
 
 @Module({
     imports: [RolleModule, LoggerModule.register(RolleApiModule.name)],
@@ -19,6 +20,6 @@ import { ProviderApiMapperProfile } from './api/provider-api.mapper.profile.js';
         RolleRechtRepo,
         ProviderApiMapperProfile,
     ],
-    controllers: [ProviderController],
+    controllers: [ProviderController, RolleController],
 })
 export class RolleApiModule {}
