@@ -15,7 +15,8 @@ export class RedisConfig {
     public readonly USERNAME!: string;
 
     @IsString()
-    public readonly PASSWORD?: string;
+    @IsNotEmpty()
+    public readonly PASSWORD!: string;
 
     @IsBoolean()
     @IsNotEmpty()
