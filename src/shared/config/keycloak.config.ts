@@ -14,8 +14,7 @@ export class KeycloakConfig {
     public readonly ADMIN_CLIENT_ID!: string;
 
     @IsString()
-    @IsNotEmpty()
-    public readonly ADMIN_SECRET!: string;
+    public readonly ADMIN_SECRET?: string;
 
     @IsString()
     @IsNotEmpty()
@@ -26,6 +25,5 @@ export class KeycloakConfig {
     public readonly CLIENT_ID!: string;
 
     @IsString()
-    @IsNotEmpty()
-    public readonly CLIENT_SECRET!: string;
+    public readonly CLIENT_SECRET?: string;
 }
