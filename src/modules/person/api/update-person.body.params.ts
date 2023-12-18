@@ -60,6 +60,6 @@ export class UpdatePersonBodyParams {
 
     @AutoMap()
     @IsString()
-    @ApiProperty()
+    @ApiProperty({ required: true })
     public readonly revision!: string;
 }
