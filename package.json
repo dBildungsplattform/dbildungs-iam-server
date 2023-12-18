@@ -35,7 +35,7 @@
         "@automapper/core": "^8.7.7",
         "@automapper/nestjs": "^8.7.7",
         "@faker-js/faker": "^8.3.1",
-        "@mikro-orm/core": "^5.9.4",
+        "@mikro-orm/core": "^5.9.5",
         "@mikro-orm/nestjs": "^5.2.2",
         "@mikro-orm/postgresql": "^5.9.4",
         "@nestjs/axios": "^3.0.1",
