@@ -70,7 +70,7 @@ export class PersonDo<WasPersisted extends boolean> implements DoBase<WasPersist
     public geschlecht?: Geschlecht;
 
     @AutoMap()
-    public lokalisierung?: string = 'de-DE';
+    public lokalisierung?: string;
 
     @AutoMap(() => String)
     public vertrauensstufe?: Vertrauensstufe;
