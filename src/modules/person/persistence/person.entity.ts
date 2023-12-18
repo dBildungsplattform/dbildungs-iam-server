@@ -83,7 +83,7 @@ export class PersonEntity extends TimestampedEntity<PersonEntity, 'id'> {
 
     @AutoMap()
     @Property({ nullable: true })
-    public lokalisierung?: string = 'de-DE';
+    public lokalisierung?: string;
 
     @AutoMap(() => String)
     @Enum({ items: () => Vertrauensstufe, nullable: true })

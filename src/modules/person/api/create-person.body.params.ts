@@ -60,8 +60,8 @@ export class CreatePersonBodyParams {
     @AutoMap()
     @IsOptional()
     @IsString()
-    @ApiProperty({ default: 'de-DE', required: false })
-    public readonly lokalisierung?: string = 'de-DE';
+    @ApiProperty({ required: false })
+    public readonly lokalisierung?: string;
 
     @AutoMap(() => String)
     @IsOptional()
