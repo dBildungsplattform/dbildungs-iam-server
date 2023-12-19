@@ -19,6 +19,7 @@ import { PersonDto } from './person.dto.js';
 import { PersonUc } from './person.uc.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { LoggerModule } from '../../../core/logging/logger.module.js';
+import { UpdatePersonDto } from './update-person.dto.js';
 
 describe('PersonUc', () => {
     let module: TestingModule;
@@ -319,6 +320,37 @@ describe('PersonUc', () => {
                 const result: { ok: boolean; error: Error } = resetResult as { ok: boolean; error: Error };
                 expect(result.ok).toBeFalsy();
                 expect(result.error).toStrictEqual(new Error('Unknown error occurred'));
+            });
+        });
+    });
+
+    describe('updatePerson', () => {
+        describe('when person exists', () => {
+            it('should return PersonendatensatzDto', async () => {
+                const personDo: PersonDo<true> = DoFactory.createPerson(true);
+                personServiceMock.updatePerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: personDo,
+                });
+
+                const result: PersonendatensatzDto | SchulConnexError = await personUc.updatePerson(
+                    {} as UpdatePersonDto,
+                );
+
+                expect(result).toBeInstanceOf(PersonendatensatzDto);
+                expect(personServiceMock.updatePerson).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when person does not exist', () => {
+            it('should return SchulConnexError', async () => {
+                personServiceMock.updatePerson.mockResolvedValueOnce({
+                    ok: false,
+                    error: new EntityNotFoundError('Person'),
+                });
+
+                await expect(personUc.updatePerson({} as UpdatePersonDto)).resolves.toBeInstanceOf(SchulConnexError);
+                expect(personServiceMock.updatePerson).toHaveBeenCalledTimes(1);
             });
         });
     });

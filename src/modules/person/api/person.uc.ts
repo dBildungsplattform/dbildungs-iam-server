@@ -21,6 +21,7 @@ import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { UpdatePersonDto } from './update-person.dto.js';
 
 @Injectable()
 export class PersonUc {
@@ -166,5 +167,19 @@ export class PersonUc {
         );
 
         return this.mapper.mapArray(result.items, PersonenkontextDo, PersonenkontextDto);
+    }
+
+    public async updatePerson(updateDto: UpdatePersonDto): Promise<PersonendatensatzDto | SchulConnexError> {
+        const personDo: PersonDo<true> = this.mapper.map(updateDto, UpdatePersonDto, PersonDo);
+        const result: Result<PersonDo<true>, DomainError> = await this.personService.updatePerson(personDo);
+
+        if (!result.ok) {
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
+        }
+
+        return new PersonendatensatzDto({
+            person: this.mapper.map(result.value, PersonDo, PersonDto),
+            personenkontexte: [],
+        });
     }
 }

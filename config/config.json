@@ -31,7 +31,7 @@
         "HOST": "localhost",
         "PORT": 6379,
         "USERNAME": "default",
-        "PASSWORD": "password",
+        "PASSWORD": "default",
         "USE_TLS": false
     },
     "LOGGING": {
