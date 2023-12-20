@@ -130,7 +130,8 @@ export class PersonUc {
 
     public async resetPassword(personId: string): Promise<Result<string> | SchulConnexError> {
         try {
-            const personResult: { ok: true; value: PersonDo<true> } | { ok: false; error: DomainError } = await this.personService.findPersonById(personId);
+            const personResult: { ok: true; value: PersonDo<true> } | { ok: false; error: DomainError } =
+                await this.personService.findPersonById(personId);
             if (!personResult.ok) {
                 return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResult.error);
             }

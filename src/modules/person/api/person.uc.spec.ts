@@ -264,8 +264,8 @@ describe('PersonUc', () => {
                 expect((resetResult as { ok: boolean; value: string }).ok).toBeTruthy();
                 expect((resetResult as { ok: boolean; value: string }).value).toBeTruthy();
 
-                expect(personServiceMock.findPersonById).toBeCalledWith('fakeid_1');
-                expect(userRepositoryMock.loadUser).toBeCalledWith('fakeKCID1');
+                expect(personServiceMock.findPersonById).toHaveBeenCalledWith('fakeid_1');
+                expect(userRepositoryMock.loadUser).toHaveBeenCalledWith('fakeKCID1');
                 expect(userMock.newPassword).toBeTruthy();
                 expect(userServiceMock.resetPassword).toHaveBeenCalledWith('fakeKCID1', userMock.newPassword);
             });
