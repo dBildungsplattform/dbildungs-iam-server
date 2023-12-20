@@ -1,35 +1,17 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import { IsString, IsOptional, ValidateNested, IsEnum, IsBoolean } from 'class-validator';
+import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonNameParams } from './person-name.params.js';
-import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 
-export class CreatePersonBodyParams {
-    @AutoMap()
-    @IsString()
-    @ApiProperty()
-    public readonly username!: string;
-
-    @AutoMap()
-    @IsOptional()
-    @IsEmail()
-    @ApiProperty({ required: false })
-    public readonly email?: string;
-
+export class UpdatePersonBodyParams {
     @AutoMap()
     @IsOptional()
     @IsString()
     @ApiProperty({ required: false })
     public readonly referrer?: string;
-
-    @AutoMap()
-    @IsOptional()
-    @IsString()
-    @IsUUID()
-    @ApiProperty({ required: true })
-    public readonly mandant!: string;
 
     @AutoMap()
     @IsOptional()
@@ -75,4 +57,9 @@ export class CreatePersonBodyParams {
     @IsBoolean()
     @ApiProperty({ required: false })
     public readonly auskunftssperre?: boolean;
+
+    @AutoMap()
+    @IsString()
+    @ApiProperty({ required: true })
+    public readonly revision!: string;
 }

@@ -23,6 +23,7 @@ import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
+import { UpdatePersonBodyParams } from './update-person.body.params.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -357,6 +358,48 @@ describe('PersonController', () => {
 
                 await expect(personController.resetPasswordByPersonId(params)).rejects.toThrow(HttpException);
                 expect(personUcMock.resetPassword).toHaveBeenCalledTimes(1);
+            });
+        });
+    });
+
+    describe('updatePerson', () => {
+        const params: PersonByIdParams = {
+            personId: faker.string.uuid(),
+        };
+        const body: UpdatePersonBodyParams = {
+            stammorganisation: faker.string.uuid(),
+            referrer: 'referrer',
+            name: {
+                vorname: 'john',
+                familienname: 'doe',
+            },
+            geburt: {},
+            lokalisierung: 'de-DE',
+            revision: '1',
+        };
+
+        describe('when updating a person is successful', () => {
+            it('should return PersonendatensatzResponse', async () => {
+                const personendatensatzDto: PersonendatensatzDto = new PersonendatensatzDto({
+                    person: {} as PersonDto,
+                    personenkontexte: [],
+                });
+                personUcMock.updatePerson.mockResolvedValue(personendatensatzDto);
+
+                await expect(personController.updatePerson(params, body)).resolves.toBeInstanceOf(
+                    PersonendatensatzResponse,
+                );
+                expect(personUcMock.updatePerson).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when updating a person is not successful', () => {
+            it('should throw HttpException', async () => {
+                const error: SchulConnexError = new SchulConnexError({} as SchulConnexError);
+                personUcMock.updatePerson.mockResolvedValue(error);
+
+                await expect(personController.updatePerson(params, body)).rejects.toThrow(HttpException);
+                expect(personUcMock.updatePerson).toHaveBeenCalledTimes(1);
             });
         });
     });
