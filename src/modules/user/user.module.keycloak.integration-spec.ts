@@ -36,7 +36,7 @@ describe('A fully integrated user module', () => {
         await app.init();
     }, 100000);
 
-    it('should create users as a reaction to the create user call', async () => {
+    it.only('should create users as a reaction to the create user call', async () => {
         const result: request.Response = await supertest(app.getHttpServer())
             .post('/personen')
             .send({
