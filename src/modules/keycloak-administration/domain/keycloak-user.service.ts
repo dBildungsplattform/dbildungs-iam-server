@@ -9,9 +9,6 @@ import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { UserRepresentationDto } from './keycloak-client/user-representation.dto.js';
 import { UserDo } from './user.do.js';
-import { PersonService } from '../../person/domain/person.service.js';
-import { PersonDo } from '../../person/domain/person.do.js';
-import { faker } from '@faker-js/faker';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export type FindUserFilter = {
@@ -23,7 +20,6 @@ export type FindUserFilter = {
 export class KeycloakUserService {
     public constructor(
         private readonly kcAdminService: KeycloakAdministrationService,
-        private readonly personService: PersonService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         private readonly logger: ClassLogger,
     ) {}
@@ -87,11 +83,7 @@ export class KeycloakUserService {
             return kcAdminClientResult;
         }
 
-        const deleteResult: Result<void, DomainError> = await this.wrapClientResponse(
-            kcAdminClientResult.value.users.del({ id }),
-        );
-
-        return deleteResult;
+        return this.wrapClientResponse(kcAdminClientResult.value.users.del({ id }));
     }
 
     public async findById(id: string): Promise<Result<UserDo<true>, DomainError>> {
@@ -109,8 +101,7 @@ export class KeycloakUserService {
             return userResult;
         }
         if (userResult.value) {
-            const mappedUserResult: Result<UserDo<true>, DomainError> = await this.mapResponseToDto(userResult.value);
-            return mappedUserResult;
+            return this.mapResponseToDto(userResult.value);
         }
 
         return {
@@ -135,27 +126,13 @@ export class KeycloakUserService {
         }
 
         if (userResult.value.length === 1) {
-            const mappedUserResult: Result<UserDo<true>, DomainError> = await this.mapResponseToDto(
-                userResult.value[0],
-            );
-            return mappedUserResult;
+            return this.mapResponseToDto(userResult.value[0]);
         }
 
         return {
             ok: false,
             error: new EntityNotFoundError(`Keycloak User could not be found`),
         };
-    }
-
-    public async resetPasswordByPersonId(personId: string): Promise<Result<string, DomainError>> {
-        const user: Result<UserDo<true>, DomainError> = await this.findByPersonId(personId);
-        if (user.ok) {
-            const generatedPassword: string = this.generatePassword();
-            await this.resetPassword(user.value.id, generatedPassword);
-            return { ok: true, value: generatedPassword };
-        } else {
-            return user;
-        }
     }
 
     public async resetPassword(userId: string, password: string): Promise<Result<string, DomainError>> {
@@ -178,21 +155,6 @@ export class KeycloakUserService {
         } catch (err) {
             return { ok: false, error: new KeycloakClientError('Could not authorize with Keycloak') };
         }
-    }
-
-    private async findByPersonId(personId: string): Promise<Result<UserDo<true>, DomainError>> {
-        const person: Result<PersonDo<true>> = await this.personService.findPersonById(personId);
-        if (person.ok) {
-            return this.findById(person.value.keycloakUserId);
-        }
-        return {
-            ok: false,
-            error: new EntityNotFoundError(),
-        };
-    }
-
-    private generatePassword(): string {
-        return faker.string.alphanumeric({ length: { min: 10, max: 10 }, casing: 'mixed' });
     }
 
     private async wrapClientResponse<T>(promise: Promise<T>): Promise<Result<T, DomainError>> {

@@ -30,7 +30,7 @@ services:
   backend:
     profiles:
       - full-backend
-    image: dbiam/server
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
     build:
       context: .
     depends_on:
@@ -47,7 +47,7 @@ services:
   bff:
     profiles:
       - full-backend
-    image: dbiam/server
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
     build:
       context: .
     depends_on:
@@ -67,7 +67,7 @@ services:
   db-init:
     profiles:
       - db-init
-    image: dbiam/server
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
     build:
       context: .
     depends_on:
