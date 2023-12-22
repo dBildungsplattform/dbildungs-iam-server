@@ -16,7 +16,7 @@ export function loadConfigFiles(): JsonConfig {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
     const json: any = parseFileToJSON(`./config/config.json`);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
-    const secrets: any = parseFileToJSON('./config/secrets.json');
+    const secrets: any = parseFileToJSON('./secrets/secrets.json');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
     const merged: any = merge(json, secrets);
     const mergedConfig: JsonConfig = plainToInstance(JsonConfig, merged, { enableImplicitConversion: true });
