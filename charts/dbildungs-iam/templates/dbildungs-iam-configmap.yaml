@@ -1,9 +1,7 @@
-#{{if not (lookup "v1" "ConfigMap" "" "dbildungs-iam-configmap")}}
-#apiVersion: v1
-#kind: ConfigMap
-#metadata:
-#  name: dbildungs-iam-configmap
-#data:
-#  config.json: |-
-#{{ .Files.Get "config/config.json" | nindent 4 }}
-#{{end}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dbildungs-iam-configmap
+data:
+  config.json: |-
+    {{ .Files.Get "config/config.json" | nindent 4 }}
