@@ -6,6 +6,7 @@ import request from 'supertest';
 
 import { CurrentUser, User } from './user.decorator.js';
 import { faker } from '@faker-js/faker';
+import { App } from 'supertest/types.js';
 
 describe('CurrentUserDecorator', () => {
     let currentUser: User | undefined;
@@ -51,7 +52,7 @@ describe('CurrentUserDecorator', () => {
             userinfo: { sub: faker.string.uuid() },
         };
 
-        const result: request.Response = await request(app.getHttpServer()).get('/currentuser/test');
+        const result: request.Response = await request(app.getHttpServer() as App).get('/currentuser/test');
 
         expect(result.body).toEqual(currentUser);
     });

@@ -14,6 +14,7 @@ import request from 'supertest';
 import { EntityManager, Loaded, MikroORM } from '@mikro-orm/core';
 import { PersonEntity } from '../person/persistence/person.entity.js';
 import { User } from './user.js';
+import { App } from 'supertest/types.js';
 
 describe('A fully integrated user module', () => {
     let module: TestingModule;
@@ -37,7 +38,7 @@ describe('A fully integrated user module', () => {
     }, 100000);
 
     it.only('should create users as a reaction to the create user call', async () => {
-        const result: request.Response = await supertest(app.getHttpServer())
+        const result: request.Response = await supertest(app.getHttpServer() as App)
             .post('/personen')
             .send({
                 mandant: 'spsh',
