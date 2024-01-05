@@ -28,28 +28,38 @@ spec:
             - name: DEPLOY_STAGE
               value: {{.Values.environment}}
           volumeMounts:
-            - mountPath: /app/config/
-              name: config
+            - mountPath: /app/config/config.json
+              subPath: config.json
+              name: config-volume
               readOnly: true
-            - mountPath: /app/sql/{{.Values.environment}}
-              name: seeding
+            - mountPath: /app/config/secrets.json
+              subPath: secrets.json
+              name: secret-volume
+              readOnly: true
+            - mountPath: /app/sql/{{.Values.database}}
+              name: seeding-volume
               readOnly: true
         - name: db-seeding
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           securityContext:
             allowPrivilegeEscalation: false
-          command: [ "node", "dist/src/console/main.js", "db", "seed", "prod", "" ]
+          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "05_person-rollen-zuweisung.json,06_service-provider-zugriff.json" ]
           env:
             - name: NODE_ENV
               value: {{.Values.environment}}
             - name: DEPLOY_STAGE
               value: {{.Values.environment}}
           volumeMounts:
-            - mountPath: /app/config/
-              name: config
+            - mountPath: /app/config/config.json
+              subPath: config.json
+              name: config-volume
               readOnly: true
-            - mountPath: /app/sql/{{.Values.environment}}
-              name: seeding
+            - mountPath: /app/config/secrets.json
+              subPath: secrets.json
+              name: secret-volume
+              readOnly: true
+            - mountPath: /app/sql/{{.Values.database}}
+              name: seeding-volume
               readOnly: true
       containers:
         - name: dbildungs-iam-backend
@@ -101,6 +111,6 @@ spec:
         - name: secret-volume
           secret:
             secretName: dbildungs-iam-secrets
-        - name: seeding
-          secret:
-            secretName: {{.Values.seedingData | default (print .Release.Name "-secret")}}
+        - name: seeding-volume
+          configMap:
+            name: {{.Values.seeding.name}}
