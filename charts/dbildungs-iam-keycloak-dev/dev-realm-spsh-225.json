@@ -844,11 +844,11 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M",
+      "secret": "1gUQE9ZsganpMBMAnFMYEVwHeB5deGk0",
       "redirectUris": [
-        "http://localhost:9091/*",
-        "https://localhost:8099/*",
-        "/*"
+        "/*",
+        "https://test.dev.spsh.dbildungsplattform.de",
+        "https://test.dev.spsh.dbildungsplattform.de/*"
       ],
       "webOrigins": [
         "/*"
@@ -947,7 +947,7 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R",
+      "secret": "1gUQE9ZsganpMBMAnFMYEVwHeB5deGk0",
       "redirectUris": [
         "/*"
       ],
