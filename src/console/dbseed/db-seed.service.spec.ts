@@ -11,11 +11,11 @@ import { ServiceProviderEntity } from '../../modules/rolle/entity/service-provid
 import { PersonEntity } from '../../modules/person/persistence/person.entity.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { ServiceProviderZugriffEntity } from '../../modules/rolle/entity/service-provider-zugriff.entity.js';
-import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enum.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { ServiceProviderZugriffFile } from './file/service-provider-zugriff-file.js';
 import { PersonRollenZuweisungFile } from './file/person-rollen-zuweisung-file.js';
 import { DataProviderFile } from './file/data-provider-file.js';
+import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enums.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
