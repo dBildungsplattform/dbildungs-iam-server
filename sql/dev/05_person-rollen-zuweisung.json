@@ -5,7 +5,7 @@
             "person": "1",
             "rolleReference": {
                 "id": "1111",
-                "persisted": true
+                "persisted": false
             },
             "schulstrukturknoten": "1"
         },
