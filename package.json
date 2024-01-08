@@ -54,7 +54,6 @@
         "connect-redis": "^7.1.0",
         "express": "^4.18.2",
         "express-session": "^1.17.3",
-        "lodash": "^4.17.21",
         "lodash-es": "^4.17.21",
         "nest-commander": "~3.10",
         "nest-keycloak-connect": "^1.9.2",
