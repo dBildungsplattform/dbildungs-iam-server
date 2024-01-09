@@ -5,14 +5,14 @@ dbildungsIamCpuRequest: 200m
 dbildungsIamMemRequest: 200Mi
 dbildungsIamReplications: 1
 environment: prod
-database: dev
 backendHostname: helm.dev.spsh.dbildungsplattform.de
 # Configuration of necessary secrets
 # Name of the secrets to inject
 secrets:
   name: spsh-config
 seeding:
-  name: spsh-seeding-data
+  configmap: spsh-seeding-data-configmap
+  database: dev
 # If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
 enableServiceMonitor: false
 # do we use a development redis?

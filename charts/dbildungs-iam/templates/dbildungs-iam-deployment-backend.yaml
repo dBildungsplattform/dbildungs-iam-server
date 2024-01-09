@@ -16,6 +16,7 @@ spec:
       labels:
         layer: dbildungs-iam-backend
     spec:
+      {{if .Values.seeding}}
       initContainers:
         - name: db-init
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -36,14 +37,14 @@ spec:
               subPath: secrets.json
               name: secret-volume
               readOnly: true
-            - mountPath: /app/sql/{{.Values.database}}
+            - mountPath: /app/sql/{{.Values.seeding.database}}
               name: seeding-volume
               readOnly: true
         - name: db-seeding
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           securityContext:
             allowPrivilegeEscalation: false
-          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "05_person-rollen-zuweisung.json,06_service-provider-zugriff.json" ]
+          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
           env:
             - name: NODE_ENV
               value: {{.Values.environment}}
@@ -58,9 +59,10 @@ spec:
               subPath: secrets.json
               name: secret-volume
               readOnly: true
-            - mountPath: /app/sql/{{.Values.database}}
+            - mountPath: /app/sql/{{.Values.seeding.database}}
               name: seeding-volume
               readOnly: true
+      {{end}}
       containers:
         - name: dbildungs-iam-backend
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -111,6 +113,8 @@ spec:
         - name: secret-volume
           secret:
             secretName: dbildungs-iam-secrets
+        {{if .Values.seeding}}
         - name: seeding-volume
           configMap:
-            name: {{.Values.seeding.name}}
+            name: {{.Values.seeding.configmap}}
+        {{end}}
