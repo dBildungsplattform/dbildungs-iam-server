@@ -20,4 +20,4 @@ redisEnabled: false
 # Image
 image:
   repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
-  tag: "SPSH-201"
+  tag: ""
