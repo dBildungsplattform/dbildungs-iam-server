@@ -21,9 +21,62 @@ services:
       - 8080:8080
       - 8443:8443
     volumes:
-      - ./dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
+      - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
   redis:
     image: redis:7.2.2
     ports:
       - 6379:6379
     command: redis-server --requirepass password
+  backend:
+    profiles:
+      - full-backend
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    build:
+      context: .
+    depends_on:
+      - keycloak
+      - db
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    network_mode: host
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind
+  bff:
+    profiles:
+      - full-backend
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    build:
+      context: .
+    depends_on:
+      - backend
+      - redis
+      - keycloak
+    restart: on-failure
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    command: ['node', 'dist/src/backend-for-frontend/main.js']
+    network_mode: host
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind
+  db-init:
+    profiles:
+      - db-init
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    build:
+      context: .
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    command: ['node', 'dist/src/console/main.js', 'db', 'init']
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind

@@ -24,8 +24,8 @@
         "ADMIN_CLIENT_ID": "spsh-admin",
         "REALM_NAME": "SPSH",
         "CLIENT_ID": "spsh",
-        "ADMIN_SECRET": "44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R",
-        "CLIENT_SECRET": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M"
+        "CLIENT_SECRET": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M",
+        "ADMIN_SECRET": "44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R"
     },
     "REDIS": {
         "HOST": "localhost",

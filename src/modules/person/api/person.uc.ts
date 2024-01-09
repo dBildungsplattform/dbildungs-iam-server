@@ -20,6 +20,8 @@ import { PersonDto } from './person.dto.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { UpdatePersonDto } from './update-person.dto.js';
 
 @Injectable()
 export class PersonUc {
@@ -28,6 +30,7 @@ export class PersonUc {
         private readonly personenkontextService: PersonenkontextService,
         private readonly userService: KeycloakUserService,
         private readonly userRepository: UserRepository,
+        private readonly logger: ClassLogger,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -126,11 +129,29 @@ export class PersonUc {
     }
 
     public async resetPassword(personId: string): Promise<Result<string> | SchulConnexError> {
-        const result: Result<string, DomainError> = await this.userService.resetPasswordByPersonId(personId);
-        if (result.ok) {
-            return result;
+        try {
+            const personResult: { ok: true; value: PersonDo<true> } | { ok: false; error: DomainError } =
+                await this.personService.findPersonById(personId);
+            if (!personResult.ok) {
+                return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResult.error);
+            }
+            const person: PersonDo<true> = personResult.value;
+            const keycloakUser: User = await this.userRepository.loadUser(person.keycloakUserId);
+
+            keycloakUser.resetPassword();
+            await keycloakUser.save(this.userService);
+            return { ok: true, value: keycloakUser.newPassword };
+        } catch (error) {
+            this.logger.error(JSON.stringify(error));
+            if (error instanceof DomainError) {
+                return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(error);
+            }
+            if (error instanceof Error) {
+                return { ok: false, error: error };
+            } else {
+                return { ok: false, error: new Error('Unknown error occurred') };
+            }
         }
-        return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 
     private async findPersonenkontexteForPerson(
@@ -146,12 +167,20 @@ export class PersonUc {
             this.mapper.map(personenkontextFilter, FindPersonenkontextDto, PersonenkontextDo),
         );
 
-        const personenkontextDtos: PersonenkontextDto[] = this.mapper.mapArray(
-            result.items,
-            PersonenkontextDo,
-            PersonenkontextDto,
-        );
+        return this.mapper.mapArray(result.items, PersonenkontextDo, PersonenkontextDto);
+    }
 
-        return personenkontextDtos;
+    public async updatePerson(updateDto: UpdatePersonDto): Promise<PersonendatensatzDto | SchulConnexError> {
+        const personDo: PersonDo<true> = this.mapper.map(updateDto, UpdatePersonDto, PersonDo);
+        const result: Result<PersonDo<true>, DomainError> = await this.personService.updatePerson(personDo);
+
+        if (!result.ok) {
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
+        }
+
+        return new PersonendatensatzDto({
+            person: this.mapper.map(result.value, PersonDo, PersonDto),
+            personenkontexte: [],
+        });
     }
 }
