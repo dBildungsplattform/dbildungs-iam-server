@@ -8,6 +8,7 @@ import { LoggerModule } from '../../core/logging/logger.module.js';
 import { ProviderService } from './outbound/provider.service.js';
 import { PersonService } from './outbound/person.service.js';
 import { RolleService } from './outbound/rolle.service.js';
+import { OrganisationService } from './outbound/organisation.service.js';
 
 @Module({
     imports: [
@@ -21,6 +22,7 @@ import { RolleService } from './outbound/rolle.service.js';
         ProviderService,
         PersonService,
         RolleService,
+        OrganisationService,
         OpenIdConnectStrategy,
         SessionSerializer,
         OIDCClientProvider,

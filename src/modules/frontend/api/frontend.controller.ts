@@ -47,6 +47,12 @@ import { ServiceProviderInfoResponse } from '../../rolle/api/service-provider-in
 import { CreatePersonBodyParams } from '../../person/api/create-person.body.params.js';
 import { PersonenQueryParams } from '../../person/api/personen-query.param.js';
 import { UserinfoResponse } from './userinfo.response.js';
+import { CreateOrganisationBodyParams } from '../../organisation/api/create-organisation.body.params.js';
+import { Observable } from 'rxjs';
+import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { OrganisationService } from '../outbound/organisation.service.js';
+import { OrganisationByIdParams } from '../../organisation/api/organisation-by-id.params.js';
+import { FindOrganisationQueryParams } from '../../organisation/api/find-organisation-query.param.js';
 import { RolleService } from '../outbound/rolle.service.js';
 import { CreateRolleBodyParams } from '../../rolle/api/create-rolle.body.params.js';
 import { RolleResponse } from '../../rolle/api/rolle.response.js';
@@ -65,6 +71,7 @@ export class FrontendController {
         @Inject(OIDC_CLIENT) private client: Client,
         private providerService: ProviderService,
         private personService: PersonService,
+        private organisationService: OrganisationService,
         private rolleService: RolleService,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
@@ -181,6 +188,51 @@ export class FrontendController {
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
     public passwordReset(@Param() params: PersonByIdParams, @CurrentUser() user: User): Promise<string> {
         return this.personService.resetPassword(params.personId, user);
+    }
+
+    @Post('organisationen')
+    @UseGuards(AuthenticatedGuard)
+    @ApiOperation({ summary: 'Creates an Organisation.' })
+    @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponse })
+    @ApiBadRequestResponse({ description: 'The organisation already exists.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
+    public createOrganisation(
+        @Body() body: CreateOrganisationBodyParams,
+        @CurrentUser() user: User,
+    ): Observable<OrganisationResponse> {
+        return this.organisationService.create(body, user);
+    }
+
+    @Get('organisationen/:organisationId')
+    @UseGuards(AuthenticatedGuard)
+    @ApiOperation({ summary: 'Finds an Organisation by ID.' })
+    @ApiOkResponse({ description: 'The organization was successfully pulled.', type: OrganisationResponse })
+    @ApiBadRequestResponse({ description: 'Organization ID is required' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get the organization.' })
+    @ApiNotFoundResponse({ description: 'The organization does not exist.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
+    public findOrganisationById(
+        @Param() params: OrganisationByIdParams,
+        @CurrentUser() user: User,
+    ): Observable<OrganisationResponse> {
+        return this.organisationService.findById(params.organisationId, user);
+    }
+
+    @Get('organisationen')
+    @UseGuards(AuthenticatedGuard)
+    @ApiOperation({ summary: 'Finds multiple Organisationen.' })
+    @ApiOkResponsePaginated(OrganisationResponse, { description: 'The organizations were successfully returned' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get organizations.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get organizations.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
+    public findOrganisationen(
+        @Query() queryParams: FindOrganisationQueryParams,
+        @CurrentUser() user: User,
+    ): Observable<PaginatedResponseDto<OrganisationResponse>> {
+        return this.organisationService.find(queryParams, user);
     }
 
     @Post('/rolle')
