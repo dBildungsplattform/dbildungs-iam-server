@@ -17,6 +17,8 @@ import { Rolle } from '../domain/rolle.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { RolleResponse } from './rolle.response.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 
 @ApiTags('rolle')
 @Controller({ path: 'rolle' })
@@ -39,7 +41,10 @@ export class RolleController {
     public async createRolle(@Body() params: CreateRolleBodyParams): Promise<RolleResponse> {
         const rolle: Rolle = this.mapper.map(params, CreateRolleBodyParams, Rolle);
 
-        await rolle.save(this.rolleRepo, this.organisationService);
+        const result: void | SchulConnexError = await rolle.save(this.rolleRepo, this.organisationService);
+        if (result instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
 
         return this.mapper.map(rolle, Rolle, RolleResponse);
     }

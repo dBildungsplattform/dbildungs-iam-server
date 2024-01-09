@@ -5,6 +5,7 @@ import { RolleRepo } from '../repo/rolle.repo.js';
 import { Rolle } from './rolle.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 
 describe('Rolle Aggregate', () => {
     describe('save', () => {
@@ -30,7 +31,7 @@ describe('Rolle Aggregate', () => {
 
             const rolle: Rolle = DoFactory.createRolle(false);
 
-            await expect(rolle.save(repo, organisationService)).rejects.toThrow(EntityNotFoundError);
+            await expect(rolle.save(repo, organisationService)).resolves.toBeInstanceOf(SchulConnexError);
         });
     });
 });

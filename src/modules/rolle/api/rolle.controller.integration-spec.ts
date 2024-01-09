@@ -47,6 +47,8 @@ describe('Rolle API', () => {
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persistAndFlush(new OrganisationEntity());
 
+            await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 administeredBySchulstrukturknoten: organisation.id,
@@ -81,7 +83,8 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer()).post('/rolle').send(params);
 
-            expect(response.status).toBe(500);
+            expect(response.status).toBe(404);
+            expect(response).toBe(404);
         });
     });
 });
