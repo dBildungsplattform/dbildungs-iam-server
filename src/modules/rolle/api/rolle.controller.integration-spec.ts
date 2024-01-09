@@ -3,6 +3,7 @@ import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
+import { App } from 'supertest/types.js';
 
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
@@ -54,7 +55,9 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
             };
 
-            const response: Response = await request(app.getHttpServer()).post('/rolle').send(params);
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/rolle')
+                .send(params);
 
             expect(response.status).toBe(201);
             expect(response.body).toEqual(expect.objectContaining(params));
@@ -69,7 +72,9 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
             };
 
-            const response: Response = await request(app.getHttpServer()).post('/rolle').send(params);
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/rolle')
+                .send(params);
             const rolle: RolleResponse = response.body as RolleResponse;
 
             await em.findOneOrFail(RolleEntity, { id: rolle.id });
@@ -81,7 +86,9 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: faker.string.uuid(),
             };
 
-            const response: Response = await request(app.getHttpServer()).post('/rolle').send(params);
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/rolle')
+                .send(params);
 
             expect(response.status).toBe(404);
         });
