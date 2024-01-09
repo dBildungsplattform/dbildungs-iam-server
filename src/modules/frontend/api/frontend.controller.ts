@@ -18,6 +18,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import {
     ApiAcceptedResponse,
+    ApiBadRequestResponse,
+    ApiCreatedResponse,
+    ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
     ApiOkResponse,
@@ -44,6 +47,9 @@ import { ServiceProviderInfoResponse } from '../../rolle/api/service-provider-in
 import { CreatePersonBodyParams } from '../../person/api/create-person.body.params.js';
 import { PersonenQueryParams } from '../../person/api/personen-query.param.js';
 import { UserinfoResponse } from './userinfo.response.js';
+import { RolleService } from '../outbound/rolle.service.js';
+import { CreateRolleBodyParams } from '../../rolle/api/create-rolle.body.params.js';
+import { RolleResponse } from '../../rolle/api/rolle.response.js';
 
 @ApiTags('frontend')
 @Controller({ path: 'frontend' })
@@ -59,6 +65,7 @@ export class FrontendController {
         @Inject(OIDC_CLIENT) private client: Client,
         private providerService: ProviderService,
         private personService: PersonService,
+        private rolleService: RolleService,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
         this.defaultLoginRedirect = frontendConfig.DEFAULT_LOGIN_REDIRECT;
@@ -174,5 +181,17 @@ export class FrontendController {
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
     public passwordReset(@Param() params: PersonByIdParams, @CurrentUser() user: User): Promise<string> {
         return this.personService.resetPassword(params.personId, user);
+    }
+
+    @Post('/rolle')
+    @HttpCode(HttpStatus.CREATED)
+    @ApiOperation({ description: 'Create a new rolle.' })
+    @ApiCreatedResponse({ description: 'The rolle was successfully created.', type: RolleResponse })
+    @ApiBadRequestResponse({ description: 'The input was not valid.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to create the roll.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rolle.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal serve rerror while creating the person.' })
+    public createRolle(@Body() params: CreateRolleBodyParams, @CurrentUser() user: User): Promise<RolleResponse> {
+        return this.rolleService.createRolle(params, user);
     }
 }

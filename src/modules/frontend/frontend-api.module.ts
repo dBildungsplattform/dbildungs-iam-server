@@ -7,6 +7,7 @@ import { BackendHttpService } from './outbound/backend-http.service.js';
 import { LoggerModule } from '../../core/logging/logger.module.js';
 import { ProviderService } from './outbound/provider.service.js';
 import { PersonService } from './outbound/person.service.js';
+import { RolleService } from './outbound/rolle.service.js';
 
 @Module({
     imports: [
@@ -19,6 +20,7 @@ import { PersonService } from './outbound/person.service.js';
         BackendHttpService,
         ProviderService,
         PersonService,
+        RolleService,
         OpenIdConnectStrategy,
         SessionSerializer,
         OIDCClientProvider,

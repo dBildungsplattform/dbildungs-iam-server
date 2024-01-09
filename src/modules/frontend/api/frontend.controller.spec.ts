@@ -30,6 +30,8 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { CreatePersonBodyParams } from '../../person/api/create-person.body.params.js';
 import { PersonNameParams } from '../../person/api/person-name.params.js';
 import { UserinfoResponse } from './userinfo.response.js';
+import { RolleResponse } from '../../rolle/api/rolle.response.js';
+import { RolleService } from '../outbound/rolle.service.js';
 
 function getPersonenDatensatzResponse(): PersonendatensatzResponse {
     const mockBirthParams: PersonBirthParams = {
@@ -73,6 +75,7 @@ describe('FrontendController', () => {
     let frontendConfig: FrontendConfig;
     let providerService: DeepMocked<ProviderService>;
     let personService: DeepMocked<PersonService>;
+    let rolleService: DeepMocked<RolleService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -81,6 +84,7 @@ describe('FrontendController', () => {
                 FrontendController,
                 { provide: ProviderService, useValue: createMock<ProviderService>() },
                 { provide: PersonService, useValue: createMock<PersonService>() },
+                { provide: RolleService, useValue: createMock<RolleService>() },
                 { provide: OIDC_CLIENT, useValue: createMock<Client>() },
             ],
         }).compile();
@@ -89,6 +93,7 @@ describe('FrontendController', () => {
         oidcClient = module.get(OIDC_CLIENT);
         providerService = module.get(ProviderService);
         personService = module.get(PersonService);
+        rolleService = module.get(RolleService);
         frontendConfig = module.get(ConfigService).getOrThrow<FrontendConfig>('FRONTEND');
     });
 
@@ -357,6 +362,23 @@ describe('FrontendController', () => {
                 personService.resetPassword.mockRejectedValueOnce(exception);
                 await expect(frontendController.passwordReset(params, createMock())).rejects.toThrow(HttpException);
             });
+        });
+    });
+
+    describe('createRolle', () => {
+        it('should return created rolle', async () => {
+            const rolle: RolleResponse = {
+                id: faker.string.uuid(),
+                name: faker.hacker.noun(),
+                administeredBySchulstrukturknoten: faker.string.uuid(),
+                createdAt: faker.date.recent(),
+                updatedAt: faker.date.recent(),
+            };
+            rolleService.createRolle.mockResolvedValueOnce(rolle);
+
+            const result: RolleResponse = await frontendController.createRolle(createMock(), createMock<User>());
+
+            expect(result).toEqual(rolle);
         });
     });
 });
