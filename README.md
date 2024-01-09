@@ -49,6 +49,13 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 | npm run setup            | Runs db:init to Initialize the DB                         |                                           |
 | npm run db:init          | Initializes the database (applies SQL schema)             | `compose.yaml` can be used                |
 
+## Docker Compose
+
+If you only need to run the server, you can start it and all it's dependencies with docker compose.
+`docker compose --profile full-backend up` will start everything you need.
+You may need to initialize the database, use `docker compose up db-init` do so.
+You can also use another profile, if you want to initialize the db while starting the server `docker compose --profile full-backend --profile db-init up`
+
 ## Developer Guides
 
 * Code conventions are enforced through the compile, eslint and prettier as far as possible

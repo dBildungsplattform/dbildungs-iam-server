@@ -33,6 +33,8 @@ import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
 import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
 import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
+import { UpdatePersonBodyParams } from './update-person.body.params.js';
+import { UpdatePersonDto } from './update-person.dto.js';
 
 @Injectable()
 export class PersonApiMapperProfile extends AutomapperProfile {
@@ -384,6 +386,66 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonenkontextDo<boolean>) => dest.rolle, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.loeschungZeitpunkt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.sichtfreigabe, ignore()),
+            );
+
+            createMap(
+                mapper,
+                UpdatePersonBodyParams,
+                UpdatePersonDto,
+                forMember((dest: UpdatePersonDto) => dest.id, ignore()),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.familienname,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.familienname),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.vorname,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.vorname),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.nameTitel,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.titel),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.nameAnrede,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.anrede),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.namePraefix,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.namenspraefix),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.nameSuffix,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.namenssuffix),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.initialenFamilienname,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.initialenfamilienname),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.initialenVorname,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.initialenvorname),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.rufname,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.rufname),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.geburtsdatum,
+                    mapFrom((src: UpdatePersonBodyParams) => src.geburt?.datum),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.geburtsort,
+                    mapFrom((src: UpdatePersonBodyParams) => src.geburt?.geburtsort),
+                ),
+            );
+
+            createMap(
+                mapper,
+                UpdatePersonDto,
+                PersonDo,
+                forMember((dest: PersonDo<boolean>) => dest.keycloakUserId, ignore()),
+                forMember((dest: PersonDo<boolean>) => dest.createdAt, ignore()),
+                forMember((dest: PersonDo<boolean>) => dest.updatedAt, ignore()),
             );
         };
     }

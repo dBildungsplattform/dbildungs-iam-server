@@ -4,7 +4,7 @@ import { getMapperToken } from '@automapper/nestjs';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { faker } from '@faker-js/faker';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
-import { OrganisationsTyp } from '../domain/organisation.enum.js';
+import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { MappingError } from '../../../shared/error/mapping.error.js';
 import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
@@ -40,12 +40,14 @@ describe('OrganisationApiMapperProfile', () => {
             name: string;
             namensergaenzung: string;
             typ: OrganisationsTyp;
+            traegerschaft: Traegerschaft;
         } = {
             kennung: faker.lorem.word(),
             kuerzel: faker.lorem.word(),
             name: faker.lorem.word(),
             namensergaenzung: faker.lorem.word(),
             typ: OrganisationsTyp.SONSTIGE,
+            traegerschaft: Traegerschaft.SONSTIGE,
         };
 
         it('should map CreateOrganisationBodyParams to CreateOrganisationDto', () => {

@@ -6,7 +6,7 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationDo } from '../domain/organisation.do.js';
-import { OrganisationsTyp } from '../domain/organisation.enum.js';
+import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { OrganisationService } from '../domain/organisation.service.js';
 import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';

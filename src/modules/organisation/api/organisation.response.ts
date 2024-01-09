@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
-import { OrganisationsTyp } from '../domain/organisation.enum.js';
 import { ApiProperty } from '@nestjs/swagger';
+import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 
 export class OrganisationResponse {
     @AutoMap()
@@ -23,7 +23,10 @@ export class OrganisationResponse {
     @ApiProperty()
     public readonly kuerzel!: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     @ApiProperty({ enum: OrganisationsTyp })
     public readonly typ!: OrganisationsTyp;
+
+    @AutoMap(() => String)
+    public traegerschaft?: Traegerschaft;
 }
