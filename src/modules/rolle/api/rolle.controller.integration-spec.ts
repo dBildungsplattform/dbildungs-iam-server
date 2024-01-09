@@ -45,7 +45,7 @@ describe('Rolle API', () => {
     describe('/POST rolle', () => {
         it('should return created rolle', async () => {
             const organisation: OrganisationEntity = new OrganisationEntity();
-            await em.persistAndFlush(new OrganisationEntity());
+            await em.persistAndFlush(organisation);
 
             await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
@@ -62,7 +62,7 @@ describe('Rolle API', () => {
 
         it('should save rolle to db', async () => {
             const organisation: OrganisationEntity = new OrganisationEntity();
-            await em.persistAndFlush(new OrganisationEntity());
+            await em.persistAndFlush(organisation);
 
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
@@ -84,7 +84,6 @@ describe('Rolle API', () => {
             const response: Response = await request(app.getHttpServer()).post('/rolle').send(params);
 
             expect(response.status).toBe(404);
-            expect(response).toBe(404);
         });
     });
 });
