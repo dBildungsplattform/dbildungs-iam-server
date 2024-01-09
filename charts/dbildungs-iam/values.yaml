@@ -6,10 +6,6 @@ dbildungsIamMemRequest: 200Mi
 dbildungsIamReplications: 1
 environment: prod
 backendHostname: helm.dev.spsh.dbildungsplattform.de
-# Configuration of necessary secrets
-# Name of the secrets to inject
-secrets:
-  name: spsh-config
 seeding:
   configmap: spsh-seeding-data-configmap
   database: dev
@@ -20,4 +16,4 @@ redisEnabled: false
 # Image
 image:
   repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
-  tag: ""
+  tag: "SPSH-201"
