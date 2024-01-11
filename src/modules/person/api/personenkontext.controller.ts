@@ -1,10 +1,11 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Param, Put, Query, UseFilters } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Put, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiNoContentResponse,
     ApiNotFoundResponse,
     ApiOkResponse,
     ApiTags,
@@ -29,6 +30,8 @@ import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
 import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
 import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
+import { DeleteRevisionBodyParams } from './delete-revision.body.params.js';
+import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @Public()
@@ -138,5 +141,28 @@ export class PersonenkontextController {
         }
 
         return this.mapper.map(response, PersonendatensatzDto, PersonendatensatzResponse);
+    }
+
+    @Delete(':personenkontextId')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiNoContentResponse({
+        description: 'The personenkontext was successfully deleted.',
+    })
+    @ApiBadRequestResponse({ description: 'Request has wrong format.' })
+    @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
+    @ApiNotFoundResponse({ description: 'The personenkontext was not found.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
+    @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
+    public async deletePersonenkontextById(
+        @Param() params: FindPersonenkontextByIdParams,
+        @Body() body: DeleteRevisionBodyParams,
+    ): Promise<void> {
+        const dto: DeletePersonenkontextDto = this.mapper.map(body, DeleteRevisionBodyParams, DeletePersonenkontextDto);
+        dto.id = params.personenkontextId;
+        const response: void | SchulConnexError = await this.personenkontextUc.deletePersonenkontextById(dto);
+
+        if (response instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
+        }
     }
 }

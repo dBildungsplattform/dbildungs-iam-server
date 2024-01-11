@@ -17,6 +17,7 @@ import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -127,5 +128,17 @@ export class PersonenkontextUc {
             person: this.mapper.map(personResult.value, PersonDo, PersonDto),
             personenkontexte: [this.mapper.map(result.value, PersonenkontextDo, PersonenkontextDto)],
         });
+    }
+
+    public async deletePersonenkontextById(
+        deletePersonenkontextDto: DeletePersonenkontextDto,
+    ): Promise<void | SchulConnexError> {
+        const result: Result<void, DomainError> = await this.personenkontextService.deletePersonenkontextById(
+            deletePersonenkontextDto.id,
+        );
+
+        if (!result.ok) {
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
+        }
     }
 }

@@ -105,4 +105,13 @@ export class PersonenkontextService {
 
         return { ok: true, value: saved };
     }
+
+    public async deletePersonenkontextById(id: string): Promise<Result<void, DomainError>> {
+        const deletedRows: number = await this.personenkontextRepo.deleteById(id);
+
+        if (deletedRows === 0) {
+            return { ok: false, error: new EntityNotFoundError('Personenkontext', id) };
+        }
+        return { ok: true, value: undefined };
+    }
 }
