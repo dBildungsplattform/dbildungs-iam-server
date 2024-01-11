@@ -1,7 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import {
-    BadRequestException,
     Body,
     Controller,
     Get,
@@ -72,9 +71,6 @@ export class PersonController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
     public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
-        if (params.username.length > 0) {
-            throw new BadRequestException('Username will be assigned and is not supported, leave empty.');
-        }
         const dto: CreatePersonDto = this.mapper.map(params, CreatePersonBodyParams, CreatePersonDto);
         const result: PersonDto | SchulConnexError = await this.personUc.createPerson(dto);
 

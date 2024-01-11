@@ -26,7 +26,6 @@ describe('GlobalValidationPipe', () => {
 
     it('should throw DetailedValidation error on failure', () => {
         const person: CreatePersonBodyParams = {
-            username: 'test',
             email: 'testgmail.com',
             mandant: '',
             name: new PersonNameParams(),
