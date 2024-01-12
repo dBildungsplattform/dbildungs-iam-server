@@ -18,3 +18,11 @@ redisEnabled: false
 image:
   repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
   tag: ""
+config:
+  db:
+    url: ''
+    name: ''
+    password: ''
+  keycloak:
+    adminSecret: ''
+    clientSecret: ''
