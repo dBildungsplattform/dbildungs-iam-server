@@ -91,7 +91,6 @@ describe('PersonService', () => {
             vorname: faker.person.firstName(),
         };
         const createPersonBodyParams: CreatePersonBodyParams = {
-            username: faker.string.alpha(),
             mandant: faker.string.alpha(),
             name: personNameParams,
         };
@@ -103,7 +102,6 @@ describe('PersonService', () => {
                 '/api/personen',
                 expect.objectContaining({
                     mandant: expect.any(String) as string,
-                    username: expect.any(String) as string,
                     name: expect.objectContaining({
                         familienname: expect.any(String) as string,
                         vorname: expect.any(String) as string,
