@@ -319,7 +319,6 @@ describe('FrontendController', () => {
                     vorname: faker.person.firstName(),
                 };
                 const createPersonBodyParams: CreatePersonBodyParams = {
-                    username: faker.string.alpha(),
                     mandant: faker.string.alpha(),
                     name: personNameParams,
                 };

@@ -8,11 +8,6 @@ import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 
 export class CreatePersonBodyParams {
     @AutoMap()
-    @IsString()
-    @ApiProperty()
-    public readonly username!: string;
-
-    @AutoMap()
     @IsOptional()
     @IsEmail()
     @ApiProperty({ required: false })
