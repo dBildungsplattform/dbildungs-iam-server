@@ -9,7 +9,7 @@ backendHostname: helm.dev.spsh.dbildungsplattform.de
 # Configuration of necessary secrets
 # Name of the secrets to inject
 secrets:
-  name: spsh-config
+  name: dbildungs-iam-secrets
 # If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
 enableServiceMonitor: false
 # do we use a development redis?
@@ -18,11 +18,3 @@ redisEnabled: false
 image:
   repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
   tag: ""
-config:
-  db:
-    url: ''
-    name: ''
-    password: ''
-  keycloak:
-    adminSecret: ''
-    clientSecret: ''
