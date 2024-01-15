@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import fs, { readFileSync } from 'fs';
 import { plainToInstance } from 'class-transformer';
 import { validateSync, ValidationError } from 'class-validator';
 import { JsonConfig } from './json.config.js';
@@ -13,15 +13,29 @@ function parseFileToJSON(path: string): any {
 }
 
 export function loadConfigFiles(): JsonConfig {
+    const secretFilePathOutsideK8s: string = './config/secrets.json';
+    const secretFilePathK8s: string = './secrets/secrets.json';
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
     const json: any = parseFileToJSON(`./config/config.json`);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
-    const secrets: any = parseFileToJSON('./config/secrets.json');
+    let secrets: unknown;
+    if (fs.existsSync(secretFilePathOutsideK8s)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
+        secrets = parseFileToJSON(secretFilePathOutsideK8s);
+    } else if (fs.existsSync(secretFilePathK8s)) {
+        secrets = parseFileToJSON(secretFilePathK8s);
+    }
     // Environmental override
     // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
     const env: any = EnvConfig();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
-    const merged: any = merge(json, secrets, env);
+    let merged: unknown;
+    if (secrets != null) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
+        merged = merge(json, secrets, env);
+    } else {
+        merged = merge(json, env);
+    }
+
     const mergedConfig: JsonConfig = plainToInstance(JsonConfig, merged, { enableImplicitConversion: true });
 
     const errors: ValidationError[] = validateSync(mergedConfig, {
