@@ -10,7 +10,7 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuweisung.do.js';
-import { RolleDo } from '../domain/rolle.do.js';
+import { Rolle } from '../domain/rolle.js';
 import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
 import { RolleBerechtigungsZuweisungEntity } from '../entity/rolle-berechtigungs-zuweisung.entity.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
@@ -63,8 +63,8 @@ describe('RollenBerechtigungsZuweisungRepo', () => {
     describe('findAllRolleBerechtigungsZuweisungen by Rolle', () => {
         describe('when found by id', () => {
             it('should return found RollenBerechtigungsZuweisung', async () => {
-                const rolleDo: RolleDo<false> = DoFactory.createRolle(false);
-                const rolleEntity: RolleEntity = mapper.map(rolleDo, RolleDo, RolleEntity);
+                const rolle: Rolle = DoFactory.createRolle(false);
+                const rolleEntity: RolleEntity = mapper.map(rolle, Rolle, RolleEntity);
 
                 const spzDo: ServiceProviderZugriffDo<false> = DoFactory.createServiceProviderZugriff(false);
                 const spzEntity: ServiceProviderZugriffEntity = mapper.map(
@@ -78,7 +78,7 @@ describe('RollenBerechtigungsZuweisungRepo', () => {
                 };
                 expect(rolleBerechtigungsZuweisung).toBeDefined();
                 const rbzDo: RolleBerechtigungsZuweisungDo<false> = DoFactory.createRolleBerechtigungsZuweisung(
-                    rolleDo,
+                    rolle,
                     spzDo,
                     false,
                 );
@@ -89,18 +89,18 @@ describe('RollenBerechtigungsZuweisungRepo', () => {
                 );
                 await em.persistAndFlush(rbzEntity);
                 const [insertedRolleEntity]: RolleEntity[] = await em.find(RolleEntity, {});
-                const insertedRolleDo: RolleDo<boolean> = mapper.map(insertedRolleEntity, RolleEntity, RolleDo);
+                const insertedRolle: Rolle = mapper.map(insertedRolleEntity, RolleEntity, Rolle);
                 const foundRolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<true>[] =
-                    await sut.findAllRolleBerechtigungsZuweisungByRolle(insertedRolleDo);
+                    await sut.findAllRolleBerechtigungsZuweisungByRolle(insertedRolle);
                 expect(foundRolleBerechtigungsZuweisung).not.toBeNull();
                 expect(foundRolleBerechtigungsZuweisung).toHaveLength(1);
             });
         });
         describe('when not found via Rolle', () => {
             it('should return null', async () => {
-                const rolleDo: RolleDo<false> = DoFactory.createRolle(false);
+                const rolle: Rolle = DoFactory.createRolle(false);
                 const foundRolleBerechtigungsZuweisung: Option<RolleBerechtigungsZuweisungDo<true>[]> =
-                    await sut.findAllRolleBerechtigungsZuweisungByRolle(rolleDo);
+                    await sut.findAllRolleBerechtigungsZuweisungByRolle(rolle);
                 expect(foundRolleBerechtigungsZuweisung).toHaveLength(0);
             });
         });
