@@ -3,6 +3,7 @@
     "entities": [
         {
             "id": "2222",
+            "name": "Rolle2222",
             "administeredBySchulstrukturknoten": "1"
         }
     ]

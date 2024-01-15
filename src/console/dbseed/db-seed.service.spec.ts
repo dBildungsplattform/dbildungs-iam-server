@@ -132,6 +132,7 @@ describe('DbSeedService', () => {
                 const entity: RolleEntity | undefined = entities[0];
                 const rolle: Partial<RolleEntity> = {
                     id: '2222',
+                    name: 'Rolle2222',
                     administeredBySchulstrukturknoten: '1',
                 };
                 expect(entities).toHaveLength(1);

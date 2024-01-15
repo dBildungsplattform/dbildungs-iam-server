@@ -13,7 +13,6 @@ import { DbSeedConsole } from './db-seed.console.js';
 import { UserModule } from '../../modules/user/user.module.js';
 import { UsernameGeneratorService } from '../../modules/user/username-generator.service.js';
 import { DbSeedMapper } from './db-seed-mapper.js';
-import { RolleDo } from '../../modules/rolle/domain/rolle.do.js';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
@@ -24,6 +23,7 @@ import { ServiceProviderZugriffEntity } from '../../modules/rolle/entity/service
 import { OrganisationEntity } from '../../modules/organisation/persistence/organisation.entity.js';
 import { ServiceProviderEntity } from '../../modules/rolle/entity/service-provider.entity.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
+import { Rolle } from '../../modules/rolle/domain/rolle.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -80,8 +80,8 @@ describe('DbSeedConsole', () => {
         describe('when directory and excluded files is set via parameter', () => {
             it('should use seeding-integration-test directory and not fail due to non-existing entityType', async () => {
                 const params: string[] = ['seeding-integration-test/all', '07_non-existing-entity.json'];
-                const role: RolleDo<false> = DoFactory.createRolle(false, { id: '1111' });
-                await orm.em.fork().persistAndFlush(mapper.map(role, RolleDo, RolleEntity));
+                const role: Rolle = DoFactory.createRolle(false, { id: '1111' });
+                await orm.em.fork().persistAndFlush(mapper.map(role, Rolle, RolleEntity));
                 await expect(sut.run(params)).resolves.not.toThrow();
                 const dataProvider: Option<DataProviderEntity> = await orm.em.findOne(DataProviderEntity, { id: '1' });
                 const prz: Option<PersonRollenZuweisungEntity> = await orm.em.findOne(PersonRollenZuweisungEntity, {

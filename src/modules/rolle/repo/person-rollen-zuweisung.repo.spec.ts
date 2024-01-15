@@ -10,7 +10,7 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { PersonRollenZuweisungDo } from '../domain/person-rollen-zuweisung.do.js';
-import { RolleDo } from '../domain/rolle.do.js';
+import { Rolle } from '../domain/rolle.js';
 import { PersonRollenZuweisungEntity } from '../entity/person-rollen-zuweisung.entity.js';
 import { PersonRollenZuweisungMapperProfile } from '../mapper/person-rollen-zuweisung.mapper.profile.js';
 import { RolleMapperProfile } from '../mapper/rolle.mapper.profile.js';
@@ -50,11 +50,11 @@ describe('PersonRollenZuweisungRepo', () => {
     describe('findAllByPersonId via personId', () => {
         describe('when found by id', () => {
             it('should return found PersonRollenZuweisung', async () => {
-                const rolleDo: RolleDo<false> = DoFactory.createRolle(false);
+                const rolle: Rolle = DoFactory.createRolle(false);
 
                 const personRollenZuweisungDo: PersonRollenZuweisungDo<false> = DoFactory.createPersonRollenZuweisung(
                     '1',
-                    rolleDo,
+                    rolle,
                     false,
                 );
                 await em.persistAndFlush(
