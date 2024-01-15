@@ -27,7 +27,7 @@ spec:
             - name: web
               containerPort: 8080
           env:
-            {{template "dbiam-backend-envs" .}}
+          {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
             - mountPath: /app/config/
               name: config
