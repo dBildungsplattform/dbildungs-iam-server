@@ -24,6 +24,8 @@ export function loadConfigFiles(): JsonConfig {
         secrets = parseFileToJSON(secretFilePathOutsideK8s);
     } else if (fs.existsSync(secretFilePathK8s)) {
         secrets = parseFileToJSON(secretFilePathK8s);
+    } else {
+        secrets = null;
     }
     // Environmental override
     // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
