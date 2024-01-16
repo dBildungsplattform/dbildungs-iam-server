@@ -2,6 +2,7 @@ import 'reflect-metadata'; // some decorators use reflect-metadata in the backgr
 import fs from 'fs';
 import { JsonConfig, loadConfigFiles } from './index.js';
 import { DeepPartial } from '../../../test/utils/index.js';
+import { PathLike } from 'node:fs';
 
 describe('configloader', () => {
     describe('loadConfigFiles', () => {
@@ -57,7 +58,7 @@ describe('configloader', () => {
             beforeEach(() => {
                 readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
                 readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(secrets));
-                existsSyncSpy = jest.spyOn(fs, 'existsSync').mockImplementation((name) => {
+                existsSyncSpy = jest.spyOn(fs, 'existsSync').mockImplementation((name: PathLike): boolean => {
                     if (name == './config/secrets.json') {
                         return false;
                     } else if (name == './secrets/secrets.json') {
@@ -73,7 +74,7 @@ describe('configloader', () => {
 
             it('should check both positions for the secrets file', () => {
                 loadConfigFiles();
-                expect(existsSyncSpy).toBeCalledTimes(2);
+                expect(existsSyncSpy).toHaveBeenCalledTimes(2);
             });
 
             it('should return validated JsonConfig', () => {
@@ -127,17 +128,19 @@ describe('configloader', () => {
             };
 
             it("should not load the secrets file if it can't find it", () => {
-                const existsSyncSpy = jest.spyOn(fs, 'existsSync').mockImplementation((name) => {
-                    if (name == './config/secrets.json') {
-                        return false;
-                    } else if (name == './secrets/secrets.json') {
-                        return false;
-                    }
-                    fail(`Unknown file ${name.toString()}`);
-                });
+                const existsSyncSpy: jest.SpyInstance = jest
+                    .spyOn(fs, 'existsSync')
+                    .mockImplementation((name: PathLike): boolean => {
+                        if (name == './config/secrets.json') {
+                            return false;
+                        } else if (name == './secrets/secrets.json') {
+                            return false;
+                        }
+                        fail(`Unknown file ${name.toString()}`);
+                    });
                 jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
                 loadConfigFiles();
-                expect(existsSyncSpy).toBeCalledTimes(2);
+                expect(existsSyncSpy).toHaveBeenCalledTimes(2);
             });
         });
 
