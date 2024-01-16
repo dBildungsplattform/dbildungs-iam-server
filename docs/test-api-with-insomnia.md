@@ -4,6 +4,7 @@ Hierzu wird in *Insomnia* das *Scratch Pad* verwendet, sodass keine SaaS-Dienste
 
 Man kann pro Umgebung einen Ordner im *Scratch Pad* erstellen, sodass man die verschiedenen Requests getrennt halten kann.
 Dies ist natürlich auch für unterschiedliche Tests möglich, ferner sind Unterordner möglich.
+
 ![Ordner im Scratch Pad erstellen](img/test-api-with-insomnia/folder.png "Ordner erstellen")
 
 Ein Klick auf das kleine Dreieck rechts neben dem Ordner-Namen öffnet ein Context-Menu, hier **+ HTTP Request** wählen.
@@ -17,6 +18,7 @@ Sollen Daten im Body mitgesendet werden, kann man diese unter ++Body++ direkt un
 ![HTTP POST Request erstellen](img/test-api-with-insomnia/post-request.png "Neues HTTP-Request (POST)")
 
 Bsp. für CreateRole (Backend lokal):
+
 POST http://localhost:9091/api/frontend/rolle
 
 BODY:
@@ -31,11 +33,17 @@ Cookies
 Einen gültigen Cookie erhält man über die Entwickler-Tools des Browsers, wenn man sich erfolgreich mit dem Test-Nutzer angemeldet hat.
 Lokal muss man hierzu das **gesamte** Backend (inkl. Keycloak, Redis und DB) und Frontend laufen haben.
 Informationen zum Starten dieser Komponenten in den jeweiligen GitHub Projekten nachlesen:
-https://github.com/dBildungsplattform/schulportal-client
-https://github.com/dBildungsplattform/dbildungs-iam-server
+
+- [Backend](https://github.com/dBildungsplattform/schulportal-client)
+- [Frontend](https://github.com/dBildungsplattform/dbildungs-iam-server)
+
+Starten des gesamten Backends samt Keycloak, Datenbank und Redis ist auch möglich über
+## [Docker Compose](README.md#Docker Compose)
 
 Den Wert des cookies *connect.sid* kopieren und in Insomnia unter **Manage Cookies** im *Scratch Pad* einfügen.
+
 ![Manage Cookies aufrufen](img/test-api-with-insomnia/manage-cookies.png "Cookies verwalten")
+
 ![Cookie editieren](img/test-api-with-insomnia/edit-cookie.png "Den Cookie editieren")
 
 
