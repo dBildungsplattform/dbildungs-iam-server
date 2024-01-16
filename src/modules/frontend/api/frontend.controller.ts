@@ -53,6 +53,9 @@ import { OrganisationResponse } from '../../organisation/api/organisation.respon
 import { OrganisationService } from '../outbound/organisation.service.js';
 import { OrganisationByIdParams } from '../../organisation/api/organisation-by-id.params.js';
 import { FindOrganisationQueryParams } from '../../organisation/api/find-organisation-query.param.js';
+import { RolleService } from '../outbound/rolle.service.js';
+import { CreateRolleBodyParams } from '../../rolle/api/create-rolle.body.params.js';
+import { RolleResponse } from '../../rolle/api/rolle.response.js';
 
 @ApiTags('frontend')
 @Controller({ path: 'frontend' })
@@ -69,6 +72,7 @@ export class FrontendController {
         private providerService: ProviderService,
         private personService: PersonService,
         private organisationService: OrganisationService,
+        private rolleService: RolleService,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
         this.defaultLoginRedirect = frontendConfig.DEFAULT_LOGIN_REDIRECT;
@@ -229,5 +233,17 @@ export class FrontendController {
         @CurrentUser() user: User,
     ): Observable<PaginatedResponseDto<OrganisationResponse>> {
         return this.organisationService.find(queryParams, user);
+    }
+
+    @Post('/rolle')
+    @HttpCode(HttpStatus.CREATED)
+    @ApiOperation({ description: 'Create a new rolle.' })
+    @ApiCreatedResponse({ description: 'The rolle was successfully created.', type: RolleResponse })
+    @ApiBadRequestResponse({ description: 'The input was not valid.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to create the roll.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rolle.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal serve rerror while creating the person.' })
+    public createRolle(@Body() params: CreateRolleBodyParams, @CurrentUser() user: User): Promise<RolleResponse> {
+        return this.rolleService.createRolle(params, user);
     }
 }
