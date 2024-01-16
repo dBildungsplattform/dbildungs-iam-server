@@ -106,12 +106,23 @@ export class PersonenkontextService {
         return { ok: true, value: saved };
     }
 
-    public async deletePersonenkontextById(id: string): Promise<Result<void, DomainError>> {
+    public async deletePersonenkontextById(id: string, revision: string): Promise<Result<void, DomainError>> {
+        const personenkontext: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.findById(id);
+
+        if (!personenkontext) {
+            return { ok: false, error: new EntityNotFoundError('Personenkontext', id) };
+        }
+
+        if (personenkontext?.revision !== revision) {
+            return { ok: false, error: new MismatchedRevisionError('Personenkontext') };
+        }
+
         const deletedRows: number = await this.personenkontextRepo.deleteById(id);
 
         if (deletedRows === 0) {
             return { ok: false, error: new EntityNotFoundError('Personenkontext', id) };
         }
+
         return { ok: true, value: undefined };
     }
 }

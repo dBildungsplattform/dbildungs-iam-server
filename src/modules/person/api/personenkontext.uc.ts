@@ -18,8 +18,6 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
-import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
-
 @Injectable()
 export class PersonenkontextUc {
     public constructor(
@@ -134,25 +132,9 @@ export class PersonenkontextUc {
     public async deletePersonenkontextById(
         deletePersonenkontextDto: DeletePersonenkontextDto,
     ): Promise<void | SchulConnexError> {
-        const personkontext: Result<
-            PersonenkontextDo<true>,
-            DomainError
-        > = await this.personenkontextService.findPersonenkontextById(deletePersonenkontextDto.id);
-
-        if (!personkontext.ok) {
-            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personkontext.error);
-        }
-
-        if (personkontext.value.revision !== deletePersonenkontextDto.revision) {
-            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                new MismatchedRevisionError(
-                    `Revision ${deletePersonenkontextDto.revision} does not match revision ${personkontext.value.revision} of stored personenkontext.`,
-                ),
-            );
-        }
-
         const result: Result<void, DomainError> = await this.personenkontextService.deletePersonenkontextById(
             deletePersonenkontextDto.id,
+            deletePersonenkontextDto.revision,
         );
 
         if (!result.ok) {
