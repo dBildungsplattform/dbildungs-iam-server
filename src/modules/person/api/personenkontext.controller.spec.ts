@@ -213,7 +213,6 @@ describe('PersonenkontextController', () => {
 
         describe('when deleting a personenkontext returns a SchulConnexError', () => {
             it('should throw HttpException', async () => {
-
                 personenkontextUcMock.deletePersonenkontextById.mockResolvedValue(
                     new SchulConnexError({} as SchulConnexError),
                 );
