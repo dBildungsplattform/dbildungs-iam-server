@@ -41,11 +41,6 @@ Starten des gesamten Backends samt Keycloak, Datenbank und Redis ist auch mögli
 
 ## [Docker Compose](./../README.md#Docker%20Compose)
 
-## [Docker Compose](./README.md#Docker%20Compose)
-
-## [Docker Compose](https://github.com/dBildungsplattform/dbildungs-iam-server/blob/SPSH-319/README.md#Docker%20Compose)
-
-
 Den Wert des cookies *connect.sid* kopieren und in Insomnia unter **Manage Cookies** im *Scratch Pad* einfügen.
 
 ![Manage Cookies aufrufen](img/test-api-with-insomnia/manage-cookies.png "Cookies verwalten")
