@@ -23,8 +23,8 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
           ports:
-             - name: web
-               containerPort: 8080
+            - name: web
+              containerPort: 8080
           env:
           {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
@@ -57,7 +57,7 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: dbildungs-iam-configmap
+            name: {{.Values.configmap.name  }}
         - name: secret-volume
           secret:
-            secretName: dbildungs-iam-secrets
+            secretName: {{.Values.secrets.name}}

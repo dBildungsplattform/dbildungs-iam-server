@@ -30,7 +30,10 @@ spec:
           {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
             - mountPath: /app/config/
-              name: config
+              name: config-volume
+              readOnly: true
+            - mountPath: /app/secrets/
+              name: secret-volume
               readOnly: true
           resources:
             requests:
@@ -53,7 +56,10 @@ spec:
               path: '/health'
       restartPolicy: Always
       volumes:
-        - name: config
+        - name: config-volume
+          configMap:
+            name: {{.Values.configmap.name  }}
+        - name: secret-volume
           secret:
-            secretName: {{.Values.secrets.name | default (print .Release.Name "-secret")}}
+            secretName: {{.Values.secrets.name}}
       
