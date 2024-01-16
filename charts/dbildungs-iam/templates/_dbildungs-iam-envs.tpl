@@ -29,5 +29,8 @@
         name: {{.Values.secrets.name}}
         key: keycloak.clientSecret
 - name: FRONTEND_SESSION_SECRET
-  value: {{ randAlphaNum 20 | quote }}
+  valueFrom:
+    secretKeyRef:
+        name: {{.Values.secrets.name}}
+        key: frontend.sessionSecret
 {{- end}}
