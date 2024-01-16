@@ -21,10 +21,6 @@ export class PersonRollenZuweisungMapperProfile extends AutomapperProfile {
                     (dest: PersonRollenZuweisungDo<true>) => dest.id,
                     mapFrom((src: PersonRollenZuweisungEntity) => src.id),
                 ),
-                forMember(
-                    (dest: PersonRollenZuweisungDo<true>) => dest.rolle,
-                    mapFrom((src: PersonRollenZuweisungEntity) => src.rolle),
-                ),
             );
         };
     }

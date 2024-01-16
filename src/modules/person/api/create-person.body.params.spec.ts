@@ -6,7 +6,6 @@ import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 
 describe('CreatePersonBodyParams', () => {
     const referenceParams: CreatePersonBodyParams = {
-        username: faker.internet.userName(),
         email: faker.internet.email(),
         referrer: faker.string.uuid(),
         mandant: faker.string.uuid(),
@@ -33,7 +32,6 @@ describe('CreatePersonBodyParams', () => {
 
     it('should convert a plain object to a class of createPersonBodyParams', () => {
         const incomingParams: object = {
-            username: referenceParams.username,
             email: referenceParams.email,
             referrer: referenceParams.referrer,
             mandant: referenceParams.mandant,

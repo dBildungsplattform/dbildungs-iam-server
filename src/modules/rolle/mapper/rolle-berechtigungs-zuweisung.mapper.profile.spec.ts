@@ -7,7 +7,7 @@ import { ServiceProviderZugriffMapperProfile } from './service-provider-zugriff.
 import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
 import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuweisung.do.js';
 import { RolleBerechtigungsZuweisungEntity } from '../entity/rolle-berechtigungs-zuweisung.entity.js';
-import { RolleDo } from '../domain/rolle.do.js';
+import { Rolle } from '../domain/rolle.js';
 import { RolleBerechtigungsZuweisungMapperProfile } from './rolle-berechtigungs-zuweisung.mapper.profile.js';
 import { RolleMapperProfile } from './rolle.mapper.profile.js';
 
@@ -37,11 +37,11 @@ describe('RolleBerechtigungsZuweisungMapperProfile', () => {
 
     describe('when mapper is initialized', () => {
         it('should map RolleBerechtigungsZuweisungDo to RolleBerechtigungsZuweisungEntity', () => {
-            const rolleDo: RolleDo<false> = DoFactory.createRolle(false);
+            const rolle: Rolle = DoFactory.createRolle(false);
             const serviceProviderZugriffDo: ServiceProviderZugriffDo<false> =
                 DoFactory.createServiceProviderZugriff(false);
             const rbz: RolleBerechtigungsZuweisungDo<true> = DoFactory.createRolleBerechtigungsZuweisung(
-                rolleDo,
+                rolle,
                 serviceProviderZugriffDo,
                 true,
             );
