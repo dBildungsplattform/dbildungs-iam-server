@@ -38,7 +38,7 @@ Informationen zum Starten dieser Komponenten in den jeweiligen GitHub Projekten 
 - [Frontend](https://github.com/dBildungsplattform/dbildungs-iam-server)
 
 Starten des gesamten Backends samt Keycloak, Datenbank und Redis ist auch möglich über
-## [Docker Compose](README.md#Docker Compose)
+## [Docker Compose](./README.md#Docker Compose)
 
 Den Wert des cookies *connect.sid* kopieren und in Insomnia unter **Manage Cookies** im *Scratch Pad* einfügen.
 
