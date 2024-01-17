@@ -14,6 +14,7 @@ import { PersonenkontextDo } from './personenkontext.do.js';
 import { PersonenkontextService } from './personenkontext.service.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
+import { EntityCouldNotBeDeleted } from '../../../shared/error/index.js';
 
 describe('PersonenkontextService', () => {
     let module: TestingModule;
@@ -337,7 +338,7 @@ describe('PersonenkontextService', () => {
         });
 
         describe('when personenkontext could not be deleted', () => {
-            it('should return EntityNotFoundError', async () => {
+            it('should return EntityCouldNotBeDeleted', async () => {
                 // AI next 11 lines
                 personenkontextRepoMock.findById.mockResolvedValue(personenkontextDo);
                 personenkontextRepoMock.deleteById.mockResolvedValue(0);
@@ -349,7 +350,7 @@ describe('PersonenkontextService', () => {
 
                 expect(response).toEqual<Result<void, DomainError>>({
                     ok: false,
-                    error: new EntityNotFoundError('Personenkontext', personenkontextDo.id),
+                    error: new EntityCouldNotBeDeleted('Personenkontext', personenkontextDo.id),
                 });
             });
         });

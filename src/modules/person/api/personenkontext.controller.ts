@@ -171,6 +171,7 @@ export class PersonenkontextController {
     ): Promise<void> {
         const dto: DeletePersonenkontextDto = this.mapper.map(body, DeleteRevisionBodyParams, DeletePersonenkontextDto);
         dto.id = params.personenkontextId;
+
         const response: void | SchulConnexError = await this.personenkontextUc.deletePersonenkontextById(dto);
 
         if (response instanceof SchulConnexError) {

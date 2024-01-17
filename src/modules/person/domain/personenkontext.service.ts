@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
-import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityCouldNotBeDeleted, EntityNotFoundError } from '../../../shared/error/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonRepo } from '../persistence/person.repo.js';
@@ -120,7 +120,7 @@ export class PersonenkontextService {
         const deletedRows: number = await this.personenkontextRepo.deleteById(id);
 
         if (deletedRows === 0) {
-            return { ok: false, error: new EntityNotFoundError('Personenkontext', id) };
+            return { ok: false, error: new EntityCouldNotBeDeleted('Personenkontext', id) };
         }
 
         return { ok: true, value: undefined };
