@@ -1,17 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import {
-    Controller,
-    Get,
-    HttpException,
-    HttpStatus,
-    Inject,
-    Param,
-    Query,
-    UseFilters,
-    Body,
-    Put,
-} from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Put, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiForbiddenResponse,
@@ -22,7 +11,9 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Public } from 'nest-keycloak-connect';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { PagingHeadersObject } from '../../../shared/paging/paging.enums.js';
@@ -36,7 +27,6 @@ import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
-import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
 import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
 
@@ -63,27 +53,25 @@ export class PersonenkontextController {
     public async findPersonenkontextById(
         @Param() params: FindPersonenkontextByIdParams,
     ): Promise<PersonendatensatzResponse> {
-        try {
-            const request: FindPersonenkontextByIdDto = this.mapper.map(
-                params,
-                FindPersonenkontextByIdParams,
-                FindPersonenkontextByIdDto,
-            );
-            const result: PersonendatensatzDto = await this.personenkontextUc.findPersonenkontextById(request);
-            const response: PersonendatensatzResponse = this.mapper.map(
-                result,
-                PersonendatensatzDto,
-                PersonendatensatzResponse,
-            );
+        const request: FindPersonenkontextByIdDto = this.mapper.map(
+            params,
+            FindPersonenkontextByIdParams,
+            FindPersonenkontextByIdDto,
+        );
+        const result: PersonendatensatzDto | SchulConnexError =
+            await this.personenkontextUc.findPersonenkontextById(request);
 
-            return response;
-        } catch (error: unknown) {
-            if (error instanceof EntityNotFoundError) {
-                throw new HttpException(error.message, HttpStatus.NOT_FOUND);
-            }
-
-            throw error;
+        if (result instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
         }
+
+        const response: PersonendatensatzResponse = this.mapper.map(
+            result,
+            PersonendatensatzDto,
+            PersonendatensatzResponse,
+        );
+
+        return response;
     }
 
     @Get()
@@ -142,7 +130,12 @@ export class PersonenkontextController {
         );
         dto.id = params.personenkontextId;
 
-        const response: PersonendatensatzDto = await this.personenkontextUc.updatePersonenkontext(dto);
+        const response: PersonendatensatzDto | SchulConnexError =
+            await this.personenkontextUc.updatePersonenkontext(dto);
+
+        if (response instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
+        }
 
         return this.mapper.map(response, PersonendatensatzDto, PersonendatensatzResponse);
     }

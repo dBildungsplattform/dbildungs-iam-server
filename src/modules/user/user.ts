@@ -64,12 +64,7 @@ export class User {
             const userDo: UserDo<false> = {
                 username: this.username,
             } as UserDo<false>;
-            const creationResult:
-                | { ok: true; value: string }
-                | {
-                      ok: false;
-                      error: DomainError;
-                  } = await kcUserService.create(userDo);
+            const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
             if (!creationResult.ok) {
                 throw creationResult.error;
             }

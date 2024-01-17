@@ -3,7 +3,13 @@ import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { EntityNotFoundError, PersonAlreadyExistsError } from '../../../shared/error/index.js';
+import {
+    DomainError,
+    EntityCouldNotBeUpdated,
+    EntityNotFoundError,
+    MismatchedRevisionError,
+    PersonAlreadyExistsError,
+} from '../../../shared/error/index.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonDo } from './person.do.js';
@@ -149,6 +155,81 @@ describe('PersonService', () => {
 
             expect(result.items).toBeInstanceOf(Array);
             expect(result.items).toHaveLength(0);
+        });
+    });
+
+    describe('updatePerson', () => {
+        describe('when person is updated successfully', () => {
+            it('should return updated person', async () => {
+                const personDo: PersonDo<true> = DoFactory.createPerson(true, {
+                    revision: '1',
+                });
+                const personDoWithUpdatedRevision: PersonDo<true> = Object.assign({}, personDo, {
+                    revision: '2',
+                });
+
+                personRepoMock.findById.mockResolvedValue(personDo);
+                personRepoMock.save.mockResolvedValue(personDoWithUpdatedRevision);
+
+                const result: Result<PersonDo<true>, DomainError> = await personService.updatePerson(personDo);
+
+                expect(result).toEqual<Result<PersonDo<true>, DomainError>>({
+                    ok: true,
+                    value: personDoWithUpdatedRevision,
+                });
+                expect(personRepoMock.save).toHaveBeenCalledWith(personDoWithUpdatedRevision);
+            });
+        });
+
+        describe('when entity is not found', () => {
+            it('should return EntityNotFoundError', async () => {
+                const response: Result<PersonDo<true>, DomainError> = await personService.updatePerson(
+                    {} as PersonDo<true>,
+                );
+
+                expect(response).toEqual<Result<PersonDo<true>, DomainError>>({
+                    ok: false,
+                    error: new EntityNotFoundError('Person'),
+                });
+            });
+        });
+
+        describe('when revision does not match', () => {
+            it('should return MismatchedRevisionError', async () => {
+                const personDo: PersonDo<true> = DoFactory.createPerson(true);
+                const personDoWithWrongRevision: PersonDo<true> = {
+                    ...personDo,
+                    revision: 'wrongRevision',
+                };
+
+                personRepoMock.findById.mockResolvedValue(personDo);
+
+                const result: Result<PersonDo<true>, DomainError> = await personService.updatePerson(
+                    personDoWithWrongRevision,
+                );
+
+                expect(result).toEqual<Result<PersonDo<true>, DomainError>>({
+                    ok: false,
+                    error: new MismatchedRevisionError(
+                        `Revision ${personDoWithWrongRevision.revision} does not match revision ${personDo.revision} of stored person.`,
+                    ),
+                });
+            });
+        });
+
+        describe('when could not be stored', () => {
+            it('should return EntityCouldNotBeUpdatedError', async () => {
+                const personDo: PersonDo<true> = DoFactory.createPerson(true);
+
+                personRepoMock.findById.mockResolvedValue(personDo);
+
+                const result: Result<PersonDo<true>, DomainError> = await personService.updatePerson(personDo);
+
+                expect(result).toEqual<Result<PersonDo<true>, DomainError>>({
+                    ok: false,
+                    error: new EntityCouldNotBeUpdated('Person', personDo.id),
+                });
+            });
         });
     });
 });

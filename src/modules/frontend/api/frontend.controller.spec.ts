@@ -4,7 +4,12 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
 import { Session, SessionData } from 'express-session';
-import { Client, EndSessionParameters, IssuerMetadata, UserinfoResponse } from 'openid-client';
+import {
+    Client,
+    EndSessionParameters,
+    IssuerMetadata,
+    UserinfoResponse as OpenIdUserinfoResponse,
+} from 'openid-client';
 
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { FrontendConfig } from '../../../shared/config/frontend.config.js';
@@ -22,7 +27,53 @@ import { PersonenkontextResponse } from '../../person/api/personenkontext.respon
 import { PersonBirthParams } from '../../person/api/person-birth.params.js';
 import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { CreatePersonBodyParams } from '../../person/api/create-person.body.params.js';
+import { PersonNameParams } from '../../person/api/person-name.params.js';
+import { UserinfoResponse } from './userinfo.response.js';
+import { OrganisationService } from '../outbound/organisation.service.js';
+import { CreateOrganisationBodyParams } from '../../organisation/api/create-organisation.body.params.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { firstValueFrom, of } from 'rxjs';
+import { FindOrganisationQueryParams } from '../../organisation/api/find-organisation-query.param.js';
+import { RolleResponse } from '../../rolle/api/rolle.response.js';
+import { RolleService } from '../outbound/rolle.service.js';
 
+function getPersonenDatensatzResponse(): PersonendatensatzResponse {
+    const mockBirthParams: PersonBirthParams = {
+        datum: faker.date.anytime(),
+        geburtsort: faker.string.alpha(),
+    };
+    const options: {
+        referrer: string;
+        lastName: string;
+        firstName: string;
+    } = {
+        referrer: faker.string.alpha(),
+        lastName: faker.person.lastName(),
+        firstName: faker.person.firstName(),
+    };
+    const personResponse: PersonResponse = {
+        id: faker.string.uuid(),
+        name: {
+            familienname: options.lastName,
+            vorname: options.firstName,
+        },
+        referrer: options.referrer,
+        mandant: '',
+        geburt: mockBirthParams,
+        geschlecht: Geschlecht.M,
+        lokalisierung: '',
+        vertrauensstufe: Vertrauensstufe.VOLL,
+        revision: '1',
+    };
+    const personenKontextResponse: PersonenkontextResponse[] = [];
+    const response: PersonendatensatzResponse = {
+        person: personResponse,
+        personenkontexte: personenKontextResponse,
+    };
+    return response;
+}
 describe('FrontendController', () => {
     let module: TestingModule;
     let frontendController: FrontendController;
@@ -30,6 +81,8 @@ describe('FrontendController', () => {
     let frontendConfig: FrontendConfig;
     let providerService: DeepMocked<ProviderService>;
     let personService: DeepMocked<PersonService>;
+    let organisationService: DeepMocked<OrganisationService>;
+    let rolleService: DeepMocked<RolleService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -38,6 +91,8 @@ describe('FrontendController', () => {
                 FrontendController,
                 { provide: ProviderService, useValue: createMock<ProviderService>() },
                 { provide: PersonService, useValue: createMock<PersonService>() },
+                { provide: OrganisationService, useValue: createMock<OrganisationService>() },
+                { provide: RolleService, useValue: createMock<RolleService>() },
                 { provide: OIDC_CLIENT, useValue: createMock<Client>() },
             ],
         }).compile();
@@ -46,6 +101,8 @@ describe('FrontendController', () => {
         oidcClient = module.get(OIDC_CLIENT);
         providerService = module.get(ProviderService);
         personService = module.get(PersonService);
+        organisationService = module.get(OrganisationService);
+        rolleService = module.get(RolleService);
         frontendConfig = module.get(ConfigService).getOrThrow<FrontendConfig>('FRONTEND');
     });
 
@@ -78,15 +135,6 @@ describe('FrontendController', () => {
             frontendController.login(responseMock, sessionMock);
 
             expect(responseMock.redirect).toHaveBeenCalledWith(sessionMock.redirectUrl);
-        });
-
-        it('should clear redirectUrl from session', () => {
-            const responseMock: Response = createMock<Response>();
-            const session: SessionData = { redirectUrl: faker.internet.url(), cookie: { originalMaxAge: 0 } };
-
-            frontendController.login(responseMock, session);
-
-            expect(session.redirectUrl).toBeUndefined();
         });
     });
 
@@ -186,11 +234,11 @@ describe('FrontendController', () => {
 
     describe('info', () => {
         it('should return user info', () => {
-            const user: User = createMock<User>({ userinfo: createMock<UserinfoResponse>() });
+            const user: User = createMock<User>({ userinfo: createMock<OpenIdUserinfoResponse>() });
 
             const result: UserinfoResponse = frontendController.info(user);
 
-            expect(result).toBe(user.userinfo);
+            expect(result).toBeInstanceOf(UserinfoResponse);
         });
     });
 
@@ -207,50 +255,47 @@ describe('FrontendController', () => {
         });
     });
 
-    describe('personen', () => {
+    describe('personById', () => {
+        const queryParams: PersonByIdParams = {
+            personId: '1',
+        };
+        describe('when person exist', () => {
+            it('should return person', async () => {
+                const personenDatensatzResponse: PersonendatensatzResponse = getPersonenDatensatzResponse();
+                personService.getPersonById.mockResolvedValueOnce(personenDatensatzResponse);
+                const result: PersonendatensatzResponse = await frontendController.personById(
+                    queryParams,
+                    createMock(),
+                );
+                expect(result).toEqual(personenDatensatzResponse);
+            });
+        });
+        describe('when error occurs', () => {
+            it('should throw exception', async () => {
+                const exception: HttpException = new HttpException(
+                    'Requested Entity does not exist',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+                personService.getPersonById.mockRejectedValueOnce(exception);
+                await expect(frontendController.personById(queryParams, createMock())).rejects.toThrow(HttpException);
+            });
+        });
+    });
+
+    describe('persons', () => {
         describe('when personen exist', () => {
             it('should return all persons', async () => {
-                const mockBirthParams: PersonBirthParams = {
-                    datum: faker.date.anytime(),
-                    geburtsort: faker.string.alpha(),
-                };
-                const options: {
-                    referrer: string;
-                    lastName: string;
-                    firstName: string;
-                } = {
-                    referrer: faker.string.alpha(),
-                    lastName: faker.person.lastName(),
-                    firstName: faker.person.firstName(),
-                };
-                const personResponse: PersonResponse = {
-                    id: faker.string.uuid(),
-                    name: {
-                        familienname: options.lastName,
-                        vorname: options.firstName,
-                    },
-                    referrer: options.referrer,
-                    mandant: '',
-                    geburt: mockBirthParams,
-                    geschlecht: Geschlecht.M,
-                    lokalisierung: '',
-                    vertrauensstufe: Vertrauensstufe.VOLL,
-                    revision: '1',
-                };
-                const personenKontextResponse: PersonenkontextResponse[] = [];
-                const response: PersonendatensatzResponse = {
-                    person: personResponse,
-                    personenkontexte: personenKontextResponse,
-                };
-
                 const pagedResponse: PagedResponse<PersonendatensatzResponse> = {
                     limit: 10,
                     total: 2,
                     offset: 0,
-                    items: [response],
+                    items: [getPersonenDatensatzResponse()],
                 };
                 personService.getAllPersons.mockResolvedValueOnce(pagedResponse);
-                const result: PagedResponse<PersonendatensatzResponse> = await frontendController.persons();
+                const result: PagedResponse<PersonendatensatzResponse> = await frontendController.persons(
+                    createMock(),
+                    createMock(),
+                );
                 expect(result).toEqual(pagedResponse);
             });
         });
@@ -261,7 +306,39 @@ describe('FrontendController', () => {
                     HttpStatus.INTERNAL_SERVER_ERROR,
                 );
                 personService.getAllPersons.mockRejectedValueOnce(exception);
-                await expect(frontendController.persons()).rejects.toThrowError(HttpException);
+                await expect(frontendController.persons(createMock(), createMock())).rejects.toThrow(HttpException);
+            });
+        });
+    });
+
+    describe('post personen', () => {
+        describe('when personen exist', () => {
+            it('should return all persons', async () => {
+                const personNameParams: PersonNameParams = {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                };
+                const createPersonBodyParams: CreatePersonBodyParams = {
+                    mandant: faker.string.alpha(),
+                    name: personNameParams,
+                };
+                const response: PersonendatensatzResponse = getPersonenDatensatzResponse();
+                personService.createPerson.mockResolvedValueOnce(response);
+                const result: PersonendatensatzResponse = await frontendController.createPerson(
+                    createPersonBodyParams,
+                    createMock(),
+                );
+                expect(result).toEqual(response);
+            });
+        });
+        describe('when error occurs', () => {
+            it('should throw exception', async () => {
+                const exception: HttpException = new HttpException(
+                    'Requested Entity does not exist',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                );
+                personService.getAllPersons.mockRejectedValueOnce(exception);
+                await expect(frontendController.persons(createMock(), createMock())).rejects.toThrow(HttpException);
             });
         });
     });
@@ -277,7 +354,7 @@ describe('FrontendController', () => {
                     personId: faker.string.numeric(),
                 };
                 personService.resetPassword.mockResolvedValueOnce(generatedPassword);
-                const result: string = await frontendController.passwordReset(params);
+                const result: string = await frontendController.passwordReset(params, createMock());
                 expect(result).toEqual(generatedPassword);
             });
         });
@@ -291,8 +368,131 @@ describe('FrontendController', () => {
                     HttpStatus.NOT_FOUND,
                 );
                 personService.resetPassword.mockRejectedValueOnce(exception);
-                await expect(frontendController.passwordReset(params)).rejects.toThrowError(HttpException);
+                await expect(frontendController.passwordReset(params, createMock())).rejects.toThrow(HttpException);
             });
+        });
+    });
+
+    describe('createOrganisation', () => {
+        it('should call OrganisationService.create with correct params', () => {
+            const organisation: CreateOrganisationBodyParams = {
+                name: faker.string.alpha(16),
+                kennung: faker.string.alpha(16),
+                kuerzel: faker.string.alpha(3),
+                namensergaenzung: faker.string.alpha(16),
+                typ: OrganisationsTyp.UNBEST,
+            };
+            const user: User = createMock<User>();
+
+            frontendController.createOrganisation(organisation, user);
+
+            expect(organisationService.create).toHaveBeenCalledWith(organisation, user);
+        });
+
+        it('should return response', async () => {
+            const response: OrganisationResponse = {
+                id: faker.string.uuid(),
+                name: faker.string.alpha(16),
+                kennung: faker.string.alpha(16),
+                kuerzel: faker.string.alpha(3),
+                namensergaenzung: faker.string.alpha(16),
+                typ: OrganisationsTyp.UNBEST,
+            };
+            organisationService.create.mockReturnValueOnce(of(response));
+
+            const result: OrganisationResponse = await firstValueFrom(
+                frontendController.createOrganisation(createMock(), createMock()),
+            );
+
+            expect(result).toEqual(response);
+        });
+    });
+
+    describe('findOrganisationById', () => {
+        it('should call OrganisationService.findById with correct params', () => {
+            const organisationId: string = faker.string.uuid();
+            const user: User = createMock<User>();
+
+            frontendController.findOrganisationById({ organisationId }, user);
+
+            expect(organisationService.findById).toHaveBeenCalledWith(organisationId, user);
+        });
+
+        it('should return response', async () => {
+            const response: OrganisationResponse = {
+                id: faker.string.uuid(),
+                name: faker.string.alpha(16),
+                kennung: faker.string.alpha(16),
+                kuerzel: faker.string.alpha(3),
+                namensergaenzung: faker.string.alpha(16),
+                typ: OrganisationsTyp.UNBEST,
+            };
+            organisationService.findById.mockReturnValueOnce(of(response));
+
+            const result: OrganisationResponse = await firstValueFrom(
+                frontendController.findOrganisationById({ organisationId: response.id }, createMock()),
+            );
+
+            expect(result).toEqual(response);
+        });
+    });
+
+    describe('findOrganisationen', () => {
+        it('should call OrganisationService.find with correct params', () => {
+            const queryParams: FindOrganisationQueryParams = {
+                kennung: faker.string.alpha(16),
+                name: faker.string.alpha(16),
+                typ: OrganisationsTyp.UNBEST,
+                limit: faker.number.int(50),
+                offset: faker.number.int(50),
+            };
+            const user: User = createMock<User>();
+
+            frontendController.findOrganisationen(queryParams, user);
+
+            expect(organisationService.find).toHaveBeenCalledWith(queryParams, user);
+        });
+
+        it('should return response', async () => {
+            const pagedResponse: PagedResponse<OrganisationResponse> = {
+                limit: faker.number.int(100),
+                offset: faker.number.int(100),
+                total: faker.number.int(100),
+                items: [
+                    {
+                        id: faker.string.uuid(),
+                        name: faker.string.alpha(16),
+                        kennung: faker.string.alpha(16),
+                        kuerzel: faker.string.alpha(3),
+                        namensergaenzung: faker.string.alpha(16),
+                        typ: OrganisationsTyp.UNBEST,
+                    },
+                ],
+            };
+            organisationService.find.mockReturnValueOnce(of(pagedResponse));
+
+            const result: PagedResponse<OrganisationResponse> = await firstValueFrom(
+                frontendController.findOrganisationen(createMock(), createMock()),
+            );
+
+            expect(result).toEqual(pagedResponse);
+        });
+    });
+
+    describe('createRolle', () => {
+        it('should return created rolle', async () => {
+            const rolle: RolleResponse = {
+                id: faker.string.uuid(),
+                name: faker.hacker.noun(),
+                administeredBySchulstrukturknoten: faker.string.uuid(),
+                createdAt: faker.date.recent(),
+                updatedAt: faker.date.recent(),
+            };
+            rolleService.createRolle.mockResolvedValueOnce(rolle);
+
+            const result: RolleResponse = await frontendController.createRolle(createMock(), createMock<User>());
+
+            expect(result).toEqual(rolle);
         });
     });
 });

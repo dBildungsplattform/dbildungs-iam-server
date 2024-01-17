@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { UserDo } from '../../src/modules/keycloak-administration/domain/user.do.js';
 import { OrganisationDo } from '../../src/modules/organisation/domain/organisation.do.js';
-import { OrganisationsTyp } from '../../src/modules/organisation/domain/organisation.enum.js';
+import { OrganisationsTyp, Traegerschaft } from '../../src/modules/organisation/domain/organisation.enums.js';
 import { PersonDo } from '../../src/modules/person/domain/person.do.js';
 import { PersonenkontextDo } from '../../src/modules/person/domain/personenkontext.do.js';
 import {
@@ -13,7 +13,7 @@ import {
 import { PersonRollenZuweisungDo } from '../../src/modules/rolle/domain/person-rollen-zuweisung.do.js';
 import { RolleBerechtigungsZuweisungDo } from '../../src/modules/rolle/domain/rolle-berechtigungs-zuweisung.do.js';
 import { RolleRechtDo } from '../../src/modules/rolle/domain/rolle-recht.do.js';
-import { RolleDo } from '../../src/modules/rolle/domain/rolle.do.js';
+import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
 import { ServiceProviderZugriffDo } from '../../src/modules/rolle/domain/service-provider-zugriff.do.js';
 import { ServiceProviderDo } from '../../src/modules/rolle/domain/service-provider.do.js';
 import { DoBase } from '../../src/shared/types/do-base.js';
@@ -59,6 +59,7 @@ export class DoFactory {
             namensergaenzung: faker.company.name(),
             kuerzel: faker.lorem.word(),
             typ: OrganisationsTyp.SONSTIGE,
+            traegerschaft: Traegerschaft.SONSTIGE,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
         };
@@ -134,15 +135,16 @@ export class DoFactory {
 
     public static createRolle<WasPersisted extends boolean>(
         withId: WasPersisted,
-        props?: Partial<RolleDo<WasPersisted>>,
-    ): RolleDo<WasPersisted> {
-        const rolle: RolleDo<false> = {
+        props?: Partial<RolleAggregate>,
+    ): RolleAggregate {
+        const rolle: Partial<RolleAggregate> = {
+            name: faker.person.jobTitle(),
             administeredBySchulstrukturknoten: faker.string.numeric(),
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
         };
-        return Object.assign(new RolleDo<WasPersisted>(), rolle, props);
+        return Object.assign(new RolleAggregate(), rolle, props);
     }
 
     public static createRolleRecht<WasPersisted extends boolean>(
@@ -159,7 +161,7 @@ export class DoFactory {
 
     public static createPersonRollenZuweisung<WasPersisted extends boolean>(
         personId: string,
-        rolle: RolleDo<boolean>,
+        rolle: RolleAggregate,
         withId: WasPersisted,
         props?: Partial<PersonRollenZuweisungDo<WasPersisted>>,
     ): PersonRollenZuweisungDo<WasPersisted> {
@@ -175,7 +177,7 @@ export class DoFactory {
     }
 
     public static createRolleBerechtigungsZuweisung<WasPersisted extends boolean>(
-        rolle: RolleDo<boolean>,
+        rolle: RolleAggregate,
         rolleRecht: RolleRechtDo<boolean>,
         withId: WasPersisted,
         props?: Partial<RolleBerechtigungsZuweisungDo<WasPersisted>>,

@@ -15,6 +15,8 @@ import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -26,18 +28,21 @@ export class PersonenkontextUc {
 
     public async createPersonenkontext(
         personenkontextDto: CreatePersonenkontextDto,
-    ): Promise<CreatedPersonenkontextDto> {
+    ): Promise<CreatedPersonenkontextDto | SchulConnexError> {
         const personenkontextDo: PersonenkontextDo<false> = this.mapper.map(
             personenkontextDto,
             CreatePersonenkontextDto,
             PersonenkontextDo,
         );
-        const result: Result<PersonenkontextDo<true>> =
-            await this.personenkontextService.createPersonenkontext(personenkontextDo);
+        const result: Result<
+            PersonenkontextDo<true>,
+            DomainError
+        > = await this.personenkontextService.createPersonenkontext(personenkontextDo);
+
         if (result.ok) {
             return this.mapper.map(result.value, PersonenkontextDo, CreatedPersonenkontextDto);
         }
-        throw result.error;
+        return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 
     public async findAll(findPersonenkontextDto: FindPersonenkontextDto): Promise<Paged<PersonenkontextDto>> {
@@ -67,20 +72,24 @@ export class PersonenkontextUc {
         };
     }
 
-    public async findPersonenkontextById(dto: FindPersonenkontextByIdDto): Promise<PersonendatensatzDto> {
-        const personenkontextResult: Result<PersonenkontextDo<true>> =
-            await this.personenkontextService.findPersonenkontextById(dto.personenkontextId);
+    public async findPersonenkontextById(
+        dto: FindPersonenkontextByIdDto,
+    ): Promise<PersonendatensatzDto | SchulConnexError> {
+        const personenkontextResult: Result<
+            PersonenkontextDo<true>,
+            DomainError
+        > = await this.personenkontextService.findPersonenkontextById(dto.personenkontextId);
 
         if (!personenkontextResult.ok) {
-            throw personenkontextResult.error;
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personenkontextResult.error);
         }
 
-        const personResult: Result<PersonDo<true>> = await this.personService.findPersonById(
+        const personResult: Result<PersonDo<true>, DomainError> = await this.personService.findPersonById(
             personenkontextResult.value.personId,
         );
 
         if (!personResult.ok) {
-            throw personResult.error;
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResult.error);
         }
 
         return new PersonendatensatzDto({
@@ -89,7 +98,9 @@ export class PersonenkontextUc {
         });
     }
 
-    public async updatePersonenkontext(updateDto: UpdatePersonenkontextDto): Promise<PersonendatensatzDto> {
+    public async updatePersonenkontext(
+        updateDto: UpdatePersonenkontextDto,
+    ): Promise<PersonendatensatzDto | SchulConnexError> {
         const personenkontextDo: PersonenkontextDo<true> = this.mapper.map(
             updateDto,
             UpdatePersonenkontextDto,
@@ -101,7 +112,7 @@ export class PersonenkontextUc {
         > = await this.personenkontextService.updatePersonenkontext(personenkontextDo);
 
         if (!result.ok) {
-            throw result.error;
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
         }
 
         const personResult: Result<PersonDo<true>, DomainError> = await this.personService.findPersonById(
@@ -109,7 +120,7 @@ export class PersonenkontextUc {
         );
 
         if (!personResult.ok) {
-            throw personResult.error;
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResult.error);
         }
 
         return new PersonendatensatzDto({

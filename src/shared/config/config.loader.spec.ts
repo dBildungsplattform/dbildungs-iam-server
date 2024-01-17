@@ -1,26 +1,9 @@
 import 'reflect-metadata'; // some decorators use reflect-metadata in the background
 import fs from 'fs';
-import { DeployStage, EnvConfig, JsonConfig, loadConfigFiles, loadEnvConfig } from './index.js';
+import { JsonConfig, loadConfigFiles } from './index.js';
 import { DeepPartial } from '../../../test/utils/index.js';
 
 describe('configloader', () => {
-    describe('loadEnvConfig', () => {
-        describe('when config is valid', () => {
-            it('should return validated EnvConfig', () => {
-                const config: Record<string, unknown> = { DEPLOY_STAGE: DeployStage.DEV };
-                const validatedConfig: EnvConfig = loadEnvConfig(config);
-                expect(validatedConfig).toBeInstanceOf(EnvConfig);
-            });
-        });
-
-        describe('when config is invalid', () => {
-            it('should throw', () => {
-                const config: Record<string, unknown> = { DEPLOY_STAGE: '' };
-                expect(() => loadEnvConfig(config)).toThrow();
-            });
-        });
-    });
-
     describe('loadConfigFiles', () => {
         describe('when config is valid', () => {
             let readFileSyncSpy: jest.SpyInstance;
@@ -31,8 +14,10 @@ describe('configloader', () => {
                 },
                 FRONTEND: {
                     PORT: 8081,
+                    TRUST_PROXY: false,
                     BACKEND_ADDRESS: 'http://localhost:8080',
                     SECURE_COOKIE: false,
+                    SESSION_SECRET: 'SessionSecretForDevelopment',
                     SESSION_TTL_MS: 1000,
                     OIDC_CALLBACK_URL: 'http://localhost:9091/api/frontend/login',
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
@@ -56,6 +41,9 @@ describe('configloader', () => {
                     USERNAME: 'default',
                     USE_TLS: false,
                 },
+                LOGGING: {
+                    DEFAULT_LOG_LEVEL: 'debug',
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -77,7 +65,7 @@ describe('configloader', () => {
             it('should return validated JsonConfig', () => {
                 const validatedConfig: JsonConfig = loadConfigFiles();
                 expect(validatedConfig).toBeInstanceOf(JsonConfig);
-                expect(readFileSyncSpy).toBeCalledTimes(2);
+                expect(readFileSyncSpy).toHaveBeenCalledTimes(2);
             });
         });
 
@@ -114,7 +102,7 @@ describe('configloader', () => {
 
             it('should throw', () => {
                 expect(() => loadConfigFiles()).toThrow();
-                expect(readFileSyncSpy).toBeCalledTimes(2);
+                expect(readFileSyncSpy).toHaveBeenCalled();
             });
         });
     });

@@ -1,17 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { OrganisationUc } from './organisation.uc.js';
-import { OrganisationService } from '../domain/organisation.service.js';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
-import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
-import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
-import { OrganisationDo } from '../domain/organisation.do.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { OrganisationsTyp } from '../domain/organisation.enum.js';
-import { FindOrganisationDto } from './find-organisation.dto.js';
-import { OrganisationResponse } from './organisation.response.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged } from '../../../shared/paging/paged.js';
+import { OrganisationDo } from '../domain/organisation.do.js';
+import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { OrganisationService } from '../domain/organisation.service.js';
+import { CreateOrganisationDto } from './create-organisation.dto.js';
+import { CreatedOrganisationDto } from './created-organisation.dto.js';
+import { FindOrganisationDto } from './find-organisation.dto.js';
+import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
+import { OrganisationResponse } from './organisation.response.js';
+import { OrganisationUc } from './organisation.uc.js';
 
 describe('OrganisationUc', () => {
     let module: TestingModule;
@@ -47,22 +49,28 @@ describe('OrganisationUc', () => {
     });
 
     describe('createOrganisation', () => {
-        it('should create an organisation', async () => {
-            organisationServiceMock.createOrganisation.mockResolvedValue({
-                ok: true,
-                value: DoFactory.createOrganisation(true),
+        describe('when result is ok', () => {
+            it('should create an organisation', async () => {
+                organisationServiceMock.createOrganisation.mockResolvedValue({
+                    ok: true,
+                    value: DoFactory.createOrganisation(true),
+                });
+                await expect(organisationUc.createOrganisation({} as CreateOrganisationDto)).resolves.toBeInstanceOf(
+                    CreatedOrganisationDto,
+                );
             });
-            await expect(organisationUc.createOrganisation({} as CreateOrganisationDto)).resolves.not.toThrow();
         });
 
-        it('should throw an error', async () => {
-            organisationServiceMock.createOrganisation.mockResolvedValue({
-                ok: false,
-                error: new EntityCouldNotBeCreated(''),
+        describe('when result is not ok', () => {
+            it('should return an error', async () => {
+                organisationServiceMock.createOrganisation.mockResolvedValue({
+                    ok: false,
+                    error: new EntityCouldNotBeCreated(''),
+                });
+                await expect(organisationUc.createOrganisation({} as CreateOrganisationDto)).resolves.toBeInstanceOf(
+                    SchulConnexError,
+                );
             });
-            await expect(organisationUc.createOrganisation({} as CreateOrganisationDto)).rejects.toThrowError(
-                EntityCouldNotBeCreated,
-            );
         });
     });
 
@@ -82,8 +90,8 @@ describe('OrganisationUc', () => {
                 ok: false,
                 error: new EntityNotFoundError(''),
             });
-            await expect(organisationUc.findOrganisationById(organisation.id)).rejects.toThrowError(
-                EntityNotFoundError,
+            await expect(organisationUc.findOrganisationById(organisation.id)).resolves.toBeInstanceOf(
+                SchulConnexError,
             );
         });
     });

@@ -11,7 +11,7 @@ import {
 } from '../../../../test/utils/index.js';
 import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuweisung.do.js';
 import { RolleRechtDo } from '../domain/rolle-recht.do.js';
-import { RolleDo } from '../domain/rolle.do.js';
+import { Rolle } from '../domain/rolle.js';
 import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
 import { ServiceProviderDo } from '../domain/service-provider.do.js';
 import { ServiceProviderZugriffEntity } from '../entity/service-provider-zugriff.entity.js';
@@ -84,9 +84,9 @@ describe('RolleRechtRepo', () => {
                 expect(serviceProviderZugriff).not.toBeNull();
                 expect(serviceProviderZugriff).toHaveLength(1);
                 //
-                const rolleDo: RolleDo<false> = DoFactory.createRolle(false);
+                const rolle: Rolle = DoFactory.createRolle(false);
                 const rolleBerechtigungsZuweisungDo: RolleBerechtigungsZuweisungDo<false> =
-                    DoFactory.createRolleBerechtigungsZuweisung(rolleDo, serviceProviderZugriffDo, false);
+                    DoFactory.createRolleBerechtigungsZuweisung(rolle, serviceProviderZugriffDo, false);
 
                 const foundRolleRecht: RolleRechtDo<true>[] =
                     await sut.findAllRolleRecht(rolleBerechtigungsZuweisungDo);
@@ -97,11 +97,11 @@ describe('RolleRechtRepo', () => {
 
         describe('when not found by id provided by RolleBerechtigungsZuweisung', () => {
             it('should return null', async () => {
-                const rolleDo: RolleDo<false> = DoFactory.createRolle(false);
+                const rolle: Rolle = DoFactory.createRolle(false);
                 const serviceProviderZugriffDo: ServiceProviderZugriffDo<true> =
                     DoFactory.createServiceProviderZugriff(true);
                 const rolleBerechtigungsZuweisungDo: RolleBerechtigungsZuweisungDo<false> =
-                    DoFactory.createRolleBerechtigungsZuweisung(rolleDo, serviceProviderZugriffDo, false);
+                    DoFactory.createRolleBerechtigungsZuweisung(rolle, serviceProviderZugriffDo, false);
                 const foundRolleRecht: Option<RolleRechtDo<true>[]> =
                     await sut.findAllRolleRecht(rolleBerechtigungsZuweisungDo);
                 expect(foundRolleRecht).toHaveLength(0);
@@ -134,9 +134,9 @@ describe('RolleRechtRepo', () => {
                 expect(serviceProviderZugriff).not.toBeNull();
                 expect(serviceProviderZugriff).toHaveLength(1);
                 //
-                const rolleDo: RolleDo<false> = DoFactory.createRolle(false);
+                const rolle: Rolle = DoFactory.createRolle(false);
                 const rolleBerechtigungsZuweisungDo: RolleBerechtigungsZuweisungDo<false> =
-                    DoFactory.createRolleBerechtigungsZuweisung(rolleDo, serviceProviderZugriffDo, false);
+                    DoFactory.createRolleBerechtigungsZuweisung(rolle, serviceProviderZugriffDo, false);
 
                 const foundServiceProviderZugriff: ServiceProviderZugriffDo<true>[] =
                     await sut.findAllServiceProviderZugriff(rolleBerechtigungsZuweisungDo);
@@ -147,11 +147,11 @@ describe('RolleRechtRepo', () => {
 
         describe('when not found by id provided by RolleBerechtigungsZuweisung', () => {
             it('should return null', async () => {
-                const rolleDo: RolleDo<false> = DoFactory.createRolle(false);
+                const rolle: Rolle = DoFactory.createRolle(false);
                 const serviceProviderZugriffDo: ServiceProviderZugriffDo<true> =
                     DoFactory.createServiceProviderZugriff(true);
                 const rolleBerechtigungsZuweisungDo: RolleBerechtigungsZuweisungDo<false> =
-                    DoFactory.createRolleBerechtigungsZuweisung(rolleDo, serviceProviderZugriffDo, false);
+                    DoFactory.createRolleBerechtigungsZuweisung(rolle, serviceProviderZugriffDo, false);
                 const foundServiceProviderZugriff: Option<ServiceProviderZugriffDo<true>[]> =
                     await sut.findAllServiceProviderZugriff(rolleBerechtigungsZuweisungDo);
                 expect(foundServiceProviderZugriff).toHaveLength(0);

@@ -3,6 +3,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { BadRequestException, HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MapperTestModule } from '../../../../test/utils/index.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
 import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
@@ -22,6 +23,7 @@ import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
+import { UpdatePersonBodyParams } from './update-person.body.params.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -66,39 +68,46 @@ describe('PersonController', () => {
         expect(personController).toBeDefined();
     });
 
-    describe('when creating a person', () => {
-        it('should throw when username is given', async () => {
-            const personDto: PersonDto = {} as PersonDto;
-            personUcMock.createPerson.mockResolvedValue(personDto);
-            const params: CreatePersonBodyParams = {
-                username: faker.internet.userName(),
-                mandant: faker.string.uuid(),
-                name: {
-                    vorname: faker.person.firstName(),
-                    familienname: faker.person.lastName(),
-                },
-                geburt: {},
-            };
-            await expect(personController.createPerson(params)).rejects.toThrow(
-                new BadRequestException('Username will be assigned and is not supported, leave empty.'),
-            );
+    describe('createPerson', () => {
+        describe('when creating a person is successful', () => {
+            it('should return PersonendatensatzResponse', async () => {
+                const personDto: PersonDto = {} as PersonDto;
+                personUcMock.createPerson.mockResolvedValue(personDto);
+
+                const params: CreatePersonBodyParams = {
+                    mandant: faker.string.uuid(),
+                    name: {
+                        vorname: faker.person.firstName(),
+                        familienname: faker.person.lastName(),
+                    },
+                    geburt: {},
+                };
+
+                await expect(personController.createPerson(params)).resolves.toBeInstanceOf(PersonendatensatzResponse);
+                expect(personUcMock.createPerson).toHaveBeenCalledTimes(1);
+            });
         });
-        it('should not throw', async () => {
-            const personDto: PersonDto = {} as PersonDto;
-            personUcMock.createPerson.mockResolvedValue(personDto);
-            const params: CreatePersonBodyParams = {
-                username: '',
-                mandant: faker.string.uuid(),
-                name: {
-                    vorname: faker.person.firstName(),
-                    familienname: faker.person.lastName(),
-                },
-                geburt: {},
-            };
-            await expect(personController.createPerson(params)).resolves.not.toThrow();
-            expect(personUcMock.createPerson).toHaveBeenCalledTimes(1);
+
+        describe('when creating a person is not successful', () => {
+            it('should throw HttpException', async () => {
+                const error: SchulConnexError = new SchulConnexError({} as SchulConnexError);
+                personUcMock.createPerson.mockResolvedValue(error);
+
+                const params: CreatePersonBodyParams = {
+                    mandant: faker.string.uuid(),
+                    name: {
+                        vorname: faker.person.firstName(),
+                        familienname: faker.person.lastName(),
+                    },
+                    geburt: {},
+                };
+
+                await expect(personController.createPerson(params)).rejects.toThrow(HttpException);
+                expect(personUcMock.createPerson).toHaveBeenCalledTimes(1);
+            });
         });
     });
+
     describe('when getting a person', () => {
         const params: PersonByIdParams = {
             personId: faker.string.uuid(),
@@ -119,9 +128,8 @@ describe('PersonController', () => {
         });
 
         it('should throw an Http not found exception', async () => {
-            const mockError: Error = new Error('person does not exist.');
-            personUcMock.findPersonById.mockRejectedValue(mockError);
-            await expect(personController.findPersonById(params)).rejects.toThrowError(HttpException);
+            personUcMock.findPersonById.mockResolvedValue(new SchulConnexError({} as SchulConnexError));
+            await expect(personController.findPersonById(params)).rejects.toThrow(HttpException);
             expect(personUcMock.findPersonById).toHaveBeenCalledTimes(1);
         });
     });
@@ -197,7 +205,7 @@ describe('PersonController', () => {
     });
 
     describe('createPersonenkontext', () => {
-        describe('when creating a personenkontext', () => {
+        describe('when creating a personenkontext is successful', () => {
             it('should not throw', async () => {
                 const pathParams: PersonByIdParams = {
                     personId: faker.string.uuid(),
@@ -223,7 +231,29 @@ describe('PersonController', () => {
                 };
                 personenkontextUcMock.createPersonenkontext.mockResolvedValue(ucResult);
 
-                await expect(personController.createPersonenkontext(pathParams, body)).resolves.not.toThrow();
+                await expect(personController.createPersonenkontext(pathParams, body)).resolves.toBeInstanceOf(
+                    PersonenkontextResponse,
+                );
+                expect(personenkontextUcMock.createPersonenkontext).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when creating a personenkontext returns a SchulConnexError', () => {
+            it('should throw HttpException', async () => {
+                const pathParams: PersonByIdParams = {
+                    personId: faker.string.uuid(),
+                };
+                const body: CreatePersonenkontextBodyParams = {
+                    rolle: Rolle.LEHRENDER,
+                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                    personenstatus: Personenstatus.AKTIV,
+                    referrer: 'referrer',
+                };
+                personenkontextUcMock.createPersonenkontext.mockResolvedValue(
+                    new SchulConnexError({} as SchulConnexError),
+                );
+
+                await expect(personController.createPersonenkontext(pathParams, body)).rejects.toThrow(HttpException);
                 expect(personenkontextUcMock.createPersonenkontext).toHaveBeenCalledTimes(1);
             });
         });
@@ -276,18 +306,80 @@ describe('PersonController', () => {
         });
     });
 
-    describe('when resetting password for a person', () => {
+    describe('resetPasswordByPersonId', () => {
+        describe('when resetting password for a person', () => {
+            const params: PersonByIdParams = {
+                personId: faker.string.uuid(),
+            };
+
+            it('should reset password for person', async () => {
+                const response: Result<string> = {
+                    ok: true,
+                    value: faker.string.alphanumeric({ length: { min: 10, max: 10 }, casing: 'mixed' }),
+                };
+
+                personUcMock.resetPassword.mockResolvedValueOnce(response);
+
+                await expect(personController.resetPasswordByPersonId(params)).resolves.not.toThrow();
+                expect(personUcMock.resetPassword).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when resetting password for a person returns a SchulConnexError', () => {
+            const params: PersonByIdParams = {
+                personId: faker.string.uuid(),
+            };
+
+            it('should throw HttpException', async () => {
+                const response: SchulConnexError = new SchulConnexError({} as SchulConnexError);
+
+                personUcMock.resetPassword.mockResolvedValueOnce(response);
+
+                await expect(personController.resetPasswordByPersonId(params)).rejects.toThrow(HttpException);
+                expect(personUcMock.resetPassword).toHaveBeenCalledTimes(1);
+            });
+        });
+    });
+
+    describe('updatePerson', () => {
         const params: PersonByIdParams = {
             personId: faker.string.uuid(),
         };
-        it('should reset password for person', async () => {
-            const response: Result<string> = {
-                ok: true,
-                value: faker.string.alphanumeric({ length: { min: 10, max: 10 }, casing: 'mixed' }),
-            };
-            personUcMock.resetPassword.mockResolvedValueOnce(response);
-            await expect(personController.resetPasswordByPersonId(params)).resolves.not.toThrow();
-            expect(personUcMock.resetPassword).toHaveBeenCalledTimes(1);
+        const body: UpdatePersonBodyParams = {
+            stammorganisation: faker.string.uuid(),
+            referrer: 'referrer',
+            name: {
+                vorname: 'john',
+                familienname: 'doe',
+            },
+            geburt: {},
+            lokalisierung: 'de-DE',
+            revision: '1',
+        };
+
+        describe('when updating a person is successful', () => {
+            it('should return PersonendatensatzResponse', async () => {
+                const personendatensatzDto: PersonendatensatzDto = new PersonendatensatzDto({
+                    person: {} as PersonDto,
+                    personenkontexte: [],
+                });
+                personUcMock.updatePerson.mockResolvedValue(personendatensatzDto);
+
+                await expect(personController.updatePerson(params, body)).resolves.toBeInstanceOf(
+                    PersonendatensatzResponse,
+                );
+                expect(personUcMock.updatePerson).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when updating a person is not successful', () => {
+            it('should throw HttpException', async () => {
+                const error: SchulConnexError = new SchulConnexError({} as SchulConnexError);
+                personUcMock.updatePerson.mockResolvedValue(error);
+
+                await expect(personController.updatePerson(params, body)).rejects.toThrow(HttpException);
+                expect(personUcMock.updatePerson).toHaveBeenCalledTimes(1);
+            });
         });
     });
 });

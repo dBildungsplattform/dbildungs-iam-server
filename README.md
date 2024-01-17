@@ -49,12 +49,19 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 | npm run setup            | Runs db:init to Initialize the DB                         |                                           |
 | npm run db:init          | Initializes the database (applies SQL schema)             | `compose.yaml` can be used                |
 
+## Docker Compose
+
+If you only need to run the server, you can start it and all it's dependencies with docker compose.
+`docker compose --profile full-backend up` will start everything you need.
+You may need to initialize the database, use `docker compose up db-init` do so.
+You can also use another profile, if you want to initialize the db while starting the server `docker compose --profile full-backend --profile db-init up`
+
 ## Developer Guides
 
 * Code conventions are enforced through the compile, eslint and prettier as far as possible
-    * Non enforcable conventions will be documented here. If they become enforcable we will put them into
+  * Non enforcable conventions will be documented here. If they become enforcable we will put them into
       automation.
-    * Table names will be all lowercase if the name contains multiple words they will be separated by
+  * Table names will be all lowercase if the name contains multiple words they will be separated by
         underscores.
 * Git conventions can be found [here](./docs/git.md)
 * Test conventions can be found [here](./docs/tests.md)
@@ -63,10 +70,11 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 * Developer notes can be found [here](./docs/developer-notes.md)
 
 ## Package (Create Docker Image )
+
 If you push a tag upstream a container will be created for you. (Check Github under Packages)
 
 ghcr.io/dbildungsplattform/dbildungs-iam-server:*tag*
 
 ## License
 
-The software is licensed under the [AGPL-3.0 license](./LICENSE).
+The software is licensed under the [EUPL-1.2 license](./LICENSE).
