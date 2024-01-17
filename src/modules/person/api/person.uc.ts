@@ -20,6 +20,8 @@ import { PersonenkontextDto } from './personenkontext.dto.js';
 import { UserRepository } from '../../user/user.repository.js';
 import { User } from '../../user/user.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { KeycloakClientError } from '../../../shared/error/index.js';
+import { UpdatePersonDto } from './update-person.dto.js';
 
 @Injectable()
 export class PersonUc {

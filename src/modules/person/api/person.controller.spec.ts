@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { BadRequestException, HttpException } from '@nestjs/common';
+import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MapperTestModule } from '../../../../test/utils/index.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';

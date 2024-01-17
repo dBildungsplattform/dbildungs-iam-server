@@ -6,8 +6,6 @@ import { EntityNotFoundError, KeycloakClientError, PersonAlreadyExistsError } fr
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged } from '../../../shared/paging/index.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { User } from '../../user/user.js';
-import { UserRepository } from '../../user/user.repository.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';
 import { SichtfreigabeType } from '../domain/personenkontext.enums.js';
