@@ -18,6 +18,7 @@ import { LoggerModule } from '../core/logging/logger.module.js';
 import { ErrorModule } from '../shared/error/error.module.js';
 import { KeycloakInstanceConfig } from '../modules/keycloak-administration/keycloak-instance-config.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
+import { AuthenticationApiModule } from '../modules/authentication/authentication-api.module.js';
 
 @Module({
     imports: [
@@ -61,6 +62,7 @@ import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloa
             inject: [KeycloakInstanceConfig],
         }),
         LoggerModule.register(ServerModule.name),
+        AuthenticationApiModule,
         PersonApiModule,
         OrganisationApiModule,
         KeycloakAdministrationModule,

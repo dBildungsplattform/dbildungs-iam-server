@@ -2,16 +2,16 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Issuer } from 'openid-client';
 
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
-import { FrontendController } from './api/frontend.controller.js';
-import { OIDC_CLIENT } from './auth/oidc-client.service.js';
-import { FrontendApiModule } from './frontend-api.module.js';
+import { AuthenticationController } from './api/frontend.controller.js';
+import { OIDC_CLIENT } from './services/oidc-client.service.js';
+import { AuthenticationApiModule } from './authentication-api.module.js';
 
-describe('FrontendApiModule', () => {
+describe('AuthenticationApiModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, FrontendApiModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, AuthenticationApiModule],
         })
             .overrideProvider(OIDC_CLIENT)
             .useValue(new new Issuer({ issuer: 'oidc' }).Client({ client_id: 'DummyId' }))
@@ -27,8 +27,8 @@ describe('FrontendApiModule', () => {
     });
 
     describe('when module is initialized', () => {
-        it('should resolve FrontendController', () => {
-            expect(module.get(FrontendController)).toBeInstanceOf(FrontendController);
+        it('should resolve AuthenticationController', () => {
+            expect(module.get(AuthenticationController)).toBeInstanceOf(AuthenticationController);
         });
     });
 });
