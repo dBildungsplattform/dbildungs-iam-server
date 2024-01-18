@@ -1,4 +1,4 @@
-import { UserinfoResponse } from 'openid-client';
+import { type UserinfoResponse } from 'openid-client';
 
 /**
  * User-type for keycloak-connect (parsed JWT)

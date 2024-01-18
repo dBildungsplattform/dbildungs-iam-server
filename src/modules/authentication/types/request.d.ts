@@ -1,4 +1,4 @@
-import { PassportUser, User } from '../types/user.js';
+import { PassportUser, User } from './user.js';
 
 declare module 'express' {
     interface Request {
