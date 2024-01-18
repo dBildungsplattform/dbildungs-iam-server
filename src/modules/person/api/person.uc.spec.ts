@@ -71,13 +71,23 @@ describe('PersonUc', () => {
 
     describe('createPerson', () => {
         it('should fail when there is no first name given', async () => {
-            await expect(personUc.createPerson({} as CreatePersonDto)).rejects.toThrow(
-                new Error('First name not given, needed for username generation'),
+            await expect(personUc.createPerson({} as CreatePersonDto)).resolves.toStrictEqual(
+                new SchulConnexError({
+                    titel: 'Anfrage unvollständig',
+                    code: 400,
+                    subcode: '00',
+                    beschreibung: 'Vorname nicht angegeben, wird für die Erzeugung des Benutzernamens gebraucht',
+                }),
             );
         });
         it('should fail when there is no last name given', async () => {
-            await expect(personUc.createPerson({ vorname: 'Horst' } as CreatePersonDto)).rejects.toThrow(
-                new Error('Last name not given, needed for username generation'),
+            await expect(personUc.createPerson({ vorname: 'Horst' } as CreatePersonDto)).resolves.toStrictEqual(
+                new SchulConnexError({
+                    titel: 'Anfrage unvollständig',
+                    code: 400,
+                    subcode: '00',
+                    beschreibung: 'Nachname nicht angegeben, wird für die Erzeugung des Benutzernamens gebraucht',
+                }),
             );
         });
         describe('when person and user do not exist', () => {
