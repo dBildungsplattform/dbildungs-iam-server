@@ -87,11 +87,7 @@ export class KeycloakUserService {
             return kcAdminClientResult;
         }
 
-        const deleteResult: Result<void, DomainError> = await this.wrapClientResponse(
-            kcAdminClientResult.value.users.del({ id }),
-        );
-
-        return deleteResult;
+        return this.wrapClientResponse(kcAdminClientResult.value.users.del({ id }));
     }
 
     public async findById(id: string): Promise<Result<UserDo<true>, DomainError>> {
@@ -109,8 +105,7 @@ export class KeycloakUserService {
             return userResult;
         }
         if (userResult.value) {
-            const mappedUserResult: Result<UserDo<true>, DomainError> = await this.mapResponseToDto(userResult.value);
-            return mappedUserResult;
+            return this.mapResponseToDto(userResult.value);
         }
 
         return {
@@ -135,10 +130,7 @@ export class KeycloakUserService {
         }
 
         if (userResult.value.length === 1) {
-            const mappedUserResult: Result<UserDo<true>, DomainError> = await this.mapResponseToDto(
-                userResult.value[0],
-            );
-            return mappedUserResult;
+            return this.mapResponseToDto(userResult.value[0]);
         }
 
         return {
@@ -151,8 +143,7 @@ export class KeycloakUserService {
         const user: Result<UserDo<true>, DomainError> = await this.findByPersonId(personId);
         if (user.ok) {
             const generatedPassword: string = this.generatePassword();
-            await this.resetPassword(user.value.id, generatedPassword);
-            return { ok: true, value: generatedPassword };
+            return this.resetPassword(user.value.id, generatedPassword);
         } else {
             return user;
         }
