@@ -1,4 +1,4 @@
-{{if not (lookup "v1" "ConfigMap" "" "dbildungs-iam-configmap")}}
+{{if not (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmap.name)}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
