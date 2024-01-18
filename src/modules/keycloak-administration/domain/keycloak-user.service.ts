@@ -11,7 +11,7 @@ import { UserRepresentationDto } from './keycloak-client/user-representation.dto
 import { UserDo } from './user.do.js';
 import { PersonService } from '../../person/domain/person.service.js';
 import { PersonDo } from '../../person/domain/person.do.js';
-import { faker } from '@faker-js/faker';
+import Generator from 'generate-password-ts';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export type FindUserFilter = {
@@ -183,7 +183,12 @@ export class KeycloakUserService {
     }
 
     private generatePassword(): string {
-        return faker.string.alphanumeric({ length: { min: 10, max: 10 }, casing: 'mixed' });
+        return Generator.generate({
+            length: 10,
+            lowercase: true,
+            uppercase: true,
+            numbers: true,
+        });
     }
 
     private async wrapClientResponse<T>(promise: Promise<T>): Promise<Result<T, DomainError>> {
