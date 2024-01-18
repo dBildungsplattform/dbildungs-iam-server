@@ -8,7 +8,7 @@ import session from 'express-session';
 import passport from 'passport';
 import { RedisClientType, createClient } from 'redis';
 import { NestLogger } from '../core/logging/nest-logger.js';
-import { HostConfig, RedisConfig, ServerConfig } from '../shared/config/index.js';
+import { FrontendConfig, HostConfig, RedisConfig, ServerConfig } from '../shared/config/index.js';
 import { GlobalValidationPipe } from '../shared/validation/index.js';
 import { ServerModule } from './server.module.js';
 import { GlobalPagingHeadersInterceptor } from '../shared/paging/index.js';
@@ -33,9 +33,9 @@ async function bootstrap(): Promise<void> {
 
     SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger));
 
-    // TODO
-    if (/* frontendConfig.TRUST_PROXY*/ true !== undefined) {
-        app.set('trust proxy', 1 /*frontendConfig.TRUST_PROXY*/);
+    const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
+    if (frontendConfig.TRUST_PROXY !== undefined) {
+        app.set('trust proxy', frontendConfig.TRUST_PROXY);
     }
 
     const redisConfig: RedisConfig = configService.getOrThrow<RedisConfig>('REDIS');
@@ -63,10 +63,10 @@ async function bootstrap(): Promise<void> {
             saveUninitialized: false,
             rolling: true,
             cookie: {
-                maxAge: 18000, // TODO,
-                secure: false, // TODO
+                maxAge: frontendConfig.SESSION_TTL_MS,
+                secure: frontendConfig.SECURE_COOKIE,
             },
-            secret: 'ABCDEFG', // TODO
+            secret: frontendConfig.SESSION_SECRET,
         }),
     );
 
