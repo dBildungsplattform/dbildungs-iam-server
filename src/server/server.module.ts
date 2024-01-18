@@ -36,6 +36,7 @@ import { AuthenticationApiModule } from '../modules/authentication/authenticatio
                 const dbConfig: DbConfig = config.getOrThrow<DbConfig>('DB');
                 return defineConfig({
                     clientUrl: dbConfig.CLIENT_URL,
+                    password: dbConfig.SECRET,
                     dbName: dbConfig.DB_NAME,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
