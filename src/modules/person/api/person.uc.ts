@@ -22,6 +22,7 @@ import { User } from '../../user/user.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { KeycloakClientError } from '../../../shared/error/index.js';
 import { UpdatePersonDto } from './update-person.dto.js';
+import { HttpStatusCode } from 'axios';
 
 @Injectable()
 export class PersonUc {
@@ -36,10 +37,20 @@ export class PersonUc {
 
     public async createPerson(personDto: CreatePersonDto): Promise<PersonDto | SchulConnexError> {
         if (!personDto.vorname) {
-            throw new Error('First name not given, needed for username generation');
+            return new SchulConnexError({
+                titel: 'Anfrage unvollständig',
+                code: HttpStatusCode.BadRequest,
+                subcode: '00',
+                beschreibung: 'Vorname nicht angegeben, wird für die Erzeugung des Benutzernamens gebraucht',
+            });
         }
         if (!personDto.familienname) {
-            throw new Error('Last name not given, needed for username generation');
+            return new SchulConnexError({
+                titel: 'Anfrage unvollständig',
+                code: HttpStatusCode.BadRequest,
+                subcode: '00',
+                beschreibung: 'Nachname nicht angegeben, wird für die Erzeugung des Benutzernamens gebraucht',
+            });
         }
         // create user
         let user: User;
