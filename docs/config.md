@@ -16,9 +16,24 @@ There is a general configuration which is used for local development and testing
 ./config/config.json
 ```
 
-Currently we are planning to have just one configuration file for all environments.
-This file is checked-in into the repository and should be used for local development and testing purposes.
-The config file contains all static, non-secret information we need to start and run dBildung-iam-server.
+There are effectively three layers to the configuration
+
+1. A configuration file (config.json) meant to contain anything that is publicly viewable
+2. A secrets file (secrets.json) containing values which should be kept safe from prying eyes. At least in production
+3. Environment variables for **some** not all values from the config to provide an override to be used in helm charts. The base for this might either be a key from a config map or a secret
+
+Please always **remember** that anything that can be overridden in the environment also has an equivalent in the config files.
+
+at the moment of writing those are:
+
+|Environment Variable Name|Purpose|Needs to come from a Kubernetes Secret|
+| ----------------------- | ------|--------------------------------------|
+|DB_NAME|Name of the Database to use (everything else is configured as fix in the deployment|No|
+|DB_SECRET|Database Password|Yes|
+|DB_CLIENT_URL|Everything for the DB connection which is neither Name nor Password|No|
+|KC_ADMIN_SECRET|Admin Secret for Keycloak|Yes|
+|KC_CLIENT_SECRET|Client Secret for Keycloak|Yes|
+|FRONTEND_SESSION_SECRET|Encryption secret for session handling in the frontend|Yes|
 
 #### Data Model
 
@@ -68,6 +83,7 @@ Secrets are provided inside the application in the same way as the static config
 There are however a few special rules applied to them:
 
 -   This file is NEVER checked-in into the repository
+-   There is a secrets.json.template file however from which a secrets file can be derrived
 -   This file is created by the CI/CD pipeline with appropriate information for the given stage
 
 #### Data Model
@@ -156,3 +172,5 @@ class MyClass {
         -   [ ] Add your config to the `JsonConfig` class with the required decorators
         -   [ ] Add your config class to the `src/shared/config/index.ts` file
         -   [ ] Add default values to the environment specific json files
+- If the new value needs to be configurable on deployment, consider expanding config.env.ts with read logic for environment variables and set those
+in the helm chart
