@@ -70,7 +70,7 @@ You can also use another profile, if you want to initialize the db while startin
 * Developer notes can be found [here](./docs/developer-notes.md)
 
 ## Testing Guides
-* Help on how to test API with Insomnia can be found [here](./docs/test-api-with-insomnia.md)
+* Help on how to test API with Insomnia can be found at [API manuell lokal testen mit Insomnia](./docs/test-api-with-insomnia.md)
 
 ## Package (Create Docker Image )
 
