@@ -8,10 +8,11 @@ import { KeycloakAdministrationModule } from '../keycloak-administration/keycloa
 import { PersonenkontextUc } from './api/personenkontext.uc.js';
 import { PersonenkontextController } from './api/personenkontext.controller.js';
 import { UserModule } from '../user/user.module.js';
+import { PersonFrontendController } from './api/person.frontend.controller.js';
 
 @Module({
     imports: [PersonModule, KeycloakAdministrationModule, UserModule, LoggerModule.register(PersonApiModule.name)],
     providers: [PersonApiMapperProfile, PersonUc, PersonenkontextUc],
-    controllers: [PersonController, PersonenkontextController],
+    controllers: [PersonController, PersonenkontextController, PersonFrontendController],
 })
 export class PersonApiModule {}
