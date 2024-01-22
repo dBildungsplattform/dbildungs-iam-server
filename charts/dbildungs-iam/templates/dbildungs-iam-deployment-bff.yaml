@@ -27,17 +27,21 @@ spec:
             - name: web
               containerPort: 8080
           env:
-            - name: NODE_ENV
-              value: {{.Values.environment}}
-            - name: DEPLOY_STAGE
-              value: {{.Values.environment}}
+          {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
+<<<<<<< HEAD
             - mountPath: /app/config/config.json
               subPath: config.json
               name: config-volume
               readOnly: true
             - mountPath: /app/config/secrets.json
               subPath: secrets.json
+=======
+            - mountPath: /app/config/
+              name: config-volume
+              readOnly: true
+            - mountPath: /app/secrets/
+>>>>>>> main
               name: secret-volume
               readOnly: true
           resources:
@@ -63,7 +67,7 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: dbildungs-iam-configmap
+            name: {{.Values.configmap.name  }}
         - name: secret-volume
           secret:
-            secretName: dbildungs-iam-secrets
+            secretName: {{.Values.secrets.name}}

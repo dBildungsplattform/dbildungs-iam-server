@@ -1,3 +1,6 @@
+{{- if not (lookup "v1" "Secret" .Release.Namespace .Values.secrets.name ) }}
+{{- fail (print "No secret in namespace " .Release.Namespace " under " .Values.secrets.name " deployment cannot continue") }}
+{{- end}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -84,13 +87,10 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
           ports:
-             - name: web
-               containerPort: 8080
+            - name: web
+              containerPort: 8080
           env:
-            - name: NODE_ENV
-              value: {{.Values.environment}}
-            - name: DEPLOY_STAGE
-              value: {{.Values.environment}}
+          {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
             - mountPath: /app/config/config.json
               subPath: config.json
@@ -123,10 +123,10 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: dbildungs-iam-configmap
+            name: {{.Values.configmap.name  }}
         - name: secret-volume
           secret:
-            secretName: dbildungs-iam-secrets
+            secretName: {{.Values.secrets.name}}
         {{if .Values.seeding}}
         - name: seeding-volume
           configMap:
