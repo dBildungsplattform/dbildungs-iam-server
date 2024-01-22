@@ -12,7 +12,6 @@ on:
         description: "image tag"
         required: true
 
-
 concurrency:
   group: dbildungs-iam-server-chart-manual
   cancel-in-progress: true
