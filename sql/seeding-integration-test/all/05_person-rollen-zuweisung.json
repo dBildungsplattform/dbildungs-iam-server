@@ -2,10 +2,10 @@
     "entityName": "PersonRollenZuweisung",
     "entities": [
         {
-            "id": "1",
-            "person": "1",
+            "id": "27ff7c36-35ea-4fcb-9faa-ed7794afaece",
+            "person": "1850aef4-a771-40fd-8e84-3de483007bfa",
             "rolleReference": {
-                "id": "1111",
+                "id": "d5732e12-5bca-4ef0-826b-3e910fcc7fd3",
                 "persisted": true
             },
             "schulstrukturknoten": "1"

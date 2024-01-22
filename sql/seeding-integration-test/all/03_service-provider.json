@@ -2,7 +2,7 @@
     "entityName": "ServiceProvider",
     "entities": [
         {
-            "id": "1",
+            "id": "af314073-539c-45ed-b94a-a2e1b9c976e3",
             "name": "Email",
             "url": "https://de.wikipedia.org/wiki/E-Mail",
             "providedOnSchulstrukturknoten": "1"

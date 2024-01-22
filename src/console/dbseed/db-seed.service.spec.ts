@@ -56,7 +56,7 @@ describe('DbSeedService', () => {
                 const entities: DataProviderFile[] = dbSeedService.readDataProvider(fileContentAsStr);
                 const entity: DataProviderFile | undefined = entities[0];
                 const dataProvider: Partial<DataProviderFile> = {
-                    id: '1',
+                    id: '431d8433-759c-4dbe-aaab-00b9a781f467',
                 };
                 expect(entities).toHaveLength(1);
                 expect(entity).toEqual(dataProvider);
@@ -74,7 +74,7 @@ describe('DbSeedService', () => {
                 const entities: ServiceProviderEntity[] = dbSeedService.readServiceProvider(fileContentAsStr);
                 const entity: ServiceProviderEntity | undefined = entities[0];
                 const serviceProvider: Partial<ServiceProviderEntity> = {
-                    id: '1',
+                    id: 'af314073-539c-45ed-b94a-a2e1b9c976e3',
                     name: 'Email',
                     url: 'https://de.wikipedia.org/wiki/E-Mail',
                     providedOnSchulstrukturknoten: '1',
@@ -95,7 +95,7 @@ describe('DbSeedService', () => {
                 const entities: OrganisationFile[] = dbSeedService.readOrganisation(fileContentAsStr);
                 const entity: OrganisationFile | undefined = entities[0];
                 const organisation: Partial<OrganisationFile> = {
-                    id: '1',
+                    id: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
                     typ: OrganisationsTyp.SCHULE,
                     kuerzel: '01',
                     namensergaenzung: 'Keine',
@@ -131,7 +131,7 @@ describe('DbSeedService', () => {
                 const entities: RolleEntity[] = dbSeedService.readRolle(fileContentAsStr);
                 const entity: RolleEntity | undefined = entities[0];
                 const rolle: Partial<RolleEntity> = {
-                    id: '2222',
+                    id: '301457e9-4fe5-42a6-8084-fec927dc00df',
                     name: 'Rolle2222',
                     administeredBySchulstrukturknoten: '1',
                 };
@@ -152,8 +152,8 @@ describe('DbSeedService', () => {
                     dbSeedService.readServiceProviderZugriff(fileContentAsStr);
                 const entity: ServiceProviderZugriffFile | undefined = entities[0];
                 const spz: Partial<ServiceProviderZugriffFile> = {
-                    id: '1',
-                    serviceProvider: '1',
+                    id: '0e23c772-07b3-4d40-a71c-71848712fb96',
+                    serviceProvider: 'af314073-539c-45ed-b94a-a2e1b9c976e3',
                 };
                 expect(entities).toHaveLength(1);
                 expect(entity).toEqual(spz);
@@ -171,10 +171,10 @@ describe('DbSeedService', () => {
                 const entities: PersonRollenZuweisungFile[] = dbSeedService.readPersonRollenZuweisung(fileContentAsStr);
                 const entity: PersonRollenZuweisungFile | undefined = entities[0];
                 const prz: Partial<PersonRollenZuweisungFile> = {
-                    id: '1',
-                    person: '1',
+                    id: '27ff7c36-35ea-4fcb-9faa-ed7794afaece',
+                    person: '1850aef4-a771-40fd-8e84-3de483007bfa',
                     rolleReference: {
-                        id: '1111',
+                        id: 'd5732e12-5bca-4ef0-826b-3e910fcc7fd3',
                         persisted: true,
                     },
                     schulstrukturknoten: '1',

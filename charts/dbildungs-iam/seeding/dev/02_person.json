@@ -2,6 +2,7 @@
     "entityName": "Person",
     "entities": [
         {
+            "id": "1d0390a7-f400-4133-ac1d-2ae79410fbc1",
             "referrer": null,
             "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
             "stammorganisation": null,
@@ -16,14 +17,14 @@
             "namenspraefix": null,
             "sortierindex": null,
             "geburt": {
-                "datum": "2023-08-26T20:28:01.000Z",
+                "datum": null,
                 "geburtsort": "Hamburg"
             },
             "geschlecht": "m",
             "loaklisierung": null,
             "vertrauensstufe": null,
             "auskunftssperre": null,
-            "dataProvider": "2"
+            "dataProvider": "d8f679f4-ea5c-4143-9233-01b96fe73196"
         }
     ]
 }

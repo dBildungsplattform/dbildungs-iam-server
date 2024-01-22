@@ -2,7 +2,7 @@
     "entityName": "Person",
     "entities": [
         {
-            "id": "1",
+            "id": "1850aef4-a771-40fd-8e84-3de483007bfa",
             "referrer": null,
             "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
             "stammorganisation": null,
@@ -24,7 +24,7 @@
             "loaklisierung": null,
             "vertrauensstufe": null,
             "auskunftssperre": null,
-            "dataProvider": "1"
+            "dataProvider": "431d8433-759c-4dbe-aaab-00b9a781f467"
         }
     ]
 }

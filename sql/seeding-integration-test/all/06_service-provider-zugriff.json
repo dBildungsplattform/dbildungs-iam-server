@@ -2,8 +2,8 @@
     "entityName": "ServiceProviderZugriff",
     "entities": [
         {
-            "id": "1",
-            "serviceProvider": "1"
+            "id": "0e23c772-07b3-4d40-a71c-71848712fb96",
+            "serviceProvider": "af314073-539c-45ed-b94a-a2e1b9c976e3"
         }
     ]
 }

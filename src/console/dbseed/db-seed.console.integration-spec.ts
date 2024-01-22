@@ -80,21 +80,27 @@ describe('DbSeedConsole', () => {
         describe('when directory and excluded files is set via parameter', () => {
             it('should use seeding-integration-test directory and not fail due to non-existing entityType', async () => {
                 const params: string[] = ['seeding-integration-test/all', '07_non-existing-entity.json'];
-                const role: Rolle = DoFactory.createRolle(false, { id: '1111' });
+                const role: Rolle = DoFactory.createRolle(false, { id: 'd5732e12-5bca-4ef0-826b-3e910fcc7fd3' });
                 await orm.em.fork().persistAndFlush(mapper.map(role, Rolle, RolleEntity));
                 await expect(sut.run(params)).resolves.not.toThrow();
-                const dataProvider: Option<DataProviderEntity> = await orm.em.findOne(DataProviderEntity, { id: '1' });
-                const prz: Option<PersonRollenZuweisungEntity> = await orm.em.findOne(PersonRollenZuweisungEntity, {
-                    id: '1',
+                const dataProvider: Option<DataProviderEntity> = await orm.em.findOne(DataProviderEntity, {
+                    id: '431d8433-759c-4dbe-aaab-00b9a781f467',
                 });
-                const rolle: Option<RolleEntity> = await orm.em.findOne(RolleEntity, { id: '2222' });
+                const prz: Option<PersonRollenZuweisungEntity> = await orm.em.findOne(PersonRollenZuweisungEntity, {
+                    id: '27ff7c36-35ea-4fcb-9faa-ed7794afaece',
+                });
+                const rolle: Option<RolleEntity> = await orm.em.findOne(RolleEntity, {
+                    id: '301457e9-4fe5-42a6-8084-fec927dc00df',
+                });
                 const serviceProvider: Option<ServiceProviderEntity> = await orm.em.findOne(ServiceProviderEntity, {
-                    id: '1',
+                    id: 'af314073-539c-45ed-b94a-a2e1b9c976e3',
                 });
                 const spz: Option<ServiceProviderZugriffEntity> = await orm.em.findOne(ServiceProviderZugriffEntity, {
-                    id: '1',
+                    id: '0e23c772-07b3-4d40-a71c-71848712fb96',
                 });
-                const organisation: Option<OrganisationEntity> = await orm.em.findOne(OrganisationEntity, { id: '1' });
+                const organisation: Option<OrganisationEntity> = await orm.em.findOne(OrganisationEntity, {
+                    id: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
+                });
                 if (!dataProvider || !prz || !rolle || !serviceProvider || !spz || !organisation) {
                     throw Error('At least one entity was not persisted correctly!');
                 }
@@ -115,14 +121,16 @@ describe('DbSeedConsole', () => {
                 const params: string[] = ['seeding-integration-test/newRolle'];
                 await expect(sut.run(params)).resolves.not.toThrow();
                 const prz: Option<PersonRollenZuweisungEntity> = await orm.em.findOne(PersonRollenZuweisungEntity, {
-                    id: '1',
+                    id: '27ff7c36-35ea-4fcb-9faa-ed7794afaece',
                 });
-                const rolle: Option<RolleEntity> = await orm.em.findOne(RolleEntity, { id: '9988' });
+                const rolle: Option<RolleEntity> = await orm.em.findOne(RolleEntity, {
+                    id: '3ca85c16-96b2-46c8-a4fd-27e73d7ab96c',
+                });
                 if (!prz || !rolle) {
                     throw Error('PersonRollenZuweisung or Rolle was not persisted correctly!');
                 }
-                expect(rolle.id).toEqual('9988');
-                expect(prz.rolle.id).toEqual('9988');
+                expect(rolle.id).toEqual('3ca85c16-96b2-46c8-a4fd-27e73d7ab96c');
+                expect(prz.rolle.id).toEqual('3ca85c16-96b2-46c8-a4fd-27e73d7ab96c');
             });
         });
 
@@ -130,7 +138,7 @@ describe('DbSeedConsole', () => {
             it('should fail', async () => {
                 const params: string[] = ['seeding-integration-test/persistedRolleMissing'];
                 await expect(sut.run(params)).rejects.toThrow(
-                    new Error(`Foreign RolleEntity with id 4444 could not be found!`),
+                    new Error(`Foreign RolleEntity with id 8a2fb3e4-2d24-4917-b8fc-7fccb98d10f1 could not be found!`),
                 );
             });
         });
@@ -138,7 +146,9 @@ describe('DbSeedConsole', () => {
         describe('when virtual (non-persisted) rolle-entity used in PersonRollenZuweisung does not exist', () => {
             it('should fail', async () => {
                 const params: string[] = ['seeding-integration-test/newRolleMissing'];
-                await expect(sut.run(params)).rejects.toThrow(new Error(`No rolle with id 4444`));
+                await expect(sut.run(params)).rejects.toThrow(
+                    new Error(`No rolle with id fa49e432-0d77-4286-b68f-01bba5ae7f2c`),
+                );
             });
         });
     });
