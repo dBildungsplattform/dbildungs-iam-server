@@ -16,7 +16,7 @@
             "namenspraefix": null,
             "sortierindex": null,
             "geburt": {
-                "datum": "2023-08-26T20:28:01.000Z",
+                "datum": null,
                 "geburtsort": "Hamburg"
             },
             "geschlecht": "m",
