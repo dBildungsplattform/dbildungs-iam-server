@@ -79,7 +79,7 @@
         "@types/passport": "^1.0.16",
         "@types/supertest": "^6.0.2",
         "@typescript-eslint/eslint-plugin": "^6.19.0",
-        "@typescript-eslint/parser": "^6.17.0",
+        "@typescript-eslint/parser": "^6.19.0",
         "eslint": "^8.56.0",
         "eslint-config-airbnb-typescript": "^17.0.0",
         "eslint-config-prettier": "^9.1.0",
