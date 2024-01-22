@@ -1,6 +1,4 @@
 {{- if not (lookup "v1" "Secret" .Release.Namespace .Values.secrets.name ) }}
-{{- fail (print "No secret in namespace " .Release.Namespace " under " .Values.secrets.name " deployment cannot continue") }}
-{{- end}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
