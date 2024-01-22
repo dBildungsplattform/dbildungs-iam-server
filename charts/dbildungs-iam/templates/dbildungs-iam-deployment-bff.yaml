@@ -29,19 +29,10 @@ spec:
           env:
           {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
-<<<<<<< HEAD
-            - mountPath: /app/config/config.json
-              subPath: config.json
-              name: config-volume
-              readOnly: true
-            - mountPath: /app/config/secrets.json
-              subPath: secrets.json
-=======
             - mountPath: /app/config/
               name: config-volume
               readOnly: true
             - mountPath: /app/secrets/
->>>>>>> main
               name: secret-volume
               readOnly: true
           resources:
