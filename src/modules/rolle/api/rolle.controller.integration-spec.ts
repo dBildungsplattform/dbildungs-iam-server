@@ -33,7 +33,7 @@ describe('Rolle API', () => {
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
-    });
+    }, 100000);
 
     afterAll(async () => {
         await app.close();
