@@ -37,9 +37,9 @@ export class RolleController {
     @ApiOperation({ description: 'Create a new rolle.' })
     @ApiCreatedResponse({ description: 'The rolle was successfully created.', type: RolleResponse })
     @ApiBadRequestResponse({ description: 'The input was not valid.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to create the roll.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to create the rolle.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rolle.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal serve rerror while creating the person.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
     public async createRolle(@Body() params: CreateRolleBodyParams): Promise<RolleResponse> {
         const rolle: Rolle = this.mapper.map(params, CreateRolleBodyParams, Rolle);
 

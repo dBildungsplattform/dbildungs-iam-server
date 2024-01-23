@@ -17,13 +17,13 @@ export class CreateRolleBodyParams {
     public administeredBySchulstrukturknoten!: string;
 
     @IsEnum(RollenArt)
-    @ApiProperty()
+    @ApiProperty({ enum: RollenArt })
     @AutoMap(() => String)
     public rollenart!: RollenArt;
 
     @ArrayUnique()
     @IsEnum(RollenMerkmal, { each: true })
-    @ApiProperty()
+    @ApiProperty({ enum: RollenMerkmal, isArray: true, uniqueItems: true })
     @AutoMap(() => [String])
     public merkmale!: RollenMerkmal[];
 }

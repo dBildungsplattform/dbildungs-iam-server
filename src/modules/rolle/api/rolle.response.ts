@@ -23,11 +23,11 @@ export class RolleResponse {
     @AutoMap()
     public administeredBySchulstrukturknoten!: string;
 
-    @ApiProperty()
+    @ApiProperty({ enum: RollenArt })
     @AutoMap(() => String)
     public rollenart!: RollenArt;
 
-    @ApiProperty()
+    @ApiProperty({ enum: RollenMerkmal, isArray: true, uniqueItems: true })
     @AutoMap(() => [String])
     public merkmale!: RollenMerkmal[];
 }
