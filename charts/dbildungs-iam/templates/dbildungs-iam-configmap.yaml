@@ -5,5 +5,5 @@ metadata:
   name: dbildungs-iam-configmap
 data:
   config.json: |-
-{{ .Files.Get "config/config.json" | nindent 4 }}
+    {{ .Files.Get "config/config.json" | nindent 4 }}
 {{end}}
