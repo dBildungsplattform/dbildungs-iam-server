@@ -16,6 +16,7 @@ import { ServiceProviderZugriffFile } from './file/service-provider-zugriff-file
 import { PersonRollenZuweisungFile } from './file/person-rollen-zuweisung-file.js';
 import { DataProviderFile } from './file/data-provider-file.js';
 import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enums.js';
+import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -134,6 +135,8 @@ describe('DbSeedService', () => {
                     id: '301457e9-4fe5-42a6-8084-fec927dc00df',
                     name: 'Rolle2222',
                     administeredBySchulstrukturknoten: '1',
+                    rollenart: RollenArt.LERN,
+                    merkmale: [],
                 };
                 expect(entities).toHaveLength(1);
                 expect(entity).toEqual(rolle);
