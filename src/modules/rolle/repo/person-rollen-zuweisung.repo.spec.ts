@@ -50,20 +50,6 @@ describe('PersonRollenZuweisungRepo', () => {
     describe('findAllByPersonId via personId', () => {
         describe('when found by id', () => {
             it('should return found PersonRollenZuweisung', async () => {
-                /*       const serviceProviderDo: ServiceProviderDo<false> = DoFactory.createServiceProvider(false);
-                await em.persistAndFlush(mapper.map(serviceProviderDo, ServiceProviderDo, ServiceProviderEntity));
-
-                const serviceProvider: ServiceProviderEntity[] = await em.find(ServiceProviderEntity, {});
-                expect(serviceProvider).not.toBeNull();
-                expect(serviceProvider).toHaveLength(1);
-
-                const serviceProviderZugriffDo: ServiceProviderZugriffDo<false> = DoFactory.createServiceProviderZugriff(false, {serviceProvider: serviceProvider[0]!.id});
-                await em.persistAndFlush(mapper.map(serviceProviderZugriffDo, ServiceProviderZugriffDo, ServiceProviderZugriffEntity));
-
-                const serviceProviderZugriff: ServiceProviderZugriffEntity[] = await em.find(ServiceProviderZugriffEntity, {});
-                expect(serviceProviderZugriff).not.toBeNull();
-                expect(serviceProviderZugriff).toHaveLength(1);
-                */
                 const rolle: Rolle = DoFactory.createRolle(false);
 
                 const personRollenZuweisungDo: PersonRollenZuweisungDo<false> = DoFactory.createPersonRollenZuweisung(

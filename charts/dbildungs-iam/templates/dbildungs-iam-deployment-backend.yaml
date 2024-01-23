@@ -1,6 +1,3 @@
-{{- if not (lookup "v1" "Secret" .Release.Namespace .Values.secrets.name ) }}
-{{- fail (print "No secret in namespace " .Release.Namespace " under " .Values.secrets.name " deployment cannot continue") }}
-{{- end}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,6 +16,67 @@ spec:
       labels:
         layer: dbildungs-iam-backend
     spec:
+      {{if .Values.seeding}}
+      initContainers:
+        - name: db-init
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          securityContext:
+            allowPrivilegeEscalation: false
+          command: [ "node", "dist/src/console/main.js", "db", "init" ]
+          env:
+            - name: NODE_ENV
+              value: {{.Values.environment}}
+            - name: DEPLOY_STAGE
+              value: {{.Values.environment}}
+          volumeMounts:
+            - mountPath: /app/config/config.json
+              subPath: config.json
+              name: config-volume
+              readOnly: true
+            - mountPath: /app/config/secrets.json
+              subPath: secrets.json
+              name: secret-volume
+              readOnly: true
+            - mountPath: /app/sql/{{.Values.seeding.database}}
+              name: seeding-volume
+              readOnly: true
+          resources:
+            requests:
+              cpu: {{.Values.dbildungsIamCpuRequest}}
+              memory: {{.Values.dbildungsIamMemRequest}}
+            limits:
+              cpu: {{.Values.dbildungsIamCpuMax}}
+              memory: {{.Values.dbildungsIamMemMax}}
+        - name: db-seeding
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          securityContext:
+            allowPrivilegeEscalation: false
+          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
+          env:
+            - name: NODE_ENV
+              value: {{.Values.environment}}
+            - name: DEPLOY_STAGE
+              value: {{.Values.environment}}
+          volumeMounts:
+            - mountPath: /app/config/config.json
+              subPath: config.json
+              name: config-volume
+              readOnly: true
+            - mountPath: /app/config/secrets.json
+              subPath: secrets.json
+              name: secret-volume
+              readOnly: true
+            - mountPath: /app/sql/{{.Values.seeding.database}}
+              name: seeding-volume
+              readOnly: true
+          resources:
+            requests:
+              cpu: {{.Values.dbildungsIamCpuRequest}}
+              memory: {{.Values.dbildungsIamMemRequest}}
+            limits:
+              cpu: {{.Values.dbildungsIamCpuMax}}
+              memory: {{.Values.dbildungsIamMemMax}}
+      {{end}}
       containers:
         - name: dbildungs-iam-backend
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -31,10 +89,12 @@ spec:
           env:
           {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
-            - mountPath: /app/config/
+            - mountPath: /app/config/config.json
+              subPath: config.json
               name: config-volume
               readOnly: true
-            - mountPath: /app/secrets/
+            - mountPath: /app/config/secrets.json
+              subPath: secrets.json
               name: secret-volume
               readOnly: true
           resources:
@@ -64,3 +124,8 @@ spec:
         - name: secret-volume
           secret:
             secretName: {{.Values.secrets.name}}
+        {{if .Values.seeding}}
+        - name: seeding-volume
+          configMap:
+            name: {{.Values.seeding.configmap}}
+        {{end}}
