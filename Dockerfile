@@ -15,7 +15,6 @@ RUN npm run build
 FROM $BASE_IMAGE_BUILDER as deployment
 
 #running apk upgrade --no-cache in this stage is less likely to introduce instability,
-#because there are fewer moving parts and complexities. 
 #The primary focus is on having the latest security updates for the runtime environment.
 
 RUN apk upgrade --no-cache
