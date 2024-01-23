@@ -22,28 +22,29 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 
 ## Scripts for Development
 
-| Command                  | Description                                     | Hint                                      |
-| :----------------------- | :---------------------------------------------- | :---------------------------------------- |
-| **Setup**                |                                                 |                                           |
-| npm ci                   | Installs all required dependencies              |                                           |
-| **Build**                |                                                 |                                           |
-| npm run build            | Compiles all `*.ts` files                       |                                           |
-| **Run**                  |                                                 |                                           |
-| npm run start            | Starts the server                               | No debug port                             |
-| npm run start:debug      | Starts the server in debug mode                 | Debug port is open                        |
-| npm run start:prod       | Starts the server in production mode            |                                           |
-| **Test**                 |                                                 |                                           |
-| npm run test:cov         | Runs all tests with coverage                    | Success is a merge requirement            |
-| npm run test:unit        | Runs only unit tests                            | Files with `*.spec.ts` ending             |
-| npm run test:integration | Runs only integration tests                     | Files with `*.integration-spec.ts` ending |
-| npm run test:watch       | Starts the interactive watch mode               |                                           |
-| **Lint**                 |                                                 |                                           |
-| npm run format           | Runs the formatter                              |                                           |
-| npm run lint             | Runs the linter                                 | Success is a merge requirement            |
-| npm run lint:fix         | Runs the linter and fixes auto fixable problems |                                           |
-| **Console Applications** |                                                 |                                           |
-| npm run setup            | Runs db:init to Initialize the DB               |                                           |
-| npm run db:init          | Initializes the database (applies SQL schema)   | `compose.yaml` can be used                |
+| Command                  | Description                                                           | Hint                                           |
+|:-------------------------|:----------------------------------------------------------------------|:-----------------------------------------------|
+| **Setup**                |                                                                       |                                                |
+| npm ci                   | Installs all required dependencies                                    |                                                |
+| **Build**                |                                                                       |                                                |
+| npm run build            | Compiles all `*.ts` files                                             |                                                |
+| **Run**                  |                                                                       |                                                |
+| npm run start            | Starts the server                                                     | No debug port                                  |
+| npm run start:debug      | Starts the server in debug mode                                       | Debug port is open                             |
+| npm run start:prod       | Starts the server in production mode                                  |                                                |
+| **Test**                 |                                                                       |                                                |
+| npm run test:cov         | Runs all tests with coverage                                          | Success is a merge requirement                 |
+| npm run test:unit        | Runs only unit tests                                                  | Files with `*.spec.ts` ending                  |
+| npm run test:integration | Runs only integration tests                                           | Files with `*.integration-spec.ts` ending      |
+| npm run test:watch       | Starts the interactive watch mode                                     |                                                |
+| **Lint**                 |                                                                       |                                                |
+| npm run format           | Runs the formatter                                                    |                                                |
+| npm run lint             | Runs the linter                                                       | Success is a merge requirement                 |
+| npm run lint:fix         | Runs the linter and fixes auto fixable problems                       |                                                |
+| **Console Applications** |                                                                       |                                                |
+| npm run setup            | Runs db:init to Initialize the DB                                     |                                                |
+| npm run db:init          | Initializes the database (applies SQL schema)                         | `compose.yaml` can be used                     |
+| npm run db:seed DATA_DIR | Creates seeding-data. DATA_DIR is required, FILES_TO_EXCLUDE optional | e.g. npm run db:seed DATA_DIR FILES_TO_EXCLUDE |
 
 ## Docker Compose
 
