@@ -10,6 +10,7 @@ import { RolleResponse } from '../../rolle/api/rolle.response.js';
 import { User } from '../auth/user.decorator.js';
 import { BackendHttpService } from './backend-http.service.js';
 import { RolleService } from './rolle.service.js';
+import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
 
 describe('RolleService', () => {
     let module: TestingModule;
@@ -46,6 +47,8 @@ describe('RolleService', () => {
             const rolle: CreateRolleBodyParams = {
                 name: faker.word.noun(),
                 administeredBySchulstrukturknoten: faker.string.uuid(),
+                rollenart: faker.helpers.enumValue(RollenArt),
+                merkmale: [faker.helpers.enumValue(RollenMerkmal)],
             };
             backendHttpService.post.mockReturnValueOnce(of({ data: {} } as AxiosResponse));
 

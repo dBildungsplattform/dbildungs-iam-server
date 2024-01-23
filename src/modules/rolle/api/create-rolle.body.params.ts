@@ -1,6 +1,8 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { ArrayUnique, IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+
+import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
 
 export class CreateRolleBodyParams {
     @IsString()
@@ -13,4 +15,15 @@ export class CreateRolleBodyParams {
     @ApiProperty()
     @AutoMap()
     public administeredBySchulstrukturknoten!: string;
+
+    @IsEnum(RollenArt)
+    @ApiProperty()
+    @AutoMap(() => String)
+    public rollenart!: RollenArt;
+
+    @ArrayUnique()
+    @IsEnum(RollenMerkmal, { each: true })
+    @ApiProperty()
+    @AutoMap(() => [String])
+    public merkmale!: RollenMerkmal[];
 }

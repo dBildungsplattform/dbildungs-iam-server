@@ -38,6 +38,7 @@ import { firstValueFrom, of } from 'rxjs';
 import { FindOrganisationQueryParams } from '../../organisation/api/find-organisation-query.param.js';
 import { RolleResponse } from '../../rolle/api/rolle.response.js';
 import { RolleService } from '../outbound/rolle.service.js';
+import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
 
 function getPersonenDatensatzResponse(): PersonendatensatzResponse {
     const mockBirthParams: PersonBirthParams = {
@@ -485,6 +486,8 @@ describe('FrontendController', () => {
                 id: faker.string.uuid(),
                 name: faker.hacker.noun(),
                 administeredBySchulstrukturknoten: faker.string.uuid(),
+                rollenart: faker.helpers.enumValue(RollenArt),
+                merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                 createdAt: faker.date.recent(),
                 updatedAt: faker.date.recent(),
             };

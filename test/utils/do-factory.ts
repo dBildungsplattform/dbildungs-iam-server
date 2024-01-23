@@ -13,6 +13,7 @@ import {
 import { PersonRollenZuweisungDo } from '../../src/modules/rolle/domain/person-rollen-zuweisung.do.js';
 import { RolleBerechtigungsZuweisungDo } from '../../src/modules/rolle/domain/rolle-berechtigungs-zuweisung.do.js';
 import { RolleRechtDo } from '../../src/modules/rolle/domain/rolle-recht.do.js';
+import { RollenArt, RollenMerkmal } from '../../src/modules/rolle/domain/rolle.enums.js';
 import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
 import { ServiceProviderZugriffDo } from '../../src/modules/rolle/domain/service-provider-zugriff.do.js';
 import { ServiceProviderDo } from '../../src/modules/rolle/domain/service-provider.do.js';
@@ -140,6 +141,8 @@ export class DoFactory {
         const rolle: Partial<RolleAggregate> = {
             name: faker.person.jobTitle(),
             administeredBySchulstrukturknoten: faker.string.numeric(),
+            rollenart: faker.helpers.enumValue(RollenArt),
+            merkmale: [faker.helpers.enumValue(RollenMerkmal)],
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,

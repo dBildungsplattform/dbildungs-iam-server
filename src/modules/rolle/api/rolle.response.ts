@@ -1,5 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
+import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
 
 export class RolleResponse {
     @ApiProperty()
@@ -21,4 +22,12 @@ export class RolleResponse {
     @ApiProperty()
     @AutoMap()
     public administeredBySchulstrukturknoten!: string;
+
+    @ApiProperty()
+    @AutoMap(() => String)
+    public rollenart!: RollenArt;
+
+    @ApiProperty()
+    @AutoMap(() => [String])
+    public merkmale!: RollenMerkmal[];
 }
