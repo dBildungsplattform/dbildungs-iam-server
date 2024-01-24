@@ -797,8 +797,8 @@
       "secret": "1gUQE9ZsganpMBMAnFMYEVwHeB5deGk0",
       "redirectUris": [
         "/*",
-        "https://test.dev.spsh.dbildungsplattform.de",
-          "https://BRANCH_NAME.dev.spsh.dbildungsplattform.de"
+          "https://___BRANCH_NAME___.dev.spsh.dbildungsplattform.de",
+          "https://___BRANCH_NAME___.dev.spsh.dbildungsplattform.de/*"
       ],
       "webOrigins": [
         "/*"

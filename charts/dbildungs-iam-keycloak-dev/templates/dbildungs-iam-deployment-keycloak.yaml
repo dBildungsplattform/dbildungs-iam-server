@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-keycloak-deployment
+  name: {{ .Release.Name }}-deployment
   labels:
     app.kubernetes.io/name: {{.Chart.Name}}
     app.kubernetes.io/version: {{.Chart.Version}}
@@ -42,4 +42,3 @@ spec:
         - name: realm-config
           secret:
             secretName: realm-config-secret
-      
