@@ -117,9 +117,9 @@ export class PersonenkontextService {
             return { ok: false, error: new MismatchedRevisionError('Personenkontext') };
         }
 
-        const deletedRows: number = await this.personenkontextRepo.deleteById(id);
+        const deletedPersons: number = await this.personenkontextRepo.deleteById(id);
 
-        if (deletedRows === 0) {
+        if (deletedPersons === 0) {
             return { ok: false, error: new EntityCouldNotBeDeleted('Personenkontext', id) };
         }
 

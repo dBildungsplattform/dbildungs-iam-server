@@ -68,7 +68,7 @@ export class PersonenkontextRepo {
     }
 
     public async deleteById(id: string): Promise<number> {
-        const deletedRows: number = await this.em.nativeDelete(PersonenkontextEntity, { id });
-        return deletedRows;
+        const deletedPersons: number = await this.em.nativeDelete(PersonenkontextEntity, { id });
+        return deletedPersons;
     }
 }
