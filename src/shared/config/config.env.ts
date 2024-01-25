@@ -17,6 +17,6 @@ export default (): { DB: Partial<DbConfig>; KEYCLOAK: Partial<KeycloakConfig>; F
         SESSION_SECRET: process.env['FRONTEND_SESSION_SECRET'],
         OIDC_CALLBACK_URL: process.env['FRONTEND_OIDC_CALLBACK_URL'],
         DEFAULT_LOGIN_REDIRECT: process.env['FRONTEND_DEFAULT_LOGIN_REDIRECT'],
-        LOGOUT_REDIRECT: process.env['FRONTEND_LOGOUT_REDIRECT']
+        LOGOUT_REDIRECT: process.env['FRONTEND_LOGOUT_REDIRECT'],
     },
 });
