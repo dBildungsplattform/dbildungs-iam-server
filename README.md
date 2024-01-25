@@ -41,10 +41,6 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 | npm run format           | Runs the formatter                                                    |                                                |
 | npm run lint             | Runs the linter                                                       | Success is a merge requirement                 |
 | npm run lint:fix         | Runs the linter and fixes auto fixable problems                       |                                                |
-| **Backend for Frontend** |                                                                       |                                                |
-| npm run start:bff        | Starts the backend for frontend server                                | No debug port                                  |
-| npm run start:bff:debug  | Starts the backend for frontend server in debug mode                  | Debug port is open                             |
-| npm run start:bff:prod   | Starts the backend for frontend server in production mode             |                                                |
 | **Console Applications** |                                                                       |                                                |
 | npm run setup            | Runs db:init to Initialize the DB                                     |                                                |
 | npm run db:init          | Initializes the database (applies SQL schema)                         | `compose.yaml` can be used                     |

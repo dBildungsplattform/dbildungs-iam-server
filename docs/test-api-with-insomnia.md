@@ -19,7 +19,7 @@ Sollen Daten im Body mitgesendet werden, kann man diese unter ++Body++ direkt un
 
 Bsp. für CreateRole (Backend lokal):
 
-POST http://localhost:9091/api/frontend/rolle
+POST http://localhost:9090/api/rolle
 
 BODY:
 ```json
@@ -50,6 +50,6 @@ Den Wert des cookies *connect.sid* kopieren und in Insomnia unter **Manage Cooki
 
 Dieser ist bereits in Insomnia erstellt, wenn man zuvor einen Login über den eingebetteten Browser ausgeführt hat mit einem Login-Request, Bsp.:
 
-GET http://localhost:9091/api/frontend/login
+GET http://localhost:9090/api/auth/login
 
 ![Login über eingebetteten Browser](img/test-api-with-insomnia/login.png "Login via Insomnia")
