@@ -6,7 +6,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DatabaseTestModule,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
@@ -42,7 +47,7 @@ describe('Rolle API', () => {
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
-    }, 100000);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await app.close();
