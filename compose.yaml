@@ -3,8 +3,6 @@ version: '3'
 services:
   db:
     image: postgres:15.3-alpine
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
     ports:
       - 5432:5432
     environment:
@@ -13,8 +11,6 @@ services:
       - POSTGRES_DB=dbildungs-iam
   keycloak:
     image: quay.io/keycloak/keycloak:22.0.3
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
