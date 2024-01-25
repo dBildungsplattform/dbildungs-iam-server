@@ -18,6 +18,7 @@ import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
 import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { DeleteRevisionBodyParams } from './delete-revision.body.params.js';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
@@ -186,6 +187,38 @@ describe('PersonenkontextController', () => {
 
                 await expect(sut.updatePersonenkontextWithId(idParams, bodyParams)).rejects.toThrow(HttpException);
                 expect(personenkontextUcMock.updatePersonenkontext).toHaveBeenCalledTimes(1);
+            });
+        });
+    });
+
+    describe('deletePersonenkontextById', () => {
+        const idParams: FindPersonenkontextByIdParams = {
+            personenkontextId: faker.string.uuid(),
+        };
+
+        const bodyParams: DeleteRevisionBodyParams = {
+            revision: '1',
+        };
+
+        describe('when deleting a personenkontext is successful', () => {
+            it('should return nothing', async () => {
+                personenkontextUcMock.deletePersonenkontextById.mockResolvedValue(undefined);
+
+                const response: void = await sut.deletePersonenkontextById(idParams, bodyParams);
+
+                expect(response).toBeUndefined();
+                expect(personenkontextUcMock.deletePersonenkontextById).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when deleting a personenkontext returns a SchulConnexError', () => {
+            it('should throw HttpException', async () => {
+                personenkontextUcMock.deletePersonenkontextById.mockResolvedValue(
+                    new SchulConnexError({} as SchulConnexError),
+                );
+
+                await expect(sut.deletePersonenkontextById(idParams, bodyParams)).rejects.toThrow(HttpException);
+                expect(personenkontextUcMock.deletePersonenkontextById).toHaveBeenCalledTimes(1);
             });
         });
     });
