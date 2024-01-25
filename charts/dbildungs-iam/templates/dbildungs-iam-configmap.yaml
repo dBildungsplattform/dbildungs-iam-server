@@ -1,9 +1,16 @@
 {{if not (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmap.name)}}
+{{- $backendHostnameByParts := .Values.backendHostname | splitList "." }}
+{{- $keycloakHostname := (prepend (rest $backendHostnameByParts) (print (first $backendHostnameByParts) "-keycloak" )) | join "." }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: dbildungs-iam-configmap
+  name: {{ .Values.configmap.name }}
 data:
   config.json: |-
     {{ .Files.Get "config/config.json" | nindent 4 }}
+  keycloak-base-url: "https://{{$keycloakHostname}}:80"
+  frontend-oidc-callback-url: "https://{{.Values.backendHostname}}/api/frontend/login"
+  frontend-default-login-redirect: "https://{{.Values.backendHostname}}/"
+  frontend-logout-redirect: "https://{{.Values.backendHostname}}/"
+
 {{end}}

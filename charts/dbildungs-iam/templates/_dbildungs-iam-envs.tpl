@@ -18,6 +18,26 @@
     secretKeyRef:
         name: {{.Values.secrets.name}}
         key: db.url
+- name: KC_BASE_URL
+  valueFrom:
+    configMapKeyRef:
+        name: {{.Values.configmap.name}}
+        key: keycloak-base-url
+- name: FRONTEND_OIDC_CALLBACK_URL
+  valueFrom:
+    configMapKeyRef:
+        name: {{.Values.configmap.name}}
+        key: frontend-oidc-callback-url
+- name: FRONTEND_DEFAULT_LOGIN_REDIRECT
+  valueFrom:
+    configMapKeyRef:
+        name: {{.Values.configmap.name}}
+        key: frontend-default-login-redirect
+- name: FRONTEND_LOGOUT_REDIRECT
+  valueFrom:
+    configMapKeyRef:
+        name: {{.Values.configmap.name}}
+        key: frontend-logout-redirect
 - name: KC_ADMIN_SECRET
   valueFrom:
     secretKeyRef:

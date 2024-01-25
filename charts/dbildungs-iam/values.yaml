@@ -18,7 +18,7 @@ configmap:
 # If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
 enableServiceMonitor: false
 # do we use a development redis?
-redisEnabled: false
+redisEnabled: true
 # Image
 image:
   repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
