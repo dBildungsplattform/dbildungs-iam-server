@@ -9,7 +9,7 @@
         "SESSION_SECRET": "SessionSecretForDevelopment",
         "SESSION_TTL_MS": 3600000,
         "BACKEND_ADDRESS": "http://127.0.0.1:9090",
-        "OIDC_CALLBACK_URL": "https://localhost:8099/api/frontend/login",
+        "OIDC_CALLBACK_URL": "https://localhost:8099/api/auth/login",
         "DEFAULT_LOGIN_REDIRECT": "https://localhost:8099/",
         "LOGOUT_REDIRECT": "https://localhost:8099/"
     },
@@ -38,11 +38,11 @@
         "DEFAULT_LOG_LEVEL": "info",
         "PERSON_MODULE_LOG_LEVEL": "debug",
         "PERSON_API_MODULE_LOG_LEVEL": "debug",
-        "ORGANISATION_MODULE_LOG_LEVEL":  "debug",
+        "ORGANISATION_MODULE_LOG_LEVEL": "debug",
         "ORGANISATION_API_MODULE_LOG_LEVEL": "debug",
         "ROLLE_MODULE_LOG_LEVEL": "debug",
         "ROLLE_API_MODULE_LOG_LEVEL": "debug",
-        "KEYCLOAK_ADMINISTRATION_MODULE_LOG_LEVEL":  "debug",
+        "KEYCLOAK_ADMINISTRATION_MODULE_LOG_LEVEL": "debug",
         "HEALTH_MODULE_LOG_LEVEL": "debug",
         "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
     }
