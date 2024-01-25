@@ -1,6 +1,6 @@
 import { HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
 import { Injectable } from '@nestjs/common';
-import { tryGetClient } from '../frontend/auth/index.js';
+import { tryGetClient } from '../authentication/services/oidc-client.service.js';
 import { KeycloakInstanceConfig } from '../keycloak-administration/keycloak-instance-config.js';
 
 @Injectable()

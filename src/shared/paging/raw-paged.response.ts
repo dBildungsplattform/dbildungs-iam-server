@@ -1,23 +1,25 @@
 import { Type, applyDecorators } from '@nestjs/common';
 import { ApiExtraModels, ApiOkResponse, ApiProperty, ApiResponseOptions, getSchemaPath } from '@nestjs/swagger';
+import { Paged } from './paged.js';
 
-export class PaginatedResponseDto<T> {
-    public items!: T[];
+export class RawPagedResponse<T> {
+    @ApiProperty()
+    public readonly total: number;
 
     @ApiProperty()
-    public offset!: number;
+    public readonly offset: number;
 
     @ApiProperty()
-    public limit!: number;
+    public readonly limit: number;
 
     @ApiProperty()
-    public total!: number;
+    public readonly items: T[];
 
-    public constructor(offset: number, limit: number, total: number, items: T[]) {
-        this.offset = offset;
-        this.limit = limit;
-        this.total = total;
-        this.items = items;
+    public constructor(page: Paged<T>) {
+        this.total = page.total;
+        this.offset = page.offset;
+        this.limit = page.limit;
+        this.items = page.items;
     }
 }
 
@@ -30,12 +32,12 @@ export const ApiOkResponsePaginated = <DataDto extends Type<unknown>>(
     descriptor?: TypedPropertyDescriptor<Y> | undefined,
 ) => void) =>
     applyDecorators(
-        ApiExtraModels(PaginatedResponseDto, dataDto),
+        ApiExtraModels(RawPagedResponse, dataDto),
         ApiOkResponse({
             ...options,
             schema: {
                 allOf: [
-                    { $ref: getSchemaPath(PaginatedResponseDto) },
+                    { $ref: getSchemaPath(RawPagedResponse) },
                     {
                         required: ['items'],
                         properties: {
