@@ -24,3 +24,5 @@ redisEnabled: true
 image:
   repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
   tag: ""
+db:
+  name: ""

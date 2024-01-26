@@ -10,5 +10,6 @@ data:
   frontend-oidc-callback-url: "https://{{ .Values.backendHostname }}/api/auth/login"
   frontend-default-login-redirect: "https://{{ .Values.backendHostname }}/"
   frontend-logout-redirect: "https://{{ .Values.backendHostname }}/"
+  db-name: "{{.Values.db.name}}"
 
 {{end}}

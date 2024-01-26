@@ -5,19 +5,19 @@
   value: {{.Values.environment | quote}}
 - name: DB_NAME
   valueFrom:
-    secretKeyRef:
-        name: {{.Values.secrets.name}}
-        key: db.name
+    configMapKeyRef:
+        name: {{.Values.configmap.name}}
+        key: db-name
 - name: DB_SECRET
   valueFrom:
     secretKeyRef:
         name: {{.Values.secrets.name}}
-        key: db.password
+        key: db-password
 - name: DB_CLIENT_URL
   valueFrom:
     secretKeyRef:
         name: {{.Values.secrets.name}}
-        key: db.url
+        key: db-url
 - name: KC_BASE_URL
   valueFrom:
     configMapKeyRef:
@@ -42,15 +42,15 @@
   valueFrom:
     secretKeyRef:
         name: {{.Values.secrets.name}}
-        key: keycloak.adminSecret
+        key: keycloak-adminSecret
 - name: KC_CLIENT_SECRET
   valueFrom:
     secretKeyRef:
         name: {{.Values.secrets.name}}
-        key: keycloak.clientSecret
+        key: keycloak-clientSecret
 - name: FRONTEND_SESSION_SECRET
   valueFrom:
     secretKeyRef:
         name: {{.Values.secrets.name}}
-        key: frontend.sessionSecret
+        key: frontend-sessionSecret
 {{- end}}
