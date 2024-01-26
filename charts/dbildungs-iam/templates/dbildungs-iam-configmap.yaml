@@ -6,9 +6,9 @@ metadata:
 data:
   config.json: |-
     {{ .Files.Get "config/config.json" | nindent 4 }}
-  keycloak-base-url: "http://keycloak:80"
-  frontend-oidc-callback-url: "https://{{.Values.backendHostname}}/api/frontend/login"
-  frontend-default-login-redirect: "https://{{.Values.backendHostname}}/"
-  frontend-logout-redirect: "https://{{.Values.backendHostname}}/"
+  keycloak-base-url: "https://{{ .Values.keycloakHostname }}"
+  frontend-oidc-callback-url: "https://{{ .Values.backendHostname }}/api/auth/login"
+  frontend-default-login-redirect: "https://{{ .Values.backendHostname }}/"
+  frontend-logout-redirect: "https://{{ .Values.backendHostname }}/"
 
 {{end}}
