@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Req, Res, Session, UseGuards } from '@nestjs/common';
+import { Controller, Get, Inject, Post, Req, Res, Session, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
     ApiInternalServerErrorResponse,
@@ -50,7 +50,7 @@ export class AuthenticationController {
         res.redirect(target);
     }
 
-    @Get('logout')
+    @Post('logout')
     @Public()
     @ApiOperation({ summary: 'Used to log out the current user.' })
     @ApiResponse({ status: 302, description: 'Redirect to logout.' })
