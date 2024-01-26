@@ -13,11 +13,13 @@
     secretKeyRef:
         name: {{.Values.secrets.name}}
         key: db-password
-- name: DB_CLIENT_URL
+- name: DB_HOST
   valueFrom:
     secretKeyRef:
         name: {{.Values.secrets.name}}
-        key: db-url
+        key: db-host
+- name: DB_CLIENT_URL
+  value: "postgres://${DB_HOST}/"
 - name: KC_BASE_URL
   valueFrom:
     configMapKeyRef:
