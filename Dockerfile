@@ -16,6 +16,8 @@ RUN npm run build
 # Deployment Stage
 FROM $BASE_IMAGE_BUILDER as deployment
 
+RUN apk --no-cache upgrade
+
 ENV NODE_ENV=prod
 WORKDIR /app
 COPY package*.json ./
