@@ -1,6 +1,7 @@
-ARG BASE_IMAGE_BUILDER=node:21.6.0-alpine3.19
-FROM $BASE_IMAGE_BUILDER as build
+ARG BASE_IMAGE_BUILDER=node:21.6.1-alpine3.19
 
+# Build Stage
+FROM $BASE_IMAGE_BUILDER as build
 
 WORKDIR /app
 COPY tsconfig*.json ./
@@ -12,14 +13,10 @@ COPY src/ src/
 
 RUN npm run build
 
+# Deployment Stage
 FROM $BASE_IMAGE_BUILDER as deployment
 
-#running apk upgrade --no-cache in this stage is less likely to introduce instability,
-#The primary focus is on having the latest security updates for the runtime environment.
-
-RUN apk upgrade --no-cache
 ENV NODE_ENV=prod
-
 WORKDIR /app
 COPY package*.json ./
 COPY config/ ./config/
