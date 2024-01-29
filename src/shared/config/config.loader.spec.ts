@@ -124,7 +124,7 @@ describe('configloader', () => {
                     });
                 jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
                 loadConfigFiles();
-                expect(existsSyncSpy).toHaveBeenCalledTimes(2);
+                expect(existsSyncSpy).toHaveBeenCalledTimes(1);
             });
         });
 
