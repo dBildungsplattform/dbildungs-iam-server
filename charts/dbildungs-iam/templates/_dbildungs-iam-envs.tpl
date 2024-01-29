@@ -19,7 +19,7 @@
         name: {{.Values.secrets.name}}
         key: db-host
 - name: DB_CLIENT_URL
-  value: "postgres://${DB_HOST}/"
+  value: "postgres://$(DB_HOST)/"
 - name: KC_BASE_URL
   valueFrom:
     configMapKeyRef:
