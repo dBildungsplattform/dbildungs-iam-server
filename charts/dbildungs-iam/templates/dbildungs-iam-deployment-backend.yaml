@@ -27,11 +27,11 @@ spec:
             {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
             - mountPath: /app/config/config.json
-              subPath: config.json
+              subPath: config-json
               name: config-volume
               readOnly: true
             - mountPath: /app/config/secrets.json
-              subPath: secrets.json
+              subPath: secrets-json
               name: secret-volume
               readOnly: true
             - mountPath: /app/sql/{{.Values.seeding.database}}
@@ -53,11 +53,11 @@ spec:
             {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
             - mountPath: /app/config/config.json
-              subPath: config.json
+              subPath: config-json
               name: config-volume
               readOnly: true
             - mountPath: /app/config/secrets.json
-              subPath: secrets.json
+              subPath: secrets-json
               name: secret-volume
               readOnly: true
             - mountPath: /app/sql/{{.Values.seeding.database}}
@@ -84,11 +84,11 @@ spec:
           {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
             - mountPath: /app/config/config.json
-              subPath: config.json
+              subPath: config-json
               name: config-volume
               readOnly: true
             - mountPath: /app/config/secrets.json
-              subPath: secrets.json
+              subPath: secrets-json
               name: secret-volume
               readOnly: true
           resources:

@@ -4,7 +4,7 @@ kind: ConfigMap
 metadata:
   name: {{ .Values.configmap.name }}
 data:
-  config.json: |-
+  config-json: |-
     {{ .Files.Get "config/config.json" | nindent 4 }}
   keycloak-base-url: "https://{{ .Values.keycloakHostname }}"
   frontend-oidc-callback-url: "https://{{ .Values.backendHostname }}/api/auth/login"
