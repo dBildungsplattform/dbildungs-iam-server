@@ -14,7 +14,7 @@ function parseFileToJSON(path: string): any {
 
 export function loadConfigFiles(): JsonConfig {
     const secretFilePathOutsideK8s: string = './config/secrets.json';
-    const secretFilePathK8s: string = './secrets/secrets.json';
+    const secretFilePathK8s: string = './config/secrets.json';
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
     const json: any = parseFileToJSON(`./config/config.json`);
