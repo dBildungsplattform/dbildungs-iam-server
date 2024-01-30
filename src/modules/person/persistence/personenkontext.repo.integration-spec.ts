@@ -194,4 +194,39 @@ describe('PersonenkontextRepo', () => {
             });
         });
     });
+
+    describe('deleteById', () => {
+        describe('when deleting personenkontext by id', () => {
+            it('should return number of deleted rows', async () => {
+                const personenkontextDos: PersonenkontextDo<false>[] = DoFactory.createMany(
+                    5,
+                    false,
+                    DoFactory.createPersonenkontext,
+                );
+
+                await em.persistAndFlush(
+                    personenkontextDos.map((entity: PersonenkontextDo<false>) =>
+                        mapper.map(entity, PersonenkontextDo, PersonenkontextEntity),
+                    ),
+                );
+
+                const [personenkontextEntity]: PersonenkontextEntity[] = await em.find<PersonenkontextEntity>(
+                    PersonenkontextEntity,
+                    {},
+                );
+
+                const result: number = await sut.deleteById(personenkontextEntity?.id as string);
+
+                expect(result).toBe(1);
+            });
+        });
+
+        describe('when no personenkontext was deleted', () => {
+            it('should return 0', async () => {
+                const result: number = await sut.deleteById(faker.string.uuid());
+
+                expect(result).toBe(0);
+            });
+        });
+    });
 });

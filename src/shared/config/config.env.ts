@@ -11,8 +11,12 @@ export default (): { DB: Partial<DbConfig>; KEYCLOAK: Partial<KeycloakConfig>; F
     KEYCLOAK: {
         ADMIN_SECRET: process.env['KC_ADMIN_SECRET'],
         CLIENT_SECRET: process.env['KC_CLIENT_SECRET'],
+        BASE_URL: process.env['KC_BASE_URL'],
     },
     FRONTEND: {
         SESSION_SECRET: process.env['FRONTEND_SESSION_SECRET'],
+        OIDC_CALLBACK_URL: process.env['FRONTEND_OIDC_CALLBACK_URL'],
+        DEFAULT_LOGIN_REDIRECT: process.env['FRONTEND_DEFAULT_LOGIN_REDIRECT'],
+        LOGOUT_REDIRECT: process.env['FRONTEND_LOGOUT_REDIRECT'],
     },
 });
