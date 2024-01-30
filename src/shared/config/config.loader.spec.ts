@@ -8,7 +8,6 @@ describe('configloader', () => {
     describe('loadConfigFiles', () => {
         describe('when config is valid', () => {
             let readFileSyncSpy: jest.SpyInstance;
-            let existsSyncSpy: jest.SpyInstance;
 
             const config: DeepPartial<JsonConfig> = {
                 HOST: {
@@ -58,23 +57,10 @@ describe('configloader', () => {
             beforeEach(() => {
                 readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
                 readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(secrets));
-                existsSyncSpy = jest.spyOn(fs, 'existsSync').mockImplementation((name: PathLike): boolean => {
-                    if (name == './config/secrets.json') {
-                        return false;
-                    } else if (name == './secrets/secrets.json') {
-                        return true;
-                    }
-                    fail(`Unknown file ${name.toString()}`);
-                });
             });
 
             afterEach(() => {
                 jest.clearAllMocks();
-            });
-
-            it('should check both positions for the secrets file', () => {
-                loadConfigFiles();
-                expect(existsSyncSpy).toHaveBeenCalledTimes(2);
             });
 
             it('should return validated JsonConfig', () => {
@@ -133,14 +119,12 @@ describe('configloader', () => {
                     .mockImplementation((name: PathLike): boolean => {
                         if (name == './config/secrets.json') {
                             return false;
-                        } else if (name == './secrets/secrets.json') {
-                            return false;
                         }
                         fail(`Unknown file ${name.toString()}`);
                     });
                 jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
                 loadConfigFiles();
-                expect(existsSyncSpy).toHaveBeenCalledTimes(2);
+                expect(existsSyncSpy).toHaveBeenCalledTimes(1);
             });
         });
 

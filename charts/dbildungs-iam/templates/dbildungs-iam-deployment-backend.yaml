@@ -24,17 +24,14 @@ spec:
             allowPrivilegeEscalation: false
           command: [ "node", "dist/src/console/main.js", "db", "init" ]
           env:
-            - name: NODE_ENV
-              value: {{.Values.environment}}
-            - name: DEPLOY_STAGE
-              value: {{.Values.environment}}
+            {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
             - mountPath: /app/config/config.json
-              subPath: config.json
+              subPath: config-json
               name: config-volume
               readOnly: true
             - mountPath: /app/config/secrets.json
-              subPath: secrets.json
+              subPath: secrets-json
               name: secret-volume
               readOnly: true
             - mountPath: /app/sql/{{.Values.seeding.database}}
@@ -53,17 +50,14 @@ spec:
             allowPrivilegeEscalation: false
           command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
           env:
-            - name: NODE_ENV
-              value: {{.Values.environment}}
-            - name: DEPLOY_STAGE
-              value: {{.Values.environment}}
+            {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
             - mountPath: /app/config/config.json
-              subPath: config.json
+              subPath: config-json
               name: config-volume
               readOnly: true
             - mountPath: /app/config/secrets.json
-              subPath: secrets.json
+              subPath: secrets-json
               name: secret-volume
               readOnly: true
             - mountPath: /app/sql/{{.Values.seeding.database}}
@@ -90,11 +84,11 @@ spec:
           {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
             - mountPath: /app/config/config.json
-              subPath: config.json
+              subPath: config-json
               name: config-volume
               readOnly: true
             - mountPath: /app/config/secrets.json
-              subPath: secrets.json
+              subPath: secrets-json
               name: secret-volume
               readOnly: true
           resources:
