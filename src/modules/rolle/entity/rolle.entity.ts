@@ -1,26 +1,27 @@
+import { Cascade, Collection, Entity, Enum, OneToMany, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { Entity, Enum, Property } from '@mikro-orm/core';
-import { AutoMap } from '@automapper/classes';
-import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
+import { RollenArt } from '../domain/rolle.enums.js';
+import { RolleMerkmalEntity } from './rolle-merkmal.entity.js';
 
 @Entity({ tableName: 'rolle' })
 export class RolleEntity extends TimestampedEntity<RolleEntity, 'id'> {
     @Property()
-    @AutoMap()
     public name!: string;
 
     /**
      * Points to Schulstrukturknoten
      */
-    @AutoMap()
     @Property()
     public administeredBySchulstrukturknoten!: string;
 
-    @AutoMap(() => String)
     @Enum(() => RollenArt)
     public rollenart!: RollenArt;
 
-    @AutoMap(() => [String])
-    @Enum({ items: () => RollenMerkmal, array: true, default: [] })
-    public merkmale: RollenMerkmal[] = [];
+    @OneToMany({
+        entity: () => RolleMerkmalEntity,
+        mappedBy: 'rolle',
+        orphanRemoval: true,
+        cascade: [Cascade.ALL],
+    })
+    public merkmale: Collection<RolleMerkmalEntity> = new Collection<RolleMerkmalEntity>(this);
 }

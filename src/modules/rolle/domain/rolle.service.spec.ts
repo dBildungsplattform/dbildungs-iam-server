@@ -100,10 +100,10 @@ describe('RolleService', () => {
     describe('getPersonRollenZuweisung', () => {
         describe('when PersonRollenZuweisung exists', () => {
             it('should get a PersonRollenZuweisung ', async () => {
-                const rolle: Rolle = DoFactory.createRolle(true);
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const personRollenZuweisung: PersonRollenZuweisungDo<true> = DoFactory.createPersonRollenZuweisung(
                     PERSON_ID,
-                    rolle,
+                    rolle.id,
                     true,
                 );
                 const array: PersonRollenZuweisungDo<true>[] = [];
@@ -116,10 +116,10 @@ describe('RolleService', () => {
         });
         describe('when PersonRollenZuweisung does not exist', () => {
             it('should get an empty array ', async () => {
-                const rolle: Rolle = DoFactory.createRolle(true);
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const personRollenZuweisung: PersonRollenZuweisungDo<true> = DoFactory.createPersonRollenZuweisung(
                     PERSON_ID,
-                    rolle,
+                    rolle.id,
                     true,
                 );
                 personRollenZuweisungRepo.findAllByPersonId.mockResolvedValue([]);
@@ -133,31 +133,33 @@ describe('RolleService', () => {
     describe('getRolleBerechtigungsZuweisung', () => {
         describe('when RolleBerechtigungsZuweisung exists', () => {
             it('should get a RolleBerechtigungsZuweisung ', async () => {
-                const rolle: Rolle = DoFactory.createRolle(true);
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const serviceProviderZugriffDo: ServiceProviderZugriffDo<true> =
                     DoFactory.createServiceProviderZugriff(true);
                 const rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<true> =
-                    DoFactory.createRolleBerechtigungsZuweisung(rolle, serviceProviderZugriffDo, true);
+                    DoFactory.createRolleBerechtigungsZuweisung(rolle.id, serviceProviderZugriffDo, true);
                 const array: RolleBerechtigungsZuweisungDo<true>[] = [];
                 array.push(rolleBerechtigungsZuweisung);
                 rolleBerechtigungsZuweisungRepo.findAllRolleBerechtigungsZuweisungByRolle.mockResolvedValue(array);
                 mapperMock.map.mockReturnValue(rolleBerechtigungsZuweisung as unknown as Dictionary<unknown>);
-                const result: RolleBerechtigungsZuweisungDo<true>[] =
-                    await rolleService.getRolleBerechtigungsZuweisung(rolle);
+                const result: RolleBerechtigungsZuweisungDo<true>[] = await rolleService.getRolleBerechtigungsZuweisung(
+                    rolle.id,
+                );
                 expect(result).not.toBeNull();
             });
         });
         describe('when RolleBerechtigungsZuweisung does not exist', () => {
             it('should get an empty array ', async () => {
-                const rolle: Rolle = DoFactory.createRolle(true);
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const serviceProviderZugriffDo: ServiceProviderZugriffDo<true> =
                     DoFactory.createServiceProviderZugriff(true);
                 const rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<true> =
-                    DoFactory.createRolleBerechtigungsZuweisung(rolle, serviceProviderZugriffDo, true);
+                    DoFactory.createRolleBerechtigungsZuweisung(rolle.id, serviceProviderZugriffDo, true);
                 rolleBerechtigungsZuweisungRepo.findAllRolleBerechtigungsZuweisungByRolle.mockResolvedValue([]);
                 mapperMock.map.mockReturnValue(rolleBerechtigungsZuweisung as unknown as Dictionary<unknown>);
-                const result: RolleBerechtigungsZuweisungDo<true>[] =
-                    await rolleService.getRolleBerechtigungsZuweisung(rolle);
+                const result: RolleBerechtigungsZuweisungDo<true>[] = await rolleService.getRolleBerechtigungsZuweisung(
+                    rolle.id,
+                );
                 expect(result).toHaveLength(0);
             });
         });
@@ -166,16 +168,16 @@ describe('RolleService', () => {
     describe('getRolleBerechtigungsZuweisungByPersonId', () => {
         describe('when RolleBerechtigungsZuweisung exists', () => {
             it('should get a RolleBerechtigungsZuweisung ', async () => {
-                const rolle: Rolle = DoFactory.createRolle(true);
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const serviceProviderZugriffDo: ServiceProviderZugriffDo<true> =
                     DoFactory.createServiceProviderZugriff(true);
                 const personRollenZuweisung: PersonRollenZuweisungDo<true> = DoFactory.createPersonRollenZuweisung(
                     PERSON_ID,
-                    rolle,
+                    rolle.id,
                     true,
                 );
                 const rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<true> =
-                    DoFactory.createRolleBerechtigungsZuweisung(rolle, serviceProviderZugriffDo, true);
+                    DoFactory.createRolleBerechtigungsZuweisung(rolle.id, serviceProviderZugriffDo, true);
                 const rolleBerechtigungZuweisungList: RolleBerechtigungsZuweisungDo<true>[] = [];
                 const personRollenZuweisungList: PersonRollenZuweisungDo<true>[] = [];
                 personRollenZuweisungList.push(personRollenZuweisung);
@@ -192,11 +194,11 @@ describe('RolleService', () => {
         });
         describe('when RolleBerechtigungsZuweisung does not exist', () => {
             it('should get an empty array ', async () => {
-                const rolle: Rolle = DoFactory.createRolle(true);
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const serviceProviderZugriffDo: ServiceProviderZugriffDo<true> =
                     DoFactory.createServiceProviderZugriff(true);
                 const rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<true> =
-                    DoFactory.createRolleBerechtigungsZuweisung(rolle, serviceProviderZugriffDo, true);
+                    DoFactory.createRolleBerechtigungsZuweisung(rolle.id, serviceProviderZugriffDo, true);
                 personRollenZuweisungRepo.findAllByPersonId.mockResolvedValue([]);
                 rolleBerechtigungsZuweisungRepo.findAllRolleBerechtigungsZuweisungByRolle.mockResolvedValue([]);
                 mapperMock.map.mockReturnValue(rolleBerechtigungsZuweisung as unknown as Dictionary<unknown>);
@@ -235,16 +237,16 @@ describe('RolleService', () => {
     });
 
     function initServiceProviderTestSuccessEssentials(): void {
-        const rolle: Rolle = DoFactory.createRolle(true);
+        const rolle: Rolle<true> = DoFactory.createRolle(true);
         const serviceProvider: ServiceProviderDo<true> = DoFactory.createServiceProvider(true);
         const serviceProviderZugriff: ServiceProviderZugriffDo<true> = DoFactory.createServiceProviderZugriff(true);
         const personRollenZuweisung: PersonRollenZuweisungDo<true> = DoFactory.createPersonRollenZuweisung(
             PERSON_ID,
-            rolle,
+            rolle.id,
             true,
         );
         const rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<true> =
-            DoFactory.createRolleBerechtigungsZuweisung(rolle, serviceProviderZugriff, true);
+            DoFactory.createRolleBerechtigungsZuweisung(rolle.id, serviceProviderZugriff, true);
         const serviceProviderList: ServiceProviderDo<true>[] = [];
         const serviceProviderZugriffList: ServiceProviderZugriffDo<true>[] = [];
         const rolleBerechtigungZuweisungList: RolleBerechtigungsZuweisungDo<true>[] = [];

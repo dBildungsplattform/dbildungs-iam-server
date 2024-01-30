@@ -7,7 +7,6 @@ import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderZugriffDo } from './service-provider-zugriff.do.js';
 import { ServiceProviderDo } from './service-provider.do.js';
 import { RolleRechtRepo } from '../repo/rolle-recht.repo.js';
-import { Rolle } from './rolle.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { PersonDo } from '../../person/domain/person.do.js';
 import { GetServiceProviderInfoDo } from './get-service-provider-info.do.js';
@@ -33,8 +32,8 @@ export class RolleService {
         return this.personRollenZuweisungRepo.findAllByPersonId(personId);
     }
 
-    public async getRolleBerechtigungsZuweisung(rolle: Rolle): Promise<RolleBerechtigungsZuweisungDo<true>[]> {
-        return this.rolleBerechtigungsZuweisungRepo.findAllRolleBerechtigungsZuweisungByRolle(rolle);
+    public async getRolleBerechtigungsZuweisung(rolleId: string): Promise<RolleBerechtigungsZuweisungDo<true>[]> {
+        return this.rolleBerechtigungsZuweisungRepo.findAllRolleBerechtigungsZuweisungByRolle(rolleId);
     }
 
     public async getRolleBerechtigungsZuweisungByPersonId(

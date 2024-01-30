@@ -13,7 +13,6 @@ import { PersonRollenZuweisungDo } from '../domain/person-rollen-zuweisung.do.js
 import { Rolle } from '../domain/rolle.js';
 import { PersonRollenZuweisungEntity } from '../entity/person-rollen-zuweisung.entity.js';
 import { PersonRollenZuweisungMapperProfile } from '../mapper/person-rollen-zuweisung.mapper.profile.js';
-import { RolleMapperProfile } from '../mapper/rolle.mapper.profile.js';
 import { PersonRollenZuweisungRepo } from './person-rollen-zuweisung.repo.js';
 
 describe('PersonRollenZuweisungRepo', () => {
@@ -26,7 +25,7 @@ describe('PersonRollenZuweisungRepo', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [PersonRollenZuweisungMapperProfile, RolleMapperProfile, PersonRollenZuweisungRepo],
+            providers: [PersonRollenZuweisungMapperProfile, PersonRollenZuweisungRepo],
         }).compile();
         sut = module.get(PersonRollenZuweisungRepo);
         orm = module.get(MikroORM);
@@ -50,11 +49,11 @@ describe('PersonRollenZuweisungRepo', () => {
     describe('findAllByPersonId via personId', () => {
         describe('when found by id', () => {
             it('should return found PersonRollenZuweisung', async () => {
-                const rolle: Rolle = DoFactory.createRolle(false);
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
 
                 const personRollenZuweisungDo: PersonRollenZuweisungDo<false> = DoFactory.createPersonRollenZuweisung(
                     '1',
-                    rolle,
+                    rolle.id,
                     false,
                 );
                 await em.persistAndFlush(

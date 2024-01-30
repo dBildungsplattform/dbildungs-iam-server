@@ -13,10 +13,7 @@ import { DbSeedConsole } from './db-seed.console.js';
 import { UserModule } from '../../modules/user/user.module.js';
 import { UsernameGeneratorService } from '../../modules/user/username-generator.service.js';
 import { DbSeedMapper } from './db-seed-mapper.js';
-import { getMapperToken } from '@automapper/nestjs';
-import { Mapper } from '@automapper/core';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
-import { RolleMapperProfile } from '../../modules/rolle/mapper/rolle.mapper.profile.js';
 import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
 import { PersonRollenZuweisungEntity } from '../../modules/rolle/entity/person-rollen-zuweisung.entity.js';
 import { ServiceProviderZugriffEntity } from '../../modules/rolle/entity/service-provider-zugriff.entity.js';
@@ -24,13 +21,13 @@ import { OrganisationEntity } from '../../modules/organisation/persistence/organ
 import { ServiceProviderEntity } from '../../modules/rolle/entity/service-provider.entity.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
+import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
     let sut: DbSeedConsole;
     let orm: MikroORM;
     let dbSeedService: DbSeedService;
-    let mapper: Mapper;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -43,12 +40,11 @@ describe('DbSeedConsole', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
             ],
-            providers: [DbSeedConsole, UsernameGeneratorService, DbSeedService, DbSeedMapper, RolleMapperProfile],
+            providers: [DbSeedConsole, UsernameGeneratorService, DbSeedService, DbSeedMapper],
         }).compile();
         sut = module.get(DbSeedConsole);
         orm = module.get(MikroORM);
         dbSeedService = module.get(DbSeedService);
-        mapper = module.get(getMapperToken());
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
     }, 100000);
@@ -80,8 +76,8 @@ describe('DbSeedConsole', () => {
         describe('when directory and excluded files is set via parameter', () => {
             it('should use seeding-integration-test directory and not fail due to non-existing entityType', async () => {
                 const params: string[] = ['seeding-integration-test/all', '07_non-existing-entity.json'];
-                const role: Rolle = DoFactory.createRolle(false, { id: 'd5732e12-5bca-4ef0-826b-3e910fcc7fd3' });
-                await orm.em.fork().persistAndFlush(mapper.map(role, Rolle, RolleEntity));
+                const role: Rolle<false> = DoFactory.createRolle(false, { id: 'd5732e12-5bca-4ef0-826b-3e910fcc7fd3' });
+                await orm.em.fork().persistAndFlush(orm.em.create(RolleEntity, RolleRepo.mapAggregateToData(role)));
                 await expect(sut.run(params)).resolves.not.toThrow();
                 const dataProvider: Option<DataProviderEntity> = await orm.em.findOne(DataProviderEntity, {
                     id: '431d8433-759c-4dbe-aaab-00b9a781f467',
@@ -130,7 +126,7 @@ describe('DbSeedConsole', () => {
                     throw Error('PersonRollenZuweisung or Rolle was not persisted correctly!');
                 }
                 expect(rolle.id).toEqual('3ca85c16-96b2-46c8-a4fd-27e73d7ab96c');
-                expect(prz.rolle.id).toEqual('3ca85c16-96b2-46c8-a4fd-27e73d7ab96c');
+                expect(prz.rolle).toEqual('3ca85c16-96b2-46c8-a4fd-27e73d7ab96c');
             });
         });
 

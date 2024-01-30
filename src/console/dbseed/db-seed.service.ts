@@ -6,7 +6,7 @@ import { ServiceProviderFile } from './file/service-provider-file.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { PersonFile } from './file/person-file.js';
 import { ServiceProviderZugriffFile } from './file/service-provider-zugriff-file.js';
-import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
+import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { ConstructorCall, EntityFile } from './db-seed.console.js';
 
 @Injectable()
@@ -19,7 +19,7 @@ export class DbSeedService {
 
     private personMap: Map<string, PersonFile> = new Map<string, PersonFile>();
 
-    private rolleMap: Map<string, RolleEntity> = new Map<string, RolleEntity>();
+    private rolleMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
 
     private spzMap: Map<string, ServiceProviderZugriffFile> = new Map<string, ServiceProviderZugriffFile>();
 
@@ -69,15 +69,26 @@ export class DbSeedService {
         return entities;
     }
 
-    public readRolle(fileContentAsStr: string): RolleEntity[] {
-        const entities: RolleEntity[] = this.readEntityFromJSONFile<RolleEntity>(
-            fileContentAsStr,
-            () => new RolleEntity(),
+    public readRolle(fileContentAsStr: string): Rolle<true>[] {
+        const { entities }: EntityFile<Rolle<true>> = JSON.parse(fileContentAsStr) as EntityFile<Rolle<true>>;
+
+        const rollen: Rolle<true>[] = entities.map((rolleData: Rolle<true>) =>
+            Rolle.create(
+                rolleData.id,
+                new Date(),
+                new Date(),
+                rolleData.name,
+                rolleData.administeredBySchulstrukturknoten,
+                rolleData.rollenart,
+                rolleData.merkmale,
+            ),
         );
-        for (const entity of entities) {
-            this.rolleMap.set(entity.id, entity);
+
+        for (const rolle of rollen) {
+            this.rolleMap.set(rolle.id, rolle);
         }
-        return entities;
+
+        return rollen;
     }
 
     public readServiceProviderZugriff(fileContentAsStr: string): ServiceProviderZugriffFile[] {
@@ -104,7 +115,7 @@ export class DbSeedService {
 
     /* Setting as RolleEntity is required, eg. RolleFile would not work, persisting would fail due to saving one RolleEntity and one RolleFile
     for entitymanager it would not be the same entity */
-    public getRolle(id: string): RolleEntity | undefined {
+    public getRolle(id: string): Rolle<true> | undefined {
         return this.rolleMap.get(id);
     }
 

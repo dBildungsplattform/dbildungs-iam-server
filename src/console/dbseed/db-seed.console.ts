@@ -1,7 +1,7 @@
 import { CommandRunner, SubCommand } from 'nest-commander';
 import fs from 'fs';
 import { ClassLogger } from '../../core/logging/class-logger.js';
-import { EntityManager, MikroORM } from '@mikro-orm/core';
+import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
 import { Inject } from '@nestjs/common';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
@@ -22,6 +22,8 @@ import { ServiceProviderEntity } from '../../modules/rolle/entity/service-provid
 import { ServiceProviderFile } from './file/service-provider-file.js';
 import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';
 import { UserDo } from '../../modules/keycloak-administration/domain/user.do.js';
+import { Rolle } from '../../modules/rolle/domain/rolle.js';
+import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
 
 export interface SeedFile {
     entityName: string;
@@ -168,9 +170,13 @@ export class DbSeedConsole extends CommandRunner {
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }
 
-    private handleRolle(entities: Entity[], entityName: string): void {
+    private handleRolle(entities: Rolle<true>[], entityName: string): void {
         for (const entity of entities) {
-            this.forkedEm.persist(entity);
+            const rolle: RequiredEntityData<RolleEntity> = this.forkedEm.create(
+                RolleEntity,
+                RolleRepo.mapAggregateToData(entity),
+            );
+            this.forkedEm.persist(rolle);
         }
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }
@@ -245,16 +251,16 @@ export class DbSeedConsole extends CommandRunner {
         if (entity.rolleReference.persisted) {
             const foreignEntity: Option<Entity> = await this.orm.em.fork().findOne(RolleEntity, { id });
             if (foreignEntity) {
-                entity.rolle = foreignEntity;
+                entity.rolle = foreignEntity.id;
             } else {
                 throw new Error(`Foreign RolleEntity with id ${id} could not be found!`);
             }
         } else {
-            const rolle: RolleEntity | undefined = this.dbSeedService.getRolle(id);
+            const rolle: Rolle<true> | undefined = this.dbSeedService.getRolle(id);
             if (rolle === undefined) {
                 throw new Error(`No rolle with id ${id}`);
             }
-            entity.rolle = rolle;
+            entity.rolle = rolle.id;
         }
     }
 }
