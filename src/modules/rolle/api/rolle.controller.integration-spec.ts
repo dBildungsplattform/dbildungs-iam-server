@@ -1,17 +1,19 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
+import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
-
 import {
     ConfigTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
+import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
+import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 import { RolleApiModule } from '../rolle-api.module.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
@@ -29,6 +31,12 @@ describe('Rolle API', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
+            ],
+            providers: [
+                {
+                    provide: APP_PIPE,
+                    useClass: GlobalValidationPipe,
+                },
             ],
         }).compile();
 
@@ -58,6 +66,8 @@ describe('Rolle API', () => {
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 administeredBySchulstrukturknoten: organisation.id,
+                rollenart: faker.helpers.enumValue(RollenArt),
+                merkmale: [faker.helpers.enumValue(RollenMerkmal)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -75,6 +85,8 @@ describe('Rolle API', () => {
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 administeredBySchulstrukturknoten: organisation.id,
+                rollenart: faker.helpers.enumValue(RollenArt),
+                merkmale: [faker.helpers.enumValue(RollenMerkmal)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -89,6 +101,8 @@ describe('Rolle API', () => {
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 administeredBySchulstrukturknoten: faker.string.uuid(),
+                rollenart: faker.helpers.enumValue(RollenArt),
+                merkmale: [faker.helpers.enumValue(RollenMerkmal)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -96,6 +110,60 @@ describe('Rolle API', () => {
                 .send(params);
 
             expect(response.status).toBe(404);
+        });
+
+        it('should fail if rollenart is invalid', async () => {
+            const organisation: OrganisationEntity = new OrganisationEntity();
+            await em.persistAndFlush(organisation);
+
+            const params: CreateRolleBodyParams = {
+                name: faker.person.jobTitle(),
+                administeredBySchulstrukturknoten: organisation.id,
+                rollenart: 'INVALID' as RollenArt,
+                merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/rolle')
+                .send(params);
+
+            expect(response.status).toBe(400);
+        });
+
+        it('should fail if merkmal is invalid', async () => {
+            const organisation: OrganisationEntity = new OrganisationEntity();
+            await em.persistAndFlush(organisation);
+
+            const params: CreateRolleBodyParams = {
+                name: faker.person.jobTitle(),
+                administeredBySchulstrukturknoten: organisation.id,
+                rollenart: faker.helpers.enumValue(RollenArt),
+                merkmale: ['INVALID' as RollenMerkmal],
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/rolle')
+                .send(params);
+
+            expect(response.status).toBe(400);
+        });
+
+        it('should fail if merkmale are not unique', async () => {
+            const organisation: OrganisationEntity = new OrganisationEntity();
+            await em.persistAndFlush(organisation);
+
+            const params: CreateRolleBodyParams = {
+                name: faker.person.jobTitle(),
+                administeredBySchulstrukturknoten: organisation.id,
+                rollenart: faker.helpers.enumValue(RollenArt),
+                merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT, RollenMerkmal.BEFRISTUNG_PFLICHT],
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/rolle')
+                .send(params);
+
+            expect(response.status).toBe(400);
         });
     });
 });

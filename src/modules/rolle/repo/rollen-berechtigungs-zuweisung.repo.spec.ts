@@ -13,14 +13,13 @@ import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuw
 import { Rolle } from '../domain/rolle.js';
 import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
 import { RolleBerechtigungsZuweisungEntity } from '../entity/rolle-berechtigungs-zuweisung.entity.js';
-import { RolleEntity } from '../entity/rolle.entity.js';
 import { ServiceProviderZugriffEntity } from '../entity/service-provider-zugriff.entity.js';
 import { RolleBerechtigungsZuweisungMapperProfile } from '../mapper/rolle-berechtigungs-zuweisung.mapper.profile.js';
 import { RolleRechtMapperProfile } from '../mapper/rolle-recht.mapper.profile.js';
-import { RolleMapperProfile } from '../mapper/rolle.mapper.profile.js';
 import { ServiceProviderZugriffMapperProfile } from '../mapper/service-provider-zugriff.mapper.profile.js';
 import { ServiceProviderMapperProfile } from '../mapper/service-provider.mapper.profile.js';
 import { RollenBerechtigungsZuweisungRepo } from './rollen-berechtigungs-zuweisung.repo.js';
+import { RolleRepo } from './rolle.repo.js';
 
 describe('RollenBerechtigungsZuweisungRepo', () => {
     let module: TestingModule;
@@ -28,6 +27,7 @@ describe('RollenBerechtigungsZuweisungRepo', () => {
     let orm: MikroORM;
     let em: EntityManager;
     let mapper: Mapper;
+    let rolleRepo: RolleRepo;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -35,16 +35,17 @@ describe('RollenBerechtigungsZuweisungRepo', () => {
             providers: [
                 ServiceProviderMapperProfile,
                 ServiceProviderZugriffMapperProfile,
-                RolleMapperProfile,
                 RolleBerechtigungsZuweisungMapperProfile,
                 RolleRechtMapperProfile,
                 RollenBerechtigungsZuweisungRepo,
+                RolleRepo,
             ],
         }).compile();
         sut = module.get(RollenBerechtigungsZuweisungRepo);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
+        rolleRepo = module.get(RolleRepo);
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
@@ -63,8 +64,7 @@ describe('RollenBerechtigungsZuweisungRepo', () => {
     describe('findAllRolleBerechtigungsZuweisungen by Rolle', () => {
         describe('when found by id', () => {
             it('should return found RollenBerechtigungsZuweisung', async () => {
-                const rolle: Rolle = DoFactory.createRolle(false);
-                const rolleEntity: RolleEntity = mapper.map(rolle, Rolle, RolleEntity);
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
 
                 const spzDo: ServiceProviderZugriffDo<false> = DoFactory.createServiceProviderZugriff(false);
                 const spzEntity: ServiceProviderZugriffEntity = mapper.map(
@@ -73,12 +73,12 @@ describe('RollenBerechtigungsZuweisungRepo', () => {
                     ServiceProviderZugriffEntity,
                 );
                 const rolleBerechtigungsZuweisung: Partial<RolleBerechtigungsZuweisungEntity> = {
-                    rolle: rolleEntity,
+                    rolleId: rolle.id,
                     rolleRecht: spzEntity,
                 };
                 expect(rolleBerechtigungsZuweisung).toBeDefined();
                 const rbzDo: RolleBerechtigungsZuweisungDo<false> = DoFactory.createRolleBerechtigungsZuweisung(
-                    rolle,
+                    rolle.id,
                     spzDo,
                     false,
                 );
@@ -88,19 +88,16 @@ describe('RollenBerechtigungsZuweisungRepo', () => {
                     RolleBerechtigungsZuweisungEntity,
                 );
                 await em.persistAndFlush(rbzEntity);
-                const [insertedRolleEntity]: RolleEntity[] = await em.find(RolleEntity, {});
-                const insertedRolle: Rolle = mapper.map(insertedRolleEntity, RolleEntity, Rolle);
                 const foundRolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<true>[] =
-                    await sut.findAllRolleBerechtigungsZuweisungByRolle(insertedRolle);
+                    await sut.findAllRolleBerechtigungsZuweisungByRolle(rolle.id);
                 expect(foundRolleBerechtigungsZuweisung).not.toBeNull();
                 expect(foundRolleBerechtigungsZuweisung).toHaveLength(1);
             });
         });
         describe('when not found via Rolle', () => {
             it('should return null', async () => {
-                const rolle: Rolle = DoFactory.createRolle(false);
                 const foundRolleBerechtigungsZuweisung: Option<RolleBerechtigungsZuweisungDo<true>[]> =
-                    await sut.findAllRolleBerechtigungsZuweisungByRolle(rolle);
+                    await sut.findAllRolleBerechtigungsZuweisungByRolle('fake-id');
                 expect(foundRolleBerechtigungsZuweisung).toHaveLength(0);
             });
         });
