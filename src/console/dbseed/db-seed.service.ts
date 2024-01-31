@@ -73,7 +73,7 @@ export class DbSeedService {
         const { entities }: EntityFile<Rolle<true>> = JSON.parse(fileContentAsStr) as EntityFile<Rolle<true>>;
 
         const rollen: Rolle<true>[] = entities.map((rolleData: Rolle<true>) =>
-            Rolle.create(
+            Rolle.construct(
                 rolleData.id,
                 new Date(),
                 new Date(),

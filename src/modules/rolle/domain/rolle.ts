@@ -20,7 +20,7 @@ export class Rolle<WasPersisted extends boolean> {
         return new Rolle(undefined, undefined, undefined, name, administeredBySchulstrukturknoten, rollenart, merkmale);
     }
 
-    public static create<WasPersisted extends boolean = false>(
+    public static construct<WasPersisted extends boolean = false>(
         id: string,
         createdAt: Date,
         updatedAt: Date,

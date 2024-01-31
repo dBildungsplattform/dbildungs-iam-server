@@ -70,7 +70,7 @@ export class RolleRepo {
             (merkmalEntity: RolleMerkmalEntity) => merkmalEntity.merkmal,
         );
 
-        return Rolle.create(
+        return Rolle.construct(
             entity.id,
             entity.createdAt,
             entity.updatedAt,
