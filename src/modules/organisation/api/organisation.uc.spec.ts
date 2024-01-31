@@ -1,6 +1,6 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
@@ -14,6 +14,7 @@ import { FindOrganisationDto } from './find-organisation.dto.js';
 import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationUc } from './organisation.uc.js';
+import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 
 describe('OrganisationUc', () => {
     let module: TestingModule;
@@ -165,7 +166,7 @@ describe('OrganisationUc', () => {
                 ok: false,
                 error: new EntityNotFoundError(''),
             });
-            await expect(organisationUc.findRootOrganisation()).rejects.toThrow(EntityNotFoundError);
+            await expect(organisationUc.findRootOrganisation()).resolves.toBeInstanceOf(SchulConnexError);
         });
     });
 

@@ -16,6 +16,7 @@ import { OrganisationByIdParams } from './organisation-by-id.params.js';
 import { OrganisationController } from './organisation.controller.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationUc } from './organisation.uc.js';
+import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js';
 
 describe('OrganisationController', () => {
     let module: TestingModule;
@@ -179,14 +180,15 @@ describe('OrganisationController', () => {
     });
 
     describe('getRootOrganisation', () => {
-        const response: OrganisationResponse = {
+        const response: OrganisationResponse = plainToClass(OrganisationResponse, {
             id: faker.string.uuid(),
             kennung: faker.lorem.word(),
             name: faker.lorem.word(),
             namensergaenzung: faker.lorem.word(),
             kuerzel: faker.lorem.word(),
             typ: OrganisationsTyp.SONSTIGE,
-        };
+            traegerschaft: Traegerschaft.SONSTIGE,
+        });
 
         it('should return the root organisation if it exists', async () => {
             organisationUcMock.findRootOrganisation.mockResolvedValue(response);
@@ -195,9 +197,14 @@ describe('OrganisationController', () => {
         });
 
         it('should throw an error', async () => {
-            const mockError: EntityNotFoundError = new EntityNotFoundError('organization', response.id);
-            organisationUcMock.findRootOrganisation.mockRejectedValue(mockError);
-            await expect(organisationController.getRootOrganisation()).rejects.toThrowError(HttpException);
+            const mockError: SchulConnexError = new SchulConnexError({
+                beschreibung: 'SchulConneX',
+                code: 500,
+                titel: 'SchulConneX Fehler',
+                subcode: '0',
+            });
+            organisationUcMock.findRootOrganisation.mockResolvedValue(mockError);
+            await expect(organisationController.getRootOrganisation()).rejects.toThrow(HttpException);
             expect(organisationUcMock.findRootOrganisation).toHaveBeenCalledTimes(1);
         });
     });
