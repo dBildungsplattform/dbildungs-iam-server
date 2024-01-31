@@ -21,7 +21,7 @@ import { OrganisationEntity } from '../../modules/organisation/persistence/organ
 import { ServiceProviderEntity } from '../../modules/rolle/entity/service-provider.entity.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
-import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
+import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rolle/repo/rolle.repo.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -77,7 +77,7 @@ describe('DbSeedConsole', () => {
             it('should use seeding-integration-test directory and not fail due to non-existing entityType', async () => {
                 const params: string[] = ['seeding-integration-test/all', '07_non-existing-entity.json'];
                 const role: Rolle<false> = DoFactory.createRolle(false, { id: 'd5732e12-5bca-4ef0-826b-3e910fcc7fd3' });
-                await orm.em.fork().persistAndFlush(orm.em.create(RolleEntity, RolleRepo.mapAggregateToData(role)));
+                await orm.em.fork().persistAndFlush(orm.em.create(RolleEntity, mapRolleAggregateToData(role)));
                 await expect(sut.run(params)).resolves.not.toThrow();
                 const dataProvider: Option<DataProviderEntity> = await orm.em.findOne(DataProviderEntity, {
                     id: '431d8433-759c-4dbe-aaab-00b9a781f467',

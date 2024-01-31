@@ -6,6 +6,38 @@ import { Rolle } from '../domain/rolle.js';
 import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 
+/**
+ * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
+ */
+export function mapAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
+    const merkmale: EntityData<RolleMerkmalEntity>[] = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
+        rolle: rolle.id,
+        merkmal,
+    }));
+
+    return {
+        // Don't assign createdAt and updatedAt, they are auto-generated!
+        id: rolle.id,
+        name: rolle.name,
+        administeredBySchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
+        rollenart: rolle.rollenart,
+        merkmale,
+    };
+}
+
+function mapEntityToAggregate(entity: RolleEntity): Rolle<boolean> {
+    const merkmale: RollenMerkmal[] = entity.merkmale.map((merkmalEntity: RolleMerkmalEntity) => merkmalEntity.merkmal);
+
+    return Rolle.construct(
+        entity.id,
+        entity.createdAt,
+        entity.updatedAt,
+        entity.name,
+        entity.administeredBySchulstrukturknoten,
+        entity.rollenart,
+        merkmale,
+    );
+}
 @Injectable()
 export class RolleRepo {
     public constructor(private readonly em: EntityManager) {}
@@ -21,7 +53,7 @@ export class RolleRepo {
             { populate: ['merkmale'] as const },
         );
 
-        return rolle && RolleRepo.mapEntityToAggregate(rolle);
+        return rolle && mapEntityToAggregate(rolle);
     }
 
     public async save(rolle: Rolle<boolean>): Promise<Rolle<true>> {
@@ -33,51 +65,19 @@ export class RolleRepo {
     }
 
     private async create(rolle: Rolle<false>): Promise<Rolle<true>> {
-        const rolleEntity: RolleEntity = this.em.create(RolleEntity, RolleRepo.mapAggregateToData(rolle));
+        const rolleEntity: RolleEntity = this.em.create(RolleEntity, mapAggregateToData(rolle));
 
         await this.em.persistAndFlush(rolleEntity);
 
-        return RolleRepo.mapEntityToAggregate(rolleEntity);
+        return mapEntityToAggregate(rolleEntity);
     }
 
     private async update(rolle: Rolle<true>): Promise<Rolle<true>> {
         const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, rolle.id);
-        rolleEntity.assign(RolleRepo.mapAggregateToData(rolle), { merge: true });
+        rolleEntity.assign(mapAggregateToData(rolle), { merge: true });
 
         await this.em.persistAndFlush(rolleEntity);
 
-        return RolleRepo.mapEntityToAggregate(rolleEntity);
-    }
-
-    public static mapAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
-        const merkmale: EntityData<RolleMerkmalEntity>[] = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
-            rolle: rolle.id,
-            merkmal,
-        }));
-
-        return {
-            // Don't assign createdAt and updatedAt, they are auto-generated!
-            id: rolle.id,
-            name: rolle.name,
-            administeredBySchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
-            rollenart: rolle.rollenart,
-            merkmale,
-        };
-    }
-
-    public static mapEntityToAggregate(entity: RolleEntity): Rolle<boolean> {
-        const merkmale: RollenMerkmal[] = entity.merkmale.map(
-            (merkmalEntity: RolleMerkmalEntity) => merkmalEntity.merkmal,
-        );
-
-        return Rolle.construct(
-            entity.id,
-            entity.createdAt,
-            entity.updatedAt,
-            entity.name,
-            entity.administeredBySchulstrukturknoten,
-            entity.rollenart,
-            merkmale,
-        );
+        return mapEntityToAggregate(rolleEntity);
     }
 }

@@ -23,7 +23,7 @@ import { ServiceProviderFile } from './file/service-provider-file.js';
 import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';
 import { UserDo } from '../../modules/keycloak-administration/domain/user.do.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
-import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
+import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rolle/repo/rolle.repo.js';
 
 export interface SeedFile {
     entityName: string;
@@ -174,7 +174,7 @@ export class DbSeedConsole extends CommandRunner {
         for (const entity of entities) {
             const rolle: RequiredEntityData<RolleEntity> = this.forkedEm.create(
                 RolleEntity,
-                RolleRepo.mapAggregateToData(entity),
+                mapRolleAggregateToData(entity),
             );
             this.forkedEm.persist(rolle);
         }
