@@ -35,11 +35,16 @@ export class PersonDto {
     public geschlecht?: Geschlecht;
 
     @AutoMap()
-    public lokalisierung?: string = 'de-DE';
+    public lokalisierung?: string;
 
     @AutoMap(() => String)
     public vertrauensstufe?: Vertrauensstufe;
 
     @AutoMap()
     public auskunftssperre?: boolean;
+
+    @AutoMap()
+    public revision!: string;
+
+    public startpasswort?: string;
 }

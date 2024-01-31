@@ -7,6 +7,10 @@ on:
         type: string
         description: "Chart version"
         required: true
+      image_tag:
+        type: string
+        description: "image tag"
+        required: true
 
 concurrency:
   group: dbildungs-iam-server-chart-manual
@@ -14,14 +18,16 @@ concurrency:
 
 jobs:
   scan:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@1.3.1
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@5.0.0
     permissions:
       contents: read
   release:
     needs: scan
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@1.3.1
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@5.0.0
     secrets: inherit
     with:
       chart_name: dbildungs-iam
-      version_generation: specified
-      chart_version: ${{ inputs.chart_version }}
+      helm_chart_version_generation: specified 
+      image_tag_generation: specified 
+      helm_chart_version: ${{ inputs.chart_version }}
+      image_tag: ${{ inputs.image_tag }}

@@ -3,7 +3,7 @@ import { getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { KeycloakAdminClient, type UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
 import { plainToClass } from 'class-transformer';
-import { ValidationError, validate } from 'class-validator';
+import { validate, ValidationError } from 'class-validator';
 
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
@@ -11,7 +11,8 @@ import { UserRepresentationDto } from './keycloak-client/user-representation.dto
 import { UserDo } from './user.do.js';
 import { PersonService } from '../../person/domain/person.service.js';
 import { PersonDo } from '../../person/domain/person.do.js';
-import { faker } from '@faker-js/faker';
+import Generator from 'generate-password-ts';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export type FindUserFilter = {
     username?: string;
@@ -24,6 +25,7 @@ export class KeycloakUserService {
         private readonly kcAdminService: KeycloakAdministrationService,
         private readonly personService: PersonService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
+        private readonly logger: ClassLogger,
     ) {}
 
     public async create(user: UserDo<false>, password?: string): Promise<Result<string, DomainError>> {
@@ -72,6 +74,7 @@ export class KeycloakUserService {
 
             return { ok: true, value: response.id };
         } catch (err) {
+            this.logger.error(`Could not create user, message: ${JSON.stringify(err)} `);
             return { ok: false, error: new KeycloakClientError('Could not create user') };
         }
     }
@@ -84,11 +87,7 @@ export class KeycloakUserService {
             return kcAdminClientResult;
         }
 
-        const deleteResult: Result<void, DomainError> = await this.wrapClientResponse(
-            kcAdminClientResult.value.users.del({ id }),
-        );
-
-        return deleteResult;
+        return this.wrapClientResponse(kcAdminClientResult.value.users.del({ id }));
     }
 
     public async findById(id: string): Promise<Result<UserDo<true>, DomainError>> {
@@ -106,8 +105,7 @@ export class KeycloakUserService {
             return userResult;
         }
         if (userResult.value) {
-            const mappedUserResult: Result<UserDo<true>, DomainError> = await this.mapResponseToDto(userResult.value);
-            return mappedUserResult;
+            return this.mapResponseToDto(userResult.value);
         }
 
         return {
@@ -132,10 +130,7 @@ export class KeycloakUserService {
         }
 
         if (userResult.value.length === 1) {
-            const mappedUserResult: Result<UserDo<true>, DomainError> = await this.mapResponseToDto(
-                userResult.value[0],
-            );
-            return mappedUserResult;
+            return this.mapResponseToDto(userResult.value[0]);
         }
 
         return {
@@ -148,8 +143,7 @@ export class KeycloakUserService {
         const user: Result<UserDo<true>, DomainError> = await this.findByPersonId(personId);
         if (user.ok) {
             const generatedPassword: string = this.generatePassword();
-            await this.resetPassword(user.value.id, generatedPassword);
-            return { ok: true, value: generatedPassword };
+            return this.resetPassword(user.value.id, generatedPassword);
         } else {
             return user;
         }
@@ -189,7 +183,12 @@ export class KeycloakUserService {
     }
 
     private generatePassword(): string {
-        return faker.string.alphanumeric({ length: { min: 10, max: 10 }, casing: 'mixed' });
+        return Generator.generate({
+            length: 10,
+            lowercase: true,
+            uppercase: true,
+            numbers: true,
+        });
     }
 
     private async wrapClientResponse<T>(promise: Promise<T>): Promise<Result<T, DomainError>> {

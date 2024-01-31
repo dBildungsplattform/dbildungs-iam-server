@@ -5,7 +5,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DbConfig, KeycloakConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../shared/config/index.js';
+import { DbConfig, loadConfigFiles, ServerConfig } from '../shared/config/index.js';
 import { mappingErrorHandler } from '../shared/error/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
@@ -14,12 +14,16 @@ import { AuthGuard, KeycloakConnectModule, RoleGuard } from 'nest-keycloak-conne
 import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from '../modules/health/health.module.js';
 import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
+import { LoggerModule } from '../core/logging/logger.module.js';
+import { ErrorModule } from '../shared/error/error.module.js';
+import { KeycloakInstanceConfig } from '../modules/keycloak-administration/keycloak-instance-config.js';
+import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
+import { AuthenticationApiModule } from '../modules/authentication/authentication-api.module.js';
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
-            validate: loadEnvConfig,
             load: [loadConfigFiles],
         }),
         AutomapperModule.forRoot({
@@ -32,6 +36,7 @@ import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
                 const dbConfig: DbConfig = config.getOrThrow<DbConfig>('DB');
                 return defineConfig({
                     clientUrl: dbConfig.CLIENT_URL,
+                    password: dbConfig.SECRET,
                     dbName: dbConfig.DB_NAME,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
@@ -47,23 +52,25 @@ import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
             inject: [ConfigService],
         }),
         KeycloakConnectModule.registerAsync({
-            useFactory: (config: ConfigService<ServerConfig, true>) => {
-                const keycloakConfig: KeycloakConfig = config.getOrThrow<KeycloakConfig>('KEYCLOAK');
-
+            useFactory: (config: KeycloakInstanceConfig) => {
                 return {
-                    authServerUrl: keycloakConfig.BASE_URL,
-                    realm: keycloakConfig.REALM_NAME,
-                    clientId: keycloakConfig.CLIENT_ID,
-                    secret: keycloakConfig.CLIENT_SECRET,
+                    authServerUrl: config.BASE_URL,
+                    realm: config.REALM_NAME,
+                    clientId: config.CLIENT_ID,
+                    secret: config.CLIENT_SECRET,
                 };
             },
-            inject: [ConfigService],
+            inject: [KeycloakInstanceConfig],
         }),
+        LoggerModule.register(ServerModule.name),
+        AuthenticationApiModule,
         PersonApiModule,
         OrganisationApiModule,
         KeycloakAdministrationModule,
         HealthModule,
         RolleApiModule,
+        ErrorModule,
+        KeycloakConfigModule,
     ],
     providers: [
         {

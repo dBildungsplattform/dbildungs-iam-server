@@ -12,7 +12,7 @@ export class PersonRollenZuweisungEntity extends TimestampedEntity<PersonRollenZ
     @Property({ nullable: false })
     public person!: string;
 
-    @AutoMap()
+    @AutoMap(() => RolleEntity)
     @ManyToOne()
     public rolle!: RolleEntity;
 

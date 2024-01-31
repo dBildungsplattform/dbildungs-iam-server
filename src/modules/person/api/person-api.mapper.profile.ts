@@ -1,4 +1,4 @@
-import { Mapper, MappingProfile, createMap, forMember, ignore, mapFrom } from '@automapper/core';
+import { createMap, forMember, ignore, mapFrom, Mapper, MappingProfile } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { UserDo } from '../../keycloak-administration/index.js';
@@ -31,6 +31,12 @@ import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
+import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
+import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
+import { UpdatePersonBodyParams } from './update-person.body.params.js';
+import { UpdatePersonDto } from './update-person.dto.js';
+import { DeleteRevisionBodyParams } from './delete-revision.body.params.js';
+import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 
 @Injectable()
 export class PersonApiMapperProfile extends AutomapperProfile {
@@ -88,6 +94,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     (dest: CreatePersonDto) => dest.geburtsort,
                     mapFrom((src: CreatePersonBodyParams) => src.geburt?.geburtsort),
                 ),
+                forMember((dest: CreatePersonDto) => dest.username, ignore()),
             );
             createMap(
                 mapper,
@@ -97,6 +104,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<boolean>) => dest.id, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.createdAt, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.updatedAt, ignore()),
+                forMember((dest: PersonDo<boolean>) => dest.revision, ignore()),
             );
             createMap(
                 mapper,
@@ -200,6 +208,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<false>) => dest.lokalisierung, ignore()),
                 forMember((dest: PersonDo<false>) => dest.vertrauensstufe, ignore()),
                 forMember((dest: PersonDo<false>) => dest.auskunftssperre, ignore()),
+                forMember((dest: PersonDo<false>) => dest.revision, ignore()),
             );
 
             createMap(mapper, CreatePersonDto, UserDo);
@@ -329,7 +338,15 @@ export class PersonApiMapperProfile extends AutomapperProfile {
 
             createMap(mapper, PersonenkontextDto, PersonenkontextResponse);
 
-            createMap(mapper, PersonDto, PersonResponse);
+            createMap(
+                mapper,
+                PersonDto,
+                PersonResponse,
+                forMember(
+                    (dest: PersonResponse) => dest.startpasswort,
+                    mapFrom((src: PersonDto) => src.startpasswort),
+                ),
+            );
 
             createMap(mapper, PersonNameDto, PersonNameParams);
 
@@ -351,6 +368,94 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                         mapper.map(src, PersonenkontextDto, PersonenkontextResponse),
                     ]),
                 ),
+            );
+
+            createMap(
+                mapper,
+                UpdatePersonenkontextBodyParams,
+                UpdatePersonenkontextDto,
+                forMember((dest: UpdatePersonenkontextDto) => dest.id, ignore()),
+            );
+
+            createMap(
+                mapper,
+                UpdatePersonenkontextDto,
+                PersonenkontextDo<boolean>,
+                forMember((dest: PersonenkontextDo<boolean>) => dest.createdAt, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.updatedAt, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.personId, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.mandant, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.organisation, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.rolle, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.loeschungZeitpunkt, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.sichtfreigabe, ignore()),
+            );
+
+            createMap(
+                mapper,
+                UpdatePersonBodyParams,
+                UpdatePersonDto,
+                forMember((dest: UpdatePersonDto) => dest.id, ignore()),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.familienname,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.familienname),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.vorname,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.vorname),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.nameTitel,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.titel),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.nameAnrede,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.anrede),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.namePraefix,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.namenspraefix),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.nameSuffix,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.namenssuffix),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.initialenFamilienname,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.initialenfamilienname),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.initialenVorname,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.initialenvorname),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.rufname,
+                    mapFrom((src: UpdatePersonBodyParams) => src.name.rufname),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.geburtsdatum,
+                    mapFrom((src: UpdatePersonBodyParams) => src.geburt?.datum),
+                ),
+                forMember(
+                    (dest: UpdatePersonDto) => dest.geburtsort,
+                    mapFrom((src: UpdatePersonBodyParams) => src.geburt?.geburtsort),
+                ),
+            );
+
+            createMap(
+                mapper,
+                UpdatePersonDto,
+                PersonDo,
+                forMember((dest: PersonDo<boolean>) => dest.keycloakUserId, ignore()),
+                forMember((dest: PersonDo<boolean>) => dest.createdAt, ignore()),
+                forMember((dest: PersonDo<boolean>) => dest.updatedAt, ignore()),
+            );
+
+            createMap(
+                mapper,
+                DeleteRevisionBodyParams,
+                DeletePersonenkontextDto,
+                forMember((dest: DeletePersonenkontextDto) => dest.id, ignore()),
             );
         };
     }

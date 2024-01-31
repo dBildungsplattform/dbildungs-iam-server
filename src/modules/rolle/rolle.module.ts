@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { LoggerModule } from '../../core/logging/logger.module.js';
 import { PersonRollenZuweisungRepo } from './repo/person-rollen-zuweisung.repo.js';
 import { RolleService } from './domain/rolle.service.js';
 import { PersonRollenZuweisungMapperProfile } from './mapper/person-rollen-zuweisung.mapper.profile.js';
@@ -11,8 +12,10 @@ import { ServiceProviderRepo } from './repo/service-provider.repo.js';
 import { RolleRechtRepo } from './repo/rolle-recht.repo.js';
 import { ServiceProviderMapperProfile } from './mapper/service-provider.mapper.profile.js';
 import { PersonRepo } from '../person/persistence/person.repo.js';
+import { RolleRepo } from './repo/rolle.repo.js';
 
 @Module({
+    imports: [LoggerModule.register(RolleModule.name)],
     providers: [
         PersonRepo,
         PersonRollenZuweisungMapperProfile,
@@ -26,7 +29,8 @@ import { PersonRepo } from '../person/persistence/person.repo.js';
         ServiceProviderRepo,
         RolleRechtRepo,
         RolleService,
+        RolleRepo,
     ],
-    exports: [RolleService, PersonRepo],
+    exports: [RolleService, PersonRepo, RolleRepo],
 })
 export class RolleModule {}

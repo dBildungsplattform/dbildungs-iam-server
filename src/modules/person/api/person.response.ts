@@ -40,4 +40,12 @@ export class PersonResponse {
     @AutoMap(() => String)
     @ApiProperty({ enum: Vertrauensstufe })
     public vertrauensstufe!: Vertrauensstufe;
+
+    @AutoMap()
+    @ApiProperty()
+    public revision!: string;
+
+    @AutoMap()
+    @ApiProperty({ description: 'Initiales Benutzerpasswort, muss nach der ersten Anmeldung geändert werden' })
+    public startpasswort?: string;
 }

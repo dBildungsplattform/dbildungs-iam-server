@@ -10,20 +10,30 @@
 
 ### General Configuration
 
-All Configuration is passed trough JSON-Files located in the following place
+There is a general configuration which is used for local development and testing purposes. This configuration is passed trough JSON-Files located in the following place
 
 ```bash
-./config/config.{STAGE}.json
-{STAGE} refers to the deployment stage this instance is running.
+./config/config.json
 ```
 
-Currently we are planning to create the following stages:
+There are effectively three layers to the configuration
 
--   DEV
--   TESTING
--   PROD
+1. A configuration file (config.json) meant to contain anything that is publicly viewable
+2. A secrets file (secrets.json) containing values which should be kept safe from prying eyes. At least in production
+3. Environment variables for **some** not all values from the config to provide an override to be used in helm charts. The base for this might either be a key from a config map or a secret
 
-The config file contains all static, non-secret information we need to start and run dBildung-iam-server.
+Please always **remember** that anything that can be overridden in the environment also has an equivalent in the config files.
+
+at the moment of writing those are:
+
+|Environment Variable Name|Purpose|Needs to come from a Kubernetes Secret|
+| ----------------------- | ------|--------------------------------------|
+|DB_NAME|Name of the Database to use (everything else is configured as fix in the deployment|No|
+|DB_SECRET|Database Password|Yes|
+|DB_CLIENT_URL|Everything for the DB connection which is neither Name nor Password|No|
+|KC_ADMIN_SECRET|Admin Secret for Keycloak|Yes|
+|KC_CLIENT_SECRET|Client Secret for Keycloak|Yes|
+|FRONTEND_SESSION_SECRET|Encryption secret for session handling in the frontend|Yes|
 
 #### Data Model
 
@@ -73,6 +83,7 @@ Secrets are provided inside the application in the same way as the static config
 There are however a few special rules applied to them:
 
 -   This file is NEVER checked-in into the repository
+-   There is a secrets.json.template file however from which a secrets file can be derrived
 -   This file is created by the CI/CD pipeline with appropriate information for the given stage
 
 #### Data Model
@@ -111,7 +122,6 @@ The ConfigModule is initialized in the ServerModule and can be used globally fro
 ```ts
 ConfigModule.forRoot({
     isGlobal: true,
-    validate: loadEnvConfig, //NestJs loads this first and is the only place it loads ENV-variables. We use this to load the current stage
     load: [loadConfig],
 });
 ```
@@ -124,7 +134,6 @@ class MyClass {
 
     public myFunction(): void {
         // the config keys are compile time checked
-        const env: DeployStage = this.configService.getOrThrow<DeployStage>('DEPLOY_STAGE');
         const dbConfig: DbConfig = this.configService.getOrThrow<DbConfig>('DB');
         const dbName: string = dbConfig.DB_NAME;
         // ...
@@ -142,11 +151,8 @@ class MyClass {
     -   If the configuration is not valid, the application will stop with an error
     -   The parsing from the environment and json is type safe
 -   **ServerConfig**
-    -   Is the top level configuration type and combines EnvConfig and JsonConfig
+    -   Is the top level configuration type of JsonConfig
     -   Should be used as the generic parameter e.g. `ConfigService<ServerConfig, true>`
--   **EnvConfig**
-    -   Is loaded from environment variables and .env file
-    -   This is used to determine the correct deployment environment
 -   **JsonConfig**
     -   Is loaded form an environment specific json file
     -   Json files can be found in the `config` folder in the repository root
@@ -154,9 +160,6 @@ class MyClass {
 ## How to expand the configuration?
 
 -   Where to put the new config value?
-    -   If it's secret, than put it into the `EnvConfig`
-        -   Annotate the new property with the desired decorators
-        -   IMPORTANT: Do NOT put complex types into the `EnvConfig`, only primitive values
     -   If it's something like a feature flag, than put it into the `JsonConfig`
         -   Annotate the new property with the desired decorators
 -   Do I want to expand an existing config class like `DbConfig`? If yes, than do the following steps:
@@ -169,3 +172,5 @@ class MyClass {
         -   [ ] Add your config to the `JsonConfig` class with the required decorators
         -   [ ] Add your config class to the `src/shared/config/index.ts` file
         -   [ ] Add default values to the environment specific json files
+- If the new value needs to be configurable on deployment, consider expanding config.env.ts with read logic for environment variables and set those
+in the helm chart

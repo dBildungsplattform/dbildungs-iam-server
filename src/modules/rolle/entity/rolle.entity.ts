@@ -4,6 +4,10 @@ import { AutoMap } from '@automapper/classes';
 
 @Entity({ tableName: 'rolle' })
 export class RolleEntity extends TimestampedEntity<RolleEntity, 'id'> {
+    @Property()
+    @AutoMap()
+    public name!: string;
+
     /**
      * Points to Schulstrukturknoten
      */

@@ -5,19 +5,27 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DbConfig, loadConfigFiles, loadEnvConfig, ServerConfig } from '../shared/config/index.js';
+import { DbConfig, loadConfigFiles, ServerConfig } from '../shared/config/index.js';
 import { mappingErrorHandler } from '../shared/error/index.js';
-import { LoggingModule } from '../shared/logging/index.js';
 import { DbConsole } from './db.console.js';
 import { DbInitConsole } from './db-init.console.js';
+import { LoggerModule } from '../core/logging/logger.module.js';
+import { DbSeedConsole } from './dbseed/db-seed.console.js';
+import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
+import { UserModule } from '../modules/user/user.module.js';
+import { UsernameGeneratorService } from '../modules/user/username-generator.service.js';
+import { DbSeedMapper } from './dbseed/db-seed-mapper.js';
+import { DbSeedService } from './dbseed/db-seed.service.js';
+import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 
 @Module({
     imports: [
-        LoggingModule,
-
+        KeycloakConfigModule,
+        KeycloakAdministrationModule,
+        UserModule,
+        LoggerModule.register(ConsoleModule.name),
         ConfigModule.forRoot({
             isGlobal: true,
-            validate: loadEnvConfig,
             load: [loadConfigFiles],
         }),
         AutomapperModule.forRoot({
@@ -42,6 +50,6 @@ import { DbInitConsole } from './db-init.console.js';
             inject: [ConfigService],
         }),
     ],
-    providers: [DbConsole, DbInitConsole],
+    providers: [DbConsole, DbInitConsole, DbSeedConsole, UsernameGeneratorService, DbSeedMapper, DbSeedService],
 })
 export class ConsoleModule {}

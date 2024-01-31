@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { OrganisationsTyp } from '../domain/organisation.enum.js';
+import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 
 export class CreateOrganisationDto {
     @AutoMap()
@@ -22,4 +22,7 @@ export class CreateOrganisationDto {
 
     @AutoMap(() => String)
     public readonly typ!: OrganisationsTyp;
+
+    @AutoMap(() => String)
+    public traegerschaft?: Traegerschaft;
 }

@@ -3,7 +3,6 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MapperTestModule } from '../../../../test/utils/index.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
@@ -17,6 +16,9 @@ import { PersonenkontextController } from './personenkontext.controller.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
+import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { DeleteRevisionBodyParams } from './delete-revision.body.params.js';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
@@ -77,9 +79,11 @@ describe('PersonenkontextController', () => {
                     personenkontextId: faker.string.uuid(),
                 };
 
-                personenkontextUcMock.findPersonenkontextById.mockRejectedValue(new EntityNotFoundError());
+                personenkontextUcMock.findPersonenkontextById.mockResolvedValue(
+                    new SchulConnexError({} as SchulConnexError),
+                );
 
-                await expect(sut.findPersonenkontextById(params)).rejects.toThrowError(HttpException);
+                await expect(sut.findPersonenkontextById(params)).rejects.toThrow(HttpException);
             });
 
             it('should throw error', async () => {
@@ -135,6 +139,86 @@ describe('PersonenkontextController', () => {
                 expect(result.items[0]?.person.id).toBe(personenkontext.personId);
                 expect(result.items[0]?.personenkontexte.length).toBe(1);
                 expect(result.items[0]?.personenkontexte[0]?.id).toBe(personenkontext.id);
+            });
+        });
+    });
+
+    describe('updatePersonenkontextWithId', () => {
+        describe('when updating a personenkontext is successful', () => {
+            it('should return PersonenkontextResponse', async () => {
+                const idParams: FindPersonenkontextByIdParams = {
+                    personenkontextId: faker.string.uuid(),
+                };
+                const bodyParams: UpdatePersonenkontextBodyParams = {
+                    referrer: 'referrer',
+                    personenstatus: Personenstatus.AKTIV,
+                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                    revision: '1',
+                };
+                const mockResonse: PersonendatensatzDto = {
+                    person: new PersonDto(),
+                    personenkontexte: [new PersonenkontextDto()],
+                };
+
+                personenkontextUcMock.updatePersonenkontext.mockResolvedValue(mockResonse);
+
+                const response: PersonendatensatzResponse = await sut.updatePersonenkontextWithId(idParams, bodyParams);
+
+                expect(response).toBeInstanceOf(PersonendatensatzResponse);
+                expect(personenkontextUcMock.updatePersonenkontext).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when updating a personenkontext returns a SchulConnexError', () => {
+            it('should throw HttpException', async () => {
+                const idParams: FindPersonenkontextByIdParams = {
+                    personenkontextId: faker.string.uuid(),
+                };
+                const bodyParams: UpdatePersonenkontextBodyParams = {
+                    referrer: 'referrer',
+                    personenstatus: Personenstatus.AKTIV,
+                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                    revision: '1',
+                };
+
+                personenkontextUcMock.updatePersonenkontext.mockResolvedValue(
+                    new SchulConnexError({} as SchulConnexError),
+                );
+
+                await expect(sut.updatePersonenkontextWithId(idParams, bodyParams)).rejects.toThrow(HttpException);
+                expect(personenkontextUcMock.updatePersonenkontext).toHaveBeenCalledTimes(1);
+            });
+        });
+    });
+
+    describe('deletePersonenkontextById', () => {
+        const idParams: FindPersonenkontextByIdParams = {
+            personenkontextId: faker.string.uuid(),
+        };
+
+        const bodyParams: DeleteRevisionBodyParams = {
+            revision: '1',
+        };
+
+        describe('when deleting a personenkontext is successful', () => {
+            it('should return nothing', async () => {
+                personenkontextUcMock.deletePersonenkontextById.mockResolvedValue(undefined);
+
+                const response: void = await sut.deletePersonenkontextById(idParams, bodyParams);
+
+                expect(response).toBeUndefined();
+                expect(personenkontextUcMock.deletePersonenkontextById).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when deleting a personenkontext returns a SchulConnexError', () => {
+            it('should throw HttpException', async () => {
+                personenkontextUcMock.deletePersonenkontextById.mockResolvedValue(
+                    new SchulConnexError({} as SchulConnexError),
+                );
+
+                await expect(sut.deletePersonenkontextById(idParams, bodyParams)).rejects.toThrow(HttpException);
+                expect(personenkontextUcMock.deletePersonenkontextById).toHaveBeenCalledTimes(1);
             });
         });
     });

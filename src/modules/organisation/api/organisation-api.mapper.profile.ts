@@ -57,6 +57,7 @@ export class OrganisationApiMapperProfile extends AutomapperProfile {
                 forMember((dest: OrganisationDo<boolean>) => dest.kuerzel, ignore()),
                 forMember((dest: OrganisationDo<boolean>) => dest.verwaltetVon, ignore()),
                 forMember((dest: OrganisationDo<boolean>) => dest.zugehoerigZu, ignore()),
+                forMember((dest: OrganisationDo<boolean>) => dest.traegerschaft, ignore()),
             );
         };
     }

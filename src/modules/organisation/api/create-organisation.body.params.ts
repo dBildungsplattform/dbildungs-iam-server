@@ -1,7 +1,7 @@
 import { AutoMap } from '@automapper/classes';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { OrganisationsTyp } from '../domain/organisation.enum.js';
+import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 
 export class CreateOrganisationBodyParams {
     @AutoMap()
@@ -36,8 +36,14 @@ export class CreateOrganisationBodyParams {
     @ApiProperty({ required: true })
     public readonly kuerzel!: string;
 
-    @AutoMap()
+    @AutoMap(() => String)
     @IsEnum(OrganisationsTyp)
     @ApiProperty({ enum: OrganisationsTyp, required: true })
     public readonly typ!: OrganisationsTyp;
+
+    @AutoMap(() => String)
+    @IsEnum(Traegerschaft)
+    @ApiProperty({ enum: Traegerschaft, required: false })
+    @IsOptional()
+    public traegerschaft?: Traegerschaft;
 }

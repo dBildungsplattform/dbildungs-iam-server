@@ -3,7 +3,8 @@ kind: Deployment
 metadata:
   name: dbiam-deployment-backend
   labels:
-    app.kubernetes.io/name: dbildungs-iam
+    app.kubernetes.io/name: {{.Chart.Name}}
+    app.kubernetes.io/version: {{.Chart.Version}}
 spec:
   selector:
     matchLabels:
@@ -15,25 +16,85 @@ spec:
       labels:
         layer: dbildungs-iam-backend
     spec:
+      {{if .Values.seeding}}
+      initContainers:
+        - name: db-init
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          securityContext:
+            allowPrivilegeEscalation: false
+          command: [ "node", "dist/src/console/main.js", "db", "init" ]
+          env:
+            {{- include "dbiam-backend-envs" . | indent  12}}
+          volumeMounts:
+            - mountPath: /app/config/config.json
+              subPath: config-json
+              name: config-volume
+              readOnly: true
+            - mountPath: /app/config/secrets.json
+              subPath: secrets-json
+              name: secret-volume
+              readOnly: true
+            - mountPath: /app/sql/{{.Values.seeding.database}}
+              name: seeding-volume
+              readOnly: true
+          resources:
+            requests:
+              cpu: {{.Values.dbildungsIamCpuRequest}}
+              memory: {{.Values.dbildungsIamMemRequest}}
+            limits:
+              cpu: {{.Values.dbildungsIamCpuMax}}
+              memory: {{.Values.dbildungsIamMemMax}}
+        - name: db-seeding
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          securityContext:
+            allowPrivilegeEscalation: false
+          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
+          env:
+            {{- include "dbiam-backend-envs" . | indent  12}}
+          volumeMounts:
+            - mountPath: /app/config/config.json
+              subPath: config-json
+              name: config-volume
+              readOnly: true
+            - mountPath: /app/config/secrets.json
+              subPath: secrets-json
+              name: secret-volume
+              readOnly: true
+            - mountPath: /app/sql/{{.Values.seeding.database}}
+              name: seeding-volume
+              readOnly: true
+          resources:
+            requests:
+              cpu: {{.Values.dbildungsIamCpuRequest}}
+              memory: {{.Values.dbildungsIamMemRequest}}
+            limits:
+              cpu: {{.Values.dbildungsIamCpuMax}}
+              memory: {{.Values.dbildungsIamMemMax}}
+      {{end}}
       containers:
         - name: dbildungs-iam-backend
-          image: {{.Values.dbildungsIamContainer}}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
           ports:
-             - name: web
-               containerPort: 8080
+            - name: web
+              containerPort: 8080
           env:
-            - name: NODE_ENV
-              value: {{.Values.environment}}
-            - name: DEPLOY_STAGE
-              value: {{.Values.environment}}
+          {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
-            - mountPath: /app/config/
-              name: config
+            - mountPath: /app/config/config.json
+              subPath: config-json
+              name: config-volume
+              readOnly: true
+            - mountPath: /app/config/secrets.json
+              subPath: secrets-json
+              name: secret-volume
               readOnly: true
           resources:
+            requests:
+              cpu: {{.Values.dbildungsIamCpuRequest}}
+              memory: {{.Values.dbildungsIamMemRequest}}
             limits:
               cpu: {{.Values.dbildungsIamCpuMax}}
               memory: {{.Values.dbildungsIamMemMax}}
@@ -51,7 +112,14 @@ spec:
               path: '/health'
       restartPolicy: Always
       volumes:
-        - name: config
+        - name: config-volume
+          configMap:
+            name: {{.Values.configmap.name  }}
+        - name: secret-volume
           secret:
-            secretName: {{.Values.secrets.name | default (print .Release.Name "-secret")}}
-      
+            secretName: {{.Values.secrets.name}}
+        {{if .Values.seeding}}
+        - name: seeding-volume
+          configMap:
+            name: {{.Values.seeding.configmap}}
+        {{end}}

@@ -8,11 +8,6 @@ import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 
 export class CreatePersonBodyParams {
     @AutoMap()
-    @IsString()
-    @ApiProperty()
-    public readonly username!: string;
-
-    @AutoMap()
     @IsOptional()
     @IsEmail()
     @ApiProperty({ required: false })
@@ -44,6 +39,7 @@ export class CreatePersonBodyParams {
     public readonly name!: PersonNameParams;
 
     @AutoMap(() => PersonBirthParams)
+    @IsOptional()
     @ValidateNested()
     @Type(() => PersonBirthParams)
     @ApiProperty({ type: PersonBirthParams, required: false })
@@ -59,8 +55,8 @@ export class CreatePersonBodyParams {
     @AutoMap()
     @IsOptional()
     @IsString()
-    @ApiProperty({ default: 'de-DE', required: false })
-    public readonly lokalisierung?: string = 'de-DE';
+    @ApiProperty({ required: false })
+    public readonly lokalisierung?: string;
 
     @AutoMap(() => String)
     @IsOptional()

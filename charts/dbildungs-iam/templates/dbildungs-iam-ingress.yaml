@@ -3,24 +3,25 @@ kind: Ingress
 metadata:
   name: {{.Release.Name}}-backend
   labels:
-    app.kubernetes.io/name: dbildungs-iam
+    app.kubernetes.io/name: {{.Chart.Name}}
+    app.kubernetes.io/version: {{.Chart.Version}}
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{.Values.backendHostname}}
+    - host: {{ required "A backend hostname (backendHostname) must be given on deployment" .Values.backendHostname }}
       http:
         paths:
           - path: /api
             pathType: Prefix
             backend:
               service:
-                name: dbiam-bff
+                name: dbiam-backend
                 port:
                   number: 80
           - path: /docs
             pathType: Prefix
             backend:
               service:
-                name: dbiam-bff
+                name: dbiam-backend
                 port:
                   number: 80
