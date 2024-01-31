@@ -15,13 +15,13 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: dbiam-bff
+                name: dbiam-backend
                 port:
                   number: 80
           - path: /docs
             pathType: Prefix
             backend:
               service:
-                name: dbiam-bff
+                name: dbiam-backend
                 port:
                   number: 80

@@ -9,7 +9,7 @@ spec:
         - {{.Values.keycloakHostname}}
   ingressClassName: nginx
   rules:
-    - host: keycloak.dev.spsh.dbildungsplattform.de
+    - host: {{.Values.keycloakHostname}}
       http:
         paths:
           - path: /

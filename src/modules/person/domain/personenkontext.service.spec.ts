@@ -14,6 +14,7 @@ import { PersonenkontextDo } from './personenkontext.do.js';
 import { PersonenkontextService } from './personenkontext.service.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
+import { EntityCouldNotBeDeleted } from '../../../shared/error/index.js';
 
 describe('PersonenkontextService', () => {
     let module: TestingModule;
@@ -280,6 +281,76 @@ describe('PersonenkontextService', () => {
                 expect(result).toEqual<Result<PersonenkontextDo<true>, DomainError>>({
                     ok: false,
                     error: new EntityCouldNotBeUpdated('Personenkontext', personenkontextDo.id),
+                });
+            });
+        });
+    });
+
+    describe('deletePersonenkontextById', () => {
+        const personenkontextDo: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+
+        describe('when personenkontext is deleted successfully', () => {
+            it('should return void', async () => {
+                personenkontextRepoMock.findById.mockResolvedValue(personenkontextDo);
+                personenkontextRepoMock.deleteById.mockResolvedValue(1);
+
+                const result: Result<void, DomainError> = await personenkontextService.deletePersonenkontextById(
+                    personenkontextDo.id,
+                    personenkontextDo.revision,
+                );
+
+                expect(result).toEqual<Result<void, DomainError>>({ ok: true, value: undefined });
+                expect(personenkontextRepoMock.deleteById).toHaveBeenCalledWith(personenkontextDo.id);
+            });
+        });
+
+        describe('when personenkontext entity is not found', () => {
+            it('should return EntityNotFoundError', async () => {
+                personenkontextRepoMock.findById.mockResolvedValue(null);
+
+                const response: Result<void, DomainError> = await personenkontextService.deletePersonenkontextById(
+                    personenkontextDo.id,
+                    personenkontextDo.revision,
+                );
+
+                expect(response).toEqual<Result<void, DomainError>>({
+                    ok: false,
+                    error: new EntityNotFoundError('Personenkontext', personenkontextDo.id),
+                });
+            });
+        });
+
+        describe('when revision of personenkontext does not match', () => {
+            it('should return MismatchedRevisionError', async () => {
+                // AI next 11 lines
+                personenkontextRepoMock.findById.mockResolvedValue(personenkontextDo);
+
+                const result: Result<void, DomainError> = await personenkontextService.deletePersonenkontextById(
+                    personenkontextDo.id,
+                    '2',
+                );
+
+                expect(result).toEqual<Result<void, DomainError>>({
+                    ok: false,
+                    error: new MismatchedRevisionError('Personenkontext'),
+                });
+            });
+        });
+
+        describe('when personenkontext could not be deleted', () => {
+            it('should return EntityCouldNotBeDeleted', async () => {
+                // AI next 11 lines
+                personenkontextRepoMock.findById.mockResolvedValue(personenkontextDo);
+                personenkontextRepoMock.deleteById.mockResolvedValue(0);
+
+                const response: Result<void, DomainError> = await personenkontextService.deletePersonenkontextById(
+                    personenkontextDo.id,
+                    personenkontextDo.revision,
+                );
+
+                expect(response).toEqual<Result<void, DomainError>>({
+                    ok: false,
+                    error: new EntityCouldNotBeDeleted('Personenkontext', personenkontextDo.id),
                 });
             });
         });

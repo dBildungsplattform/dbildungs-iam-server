@@ -46,7 +46,6 @@ export class KeycloakAdministrationService {
                     clientId: this.kcConfig.ADMIN_CLIENT_ID,
                     clientSecret: this.kcConfig.ADMIN_SECRET,
                 };
-
                 await this.kcAdminClient.auth(credentials);
             } catch (err) {
                 return { ok: false, error: new KeycloakClientError('Could not authorize with Keycloak') };

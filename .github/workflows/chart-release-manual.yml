@@ -12,19 +12,18 @@ on:
         description: "image tag"
         required: true
 
-
 concurrency:
   group: dbildungs-iam-server-chart-manual
   cancel-in-progress: true
 
 jobs:
   scan:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@4.0.0
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@5.0.0
     permissions:
       contents: read
   release:
     needs: scan
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@4.0.0
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@5.0.0
     secrets: inherit
     with:
       chart_name: dbildungs-iam

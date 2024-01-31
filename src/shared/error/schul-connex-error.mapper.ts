@@ -7,6 +7,7 @@ import { KeycloakClientError } from './keycloak-client.error.js';
 import { MismatchedRevisionError } from './mismatched-revision.error.js';
 import { PersonAlreadyExistsError } from './person-already-exists.error.js';
 import { SchulConnexError } from './schul-connex.error.js';
+import { EntityCouldNotBeDeleted } from './entity-could-not-be-deleted.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -26,6 +27,15 @@ export class SchulConnexErrorMapper {
                 subcode: '00',
                 titel: 'Interner Serverfehler',
                 beschreibung: 'Es ist ein interner Fehler aufgetreten. Entität konnte nicht aktualisiert werden.',
+            }),
+        ],
+        [
+            EntityCouldNotBeDeleted.name,
+            new SchulConnexError({
+                code: 500,
+                subcode: '00',
+                titel: 'Interner Serverfehler',
+                beschreibung: 'Es ist ein interner Fehler aufgetreten. Entität konnte nicht gelöscht werden.',
             }),
         ],
         [

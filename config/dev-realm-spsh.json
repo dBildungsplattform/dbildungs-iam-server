@@ -517,6 +517,22 @@
           "value": "test"
         }
       ]
+    },
+    {
+      "id": "e9806d01-0d4e-4523-b21d-2bfc8a802051",
+      "createdTimestamp": 1697087666332,
+      "username": "pwtest",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Max",
+      "lastName": "Mustermann",
+      "email": "pwtest@example.com",
+      "credentials": [
+          {
+              "type": "password",
+              "value": "pwtest"
+          }
+      ]
     }
   ],
   "scopeMappings": [
@@ -2358,7 +2374,7 @@
     "cibaInterval": "5",
     "realmReusableOtpCode": "false"
   },
-  "keycloakVersion": "22.0.3",
+  "keycloakVersion": "23.0.4",
   "userManagedAccessAllowed": false,
   "clientProfiles": {
     "profiles": []

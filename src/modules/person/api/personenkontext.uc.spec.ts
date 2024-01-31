@@ -19,6 +19,7 @@ import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 
 describe('PersonenkontextUc', () => {
     let module: TestingModule;
@@ -260,6 +261,40 @@ describe('PersonenkontextUc', () => {
                 );
 
                 await expect(updatePersonPromise).resolves.toBeInstanceOf(SchulConnexError);
+            });
+        });
+    });
+
+    describe('deletePersonenkontextById', () => {
+        const deletePersonenkontextDto: DeletePersonenkontextDto = {
+            id: faker.string.uuid(),
+            revision: '1',
+        };
+
+        describe('when deleting personenkontext is successful', () => {
+            it('should return nothing', async () => {
+                personenkontextServiceMock.deletePersonenkontextById.mockResolvedValue({
+                    ok: true,
+                    value: undefined,
+                });
+
+                const result: void | SchulConnexError = await sut.deletePersonenkontextById(deletePersonenkontextDto);
+
+                expect(result).toBeUndefined();
+            });
+        });
+
+        describe('when personenkontext that should be deleted was not found', () => {
+            it('should return SchulConnexError', async () => {
+                personenkontextServiceMock.deletePersonenkontextById.mockResolvedValue({
+                    ok: false,
+                    error: new EntityNotFoundError('Personenkontext'),
+                });
+
+                const result: void | SchulConnexError = await sut.deletePersonenkontextById(deletePersonenkontextDto);
+
+                expect(result).toBeInstanceOf(SchulConnexError);
+                expect(result?.code).toBe(404);
             });
         });
     });

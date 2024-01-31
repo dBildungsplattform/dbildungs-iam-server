@@ -9,7 +9,7 @@ import { ConfigTestModule, KeycloakConfigTestModule } from '../../../test/utils/
 
 let error: Error | string | undefined = undefined;
 
-jest.mock('../frontend/auth/index.js', () => {
+jest.mock('../authentication/services/oidc-client.service.js', () => {
     return {
         tryGetClient: function (): Promise<BaseClient> {
             if (error === undefined) {

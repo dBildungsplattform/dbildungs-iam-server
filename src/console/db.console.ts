@@ -1,12 +1,13 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { ClassLogger } from '../core/logging/class-logger.js';
 import { DbInitConsole } from './db-init.console.js';
+import { DbSeedConsole } from './dbseed/db-seed.console.js';
 
 @Command({
     name: 'db',
     arguments: '<sub-command>',
     description: 'runs commands to manage the database',
-    subCommands: [DbInitConsole],
+    subCommands: [DbInitConsole, DbSeedConsole],
 })
 export class DbConsole extends CommandRunner {
     public constructor(private readonly logger: ClassLogger) {

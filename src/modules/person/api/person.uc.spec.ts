@@ -6,8 +6,6 @@ import { EntityNotFoundError, KeycloakClientError, PersonAlreadyExistsError } fr
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged } from '../../../shared/paging/index.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { User } from '../../user/user.js';
-import { UserRepository } from '../../user/user.repository.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';
 import { SichtfreigabeType } from '../domain/personenkontext.enums.js';
@@ -18,6 +16,8 @@ import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonDto } from './person.dto.js';
 import { PersonUc } from './person.uc.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
+import { UserRepository } from '../../user/user.repository.js';
+import { User } from '../../user/user.js';
 import { LoggerModule } from '../../../core/logging/logger.module.js';
 import { UpdatePersonDto } from './update-person.dto.js';
 
@@ -70,6 +70,26 @@ describe('PersonUc', () => {
     });
 
     describe('createPerson', () => {
+        it('should fail when there is no first name given', async () => {
+            await expect(personUc.createPerson({} as CreatePersonDto)).resolves.toStrictEqual(
+                new SchulConnexError({
+                    titel: 'Anfrage unvollständig',
+                    code: 400,
+                    subcode: '00',
+                    beschreibung: 'Vorname nicht angegeben, wird für die Erzeugung des Benutzernamens gebraucht',
+                }),
+            );
+        });
+        it('should fail when there is no last name given', async () => {
+            await expect(personUc.createPerson({ vorname: 'Horst' } as CreatePersonDto)).resolves.toStrictEqual(
+                new SchulConnexError({
+                    titel: 'Anfrage unvollständig',
+                    code: 400,
+                    subcode: '00',
+                    beschreibung: 'Nachname nicht angegeben, wird für die Erzeugung des Benutzernamens gebraucht',
+                }),
+            );
+        });
         describe('when person and user do not exist', () => {
             it('should create a new person', async () => {
                 const personDo: PersonDo<true> = DoFactory.createPerson(true);

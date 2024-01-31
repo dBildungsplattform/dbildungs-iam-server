@@ -35,6 +35,8 @@ import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.p
 import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { UpdatePersonDto } from './update-person.dto.js';
+import { DeleteRevisionBodyParams } from './delete-revision.body.params.js';
+import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 
 @Injectable()
 export class PersonApiMapperProfile extends AutomapperProfile {
@@ -447,6 +449,13 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<boolean>) => dest.keycloakUserId, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.createdAt, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.updatedAt, ignore()),
+            );
+
+            createMap(
+                mapper,
+                DeleteRevisionBodyParams,
+                DeletePersonenkontextDto,
+                forMember((dest: DeletePersonenkontextDto) => dest.id, ignore()),
             );
         };
     }

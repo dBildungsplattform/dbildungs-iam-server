@@ -1,0 +1,14 @@
+{
+    "entityName": "PersonRollenZuweisung",
+    "entities": [
+        {
+            "id": "27ff7c36-35ea-4fcb-9faa-ed7794afaece",
+            "person": "1850aef4-a771-40fd-8e84-3de483007bfa",
+            "rolleReference": {
+                "id": "3ca85c16-96b2-46c8-a4fd-27e73d7ab96c",
+                "persisted": false
+            },
+            "schulstrukturknoten": "1"
+        }
+    ]
+}

@@ -6,8 +6,6 @@ import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged } from '../../../shared/paging/index.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { User } from '../../user/user.js';
-import { UserRepository } from '../../user/user.repository.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
@@ -19,9 +17,12 @@ import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonDto } from './person.dto.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
-import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
+import { UserRepository } from '../../user/user.repository.js';
+import { User } from '../../user/user.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { KeycloakClientError } from '../../../shared/error/index.js';
 import { UpdatePersonDto } from './update-person.dto.js';
+import { HttpStatusCode } from 'axios';
 
 @Injectable()
 export class PersonUc {
@@ -35,6 +36,22 @@ export class PersonUc {
     ) {}
 
     public async createPerson(personDto: CreatePersonDto): Promise<PersonDto | SchulConnexError> {
+        if (!personDto.vorname) {
+            return new SchulConnexError({
+                titel: 'Anfrage unvollständig',
+                code: HttpStatusCode.BadRequest,
+                subcode: '00',
+                beschreibung: 'Vorname nicht angegeben, wird für die Erzeugung des Benutzernamens gebraucht',
+            });
+        }
+        if (!personDto.familienname) {
+            return new SchulConnexError({
+                titel: 'Anfrage unvollständig',
+                code: HttpStatusCode.BadRequest,
+                subcode: '00',
+                beschreibung: 'Nachname nicht angegeben, wird für die Erzeugung des Benutzernamens gebraucht',
+            });
+        }
         // create user
         let user: User;
         try {

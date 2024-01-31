@@ -232,7 +232,7 @@ export class PersonController {
 
     @Patch(':personId/password')
     @HttpCode(HttpStatus.ACCEPTED)
-    @ApiAcceptedResponse({ description: 'Password for person was successfully reset.' })
+    @ApiAcceptedResponse({ description: 'Password for person was successfully reset.', type: String })
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
     @UseInterceptors(ResultInterceptor)
