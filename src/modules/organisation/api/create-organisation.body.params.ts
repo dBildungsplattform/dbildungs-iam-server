@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 

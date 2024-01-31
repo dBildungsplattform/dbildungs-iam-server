@@ -25,6 +25,7 @@ import { FindOrganisationDto } from './find-organisation.dto.js';
 import { OrganisationByIdParams } from './organisation-by-id.params.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationUc } from './organisation.uc.js';
+import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
@@ -63,12 +64,13 @@ export class OrganisationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
     public async getRootOrganisation(): Promise<OrganisationResponse> {
-        try {
-            const organisation: OrganisationResponse = await this.uc.findRootOrganisation();
-            return organisation;
-        } catch (error) {
-            throw new HttpException('Requested Entity does not exist', HttpStatus.NOT_FOUND);
+        const result: OrganisationResponse | SchulConnexError = await this.uc.findRootOrganisation();
+
+        if (result instanceof OrganisationResponse) {
+            return result;
         }
+
+        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
     }
 
     @Get(':organisationId')

@@ -12,9 +12,7 @@ import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { FindOrganisationDto } from './find-organisation.dto.js';
 import { OrganisationResponse } from './organisation.response.js';
-import { Paged } from '../../../shared/paging/paged.js';
 import { ServerConfig, DataConfig } from '../../../shared/config/index.js';
-import { FindOrganisationDto } from './find-organisation.dto.js';
 
 @Injectable()
 export class OrganisationUc {
@@ -61,24 +59,16 @@ export class OrganisationUc {
         return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 
-    public async findRootOrganisation(): Promise<OrganisationResponse> {
-        const result: Result<OrganisationDo<true>> = await this.organisationService.findOrganisationById(
+    public async findRootOrganisation(): Promise<OrganisationResponse | SchulConnexError> {
+        const result: Result<OrganisationDo<true>, DomainError> = await this.organisationService.findOrganisationById(
             this.ROOT_ORGANISATION_ID,
         );
-        if (result.ok) {
-            return this.mapper.map(result.value, OrganisationDo, OrganisationResponse);
-        }
-        return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
-    }
 
-    public async findRootOrganisation(): Promise<OrganisationResponse> {
-        const result: Result<OrganisationDo<true>> = await this.organisationService.findOrganisationById(
-            this.ROOT_ORGANISATION_ID,
-        );
         if (result.ok) {
             return this.mapper.map(result.value, OrganisationDo, OrganisationResponse);
         }
-        throw result.error;
+
+        return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 
     public async findAll(organisationDto: FindOrganisationDto): Promise<Paged<OrganisationResponse>> {
