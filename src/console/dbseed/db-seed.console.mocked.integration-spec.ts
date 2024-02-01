@@ -11,7 +11,6 @@ import { DbSeedService } from './db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
 import { UsernameGeneratorService } from '../../modules/user/username-generator.service.js';
 import { DbSeedMapper } from './db-seed-mapper.js';
-import { RolleMapperProfile } from '../../modules/rolle/mapper/rolle.mapper.profile.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';
 import { DomainError, KeycloakClientError } from '../../shared/error/index.js';
@@ -37,7 +36,6 @@ describe('DbSeedConsoleMockedKeycloak', () => {
                 DbSeedConsole,
                 DbSeedService,
                 DbSeedMapper,
-                RolleMapperProfile,
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),
