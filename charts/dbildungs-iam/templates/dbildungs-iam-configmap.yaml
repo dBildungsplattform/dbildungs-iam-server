@@ -2,8 +2,14 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: dbildungs-iam-configmap
+  name: {{ .Values.configmap.name }}
 data:
-  config.json: |-
-{{ .Files.Get "config/config.json" | nindent 4 }}
+  config-json: |-
+    {{ .Files.Get "config/config.json" | nindent 4 }}
+  keycloak-base-url: "https://{{ .Values.keycloakHostname }}"
+  frontend-oidc-callback-url: "https://{{ .Values.backendHostname }}/api/auth/login"
+  frontend-default-login-redirect: "https://{{ .Values.backendHostname }}/"
+  frontend-logout-redirect: "https://{{ .Values.backendHostname }}/"
+  db-name: "{{.Values.db.name}}"
+
 {{end}}

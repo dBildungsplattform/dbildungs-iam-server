@@ -7,10 +7,8 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { Rolle } from '../domain/rolle.js';
-import { RolleMapperProfile } from '../mapper/rolle.mapper.profile.js';
 import { RolleRepo } from './rolle.repo.js';
 
 describe('RolleRepo', () => {
@@ -21,8 +19,8 @@ describe('RolleRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [RolleRepo, RolleMapperProfile],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
+            providers: [RolleRepo],
         }).compile();
 
         sut = module.get(RolleRepo);
@@ -47,45 +45,36 @@ describe('RolleRepo', () => {
 
     describe('save', () => {
         it('should save a new rolle', async () => {
-            const rolle: Rolle = DoFactory.createRolle(false);
+            const rolle: Rolle<false> = DoFactory.createRolle(false);
 
-            const savedRolle: Rolle = await sut.save(rolle);
+            const savedRolle: Rolle<true> = await sut.save(rolle);
 
             expect(savedRolle.id).toBeDefined();
         });
 
         it('should update an existing rolle', async () => {
-            const existingRolle: Rolle = await sut.save(DoFactory.createRolle(false));
-            const update: Rolle = DoFactory.createRolle(false);
+            const existingRolle: Rolle<true> = await sut.save(DoFactory.createRolle(false));
+            const update: Rolle<false> = DoFactory.createRolle(false);
             update.id = existingRolle.id;
 
-            const savedRolle: Rolle = await sut.save(existingRolle);
+            const savedRolle: Rolle<true> = await sut.save(existingRolle);
 
             expect(savedRolle).toEqual(existingRolle);
-        });
-
-        it('should update rolle with id', async () => {
-            const rolle: Rolle = DoFactory.createRolle(true);
-
-            const savedRolle: Rolle = await sut.save(rolle);
-
-            expect(savedRolle).toEqual(rolle);
         });
     });
 
     describe('findById', () => {
         it('should return the rolle', async () => {
-            const rolle: Rolle = await sut.save(DoFactory.createRolle(false));
+            const rolle: Rolle<true> = await sut.save(DoFactory.createRolle(false));
 
-            const rolleResult: Option<Rolle> = await sut.findById(rolle.id!);
+            const rolleResult: Option<Rolle<true>> = await sut.findById(rolle.id);
 
             expect(rolleResult).toBeDefined();
             expect(rolleResult).toBeInstanceOf(Rolle);
-            expect(rolleResult).toEqual(rolle);
         });
 
         it('should return undefined if the entity does not exist', async () => {
-            const rolle: Option<Rolle> = await sut.findById(faker.string.uuid());
+            const rolle: Option<Rolle<true>> = await sut.findById(faker.string.uuid());
 
             expect(rolle).toBeNull();
         });

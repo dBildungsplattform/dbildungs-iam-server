@@ -66,4 +66,9 @@ export class PersonenkontextRepo {
 
         return this.mapper.map(personenkontext, PersonenkontextEntity, PersonenkontextDo);
     }
+
+    public async deleteById(id: string): Promise<number> {
+        const deletedPersons: number = await this.em.nativeDelete(PersonenkontextEntity, { id });
+        return deletedPersons;
+    }
 }

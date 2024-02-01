@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
-import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityCouldNotBeDeleted, EntityNotFoundError } from '../../../shared/error/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonRepo } from '../persistence/person.repo.js';
@@ -104,5 +104,25 @@ export class PersonenkontextService {
         }
 
         return { ok: true, value: saved };
+    }
+
+    public async deletePersonenkontextById(id: string, revision: string): Promise<Result<void, DomainError>> {
+        const personenkontext: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.findById(id);
+
+        if (!personenkontext) {
+            return { ok: false, error: new EntityNotFoundError('Personenkontext', id) };
+        }
+
+        if (personenkontext?.revision !== revision) {
+            return { ok: false, error: new MismatchedRevisionError('Personenkontext') };
+        }
+
+        const deletedPersons: number = await this.personenkontextRepo.deleteById(id);
+
+        if (deletedPersons === 0) {
+            return { ok: false, error: new EntityCouldNotBeDeleted('Personenkontext', id) };
+        }
+
+        return { ok: true, value: undefined };
     }
 }

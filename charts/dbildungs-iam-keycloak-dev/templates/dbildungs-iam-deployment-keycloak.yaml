@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: dbildungs-iam-keycloak
-          image: quay.io/keycloak/keycloak:22.0.3
+          image: quay.io/keycloak/keycloak:23.0.4
           args:
             - start-dev
             - "--import-realm"
@@ -42,4 +42,3 @@ spec:
         - name: realm-config
           secret:
             secretName: realm-config-secret
-      
