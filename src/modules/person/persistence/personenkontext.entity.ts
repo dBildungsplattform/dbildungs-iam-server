@@ -4,7 +4,7 @@ import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 
 @Entity({ tableName: 'personenkontext' })
-export class PersonenkontextEntity extends TimestampedEntity<PersonenkontextEntity, 'id'> {
+export class PersonenkontextEntity extends TimestampedEntity {
     public constructor() {
         super();
     }

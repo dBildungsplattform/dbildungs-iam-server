@@ -6,7 +6,7 @@ import { Entity, OneToOne, Property } from '@mikro-orm/core';
     discriminatorColumn: 'nodeType',
     discriminatorMap: { traeger: 'traeger', organisation: 'organisation', group: 'gruppe' },
 })
-export abstract class SchulstrukturknotenEntity extends TimestampedEntity<SchulstrukturknotenEntity, 'id'> {
+export abstract class SchulstrukturknotenEntity extends TimestampedEntity {
     @OneToOne()
     public administrativeParent?: SchulstrukturknotenEntity;
 
