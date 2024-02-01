@@ -294,32 +294,78 @@ describe('OrganisationController', () => {
     });
 
     describe('addAdministrierteOrganisation', () => {
-        it('should not throw an error', async () => {
-            const params: OrganisationByIdParams = {
-                organisationId: faker.string.uuid(),
-            };
+        describe('when usecase succeeds', () => {
+            it('should not throw an error', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
 
-            const body: OrganisationByIdBodyParams = {
-                organisationId: faker.string.uuid(),
-            };
+                const body: OrganisationByIdBodyParams = {
+                    organisationId: faker.string.uuid(),
+                };
 
-            await expect(organisationController.addAdministrierteOrganisation(params, body)).resolves.not.toThrow();
-            expect(organisationUcMock.setAdministriertVon).toHaveBeenCalledTimes(1);
+                organisationUcMock.setAdministriertVon.mockResolvedValue();
+
+                await expect(organisationController.addAdministrierteOrganisation(params, body)).resolves.not.toThrow();
+                expect(organisationUcMock.setAdministriertVon).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when usecase returns a SchulConnexError', () => {
+            it('should throw a HttpException', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
+
+                const body: OrganisationByIdBodyParams = {
+                    organisationId: faker.string.uuid(),
+                };
+
+                organisationUcMock.setAdministriertVon.mockResolvedValue({} as SchulConnexError);
+                await expect(organisationController.addAdministrierteOrganisation(params, body)).rejects.toThrow(
+                    HttpException,
+                );
+
+                expect(organisationUcMock.setAdministriertVon).toHaveBeenCalledTimes(1);
+            });
         });
     });
 
     describe('addZugehoerigeOrganisation', () => {
-        it('should not throw an error', async () => {
-            const params: OrganisationByIdParams = {
-                organisationId: faker.string.uuid(),
-            };
+        describe('when usecase succeeds', () => {
+            it('should not throw an error', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
 
-            const body: OrganisationByIdBodyParams = {
-                organisationId: faker.string.uuid(),
-            };
+                const body: OrganisationByIdBodyParams = {
+                    organisationId: faker.string.uuid(),
+                };
 
-            await expect(organisationController.addZugehoerigeOrganisation(params, body)).resolves.not.toThrow();
-            expect(organisationUcMock.setZugehoerigZu).toHaveBeenCalledTimes(1);
+                organisationUcMock.setZugehoerigZu.mockResolvedValue();
+
+                await expect(organisationController.addZugehoerigeOrganisation(params, body)).resolves.not.toThrow();
+                expect(organisationUcMock.setZugehoerigZu).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when usecase returns a SchulConnexError', () => {
+            it('should throw a HttpException', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
+
+                const body: OrganisationByIdBodyParams = {
+                    organisationId: faker.string.uuid(),
+                };
+
+                organisationUcMock.setZugehoerigZu.mockResolvedValue({} as SchulConnexError);
+                await expect(organisationController.addZugehoerigeOrganisation(params, body)).rejects.toThrow(
+                    HttpException,
+                );
+
+                expect(organisationUcMock.setZugehoerigZu).toHaveBeenCalledTimes(1);
+            });
         });
     });
 });

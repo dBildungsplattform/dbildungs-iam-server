@@ -106,25 +106,31 @@ export class OrganisationUc {
         };
     }
 
-    public async setAdministriertVon(parentOrganisationId: string, childOrganisationId: string): Promise<void> {
-        const res: Result<void> = await this.organisationService.setAdministriertVon(
+    public async setAdministriertVon(
+        parentOrganisationId: string,
+        childOrganisationId: string,
+    ): Promise<void | SchulConnexError> {
+        const res: Result<void, DomainError> = await this.organisationService.setAdministriertVon(
             parentOrganisationId,
             childOrganisationId,
         );
 
         if (!res.ok) {
-            throw res.error;
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(res.error);
         }
     }
 
-    public async setZugehoerigZu(parentOrganisationId: string, childOrganisationId: string): Promise<void> {
-        const res: Result<void> = await this.organisationService.setZugehoerigZu(
+    public async setZugehoerigZu(
+        parentOrganisationId: string,
+        childOrganisationId: string,
+    ): Promise<void | SchulConnexError> {
+        const res: Result<void, DomainError> = await this.organisationService.setZugehoerigZu(
             parentOrganisationId,
             childOrganisationId,
         );
 
         if (!res.ok) {
-            throw res.error;
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(res.error);
         }
     }
 

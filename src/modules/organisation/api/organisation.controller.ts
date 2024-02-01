@@ -143,7 +143,14 @@ export class OrganisationController {
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByIdBodyParams,
     ): Promise<void> {
-        await this.uc.setAdministriertVon(params.organisationId, body.organisationId);
+        const result: void | SchulConnexError = await this.uc.setAdministriertVon(
+            params.organisationId,
+            body.organisationId,
+        );
+
+        if (result) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
     }
 
     @Get(':organisationId/zugehoerig')
@@ -174,6 +181,13 @@ export class OrganisationController {
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByIdBodyParams,
     ): Promise<void> {
-        await this.uc.setZugehoerigZu(params.organisationId, body.organisationId);
+        const result: void | SchulConnexError = await this.uc.setZugehoerigZu(
+            params.organisationId,
+            body.organisationId,
+        );
+
+        if (result) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
     }
 }

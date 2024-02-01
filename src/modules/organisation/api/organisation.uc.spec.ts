@@ -184,7 +184,8 @@ describe('OrganisationUc', () => {
                 ok: false,
                 error: new EntityCouldNotBeUpdated('', ''),
             });
-            await expect(organisationUc.setAdministriertVon('', '')).rejects.toThrow(EntityCouldNotBeUpdated);
+
+            await expect(organisationUc.setAdministriertVon('', '')).resolves.toBeInstanceOf(SchulConnexError);
         });
     });
 
@@ -202,7 +203,8 @@ describe('OrganisationUc', () => {
                 ok: false,
                 error: new EntityCouldNotBeUpdated('', ''),
             });
-            await expect(organisationUc.setZugehoerigZu('', '')).rejects.toThrow(EntityCouldNotBeUpdated);
+
+            await expect(organisationUc.setZugehoerigZu('', '')).resolves.toBeInstanceOf(SchulConnexError);
         });
     });
 
