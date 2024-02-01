@@ -2,7 +2,7 @@ import { TimestampedEntity } from './timestamped.entity.js';
 import { Entity, Property } from '@mikro-orm/core';
 
 @Entity({ tableName: 'benachrichtigung' })
-export class BenachrichtigungEntity extends TimestampedEntity<BenachrichtigungEntity, 'id'> {
+export class BenachrichtigungEntity extends TimestampedEntity {
     public constructor() {
         super();
     }
