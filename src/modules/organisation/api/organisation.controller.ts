@@ -115,7 +115,7 @@ export class OrganisationController {
         return response;
     }
 
-    @Get(':organisationId/verwaltet')
+    @Get(':organisationId/administriert')
     @ApiOkResponse({
         description: 'The organizations were successfully returned.',
         type: [OrganisationResponse],
@@ -124,26 +124,26 @@ export class OrganisationController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get organizations.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get organizations.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
-    public async getVerwalteteOrganisationen(
+    public async getAdministrierteOrganisationen(
         @Param() params: OrganisationByIdParams,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const organisations: Paged<OrganisationResponse> = await this.uc.findVerwaltetVon(params.organisationId);
+        const organisations: Paged<OrganisationResponse> = await this.uc.findAdministriertVon(params.organisationId);
         const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
 
         return response;
     }
 
-    @Post(':organisationId/verwaltet')
+    @Post(':organisationId/administriert')
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
     @ApiBadRequestResponse({ description: 'The organisation could not be modified.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
-    public async addVerwalteteOrganisation(
+    public async addAdministrierteOrganisation(
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByIdBodyParams,
     ): Promise<void> {
-        await this.uc.setVerwaltetVon(params.organisationId, body.organisationId);
+        await this.uc.setAdministriertVon(params.organisationId, body.organisationId);
     }
 
     @Get(':organisationId/zugehoerig')

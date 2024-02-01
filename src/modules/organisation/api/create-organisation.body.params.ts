@@ -8,7 +8,7 @@ export class CreateOrganisationBodyParams {
     @IsOptional()
     @IsString()
     @ApiPropertyOptional()
-    public readonly verwaltetVon?: string;
+    public readonly administriertVon?: string;
 
     @AutoMap()
     @IsOptional()

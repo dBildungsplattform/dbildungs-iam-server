@@ -27,10 +27,10 @@ export class OrganisationScope extends ScopeBase<OrganisationEntity> {
         return this;
     }
 
-    public findVerwalteteVon(parentOrganisationId: string): this {
+    public findAdministrierteVon(parentOrganisationId: string): this {
         this.findByInternal(
             {
-                verwaltetVon: Reference.createFromPK(OrganisationEntity, parentOrganisationId),
+                administriertVon: Reference.createFromPK(OrganisationEntity, parentOrganisationId),
             },
             ScopeOperator.AND,
         );

@@ -170,21 +170,21 @@ describe('OrganisationUc', () => {
         });
     });
 
-    describe('setVerwaltetVon', () => {
+    describe('setAdministriertVon', () => {
         it('should find the root organisation', async () => {
-            organisationServiceMock.setVerwaltetVon.mockResolvedValue({
+            organisationServiceMock.setAdministriertVon.mockResolvedValue({
                 ok: true,
                 value: undefined,
             });
-            await expect(organisationUc.setVerwaltetVon('', '')).resolves.not.toThrow();
+            await expect(organisationUc.setAdministriertVon('', '')).resolves.not.toThrow();
         });
 
         it('should throw an error', async () => {
-            organisationServiceMock.setVerwaltetVon.mockResolvedValue({
+            organisationServiceMock.setAdministriertVon.mockResolvedValue({
                 ok: false,
                 error: new EntityCouldNotBeUpdated('', ''),
             });
-            await expect(organisationUc.setVerwaltetVon('', '')).rejects.toThrow(EntityCouldNotBeUpdated);
+            await expect(organisationUc.setAdministriertVon('', '')).rejects.toThrow(EntityCouldNotBeUpdated);
         });
     });
 
@@ -206,7 +206,7 @@ describe('OrganisationUc', () => {
         });
     });
 
-    describe('findVerwaltetVon', () => {
+    describe('findAdministriertVon', () => {
         describe('when parent organisation exists', () => {
             it('should return all found organisations', async () => {
                 const organisationDos: OrganisationDo<true>[] = DoFactory.createMany(
@@ -220,14 +220,14 @@ describe('OrganisationUc', () => {
                     value: DoFactory.createOrganisation(true),
                 });
 
-                organisationServiceMock.findAllVerwaltetVon.mockResolvedValue({
+                organisationServiceMock.findAllAdministriertVon.mockResolvedValue({
                     total: organisationDos.length,
                     offset: 0,
                     limit: 0,
                     items: organisationDos,
                 });
 
-                const result: Paged<OrganisationResponse> = await organisationUc.findVerwaltetVon('');
+                const result: Paged<OrganisationResponse> = await organisationUc.findAdministriertVon('');
 
                 expect(result.total).toBe(2);
                 expect(result.items).toHaveLength(2);
@@ -247,7 +247,7 @@ describe('OrganisationUc', () => {
                     error: new EntityNotFoundError(),
                 });
 
-                await expect(organisationUc.findVerwaltetVon('')).rejects.toThrow(EntityNotFoundError);
+                await expect(organisationUc.findAdministriertVon('')).rejects.toThrow(EntityNotFoundError);
             });
         });
     });

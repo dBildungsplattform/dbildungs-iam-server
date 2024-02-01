@@ -19,7 +19,7 @@ export class OrganisationDo<WasPersisted extends boolean> implements DoBase<WasP
     public updatedAt!: Persisted<Date, WasPersisted>;
 
     @AutoMap()
-    public verwaltetVon?: string;
+    public administriertVon?: string;
 
     @AutoMap()
     public zugehoerigZu?: string;

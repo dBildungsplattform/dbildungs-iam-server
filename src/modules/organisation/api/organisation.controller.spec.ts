@@ -209,7 +209,7 @@ describe('OrganisationController', () => {
         });
     });
 
-    describe('getVerwalteteOrganisationen', () => {
+    describe('getAdministrierteOrganisationen', () => {
         const params: OrganisationByIdParams = {
             organisationId: faker.string.uuid(),
         };
@@ -240,13 +240,13 @@ describe('OrganisationController', () => {
                 total: 2,
             };
 
-            organisationUcMock.findVerwaltetVon.mockResolvedValue(mockedPagedResponse);
+            organisationUcMock.findAdministriertVon.mockResolvedValue(mockedPagedResponse);
 
             const result: Paged<OrganisationResponse> =
-                await organisationController.getVerwalteteOrganisationen(params);
+                await organisationController.getAdministrierteOrganisationen(params);
 
             expect(result).toEqual(mockedPagedResponse);
-            expect(organisationUcMock.findVerwaltetVon).toHaveBeenCalledTimes(1);
+            expect(organisationUcMock.findAdministriertVon).toHaveBeenCalledTimes(1);
             expect(result.items.length).toEqual(2);
         });
     });
@@ -293,7 +293,7 @@ describe('OrganisationController', () => {
         });
     });
 
-    describe('addVerwalteteOrganisation', () => {
+    describe('addAdministrierteOrganisation', () => {
         it('should not throw an error', async () => {
             const params: OrganisationByIdParams = {
                 organisationId: faker.string.uuid(),
@@ -303,8 +303,8 @@ describe('OrganisationController', () => {
                 organisationId: faker.string.uuid(),
             };
 
-            await expect(organisationController.addVerwalteteOrganisation(params, body)).resolves.not.toThrow();
-            expect(organisationUcMock.setVerwaltetVon).toHaveBeenCalledTimes(1);
+            await expect(organisationController.addAdministrierteOrganisation(params, body)).resolves.not.toThrow();
+            expect(organisationUcMock.setAdministriertVon).toHaveBeenCalledTimes(1);
         });
     });
 

@@ -17,10 +17,13 @@ export class OrganisationService {
     public async createOrganisation(
         organisationDo: OrganisationDo<false>,
     ): Promise<Result<OrganisationDo<true>, DomainError>> {
-        if (organisationDo.verwaltetVon && !(await this.organisationRepo.findById(organisationDo.verwaltetVon))) {
+        if (
+            organisationDo.administriertVon &&
+            !(await this.organisationRepo.findById(organisationDo.administriertVon))
+        ) {
             return {
                 ok: false,
-                error: new EntityNotFoundError('Organisation', organisationDo.verwaltetVon),
+                error: new EntityNotFoundError('Organisation', organisationDo.administriertVon),
             };
         }
 
@@ -68,7 +71,7 @@ export class OrganisationService {
         };
     }
 
-    public async setVerwaltetVon(parentId: string, childId: string): Promise<Result<void, DomainError>> {
+    public async setAdministriertVon(parentId: string, childId: string): Promise<Result<void, DomainError>> {
         const parentOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(parentId);
         if (!parentOrganisation) {
             return {
@@ -85,7 +88,7 @@ export class OrganisationService {
             };
         }
 
-        childOrganisation.verwaltetVon = parentId;
+        childOrganisation.administriertVon = parentId;
 
         const organisation: OrganisationDo<true> = await this.organisationRepo.save(childOrganisation);
         if (organisation) {
@@ -122,13 +125,13 @@ export class OrganisationService {
         return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
     }
 
-    public async findAllVerwaltetVon(
+    public async findAllAdministriertVon(
         parentOrganisationID: string,
         offset?: number,
         limit?: number,
     ): Promise<Paged<OrganisationDo<true>>> {
         const scope: OrganisationScope = new OrganisationScope()
-            .findVerwalteteVon(parentOrganisationID)
+            .findAdministrierteVon(parentOrganisationID)
             .paged(offset, limit);
 
         const [organisations, total]: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);

@@ -67,14 +67,14 @@ describe('OrganisationService', () => {
 
         it('should return a domain error if parent organisation does not exist', async () => {
             const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
-            organisationDo.verwaltetVon = faker.string.uuid();
+            organisationDo.administriertVon = faker.string.uuid();
             organisationRepoMock.findById.mockResolvedValueOnce(undefined);
 
             const result: Result<OrganisationDo<true>> = await organisationService.createOrganisation(organisationDo);
 
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: false,
-                error: new EntityNotFoundError('Organisation', organisationDo.verwaltetVon),
+                error: new EntityNotFoundError('Organisation', organisationDo.administriertVon),
             });
         });
 
@@ -162,7 +162,7 @@ describe('OrganisationService', () => {
         });
     });
 
-    describe('setVerwaltetVon', () => {
+    describe('setAdministriertVon', () => {
         it('should update the organisation', async () => {
             const parentId: string = faker.string.uuid();
             const childId: string = faker.string.uuid();
@@ -171,7 +171,7 @@ describe('OrganisationService', () => {
             const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
             organisationRepoMock.save.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
 
-            const result: Result<void> = await organisationService.setVerwaltetVon(parentId, childId);
+            const result: Result<void> = await organisationService.setAdministriertVon(parentId, childId);
 
             expect(result).toEqual<Result<void>>({
                 ok: true,
@@ -184,7 +184,7 @@ describe('OrganisationService', () => {
             const childId: string = faker.string.uuid();
             organisationRepoMock.findById.mockResolvedValueOnce(undefined);
 
-            const result: Result<void> = await organisationService.setVerwaltetVon(parentId, childId);
+            const result: Result<void> = await organisationService.setAdministriertVon(parentId, childId);
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
@@ -198,7 +198,7 @@ describe('OrganisationService', () => {
             organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
             organisationRepoMock.findById.mockResolvedValueOnce(undefined);
 
-            const result: Result<void> = await organisationService.setVerwaltetVon(parentId, childId);
+            const result: Result<void> = await organisationService.setAdministriertVon(parentId, childId);
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
@@ -212,7 +212,7 @@ describe('OrganisationService', () => {
             organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
             organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
 
-            const result: Result<void> = await organisationService.setVerwaltetVon(parentId, childId);
+            const result: Result<void> = await organisationService.setAdministriertVon(parentId, childId);
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
@@ -280,7 +280,7 @@ describe('OrganisationService', () => {
         });
     });
 
-    describe('findAllVerwaltetVon', () => {
+    describe('findAllAdministriertVon', () => {
         describe('when organizations are found', () => {
             it('should return all organizations', async () => {
                 const parentId: string = faker.string.uuid();
@@ -290,7 +290,7 @@ describe('OrganisationService', () => {
 
                 organisationRepoMock.findBy.mockResolvedValue([organisations, total]);
 
-                const result: Paged<OrganisationDo<true>> = await organisationService.findAllVerwaltetVon(parentId);
+                const result: Paged<OrganisationDo<true>> = await organisationService.findAllAdministriertVon(parentId);
 
                 expect(result).toEqual({
                     total: total,
@@ -306,7 +306,7 @@ describe('OrganisationService', () => {
                 const parentId: string = faker.string.uuid();
                 organisationRepoMock.findBy.mockResolvedValue([[], 0]);
 
-                const result: Paged<OrganisationDo<true>> = await organisationService.findAllVerwaltetVon(parentId);
+                const result: Paged<OrganisationDo<true>> = await organisationService.findAllAdministriertVon(parentId);
 
                 expect(result.items).toHaveLength(0);
                 expect(result.items).toBeInstanceOf(Array);

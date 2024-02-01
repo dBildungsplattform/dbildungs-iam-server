@@ -3,7 +3,7 @@ import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js
 
 export class CreateOrganisationDto {
     @AutoMap()
-    public readonly verwaltetVon?: string;
+    public readonly administriertVon?: string;
 
     @AutoMap()
     public readonly zugehoerigZu?: string;

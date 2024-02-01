@@ -11,7 +11,7 @@ export class OrganisationEntity extends TimestampedEntity<OrganisationEntity, 'i
 
     @AutoMap()
     @ManyToOne(() => OrganisationEntity, { nullable: true })
-    public verwaltetVon?: Ref<OrganisationEntity>;
+    public administriertVon?: Ref<OrganisationEntity>;
 
     @AutoMap()
     @ManyToOne(() => OrganisationEntity, { nullable: true })

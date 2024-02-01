@@ -37,7 +37,7 @@ describe('OrganisationPersistenceMapperProfile', () => {
 
         it('should map organisation entity into organisation Domain object', () => {
             const organisation: OrganisationEntity = new OrganisationEntity();
-            organisation.verwaltetVon = Reference.createFromPK(OrganisationEntity, faker.string.uuid());
+            organisation.administriertVon = Reference.createFromPK(OrganisationEntity, faker.string.uuid());
             organisation.zugehoerigZu = Reference.createFromPK(OrganisationEntity, faker.string.uuid());
             expect(() => sut.map(organisation, OrganisationEntity, OrganisationDo)).not.toThrowError(MappingError);
         });

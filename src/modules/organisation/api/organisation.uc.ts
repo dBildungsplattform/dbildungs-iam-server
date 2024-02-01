@@ -35,7 +35,7 @@ export class OrganisationUc {
             OrganisationDo,
         );
 
-        organisationDo.verwaltetVon ??= this.ROOT_ORGANISATION_ID;
+        organisationDo.administriertVon ??= this.ROOT_ORGANISATION_ID;
         organisationDo.zugehoerigZu ??= this.ROOT_ORGANISATION_ID;
 
         const result: Result<OrganisationDo<true>, DomainError> = await this.organisationService.createOrganisation(
@@ -106,8 +106,8 @@ export class OrganisationUc {
         };
     }
 
-    public async setVerwaltetVon(parentOrganisationId: string, childOrganisationId: string): Promise<void> {
-        const res: Result<void> = await this.organisationService.setVerwaltetVon(
+    public async setAdministriertVon(parentOrganisationId: string, childOrganisationId: string): Promise<void> {
+        const res: Result<void> = await this.organisationService.setAdministriertVon(
             parentOrganisationId,
             childOrganisationId,
         );
@@ -128,7 +128,7 @@ export class OrganisationUc {
         }
     }
 
-    public async findVerwaltetVon(parentOrganisationId: string): Promise<Paged<OrganisationResponse>> {
+    public async findAdministriertVon(parentOrganisationId: string): Promise<Paged<OrganisationResponse>> {
         const parentOrg: Result<OrganisationDo<true>> =
             await this.organisationService.findOrganisationById(parentOrganisationId);
         if (!parentOrg.ok) {
@@ -136,7 +136,7 @@ export class OrganisationUc {
         }
 
         const result: Paged<OrganisationDo<true>> =
-            await this.organisationService.findAllVerwaltetVon(parentOrganisationId);
+            await this.organisationService.findAllAdministriertVon(parentOrganisationId);
 
         const organisations: OrganisationResponse[] = this.mapper.mapArray(
             result.items,

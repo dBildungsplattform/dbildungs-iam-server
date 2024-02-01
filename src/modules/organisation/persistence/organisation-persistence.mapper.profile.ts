@@ -18,8 +18,8 @@ export class OrganisationPersistenceMapperProfile extends AutomapperProfile {
                 OrganisationDo,
                 OrganisationEntity,
                 forMember(
-                    (dest: OrganisationEntity) => dest.verwaltetVon,
-                    mapFrom((src: OrganisationDo<boolean>) => optionalRef(OrganisationEntity, src.verwaltetVon)),
+                    (dest: OrganisationEntity) => dest.administriertVon,
+                    mapFrom((src: OrganisationDo<boolean>) => optionalRef(OrganisationEntity, src.administriertVon)),
                 ),
                 forMember(
                     (dest: OrganisationEntity) => dest.zugehoerigZu,
@@ -35,8 +35,8 @@ export class OrganisationPersistenceMapperProfile extends AutomapperProfile {
                     mapFrom((src: OrganisationEntity) => src.id),
                 ),
                 forMember(
-                    (dest: OrganisationDo<true>) => dest.verwaltetVon,
-                    mapFrom((src: OrganisationEntity) => src.verwaltetVon?.id),
+                    (dest: OrganisationDo<true>) => dest.administriertVon,
+                    mapFrom((src: OrganisationEntity) => src.administriertVon?.id),
                 ),
                 forMember(
                     (dest: OrganisationDo<true>) => dest.zugehoerigZu,
