@@ -5,8 +5,8 @@ dbildungsIamCpuRequest: 200m
 dbildungsIamMemRequest: 200Mi
 dbildungsIamReplications: 1
 environment: prod
-backendHostname: ""
-keycloakHostname: ""
+backendHostname: "spsh-312.dev.spsh.dbildungsplattform.de"
+keycloakHostname: "spsh-312keycloak.dev.spsh.dbildungsplattform.de"
 #seeding:
 #  configmap: spsh-seeding-data-configmap
 #  database: dev
@@ -25,4 +25,4 @@ image:
   repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
   tag: "latest"
 db:
-  name: ""
+  name: "dev"
