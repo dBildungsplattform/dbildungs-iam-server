@@ -4,7 +4,7 @@ import { RollenArt } from '../domain/rolle.enums.js';
 import { RolleMerkmalEntity } from './rolle-merkmal.entity.js';
 
 @Entity({ tableName: 'rolle' })
-export class RolleEntity extends TimestampedEntity<RolleEntity, 'id'> {
+export class RolleEntity extends TimestampedEntity {
     @Property()
     public name!: string;
 

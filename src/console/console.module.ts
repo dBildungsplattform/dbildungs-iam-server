@@ -45,6 +45,7 @@ import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloa
                             ssl: config.getOrThrow<DbConfig>('DB').USE_SSL,
                         },
                     },
+                    connect: false,
                 });
             },
             inject: [ConfigService],

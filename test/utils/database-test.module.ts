@@ -39,6 +39,7 @@ export class DatabaseTestModule implements OnModuleDestroy {
                             entities: ['./dist/**/*.entity.js'],
                             entitiesTs: ['./src/**/*.entity.ts'],
                             allowGlobalContext: true,
+                            connect: options?.isDatabaseRequired ?? false,
                         });
                     },
                     inject: [ConfigService],

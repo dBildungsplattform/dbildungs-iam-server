@@ -3,7 +3,7 @@ import { Entity, Property } from '@mikro-orm/core';
 import { AutoMap } from '@automapper/classes';
 
 @Entity({ tableName: 'person_rollenzuweisung' })
-export class PersonRollenZuweisungEntity extends TimestampedEntity<PersonRollenZuweisungEntity, 'id'> {
+export class PersonRollenZuweisungEntity extends TimestampedEntity {
     /**
      * Links to Person
      */

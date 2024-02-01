@@ -4,7 +4,7 @@ import { AutoMap } from '@automapper/classes';
 import { RolleRechtEntity } from './rolle-recht.entity.js';
 
 @Entity({ tableName: 'rolle_berechtigungszuweisung' })
-export class RolleBerechtigungsZuweisungEntity extends TimestampedEntity<RolleBerechtigungsZuweisungEntity, 'id'> {
+export class RolleBerechtigungsZuweisungEntity extends TimestampedEntity {
     @AutoMap()
     @Property()
     public validForOrganisationalChildren!: boolean;
