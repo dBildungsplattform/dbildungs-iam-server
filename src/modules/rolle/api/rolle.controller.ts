@@ -1,6 +1,4 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, HttpCode, HttpStatus, Inject, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -12,22 +10,24 @@ import {
 } from '@nestjs/swagger';
 import { Public } from 'nest-keycloak-connect';
 
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
+import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { RolleResponse } from './rolle.response.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 
+@UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
 @Controller({ path: 'rolle' })
 @Public()
 export class RolleController {
     public constructor(
         private readonly rolleRepo: RolleRepo,
-        private readonly organisationService: OrganisationService,
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
+        private readonly orgService: OrganisationService,
     ) {}
 
     @Post()
@@ -35,17 +35,29 @@ export class RolleController {
     @ApiOperation({ description: 'Create a new rolle.' })
     @ApiCreatedResponse({ description: 'The rolle was successfully created.', type: RolleResponse })
     @ApiBadRequestResponse({ description: 'The input was not valid.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to create the roll.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to create the rolle.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rolle.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal serve rerror while creating the person.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
     public async createRolle(@Body() params: CreateRolleBodyParams): Promise<RolleResponse> {
-        const rolle: Rolle = this.mapper.map(params, CreateRolleBodyParams, Rolle);
+        const orgResult: Result<OrganisationDo<true>, DomainError> = await this.orgService.findOrganisationById(
+            params.administeredBySchulstrukturknoten,
+        );
 
-        const result: void | SchulConnexError = await rolle.save(this.rolleRepo, this.organisationService);
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        if (!orgResult.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(orgResult.error),
+            );
         }
 
-        return this.mapper.map(rolle, Rolle, RolleResponse);
+        const rolle: Rolle<false> = Rolle.createNew(
+            params.name,
+            params.administeredBySchulstrukturknoten,
+            params.rollenart,
+            params.merkmale,
+        );
+
+        const result: Rolle<true> = await this.rolleRepo.save(rolle);
+
+        return result;
     }
 }

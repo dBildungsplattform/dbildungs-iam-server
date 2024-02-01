@@ -1,37 +1,47 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
-
 import { DoFactory } from '../../../../test/utils/index.js';
-import { RolleRepo } from '../repo/rolle.repo.js';
+import { RollenMerkmal } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
-import { OrganisationService } from '../../organisation/domain/organisation.service.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 
 describe('Rolle Aggregate', () => {
-    describe('save', () => {
-        const repo: DeepMocked<RolleRepo> = createMock();
-        const organisationService: DeepMocked<OrganisationService> = createMock();
+    describe('addMerkmal', () => {
+        it('should add merkmal if it does not exist', () => {
+            const savedRolle: Rolle<true> = DoFactory.createRolle(true, { merkmale: [] });
 
-        it('should update itself with saved data', async () => {
-            const savedRolle: Rolle = DoFactory.createRolle(true);
-            repo.save.mockResolvedValueOnce(savedRolle);
-            organisationService.findOrganisationById.mockResolvedValueOnce({ ok: true, value: createMock() });
+            savedRolle.addMerkmal(RollenMerkmal.BEFRISTUNG_PFLICHT);
 
-            const rolle: Rolle = DoFactory.createRolle(false);
-            await rolle.save(repo, organisationService);
-
-            expect(rolle).toEqual(savedRolle);
+            expect(savedRolle.merkmale).toEqual([RollenMerkmal.BEFRISTUNG_PFLICHT]);
         });
 
-        it('should throw error if schulstrukturknoten does not exist', async () => {
-            organisationService.findOrganisationById.mockResolvedValueOnce({
-                ok: false,
-                error: new EntityNotFoundError('Organisation'),
+        it('should not add merkmal if it already exists', () => {
+            const savedRolle: Rolle<true> = DoFactory.createRolle(true, {
+                merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
             });
 
-            const rolle: Rolle = DoFactory.createRolle(false);
+            savedRolle.addMerkmal(RollenMerkmal.BEFRISTUNG_PFLICHT);
 
-            await expect(rolle.save(repo, organisationService)).resolves.toBeInstanceOf(SchulConnexError);
+            expect(savedRolle.merkmale).toEqual([RollenMerkmal.BEFRISTUNG_PFLICHT]);
+        });
+    });
+
+    describe('removeMerkmal', () => {
+        it('should remove merkmal if it exists', () => {
+            const savedRolle: Rolle<true> = DoFactory.createRolle(true, {
+                merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT, RollenMerkmal.KOPERS_PFLICHT],
+            });
+
+            savedRolle.removeMerkmal(RollenMerkmal.BEFRISTUNG_PFLICHT);
+
+            expect(savedRolle.merkmale).toEqual([RollenMerkmal.KOPERS_PFLICHT]);
+        });
+
+        it('should do nothing if merkmal does not exist', () => {
+            const savedRolle: Rolle<true> = DoFactory.createRolle(true, {
+                merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
+            });
+
+            savedRolle.removeMerkmal(RollenMerkmal.KOPERS_PFLICHT);
+
+            expect(savedRolle.merkmale).toEqual([RollenMerkmal.BEFRISTUNG_PFLICHT]);
         });
     });
 });

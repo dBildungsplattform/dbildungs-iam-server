@@ -9,7 +9,6 @@ import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuw
 import { RolleBerechtigungsZuweisungEntity } from '../entity/rolle-berechtigungs-zuweisung.entity.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleBerechtigungsZuweisungMapperProfile } from './rolle-berechtigungs-zuweisung.mapper.profile.js';
-import { RolleMapperProfile } from './rolle.mapper.profile.js';
 
 describe('RolleBerechtigungsZuweisungMapperProfile', () => {
     let module: TestingModule;
@@ -18,11 +17,7 @@ describe('RolleBerechtigungsZuweisungMapperProfile', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [MapperTestModule],
-            providers: [
-                ServiceProviderZugriffMapperProfile,
-                RolleBerechtigungsZuweisungMapperProfile,
-                RolleMapperProfile,
-            ],
+            providers: [ServiceProviderZugriffMapperProfile, RolleBerechtigungsZuweisungMapperProfile],
         }).compile();
         sut = module.get(getMapperToken());
     });
@@ -37,11 +32,11 @@ describe('RolleBerechtigungsZuweisungMapperProfile', () => {
 
     describe('when mapper is initialized', () => {
         it('should map RolleBerechtigungsZuweisungDo to RolleBerechtigungsZuweisungEntity', () => {
-            const rolle: Rolle = DoFactory.createRolle(false);
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
             const serviceProviderZugriffDo: ServiceProviderZugriffDo<false> =
                 DoFactory.createServiceProviderZugriff(false);
             const rbz: RolleBerechtigungsZuweisungDo<true> = DoFactory.createRolleBerechtigungsZuweisung(
-                rolle,
+                rolle.id,
                 serviceProviderZugriffDo,
                 true,
             );

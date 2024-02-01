@@ -7,7 +7,6 @@ import { ServiceProviderZugriffMapperProfile } from './service-provider-zugriff.
 import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
 import { ServiceProviderZugriffEntity } from '../entity/service-provider-zugriff.entity.js';
 import { RolleBerechtigungsZuweisungMapperProfile } from './rolle-berechtigungs-zuweisung.mapper.profile.js';
-import { RolleMapperProfile } from './rolle.mapper.profile.js';
 
 describe('ServiceProviderZugriffMapperProfile', () => {
     let module: TestingModule;
@@ -16,11 +15,7 @@ describe('ServiceProviderZugriffMapperProfile', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [MapperTestModule],
-            providers: [
-                ServiceProviderZugriffMapperProfile,
-                RolleBerechtigungsZuweisungMapperProfile,
-                RolleMapperProfile,
-            ],
+            providers: [ServiceProviderZugriffMapperProfile, RolleBerechtigungsZuweisungMapperProfile],
         }).compile();
         sut = module.get(getMapperToken());
     });

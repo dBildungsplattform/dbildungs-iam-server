@@ -1,6 +1,5 @@
 import { AutoMap } from '@automapper/classes';
 import { DoBase } from '../../../shared/types/index.js';
-import { Rolle } from './rolle.js';
 
 export class PersonRollenZuweisungDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
     /**
@@ -22,7 +21,7 @@ export class PersonRollenZuweisungDo<WasPersisted extends boolean> implements Do
     public person!: string;
 
     @AutoMap()
-    public rolle!: Rolle;
+    public rolle!: string;
 
     @AutoMap()
     public schulstrukturknoten!: string;
