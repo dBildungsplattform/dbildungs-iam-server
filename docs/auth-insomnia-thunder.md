@@ -13,22 +13,20 @@ _Thunder_ can be easily configured to apply OAuth authentication to the entire c
 3. Select `OAuth 2`
 4. Enter the following parameters
 
-| Parameter     | Value                                                                               |
-| ------------- | ----------------------------------------------------------------------------------- |
-| Token Prefix  | `Bearer`                                                                            |
-| Access Token  | leave blank, will be auto generated                                                 |
-| Grant Type    | `Authorization Code`                                                                |
-| Auth URL     | `http://127.0.0.1:8080/realms/SPSH/protocol/openid-connect/auth`   |
-| Token URL     | `http://127.0.0.1:8080/realms/SPSH/protocol/openid-connect/token`                   |
-| Callback URL  | `http://localhost:6789/callback` (Thunder listens here to retrieve generated token) |
-| Client ID     | `spsh`                                                                              |
-| Client Secret | `YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M` (valid for the default configuration)            |
+| Parameter     | Value                                                                    |
+| ------------- | ------------------------------------------------------------------------ |
+| Token Prefix  | `Bearer`                                                                 |
+| Access Token  | leave blank, will be auto generated                                      |
+| Grant Type    | `Password Credentials`                                                   |
+| Token URL     | `http://127.0.0.1:8080/realms/SPSH/protocol/openid-connect/token`        |
+| Client ID     | `spsh`                                                                   |
+| Client Secret | `YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M` (valid for the default configuration) |
+| Username      | `test` (Or another user)                                                 |
+| Password      | `test`                                                                   |
 
 You can test the configuration by clicking `Generate Token` at the bottom of the page.
 
 All requests will now use this authorization by default.
-
-_You can also select `Password Credentials` for the `Grant Type` and enter your credentials directly, if you want to skip the manual auth flow_
 
 ## Insomnia
 
@@ -66,10 +64,6 @@ With a bit of work you can configure Insomnia to behave similiar to Thunder, ins
 Now the `Authorization` header on every request will be automatically set.
 
 ## Troubleshooting
-
-### Keycloak shows `Invalid parameter: redirect_uri`
-
-Make sure you have an up-to-date keycloak realm. Either completely delete and restart the keycloak container (will reimport the default realm) or use the admin-ui to delete the realm and restart keycloak
 
 ### Thunder fails to update token
 

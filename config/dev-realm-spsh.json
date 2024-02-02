@@ -846,9 +846,8 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M",
       "redirectUris": [
-        "http://localhost:9090/*",
+        "http://localhost:9091/*",
         "https://localhost:8099/*",
-        "http://localhost:6789/callback",
         "/*"
       ],
       "webOrigins": [
