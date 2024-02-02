@@ -8,7 +8,6 @@ describe('CreatePersonBodyParams', () => {
     const referenceParams: CreatePersonBodyParams = {
         email: faker.internet.email(),
         referrer: faker.string.uuid(),
-        mandant: faker.string.uuid(),
         name: {
             vorname: faker.person.firstName(),
             familienname: faker.person.lastName(),
@@ -34,7 +33,6 @@ describe('CreatePersonBodyParams', () => {
         const incomingParams: object = {
             email: referenceParams.email,
             referrer: referenceParams.referrer,
-            mandant: referenceParams.mandant,
             name: {
                 vorname: referenceParams.name.vorname,
                 familienname: referenceParams.name.familienname,

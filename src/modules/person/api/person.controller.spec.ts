@@ -75,7 +75,6 @@ describe('PersonController', () => {
                 personUcMock.createPerson.mockResolvedValue(personDto);
 
                 const params: CreatePersonBodyParams = {
-                    mandant: faker.string.uuid(),
                     name: {
                         vorname: faker.person.firstName(),
                         familienname: faker.person.lastName(),
@@ -94,7 +93,6 @@ describe('PersonController', () => {
                 personUcMock.createPerson.mockResolvedValue(error);
 
                 const params: CreatePersonBodyParams = {
-                    mandant: faker.string.uuid(),
                     name: {
                         vorname: faker.person.firstName(),
                         familienname: faker.person.lastName(),
