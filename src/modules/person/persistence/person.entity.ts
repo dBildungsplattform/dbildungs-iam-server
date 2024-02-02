@@ -5,7 +5,7 @@ import { DataProviderEntity } from '../../../persistence/data-provider.entity.js
 import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 
 @Entity({ tableName: 'person' })
-export class PersonEntity extends TimestampedEntity<PersonEntity, 'id'> {
+export class PersonEntity extends TimestampedEntity {
     /**
      * @deprecated This constructor is for automapper only.
      */

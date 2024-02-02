@@ -4,7 +4,7 @@ import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 
 @Entity({ tableName: 'organisation' })
-export class OrganisationEntity extends TimestampedEntity<OrganisationEntity, 'id'> {
+export class OrganisationEntity extends TimestampedEntity {
     public constructor() {
         super();
     }
