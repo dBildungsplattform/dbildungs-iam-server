@@ -17,7 +17,7 @@ _Thunder_ can be easily configured to apply OAuth authentication to the entire c
 | ------------- | ----------------------------------------------------------------------------------- |
 | Token Prefix  | `Bearer`                                                                            |
 | Access Token  | leave blank, will be auto generated                                                 |
-| Grand Type    | `Authorization Code`                                                                |
+| Grant Type    | `Authorization Code`                                                                |
 | Token URL     | `http://127.0.0.1:8080/realms/SPSH/protocol/openid-connect/token`                   |
 | Callback URL  | `http://localhost:6789/callback` (Thunder listens here to retrieve generated token) |
 | Client ID     | `spsh`                                                                              |
@@ -26,6 +26,8 @@ _Thunder_ can be easily configured to apply OAuth authentication to the entire c
 You can test the configuration by clicking `Generate Token` at the bottom of the page.
 
 All requests will now use this authorization by default.
+
+_You can also select `Password Credentials` for the `Grant Type` and enter your credentials directly, if you want to skip the manual auth flow_
 
 ## Insomnia
 
