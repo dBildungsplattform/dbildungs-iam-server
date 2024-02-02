@@ -18,6 +18,7 @@ _Thunder_ can be easily configured to apply OAuth authentication to the entire c
 | Token Prefix  | `Bearer`                                                                            |
 | Access Token  | leave blank, will be auto generated                                                 |
 | Grant Type    | `Authorization Code`                                                                |
+| Auth URL     | `http://127.0.0.1:8080/realms/SPSH/protocol/openid-connect/auth`   |
 | Token URL     | `http://127.0.0.1:8080/realms/SPSH/protocol/openid-connect/token`                   |
 | Callback URL  | `http://localhost:6789/callback` (Thunder listens here to retrieve generated token) |
 | Client ID     | `spsh`                                                                              |
