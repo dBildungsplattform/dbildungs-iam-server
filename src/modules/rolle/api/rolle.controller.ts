@@ -8,7 +8,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Public } from 'nest-keycloak-connect';
 
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
@@ -23,7 +22,6 @@ import { RolleResponse } from './rolle.response.js';
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
 @Controller({ path: 'rolle' })
-@Public()
 export class RolleController {
     public constructor(
         private readonly rolleRepo: RolleRepo,

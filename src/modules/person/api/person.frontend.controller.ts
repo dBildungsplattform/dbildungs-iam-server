@@ -7,7 +7,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Public } from 'nest-keycloak-connect';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import {
     ApiOkResponsePaginated,
@@ -24,7 +23,6 @@ import { PersonendatensatzResponse } from './personendatensatz.response.js';
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen-frontend')
 @Controller({ path: 'personen-frontend' })
-@Public()
 export class PersonFrontendController {
     public constructor(
         private readonly personUc: PersonUc,

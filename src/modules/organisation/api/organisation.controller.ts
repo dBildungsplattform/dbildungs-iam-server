@@ -11,7 +11,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Public } from 'nest-keycloak-connect';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
@@ -29,7 +28,6 @@ import { OrganisationUc } from './organisation.uc.js';
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
 @Controller({ path: 'organisationen' })
-@Public()
 export class OrganisationController {
     public constructor(
         private readonly uc: OrganisationUc,
