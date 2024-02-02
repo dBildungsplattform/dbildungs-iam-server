@@ -95,6 +95,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     mapFrom((src: CreatePersonBodyParams) => src.geburt?.geburtsort),
                 ),
                 forMember((dest: CreatePersonDto) => dest.username, ignore()),
+                forMember((dest: CreatePersonDto) => dest.mandant, ignore()),
             );
             createMap(
                 mapper,
@@ -105,6 +106,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<boolean>) => dest.createdAt, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.updatedAt, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.revision, ignore()),
+                forMember((dest: PersonDo<boolean>) => dest.mandant, ignore()),
             );
             createMap(
                 mapper,
