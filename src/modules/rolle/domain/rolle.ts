@@ -1,42 +1,47 @@
-import { AutoMap } from '@automapper/classes';
+import { RollenArt, RollenMerkmal } from './rolle.enums.js';
 
-import { RolleRepo } from '../repo/rolle.repo.js';
-import { OrganisationService } from '../../organisation/domain/organisation.service.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+export class Rolle<WasPersisted extends boolean> {
+    private constructor(
+        public id: Persisted<string, WasPersisted>,
+        public createdAt: Persisted<Date, WasPersisted>,
+        public updatedAt: Persisted<Date, WasPersisted>,
+        public name: string,
+        public administeredBySchulstrukturknoten: string,
+        public rollenart: RollenArt,
+        public merkmale: RollenMerkmal[],
+    ) {}
 
-export class Rolle {
-    @AutoMap()
-    public id?: string;
+    public static createNew(
+        name: string,
+        administeredBySchulstrukturknoten: string,
+        rollenart: RollenArt,
+        merkmale: RollenMerkmal[],
+    ): Rolle<false> {
+        return new Rolle(undefined, undefined, undefined, name, administeredBySchulstrukturknoten, rollenart, merkmale);
+    }
 
-    @AutoMap()
-    public createdAt?: Date;
+    public static construct<WasPersisted extends boolean = false>(
+        id: string,
+        createdAt: Date,
+        updatedAt: Date,
+        name: string,
+        administeredBySchulstrukturknoten: string,
+        rollenart: RollenArt,
+        merkmale: RollenMerkmal[],
+    ): Rolle<WasPersisted> {
+        return new Rolle(id, createdAt, updatedAt, name, administeredBySchulstrukturknoten, rollenart, merkmale);
+    }
 
-    @AutoMap()
-    public updatedAt?: Date;
-
-    @AutoMap()
-    public name!: string;
-
-    @AutoMap()
-    public administeredBySchulstrukturknoten!: string;
-
-    public async save(
-        rolleRepo: RolleRepo,
-        organisationService: OrganisationService,
-    ): Promise<void | SchulConnexError> {
-        const orgResult: Result<OrganisationDo<true>, DomainError> = await organisationService.findOrganisationById(
-            this.administeredBySchulstrukturknoten,
-        );
-
-        if (!orgResult.ok) {
-            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(orgResult.error);
+    public addMerkmal(merkmal: RollenMerkmal): void {
+        if (!this.merkmale.includes(merkmal)) {
+            this.merkmale.push(merkmal);
         }
+    }
 
-        const rolle: Rolle = await rolleRepo.save(this);
-
-        Object.assign(this, rolle);
+    public removeMerkmal(merkmal: RollenMerkmal): void {
+        const idx: number = this.merkmale.indexOf(merkmal);
+        if (idx !== -1) {
+            this.merkmale.splice(idx, 1);
+        }
     }
 }

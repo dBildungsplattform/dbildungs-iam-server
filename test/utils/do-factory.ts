@@ -13,6 +13,7 @@ import {
 import { PersonRollenZuweisungDo } from '../../src/modules/rolle/domain/person-rollen-zuweisung.do.js';
 import { RolleBerechtigungsZuweisungDo } from '../../src/modules/rolle/domain/rolle-berechtigungs-zuweisung.do.js';
 import { RolleRechtDo } from '../../src/modules/rolle/domain/rolle-recht.do.js';
+import { RollenArt, RollenMerkmal } from '../../src/modules/rolle/domain/rolle.enums.js';
 import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
 import { ServiceProviderZugriffDo } from '../../src/modules/rolle/domain/service-provider-zugriff.do.js';
 import { ServiceProviderDo } from '../../src/modules/rolle/domain/service-provider.do.js';
@@ -135,16 +136,18 @@ export class DoFactory {
 
     public static createRolle<WasPersisted extends boolean>(
         withId: WasPersisted,
-        props?: Partial<RolleAggregate>,
-    ): RolleAggregate {
-        const rolle: Partial<RolleAggregate> = {
+        props?: Partial<RolleAggregate<WasPersisted>>,
+    ): RolleAggregate<WasPersisted> {
+        const rolle: Partial<RolleAggregate<WasPersisted>> = {
             name: faker.person.jobTitle(),
             administeredBySchulstrukturknoten: faker.string.numeric(),
+            rollenart: faker.helpers.enumValue(RollenArt),
+            merkmale: [faker.helpers.enumValue(RollenMerkmal)],
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
         };
-        return Object.assign(new RolleAggregate(), rolle, props);
+        return Object.assign(Object.create(RolleAggregate.prototype) as RolleAggregate<boolean>, rolle, props);
     }
 
     public static createRolleRecht<WasPersisted extends boolean>(
@@ -161,13 +164,13 @@ export class DoFactory {
 
     public static createPersonRollenZuweisung<WasPersisted extends boolean>(
         personId: string,
-        rolle: RolleAggregate,
+        rolleId: string,
         withId: WasPersisted,
         props?: Partial<PersonRollenZuweisungDo<WasPersisted>>,
     ): PersonRollenZuweisungDo<WasPersisted> {
         const personRollenZuweisung: PersonRollenZuweisungDo<false> = {
             person: personId,
-            rolle: rolle,
+            rolle: rolleId,
             schulstrukturknoten: faker.string.numeric(),
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
@@ -177,13 +180,13 @@ export class DoFactory {
     }
 
     public static createRolleBerechtigungsZuweisung<WasPersisted extends boolean>(
-        rolle: RolleAggregate,
+        rolleId: string,
         rolleRecht: RolleRechtDo<boolean>,
         withId: WasPersisted,
         props?: Partial<RolleBerechtigungsZuweisungDo<WasPersisted>>,
     ): RolleBerechtigungsZuweisungDo<WasPersisted> {
         const rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<false> = {
-            rolle: rolle,
+            rolleId: rolleId,
             rolleRecht: rolleRecht,
             validForAdministrativeParents: false,
             validForOrganisationalChildren: false,

@@ -5,4 +5,4 @@ import { Entity } from '@mikro-orm/core';
     tableName: 'rolle_recht',
     discriminatorColumn: 'type',
 })
-export class RolleRechtEntity extends TimestampedEntity<RolleRechtEntity, 'id'> {}
+export class RolleRechtEntity extends TimestampedEntity {}

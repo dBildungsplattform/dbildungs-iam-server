@@ -3,7 +3,7 @@ import { Entity, Property } from '@mikro-orm/core';
 import { AutoMap } from '@automapper/classes';
 
 @Entity({ tableName: 'service_provider' })
-export class ServiceProviderEntity extends TimestampedEntity<ServiceProviderEntity, 'id'> {
+export class ServiceProviderEntity extends TimestampedEntity {
     @AutoMap()
     @Property()
     public name!: string;

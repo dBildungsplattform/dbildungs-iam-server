@@ -3,7 +3,7 @@ import { Entity, ManyToOne, Property } from '@mikro-orm/core';
 import { ServiceProviderEntity } from './service-provider.entity.js';
 
 @Entity({ tableName: 'service_provider_lizenz' })
-export class ServiceProviderLizenzEntity extends TimestampedEntity<ServiceProviderLizenzEntity, 'id'> {
+export class ServiceProviderLizenzEntity extends TimestampedEntity {
     @ManyToOne()
     public serviceProvider!: ServiceProviderEntity;
 

@@ -41,12 +41,12 @@ import { AuthenticationApiModule } from '../modules/authentication/authenticatio
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
                     // Needed for HealthCheck
-                    type: 'postgresql',
                     driverOptions: {
                         connection: {
                             ssl: dbConfig.USE_SSL,
                         },
                     },
+                    connect: false,
                 });
             },
             inject: [ConfigService],

@@ -1,10 +1,9 @@
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { Entity, ManyToOne, Property } from '@mikro-orm/core';
-import { RolleEntity } from './rolle.entity.js';
+import { Entity, Property } from '@mikro-orm/core';
 import { AutoMap } from '@automapper/classes';
 
 @Entity({ tableName: 'person_rollenzuweisung' })
-export class PersonRollenZuweisungEntity extends TimestampedEntity<PersonRollenZuweisungEntity, 'id'> {
+export class PersonRollenZuweisungEntity extends TimestampedEntity {
     /**
      * Links to Person
      */
@@ -12,9 +11,9 @@ export class PersonRollenZuweisungEntity extends TimestampedEntity<PersonRollenZ
     @Property({ nullable: false })
     public person!: string;
 
-    @AutoMap(() => RolleEntity)
-    @ManyToOne()
-    public rolle!: RolleEntity;
+    @AutoMap()
+    @Property({ nullable: false })
+    public rolle!: string;
 
     /**
      * Points to Schulstrukturknoten

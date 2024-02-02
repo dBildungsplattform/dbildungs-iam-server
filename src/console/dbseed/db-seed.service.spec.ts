@@ -9,13 +9,14 @@ import {
 import fs from 'fs';
 import { ServiceProviderEntity } from '../../modules/rolle/entity/service-provider.entity.js';
 import { PersonEntity } from '../../modules/person/persistence/person.entity.js';
-import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
+import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { ServiceProviderZugriffEntity } from '../../modules/rolle/entity/service-provider-zugriff.entity.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { ServiceProviderZugriffFile } from './file/service-provider-zugriff-file.js';
 import { PersonRollenZuweisungFile } from './file/person-rollen-zuweisung-file.js';
 import { DataProviderFile } from './file/data-provider-file.js';
 import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enums.js';
+import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -128,15 +129,18 @@ describe('DbSeedService', () => {
                     `./sql/seeding-integration-test/all/04_rolle.json`,
                     'utf-8',
                 );
-                const entities: RolleEntity[] = dbSeedService.readRolle(fileContentAsStr);
-                const entity: RolleEntity | undefined = entities[0];
-                const rolle: Partial<RolleEntity> = {
+                const rollen: Rolle<true>[] = dbSeedService.readRolle(fileContentAsStr);
+                const rolle: Partial<Rolle<true>> = {
                     id: '301457e9-4fe5-42a6-8084-fec927dc00df',
                     name: 'Rolle2222',
                     administeredBySchulstrukturknoten: '1',
+                    rollenart: RollenArt.LERN,
+                    merkmale: [],
+                    createdAt: expect.any(Date) as Date,
+                    updatedAt: expect.any(Date) as Date,
                 };
-                expect(entities).toHaveLength(1);
-                expect(entity).toEqual(rolle);
+                expect(rollen).toHaveLength(1);
+                expect(rollen[0]).toEqual(rolle);
             });
         });
     });
@@ -192,9 +196,9 @@ describe('DbSeedService', () => {
                     `./sql/seeding-integration-test/all/04_rolle.json`,
                     'utf-8',
                 );
-                const entities: RolleEntity[] = dbSeedService.readRolle(fileContentAsStr);
-                const entity: RolleEntity | undefined = entities[0];
-                const rolle: RolleEntity | undefined = dbSeedService.getRolle(entity!.id);
+                const entities: Rolle<true>[] = dbSeedService.readRolle(fileContentAsStr);
+                const entity: Rolle<true> | undefined = entities[0];
+                const rolle: Rolle<true> | undefined = dbSeedService.getRolle(entity!.id);
                 expect(rolle).toBeTruthy();
             });
         });
