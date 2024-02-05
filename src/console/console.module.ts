@@ -38,6 +38,7 @@ import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloa
                 return defineConfig({
                     clientUrl: config.getOrThrow<DbConfig>('DB').CLIENT_URL,
                     dbName: config.getOrThrow<DbConfig>('DB').DB_NAME,
+                    password: config.getOrThrow<DbConfig>('DB').SECRET,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
                     driverOptions: {
