@@ -16,6 +16,8 @@ import { OrganisationByIdParams } from './organisation-by-id.params.js';
 import { OrganisationController } from './organisation.controller.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationUc } from './organisation.uc.js';
+import { UpdateOrganisationBodyParams } from './update-organisation.body.params.js';
+import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 
 describe('OrganisationController', () => {
     let module: TestingModule;
@@ -83,6 +85,50 @@ describe('OrganisationController', () => {
                     organisationController.createOrganisation({} as CreateOrganisationBodyParams),
                 ).rejects.toThrow(HttpException);
                 expect(organisationUcMock.createOrganisation).toHaveBeenCalledTimes(1);
+            });
+        });
+    });
+
+    describe('updateOrganisation', () => {
+        describe('when usecase returns a DTO', () => {
+            it('should not throw an error', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
+
+                const body: UpdateOrganisationBodyParams = {
+                    kennung: faker.lorem.word(),
+                    name: faker.lorem.word(),
+                    namensergaenzung: faker.lorem.word(),
+                    kuerzel: faker.lorem.word(),
+                    typ: OrganisationsTyp.SONSTIGE,
+                    traegerschaft: Traegerschaft.SONSTIGE,
+                };
+
+                const returnedValue: UpdatedOrganisationDto = plainToClass(UpdatedOrganisationDto, {
+                    id: faker.string.uuid(),
+                    kennung: faker.lorem.word(),
+                    name: faker.lorem.word(),
+                    namensergaenzung: faker.lorem.word(),
+                    kuerzel: faker.lorem.word(),
+                    typ: OrganisationsTyp.SONSTIGE,
+                    traegerschaft: Traegerschaft.SONSTIGE,
+                });
+                organisationUcMock.updateOrganisation.mockResolvedValue(returnedValue);
+                await expect(organisationController.updateOrganisation(params, body)).resolves.not.toThrow();
+                expect(organisationUcMock.updateOrganisation).toHaveBeenCalledTimes(1);
+            });
+        });
+        describe('when usecase returns a SchulConnexError', () => {
+            it('should throw a HttpException', async () => {
+                organisationUcMock.updateOrganisation.mockResolvedValue({} as SchulConnexError);
+                await expect(
+                    organisationController.updateOrganisation(
+                        { organisationId: faker.string.uuid() } as OrganisationByIdParams,
+                        {} as UpdateOrganisationBodyParams,
+                    ),
+                ).rejects.toThrow(HttpException);
+                expect(organisationUcMock.updateOrganisation).toHaveBeenCalledTimes(1);
             });
         });
     });
