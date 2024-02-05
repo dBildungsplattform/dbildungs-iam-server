@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OrganisationRepo } from '../persistence/organisation.repo.js';
-import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityCouldNotBeUpdated, EntityNotFoundError } from '../../../shared/error/index.js';
 import { OrganisationDo } from './organisation.do.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { Paged } from '../../../shared/paging/paged.js';
@@ -34,7 +34,10 @@ export class OrganisationService {
             return { ok: true, value: organisation };
         }
 
-        return { ok: false, error: new EntityCouldNotBeCreated(`Organization could not be updated`) };
+        return {
+            ok: false,
+            error: new EntityCouldNotBeUpdated(`Organization could not be updated`, organisationDo.id),
+        };
     }
 
     public async findOrganisationById(id: string): Promise<Result<OrganisationDo<true>, DomainError>> {
