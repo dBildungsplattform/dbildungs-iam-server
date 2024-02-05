@@ -11,6 +11,8 @@ import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { FindOrganisationDto } from './find-organisation.dto.js';
 import { OrganisationResponse } from './organisation.response.js';
+import { UpdateOrganisationDto } from './update-organisation.dto.js';
+import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 
 @Injectable()
 export class OrganisationUc {
@@ -33,6 +35,25 @@ export class OrganisationUc {
 
         if (result.ok) {
             return this.mapper.map(result.value, OrganisationDo, CreatedOrganisationDto);
+        }
+
+        return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
+    }
+
+    public async updateOrganisation(
+        organisationDto: UpdateOrganisationDto,
+    ): Promise<UpdatedOrganisationDto | SchulConnexError> {
+        const organisationDo: OrganisationDo<true> = this.mapper.map(
+            organisationDto,
+            CreateOrganisationDto,
+            OrganisationDo,
+        );
+        const result: Result<OrganisationDo<true>, DomainError> = await this.organisationService.updateOrganisation(
+            organisationDo,
+        );
+
+        if (result.ok) {
+            return this.mapper.map(result.value, OrganisationDo, UpdatedOrganisationDto);
         }
 
         return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
