@@ -22,6 +22,15 @@ async function bootstrap(): Promise<void> {
         .setTitle('dBildungs IAM')
         .setDescription('The dBildungs IAM server API description')
         .setVersion('1.0')
+        .addOAuth2({
+            type: 'oauth2',
+            flows: {
+                password: {
+                    tokenUrl: `http://127.0.0.1:8080/realms/SPSH/protocol/openid-connect/token`,
+                    scopes: {},
+                },
+            },
+        })
         .build();
 
     app.useLogger(app.get(NestLogger));
@@ -31,7 +40,17 @@ async function bootstrap(): Promise<void> {
         exclude: ['health'],
     });
 
-    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger));
+    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger),{
+        swaggerOptions: {
+            persistAuthorization: true,
+            initOAuth: {
+                clientId: 'spsh',
+                clientSecret: 'YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M',
+                realm: 'SPSH',
+                scopes: ['openid, profile'],
+            }
+        },
+    });
 
     const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
     if (frontendConfig.TRUST_PROXY !== undefined) {
