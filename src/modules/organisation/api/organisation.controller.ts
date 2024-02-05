@@ -25,6 +25,7 @@ import { FindOrganisationDto } from './find-organisation.dto.js';
 import { OrganisationByIdParams } from './organisation-by-id.params.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationUc } from './organisation.uc.js';
+import { UpdateOrganisationBodyParams } from './update-organisation.body.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
@@ -54,6 +55,13 @@ export class OrganisationController {
             return this.mapper.map(result, CreatedOrganisationDto, OrganisationResponse);
         }
         throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+    }
+
+    public async updateOrganisation(
+        @Param() params: OrganisationByIdParams,
+        @Body() body: UpdateOrganisationBodyParams,
+    ): Promise<OrganisationResponse> {
+        return;
     }
 
     @Get(':organisationId')
