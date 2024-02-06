@@ -6,13 +6,26 @@ import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import RedisStore from 'connect-redis';
 import session from 'express-session';
 import passport from 'passport';
-import { RedisClientType, createClient } from 'redis';
+import { createClient, RedisClientType } from 'redis';
 import { NestLogger } from '../core/logging/nest-logger.js';
 import { FrontendConfig, HostConfig, RedisConfig, ServerConfig } from '../shared/config/index.js';
 import { GlobalValidationPipe } from '../shared/validation/index.js';
 import { ServerModule } from './server.module.js';
 import { GlobalPagingHeadersInterceptor } from '../shared/paging/index.js';
 import { sessionAccessTokenMiddleware } from '../modules/authentication/services/session-access-token.middleware.js';
+
+/**
+ * Returns a failure after a specified delay with the given error message.
+ *
+ * The rationale is for this to be basically a sleep(...) call in a retry loop
+ * @param delayInMiliseconds how long to wait for
+ * @param errorMessage what error message to return
+ */
+function rejectAfterDelay(delayInMiliseconds: number, errorMessage: string): Promise<never> {
+    return new Promise((_: (value: PromiseLike<never>) => void, reject: (reason?: string) => void) =>
+        setTimeout(reject.bind(null, errorMessage), delayInMiliseconds),
+    );
+}
 
 async function bootstrap(): Promise<void> {
     const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(ServerModule);
@@ -50,7 +63,22 @@ async function bootstrap(): Promise<void> {
             cert: redisConfig.CERTIFICATE_AUTHORITIES,
         },
     });
-    await redisClient.connect();
+
+    // Starting condition: The connection failed
+    let resultOfConnectionAttempts: Promise<RedisClientType> = Promise.reject();
+    const MaxAttempts: number = 5;
+
+    for (let count: number = 0; count < MaxAttempts; count++) {
+        app.get(NestLogger).log(`Redis connection attempt no: ${count}`);
+        // if the condition still failed (catch), try it again
+        resultOfConnectionAttempts = resultOfConnectionAttempts
+            .catch((_reason: string) => redisClient.connect())
+            // if the retry failed create an ever-failing promise that will fail after timeout but keep the original reason for failure intact
+            .catch((reason: string) => rejectAfterDelay(5000, reason));
+    }
+
+    // Either the connection failed or it worked Here we'll find out
+    await resultOfConnectionAttempts;
 
     const redisStore: RedisStore = new RedisStore({
         client: redisClient,
