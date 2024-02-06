@@ -17,14 +17,15 @@ import {
 } from '@nestjs/common';
 import {
     ApiAcceptedResponse,
-    ApiBadRequestResponse, ApiBearerAuth,
+    ApiBadRequestResponse,
+    ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
     ApiOkResponse,
     ApiTags,
-    ApiUnauthorizedResponse
+    ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';

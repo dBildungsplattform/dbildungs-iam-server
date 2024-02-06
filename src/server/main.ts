@@ -8,7 +8,7 @@ import session from 'express-session';
 import passport from 'passport';
 import { RedisClientType, createClient } from 'redis';
 import { NestLogger } from '../core/logging/nest-logger.js';
-import { FrontendConfig, HostConfig, RedisConfig, ServerConfig } from '../shared/config/index.js';
+import { FrontendConfig, HostConfig, KeycloakConfig, RedisConfig, ServerConfig } from '../shared/config/index.js';
 import { GlobalValidationPipe } from '../shared/validation/index.js';
 import { ServerModule } from './server.module.js';
 import { GlobalPagingHeadersInterceptor } from '../shared/paging/index.js';
@@ -18,6 +18,8 @@ async function bootstrap(): Promise<void> {
     const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(ServerModule);
     const configService: ConfigService<ServerConfig, true> = app.get(ConfigService<ServerConfig, true>);
     const port: number = configService.getOrThrow<HostConfig>('HOST').PORT;
+    const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
+
     const swagger: Omit<OpenAPIObject, 'paths'> = new DocumentBuilder()
         .setTitle('dBildungs IAM')
         .setDescription('The dBildungs IAM server API description')
@@ -26,7 +28,7 @@ async function bootstrap(): Promise<void> {
             type: 'oauth2',
             flows: {
                 password: {
-                    tokenUrl: `http://127.0.0.1:8080/realms/SPSH/protocol/openid-connect/token`,
+                    tokenUrl: `${keycloakConfig.BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/token`,
                     scopes: {},
                 },
             },
@@ -45,15 +47,15 @@ async function bootstrap(): Promise<void> {
         exclude: ['health'],
     });
 
-    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger),{
+    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger), {
         swaggerOptions: {
             persistAuthorization: true,
             initOAuth: {
-                clientId: 'spsh',
-                clientSecret: 'YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M',
-                realm: 'SPSH',
+                clientId: keycloakConfig.CLIENT_ID,
+                clientSecret: keycloakConfig.CLIENT_SECRET,
+                realm: keycloakConfig.REALM_NAME,
                 scopes: ['openid, profile'],
-            }
+            },
         },
     });
 
