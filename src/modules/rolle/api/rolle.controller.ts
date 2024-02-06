@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -29,6 +29,17 @@ export class RolleController {
         private readonly rolleRepo: RolleRepo,
         private readonly orgService: OrganisationService,
     ) {}
+
+    @Get()
+    @ApiOperation({ description: 'List all rollen.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get rollen.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollen.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all rollen.' })
+    public async findRollen(): Promise<RolleResponse[]> {
+        const rollen: Rolle<true>[] = await this.rolleRepo.find();
+
+        return rollen;
+    }
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
