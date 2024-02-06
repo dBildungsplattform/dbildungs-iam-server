@@ -31,6 +31,11 @@ async function bootstrap(): Promise<void> {
                 },
             },
         })
+        .addBearerAuth({
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+        })
         .build();
 
     app.useLogger(app.get(NestLogger));

@@ -17,14 +17,14 @@ import {
 } from '@nestjs/common';
 import {
     ApiAcceptedResponse,
-    ApiBadRequestResponse,
+    ApiBadRequestResponse, ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
     ApiOkResponse,
     ApiTags,
-    ApiUnauthorizedResponse,
+    ApiUnauthorizedResponse
 } from '@nestjs/swagger';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
@@ -53,6 +53,7 @@ import { UpdatePersonDto } from './update-person.dto.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
+@ApiBearerAuth()
 @Controller({ path: 'personen' })
 export class PersonController {
     public constructor(
