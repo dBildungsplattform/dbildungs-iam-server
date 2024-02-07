@@ -22,7 +22,7 @@ import { sessionAccessTokenMiddleware } from '../modules/authentication/services
  * @param errorMessage what error message to return
  */
 function rejectAfterDelay(delayInMiliseconds: number, errorMessage: string): Promise<never> {
-    return new Promise((_: (value: PromiseLike<never>) => void, reject: (reason?: string) => void) =>
+    return new Promise((_resolve: (value: PromiseLike<never>) => void, reject: (reason?: string) => void) =>
         setTimeout(reject.bind(null, errorMessage), delayInMiliseconds),
     );
 }
@@ -68,17 +68,22 @@ async function bootstrap(): Promise<void> {
     let resultOfConnectionAttempts: Promise<RedisClientType> = Promise.reject();
     const MaxAttempts: number = 5;
 
+    app.get(NestLogger).log(`Trying to connect to Redis`);
+
     for (let count: number = 0; count < MaxAttempts; count++) {
-        app.get(NestLogger).log(`Redis connection attempt no: ${count}`);
         // if the condition still failed (catch), try it again
         resultOfConnectionAttempts = resultOfConnectionAttempts
-            .catch((_reason: string) => redisClient.connect())
-            // if the retry failed create an ever-failing promise that will fail after timeout but keep the original reason for failure intact
-            .catch((reason: string) => rejectAfterDelay(5000, reason));
+            .catch(() => redisClient.connect())
+            .catch((reason: string) => {
+                // if the retry failed create an ever-failing promise that will fail after timeout but keep the original reason for failure intact
+                app.get(NestLogger).log(`Attempt ${count} failed, waiting for next attempt`);
+                return rejectAfterDelay(5000, reason);
+            });
     }
 
     // Either the connection failed or it worked Here we'll find out
-    await resultOfConnectionAttempts;
+    await resultOfConnectionAttempts.catch(() => app.get(NestLogger).error('Redis connection could not be made'));
+    app.get(NestLogger).log('Redis-connection made');
 
     const redisStore: RedisStore = new RedisStore({
         client: redisClient,
