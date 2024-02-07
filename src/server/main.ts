@@ -76,13 +76,13 @@ async function bootstrap(): Promise<void> {
             .catch(() => redisClient.connect())
             .catch((reason: string) => {
                 // if the retry failed create an ever-failing promise that will fail after timeout but keep the original reason for failure intact
-                app.get(NestLogger).log(`Attempt ${count} failed, waiting for next attempt`);
-                return rejectAfterDelay(5000, reason);
+                app.get(NestLogger).log(`Attempt ${count} failed: ${reason}, waiting for next attempt`);
+                return rejectAfterDelay(10000, reason);
             });
     }
 
     // Either the connection failed or it worked Here we'll find out
-    await resultOfConnectionAttempts.catch(() => app.get(NestLogger).error('Redis connection could not be made'));
+    await resultOfConnectionAttempts;
     app.get(NestLogger).log('Redis-connection made');
 
     const redisStore: RedisStore = new RedisStore({
