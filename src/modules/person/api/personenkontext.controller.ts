@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
+    ApiBearerAuth,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNoContentResponse,
@@ -46,6 +47,7 @@ import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontexte')
+@ApiBearerAuth()
 @Controller({ path: 'personenkontexte' })
 export class PersonenkontextController {
     public constructor(

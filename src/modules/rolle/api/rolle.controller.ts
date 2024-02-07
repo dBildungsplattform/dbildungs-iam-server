@@ -1,6 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
+    ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
@@ -21,6 +22,7 @@ import { RolleResponse } from './rolle.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
+@ApiBearerAuth()
 @Controller({ path: 'rolle' })
 export class RolleController {
     public constructor(

@@ -2,6 +2,7 @@ import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Controller, Get, Inject, Query, UseFilters } from '@nestjs/common';
 import {
+    ApiBearerAuth,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiTags,
@@ -22,6 +23,7 @@ import { PersonendatensatzResponse } from './personendatensatz.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen-frontend')
+@ApiBearerAuth()
 @Controller({ path: 'personen-frontend' })
 export class PersonFrontendController {
     public constructor(

@@ -3,6 +3,7 @@ import { getMapperToken } from '@automapper/nestjs';
 import { Body, Controller, Get, Inject, Param, Post, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
+    ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
@@ -27,6 +28,7 @@ import { OrganisationUc } from './organisation.uc.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
+@ApiBearerAuth()
 @Controller({ path: 'organisationen' })
 export class OrganisationController {
     public constructor(
