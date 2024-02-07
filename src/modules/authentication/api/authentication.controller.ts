@@ -53,7 +53,7 @@ export class AuthenticationController {
     @Post('logout')
     @Public()
     @ApiOperation({ summary: 'Used to log out the current user.' })
-    @ApiResponse({ status: 302, description: 'Redirect to logout.' })
+    @ApiResponse({ status: 303, description: 'Redirect to logout.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to log out.' })
     public logout(@Req() req: Request, @Res() res: Response): void {
         const idToken: string | undefined = req.passportUser?.id_token;
@@ -76,8 +76,7 @@ export class AuthenticationController {
                         post_logout_redirect_uri: this.logoutRedirect,
                         client_id: this.client.metadata.client_id,
                     });
-
-                    res.redirect(endSessionUrl);
+                    res.redirect(303, endSessionUrl);
                 } else {
                     res.redirect(this.logoutRedirect);
                 }
