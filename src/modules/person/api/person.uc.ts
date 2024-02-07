@@ -11,7 +11,6 @@ import { PersonService } from '../domain/person.service.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonenkontextService } from '../domain/personenkontext.service.js';
-import { CreatePersonDto } from './create-person.dto.js';
 import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonDto } from './person.dto.js';
@@ -20,9 +19,7 @@ import { PersonenkontextDto } from './personenkontext.dto.js';
 import { UserRepository } from '../../user/user.repository.js';
 import { User } from '../../user/user.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { KeycloakClientError } from '../../../shared/error/index.js';
 import { UpdatePersonDto } from './update-person.dto.js';
-import { HttpStatusCode } from 'axios';
 
 @Injectable()
 export class PersonUc {
@@ -34,56 +31,6 @@ export class PersonUc {
         private readonly logger: ClassLogger,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
-
-    public static readonly CREATE_PERSON_DTO_MANDANT_UUID: string = '8c6a9447-c23e-4e70-8595-3bcc88a5577a';
-
-    public async createPerson(personDto: CreatePersonDto): Promise<PersonDto | SchulConnexError> {
-        if (!personDto.vorname) {
-            return new SchulConnexError({
-                titel: 'Anfrage unvollständig',
-                code: HttpStatusCode.BadRequest,
-                subcode: '00',
-                beschreibung: 'Vorname nicht angegeben, wird für die Erzeugung des Benutzernamens gebraucht',
-            });
-        }
-        if (!personDto.familienname) {
-            return new SchulConnexError({
-                titel: 'Anfrage unvollständig',
-                code: HttpStatusCode.BadRequest,
-                subcode: '00',
-                beschreibung: 'Nachname nicht angegeben, wird für die Erzeugung des Benutzernamens gebraucht',
-            });
-        }
-        // create user
-        let user: User;
-        try {
-            user = await this.userRepository.createUser(personDto.vorname, personDto.familienname);
-            await user.save(this.userService);
-        } catch (error) {
-            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new KeycloakClientError(`Can't save user`));
-        }
-
-        // create person
-        const personDo: PersonDo<false> = this.mapper.map(personDto, CreatePersonDto, PersonDo);
-        personDo.keycloakUserId = user.id;
-        personDo.referrer = user.username;
-        personDo.mandant = PersonUc.CREATE_PERSON_DTO_MANDANT_UUID;
-
-        const result: Result<PersonDo<true>, DomainError> = await this.personService.createPerson(personDo);
-        if (result.ok) {
-            const resPersonDto: PersonDto = this.mapper.map(personDo, PersonDo, PersonDto);
-            resPersonDto.startpasswort = user.newPassword;
-            return resPersonDto;
-        }
-
-        // delete user if person could not be created
-        const deleteUserResult: Result<void, DomainError> = await this.userService.delete(user.id);
-        if (deleteUserResult.ok) {
-            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
-        } else {
-            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(deleteUserResult.error);
-        }
-    }
 
     public async findPersonById(id: string): Promise<PersonendatensatzDto | SchulConnexError> {
         const result: Result<PersonDo<true>, DomainError> = await this.personService.findPersonById(id);

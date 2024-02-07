@@ -1,67 +1,49 @@
 
+import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { KeycloakUserService } from '../../keycloak-administration/domain/keycloak-user.service.js';
 import { User } from '../../user/user.js';
 import { UserRepository } from '../../user/user.repository.js';
+import { PersonNameParams } from '../api/person-name.params.js';
+import { PersonRepo } from '../persistence/person.repo.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
 
 export class Person<WasPersisted extends boolean> {
     public static readonly CREATE_PERSON_DTO_MANDANT_UUID: string = '8c6a9447-c23e-4e70-8595-3bcc88a5577a';
 
-    private id: Persisted<string, WasPersisted> | undefined;
-
-    private createdAt: Persisted<Date, WasPersisted> | undefined;
-
-    private updatedAt: Persisted<Date, WasPersisted> | undefined;
-
-    private keycloakUserId: string;
-
-    private mandant: string;
-
-    private familienname: string;
-
-    private vorname: string;
-
-    private revision: string;
-
-    private referrer?: string;
-
-    private stammorganisation?: string;
-
-    private initialenFamilienname?: string;
-
-    private initialenVorname?: string;
-
-    private rufname?: string;
-
-    private nameTitel?: string;
-
-    private nameAnrede?: string[];
-
-    private namePraefix?: string[];
-
-    private nameSuffix?: string[];
-
-    private nameSortierindex?: string;
-
-    private geburtsdatum?: Date;
-
-    private geburtsort?: string;
-
-    private geschlecht?: Geschlecht;
-
-    private lokalisierung?: string;
-
-    private vertrauensstufe?: Vertrauensstufe;
-
-    private auskunftssperre?: boolean;
-
     private constructor(
-        id: Persisted<string, WasPersisted> | undefined,
-        createdAt: Persisted<Date, WasPersisted> | undefined,
-        updatedAt: Persisted<Date, WasPersisted> | undefined,
+        public id: Persisted<string, WasPersisted> | undefined,
+        public createdAt: Persisted<Date, WasPersisted> | undefined,
+        public updatedAt: Persisted<Date, WasPersisted> | undefined,
+        public keycloakUserId: string,
+        public mandant: string,
+        public familienname: string,
+        public vorname: string,
+        public revision: string,
+        public referrer?: string,
+        public stammorganisation?: string,
+        public initialenFamilienname?: string,
+        public initialenVorname?: string,
+        public rufname?: string,
+        public nameTitel?: string,
+        public nameAnrede?: string[],
+        public namePraefix?: string[],
+        public nameSuffix?: string[],
+        public nameSortierindex?: string,
+        public geburtsdatum?: Date,
+        public geburtsort?: string,
+        public geschlecht?: Geschlecht,
+        public lokalisierung?: string,
+        public vertrauensstufe?: Vertrauensstufe,
+        public auskunftssperre?: boolean,
+    ) {}
+
+    public static construct<WasPersisted extends boolean = true>(
+        id: string,
+        createdAt: Date,
+        updatedAt: Date,
         keycloakUserId: string,
         mandant: string,
         familienname: string,
@@ -83,70 +65,13 @@ export class Person<WasPersisted extends boolean> {
         lokalisierung?: string,
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
-    ) {
-        this.id = id;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.keycloakUserId = keycloakUserId;
-        this.mandant = mandant;
-        this.familienname = familienname;
-        this.vorname = vorname;
-        this.revision = revision;
-        this.referrer = referrer;
-        this.stammorganisation = stammorganisation;
-        this.initialenFamilienname = initialenFamilienname;
-        this.initialenVorname = initialenVorname;
-        this.rufname = rufname;
-        this.nameTitel = nameTitel;
-        this.nameAnrede = nameAnrede;
-        this.namePraefix = namePraefix;
-        this.nameSuffix = nameSuffix;
-        this.nameSortierindex = nameSortierindex;
-        this.geburtsdatum = geburtsdatum;
-        this.geburtsort = geburtsort;
-        this.geschlecht = geschlecht;
-        this.lokalisierung = lokalisierung;
-        this.vertrauensstufe = vertrauensstufe;
-        this.auskunftssperre = auskunftssperre;
-    }
-
-    public static async createNew(
-        userRepository: UserRepository,
-        userService: KeycloakUserService,
-        familienname: string,
-        vorname: string,
-        revision: string,
-        referrer?: string,
-        stammorganisation?: string,
-        initialenFamilienname?: string,
-        initialenVorname?: string,
-        rufname?: string,
-        nameTitel?: string,
-        nameAnrede?: string[],
-        namePraefix?: string[],
-        nameSuffix?: string[],
-        nameSortierindex?: string,
-        geburtsdatum?: Date,
-        geburtsort?: string,
-        geschlecht?: Geschlecht,
-        lokalisierung?: string,
-        vertrauensstufe?: Vertrauensstufe,
-        auskunftssperre?: boolean,
-    ): Promise<Person<false> | SchulConnexError> {
-        let user: User;
-        try {
-            user = await userRepository.createUser(vorname, familienname);
-            await user.save(userService);
-        } catch (error) {
-            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new KeycloakClientError(`Can't save user`));
-        }
-
+    ): Person<WasPersisted> {
         return new Person(
-            undefined,
-            undefined,
-            undefined,
-            user.id,
-            Person.CREATE_PERSON_DTO_MANDANT_UUID,
+            id,
+            createdAt,
+            updatedAt,
+            keycloakUserId,
+            mandant,
             familienname,
             vorname,
             revision,
@@ -167,5 +92,64 @@ export class Person<WasPersisted extends boolean> {
             vertrauensstufe,
             auskunftssperre,
         );
+    }
+
+    public static async createNew(
+        personRepo: PersonRepo,
+        userRepository: UserRepository,
+        userService: KeycloakUserService,
+        name: PersonNameParams,
+        revision: string,
+        stammorganisation?: string,
+        geburtsdatum?: Date,
+        geburtsort?: string,
+        geschlecht?: Geschlecht,
+        lokalisierung?: string,
+        vertrauensstufe?: Vertrauensstufe,
+        auskunftssperre?: boolean,
+    ): Promise<Person<true> | SchulConnexError> {
+        let user: User;
+        try {
+            user = await userRepository.createUser(name.vorname, name.familienname);
+            await user.save(userService);
+        } catch (error) {
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new KeycloakClientError(`Can't save user`));
+        }
+
+        const personToCreate: Person<false> = new Person(
+            undefined,
+            undefined,
+            undefined,
+            user.id,
+            Person.CREATE_PERSON_DTO_MANDANT_UUID,
+            name.familienname,
+            name.vorname,
+            revision,
+            user.username,
+            stammorganisation,
+            name.initialenfamilienname,
+            name.initialenvorname,
+            name.rufname,
+            name.titel,
+            name.anrede,
+            name.namenspraefix,
+            name.namenssuffix,
+            name.sortierindex,
+            geburtsdatum,
+            geburtsort,
+            geschlecht,
+            lokalisierung,
+            vertrauensstufe,
+            auskunftssperre,
+        );
+        try {
+            const createdPerson: Person<true> = await personRepo.save(personToCreate);
+            return createdPerson;
+        } catch (error) {
+            //TODO: REMOVE KEYCLOAK USER
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                new EntityCouldNotBeCreated(`Can't save user`),
+            );
+        }
     }
 }

@@ -51,6 +51,10 @@ import { PersonenkontextResponse } from './personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { UpdatePersonDto } from './update-person.dto.js';
+import { Person } from '../domain/person.js';
+import { PersonRepo } from '../persistence/person.repo.js';
+import { UserRepository } from '../../user/user.repository.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -58,6 +62,9 @@ import { UpdatePersonDto } from './update-person.dto.js';
 @Public()
 export class PersonController {
     public constructor(
+        private readonly personRepo: PersonRepo,
+        private readonly userRepository: UserRepository,
+        private readonly keycloakUserService: KeycloakUserService,
         private readonly personUc: PersonUc,
         private readonly personenkontextUc: PersonenkontextUc,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
@@ -71,8 +78,20 @@ export class PersonController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
     public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
-        const dto: CreatePersonDto = this.mapper.map(params, CreatePersonBodyParams, CreatePersonDto);
-        const result: PersonDto | SchulConnexError = await this.personUc.createPerson(dto);
+        const result: Person<true> | SchulConnexError = await Person.createNew(
+            this.personRepo,
+            this.userRepository,
+            this.keycloakUserService,
+            params.name,
+            revision: string,
+            params.stammorganisation,
+            params.geburt?.datum,
+            params.geburt?.geburtsort,
+            params.geschlecht,
+            params.lokalisierung,
+            params.vertrauensstufe,
+            params.auskunftssperre,
+        );
 
         if (result instanceof SchulConnexError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
