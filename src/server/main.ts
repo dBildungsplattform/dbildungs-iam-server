@@ -52,7 +52,6 @@ async function bootstrap(): Promise<void> {
             persistAuthorization: true,
             initOAuth: {
                 clientId: keycloakConfig.CLIENT_ID,
-                clientSecret: keycloakConfig.CLIENT_SECRET,
                 realm: keycloakConfig.REALM_NAME,
                 scopes: ['openid, profile'],
             },
