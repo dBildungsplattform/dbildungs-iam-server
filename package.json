@@ -57,7 +57,7 @@
         "nest-keycloak-connect": "^1.9.5",
         "openid-client": "^5.6.4",
         "passport": "^0.7.0",
-        "redis": "^4.6.12",
+        "redis": "^4.6.13",
         "reflect-metadata": "^0.1.14",
         "rxjs": "^7.2.0",
         "winston": "^3.11.0"
