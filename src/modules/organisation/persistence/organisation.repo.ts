@@ -40,6 +40,16 @@ export class OrganisationRepo {
         return this.mapper.map(organisation, OrganisationEntity, OrganisationDo);
     }
 
+    public async exists(id: string): Promise<boolean> {
+        const organisation: Option<Loaded<OrganisationEntity, never, 'id', never>> = await this.em.findOne(
+            OrganisationEntity,
+            { id },
+            { fields: ['id'] as const },
+        );
+
+        return !!organisation;
+    }
+
     public async findById(id: string): Promise<Option<OrganisationDo<true>>> {
         const organisation: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
         if (organisation) {

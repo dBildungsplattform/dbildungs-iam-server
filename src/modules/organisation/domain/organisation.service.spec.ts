@@ -65,10 +65,10 @@ describe('OrganisationService', () => {
             });
         });
 
-        it('should return a domain error if parent organisation does not exist', async () => {
+        it('should return a domain error if first parent organisation does not exist', async () => {
             const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
             organisationDo.administriertVon = faker.string.uuid();
-            organisationRepoMock.findById.mockResolvedValueOnce(undefined);
+            organisationRepoMock.exists.mockResolvedValueOnce(false);
 
             const result: Result<OrganisationDo<true>> = await organisationService.createOrganisation(organisationDo);
 
@@ -78,10 +78,10 @@ describe('OrganisationService', () => {
             });
         });
 
-        it('should return a domain error if child organisation does not exist', async () => {
+        it('should return a domain error if second parent organisation does not exist', async () => {
             const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
             organisationDo.zugehoerigZu = faker.string.uuid();
-            organisationRepoMock.findById.mockResolvedValueOnce(undefined);
+            organisationRepoMock.exists.mockResolvedValueOnce(false);
 
             const result: Result<OrganisationDo<true>> = await organisationService.createOrganisation(organisationDo);
 
@@ -166,7 +166,7 @@ describe('OrganisationService', () => {
         it('should update the organisation', async () => {
             const parentId: string = faker.string.uuid();
             const childId: string = faker.string.uuid();
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            organisationRepoMock.exists.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
             const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
             organisationRepoMock.save.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
@@ -182,7 +182,7 @@ describe('OrganisationService', () => {
         it('should return a domain error if parent organisation does not exist', async () => {
             const parentId: string = faker.string.uuid();
             const childId: string = faker.string.uuid();
-            organisationRepoMock.findById.mockResolvedValueOnce(undefined);
+            organisationRepoMock.exists.mockResolvedValueOnce(false);
 
             const result: Result<void> = await organisationService.setAdministriertVon(parentId, childId);
 
@@ -195,7 +195,7 @@ describe('OrganisationService', () => {
         it('should return a domain error if child organisation does not exist', async () => {
             const parentId: string = faker.string.uuid();
             const childId: string = faker.string.uuid();
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            organisationRepoMock.exists.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(undefined);
 
             const result: Result<void> = await organisationService.setAdministriertVon(parentId, childId);
@@ -209,7 +209,7 @@ describe('OrganisationService', () => {
         it('should return a domain error if the organisation could not be updated', async () => {
             const parentId: string = faker.string.uuid();
             const childId: string = faker.string.uuid();
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            organisationRepoMock.exists.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
 
             const result: Result<void> = await organisationService.setAdministriertVon(parentId, childId);
@@ -225,7 +225,7 @@ describe('OrganisationService', () => {
         it('should update the organisation', async () => {
             const parentId: string = faker.string.uuid();
             const childId: string = faker.string.uuid();
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            organisationRepoMock.exists.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
             const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
             organisationRepoMock.save.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
@@ -241,7 +241,7 @@ describe('OrganisationService', () => {
         it('should return a domain error if parent organisation does not exist', async () => {
             const parentId: string = faker.string.uuid();
             const childId: string = faker.string.uuid();
-            organisationRepoMock.findById.mockResolvedValueOnce(undefined);
+            organisationRepoMock.exists.mockResolvedValueOnce(false);
 
             const result: Result<void> = await organisationService.setZugehoerigZu(parentId, childId);
 
@@ -254,7 +254,7 @@ describe('OrganisationService', () => {
         it('should return a domain error if child organisation does not exist', async () => {
             const parentId: string = faker.string.uuid();
             const childId: string = faker.string.uuid();
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            organisationRepoMock.exists.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(undefined);
 
             const result: Result<void> = await organisationService.setZugehoerigZu(parentId, childId);
@@ -268,7 +268,7 @@ describe('OrganisationService', () => {
         it('should return a domain error if the organisation could not be updated', async () => {
             const parentId: string = faker.string.uuid();
             const childId: string = faker.string.uuid();
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            organisationRepoMock.exists.mockResolvedValueOnce(true);
             organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
 
             const result: Result<void> = await organisationService.setZugehoerigZu(parentId, childId);

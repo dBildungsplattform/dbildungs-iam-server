@@ -17,17 +17,14 @@ export class OrganisationService {
     public async createOrganisation(
         organisationDo: OrganisationDo<false>,
     ): Promise<Result<OrganisationDo<true>, DomainError>> {
-        if (
-            organisationDo.administriertVon &&
-            !(await this.organisationRepo.findById(organisationDo.administriertVon))
-        ) {
+        if (organisationDo.administriertVon && !(await this.organisationRepo.exists(organisationDo.administriertVon))) {
             return {
                 ok: false,
                 error: new EntityNotFoundError('Organisation', organisationDo.administriertVon),
             };
         }
 
-        if (organisationDo.zugehoerigZu && !(await this.organisationRepo.findById(organisationDo.zugehoerigZu))) {
+        if (organisationDo.zugehoerigZu && !(await this.organisationRepo.exists(organisationDo.zugehoerigZu))) {
             return {
                 ok: false,
                 error: new EntityNotFoundError('Organisation', organisationDo.zugehoerigZu),
@@ -72,8 +69,8 @@ export class OrganisationService {
     }
 
     public async setAdministriertVon(parentId: string, childId: string): Promise<Result<void, DomainError>> {
-        const parentOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(parentId);
-        if (!parentOrganisation) {
+        const parentExists: boolean = await this.organisationRepo.exists(parentId);
+        if (!parentExists) {
             return {
                 ok: false,
                 error: new EntityNotFoundError('Organisation', parentId),
@@ -99,8 +96,8 @@ export class OrganisationService {
     }
 
     public async setZugehoerigZu(parentId: string, childId: string): Promise<Result<void, DomainError>> {
-        const parentOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(parentId);
-        if (!parentOrganisation) {
+        const parentExists: boolean = await this.organisationRepo.exists(parentId);
+        if (!parentExists) {
             return {
                 ok: false,
                 error: new EntityNotFoundError('Organisation', parentId),
