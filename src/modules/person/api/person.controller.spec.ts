@@ -6,7 +6,7 @@ import { MapperTestModule } from '../../../../test/utils/index.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
 import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
-import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../../person-kontext/domain/personenkontext.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonenkontextBodyParams } from '../../person-kontext/api/create-personenkontext.body.params.js';
 import { CreatedPersonenkontextDto } from '../../person-kontext/api/created-personenkontext.dto.js';

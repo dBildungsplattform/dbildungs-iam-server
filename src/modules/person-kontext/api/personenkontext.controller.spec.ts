@@ -5,7 +5,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MapperTestModule } from '../../../../test/utils/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
-import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../../person/domain/personenkontext.enums.js';
+import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
 import { PersonApiMapperProfile } from '../../person/api/person-api.mapper.profile.js';
 import { PersonDto } from '../../person/api/person.dto.js';

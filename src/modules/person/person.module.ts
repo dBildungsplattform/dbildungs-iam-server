@@ -4,7 +4,7 @@ import { PersonService } from './domain/person.service.js';
 import { PersonPersistenceMapperProfile } from './persistence/person-persistence.mapper.profile.js';
 import { PersonRepo } from './persistence/person.repo.js';
 import { PersonenkontextRepo } from './persistence/personenkontext.repo.js';
-import { PersonenkontextService } from './domain/personenkontext.service.js';
+import { PersonenkontextService } from '../person-kontext/domain/personenkontext.service.js';
 
 @Module({
     imports: [LoggerModule.register(PersonModule.name)],

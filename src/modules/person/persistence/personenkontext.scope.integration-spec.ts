@@ -11,7 +11,7 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { PersonenkontextDo } from '../domain/personenkontext.do.js';
+import { PersonenkontextDo } from '../../person-kontext/domain/personenkontext.do.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';

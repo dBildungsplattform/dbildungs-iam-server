@@ -1,7 +1,7 @@
 import { AutoMap } from '@automapper/classes';
 import { DateTimeType, Entity, Enum, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../../person-kontext/domain/personenkontext.enums.js';
 
 @Entity({ tableName: 'personenkontext' })
 export class PersonenkontextEntity extends TimestampedEntity {

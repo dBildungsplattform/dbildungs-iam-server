@@ -3,10 +3,10 @@ import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-
 import { DomainError, EntityCouldNotBeDeleted, EntityNotFoundError } from '../../../shared/error/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { PersonRepo } from '../persistence/person.repo.js';
-import { PersonenkontextRepo } from '../persistence/personenkontext.repo.js';
-import { PersonenkontextScope } from '../persistence/personenkontext.scope.js';
-import { PersonDo } from './person.do.js';
+import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { PersonenkontextRepo } from '../../person/persistence/personenkontext.repo.js';
+import { PersonenkontextScope } from '../../person/persistence/personenkontext.scope.js';
+import { PersonDo } from '../../person/domain/person.do.js';
 import { PersonenkontextDo } from './personenkontext.do.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';

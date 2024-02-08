@@ -7,9 +7,9 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { Paged } from '../../../shared/paging/paged.js';
 import { PersonDo } from '../../person/domain/person.do.js';
 import { PersonService } from '../../person/domain/person.service.js';
-import { PersonenkontextDo } from '../../person/domain/personenkontext.do.js';
-import { Personenstatus, Rolle, SichtfreigabeType } from '../../person/domain/personenkontext.enums.js';
-import { PersonenkontextService } from '../../person/domain/personenkontext.service.js';
+import { PersonenkontextDo } from '../domain/personenkontext.do.js';
+import { Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { PersonenkontextService } from '../domain/personenkontext.service.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';

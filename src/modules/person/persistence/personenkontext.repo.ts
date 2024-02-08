@@ -3,7 +3,7 @@ import { getMapperToken } from '@automapper/nestjs';
 import { Loaded } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
-import { PersonenkontextDo } from '../domain/personenkontext.do.js';
+import { PersonenkontextDo } from '../../person-kontext/domain/personenkontext.do.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
 

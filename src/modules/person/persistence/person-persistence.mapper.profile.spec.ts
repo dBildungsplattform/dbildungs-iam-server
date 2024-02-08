@@ -6,7 +6,7 @@ import { MappingError } from '../../../shared/error/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonEntity } from '../persistence/person.entity.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
-import { PersonenkontextDo } from '../domain/personenkontext.do.js';
+import { PersonenkontextDo } from '../../person-kontext/domain/personenkontext.do.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 
 describe('PersonPersistenceMapperProfile', () => {

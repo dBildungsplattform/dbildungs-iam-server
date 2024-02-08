@@ -1,7 +1,7 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { Jahrgangsstufe, Personenstatus } from '../../person/domain/personenkontext.enums.js';
+import { Jahrgangsstufe, Personenstatus } from '../domain/personenkontext.enums.js';
 
 export class UpdatePersonenkontextBodyParams {
     @AutoMap()

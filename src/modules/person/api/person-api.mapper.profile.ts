@@ -4,7 +4,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { UserDo } from '../../keycloak-administration/index.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { PersonDo } from '../domain/person.do.js';
-import { PersonenkontextDo } from '../domain/personenkontext.do.js';
+import { PersonenkontextDo } from '../../person-kontext/domain/personenkontext.do.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from './create-person.dto.js';
 import { CreatePersonenkontextBodyParams } from '../../person-kontext/api/create-personenkontext.body.params.js';
