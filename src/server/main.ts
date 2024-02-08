@@ -14,19 +14,6 @@ import { ServerModule } from './server.module.js';
 import { GlobalPagingHeadersInterceptor } from '../shared/paging/index.js';
 import { sessionAccessTokenMiddleware } from '../modules/authentication/services/session-access-token.middleware.js';
 
-/**
- * Returns a failure after a specified delay with the given error message.
- *
- * The rationale is for this to be basically a sleep(...) call in a retry loop
- * @param delayInMiliseconds how long to wait for
- * @param errorMessage what error message to return
- */
-function rejectAfterDelay(delayInMiliseconds: number, errorMessage: string): Promise<never> {
-    return new Promise((_resolve: (value: PromiseLike<never>) => void, reject: (reason?: string) => void) =>
-        setTimeout(reject.bind(null, errorMessage), delayInMiliseconds),
-    );
-}
-
 async function bootstrap(): Promise<void> {
     const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(ServerModule);
     const configService: ConfigService<ServerConfig, true> = app.get(ConfigService<ServerConfig, true>);
@@ -89,25 +76,16 @@ async function bootstrap(): Promise<void> {
         },
     });
 
-    // Starting condition: The connection failed
-    let resultOfConnectionAttempts: Promise<RedisClientType> = Promise.reject();
-    const MaxAttempts: number = 5;
+    /*
+    Just retrying does not work.
+    Once the connection has failed if no error handler is registered later connection attemps might just fail because
+    the client library assumes termination of the process if failure
+    Also the documentation expressly requires listening to on('error')
+     */
 
-    app.get(NestLogger).log(`Trying to connect to Redis`);
-
-    for (let count: number = 0; count < MaxAttempts; count++) {
-        // if the condition still failed (catch), try it again
-        resultOfConnectionAttempts = resultOfConnectionAttempts
-            .catch(() => redisClient.connect())
-            .catch((reason: string) => {
-                // if the retry failed create an ever-failing promise that will fail after timeout but keep the original reason for failure intact
-                app.get(NestLogger).log(`Attempt ${count} failed: ${reason}, waiting for next attempt`);
-                return rejectAfterDelay(10000, reason);
-            });
-    }
-
-    // Either the connection failed or it worked Here we'll find out
-    await resultOfConnectionAttempts;
+    await redisClient
+        .on('error', (error: Error) => app.get(NestLogger).error(`Redis connection failed: ${error.message}`))
+        .connect();
     app.get(NestLogger).log('Redis-connection made');
 
     const redisStore: RedisStore = new RedisStore({
