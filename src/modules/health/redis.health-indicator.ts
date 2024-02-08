@@ -1,14 +1,16 @@
 import { HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
 import { Injectable } from '@nestjs/common';
-import { RedisConfig } from '../../shared/config/index.js';
+import { RedisConfig, ServerConfig } from '../../shared/config/index.js';
 import { createClient, RedisClientType } from 'redis';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class RedisHealthIndicator extends HealthIndicator {
     private redisClient: RedisClientType;
 
-    public constructor(redisConfig: RedisConfig) {
+    public constructor(configService: ConfigService<ServerConfig>) {
         super();
+        const redisConfig: RedisConfig = configService.getOrThrow<RedisConfig>('REDIS');
         this.redisClient = createClient({
             username: redisConfig.USERNAME,
             password: redisConfig.PASSWORD,
