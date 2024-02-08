@@ -16,7 +16,7 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
    * keycloak
    * redis
 3. Create a `.env` file and set the required environment variables from `env.config.ts`
-4. run `npm run setup` to initialize the DB
+4. run `npm run setup` to initialize the DB and seed data
 5. Run `npm run start:debug` to start the server
 6. Server runs on the url printed in the console
 

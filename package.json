@@ -26,7 +26,7 @@
         "start:console": "nest start console --",
         "db:init": "npm run start:console -- db init",
         "db:seed": "npm run start:console -- db seed",
-        "setup": "npm run db:init"
+        "setup": "npm run db:init && npm run db:seed dev"
     },
     "dependencies": {
         "@automapper/classes": "^8.8.1",

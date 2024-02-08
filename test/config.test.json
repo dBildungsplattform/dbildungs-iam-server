@@ -32,6 +32,9 @@
         "PASSWORD": "password",
         "USE_TLS": false
     },
+    "DATA": {
+        "ROOT_ORGANISATION_ID": "a10852ab-1d75-45a7-9421-b1cbd8abe693"
+    },
     "LOGGING": {
         "DEFAULT_LOG_LEVEL": "info"
     }
