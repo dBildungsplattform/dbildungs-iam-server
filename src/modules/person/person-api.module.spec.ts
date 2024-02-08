@@ -7,8 +7,8 @@ import {
 } from '../../../test/utils/index.js';
 import { PersonController } from './api/person.controller.js';
 import { PersonUc } from './api/person.uc.js';
-import { PersonenkontextController } from './api/personenkontext.controller.js';
-import { PersonenkontextUc } from './api/personenkontext.uc.js';
+import { PersonenkontextController } from '../person-kontext/api/personenkontext.controller.js';
+import { PersonenkontextUc } from '../person-kontext/api/personenkontext.uc.js';
 import { PersonApiModule } from './person-api.module.js';
 
 describe('PersonApiModule', () => {

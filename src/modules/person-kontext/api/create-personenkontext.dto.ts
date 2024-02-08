@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { Rolle, Personenstatus, Jahrgangsstufe } from '../domain/personenkontext.enums.js';
+import { Rolle, Personenstatus, Jahrgangsstufe } from '../../person/domain/personenkontext.enums.js';
 
 export class CreatePersonenkontextDto {
     @AutoMap()

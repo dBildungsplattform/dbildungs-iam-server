@@ -2,7 +2,7 @@ import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { PagedQueryParams } from '../../../shared/paging/paged.query.params.js';
-import { Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { Personenstatus, Rolle, SichtfreigabeType } from '../../person/domain/personenkontext.enums.js';
 
 export class PersonenkontextQueryParams extends PagedQueryParams {
     @AutoMap()

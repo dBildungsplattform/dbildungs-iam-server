@@ -1,6 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import 'reflect-metadata';
-import { Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { Personenstatus, Rolle, SichtfreigabeType } from '../../person/domain/personenkontext.enums.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 
 describe('PersonenkontextQueryParams', () => {

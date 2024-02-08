@@ -1,8 +1,8 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
-import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../../person/domain/personenkontext.enums.js';
 import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-organisation.dto.js';
-import { LoeschungResponse } from './loeschung.response.js';
+import { LoeschungResponse } from '../../person/api/loeschung.response.js';
 
 export class PersonenkontextResponse {
     @AutoMap()

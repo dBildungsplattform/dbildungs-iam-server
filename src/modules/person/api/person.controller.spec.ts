@@ -8,8 +8,8 @@ import { Paged, PagedResponse } from '../../../shared/paging/index.js';
 import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
-import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
-import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { CreatePersonenkontextBodyParams } from '../../person-kontext/api/create-personenkontext.body.params.js';
+import { CreatedPersonenkontextDto } from '../../person-kontext/api/created-personenkontext.dto.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonByIdParams } from './person-by-id.param.js';
@@ -19,10 +19,10 @@ import { PersonUc } from './person.uc.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
-import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
-import { PersonenkontextDto } from './personenkontext.dto.js';
-import { PersonenkontextResponse } from './personenkontext.response.js';
-import { PersonenkontextUc } from './personenkontext.uc.js';
+import { PersonenkontextQueryParams } from '../../person-kontext/api/personenkontext-query.params.js';
+import { PersonenkontextDto } from '../../person-kontext/api/personenkontext.dto.js';
+import { PersonenkontextResponse } from '../../person-kontext/api/personenkontext.response.js';
+import { PersonenkontextUc } from '../../person-kontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 
 describe('PersonController', () => {

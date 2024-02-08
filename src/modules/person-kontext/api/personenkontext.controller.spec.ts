@@ -5,12 +5,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MapperTestModule } from '../../../../test/utils/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
-import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../../person/domain/personenkontext.enums.js';
 import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
-import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
-import { PersonDto } from './person.dto.js';
-import { PersonendatensatzDto } from './personendatensatz.dto.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { PersonApiMapperProfile } from '../../person/api/person-api.mapper.profile.js';
+import { PersonDto } from '../../person/api/person.dto.js';
+import { PersonendatensatzDto } from '../../person/api/personendatensatz.dto.js';
+import { PersonendatensatzResponse } from '../../person/api/personendatensatz.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextController } from './personenkontext.controller.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
@@ -18,7 +18,7 @@ import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
 import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
-import { DeleteRevisionBodyParams } from './delete-revision.body.params.js';
+import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
