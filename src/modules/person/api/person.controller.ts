@@ -83,7 +83,7 @@ export class PersonController {
             this.userRepository,
             this.keycloakUserService,
             params.name,
-            revision: string,
+            '1',
             params.stammorganisation,
             params.geburt?.datum,
             params.geburt?.geburtsort,
