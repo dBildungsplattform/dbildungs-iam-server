@@ -10,6 +10,7 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { Unprotected } from 'nest-keycloak-connect';
 import { KeycloakHealthIndicator } from './keycloak.health-indicator.js';
+import { RedisHealthIndicator } from './redis.health-indicator.js';
 
 @Controller('health')
 @Unprotected()
@@ -20,6 +21,7 @@ export class HealthController {
         private mikroOrm: MikroOrmHealthIndicator,
         private em: EntityManager,
         private keycloak: KeycloakHealthIndicator,
+        private redis: RedisHealthIndicator,
     ) {}
 
     @Get()
@@ -29,6 +31,7 @@ export class HealthController {
             (): Promise<HealthIndicatorResult> =>
                 this.mikroOrm.pingCheck('database', { connection: this.em.getConnection() }),
             (): Promise<HealthIndicatorResult> => this.keycloak.check(),
+            (): Promise<HealthIndicatorResult> => this.redis.check(),
         ]);
     }
 }
