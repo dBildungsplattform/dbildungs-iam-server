@@ -8,7 +8,7 @@ import session from 'express-session';
 import passport from 'passport';
 import { RedisClientType, createClient } from 'redis';
 import { NestLogger } from '../core/logging/nest-logger.js';
-import { FrontendConfig, HostConfig, RedisConfig, ServerConfig } from '../shared/config/index.js';
+import { FrontendConfig, HostConfig, KeycloakConfig, RedisConfig, ServerConfig } from '../shared/config/index.js';
 import { GlobalValidationPipe } from '../shared/validation/index.js';
 import { ServerModule } from './server.module.js';
 import { GlobalPagingHeadersInterceptor } from '../shared/paging/index.js';
@@ -18,10 +18,26 @@ async function bootstrap(): Promise<void> {
     const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(ServerModule);
     const configService: ConfigService<ServerConfig, true> = app.get(ConfigService<ServerConfig, true>);
     const port: number = configService.getOrThrow<HostConfig>('HOST').PORT;
+    const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
+
     const swagger: Omit<OpenAPIObject, 'paths'> = new DocumentBuilder()
         .setTitle('dBildungs IAM')
         .setDescription('The dBildungs IAM server API description')
         .setVersion('1.0')
+        .addOAuth2({
+            type: 'oauth2',
+            flows: {
+                password: {
+                    tokenUrl: `${keycloakConfig.BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/token`,
+                    scopes: {},
+                },
+            },
+        })
+        .addBearerAuth({
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+        })
         .build();
 
     app.useLogger(app.get(NestLogger));
@@ -31,7 +47,16 @@ async function bootstrap(): Promise<void> {
         exclude: ['health'],
     });
 
-    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger));
+    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger), {
+        swaggerOptions: {
+            persistAuthorization: true,
+            initOAuth: {
+                clientId: keycloakConfig.CLIENT_ID,
+                realm: keycloakConfig.REALM_NAME,
+                scopes: ['openid, profile'],
+            },
+        },
+    });
 
     const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
     if (frontendConfig.TRUST_PROXY !== undefined) {
