@@ -1,6 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
+    ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
@@ -8,7 +9,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Public } from 'nest-keycloak-connect';
 
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
@@ -22,8 +22,8 @@ import { RolleResponse } from './rolle.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
+@ApiBearerAuth()
 @Controller({ path: 'rolle' })
-@Public()
 export class RolleController {
     public constructor(
         private readonly rolleRepo: RolleRepo,
