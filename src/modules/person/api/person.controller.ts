@@ -53,7 +53,9 @@ import { Person } from '../domain/person.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 import { UserRepository } from '../../user/user.repository.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { PersonDDDDto } from './personDDD.dto.js';
+import { PersonDDDDto } from './person-DDD.dto.js';
+import { PersonNameDDDDto } from './person-name-DDD.dto.js';
+import { PersonGeburtDDDDto } from './person-geburt-DDD.dto.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -96,7 +98,25 @@ export class PersonController {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
         }
 
-        const personDto: PersonDDDDto = new PersonDDDDto();
+        const personName: PersonNameDDDDto = new PersonNameDDDDto(result.vorname, result.familienname);
+        const personGeburt: PersonGeburtDDDDto = new PersonGeburtDDDDto();
+
+        const personDto: PersonDDDDto = new PersonDDDDto(
+            result.id as string,
+            result.createdAt as Date,
+            result.updatedAt as Date,
+            result.keycloakUserId,
+            result.referrer,
+            result.mandant,
+            result.stammorganisation,
+            personName,
+            personGeburt,
+            result.geschlecht,
+            result.lokalisierung,
+            result.vertrauensstufe,
+            result.auskunftssperre,
+            result.revision,
+        );
 
         const personendatensatzDto: PersonendatensatzDto = {
             person: personDto,
