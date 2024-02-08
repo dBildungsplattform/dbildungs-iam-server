@@ -3,7 +3,7 @@ import { LoggerModule } from '../../core/logging/logger.module.js';
 import { PersonService } from './domain/person.service.js';
 import { PersonPersistenceMapperProfile } from './persistence/person-persistence.mapper.profile.js';
 import { PersonRepo } from './persistence/person.repo.js';
-import { PersonenkontextRepo } from './persistence/personenkontext.repo.js';
+import { PersonenkontextRepo } from '../person-kontext/persistence/personenkontext.repo.js';
 import { PersonenkontextService } from '../person-kontext/domain/personenkontext.service.js';
 
 @Module({

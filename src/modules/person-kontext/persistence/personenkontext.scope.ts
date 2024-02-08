@@ -1,7 +1,7 @@
 import { EntityName } from '@mikro-orm/core';
 import { ScopeBase } from '../../../shared/persistence/scope-base.js';
 import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
-import { Personenstatus, Rolle, SichtfreigabeType } from '../../person-kontext/domain/personenkontext.enums.js';
+import { Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 
 type FindProps = {

@@ -5,7 +5,7 @@ import { PersonRepo } from './persistence/person.repo.js';
 import { PersonModule } from './person.module.js';
 import { PersonPersistenceMapperProfile } from './persistence/person-persistence.mapper.profile.js';
 import { PersonenkontextService } from '../person-kontext/domain/personenkontext.service.js';
-import { PersonenkontextRepo } from './persistence/personenkontext.repo.js';
+import { PersonenkontextRepo } from '../person-kontext/persistence/personenkontext.repo.js';
 
 describe('PersonModule', () => {
     let module: TestingModule;

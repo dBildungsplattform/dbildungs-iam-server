@@ -8,7 +8,7 @@ import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
-import { PersonenkontextRepo } from '../../person/persistence/personenkontext.repo.js';
+import { PersonenkontextRepo } from '../persistence/personenkontext.repo.js';
 import { PersonDo } from '../../person/domain/person.do.js';
 import { PersonenkontextDo } from './personenkontext.do.js';
 import { PersonenkontextService } from './personenkontext.service.js';

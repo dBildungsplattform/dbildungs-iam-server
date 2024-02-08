@@ -4,7 +4,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../../person-kontext/domain/personenkontext.do.js';
 import { PersonEntity } from '../persistence/person.entity.js';
-import { PersonenkontextEntity } from './personenkontext.entity.js';
+import { PersonenkontextEntity } from '../../person-kontext/persistence/personenkontext.entity.js';
 
 @Injectable()
 export class PersonPersistenceMapperProfile extends AutomapperProfile {
