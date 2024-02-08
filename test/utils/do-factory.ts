@@ -135,6 +135,7 @@ export class DoFactory {
     }
 
     public static createRolle<WasPersisted extends boolean>(
+        this: void,
         withId: WasPersisted,
         props?: Partial<RolleAggregate<WasPersisted>>,
     ): RolleAggregate<WasPersisted> {
