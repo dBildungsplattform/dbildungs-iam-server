@@ -34,14 +34,12 @@ import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/pagin
 import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
 import { PersonUc } from '../api/person.uc.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
-import { CreatePersonDto } from './create-person.dto.js';
 import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
 import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
-import { PersonDto } from './person.dto.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
@@ -55,6 +53,7 @@ import { Person } from '../domain/person.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 import { UserRepository } from '../../user/user.repository.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { PersonDDDDto } from './personDDD.dto.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -97,8 +96,10 @@ export class PersonController {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
         }
 
+        const personDto: PersonDDDDto = new PersonDDDDto();
+
         const personendatensatzDto: PersonendatensatzDto = {
-            person: result,
+            person: personDto,
             personenkontexte: [],
         };
         const personendatensatzResponse: PersonendatensatzResponse = this.mapper.map(
