@@ -6,14 +6,12 @@ import { RedisHealthIndicator } from './redis.health-indicator.js';
 import { RedisClientOptions, RedisClientType } from 'redis';
 import EventEmitter from 'node:events';
 
-let redisClient: DeepMocked<RedisClientType>;
+const redisClient: DeepMocked<RedisClientType> = createMock<RedisClientType>();
 const clientEventEmitter: EventEmitter = new EventEmitter();
 
 jest.mock('redis', () => {
     return {
         createClient: function (_options: RedisClientOptions): RedisClientType {
-            redisClient = createMock<RedisClientType>();
-
             redisClient.on.mockImplementation((eventName: string | symbol, listener: (...args: unknown[]) => void) => {
                 clientEventEmitter.on(eventName, listener);
                 return redisClient;
