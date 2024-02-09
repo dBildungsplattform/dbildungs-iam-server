@@ -28,5 +28,4 @@ export class UpdatedOrganisationDto {
 
     @AutoMap()
     public readonly zugehoerigZu?: string;
-
 }
