@@ -68,4 +68,19 @@ describe('Redis health indicator', () => {
         expect(checkResult?.status).toBe('down');
         expect(checkResult?.['message']).toBe('Redis does not seem to be up: Because reasons');
     });
+
+    it('should report an exception as the service being down and showing the error message in the status', async () => {
+        const redisHI: RedisHealthIndicator = module.get<RedisHealthIndicator>(RedisHealthIndicator);
+
+        redisClient.connect.mockImplementation(() => {
+            throw new Error('Connection failed');
+        });
+
+        const checkResult: { status: HealthIndicatorStatus; [options: string]: string } | undefined = await redisHI
+            .check()
+            .then((r: HealthIndicatorResult) => r['Redis']);
+        expect(checkResult).toBeDefined();
+        expect(checkResult?.status).toBe('down');
+        expect(checkResult?.['message']).toBe('Exception while making connection: Error: Connection failed');
+    });
 });
