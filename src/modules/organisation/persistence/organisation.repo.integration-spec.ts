@@ -69,6 +69,20 @@ describe('OrganisationRepo', () => {
         });
     });
 
+    describe('exists', () => {
+        it('should find an organization by ID', async () => {
+            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
+            const organisation: OrganisationDo<boolean> = await sut.save(organisationDo);
+            const orgExists: boolean = await sut.exists(organisation.id as string);
+            expect(orgExists).toBe(true);
+        });
+
+        it('should return false', async () => {
+            const orgExists: boolean = await sut.exists(faker.string.uuid());
+            expect(orgExists).toBe(false);
+        });
+    });
+
     describe('findById', () => {
         it('should find an organization by ID', async () => {
             const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);

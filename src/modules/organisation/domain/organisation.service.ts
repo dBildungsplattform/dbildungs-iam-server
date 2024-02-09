@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { OrganisationRepo } from '../persistence/organisation.repo.js';
-import { DomainError, EntityCouldNotBeUpdated, EntityNotFoundError } from '../../../shared/error/index.js';
+import {
+    DomainError,
+    EntityCouldNotBeCreated,
+    EntityCouldNotBeUpdated,
+    EntityNotFoundError,
+} from '../../../shared/error/index.js';
 import { OrganisationDo } from './organisation.do.js';
-import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 
@@ -13,6 +17,20 @@ export class OrganisationService {
     public async createOrganisation(
         organisationDo: OrganisationDo<false>,
     ): Promise<Result<OrganisationDo<true>, DomainError>> {
+        if (organisationDo.administriertVon && !(await this.organisationRepo.exists(organisationDo.administriertVon))) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('Organisation', organisationDo.administriertVon),
+            };
+        }
+
+        if (organisationDo.zugehoerigZu && !(await this.organisationRepo.exists(organisationDo.zugehoerigZu))) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('Organisation', organisationDo.zugehoerigZu),
+            };
+        }
+
         const organisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
         if (organisation) {
             return { ok: true, value: organisation };
@@ -60,6 +78,98 @@ export class OrganisationService {
                 typ: organisationDo.typ,
             })
             .paged(offset, limit);
+        const [organisations, total]: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);
+
+        return {
+            total,
+            offset: offset ?? 0,
+            limit: limit ?? total,
+            items: organisations,
+        };
+    }
+
+    public async setAdministriertVon(parentId: string, childId: string): Promise<Result<void, DomainError>> {
+        const parentExists: boolean = await this.organisationRepo.exists(parentId);
+        if (!parentExists) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('Organisation', parentId),
+            };
+        }
+
+        const childOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(childId);
+        if (!childOrganisation) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('Organisation', childId),
+            };
+        }
+
+        childOrganisation.administriertVon = parentId;
+
+        const organisation: OrganisationDo<true> = await this.organisationRepo.save(childOrganisation);
+        if (organisation) {
+            return { ok: true, value: undefined };
+        }
+
+        return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
+    }
+
+    public async setZugehoerigZu(parentId: string, childId: string): Promise<Result<void, DomainError>> {
+        const parentExists: boolean = await this.organisationRepo.exists(parentId);
+        if (!parentExists) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('Organisation', parentId),
+            };
+        }
+
+        const childOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(childId);
+        if (!childOrganisation) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('Organisation', childId),
+            };
+        }
+
+        childOrganisation.zugehoerigZu = parentId;
+
+        const organisation: OrganisationDo<true> = await this.organisationRepo.save(childOrganisation);
+        if (organisation) {
+            return { ok: true, value: undefined };
+        }
+
+        return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
+    }
+
+    public async findAllAdministriertVon(
+        parentOrganisationID: string,
+        offset?: number,
+        limit?: number,
+    ): Promise<Paged<OrganisationDo<true>>> {
+        const scope: OrganisationScope = new OrganisationScope()
+            .findAdministrierteVon(parentOrganisationID)
+            .paged(offset, limit);
+
+        const [organisations, total]: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);
+
+        return {
+            total,
+            offset: offset ?? 0,
+            limit: limit ?? total,
+            items: organisations,
+        };
+    }
+
+    public async findAllZugehoerigZu(
+        parentOrganisationID: string,
+        offset?: number,
+        limit?: number,
+    ): Promise<Paged<OrganisationDo<true>>> {
+        const scope: OrganisationScope = new OrganisationScope()
+            .findZugehoerigeZu(parentOrganisationID)
+            .paged(offset, limit);
+
         const [organisations, total]: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);
 
         return {

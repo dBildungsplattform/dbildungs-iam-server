@@ -18,6 +18,7 @@ import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationUc } from './organisation.uc.js';
 import { UpdateOrganisationBodyParams } from './update-organisation.body.params.js';
 import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
+import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js';
 
 describe('OrganisationController', () => {
     let module: TestingModule;
@@ -220,6 +221,196 @@ describe('OrganisationController', () => {
                 expect(result).toEqual(mockedPagedResponse);
                 expect(organisationUcMock.findAll).toHaveBeenCalledTimes(1);
                 expect(result.items.length).toEqual(2);
+            });
+        });
+    });
+
+    describe('getRootOrganisation', () => {
+        const response: OrganisationResponse = plainToClass(OrganisationResponse, {
+            id: faker.string.uuid(),
+            kennung: faker.lorem.word(),
+            name: faker.lorem.word(),
+            namensergaenzung: faker.lorem.word(),
+            kuerzel: faker.lorem.word(),
+            typ: OrganisationsTyp.SONSTIGE,
+            traegerschaft: Traegerschaft.SONSTIGE,
+        });
+
+        it('should return the root organisation if it exists', async () => {
+            organisationUcMock.findRootOrganisation.mockResolvedValue(response);
+            await expect(organisationController.getRootOrganisation()).resolves.not.toThrow();
+            expect(organisationUcMock.findRootOrganisation).toHaveBeenCalledTimes(1);
+        });
+
+        it('should throw an error', async () => {
+            const mockError: SchulConnexError = new SchulConnexError({
+                beschreibung: 'SchulConneX',
+                code: 500,
+                titel: 'SchulConneX Fehler',
+                subcode: '0',
+            });
+            organisationUcMock.findRootOrganisation.mockResolvedValue(mockError);
+            await expect(organisationController.getRootOrganisation()).rejects.toThrow(HttpException);
+            expect(organisationUcMock.findRootOrganisation).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('getAdministrierteOrganisationen', () => {
+        const params: OrganisationByIdParams = {
+            organisationId: faker.string.uuid(),
+        };
+
+        it('should return all organizations that match', async () => {
+            const response1: OrganisationResponse = {
+                id: faker.string.uuid(),
+                kennung: faker.lorem.word(),
+                name: faker.lorem.word(),
+                namensergaenzung: faker.lorem.word(),
+                kuerzel: faker.lorem.word(),
+                typ: OrganisationsTyp.SONSTIGE,
+            };
+
+            const response2: OrganisationResponse = {
+                id: faker.string.uuid(),
+                kennung: faker.lorem.word(),
+                name: faker.lorem.word(),
+                namensergaenzung: faker.lorem.word(),
+                kuerzel: faker.lorem.word(),
+                typ: OrganisationsTyp.SONSTIGE,
+            };
+
+            const mockedPagedResponse: Paged<OrganisationResponse> = {
+                items: [response1, response2],
+                limit: 10,
+                offset: 0,
+                total: 2,
+            };
+
+            organisationUcMock.findAdministriertVon.mockResolvedValue(mockedPagedResponse);
+
+            const result: Paged<OrganisationResponse> =
+                await organisationController.getAdministrierteOrganisationen(params);
+
+            expect(result).toEqual(mockedPagedResponse);
+            expect(organisationUcMock.findAdministriertVon).toHaveBeenCalledTimes(1);
+            expect(result.items.length).toEqual(2);
+        });
+    });
+
+    describe('getZugehoerigeOrganisationen', () => {
+        const params: OrganisationByIdParams = {
+            organisationId: faker.string.uuid(),
+        };
+
+        it('should return all organizations that match', async () => {
+            const response1: OrganisationResponse = {
+                id: faker.string.uuid(),
+                kennung: faker.lorem.word(),
+                name: faker.lorem.word(),
+                namensergaenzung: faker.lorem.word(),
+                kuerzel: faker.lorem.word(),
+                typ: OrganisationsTyp.SONSTIGE,
+            };
+
+            const response2: OrganisationResponse = {
+                id: faker.string.uuid(),
+                kennung: faker.lorem.word(),
+                name: faker.lorem.word(),
+                namensergaenzung: faker.lorem.word(),
+                kuerzel: faker.lorem.word(),
+                typ: OrganisationsTyp.SONSTIGE,
+            };
+
+            const mockedPagedResponse: Paged<OrganisationResponse> = {
+                items: [response1, response2],
+                limit: 10,
+                offset: 0,
+                total: 2,
+            };
+
+            organisationUcMock.findZugehoerigZu.mockResolvedValue(mockedPagedResponse);
+
+            const result: Paged<OrganisationResponse> =
+                await organisationController.getZugehoerigeOrganisationen(params);
+
+            expect(result).toEqual(mockedPagedResponse);
+            expect(organisationUcMock.findZugehoerigZu).toHaveBeenCalledTimes(1);
+            expect(result.items.length).toEqual(2);
+        });
+    });
+
+    describe('addAdministrierteOrganisation', () => {
+        describe('when usecase succeeds', () => {
+            it('should not throw an error', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
+
+                const body: OrganisationByIdBodyParams = {
+                    organisationId: faker.string.uuid(),
+                };
+
+                organisationUcMock.setAdministriertVon.mockResolvedValue();
+
+                await expect(organisationController.addAdministrierteOrganisation(params, body)).resolves.not.toThrow();
+                expect(organisationUcMock.setAdministriertVon).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when usecase returns a SchulConnexError', () => {
+            it('should throw a HttpException', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
+
+                const body: OrganisationByIdBodyParams = {
+                    organisationId: faker.string.uuid(),
+                };
+
+                organisationUcMock.setAdministriertVon.mockResolvedValue({} as SchulConnexError);
+                await expect(organisationController.addAdministrierteOrganisation(params, body)).rejects.toThrow(
+                    HttpException,
+                );
+
+                expect(organisationUcMock.setAdministriertVon).toHaveBeenCalledTimes(1);
+            });
+        });
+    });
+
+    describe('addZugehoerigeOrganisation', () => {
+        describe('when usecase succeeds', () => {
+            it('should not throw an error', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
+
+                const body: OrganisationByIdBodyParams = {
+                    organisationId: faker.string.uuid(),
+                };
+
+                organisationUcMock.setZugehoerigZu.mockResolvedValue();
+
+                await expect(organisationController.addZugehoerigeOrganisation(params, body)).resolves.not.toThrow();
+                expect(organisationUcMock.setZugehoerigZu).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when usecase returns a SchulConnexError', () => {
+            it('should throw a HttpException', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
+
+                const body: OrganisationByIdBodyParams = {
+                    organisationId: faker.string.uuid(),
+                };
+
+                organisationUcMock.setZugehoerigZu.mockResolvedValue({} as SchulConnexError);
+                await expect(organisationController.addZugehoerigeOrganisation(params, body)).rejects.toThrow(
+                    HttpException,
+                );
+
+                expect(organisationUcMock.setZugehoerigZu).toHaveBeenCalledTimes(1);
             });
         });
     });

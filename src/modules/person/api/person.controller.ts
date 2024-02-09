@@ -18,6 +18,7 @@ import {
 import {
     ApiAcceptedResponse,
     ApiBadRequestResponse,
+    ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
@@ -26,7 +27,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Public } from 'nest-keycloak-connect';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
@@ -54,8 +54,8 @@ import { UpdatePersonDto } from './update-person.dto.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
+@ApiBearerAuth()
 @Controller({ path: 'personen' })
-@Public()
 export class PersonController {
     public constructor(
         private readonly personUc: PersonUc,

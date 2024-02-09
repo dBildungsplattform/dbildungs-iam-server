@@ -3,6 +3,7 @@ import { getMapperToken } from '@automapper/nestjs';
 import { Body, Controller, Get, Inject, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
+    ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
@@ -11,7 +12,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Public } from 'nest-keycloak-connect';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
@@ -28,11 +28,12 @@ import { OrganisationUc } from './organisation.uc.js';
 import { UpdateOrganisationBodyParams } from './update-organisation.body.params.js';
 import { UpdateOrganisationDto } from './update-organisation.dto.js';
 import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
+import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
+@ApiBearerAuth()
 @Controller({ path: 'organisationen' })
-@Public()
 export class OrganisationController {
     public constructor(
         private readonly uc: OrganisationUc,
@@ -84,6 +85,22 @@ export class OrganisationController {
         throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
     }
 
+    @Get('root')
+    @ApiOkResponse({ description: 'The organization was successfully pulled.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get the organization.' })
+    @ApiNotFoundResponse({ description: 'The organization does not exist.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
+    public async getRootOrganisation(): Promise<OrganisationResponse> {
+        const result: OrganisationResponse | SchulConnexError = await this.uc.findRootOrganisation();
+
+        if (result instanceof OrganisationResponse) {
+            return result;
+        }
+
+        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+    }
+
     @Get(':organisationId')
     @ApiOkResponse({ description: 'The organization was successfully pulled.' })
     @ApiBadRequestResponse({ description: 'Organization ID is required' })
@@ -124,5 +141,81 @@ export class OrganisationController {
         const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
 
         return response;
+    }
+
+    @Get(':organisationId/administriert')
+    @ApiOkResponse({
+        description: 'The organizations were successfully returned.',
+        type: [OrganisationResponse],
+        headers: PagingHeadersObject,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get organizations.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get organizations.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
+    public async getAdministrierteOrganisationen(
+        @Param() params: OrganisationByIdParams,
+    ): Promise<PagedResponse<OrganisationResponse>> {
+        const organisations: Paged<OrganisationResponse> = await this.uc.findAdministriertVon(params.organisationId);
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
+
+        return response;
+    }
+
+    @Post(':organisationId/administriert')
+    @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
+    @ApiBadRequestResponse({ description: 'The organisation could not be modified.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
+    public async addAdministrierteOrganisation(
+        @Param() params: OrganisationByIdParams,
+        @Body() body: OrganisationByIdBodyParams,
+    ): Promise<void> {
+        const result: void | SchulConnexError = await this.uc.setAdministriertVon(
+            params.organisationId,
+            body.organisationId,
+        );
+
+        if (result) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
+    }
+
+    @Get(':organisationId/zugehoerig')
+    @ApiOkResponse({
+        description: 'The organizations were successfully returned.',
+        type: [OrganisationResponse],
+        headers: PagingHeadersObject,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get organizations.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get organizations.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
+    public async getZugehoerigeOrganisationen(
+        @Param() params: OrganisationByIdParams,
+    ): Promise<PagedResponse<OrganisationResponse>> {
+        const organisations: Paged<OrganisationResponse> = await this.uc.findZugehoerigZu(params.organisationId);
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
+
+        return response;
+    }
+
+    @Post(':organisationId/zugehoerig')
+    @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
+    @ApiBadRequestResponse({ description: 'The organisation could not be modified.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
+    public async addZugehoerigeOrganisation(
+        @Param() params: OrganisationByIdParams,
+        @Body() body: OrganisationByIdBodyParams,
+    ): Promise<void> {
+        const result: void | SchulConnexError = await this.uc.setZugehoerigZu(
+            params.organisationId,
+            body.organisationId,
+        );
+
+        if (result) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
     }
 }

@@ -2,6 +2,13 @@
     "entityName": "Organisation",
     "entities": [
         {
+            "id": "d39cb7cf-2f9b-45f1-849f-973661f2f057",
+            "kennung": "Root",
+            "name": "Root Organisation",
+            "kuerzel": "Root",
+            "typ": "SCHULE"
+        },
+        {
             "kennung": "Organisation1",
             "name": "Schule1",
             "namensergaenzung": "Keine",
