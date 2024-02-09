@@ -14,6 +14,8 @@ import { FindOrganisationDto } from './find-organisation.dto.js';
 import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationUc } from './organisation.uc.js';
+import { UpdateOrganisationDto } from './update-organisation.dto.js';
+import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 
 describe('OrganisationUc', () => {
@@ -69,6 +71,32 @@ describe('OrganisationUc', () => {
                     error: new EntityCouldNotBeCreated(''),
                 });
                 await expect(organisationUc.createOrganisation({} as CreateOrganisationDto)).resolves.toBeInstanceOf(
+                    SchulConnexError,
+                );
+            });
+        });
+    });
+
+    describe('updateOrganisation', () => {
+        describe('when result is ok', () => {
+            it('should update an organisation', async () => {
+                organisationServiceMock.updateOrganisation.mockResolvedValue({
+                    ok: true,
+                    value: DoFactory.createOrganisation(true),
+                });
+                await expect(organisationUc.updateOrganisation({} as UpdateOrganisationDto)).resolves.toBeInstanceOf(
+                    UpdatedOrganisationDto,
+                );
+            });
+        });
+
+        describe('when result is not ok', () => {
+            it('should return an error', async () => {
+                organisationServiceMock.updateOrganisation.mockResolvedValue({
+                    ok: false,
+                    error: new EntityCouldNotBeCreated(''),
+                });
+                await expect(organisationUc.updateOrganisation({} as UpdateOrganisationDto)).resolves.toBeInstanceOf(
                     SchulConnexError,
                 );
             });
