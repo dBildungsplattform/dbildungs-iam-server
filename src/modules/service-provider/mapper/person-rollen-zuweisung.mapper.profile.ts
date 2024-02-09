@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { createMap, forMember, mapFrom, Mapper, MappingProfile } from '@automapper/core';
-import { PersonRollenZuweisungDo } from '../domain/person-rollen-zuweisung.do.js';
-import { PersonRollenZuweisungEntity } from '../entity/person-rollen-zuweisung.entity.js';
+import { PersonRollenZuweisungDo } from '../../service-provider/domain/person-rollen-zuweisung.do.js';
+import { PersonRollenZuweisungEntity } from '../../service-provider/entity/person-rollen-zuweisung.entity.js';
 
 @Injectable()
 export class PersonRollenZuweisungMapperProfile extends AutomapperProfile {

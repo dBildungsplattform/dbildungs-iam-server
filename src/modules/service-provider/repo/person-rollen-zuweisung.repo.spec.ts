@@ -10,7 +10,7 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { PersonRollenZuweisungDo } from '../domain/person-rollen-zuweisung.do.js';
-import { Rolle } from '../domain/rolle.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 import { PersonRollenZuweisungEntity } from '../entity/person-rollen-zuweisung.entity.js';
 import { PersonRollenZuweisungMapperProfile } from '../mapper/person-rollen-zuweisung.mapper.profile.js';
 import { PersonRollenZuweisungRepo } from './person-rollen-zuweisung.repo.js';

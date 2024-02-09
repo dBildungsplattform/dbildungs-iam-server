@@ -10,7 +10,7 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuweisung.do.js';
-import { Rolle } from '../domain/rolle.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
 import { RolleBerechtigungsZuweisungEntity } from '../entity/rolle-berechtigungs-zuweisung.entity.js';
 import { ServiceProviderZugriffEntity } from '../entity/service-provider-zugriff.entity.js';
@@ -19,7 +19,7 @@ import { RolleRechtMapperProfile } from '../mapper/rolle-recht.mapper.profile.js
 import { ServiceProviderZugriffMapperProfile } from '../mapper/service-provider-zugriff.mapper.profile.js';
 import { ServiceProviderMapperProfile } from '../mapper/service-provider.mapper.profile.js';
 import { RollenBerechtigungsZuweisungRepo } from './rollen-berechtigungs-zuweisung.repo.js';
-import { RolleRepo } from './rolle.repo.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 
 describe('RollenBerechtigungsZuweisungRepo', () => {
     let module: TestingModule;

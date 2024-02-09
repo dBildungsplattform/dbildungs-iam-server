@@ -4,10 +4,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { MappingError } from '../../../shared/error/index.js';
 import { ServiceProviderZugriffMapperProfile } from './service-provider-zugriff.mapper.profile.js';
-import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
-import { RolleBerechtigungsZuweisungDo } from '../domain/rolle-berechtigungs-zuweisung.do.js';
-import { RolleBerechtigungsZuweisungEntity } from '../entity/rolle-berechtigungs-zuweisung.entity.js';
-import { Rolle } from '../domain/rolle.js';
+import { ServiceProviderZugriffDo } from '../../service-provider/domain/service-provider-zugriff.do.js';
+import { RolleBerechtigungsZuweisungDo } from '../../service-provider/domain/rolle-berechtigungs-zuweisung.do.js';
+import { RolleBerechtigungsZuweisungEntity } from '../../service-provider/entity/rolle-berechtigungs-zuweisung.entity.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleBerechtigungsZuweisungMapperProfile } from './rolle-berechtigungs-zuweisung.mapper.profile.js';
 
 describe('RolleBerechtigungsZuweisungMapperProfile', () => {

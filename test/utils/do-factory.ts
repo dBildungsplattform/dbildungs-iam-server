@@ -10,13 +10,13 @@ import {
     Rolle,
     SichtfreigabeType,
 } from '../../src/modules/person/domain/personenkontext.enums.js';
-import { PersonRollenZuweisungDo } from '../../src/modules/rolle/domain/person-rollen-zuweisung.do.js';
-import { RolleBerechtigungsZuweisungDo } from '../../src/modules/rolle/domain/rolle-berechtigungs-zuweisung.do.js';
-import { RolleRechtDo } from '../../src/modules/rolle/domain/rolle-recht.do.js';
+import { PersonRollenZuweisungDo } from '../../src/modules/service-provider/domain/person-rollen-zuweisung.do.js';
+import { RolleBerechtigungsZuweisungDo } from '../../src/modules/service-provider/domain/rolle-berechtigungs-zuweisung.do.js';
+import { RolleRechtDo } from '../../src/modules/service-provider/domain/rolle-recht.do.js';
 import { RollenArt, RollenMerkmal } from '../../src/modules/rolle/domain/rolle.enums.js';
 import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
-import { ServiceProviderZugriffDo } from '../../src/modules/rolle/domain/service-provider-zugriff.do.js';
-import { ServiceProviderDo } from '../../src/modules/rolle/domain/service-provider.do.js';
+import { ServiceProviderZugriffDo } from '../../src/modules/service-provider/domain/service-provider-zugriff.do.js';
+import { ServiceProviderDo } from '../../src/modules/service-provider/domain/service-provider.do.js';
 import { DoBase } from '../../src/shared/types/do-base.js';
 
 export class DoFactory {

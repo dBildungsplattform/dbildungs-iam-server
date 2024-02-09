@@ -4,8 +4,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { MappingError } from '../../../shared/error/index.js';
 import { ServiceProviderZugriffMapperProfile } from './service-provider-zugriff.mapper.profile.js';
-import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
-import { ServiceProviderZugriffEntity } from '../entity/service-provider-zugriff.entity.js';
+import { ServiceProviderZugriffDo } from '../../service-provider/domain/service-provider-zugriff.do.js';
+import { ServiceProviderZugriffEntity } from '../../service-provider/entity/service-provider-zugriff.entity.js';
 import { RolleBerechtigungsZuweisungMapperProfile } from './rolle-berechtigungs-zuweisung.mapper.profile.js';
 
 describe('ServiceProviderZugriffMapperProfile', () => {

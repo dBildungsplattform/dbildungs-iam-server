@@ -1,3 +1,3 @@
-import { ServiceProviderEntity } from '../../../modules/rolle/entity/service-provider.entity.js';
+import { ServiceProviderEntity } from '../../../modules/service-provider/entity/service-provider.entity.js';
 
 export class ServiceProviderFile extends ServiceProviderEntity {}

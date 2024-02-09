@@ -3,8 +3,8 @@ import { getMapperToken } from '@automapper/nestjs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { MappingError } from '../../../shared/error/index.js';
-import { RolleRechtDo } from '../domain/rolle-recht.do.js';
-import { RolleRechtEntity } from '../entity/rolle-recht.entity.js';
+import { RolleRechtDo } from '../../service-provider/domain/rolle-recht.do.js';
+import { RolleRechtEntity } from '../../service-provider/entity/rolle-recht.entity.js';
 import { RolleRechtMapperProfile } from './rolle-recht.mapper.profile.js';
 
 describe('RolleRechtMapperProfile', () => {

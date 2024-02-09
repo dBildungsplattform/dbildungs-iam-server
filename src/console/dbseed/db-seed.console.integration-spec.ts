@@ -15,10 +15,10 @@ import { UsernameGeneratorService } from '../../modules/user/username-generator.
 import { DbSeedMapper } from './db-seed-mapper.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
-import { PersonRollenZuweisungEntity } from '../../modules/rolle/entity/person-rollen-zuweisung.entity.js';
-import { ServiceProviderZugriffEntity } from '../../modules/rolle/entity/service-provider-zugriff.entity.js';
+import { PersonRollenZuweisungEntity } from '../../modules/service-provider/entity/person-rollen-zuweisung.entity.js';
+import { ServiceProviderZugriffEntity } from '../../modules/service-provider/entity/service-provider-zugriff.entity.js';
 import { OrganisationEntity } from '../../modules/organisation/persistence/organisation.entity.js';
-import { ServiceProviderEntity } from '../../modules/rolle/entity/service-provider.entity.js';
+import { ServiceProviderEntity } from '../../modules/service-provider/entity/service-provider.entity.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rolle/repo/rolle.repo.js';

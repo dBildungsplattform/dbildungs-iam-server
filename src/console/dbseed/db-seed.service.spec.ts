@@ -7,10 +7,10 @@ import {
     MapperTestModule,
 } from '../../../test/utils/index.js';
 import fs from 'fs';
-import { ServiceProviderEntity } from '../../modules/rolle/entity/service-provider.entity.js';
+import { ServiceProviderEntity } from '../../modules/service-provider/entity/service-provider.entity.js';
 import { PersonEntity } from '../../modules/person/persistence/person.entity.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
-import { ServiceProviderZugriffEntity } from '../../modules/rolle/entity/service-provider-zugriff.entity.js';
+import { ServiceProviderZugriffEntity } from '../../modules/service-provider/entity/service-provider-zugriff.entity.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { ServiceProviderZugriffFile } from './file/service-provider-zugriff-file.js';
 import { PersonRollenZuweisungFile } from './file/person-rollen-zuweisung-file.js';

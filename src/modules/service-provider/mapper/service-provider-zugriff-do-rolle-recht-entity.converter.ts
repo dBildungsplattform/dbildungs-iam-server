@@ -1,8 +1,8 @@
 import { Converter } from '@automapper/core';
-import { RolleRechtEntity } from '../entity/rolle-recht.entity.js';
-import { RolleRechtDo } from '../domain/rolle-recht.do.js';
-import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
-import { ServiceProviderZugriffEntity } from '../entity/service-provider-zugriff.entity.js';
+import { RolleRechtEntity } from '../../service-provider/entity/rolle-recht.entity.js';
+import { RolleRechtDo } from '../../service-provider/domain/rolle-recht.do.js';
+import { ServiceProviderZugriffDo } from '../../service-provider/domain/service-provider-zugriff.do.js';
+import { ServiceProviderZugriffEntity } from '../../service-provider/entity/service-provider-zugriff.entity.js';
 
 export class ServiceProviderZugriffDoRolleRechtEntityConverter
     implements Converter<RolleRechtDo<boolean>, RolleRechtEntity>

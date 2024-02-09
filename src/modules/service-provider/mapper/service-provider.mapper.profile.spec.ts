@@ -4,9 +4,9 @@ import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { getMapperToken } from '@automapper/nestjs';
 import { MappingError } from '../../../shared/error/index.js';
 import { ServiceProviderMapperProfile } from './service-provider.mapper.profile.js';
-import { ServiceProviderDo } from '../domain/service-provider.do.js';
-import { ServiceProviderEntity } from '../entity/service-provider.entity.js';
-import { GetServiceProviderInfoDo } from '../domain/get-service-provider-info.do.js';
+import { ServiceProviderDo } from '../../service-provider/domain/service-provider.do.js';
+import { ServiceProviderEntity } from '../../service-provider/entity/service-provider.entity.js';
+import { GetServiceProviderInfoDo } from '../../service-provider/domain/get-service-provider-info.do.js';
 import { faker } from '@faker-js/faker';
 
 describe('ServiceProviderMapperProfile', () => {

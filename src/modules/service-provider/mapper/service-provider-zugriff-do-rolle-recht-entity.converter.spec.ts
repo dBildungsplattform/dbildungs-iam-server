@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ServiceProviderZugriffDoRolleRechtEntityConverter } from './service-provider-zugriff-do-rolle-recht-entity.converter.js';
-import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.js';
+import { ServiceProviderZugriffDo } from '../../service-provider/domain/service-provider-zugriff.do.js';
 import { DoFactory } from '../../../../test/utils/index.js';
-import { ServiceProviderZugriffEntity } from '../entity/service-provider-zugriff.entity.js';
-import { RolleRechtDo } from '../domain/rolle-recht.do.js';
-import { RolleRechtEntity } from '../entity/rolle-recht.entity.js';
+import { ServiceProviderZugriffEntity } from '../../service-provider/entity/service-provider-zugriff.entity.js';
+import { RolleRechtDo } from '../../service-provider/domain/rolle-recht.do.js';
+import { RolleRechtEntity } from '../../service-provider/entity/rolle-recht.entity.js';
 
 describe('ServiceProviderZugriffDoRolleRechtEntityConverter', () => {
     let module: TestingModule;

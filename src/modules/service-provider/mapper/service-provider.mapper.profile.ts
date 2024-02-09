@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { createMap, forMember, mapFrom, Mapper, MappingProfile } from '@automapper/core';
-import { ServiceProviderDo } from '../domain/service-provider.do.js';
-import { ServiceProviderEntity } from '../entity/service-provider.entity.js';
-import { GetServiceProviderInfoDo } from '../domain/get-service-provider-info.do.js';
+import { ServiceProviderDo } from '../../service-provider/domain/service-provider.do.js';
+import { ServiceProviderEntity } from '../../service-provider/entity/service-provider.entity.js';
+import { GetServiceProviderInfoDo } from '../../service-provider/domain/get-service-provider-info.do.js';
 
 @Injectable()
 export class ServiceProviderMapperProfile extends AutomapperProfile {

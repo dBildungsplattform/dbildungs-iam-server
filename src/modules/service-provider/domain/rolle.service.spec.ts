@@ -9,7 +9,7 @@ import { RollenBerechtigungsZuweisungRepo } from '../repo/rollen-berechtigungs-z
 import { RolleRechtRepo } from '../repo/rolle-recht.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { PersonRollenZuweisungDo } from './person-rollen-zuweisung.do.js';
-import { Rolle } from './rolle.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleBerechtigungsZuweisungDo } from './rolle-berechtigungs-zuweisung.do.js';
 import { ServiceProviderZugriffDo } from './service-provider-zugriff.do.js';
 import { ServiceProviderDo } from './service-provider.do.js';
