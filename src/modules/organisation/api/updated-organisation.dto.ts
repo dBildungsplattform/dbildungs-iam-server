@@ -22,4 +22,11 @@ export class UpdatedOrganisationDto {
 
     @AutoMap(() => String)
     public traegerschaft?: Traegerschaft;
+
+    @AutoMap()
+    public readonly administriertVon?: string;
+
+    @AutoMap()
+    public readonly zugehoerigZu?: string;
+
 }

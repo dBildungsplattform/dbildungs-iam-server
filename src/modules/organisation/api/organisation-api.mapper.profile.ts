@@ -37,6 +37,14 @@ export class OrganisationApiMapperProfile extends AutomapperProfile {
             );
             createMap(
                 mapper,
+                UpdateOrganisationDto,
+                OrganisationDo<false>,
+                forMember((dest: OrganisationDo<boolean>) => dest.id, ignore()),
+                forMember((dest: OrganisationDo<boolean>) => dest.createdAt, ignore()),
+                forMember((dest: OrganisationDo<boolean>) => dest.updatedAt, ignore()),
+            );
+            createMap(
+                mapper,
                 OrganisationDo<true>,
                 CreatedOrganisationDto,
                 forMember(

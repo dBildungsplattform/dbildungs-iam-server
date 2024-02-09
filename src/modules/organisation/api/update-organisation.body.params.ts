@@ -34,4 +34,16 @@ export class UpdateOrganisationBodyParams {
     @ApiProperty({ enum: Traegerschaft, required: false })
     @IsOptional()
     public traegerschaft?: Traegerschaft;
+
+    @AutoMap()
+    @IsOptional()
+    @IsString()
+    @IsOptional()
+    public readonly administriertVon?: string;
+
+    @AutoMap()
+    @IsOptional()
+    @IsString()
+    @IsOptional()
+    public readonly zugehoerigZu?: string;
 }

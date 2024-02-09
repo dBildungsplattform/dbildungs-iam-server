@@ -104,6 +104,8 @@ describe('OrganisationController', () => {
                     kuerzel: faker.lorem.word(),
                     typ: OrganisationsTyp.SONSTIGE,
                     traegerschaft: Traegerschaft.SONSTIGE,
+                    administriertVon: faker.lorem.word(),
+                    zugehoerigZu: faker.lorem.word(),
                 };
 
                 const returnedValue: UpdatedOrganisationDto = plainToClass(UpdatedOrganisationDto, {
