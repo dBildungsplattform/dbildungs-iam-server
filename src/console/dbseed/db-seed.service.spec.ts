@@ -139,7 +139,7 @@ describe('DbSeedService', () => {
         describe('getEntityFileNames in directory sql/seeding-integration-test', () => {
             it('should return all files in directory', () => {
                 const entityFileNames: string[] = dbSeedService.getEntityFileNames('seeding-integration-test/all');
-                expect(entityFileNames).toHaveLength(8);
+                expect(entityFileNames).toHaveLength(5);
             });
         });
     });
