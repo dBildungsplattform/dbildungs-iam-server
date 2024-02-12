@@ -15,10 +15,7 @@ import { UsernameGeneratorService } from '../../modules/user/username-generator.
 import { DbSeedMapper } from './db-seed-mapper.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
-import { PersonRollenZuweisungEntity } from '../../modules/service-provider/entity/person-rollen-zuweisung.entity.js';
-import { ServiceProviderZugriffEntity } from '../../modules/service-provider/entity/service-provider-zugriff.entity.js';
 import { OrganisationEntity } from '../../modules/organisation/persistence/organisation.entity.js';
-import { ServiceProviderEntity } from '../../modules/service-provider/entity/service-provider.entity.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rolle/repo/rolle.repo.js';
@@ -82,22 +79,13 @@ describe('DbSeedConsole', () => {
                 const dataProvider: Option<DataProviderEntity> = await orm.em.findOne(DataProviderEntity, {
                     id: '431d8433-759c-4dbe-aaab-00b9a781f467',
                 });
-                const prz: Option<PersonRollenZuweisungEntity> = await orm.em.findOne(PersonRollenZuweisungEntity, {
-                    id: '27ff7c36-35ea-4fcb-9faa-ed7794afaece',
-                });
                 const rolle: Option<RolleEntity> = await orm.em.findOne(RolleEntity, {
                     id: '301457e9-4fe5-42a6-8084-fec927dc00df',
-                });
-                const serviceProvider: Option<ServiceProviderEntity> = await orm.em.findOne(ServiceProviderEntity, {
-                    id: 'af314073-539c-45ed-b94a-a2e1b9c976e3',
-                });
-                const spz: Option<ServiceProviderZugriffEntity> = await orm.em.findOne(ServiceProviderZugriffEntity, {
-                    id: '0e23c772-07b3-4d40-a71c-71848712fb96',
                 });
                 const organisation: Option<OrganisationEntity> = await orm.em.findOne(OrganisationEntity, {
                     id: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
                 });
-                if (!dataProvider || !prz || !rolle || !serviceProvider || !spz || !organisation) {
+                if (!dataProvider || !rolle || !organisation) {
                     throw Error('At least one entity was not persisted correctly!');
                 }
             });
@@ -109,24 +97,6 @@ describe('DbSeedConsole', () => {
                 await expect(sut.run(params)).rejects.toThrow(
                     new Error(`Unsupported EntityName / EntityType: NonExistingEntityType`),
                 );
-            });
-        });
-
-        describe('when new rolle-entity is used in PersonRollenZuweisung', () => {
-            it('should succeed', async () => {
-                const params: string[] = ['seeding-integration-test/newRolle'];
-                await expect(sut.run(params)).resolves.not.toThrow();
-                const prz: Option<PersonRollenZuweisungEntity> = await orm.em.findOne(PersonRollenZuweisungEntity, {
-                    id: '27ff7c36-35ea-4fcb-9faa-ed7794afaece',
-                });
-                const rolle: Option<RolleEntity> = await orm.em.findOne(RolleEntity, {
-                    id: '3ca85c16-96b2-46c8-a4fd-27e73d7ab96c',
-                });
-                if (!prz || !rolle) {
-                    throw Error('PersonRollenZuweisung or Rolle was not persisted correctly!');
-                }
-                expect(rolle.id).toEqual('3ca85c16-96b2-46c8-a4fd-27e73d7ab96c');
-                expect(prz.rolle).toEqual('3ca85c16-96b2-46c8-a4fd-27e73d7ab96c');
             });
         });
 

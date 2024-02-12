@@ -6,20 +6,14 @@ import { Inject } from '@nestjs/common';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { UsernameGeneratorService } from '../../modules/user/username-generator.service.js';
-import { PersonRollenZuweisungFile } from './file/person-rollen-zuweisung-file.js';
 import { DbSeedService } from './db-seed.service.js';
 import { PersonFile } from './file/person-file.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
-import { PersonRollenZuweisungEntity } from '../../modules/service-provider/entity/person-rollen-zuweisung.entity.js';
-import { ServiceProviderZugriffFile } from './file/service-provider-zugriff-file.js';
-import { ServiceProviderZugriffEntity } from '../../modules/service-provider/entity/service-provider-zugriff.entity.js';
 import { OrganisationEntity } from '../../modules/organisation/persistence/organisation.entity.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { DataProviderFile } from './file/data-provider-file.js';
 import { PersonEntity } from '../../modules/person/persistence/person.entity.js';
-import { ServiceProviderEntity } from '../../modules/service-provider/entity/service-provider.entity.js';
-import { ServiceProviderFile } from './file/service-provider-file.js';
 import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';
 import { UserDo } from '../../modules/keycloak-administration/domain/user.do.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
@@ -32,13 +26,7 @@ export interface EntityFile<T> extends SeedFile {
     entities: T[];
 }
 
-export type Entity =
-    | DataProviderFile
-    | PersonFile
-    | OrganisationFile
-    | ServiceProviderFile
-    | RolleEntity
-    | PersonRollenZuweisungFile;
+export type Entity = DataProviderFile | PersonFile | OrganisationFile | RolleEntity;
 
 export type ConstructorCall = () => Entity;
 
@@ -54,7 +42,7 @@ export class DbSeedConsole extends CommandRunner {
     private createdKeycloakUsers: [string, string][] = [];
 
     public constructor(
-        private readonly orm: MikroORM,
+        orm: MikroORM,
         private readonly logger: ClassLogger,
         private readonly dbSeedService: DbSeedService,
         private readonly usernameGenerator: UsernameGeneratorService,
@@ -109,12 +97,6 @@ export class DbSeedConsole extends CommandRunner {
             case 'DataProvider':
                 this.handleDataProvider(this.dbSeedService.readDataProvider(fileContentAsStr), seedFile.entityName);
                 break;
-            case 'ServiceProvider':
-                this.handleServiceProvider(
-                    this.dbSeedService.readServiceProvider(fileContentAsStr),
-                    seedFile.entityName,
-                );
-                break;
             case 'Organisation':
                 this.handleOrganisation(this.dbSeedService.readOrganisation(fileContentAsStr), seedFile.entityName);
                 break;
@@ -124,42 +106,9 @@ export class DbSeedConsole extends CommandRunner {
             case 'Rolle':
                 this.handleRolle(this.dbSeedService.readRolle(fileContentAsStr), seedFile.entityName);
                 break;
-            case 'ServiceProviderZugriff':
-                this.handleServiceProviderZugriff(
-                    this.dbSeedService.readServiceProviderZugriff(fileContentAsStr),
-                    seedFile.entityName,
-                );
-                break;
-            case 'PersonRollenZuweisung':
-                await this.handlePersonRollenZuweisung(fileContentAsStr, seedFile.entityName);
-                break;
             default:
                 throw new Error(`Unsupported EntityName / EntityType: ${seedFile.entityName}`);
         }
-    }
-
-    private handleServiceProvider(entities: Entity[], entityName: string): void {
-        for (const entity of entities) {
-            const mappedEntity: ServiceProviderEntity = this.mapper.map(
-                entity,
-                ServiceProviderFile,
-                ServiceProviderEntity,
-            );
-            this.forkedEm.persist(mappedEntity);
-        }
-        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
-    }
-
-    private handleServiceProviderZugriff(entities: Entity[], entityName: string): void {
-        for (const entity of entities) {
-            const mappedEntity: ServiceProviderZugriffEntity = this.mapper.map(
-                entity,
-                ServiceProviderZugriffFile,
-                ServiceProviderZugriffEntity,
-            );
-            this.forkedEm.persist(mappedEntity);
-        }
-        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }
 
     private handleDataProvider(entities: Entity[], entityName: string): void {
@@ -229,38 +178,6 @@ export class DbSeedConsole extends CommandRunner {
         for (const userTuple of this.createdKeycloakUsers) {
             await this.keycloakUserService.delete(userTuple[0]);
             this.logger.info(`Removed keycloak-user with username ${userTuple[1]}`);
-        }
-    }
-
-    private async handlePersonRollenZuweisung(fileContentAsStr: string, entityName: string): Promise<void> {
-        const entities: PersonRollenZuweisungFile[] = this.dbSeedService.readPersonRollenZuweisung(fileContentAsStr);
-        for (const e of entities) {
-            await this.setRolle(e);
-            const mappedEntity: PersonRollenZuweisungEntity = this.mapper.map(
-                e,
-                PersonRollenZuweisungFile,
-                PersonRollenZuweisungEntity,
-            );
-            this.forkedEm.persist(mappedEntity);
-        }
-        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
-    }
-
-    private async setRolle(entity: PersonRollenZuweisungFile): Promise<void> {
-        const id: string = entity.rolleReference.id;
-        if (entity.rolleReference.persisted) {
-            const foreignEntity: Option<Entity> = await this.orm.em.fork().findOne(RolleEntity, { id });
-            if (foreignEntity) {
-                entity.rolle = foreignEntity.id;
-            } else {
-                throw new Error(`Foreign RolleEntity with id ${id} could not be found!`);
-            }
-        } else {
-            const rolle: Rolle<true> | undefined = this.dbSeedService.getRolle(id);
-            if (rolle === undefined) {
-                throw new Error(`No rolle with id ${id}`);
-            }
-            entity.rolle = rolle.id;
         }
     }
 }

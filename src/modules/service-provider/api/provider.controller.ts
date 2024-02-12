@@ -1,34 +1,29 @@
-import { Controller, Get, HttpException, HttpStatus, Inject } from '@nestjs/common';
-import { RolleService } from '../domain/rolle.service.js';
+import { Controller, Get } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
-import { GetServiceProviderInfoDo } from '../domain/get-service-provider-info.do.js';
-import { getMapperToken } from '@automapper/nestjs';
-import { Mapper } from '@automapper/core';
-import { ServiceProviderInfoResponse } from './service-provider-info.response.js';
+import { plainToInstance } from 'class-transformer';
+import { ServiceProviderResponse } from './service-provider.response.js';
 
 @ApiTags('provider')
 @ApiBearerAuth()
 @Controller({ path: 'provider' })
 export class ProviderController {
-    public constructor(
-        private readonly rolleService: RolleService,
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
-    ) {}
-
     @Get()
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
-    @ApiOkResponse({ type: [ServiceProviderInfoResponse] })
-    public async getServiceProvidersByPersonId(
-        @AuthenticatedUser() user: unknown,
-    ): Promise<ServiceProviderInfoResponse[]> {
-        if (this.rolleService.hasKeycloakUserSub(user)) {
-            const provider: GetServiceProviderInfoDo[] = await this.rolleService.getServiceProviderInfoListByUserSub(
-                user.sub,
-            );
+    @ApiOkResponse({ type: [ServiceProviderResponse] })
+    public getServiceProvidersByPersonId(): ServiceProviderResponse[] {
+        const providers: ServiceProviderResponse[] = plainToInstance(ServiceProviderResponse, [
+            {
+                id: '8f448f82-0be3-4d82-9cb1-2e67f277796f',
+                name: 'Email',
+                url: 'https://de.wikipedia.org/wiki/E-Mail',
+            },
+            {
+                id: 'ecc794a3-f94f-40f6-bef6-bd4808cf64d4',
+                name: 'ItsLearning',
+                url: 'https://itslearning.com/de',
+            },
+        ]);
 
-            return this.mapper.mapArray(provider, GetServiceProviderInfoDo, ServiceProviderInfoResponse);
-        }
-        throw new HttpException('Not authorized to get available service providers', HttpStatus.UNAUTHORIZED);
+        return providers;
     }
 }
