@@ -1,19 +1,20 @@
+/* eslint-disable max-classes-per-file */
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrganisationsTyp } from '../organisation/domain/organisation.enums.js';
 import {
     AndNotSpecification,
     AndSpecification,
-    CompositeSpecification,
     NotSpecification,
     OrNotSpecification,
     OrSpecification,
-} from './specifications';
+} from './specifications.js';
+import { CompositeSpecification } from './composite-specification.js';
 
-class TestOrganisation {
-    public name!: string;
-
-    public typ!: OrganisationsTyp;
-}
+type TestOrganisation = {
+    name: string;
+    typ: OrganisationsTyp;
+};
 
 class IstSchule extends CompositeSpecification<TestOrganisation> {
     public async isSatisfiedBy(t: TestOrganisation): Promise<boolean> {
@@ -69,17 +70,17 @@ describe('SpecificationModule', () => {
     });
 
     describe('AndSpecification', () => {
-        it('should be satisfied', () => {
+        it('should be satisfied', async () => {
             const istSchule: IstSchule = new IstSchule();
             const nameStartetMitSchule: NameStartetMitSchule = new NameStartetMitSchule();
             const and: AndSpecification<TestOrganisation> = new AndSpecification(istSchule, nameStartetMitSchule);
-            expect(and.isSatisfiedBy(organisation));
+            expect(await and.isSatisfiedBy(organisation));
         });
-        it('should not be satisfied', () => {
+        it('should not be satisfied', async () => {
             const istSchule: IstSchule = new IstSchule();
             const istTraeger: IstTraeger = new IstTraeger();
             const and: AndSpecification<TestOrganisation> = new AndSpecification(istSchule, istTraeger);
-            expect(!and.isSatisfiedBy(organisation));
+            expect(!(await and.isSatisfiedBy(organisation)));
         });
     });
 
@@ -90,11 +91,11 @@ describe('SpecificationModule', () => {
             const or: OrSpecification<TestOrganisation> = new OrSpecification(istSchule, istTraeger);
             expect(or.isSatisfiedBy(organisation));
         });
-        it('should not be satisfied', () => {
+        it('should not be satisfied', async () => {
             const istTraeger: IstTraeger = new IstTraeger();
             const nameStartetMitTraeger: NameStartetMitTraeger = new NameStartetMitTraeger();
             const or: OrSpecification<TestOrganisation> = new OrSpecification(nameStartetMitTraeger, istTraeger);
-            expect(!or.isSatisfiedBy(organisation));
+            expect(!(await or.isSatisfiedBy(organisation)));
         });
     });
 
@@ -106,12 +107,12 @@ describe('SpecificationModule', () => {
             );
             expect(istNichtTraeger.isSatisfiedBy(organisation));
         });
-        it('should not be satisfied', () => {
+        it('should not be satisfied', async () => {
             const istSchule: IstSchule = new IstSchule();
             const istNichtSchule: NotSpecification<TestOrganisation> = new NotSpecification<TestOrganisation>(
                 istSchule,
             );
-            expect(!istNichtSchule.isSatisfiedBy(organisation));
+            expect(!(await istNichtSchule.isSatisfiedBy(organisation)));
         });
     });
 
@@ -125,14 +126,14 @@ describe('SpecificationModule', () => {
             );
             expect(andNot.isSatisfiedBy(organisation));
         });
-        it('should not be satisfied', () => {
+        it('should not be satisfied', async () => {
             const istSchule: IstSchule = new IstSchule();
             const nameStartedMitSchule: NameStartetMitSchule = new NameStartetMitSchule();
             const andNot: AndNotSpecification<TestOrganisation> = new AndNotSpecification(
                 istSchule,
                 nameStartedMitSchule,
             );
-            expect(!andNot.isSatisfiedBy(organisation));
+            expect(!(await andNot.isSatisfiedBy(organisation)));
         });
     });
 
@@ -147,11 +148,11 @@ describe('SpecificationModule', () => {
             expect(orNot.isSatisfiedBy(organisation));
         });
 
-        it('should not be satisfied', () => {
+        it('should not be satisfied', async () => {
             const istSchule: IstSchule = new IstSchule();
             const nameStartedMitSchule: NameStartetMitSchule = new NameStartetMitSchule();
             const orNot: OrNotSpecification<TestOrganisation> = new OrNotSpecification(istSchule, nameStartedMitSchule);
-            expect(!orNot.isSatisfiedBy(organisation));
+            expect(!(await orNot.isSatisfiedBy(organisation)));
         });
     });
 
