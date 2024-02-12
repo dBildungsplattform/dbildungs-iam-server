@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MapperTestModule } from '../../../../test/utils/index.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
 import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
-import { SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonDto } from './person.dto.js';

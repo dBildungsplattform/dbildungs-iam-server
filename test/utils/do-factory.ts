@@ -3,13 +3,13 @@ import { UserDo } from '../../src/modules/keycloak-administration/domain/user.do
 import { OrganisationDo } from '../../src/modules/organisation/domain/organisation.do.js';
 import { OrganisationsTyp, Traegerschaft } from '../../src/modules/organisation/domain/organisation.enums.js';
 import { PersonDo } from '../../src/modules/person/domain/person.do.js';
-import { PersonenkontextDo } from '../../src/modules/person/domain/personenkontext.do.js';
+import { PersonenkontextDo } from '../../src/modules/personenkontext/domain/personenkontext.do.js';
 import {
     Jahrgangsstufe,
     Personenstatus,
     Rolle,
     SichtfreigabeType,
-} from '../../src/modules/person/domain/personenkontext.enums.js';
+} from '../../src/modules/personenkontext/domain/personenkontext.enums.js';
 import { RollenArt, RollenMerkmal } from '../../src/modules/rolle/domain/rolle.enums.js';
 import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
 import { DoBase } from '../../src/shared/types/do-base.js';
