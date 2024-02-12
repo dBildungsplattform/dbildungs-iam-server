@@ -3,13 +3,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrganisationsTyp } from '../organisation/domain/organisation.enums.js';
 import {
+    CompositeSpecification,
     AndNotSpecification,
     AndSpecification,
     NotSpecification,
     OrNotSpecification,
     OrSpecification,
 } from './specifications.js';
-import { CompositeSpecification } from './composite-specification.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../test/utils/index.js';
 
 type TestOrganisation = {
     name: string;
@@ -40,7 +41,7 @@ class NameStartetMitTraeger extends CompositeSpecification<TestOrganisation> {
     }
 }
 
-describe('SpecificationModule', () => {
+describe('SpecificationTests', () => {
     let module: TestingModule;
 
     const organisation: TestOrganisation = {
@@ -52,7 +53,7 @@ describe('SpecificationModule', () => {
         module = await Test.createTestingModule({
             imports: [],
         }).compile();
-    });
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await module.close();
