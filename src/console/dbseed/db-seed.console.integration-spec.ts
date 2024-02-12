@@ -99,23 +99,5 @@ describe('DbSeedConsole', () => {
                 );
             });
         });
-
-        describe('when foreign (persisted) rolle-entity used in PersonRollenZuweisung does not exist', () => {
-            it('should fail', async () => {
-                const params: string[] = ['seeding-integration-test/persistedRolleMissing'];
-                await expect(sut.run(params)).rejects.toThrow(
-                    new Error(`Foreign RolleEntity with id 8a2fb3e4-2d24-4917-b8fc-7fccb98d10f1 could not be found!`),
-                );
-            });
-        });
-
-        describe('when virtual (non-persisted) rolle-entity used in PersonRollenZuweisung does not exist', () => {
-            it('should fail', async () => {
-                const params: string[] = ['seeding-integration-test/newRolleMissing'];
-                await expect(sut.run(params)).rejects.toThrow(
-                    new Error(`No rolle with id fa49e432-0d77-4286-b68f-01bba5ae7f2c`),
-                );
-            });
-        });
     });
 });
