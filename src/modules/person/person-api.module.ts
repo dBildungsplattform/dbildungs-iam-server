@@ -7,13 +7,13 @@ import { PersonModule } from './person.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { UserModule } from '../user/user.module.js';
 import { PersonFrontendController } from './api/person.frontend.controller.js';
-import { PersonKontextModule } from '../person-kontext/person-kontext.module.js';
-import { PersonenkontextUc } from '../person-kontext/api/personenkontext.uc.js';
+import { PersonenkontextUc } from '../personenkontext/api/personenkontext.uc.js';
+import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 
 @Module({
     imports: [
         PersonModule,
-        PersonKontextModule,
+        PersonenKontextModule,
         KeycloakAdministrationModule,
         UserModule,
         LoggerModule.register(PersonApiModule.name),

@@ -7,7 +7,7 @@ import {
 } from '../../../test/utils/index.js';
 import { PersonController } from './api/person.controller.js';
 import { PersonUc } from './api/person.uc.js';
-import { PersonenkontextUc } from '../person-kontext/api/personenkontext.uc.js';
+import { PersonenkontextUc } from '../personenkontext/api/personenkontext.uc.js';
 import { PersonApiModule } from './person-api.module.js';
 import { PersonFrontendController } from './api/person.frontend.controller.js';
 import { PersonApiMapperProfile } from './api/person-api.mapper.profile.js';

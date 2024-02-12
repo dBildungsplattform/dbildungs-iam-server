@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { PagedDto } from '../../../shared/paging/index.js';
-import { SichtfreigabeType } from '../../person-kontext/domain/personenkontext.enums.js';
+import { SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
 
 export class FindPersonendatensatzDto extends PagedDto {
     @AutoMap()

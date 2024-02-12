@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
-import { PersonKontextModule } from './person-kontext.module.js';
+import { PersonenKontextModule } from './personenkontext.module.js';
 import { PersonenkontextRepo } from './persistence/personenkontext.repo.js';
 import { PersonenkontextService } from './domain/personenkontext.service.js';
 import { PersonRepo } from '../person/persistence/person.repo.js';
@@ -10,7 +10,7 @@ describe('PersonKontextModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, PersonKontextModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, PersonenKontextModule],
         }).compile();
     });
 

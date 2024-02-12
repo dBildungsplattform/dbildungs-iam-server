@@ -5,21 +5,21 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { MappingError } from '../../../shared/error/index.js';
 import { PersonDo } from '../domain/person.do.js';
-import { PersonenkontextDo } from '../../person-kontext/domain/personenkontext.do.js';
+import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
 import {
     Jahrgangsstufe,
     Personenstatus,
     Rolle,
     SichtfreigabeType,
-} from '../../person-kontext/domain/personenkontext.enums.js';
+} from '../../personenkontext/domain/personenkontext.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from './create-person.dto.js';
-import { CreatePersonenkontextBodyParams } from '../../person-kontext/api/create-personenkontext.body.params.js';
-import { CreatePersonenkontextDto } from '../../person-kontext/api/create-personenkontext.dto.js';
-import { CreatedPersonenkontextDto } from '../../person-kontext/api/created-personenkontext.dto.js';
-import { FindPersonenkontextByIdDto } from '../../person-kontext/api/find-personenkontext-by-id.dto.js';
-import { FindPersonenkontextByIdParams } from '../../person-kontext/api/find-personenkontext-by-id.params.js';
-import { FindPersonenkontextDto } from '../../person-kontext/api/find-personenkontext.dto.js';
+import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/create-personenkontext.body.params.js';
+import { CreatePersonenkontextDto } from '../../personenkontext/api/create-personenkontext.dto.js';
+import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
+import { FindPersonenkontextByIdDto } from '../../personenkontext/api/find-personenkontext-by-id.dto.js';
+import { FindPersonenkontextByIdParams } from '../../personenkontext/api/find-personenkontext-by-id.params.js';
+import { FindPersonenkontextDto } from '../../personenkontext/api/find-personenkontext.dto.js';
 import { LoeschungDto } from './loeschung.dto.js';
 import { LoeschungResponse } from './loeschung.response.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
@@ -31,12 +31,12 @@ import { PersonDto } from './person.dto.js';
 import { PersonResponse } from './person.response.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
-import { PersonenkontextQueryParams } from '../../person-kontext/api/personenkontext-query.params.js';
-import { PersonenkontextDto } from '../../person-kontext/api/personenkontext.dto.js';
-import { PersonenkontextResponse } from '../../person-kontext/api/personenkontext.response.js';
-import { PersonenkontextdatensatzResponse } from '../../person-kontext/api/personenkontextdatensatz.response.js';
-import { UpdatePersonenkontextDto } from '../../person-kontext/api/update-personenkontext.dto.js';
-import { UpdatePersonenkontextBodyParams } from '../../person-kontext/api/update-personenkontext.body.params.js';
+import { PersonenkontextQueryParams } from '../../personenkontext/api/personenkontext-query.params.js';
+import { PersonenkontextDto } from '../../personenkontext/api/personenkontext.dto.js';
+import { PersonenkontextResponse } from '../../personenkontext/api/personenkontext.response.js';
+import { PersonenkontextdatensatzResponse } from '../../personenkontext/api/personenkontextdatensatz.response.js';
+import { UpdatePersonenkontextDto } from '../../personenkontext/api/update-personenkontext.dto.js';
+import { UpdatePersonenkontextBodyParams } from '../../personenkontext/api/update-personenkontext.body.params.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { UpdatePersonDto } from './update-person.dto.js';
 

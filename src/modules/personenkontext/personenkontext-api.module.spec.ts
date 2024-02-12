@@ -5,8 +5,8 @@ import {
     MapperTestModule,
     KeycloakConfigTestModule,
 } from '../../../test/utils/index.js';
-import { PersonenkontextUc } from '../person-kontext/api/personenkontext.uc.js';
-import { PersonKontextApiModule } from './person-kontext-api.module.js';
+import { PersonenkontextUc } from '../personenkontext/api/personenkontext.uc.js';
+import { PersonenKontextApiModule } from './personenkontext-api.module.js';
 import { PersonenkontextController } from './api/personenkontext.controller.js';
 import { PersonenkontextService } from './domain/personenkontext.service.js';
 import { PersonenkontextRepo } from './persistence/personenkontext.repo.js';
@@ -21,7 +21,7 @@ describe('PersonKontextApiModule', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot(),
                 MapperTestModule,
-                PersonKontextApiModule,
+                PersonenKontextApiModule,
                 KeycloakConfigTestModule.forRoot(),
             ],
         }).compile();
