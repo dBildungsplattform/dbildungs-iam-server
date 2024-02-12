@@ -1,7 +1,7 @@
 import { AutoMap } from '@automapper/classes';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-organisation.dto.js';
-import { LoeschungDto } from './loeschung.dto.js';
+import { LoeschungDto } from '../../person/api/loeschung.dto.js';
 
 export class PersonenkontextDto {
     @AutoMap()

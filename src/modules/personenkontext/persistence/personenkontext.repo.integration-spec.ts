@@ -10,11 +10,11 @@ import {
     DoFactory,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { PersonDo } from '../domain/person.do.js';
+import { PersonDo } from '../../person/domain/person.do.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
-import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
-import { PersonEntity } from './person.entity.js';
+import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
+import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextRepo } from './personenkontext.repo.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';

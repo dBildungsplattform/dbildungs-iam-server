@@ -1,36 +1,47 @@
 import { AutoMap } from '@automapper/classes';
+import { ApiProperty } from '@nestjs/swagger';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { CreatedPersonenkontextOrganisationDto } from './created-personenkontext-organisation.dto.js';
-import { LoeschungDto } from './loeschung.dto.js';
+import { LoeschungResponse } from '../../person/api/loeschung.response.js';
 
-export class CreatedPersonenkontextDto {
+export class PersonenkontextResponse {
     @AutoMap()
+    @ApiProperty()
     public readonly id!: string;
 
     @AutoMap()
+    @ApiProperty()
     public readonly referrer?: string;
 
     @AutoMap()
+    @ApiProperty()
     public readonly mandant!: string;
 
-    @AutoMap()
+    @AutoMap(() => CreatedPersonenkontextOrganisationDto)
+    @ApiProperty()
     public readonly organisation!: CreatedPersonenkontextOrganisationDto;
 
-    @AutoMap()
+    @AutoMap(() => String)
+    @ApiProperty()
     public readonly rolle!: Rolle;
 
-    @AutoMap()
+    @AutoMap(() => String)
+    @ApiProperty()
     public readonly personenstatus?: Personenstatus;
 
-    @AutoMap()
+    @AutoMap(() => String)
+    @ApiProperty()
     public readonly jahrgangsstufe?: Jahrgangsstufe;
 
     @AutoMap(() => String)
+    @ApiProperty()
     public readonly sichtfreigabe?: SichtfreigabeType;
 
-    @AutoMap(() => LoeschungDto)
-    public readonly loeschung?: LoeschungDto;
+    @AutoMap(() => LoeschungResponse)
+    @ApiProperty()
+    public readonly loeschung?: LoeschungResponse;
 
     @AutoMap()
+    @ApiProperty()
     public readonly revision!: string;
 }

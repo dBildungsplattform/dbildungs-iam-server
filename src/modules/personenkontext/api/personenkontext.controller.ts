@@ -33,8 +33,8 @@ import { PagingHeadersObject } from '../../../shared/paging/paging.enums.js';
 import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
 import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
-import { PersonendatensatzDto } from './personendatensatz.dto.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { PersonendatensatzDto } from '../../person/api/personendatensatz.dto.js';
+import { PersonendatensatzResponse } from '../../person/api/personendatensatz.response.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
@@ -42,7 +42,7 @@ import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.response.js';
 import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
 import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
-import { DeleteRevisionBodyParams } from './delete-revision.body.params.js';
+import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
