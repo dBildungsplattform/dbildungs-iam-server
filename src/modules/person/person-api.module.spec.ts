@@ -12,7 +12,6 @@ import { PersonApiModule } from './person-api.module.js';
 import { PersonFrontendController } from './api/person.frontend.controller.js';
 import { PersonApiMapperProfile } from './api/person-api.mapper.profile.js';
 
-
 describe('PersonApiModule', () => {
     let module: TestingModule;
 

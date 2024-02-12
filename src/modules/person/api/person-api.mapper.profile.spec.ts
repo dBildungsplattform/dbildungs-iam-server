@@ -6,7 +6,12 @@ import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { MappingError } from '../../../shared/error/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../../person-kontext/domain/personenkontext.do.js';
-import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../../person-kontext/domain/personenkontext.enums.js';
+import {
+    Jahrgangsstufe,
+    Personenstatus,
+    Rolle,
+    SichtfreigabeType,
+} from '../../person-kontext/domain/personenkontext.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from './create-person.dto.js';
 import { CreatePersonenkontextBodyParams } from '../../person-kontext/api/create-personenkontext.body.params.js';
