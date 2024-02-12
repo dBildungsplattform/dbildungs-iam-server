@@ -12,7 +12,6 @@ import {
 import { PersonRollenZuweisungDo } from '../domain/person-rollen-zuweisung.do.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { PersonRollenZuweisungEntity } from '../entity/person-rollen-zuweisung.entity.js';
-import { PersonRollenZuweisungMapperProfile } from '../mapper/person-rollen-zuweisung.mapper.profile.js';
 import { PersonRollenZuweisungRepo } from './person-rollen-zuweisung.repo.js';
 
 describe('PersonRollenZuweisungRepo', () => {
@@ -25,7 +24,7 @@ describe('PersonRollenZuweisungRepo', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [PersonRollenZuweisungMapperProfile, PersonRollenZuweisungRepo],
+            providers: [PersonRollenZuweisungRepo],
         }).compile();
         sut = module.get(PersonRollenZuweisungRepo);
         orm = module.get(MikroORM);

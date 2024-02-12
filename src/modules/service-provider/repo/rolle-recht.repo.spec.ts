@@ -16,10 +16,6 @@ import { ServiceProviderZugriffDo } from '../domain/service-provider-zugriff.do.
 import { ServiceProviderDo } from '../domain/service-provider.do.js';
 import { ServiceProviderZugriffEntity } from '../entity/service-provider-zugriff.entity.js';
 import { ServiceProviderEntity } from '../entity/service-provider.entity.js';
-import { RolleBerechtigungsZuweisungMapperProfile } from '../mapper/rolle-berechtigungs-zuweisung.mapper.profile.js';
-import { RolleRechtMapperProfile } from '../mapper/rolle-recht.mapper.profile.js';
-import { ServiceProviderZugriffMapperProfile } from '../mapper/service-provider-zugriff.mapper.profile.js';
-import { ServiceProviderMapperProfile } from '../mapper/service-provider.mapper.profile.js';
 import { RolleRechtRepo } from './rolle-recht.repo.js';
 
 describe('RolleRechtRepo', () => {
@@ -32,13 +28,7 @@ describe('RolleRechtRepo', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [
-                RolleBerechtigungsZuweisungMapperProfile,
-                RolleRechtMapperProfile,
-                ServiceProviderMapperProfile,
-                ServiceProviderZugriffMapperProfile,
-                RolleRechtRepo,
-            ],
+            providers: [RolleRechtRepo],
         }).compile();
         sut = module.get(RolleRechtRepo);
         orm = module.get(MikroORM);
