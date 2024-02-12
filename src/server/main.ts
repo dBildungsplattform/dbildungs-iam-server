@@ -6,7 +6,7 @@ import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import RedisStore from 'connect-redis';
 import session from 'express-session';
 import passport from 'passport';
-import { RedisClientType, createClient } from 'redis';
+import { createClient, RedisClientType } from 'redis';
 import { NestLogger } from '../core/logging/nest-logger.js';
 import { FrontendConfig, HostConfig, KeycloakConfig, RedisConfig, ServerConfig } from '../shared/config/index.js';
 import { GlobalValidationPipe } from '../shared/validation/index.js';
@@ -75,7 +75,18 @@ async function bootstrap(): Promise<void> {
             cert: redisConfig.CERTIFICATE_AUTHORITIES,
         },
     });
-    await redisClient.connect();
+
+    /*
+    Just retrying does not work.
+    Once the connection has failed if no error handler is registered later connection attemps might just fail because
+    the client library assumes termination of the process if failure
+    Also the documentation expressly requires listening to on('error')
+     */
+
+    await redisClient
+        .on('error', (error: Error) => app.get(NestLogger).error(`Redis connection failed: ${error.message}`))
+        .connect();
+    app.get(NestLogger).log('Redis-connection made');
 
     const redisStore: RedisStore = new RedisStore({
         client: redisClient,
