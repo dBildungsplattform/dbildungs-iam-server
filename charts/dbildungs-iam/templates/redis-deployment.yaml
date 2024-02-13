@@ -18,8 +18,6 @@ spec:
         app.kubernetes.io/layer: {{ .Values.dbiam.selector.layer }} 
     spec:
       automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
-      securityContext:
-        allowPrivilegeEscalation: false
       initContainers:
         {{- range .Values.redisinitContainer }}
         - name: {{ .name }}
@@ -37,7 +35,7 @@ spec:
           securityContext:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           ports:
-            {{- toYaml .Values.redisports | nindent 12 }}
+            {{- toYaml .Values.redis.ports | nindent 12 }}
           volumeMounts:
             {{- toYaml .Values.redis.volumeMounts | nindent 12 }}
           resources:

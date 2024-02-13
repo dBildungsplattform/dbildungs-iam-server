@@ -14,13 +14,15 @@ enableServiceMonitor: false
 
 enabledcontainerSecurityContext: true
 containerSecurityContext:
-  runAsUser: 1000
+  runAsUser: 2000
   runAsNonRoot: true
   privileged: false
   readOnlyRootFilesystem: false
   allowPrivilegeEscalation: false
   capabilities:
     drop: ["ALL"]
+  seccompProfile:
+      type: RuntimeDefault
   
 database:
   name: ""
@@ -90,7 +92,7 @@ redisvolumes:
 
 enabledredisserviceport:  true
 redisports:
-  - containerPort:  6379
+  - port:  6379
     targetPort: redis-port
     protocol: TCP
     name: redis-port
