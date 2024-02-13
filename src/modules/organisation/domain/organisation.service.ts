@@ -9,6 +9,8 @@ import {
 import { OrganisationDo } from './organisation.do.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
+import {SchuleZuTraeger} from "../specification/schule-zu-traeger.js";
+import {TraegerZuTraeger} from "../specification/traeger-zu-traeger.js";
 
 @Injectable()
 export class OrganisationService {
@@ -86,13 +88,20 @@ export class OrganisationService {
         }
 
         childOrganisation.administriertVon = parentId;
-
+        console.log(await this.validateAdministriertVon(childOrganisation));
         const organisation: OrganisationDo<true> = await this.organisationRepo.save(childOrganisation);
         if (organisation) {
             return { ok: true, value: undefined };
         }
 
         return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
+    }
+
+    private async validateAdministriertVon(childOrganisation: OrganisationDo<true>): Promise<boolean> {
+       const schuleAdministriertVonTraeger = new SchuleZuTraeger(this.organisationRepo);
+       const traegerAdministriertVonTraeger = new TraegerZuTraeger(this.organisationRepo);
+       const combined = schuleAdministriertVonTraeger.and(traegerAdministriertVonTraeger);
+       return combined.isSatisfiedBy(childOrganisation);
     }
 
     public async setZugehoerigZu(parentId: string, childId: string): Promise<Result<void, DomainError>> {

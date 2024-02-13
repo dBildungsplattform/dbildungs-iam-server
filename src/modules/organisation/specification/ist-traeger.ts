@@ -4,6 +4,6 @@ import { CompositeSpecification } from '../../specification/specifications.js';
 
 export class IstTraeger extends CompositeSpecification<OrganisationDo<true>> {
     public async isSatisfiedBy(t: OrganisationDo<true>): Promise<boolean> {
-        return Promise.resolve(t.typ == OrganisationsTyp.SONSTIGE);
+        return Promise.resolve(t.typ == OrganisationsTyp.TRAEGER);
     }
 }

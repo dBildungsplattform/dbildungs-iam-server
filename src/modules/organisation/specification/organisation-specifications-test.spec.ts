@@ -16,6 +16,10 @@ import { IstSchule } from './ist-schule.js';
 import { IstTraeger } from './ist-traeger.js';
 import { ZugehoerigZuSchule } from './zugehoerig-zu-schule.js';
 import { ZugehoerigZuTraeger } from './zugehoerig-zu-traeger.js';
+import {AdministriertVonSchule} from "./administriert-von-schule.js";
+import {AdministriertZyklus} from "./administriert-zyklus.js";
+import {SchuleZuTraeger} from "./schule-zu-traeger";
+import {TraegerZuTraeger} from "./traeger-zu-traeger";
 
 describe('OrganisationSpecificationTests', () => {
     let module: TestingModule;
@@ -23,13 +27,17 @@ describe('OrganisationSpecificationTests', () => {
     let orm: MikroORM;
 
     let schule1: OrganisationDo<true>;
-    let traeger1: OrganisationDo<true>;
     let schule2: OrganisationDo<true>;
+    let traeger1: OrganisationDo<true>;
+    let traeger2: OrganisationDo<true>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [OrganisationPersistenceMapperProfile, OrganisationRepo],
+            providers: [
+                OrganisationPersistenceMapperProfile,
+                OrganisationRepo,
+            ],
         }).compile();
         repo = module.get(OrganisationRepo);
         orm = module.get(MikroORM);
@@ -44,11 +52,17 @@ describe('OrganisationSpecificationTests', () => {
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
 
-        const traeger: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+        let traeger: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
             name: 'Traeger1',
-            typ: OrganisationsTyp.SONSTIGE,
+            typ: OrganisationsTyp.TRAEGER,
         });
         traeger1 = await repo.save(traeger);
+        traeger = DoFactory.createOrganisation(false, {
+            name: 'Traeger2',
+            typ: OrganisationsTyp.TRAEGER,
+            administriertVon: traeger1.id,
+        });
+        traeger2 = await repo.save(traeger);
         let schule: OrganisationDo<false> = DoFactory.createOrganisation(false, {
             name: 'Schule1',
             typ: OrganisationsTyp.SCHULE,
@@ -77,6 +91,17 @@ describe('OrganisationSpecificationTests', () => {
         it('should not be satisfied when administriertVon-property is not a Traeger', async () => {
             const administriertVonTraeger: AdministriertVonTraeger = new AdministriertVonTraeger(repo);
             expect(await administriertVonTraeger.isSatisfiedBy(schule2)).toBeFalsy();
+        });
+    });
+
+    describe('administriert-von-schule', () => {
+        it('should be satisfied when administriertVon-property is Schule', async () => {
+            const administriertVonSchule: AdministriertVonSchule = new AdministriertVonSchule(repo);
+            expect(await administriertVonSchule.isSatisfiedBy(schule1)).toBeFalsy();
+        });
+        it('should not be satisfied when administriertVon-property is not a Schule', async () => {
+            const administriertVonSchule: AdministriertVonSchule = new AdministriertVonSchule(repo);
+            expect(await administriertVonSchule.isSatisfiedBy(schule2)).toBeTruthy();
         });
     });
 
@@ -121,6 +146,79 @@ describe('OrganisationSpecificationTests', () => {
         it('should not be satisfied when zugehoerigZu is referencing an organisation with type other than TRAEGER', async () => {
             const zugehoerigZuTraeger: ZugehoerigZuTraeger = new ZugehoerigZuTraeger(repo);
             expect(await zugehoerigZuTraeger.isSatisfiedBy(schule2)).toBeFalsy();
+        });
+    });
+
+    describe('schule-zu-traeger', () => {
+        it('should be satisfied', async () => {
+            const schuleZuTraeger: SchuleZuTraeger = new SchuleZuTraeger(repo);
+            expect(await schuleZuTraeger.isSatisfiedBy(schule1)).toBeTruthy();
+        });
+        it('should not be satisfied', async () => {
+            const schuleZuTraeger: SchuleZuTraeger = new SchuleZuTraeger(repo);
+            expect(await schuleZuTraeger.isSatisfiedBy(schule2)).toBeFalsy();
+        });
+    });
+
+    describe('traeger-zu-traeger', () => {
+        it('should be satisfied', async () => {
+            const traegerZuTraeger: TraegerZuTraeger = new TraegerZuTraeger(repo);
+            expect(await traegerZuTraeger.isSatisfiedBy(traeger2)).toBeTruthy();
+        });
+        it('should not be satisfied', async () => {
+            const traegerZuTraeger: TraegerZuTraeger = new TraegerZuTraeger(repo);
+            expect(await traegerZuTraeger.isSatisfiedBy(traeger1)).toBeFalsy();
+        });
+    });
+
+    describe('AdministriertVon circle reference test', () => {
+        it('should be satisfied because chaining is building a circular reference', async () => {
+            let traeger: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Traeger1',
+                administriertVon: undefined,
+                typ: OrganisationsTyp.TRAEGER,
+            });
+            const traeger1: OrganisationDo<true> = await repo.save(traeger);
+            traeger = DoFactory.createOrganisation(false, {
+                name: 'Traeger2',
+                administriertVon: traeger1.id,
+                typ: OrganisationsTyp.TRAEGER,
+            });
+            const traeger2: OrganisationDo<true> = await repo.save(traeger);
+            traeger = DoFactory.createOrganisation(false, {
+                name: 'Traeger3',
+                administriertVon: traeger2.id,
+                typ: OrganisationsTyp.TRAEGER,
+            });
+            const traeger3: OrganisationDo<true> =  await repo.save(traeger);
+
+            traeger1.administriertVon = traeger3.id;
+            const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(repo);
+            expect(await administriertZyklus.isSatisfiedBy(traeger1)).toBeTruthy();
+        });
+
+        it('should not be satisfied because chaining is not building a circular reference', async () => {
+            let traeger: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Traeger4',
+                administriertVon: undefined,
+                typ: OrganisationsTyp.TRAEGER,
+            });
+            const traeger4: OrganisationDo<true> = await repo.save(traeger);
+            traeger = DoFactory.createOrganisation(false, {
+                name: 'Traeger5',
+                administriertVon: traeger4.id,
+                typ: OrganisationsTyp.TRAEGER,
+            });
+            const traeger5: OrganisationDo<true> = await repo.save(traeger);
+            traeger = DoFactory.createOrganisation(false, {
+                name: 'Traeger6',
+                administriertVon: traeger5.id,
+                typ: OrganisationsTyp.TRAEGER,
+            });
+            await repo.save(traeger);
+
+            const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(repo);
+            expect(await administriertZyklus.isSatisfiedBy(traeger4)).toBeFalsy();
         });
     });
 });

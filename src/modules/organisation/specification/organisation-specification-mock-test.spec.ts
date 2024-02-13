@@ -13,6 +13,7 @@ import { ZugehoerigZuSchule } from './zugehoerig-zu-schule.js';
 import { ZugehoerigZuTraeger } from './zugehoerig-zu-traeger.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { OrganisationDo } from '../domain/organisation.do.js';
+import {AdministriertVonSchule} from "./administriert-von-schule";
 
 describe('OrganisationSpecificationMockedRepoTests', () => {
     let module: TestingModule;
@@ -52,6 +53,21 @@ describe('OrganisationSpecificationMockedRepoTests', () => {
             const schule: OrganisationDo<true> = DoFactory.createOrganisation(true, { administriertVon: undefined });
             repoMock.findById.mockResolvedValueOnce(null);
             expect(await administriertVonTraeger.isSatisfiedBy(schule)).toBeFalsy();
+        });
+    });
+
+    describe('administriert-von-schule', () => {
+        it('should not be satisfied when organisation referenced by administriertVon cannot be found', async () => {
+            const administriertVonSchule: AdministriertVonSchule = new AdministriertVonSchule(repoMock);
+            const schule: OrganisationDo<true> = DoFactory.createOrganisation(true, { administriertVon: '1' });
+            repoMock.findById.mockResolvedValueOnce(null);
+            expect(await administriertVonSchule.isSatisfiedBy(schule)).toBeFalsy();
+        });
+        it('should not be satisfied when administriertVon is undefined', async () => {
+            const administriertVonSchule: AdministriertVonSchule = new AdministriertVonSchule(repoMock);
+            const schule: OrganisationDo<true> = DoFactory.createOrganisation(true, { administriertVon: undefined });
+            repoMock.findById.mockResolvedValueOnce(null);
+            expect(await administriertVonSchule.isSatisfiedBy(schule)).toBeFalsy();
         });
     });
 

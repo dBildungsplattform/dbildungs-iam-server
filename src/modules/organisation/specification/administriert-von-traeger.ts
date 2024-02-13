@@ -12,6 +12,6 @@ export class AdministriertVonTraeger extends CompositeSpecification<Organisation
         if (!t.administriertVon) return false;
         const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(t.administriertVon);
         if (!organisation) return false;
-        return organisation.typ === OrganisationsTyp.SONSTIGE;
+        return organisation.typ === OrganisationsTyp.TRAEGER;
     }
 }
