@@ -22,12 +22,13 @@ spec:
         allowPrivilegeEscalation: false
       initContainers:
       {{- toYaml .Values.redisinitContainer | nindent 8 }}
+      
       containers:
         - name: {{ .Values.redis.image.name }}
           image: {{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}
           imagePullPolicy: {{ .Values.redis.image.pullPolicy }}
           securityContext:
-            {{- toYaml .Values.redis.containerSecurityContext | nindent 12 }}
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           ports:
             {{- toYaml .Values.redisports | nindent 12 }}
           volumeMounts:

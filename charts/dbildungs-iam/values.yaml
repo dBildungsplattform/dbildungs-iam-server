@@ -49,8 +49,6 @@ ports:
     name: redis-port
 
 
-
-#enabledredisinitContainer: true
 redisinitContainer:
   - name: copy-tls-data
     image: alpine
@@ -62,7 +60,16 @@ redisinitContainer:
         name: tls-data
       - mountPath: "/data"
         name: data
-
+    securityContext:
+      runAsUser: 1000
+      runAsNonRoot: true
+      privileged: false
+      readOnlyRootFilesystem: false
+      allowPrivilegeEscalation: false
+      capabilities:
+      drop: ["ALL"]
+      seccompProfile:
+        type: "RuntimeDefault"
 
 # Redis Container Configuration
 redis:
@@ -71,17 +78,6 @@ redis:
     repository: redis
     tag: "7.2.2"
     pullPolicy: IfNotPresent
-  containerSecurityContext:
-    runAsUser: 1000
-    runAsNonRoot: true
-    privileged: false
-    readOnlyRootFilesystem: true
-    allowPrivilegeEscalation: false
-    capabilities:
-      drop:
-        - "ALL"
-    seccompProfile:
-      type: "RuntimeDefault"
   volumeMounts:
     - mountPath: "/data"
       name: data
