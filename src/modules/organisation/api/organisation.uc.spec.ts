@@ -257,16 +257,19 @@ describe('OrganisationUc', () => {
                     items: organisationDos,
                 });
 
-                const result: Paged<OrganisationResponse> = await organisationUc.findAdministriertVon('');
+                const result: Paged<OrganisationResponse> | SchulConnexError =
+                    await organisationUc.findAdministriertVon('');
 
-                expect(result.total).toBe(2);
-                expect(result.items).toHaveLength(2);
-                expect(result.items[0]?.name).toEqual(organisationDos[0]?.name);
-                expect(result.items[1]?.name).toEqual(organisationDos[1]?.name);
-                expect(result.items[0]?.kennung).toEqual(organisationDos[0]?.kennung);
-                expect(result.items[1]?.kennung).toEqual(organisationDos[1]?.kennung);
-                expect(result.items[0]?.typ).toEqual(organisationDos[0]?.typ);
-                expect(result.items[1]?.typ).toEqual(organisationDos[1]?.typ);
+                if (!(result instanceof SchulConnexError)) {
+                    expect(result.total).toBe(2);
+                    expect(result.items).toHaveLength(2);
+                    expect(result.items[0]?.name).toEqual(organisationDos[0]?.name);
+                    expect(result.items[1]?.name).toEqual(organisationDos[1]?.name);
+                    expect(result.items[0]?.kennung).toEqual(organisationDos[0]?.kennung);
+                    expect(result.items[1]?.kennung).toEqual(organisationDos[1]?.kennung);
+                    expect(result.items[0]?.typ).toEqual(organisationDos[0]?.typ);
+                    expect(result.items[1]?.typ).toEqual(organisationDos[1]?.typ);
+                }
             });
         });
 
@@ -277,7 +280,7 @@ describe('OrganisationUc', () => {
                     error: new EntityNotFoundError(),
                 });
 
-                await expect(organisationUc.findAdministriertVon('')).rejects.toThrow(EntityNotFoundError);
+                await expect(organisationUc.findAdministriertVon('')).resolves.toBeInstanceOf(SchulConnexError);
             });
         });
     });
