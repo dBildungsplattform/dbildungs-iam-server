@@ -23,7 +23,7 @@ spec:
         - name: {{ .name }}
           image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
           securityContext:
-            allowPrivilegeEscalation: false
+            {{- toYaml $.Values.containerSecurityContext | nindent 12 }}
           command: {{ .command }}
           env:
             {{- include "dbiam-backend-envs" $ | nindent 12 }}
@@ -60,10 +60,11 @@ spec:
             {{- toYaml .Values.backendcontainer.readinessProbe | nindent 12 }}
       restartPolicy: {{.Values.restartPolicy  }}
       volumes:
-        - name: {{ .Values.backendcontainer.volumeMounts.configVolume.name }}
+      volumes:
+        - name: {{ (index .Values.backendcontainer.volumeMounts 0).name }}
           configMap:
-            name:  {{.Values.configmap.name  }}
-        - name: {{ .Values.backendcontainer.volumeMounts.secretVolume.name }}
+            name: {{.Values.configmap.name  }}
+        - name: {{ (index .Values.backendcontainer.volumeMounts 1).name }}
           secret:
             secretName: {{.Values.secrets.name}}
         {{if .Values.seeding}}

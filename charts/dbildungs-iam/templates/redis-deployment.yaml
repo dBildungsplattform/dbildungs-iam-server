@@ -21,8 +21,15 @@ spec:
       securityContext:
         allowPrivilegeEscalation: false
       initContainers:
-      {{- toYaml .Values.redisinitContainer | nindent 8 }}
-      
+        {{- range .Values.redisinitContainer }}
+        - name: {{ .name }}
+          image: {{ .image }}
+          command: {{ .command }}
+          volumeMounts:
+            {{- toYaml .volumeMounts | nindent 12 }}
+          securityContext:
+            {{- toYaml $.Values.containerSecurityContext | nindent 12 }}
+        {{- end }}
       containers:
         - name: {{ .Values.redis.image.name }}
           image: {{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}

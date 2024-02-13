@@ -1,26 +1,16 @@
-#dbildungsIamExternalPort: 80
-#dbildungsIamReplications: 1
+image:
+  repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
+  tag: ""
+  pullPolicy: Always
 
 environment: prod
-#backendHostname: ""
-#keycloakHostname: ""
 
-
-# Configuration of necessary secrets
-# Name of the secrets to inject
 secrets:
   name: dbildungs-iam-secrets
 configmap:
   name: dbildungs-iam-configmap
 # If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
 enableServiceMonitor: false
-# do we use a development redis?
-redisEnabled: true
-# Image
-image:
-  repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
-  tag: ""
-  pullPolicy: Always
 
 enabledcontainerSecurityContext: true
 containerSecurityContext:
@@ -30,16 +20,12 @@ containerSecurityContext:
   readOnlyRootFilesystem: false
   allowPrivilegeEscalation: false
   capabilities:
-  drop: ["ALL"]
-  seccompProfile:
-    type: "RuntimeDefault"
-
-db:
+    drop: ["ALL"]
+  
+database:
   name: ""
 namespace: ""
 replicaCount: 1
-
-
 
 enabledserviceport: true
 ports:
@@ -48,30 +34,15 @@ ports:
     protocol: TCP
     name: redis-port
 
-
 redisinitContainer:
   - name: copy-tls-data
     image: alpine
-    securityContext:
-      allowPrivilegeEscalation: false
     command: ["/bin/sh","-c", "apk add --no-cache openssl bash;/bin/bash /tls/copy-tls.sh"]
     volumeMounts:
       - mountPath: "/tls"
         name: tls-data
       - mountPath: "/data"
         name: data
-    securityContext:
-      runAsUser: 1000
-      runAsNonRoot: true
-      privileged: false
-      readOnlyRootFilesystem: false
-      allowPrivilegeEscalation: false
-      capabilities:
-      drop: ["ALL"]
-      seccompProfile:
-        type: "RuntimeDefault"
-
-# Redis Container Configuration
 redis:
   image:
     name: redis
@@ -109,7 +80,6 @@ ingress:
   portnumber: 80 
   automountServiceAccountToken: false
 
-
 enabledredisvolume: true
 redisvolumes:
   - name: tls-data
@@ -118,32 +88,13 @@ redisvolumes:
   - name: data
     emptyDir: {}
 
-
 enabledredisserviceport:  true
 redisports:
-  - port:  6379
+  - containerPort:  6379
     targetPort: redis-port
     protocol: TCP
     name: redis-port
 redisservicetype: ClusterIP
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 enabledbackendserviceport:  true
 backendports:
@@ -158,10 +109,6 @@ seeding:
   configmap: spsh-seeding-data-configmap
   database: dev
   
-
-
-
-
 serviceMonitor:
   namespaceSelector:
     any: true
@@ -179,8 +126,6 @@ backend:
     layer: dbildungs-iam-backend
   commonLabels:
     name: dbildungs-iam-backend
-
-
 
 initContainers:
   - name: db-init
@@ -237,14 +182,13 @@ backendcontainer:
       port: 8080
       path: '/health'
   volumeMounts:
-    configVolume:
-      mountPath: /app/config/config.json
+    - mountPath: /app/config/config.json
       subPath: config-json
       name: config-volume
       readOnly: true
-    secretVolume:
-      mountPath: /app/config/secrets.json
+    - mountPath: /app/config/secrets.json
       subPath: secrets-json
       name: secret-volume
       readOnly: true
+    
 restartPolicy: Always
