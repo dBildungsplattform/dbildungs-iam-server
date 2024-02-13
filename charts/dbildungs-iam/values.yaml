@@ -39,11 +39,7 @@ db:
 namespace: ""
 replicaCount: 1
 
-#service:
-#  type: ClusterIP
-#  port: 6379
-#  targetPort: redis-port
-#  portName: redis-port
+
 
 enabledserviceport: true
 ports:
@@ -54,7 +50,7 @@ ports:
 
 
 
-enabledredisinitContainer: true
+#enabledredisinitContainer: true
 redisinitContainer:
   - name: copy-tls-data
     image: alpine
@@ -67,22 +63,49 @@ redisinitContainer:
       - mountPath: "/data"
         name: data
 
-enabledrediscontainer: true
-rediscontainers:
-  - name: redis
-    image: redis:7.2.2
-    pullPolicy: Always
-    securityContext:
-      allowPrivilegeEscalation: false
-    volumeMounts:
-      - mountPath: "/data"
-        name: data
-    ports:
-      - name: redis-port
-        containerPort: 6379
-        protocol: TCP
-    args:
+
+# Redis Container Configuration
+redis:
+  image:
+    name: redis
+    repository: redis
+    tag: "7.2.2"
+    pullPolicy: IfNotPresent
+  containerSecurityContext:
+    runAsUser: 1000
+    runAsNonRoot: true
+    privileged: false
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    seccompProfile:
+      type: "RuntimeDefault"
+  volumeMounts:
+    - mountPath: "/data"
+      name: data
+  ports:
+    - name: redis-port
+      containerPort: 6379
+      protocol: TCP
+  args:
       - "/data/tls/redis.conf"
+  livenessProbe:
+    tcpSocket:
+      port: 6379
+    initialDelaySeconds: 15
+    timeoutSeconds: 2
+  readinessProbe:
+    tcpSocket:
+      port: 6379
+    initialDelaySeconds: 5
+    timeoutSeconds: 1
+  startupProbe:
+    tcpSocket:
+      port: 6379
+    failureThreshold: 30
+    periodSeconds: 10
 
 ingress:
   ingressClassName: nginx  
@@ -107,6 +130,24 @@ redisports:
     protocol: TCP
     name: redis-port
 redisservicetype: ClusterIP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 enabledbackendserviceport:  true
 backendports:

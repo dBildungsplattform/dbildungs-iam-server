@@ -18,18 +18,28 @@ spec:
         app.kubernetes.io/layer: {{ .Values.dbiam.selector.layer }} 
     spec:
       automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
-      {{- if .Values.enabledredisinitContainer }}
-      initContainers: {{- toYaml .Values.redisinitContainer | nindent 6 }}
-      {{- end }}
-      
-      {{- if .Values.enabledrediscontainer }}
-      containers: {{- toYaml .Values.rediscontainers | nindent 6 }}
-      {{- end }}
-
-      {{- if .Values.enabledredisvolume }}
-      volumes: {{- toYaml .Values.redisvolumes | nindent 6 }}
-      {{- end }}
-
-
-
-      
+      securityContext:
+        allowPrivilegeEscalation: false
+      initContainers:
+      {{- toYaml .Values.redisinitContainer | nindent 8 }}
+      containers:
+        - name: {{ .Values.redis.image.name }}
+          image: {{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}
+          imagePullPolicy: {{ .Values.redis.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.redis.containerSecurityContext | nindent 12 }}
+          ports:
+            {{- toYaml .Values.redisports | nindent 12 }}
+          volumeMounts:
+            {{- toYaml .Values.redis.volumeMounts | nindent 12 }}
+          resources:
+            {{- toYaml .Values.containerResources | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.redis.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.redis.readinessProbe | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.redis.startupProbe | nindent 12 }}
+      volumes:
+        {{- toYaml .Values.redisvolumes | nindent 8 }}
+      restartPolicy: {{ .Values.restartPolicy }}
