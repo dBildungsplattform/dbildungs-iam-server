@@ -1,12 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+import { ServiceProviderKategorie } from '../domain/service-provider.enum.js';
+import { ServiceProvider } from '../domain/service-provider.js';
+
 export class ServiceProviderResponse {
     @ApiProperty()
-    public id!: string;
+    public id: string;
 
     @ApiProperty()
-    public name!: string;
+    public name: string;
 
     @ApiProperty()
-    public url!: string;
+    public url: string;
+
+    @ApiProperty({ enum: ServiceProviderKategorie })
+    public kategorie: ServiceProviderKategorie;
+
+    public constructor(serviceProvider: ServiceProvider<true, boolean>) {
+        this.id = serviceProvider.id;
+        this.name = serviceProvider.name;
+        this.url = serviceProvider.url;
+        this.kategorie = serviceProvider.kategorie;
+    }
 }
