@@ -1,49 +1,35 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dbiam-server-redis-deployment
+  name: {{ include "common.names.releasename" . }}-redis
+  namespace: {{ .Values.namespace }}
   labels:
-    app.kubernetes.io/name: {{.Chart.Name}}
+    app.kubernetes.io/name: {{ .Values.dbiam.commonLabels.name }}
     app.kubernetes.io/version: {{.Chart.Version}}
 spec:
   selector:
     matchLabels:
-      layer: dbildungs-iam-redis
-  replicas: 1
+      app.kubernetes.io/layer: {{ .Values.dbiam.selector.layer }}
+  replicas: {{ .Values.replicaCount }}
   template:
     metadata:
-      name: dbildungs-iam-redis
       labels:
-        layer: dbildungs-iam-redis
+        app.kubernetes.io/name: {{ .Values.dbiam.commonLabels.name }}
+        app.kubernetes.io/layer: {{ .Values.dbiam.selector.layer }} 
     spec:
-      initContainers:
-        - name: copy-tls-data
-          image: alpine
-          securityContext:
-            allowPrivilegeEscalation: false
-          command: ["/bin/sh","-c", "apk add --no-cache openssl bash;/bin/bash /tls/copy-tls.sh"]
-          volumeMounts:
-            - mountPath: "/tls"
-              name: tls-data
-            - mountPath: "/data"
-              name: data
-      containers:
-        - name: redis
-          image: redis:7.2.2
-          securityContext:
-            allowPrivilegeEscalation: false
-          volumeMounts:
-            - mountPath: "/data"
-              name: data
-          ports:
-            - name: redis-port
-              containerPort: 6379
-              protocol: TCP
-          args:
-            - "/data/tls/redis.conf"
-      volumes:
-        - name: tls-data
-          configMap:
-            name: dbiam-redis-tls-config
-        - name: data
-          emptyDir: {}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- if .Values.enabledredisinitContainer }}
+      initContainers: {{- toYaml .Values.redisinitContainer | nindent 6 }}
+      {{- end }}
+      
+      {{- if .Values.enabledrediscontainer }}
+      containers: {{- toYaml .Values.rediscontainers | nindent 6 }}
+      {{- end }}
+
+      {{- if .Values.enabledredisvolume }}
+      volumes: {{- toYaml .Values.redisvolumes | nindent 6 }}
+      {{- end }}
+
+
+
+      

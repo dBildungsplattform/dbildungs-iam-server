@@ -1,8 +1,11 @@
-{{if not (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmap.name)}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Values.configmap.name }}
+  namespace: {{ .Values.namespace }}
+  labels: 
+    app.kubernetes.io/name: {{ .Values.dbiam.commonLabels.name }}
+    app.kubernetes.io/version: {{.Chart.Version}}
 data:
   config-json: |-
     {{ .Files.Get "config/config.json" | nindent 4 }}
@@ -10,6 +13,4 @@ data:
   frontend-oidc-callback-url: "https://{{ .Values.backendHostname }}/api/auth/login"
   frontend-default-login-redirect: "https://{{ .Values.backendHostname }}/"
   frontend-logout-redirect: "https://{{ .Values.backendHostname }}/"
-  db-name: "{{.Values.db.name}}"
-
-{{end}}
+  db-name: "{{ .Values.db.name }}"

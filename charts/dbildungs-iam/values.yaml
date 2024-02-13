@@ -1,15 +1,11 @@
-dbildungsIamExternalPort: 80
-dbildungsIamCpuMax: 2
-dbildungsIamMemMax: 4G
-dbildungsIamCpuRequest: 200m
-dbildungsIamMemRequest: 200Mi
-dbildungsIamReplications: 1
+#dbildungsIamExternalPort: 80
+#dbildungsIamReplications: 1
+
 environment: prod
-backendHostname: ""
-keycloakHostname: ""
-seeding:
-  configmap: spsh-seeding-data-configmap
-  database: dev
+#backendHostname: ""
+#keycloakHostname: ""
+
+
 # Configuration of necessary secrets
 # Name of the secrets to inject
 secrets:
@@ -24,5 +20,194 @@ redisEnabled: true
 image:
   repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
   tag: ""
+  pullPolicy: Always
+
+enabledcontainerSecurityContext: true
+containerSecurityContext:
+  runAsUser: 1000
+  runAsNonRoot: true
+  privileged: false
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+  capabilities:
+  drop: ["ALL"]
+  seccompProfile:
+    type: "RuntimeDefault"
+
 db:
   name: ""
+namespace: ""
+replicaCount: 1
+
+#service:
+#  type: ClusterIP
+#  port: 6379
+#  targetPort: redis-port
+#  portName: redis-port
+
+enabledserviceport: true
+ports:
+  - port: 6379
+    targetPort: redis-port
+    protocol: TCP
+    name: redis-port
+
+
+
+enabledredisinitContainer: true
+redisinitContainer:
+  - name: copy-tls-data
+    image: alpine
+    securityContext:
+      allowPrivilegeEscalation: false
+    command: ["/bin/sh","-c", "apk add --no-cache openssl bash;/bin/bash /tls/copy-tls.sh"]
+    volumeMounts:
+      - mountPath: "/tls"
+        name: tls-data
+      - mountPath: "/data"
+        name: data
+
+enabledrediscontainer: true
+rediscontainers:
+  - name: redis
+    image: redis:7.2.2
+    pullPolicy: Always
+    securityContext:
+      allowPrivilegeEscalation: false
+    volumeMounts:
+      - mountPath: "/data"
+        name: data
+    ports:
+      - name: redis-port
+        containerPort: 6379
+        protocol: TCP
+    args:
+      - "/data/tls/redis.conf"
+
+ingress:
+  ingressClassName: nginx  
+  pathType: Prefix  
+  portnumber: 80 
+  automountServiceAccountToken: false
+
+
+enabledredisvolume: true
+redisvolumes:
+  - name: tls-data
+    configMap:
+      name: dbildungs-iam-redis-tls-config
+  - name: data
+    emptyDir: {}
+
+
+enabledredisserviceport:  true
+redisports:
+  - port:  6379
+    targetPort: redis-port
+    protocol: TCP
+    name: redis-port
+redisservicetype: ClusterIP
+
+enabledbackendserviceport:  true
+backendports:
+  - port:  80
+    targetPort: web
+    protocol: TCP
+    name: web
+backendservicetype: ClusterIP
+
+seeding:
+  enabled: true
+  configmap: spsh-seeding-data-configmap
+  database: dev
+  
+
+
+
+
+serviceMonitor:
+  namespaceSelector:
+    any: true
+  endpoints:
+    - port: "web" 
+
+dbiam:
+  selector:
+    layer: dbildungs-iam
+  commonLabels:
+    name: dbildungs-iam
+
+backend:
+  selector:
+    layer: dbildungs-iam-backend
+  commonLabels:
+    name: dbildungs-iam-backend
+
+
+
+initContainers:
+  - name: db-init
+    command: ["node", "dist/src/console/main.js", "db", "init"]
+    volumeMounts:
+      - mountPath: /app/config/config.json
+        subPath: config-json
+        name: config-volume
+        readOnly: true
+      - mountPath: /app/config/secrets.json
+        subPath: secrets-json
+        name: secret-volume
+        readOnly: true
+      - mountPath: /app/sql/{{ .Values.seeding.database }}
+        name: seeding-volume
+        readOnly: true
+  - name: db-seeding
+    command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
+    volumeMounts:
+      - mountPath: /app/config/config.json
+        subPath: config-json
+        name: config-volume
+        readOnly: true
+      - mountPath: /app/config/secrets.json
+        subPath: secrets-json
+        name: secret-volume
+        readOnly: true
+      - mountPath: /app/sql/{{ .Values.seeding.database }}
+        name: seeding-volume
+        readOnly: true
+
+containerResources:
+  requests:
+    cpu: 200m
+    memory: 200Mi
+  limits:
+    cpu: 2
+    memory: 4G
+
+backendcontainer:
+  ports:
+    - name: web
+      containerPort: 8080
+  livenessProbe:
+    initialDelaySeconds: 10
+    httpGet:
+      scheme: 'HTTP'
+      port: 8080
+      path: '/health'
+  readinessProbe:
+    initialDelaySeconds: 10
+    httpGet:
+      scheme: 'HTTP'
+      port: 8080
+      path: '/health'
+  volumeMounts:
+    configVolume:
+      mountPath: /app/config/config.json
+      subPath: config-json
+      name: config-volume
+      readOnly: true
+    secretVolume:
+      mountPath: /app/config/secrets.json
+      subPath: secrets-json
+      name: secret-volume
+      readOnly: true
+restartPolicy: Always
