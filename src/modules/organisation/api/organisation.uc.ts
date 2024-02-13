@@ -183,11 +183,15 @@ export class OrganisationUc {
         };
     }
 
-    public async findZugehoerigZu(parentOrganisationId: string): Promise<Paged<OrganisationResponse>> {
-        const parentOrg: Result<OrganisationDo<true>> =
-            await this.organisationService.findOrganisationById(parentOrganisationId);
+    public async findZugehoerigZu(
+        parentOrganisationId: string,
+    ): Promise<Paged<OrganisationResponse> | SchulConnexError> {
+        const parentOrg: Result<
+            OrganisationDo<true>,
+            DomainError
+        > = await this.organisationService.findOrganisationById(parentOrganisationId);
         if (!parentOrg.ok) {
-            throw parentOrg.error;
+            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(parentOrg.error);
         }
 
         const result: Paged<OrganisationDo<true>> =
