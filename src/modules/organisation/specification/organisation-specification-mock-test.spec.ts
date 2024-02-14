@@ -105,6 +105,16 @@ describe('OrganisationSpecificationMockedRepoTests', () => {
     });
 
     describe('schule-zu-traeger', () => {
+        it('should be satisfied when organisation is not SCHULE', async () => {
+            const schuleZuTraeger: SchuleZuTraeger = new SchuleZuTraeger(repoMock);
+            const schule: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.SONSTIGE,
+                administriertVon: '1',
+            });
+            repoMock.findById.mockResolvedValueOnce(null);
+            expect(await schuleZuTraeger.isSatisfiedBy(schule)).toBeTruthy();
+        });
+
         it('should not be satisfied when organisation referenced by administriertVon cannot be found', async () => {
             const schuleZuTraeger: SchuleZuTraeger = new SchuleZuTraeger(repoMock);
             const schule: OrganisationDo<true> = DoFactory.createOrganisation(true, {
@@ -126,14 +136,14 @@ describe('OrganisationSpecificationMockedRepoTests', () => {
     });
 
     describe('traeger-zu-traeger', () => {
-        it('should not be satisfied when organisation is not a TRAEGER', async () => {
+        it('should be satisfied when organisation is not TRAEGER', async () => {
             const traegerZuTraeger: TraegerZuTraeger = new TraegerZuTraeger(repoMock);
             const traeger: OrganisationDo<true> = DoFactory.createOrganisation(true, {
                 typ: OrganisationsTyp.SONSTIGE,
                 administriertVon: '1',
             });
             repoMock.findById.mockResolvedValueOnce(null);
-            expect(await traegerZuTraeger.isSatisfiedBy(traeger)).toBeFalsy();
+            expect(await traegerZuTraeger.isSatisfiedBy(traeger)).toBeTruthy();
         });
         it('should not be satisfied when organisation referenced by administriertVon cannot be found', async () => {
             const traegerZuTraeger: TraegerZuTraeger = new TraegerZuTraeger(repoMock);

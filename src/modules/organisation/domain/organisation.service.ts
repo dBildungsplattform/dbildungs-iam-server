@@ -11,7 +11,8 @@ import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { SchuleZuTraeger } from '../specification/schule-zu-traeger.js';
 import { TraegerZuTraeger } from '../specification/traeger-zu-traeger.js';
-import { Specification } from '../../specification/specifications.js';
+import { SchuleZuTraegerError } from '../specification/error/schule-zu-traeger.error.js';
+import { TraegerZuTraegerError } from '../specification/error/traeger-zu-traeger.error.js';
 
 @Injectable()
 export class OrganisationService {
@@ -89,7 +90,11 @@ export class OrganisationService {
         }
 
         childOrganisation.administriertVon = parentId;
-        console.log(await this.validateAdministriertVon(childOrganisation));
+        const validationResult: Result<boolean, DomainError> = await this.validateAdministriertVon(childOrganisation);
+        if (!validationResult.ok) {
+            return { ok: false, error: validationResult.error };
+        }
+
         const organisation: OrganisationDo<true> = await this.organisationRepo.save(childOrganisation);
         if (organisation) {
             return { ok: true, value: undefined };
@@ -98,12 +103,18 @@ export class OrganisationService {
         return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
     }
 
-    private async validateAdministriertVon(childOrganisation: OrganisationDo<true>): Promise<boolean> {
+    private async validateAdministriertVon(
+        childOrganisation: OrganisationDo<true>,
+    ): Promise<Result<boolean, DomainError>> {
         const schuleAdministriertVonTraeger: SchuleZuTraeger = new SchuleZuTraeger(this.organisationRepo);
+        if (!(await schuleAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
+            return { ok: false, error: new SchuleZuTraegerError(childOrganisation.id, 'SchuleZuTraeger') };
+        }
         const traegerAdministriertVonTraeger: TraegerZuTraeger = new TraegerZuTraeger(this.organisationRepo);
-        const combined: Specification<OrganisationDo<true>> =
-            schuleAdministriertVonTraeger.and(traegerAdministriertVonTraeger);
-        return combined.isSatisfiedBy(childOrganisation);
+        if (!(await traegerAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
+            return { ok: false, error: new TraegerZuTraegerError(childOrganisation.id, 'TraegerZuTraeger') };
+        }
+        return { ok: true, value: true };
     }
 
     public async setZugehoerigZu(parentId: string, childId: string): Promise<Result<void, DomainError>> {

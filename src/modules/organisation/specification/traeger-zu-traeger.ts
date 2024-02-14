@@ -9,7 +9,7 @@ export class TraegerZuTraeger extends CompositeSpecification<OrganisationDo<true
     }
 
     public async isSatisfiedBy(t: OrganisationDo<true>): Promise<boolean> {
-        if (t.typ !== OrganisationsTyp.TRAEGER) return false;
+        if (t.typ !== OrganisationsTyp.TRAEGER) return true;
         if (!t.administriertVon) return false;
         const parent: Option<OrganisationDo<true>> = await this.organisationRepo.findById(t.administriertVon);
         if (!parent) return false;

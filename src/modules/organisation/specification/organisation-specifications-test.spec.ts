@@ -147,11 +147,11 @@ describe('OrganisationSpecificationTests', () => {
     });
 
     describe('schule-zu-traeger', () => {
-        it('should be satisfied', async () => {
+        it('should be satisfied when typ is SCHULE and administriertVon is TRAEGER ', async () => {
             const schuleZuTraeger: SchuleZuTraeger = new SchuleZuTraeger(repo);
             expect(await schuleZuTraeger.isSatisfiedBy(schule1)).toBeTruthy();
         });
-        it('should not be satisfied', async () => {
+        it('should not be satisfied when typ is SCHULE and administriertVon is SCHULE', async () => {
             const schuleZuTraeger: SchuleZuTraeger = new SchuleZuTraeger(repo);
             expect(await schuleZuTraeger.isSatisfiedBy(schule2)).toBeFalsy();
         });
@@ -189,9 +189,9 @@ describe('OrganisationSpecificationTests', () => {
             });
             const traeger6: OrganisationDo<true> = await repo.save(traeger);
 
-            traeger1.administriertVon = traeger6.id;
+            traeger4.administriertVon = traeger6.id;
             const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(repo);
-            expect(await administriertZyklus.isSatisfiedBy(traeger1)).toBeTruthy();
+            expect(await administriertZyklus.isSatisfiedBy(traeger4)).toBeTruthy();
         });
 
         it('should not be satisfied because chaining is not building a circular reference', async () => {

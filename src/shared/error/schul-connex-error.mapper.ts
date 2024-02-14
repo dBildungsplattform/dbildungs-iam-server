@@ -8,6 +8,8 @@ import { MismatchedRevisionError } from './mismatched-revision.error.js';
 import { PersonAlreadyExistsError } from './person-already-exists.error.js';
 import { SchulConnexError } from './schul-connex.error.js';
 import { EntityCouldNotBeDeleted } from './entity-could-not-be-deleted.error.js';
+import { SchuleZuTraegerError } from '../../modules/organisation/specification/error/schule-zu-traeger.error.js';
+import { TraegerZuTraegerError } from '../../modules/organisation/specification/error/traeger-zu-traeger.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -73,6 +75,24 @@ export class SchulConnexErrorMapper {
                 subcode: '00',
                 titel: 'Fehlerhafte Anfrage',
                 beschreibung: 'Die Anfrage ist fehlerhaft: Die Person existiert bereits.',
+            }),
+        ],
+        [
+            SchuleZuTraegerError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '00',
+                titel: 'Spezifikation von Organisation nicht erfüllt',
+                beschreibung: 'Die Spezifikation für die Zuordnung von Schule zu Träger wurde nicht erfüllt.',
+            }),
+        ],
+        [
+            TraegerZuTraegerError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '00',
+                titel: 'Spezifikation von Organisation nicht erfüllt',
+                beschreibung: 'Die Spezifikation für die Zuordnung von Träger zu Träger wurde nicht erfüllt.',
             }),
         ],
     ]);
