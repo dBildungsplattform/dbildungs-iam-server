@@ -13,6 +13,8 @@ import { SchuleZuTraeger } from '../specification/schule-zu-traeger.js';
 import { TraegerZuTraeger } from '../specification/traeger-zu-traeger.js';
 import { SchuleZuTraegerError } from '../specification/error/schule-zu-traeger.error.js';
 import { TraegerZuTraegerError } from '../specification/error/traeger-zu-traeger.error.js';
+import { AdministriertZyklus } from '../specification/administriert-zyklus.js';
+import { AdministriertZyklusError } from '../specification/error/administriert-zyklus.error.js';
 
 @Injectable()
 export class OrganisationService {
@@ -113,6 +115,10 @@ export class OrganisationService {
         const traegerAdministriertVonTraeger: TraegerZuTraeger = new TraegerZuTraeger(this.organisationRepo);
         if (!(await traegerAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
             return { ok: false, error: new TraegerZuTraegerError(childOrganisation.id, 'TraegerZuTraeger') };
+        }
+        const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(this.organisationRepo);
+        if (await administriertZyklus.isSatisfiedBy(childOrganisation)) {
+            return { ok: false, error: new AdministriertZyklusError(childOrganisation.id, 'ZyklusInAdministiertVon') };
         }
         return { ok: true, value: true };
     }

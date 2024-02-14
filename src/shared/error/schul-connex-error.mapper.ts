@@ -10,6 +10,7 @@ import { SchulConnexError } from './schul-connex.error.js';
 import { EntityCouldNotBeDeleted } from './entity-could-not-be-deleted.error.js';
 import { SchuleZuTraegerError } from '../../modules/organisation/specification/error/schule-zu-traeger.error.js';
 import { TraegerZuTraegerError } from '../../modules/organisation/specification/error/traeger-zu-traeger.error.js';
+import { AdministriertZyklusError } from '../../modules/organisation/specification/error/administriert-zyklus.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -93,6 +94,15 @@ export class SchulConnexErrorMapper {
                 subcode: '00',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
                 beschreibung: 'Die Spezifikation für die Zuordnung von Träger zu Träger wurde nicht erfüllt.',
+            }),
+        ],
+        [
+            AdministriertZyklusError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '00',
+                titel: 'Spezifikation von Organisation nicht erfüllt',
+                beschreibung: 'Zyklus in der administriertVon-Beziehung ist nicht erlaubt.',
             }),
         ],
     ]);

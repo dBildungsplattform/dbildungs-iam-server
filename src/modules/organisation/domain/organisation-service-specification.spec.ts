@@ -11,6 +11,7 @@ import { MikroORM } from '@mikro-orm/core';
 import { MapperTestModule } from '../../../../test/utils/index.js';
 import { OrganisationPersistenceMapperProfile } from '../persistence/organisation-persistence.mapper.profile.js';
 import { TraegerZuTraegerError } from '../specification/error/traeger-zu-traeger.error.js';
+import { AdministriertZyklusError } from '../specification/error/administriert-zyklus.error.js';
 
 describe('OrganisationServiceSpecificationTest', () => {
     let module: TestingModule;
@@ -85,6 +86,28 @@ describe('OrganisationServiceSpecificationTest', () => {
             expect(result).toEqual<Result<void>>({
                 ok: false,
                 error: new TraegerZuTraegerError(traeger.id, 'TraegerZuTraeger'),
+            });
+        });
+
+        it('should return a domain error if the AdministiertZyklus specification is not met', async () => {
+            const traeger1Do: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Traeger1',
+                administriertVon: undefined,
+                typ: OrganisationsTyp.TRAEGER,
+            });
+            const traeger1: OrganisationDo<true> = await organisationRepo.save(traeger1Do);
+            const traeger2Do: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Traeger2',
+                administriertVon: traeger1.id,
+                typ: OrganisationsTyp.TRAEGER,
+            });
+            const traeger2: OrganisationDo<true> = await organisationRepo.save(traeger2Do);
+
+            const result: Result<void> = await organisationService.setAdministriertVon(traeger2.id, traeger1.id);
+
+            expect(result).toEqual<Result<void>>({
+                ok: false,
+                error: new AdministriertZyklusError(traeger1.id, 'ZyklusInAdministiertVon'),
             });
         });
     });
