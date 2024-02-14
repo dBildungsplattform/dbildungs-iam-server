@@ -16,13 +16,13 @@ enabledcontainerSecurityContext: true
 containerSecurityContext:
   #runAsUser: 1000
   #runAsNonRoot: true
-  #privileged: false
-  #readOnlyRootFilesystem: false
+  privileged: false
+  readOnlyRootFilesystem: false
   allowPrivilegeEscalation: false
-  #capabilities:
-  #  drop: ["ALL"]
-  #seccompProfile:
-  #    type: RuntimeDefault
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+      type: RuntimeDefault
   
 database:
   name: ""
