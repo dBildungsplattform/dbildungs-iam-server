@@ -11,7 +11,7 @@ import { faker } from '@faker-js/faker';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { Paged } from '../../../shared/paging/index.js';
-import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
+import { EntityCouldNotBeUpdated } from '../../../shared/error/index.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 
@@ -98,6 +98,39 @@ describe('OrganisationService', () => {
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: false,
                 error: new EntityCouldNotBeCreated(`Organization could not be created`),
+            });
+        });
+    });
+
+    describe('updateOrganisation', () => {
+        it('should update an organisation', async () => {
+            const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true);
+            organisationRepoMock.save.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
+            const result: Result<OrganisationDo<true>> = await organisationService.updateOrganisation(organisationDo);
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: true,
+                value: organisationDo as unknown as OrganisationDo<true>,
+            });
+        });
+
+        it('should return a domain error', async () => {
+            const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true);
+            organisationDo.id = '';
+            organisationRepoMock.findById.mockResolvedValue({} as Option<OrganisationDo<true>>);
+            const result: Result<OrganisationDo<true>> = await organisationService.updateOrganisation(organisationDo);
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new EntityCouldNotBeUpdated(`Organization could not be updated`, organisationDo.id),
+            });
+        });
+
+        it('should return a domain error', async () => {
+            const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true);
+            organisationRepoMock.findById.mockResolvedValue(undefined);
+            const result: Result<OrganisationDo<true>> = await organisationService.updateOrganisation(organisationDo);
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new EntityNotFoundError('Organisation', organisationDo.id),
             });
         });
     });

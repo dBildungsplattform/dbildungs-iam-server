@@ -14,6 +14,8 @@ import { FindOrganisationDto } from './find-organisation.dto.js';
 import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationUc } from './organisation.uc.js';
+import { UpdateOrganisationDto } from './update-organisation.dto.js';
+import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 
 describe('OrganisationUc', () => {
@@ -69,6 +71,32 @@ describe('OrganisationUc', () => {
                     error: new EntityCouldNotBeCreated(''),
                 });
                 await expect(organisationUc.createOrganisation({} as CreateOrganisationDto)).resolves.toBeInstanceOf(
+                    SchulConnexError,
+                );
+            });
+        });
+    });
+
+    describe('updateOrganisation', () => {
+        describe('when result is ok', () => {
+            it('should update an organisation', async () => {
+                organisationServiceMock.updateOrganisation.mockResolvedValue({
+                    ok: true,
+                    value: DoFactory.createOrganisation(true),
+                });
+                await expect(organisationUc.updateOrganisation({} as UpdateOrganisationDto)).resolves.toBeInstanceOf(
+                    UpdatedOrganisationDto,
+                );
+            });
+        });
+
+        describe('when result is not ok', () => {
+            it('should return an error', async () => {
+                organisationServiceMock.updateOrganisation.mockResolvedValue({
+                    ok: false,
+                    error: new EntityCouldNotBeCreated(''),
+                });
+                await expect(organisationUc.updateOrganisation({} as UpdateOrganisationDto)).resolves.toBeInstanceOf(
                     SchulConnexError,
                 );
             });
@@ -229,16 +257,21 @@ describe('OrganisationUc', () => {
                     items: organisationDos,
                 });
 
-                const result: Paged<OrganisationResponse> = await organisationUc.findAdministriertVon('');
+                const result: Paged<OrganisationResponse> | SchulConnexError =
+                    await organisationUc.findAdministriertVon('');
 
-                expect(result.total).toBe(2);
-                expect(result.items).toHaveLength(2);
-                expect(result.items[0]?.name).toEqual(organisationDos[0]?.name);
-                expect(result.items[1]?.name).toEqual(organisationDos[1]?.name);
-                expect(result.items[0]?.kennung).toEqual(organisationDos[0]?.kennung);
-                expect(result.items[1]?.kennung).toEqual(organisationDos[1]?.kennung);
-                expect(result.items[0]?.typ).toEqual(organisationDos[0]?.typ);
-                expect(result.items[1]?.typ).toEqual(organisationDos[1]?.typ);
+                expect(result).not.toBeInstanceOf(SchulConnexError);
+
+                if (!(result instanceof SchulConnexError)) {
+                    expect(result.total).toBe(2);
+                    expect(result.items).toHaveLength(2);
+                    expect(result.items[0]?.name).toEqual(organisationDos[0]?.name);
+                    expect(result.items[1]?.name).toEqual(organisationDos[1]?.name);
+                    expect(result.items[0]?.kennung).toEqual(organisationDos[0]?.kennung);
+                    expect(result.items[1]?.kennung).toEqual(organisationDos[1]?.kennung);
+                    expect(result.items[0]?.typ).toEqual(organisationDos[0]?.typ);
+                    expect(result.items[1]?.typ).toEqual(organisationDos[1]?.typ);
+                }
             });
         });
 
@@ -249,7 +282,7 @@ describe('OrganisationUc', () => {
                     error: new EntityNotFoundError(),
                 });
 
-                await expect(organisationUc.findAdministriertVon('')).rejects.toThrow(EntityNotFoundError);
+                await expect(organisationUc.findAdministriertVon('')).resolves.toBeInstanceOf(SchulConnexError);
             });
         });
     });
@@ -275,16 +308,21 @@ describe('OrganisationUc', () => {
                     items: organisationDos,
                 });
 
-                const result: Paged<OrganisationResponse> = await organisationUc.findZugehoerigZu('');
+                const result: Paged<OrganisationResponse> | SchulConnexError =
+                    await organisationUc.findZugehoerigZu('');
 
-                expect(result.total).toBe(2);
-                expect(result.items).toHaveLength(2);
-                expect(result.items[0]?.name).toEqual(organisationDos[0]?.name);
-                expect(result.items[1]?.name).toEqual(organisationDos[1]?.name);
-                expect(result.items[0]?.kennung).toEqual(organisationDos[0]?.kennung);
-                expect(result.items[1]?.kennung).toEqual(organisationDos[1]?.kennung);
-                expect(result.items[0]?.typ).toEqual(organisationDos[0]?.typ);
-                expect(result.items[1]?.typ).toEqual(organisationDos[1]?.typ);
+                expect(result).not.toBeInstanceOf(SchulConnexError);
+
+                if (!(result instanceof SchulConnexError)) {
+                    expect(result.total).toBe(2);
+                    expect(result.items).toHaveLength(2);
+                    expect(result.items[0]?.name).toEqual(organisationDos[0]?.name);
+                    expect(result.items[1]?.name).toEqual(organisationDos[1]?.name);
+                    expect(result.items[0]?.kennung).toEqual(organisationDos[0]?.kennung);
+                    expect(result.items[1]?.kennung).toEqual(organisationDos[1]?.kennung);
+                    expect(result.items[0]?.typ).toEqual(organisationDos[0]?.typ);
+                    expect(result.items[1]?.typ).toEqual(organisationDos[1]?.typ);
+                }
             });
         });
 
@@ -295,7 +333,7 @@ describe('OrganisationUc', () => {
                     error: new EntityNotFoundError(),
                 });
 
-                await expect(organisationUc.findZugehoerigZu('')).rejects.toThrow(EntityNotFoundError);
+                await expect(organisationUc.findZugehoerigZu('')).resolves.toBeInstanceOf(SchulConnexError);
             });
         });
     });

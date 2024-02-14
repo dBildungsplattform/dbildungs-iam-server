@@ -6,10 +6,15 @@ import { MapperTestModule } from '../../../../test/utils/index.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
 import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
-import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import {
+    Jahrgangsstufe,
+    Personenstatus,
+    Rolle,
+    SichtfreigabeType,
+} from '../../personenkontext/domain/personenkontext.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
-import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
-import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/create-personenkontext.body.params.js';
+import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonByIdParams } from './person-by-id.param.js';
@@ -19,10 +24,10 @@ import { PersonUc } from './person.uc.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
-import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
-import { PersonenkontextDto } from './personenkontext.dto.js';
-import { PersonenkontextResponse } from './personenkontext.response.js';
-import { PersonenkontextUc } from './personenkontext.uc.js';
+import { PersonenkontextQueryParams } from '../../personenkontext/api/personenkontext-query.params.js';
+import { PersonenkontextDto } from '../../personenkontext/api/personenkontext.dto.js';
+import { PersonenkontextResponse } from '../../personenkontext/api/personenkontext.response.js';
+import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 
 describe('PersonController', () => {

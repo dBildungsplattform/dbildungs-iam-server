@@ -44,6 +44,26 @@ export class OrganisationService {
         return { ok: false, error: new EntityCouldNotBeCreated(`Organization could not be created`) };
     }
 
+    public async updateOrganisation(
+        organisationDo: OrganisationDo<true>,
+    ): Promise<Result<OrganisationDo<true>, DomainError>> {
+        const storedOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(
+            organisationDo.id,
+        );
+        if (!storedOrganisation) {
+            return { ok: false, error: new EntityNotFoundError('Organisation', organisationDo.id) };
+        }
+        const organisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
+        if (organisation) {
+            return { ok: true, value: organisation };
+        }
+
+        return {
+            ok: false,
+            error: new EntityCouldNotBeUpdated(`Organization could not be updated`, organisationDo.id),
+        };
+    }
+
     public async findOrganisationById(id: string): Promise<Result<OrganisationDo<true>, DomainError>> {
         const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(id);
         if (organisation) {
