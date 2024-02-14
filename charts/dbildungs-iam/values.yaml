@@ -69,10 +69,10 @@ containerSecurityContext:
   privileged: false
   readOnlyRootFilesystem: false
   allowPrivilegeEscalation: false
-  capabilities:
-    drop: ["ALL"]
-  seccompProfile:
-      type: RuntimeDefault
+  #capabilities:
+  #  drop: ["ALL"]
+  #seccompProfile:
+  #    type: RuntimeDefault
 
 containerResources:
   requests:
@@ -202,4 +202,3 @@ backendports:
     targetPort: web
     protocol: TCP
     name: web
-
