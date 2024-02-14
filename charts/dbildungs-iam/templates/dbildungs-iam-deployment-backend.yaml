@@ -24,7 +24,11 @@ spec:
           image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
           securityContext:
             {{- toYaml $.Values.containerSecurityContext | nindent 12 }}
-          command: {{ .command }}
+          {{- if eq .name "db-init" }}
+          command: ["node", "dist/src/console/main.js", "db", "init"]
+          {{- else if eq .name "db-seeding" }}
+          command: ["node", "dist/src/console/main.js", "db", "seed", "dev", ""]
+          {{- end }}
           env:
             {{- include "dbiam-backend-envs" $ | nindent 12 }}
           volumeMounts:
@@ -43,7 +47,8 @@ spec:
           image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{- if .Values.enabledcontainerSecurityContext }}
-          securityContext: {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           {{- end }}
           ports:
             - name: {{ (index .Values.backendcontainer.ports 0).name }}
@@ -58,17 +63,16 @@ spec:
             {{- toYaml .Values.backendcontainer.livenessProbe | nindent 12 }}
           readinessProbe:
             {{- toYaml .Values.backendcontainer.readinessProbe | nindent 12 }}
-      restartPolicy: {{.Values.restartPolicy  }}
-      volumes:
+      restartPolicy: {{ .Values.restartPolicy }}
       volumes:
         - name: {{ (index .Values.backendcontainer.volumeMounts 0).name }}
           configMap:
-            name: {{.Values.configmap.name  }}
+            name: {{ .Values.configmap.name }}
         - name: {{ (index .Values.backendcontainer.volumeMounts 1).name }}
           secret:
-            secretName: {{.Values.secrets.name}}
-        {{if .Values.seeding}}
+            secretName: {{ .Values.secrets.name }}
+        {{- if .Values.seeding }}
         - name: seeding-volume
           configMap:
-            name: {{.Values.seeding.configmap}}
-        {{end}}
+            name: {{ .Values.seeding.configmap }}
+        {{- end }}

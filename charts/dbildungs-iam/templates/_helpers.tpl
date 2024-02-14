@@ -1,6 +1,6 @@
 {{/*
-Create  release name
+Create release name with common name: dbiam
 */}}
 {{- define "common.names.releasename" -}}
-{{- .Release.Name -}}
+{{- printf "dbiam-server" -}}
 {{- end -}}

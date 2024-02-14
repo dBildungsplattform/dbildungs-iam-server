@@ -14,7 +14,7 @@ enableServiceMonitor: false
 
 enabledcontainerSecurityContext: true
 containerSecurityContext:
-  runAsUser: 2000
+  runAsUser: 1000
   runAsNonRoot: true
   privileged: false
   readOnlyRootFilesystem: false
@@ -39,13 +39,13 @@ ports:
 redisinitContainer:
   - name: copy-tls-data
     image: alpine
-    command: ["/bin/sh","-c", "apk add --no-cache openssl bash;/bin/bash /tls/copy-tls.sh"]
+    #command: ["/bin/sh","-c", "apk add --no-cache openssl bash;/bin/bash /tls/copy-tls.sh"]
     volumeMounts:
       - mountPath: "/tls"
         name: tls-data
       - mountPath: "/data"
         name: data
-redis:
+rediscontainer: 
   image:
     name: redis
     repository: redis
@@ -59,7 +59,7 @@ redis:
       containerPort: 6379
       protocol: TCP
   args:
-      - "/data/tls/redis.conf"
+    - "/data/tls/redis.conf"
   livenessProbe:
     tcpSocket:
       port: 6379
@@ -86,9 +86,10 @@ enabledredisvolume: true
 redisvolumes:
   - name: tls-data
     configMap:
-      name: dbildungs-iam-redis-tls-config
+      name: dbiam-redis-tls-config
   - name: data
     emptyDir: {}
+
 
 enabledredisserviceport:  true
 redisports:
@@ -128,6 +129,17 @@ backend:
     layer: dbildungs-iam-backend
   commonLabels:
     name: dbildungs-iam-backend
+
+redis:
+  selector:
+    layer: dbildungs-iam-redis
+  commonLabels:
+    name: dbildungs-iam-redis
+
+service:
+  name: dbiam-backend
+redisservice:
+  name: redis-service
 
 initContainers:
   - name: db-init

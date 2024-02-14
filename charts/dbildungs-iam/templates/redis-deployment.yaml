@@ -5,47 +5,47 @@ metadata:
   namespace: {{ .Values.namespace }}
   labels:
     app.kubernetes.io/name: {{ .Values.dbiam.commonLabels.name }}
-    app.kubernetes.io/version: {{.Chart.Version}}
+    app.kubernetes.io/version: {{ .Chart.Version }}
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/layer: {{ .Values.dbiam.selector.layer }}
+      app.kubernetes.io/layer: {{ .Values.redis.selector.layer }}
   replicas: {{ .Values.replicaCount }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ .Values.dbiam.commonLabels.name }}
-        app.kubernetes.io/layer: {{ .Values.dbiam.selector.layer }} 
+        app.kubernetes.io/name: {{ .Values.redis.commonLabels.name }}
+        app.kubernetes.io/layer: {{ .Values.redis.selector.layer }}
     spec:
       automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       initContainers:
         {{- range .Values.redisinitContainer }}
         - name: {{ .name }}
           image: {{ .image }}
-          command: {{ .command }}
+          command: ["/bin/sh", "-c", "apk add --no-cache openssl bash;/bin/bash /tls/copy-tls.sh"]
           volumeMounts:
             {{- toYaml .volumeMounts | nindent 12 }}
           securityContext:
             {{- toYaml $.Values.containerSecurityContext | nindent 12 }}
         {{- end }}
       containers:
-        - name: {{ .Values.redis.image.name }}
-          image: {{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}
-          imagePullPolicy: {{ .Values.redis.image.pullPolicy }}
+        - name: {{ .Values.rediscontainer.image.name }}
+          image: {{ .Values.rediscontainer.image.repository }}:{{ .Values.rediscontainer.image.tag }}
+          imagePullPolicy: {{ .Values.rediscontainer.image.pullPolicy }}
           securityContext:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           ports:
-            {{- toYaml .Values.redis.ports | nindent 12 }}
+            {{- toYaml .Values.rediscontainer.ports | nindent 12 }}
           volumeMounts:
-            {{- toYaml .Values.redis.volumeMounts | nindent 12 }}
+            {{- toYaml .Values.rediscontainer.volumeMounts | nindent 12 }}
           resources:
             {{- toYaml .Values.containerResources | nindent 12 }}
           livenessProbe:
-            {{- toYaml .Values.redis.livenessProbe | nindent 12 }}
+            {{- toYaml .Values.rediscontainer.livenessProbe | nindent 12 }}
           readinessProbe:
-            {{- toYaml .Values.redis.readinessProbe | nindent 12 }}
+            {{- toYaml .Values.rediscontainer.readinessProbe | nindent 12 }}
           startupProbe:
-            {{- toYaml .Values.redis.startupProbe | nindent 12 }}
+            {{- toYaml .Values.rediscontainer.startupProbe | nindent 12 }}
       volumes:
         {{- toYaml .Values.redisvolumes | nindent 8 }}
       restartPolicy: {{ .Values.restartPolicy }}
