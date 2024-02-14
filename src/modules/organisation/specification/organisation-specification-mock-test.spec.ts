@@ -13,7 +13,10 @@ import { ZugehoerigZuSchule } from './zugehoerig-zu-schule.js';
 import { ZugehoerigZuTraeger } from './zugehoerig-zu-traeger.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { OrganisationDo } from '../domain/organisation.do.js';
-import {AdministriertVonSchule} from "./administriert-von-schule";
+import { AdministriertVonSchule } from './administriert-von-schule.js';
+import { SchuleZuTraeger } from './schule-zu-traeger.js';
+import { TraegerZuTraeger } from './traeger-zu-traeger.js';
+import { OrganisationsTyp } from '../domain/organisation.enums.js';
 
 describe('OrganisationSpecificationMockedRepoTests', () => {
     let module: TestingModule;
@@ -98,6 +101,57 @@ describe('OrganisationSpecificationMockedRepoTests', () => {
             const schule: OrganisationDo<true> = DoFactory.createOrganisation(true, { zugehoerigZu: undefined });
             repoMock.findById.mockResolvedValueOnce(null);
             expect(await zugehoerigZuTraeger.isSatisfiedBy(schule)).toBeFalsy();
+        });
+    });
+
+    describe('schule-zu-traeger', () => {
+        it('should not be satisfied when organisation referenced by administriertVon cannot be found', async () => {
+            const schuleZuTraeger: SchuleZuTraeger = new SchuleZuTraeger(repoMock);
+            const schule: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.SCHULE,
+                administriertVon: '1',
+            });
+            repoMock.findById.mockResolvedValueOnce(null);
+            expect(await schuleZuTraeger.isSatisfiedBy(schule)).toBeFalsy();
+        });
+        it('should not be satisfied when administriertVon is undefined', async () => {
+            const schuleZuTraeger: SchuleZuTraeger = new SchuleZuTraeger(repoMock);
+            const schule: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.SCHULE,
+                administriertVon: undefined,
+            });
+            repoMock.findById.mockResolvedValueOnce(null);
+            expect(await schuleZuTraeger.isSatisfiedBy(schule)).toBeFalsy();
+        });
+    });
+
+    describe('traeger-zu-traeger', () => {
+        it('should not be satisfied when organisation is not a TRAEGER', async () => {
+            const traegerZuTraeger: TraegerZuTraeger = new TraegerZuTraeger(repoMock);
+            const traeger: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.SONSTIGE,
+                administriertVon: '1',
+            });
+            repoMock.findById.mockResolvedValueOnce(null);
+            expect(await traegerZuTraeger.isSatisfiedBy(traeger)).toBeFalsy();
+        });
+        it('should not be satisfied when organisation referenced by administriertVon cannot be found', async () => {
+            const traegerZuTraeger: TraegerZuTraeger = new TraegerZuTraeger(repoMock);
+            const traeger: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.TRAEGER,
+                administriertVon: '1',
+            });
+            repoMock.findById.mockResolvedValueOnce(null);
+            expect(await traegerZuTraeger.isSatisfiedBy(traeger)).toBeFalsy();
+        });
+        it('should not be satisfied when administriertVon is undefined', async () => {
+            const traegerZuTraeger: TraegerZuTraeger = new TraegerZuTraeger(repoMock);
+            const traeger: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.TRAEGER,
+                administriertVon: undefined,
+            });
+            repoMock.findById.mockResolvedValueOnce(null);
+            expect(await traegerZuTraeger.isSatisfiedBy(traeger)).toBeFalsy();
         });
     });
 });

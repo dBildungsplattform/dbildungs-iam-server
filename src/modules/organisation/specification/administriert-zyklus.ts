@@ -1,7 +1,6 @@
-import {CompositeSpecification} from "../../specification/specifications.js";
-import {OrganisationDo} from "../domain/organisation.do.js";
-import {OrganisationRepo} from "../persistence/organisation.repo.js";
-
+import { CompositeSpecification } from '../../specification/specifications.js';
+import { OrganisationDo } from '../domain/organisation.do.js';
+import { OrganisationRepo } from '../persistence/organisation.repo.js';
 
 export class AdministriertZyklus extends CompositeSpecification<OrganisationDo<true>> {
     public constructor(private readonly organisationRepo: OrganisationRepo) {

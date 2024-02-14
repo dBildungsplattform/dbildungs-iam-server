@@ -16,10 +16,10 @@ import { IstSchule } from './ist-schule.js';
 import { IstTraeger } from './ist-traeger.js';
 import { ZugehoerigZuSchule } from './zugehoerig-zu-schule.js';
 import { ZugehoerigZuTraeger } from './zugehoerig-zu-traeger.js';
-import {AdministriertVonSchule} from "./administriert-von-schule.js";
-import {AdministriertZyklus} from "./administriert-zyklus.js";
-import {SchuleZuTraeger} from "./schule-zu-traeger";
-import {TraegerZuTraeger} from "./traeger-zu-traeger";
+import { AdministriertVonSchule } from './administriert-von-schule.js';
+import { AdministriertZyklus } from './administriert-zyklus.js';
+import { SchuleZuTraeger } from './schule-zu-traeger.js';
+import { TraegerZuTraeger } from './traeger-zu-traeger.js';
 
 describe('OrganisationSpecificationTests', () => {
     let module: TestingModule;
@@ -34,10 +34,7 @@ describe('OrganisationSpecificationTests', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [
-                OrganisationPersistenceMapperProfile,
-                OrganisationRepo,
-            ],
+            providers: [OrganisationPersistenceMapperProfile, OrganisationRepo],
         }).compile();
         repo = module.get(OrganisationRepo);
         orm = module.get(MikroORM);
@@ -174,25 +171,25 @@ describe('OrganisationSpecificationTests', () => {
     describe('AdministriertVon circle reference test', () => {
         it('should be satisfied because chaining is building a circular reference', async () => {
             let traeger: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
-                name: 'Traeger1',
+                name: 'Traeger4',
                 administriertVon: undefined,
                 typ: OrganisationsTyp.TRAEGER,
             });
-            const traeger1: OrganisationDo<true> = await repo.save(traeger);
+            const traeger4: OrganisationDo<true> = await repo.save(traeger);
             traeger = DoFactory.createOrganisation(false, {
-                name: 'Traeger2',
-                administriertVon: traeger1.id,
+                name: 'Traeger5',
+                administriertVon: traeger4.id,
                 typ: OrganisationsTyp.TRAEGER,
             });
-            const traeger2: OrganisationDo<true> = await repo.save(traeger);
+            const traeger5: OrganisationDo<true> = await repo.save(traeger);
             traeger = DoFactory.createOrganisation(false, {
-                name: 'Traeger3',
-                administriertVon: traeger2.id,
+                name: 'Traeger6',
+                administriertVon: traeger5.id,
                 typ: OrganisationsTyp.TRAEGER,
             });
-            const traeger3: OrganisationDo<true> =  await repo.save(traeger);
+            const traeger6: OrganisationDo<true> = await repo.save(traeger);
 
-            traeger1.administriertVon = traeger3.id;
+            traeger1.administriertVon = traeger6.id;
             const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(repo);
             expect(await administriertZyklus.isSatisfiedBy(traeger1)).toBeTruthy();
         });
