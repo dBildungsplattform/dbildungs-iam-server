@@ -1,21 +1,71 @@
+enabledcontainerSecurityContext: true
+enabledbackendserviceport:  true
+enabledredisserviceport:  true
+enableServiceMonitor: false
+enabledserviceport: true
+enabledredisvolume: true
+
+replicaCount: 1
 image:
   repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
   tag: ""
   pullPolicy: Always
 
+restartPolicy: Always
+
+database:
+  name: ""
+
+namespace: ""
+
 environment: prod
 
 secrets:
   name: dbildungs-iam-secrets
+
 configmap:
   name: dbildungs-iam-configmap
-# If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
-enableServiceMonitor: false
 
-enabledcontainerSecurityContext: true
+service:
+  name: dbiam-backend
+redisservice:
+  name: redis-service
+
+dbiam:
+  selector:
+    layer: dbildungs-iam
+  commonLabels:
+    name: dbildungs-iam
+
+backend:
+  selector:
+    layer: dbildungs-iam-backend
+  commonLabels:
+    name: dbildungs-iam-backend
+
+redis:
+  selector:
+    layer: dbildungs-iam-redis
+  commonLabels:
+    name: dbildungs-iam-redis
+
+redisservicetype: ClusterIP
+backendservicetype: ClusterIP
+
+seeding:
+  enabled: true
+  configmap: spsh-seeding-data-configmap
+  database: dev
+
+serviceMonitor:
+  namespaceSelector:
+    any: true
+  endpoints:
+    - port: "web" 
+
 containerSecurityContext:
-  #runAsUser: 1000
-  #runAsNonRoot: true
+  runAsUser: 1000
+  runAsNonRoot: true
   privileged: false
   readOnlyRootFilesystem: false
   allowPrivilegeEscalation: false
@@ -23,28 +73,30 @@ containerSecurityContext:
     drop: ["ALL"]
   seccompProfile:
       type: RuntimeDefault
-  
-database:
-  name: ""
-namespace: ""
-replicaCount: 1
 
-enabledserviceport: true
-ports:
-  - port: 6379
-    targetPort: redis-port
-    protocol: TCP
-    name: redis-port
+containerResources:
+  requests:
+    cpu: 200m
+    memory: 200Mi
+  limits:
+    cpu: 2
+    memory: 4G
+
+ingress:
+  ingressClassName: nginx  
+  pathType: Prefix  
+  portnumber: 80 
+  automountServiceAccountToken: false
 
 redisinitContainer:
   - name: copy-tls-data
     image: alpine
-    #command: ["/bin/sh","-c", "apk add --no-cache openssl bash;/bin/bash /tls/copy-tls.sh"]
     volumeMounts:
       - mountPath: "/tls"
         name: tls-data
       - mountPath: "/data"
         name: data
+
 rediscontainer: 
   image:
     name: redis
@@ -76,13 +128,6 @@ rediscontainer:
     failureThreshold: 30
     periodSeconds: 10
 
-ingress:
-  ingressClassName: nginx  
-  pathType: Prefix  
-  portnumber: 80 
-  automountServiceAccountToken: false
-
-enabledredisvolume: true
 redisvolumes:
   - name: tls-data
     configMap:
@@ -90,56 +135,11 @@ redisvolumes:
   - name: data
     emptyDir: {}
 
-
-enabledredisserviceport:  true
 redisports:
   - port:  6379
     targetPort: redis-port
     protocol: TCP
     name: redis-port
-redisservicetype: ClusterIP
-
-enabledbackendserviceport:  true
-backendports:
-  - port:  80
-    targetPort: web
-    protocol: TCP
-    name: web
-backendservicetype: ClusterIP
-
-seeding:
-  enabled: true
-  configmap: spsh-seeding-data-configmap
-  database: dev
-  
-serviceMonitor:
-  namespaceSelector:
-    any: true
-  endpoints:
-    - port: "web" 
-
-dbiam:
-  selector:
-    layer: dbildungs-iam
-  commonLabels:
-    name: dbildungs-iam
-
-backend:
-  selector:
-    layer: dbildungs-iam-backend
-  commonLabels:
-    name: dbildungs-iam-backend
-
-redis:
-  selector:
-    layer: dbildungs-iam-redis
-  commonLabels:
-    name: dbildungs-iam-redis
-
-service:
-  name: dbiam-backend
-redisservice:
-  name: redis-service
 
 initContainers:
   - name: db-init
@@ -171,14 +171,6 @@ initContainers:
         name: seeding-volume
         readOnly: true
 
-containerResources:
-  requests:
-    cpu: 200m
-    memory: 200Mi
-  limits:
-    cpu: 2
-    memory: 4G
-
 backendcontainer:
   ports:
     - name: web
@@ -204,5 +196,10 @@ backendcontainer:
       subPath: secrets-json
       name: secret-volume
       readOnly: true
-    
-restartPolicy: Always
+
+backendports:
+  - port:  80
+    targetPort: web
+    protocol: TCP
+    name: web
+
