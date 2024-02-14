@@ -64,8 +64,8 @@ serviceMonitor:
     - port: "web" 
 
 containerSecurityContext:
-  runAsUser: 1000
-  runAsNonRoot: true
+  #runAsUser: 1000
+  #runAsNonRoot: true
   privileged: false
   readOnlyRootFilesystem: false
   allowPrivilegeEscalation: false
