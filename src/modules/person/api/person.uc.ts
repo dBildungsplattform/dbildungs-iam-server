@@ -23,11 +23,14 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { KeycloakClientError } from '../../../shared/error/index.js';
 import { UpdatePersonDto } from './update-person.dto.js';
 import { HttpStatusCode } from 'axios';
+import { Person } from '../domain/person.js';
+import { UsernameGeneratorService } from '../../user/username-generator.service.js';
 
 @Injectable()
 export class PersonUc {
     public constructor(
         private readonly personService: PersonService,
+        private readonly usernameGenerator: UsernameGeneratorService,
         private readonly personenkontextService: PersonenkontextService,
         private readonly userService: KeycloakUserService,
         private readonly userRepository: UserRepository,
@@ -54,30 +57,32 @@ export class PersonUc {
                 beschreibung: 'Nachname nicht angegeben, wird für die Erzeugung des Benutzernamens gebraucht',
             });
         }
-        // create user
-        let user: User;
+
+        const person: Person<false> = Person.createNew(personDto.familienname, personDto.vorname);
         try {
-            user = await this.userRepository.createUser(personDto.vorname, personDto.familienname);
-            await user.save(this.userService);
+            await person.saveUser(this.userService, this.usernameGenerator);
+            if (person.keycloakUserId === undefined) {
+                throw new KeycloakClientError(`Can't save user`);
+            }
         } catch (error) {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new KeycloakClientError(`Can't save user`));
         }
 
         // create person
         const personDo: PersonDo<false> = this.mapper.map(personDto, CreatePersonDto, PersonDo);
-        personDo.keycloakUserId = user.id;
-        personDo.referrer = user.username;
+        personDo.keycloakUserId = person.keycloakUserId;
+        personDo.referrer = person.username;
         personDo.mandant = PersonUc.CREATE_PERSON_DTO_MANDANT_UUID;
 
         const result: Result<PersonDo<true>, DomainError> = await this.personService.createPerson(personDo);
         if (result.ok) {
             const resPersonDto: PersonDto = this.mapper.map(personDo, PersonDo, PersonDto);
-            resPersonDto.startpasswort = user.newPassword;
+            resPersonDto.startpasswort = person.newPassword;
             return resPersonDto;
         }
 
         // delete user if person could not be created
-        const deleteUserResult: Result<void, DomainError> = await this.userService.delete(user.id);
+        const deleteUserResult: Result<void, DomainError> = await this.userService.delete(person.keycloakUserId);
         if (deleteUserResult.ok) {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
         } else {

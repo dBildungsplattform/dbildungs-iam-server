@@ -1,11 +1,10 @@
-
 import { faker } from '@faker-js/faker';
-import { DomainError } from '../../../shared/error/index.js';
+import { DomainError} from '../../../shared/error/index.js';
 import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
+import { UsernameGeneratorService } from '../../user/username-generator.service.js';
 
 type State = {
-    pristine: boolean;
     passwordReset: boolean;
 };
 
@@ -16,17 +15,18 @@ export class Person<WasPersisted extends boolean> {
 
     private newPasswordInternal: string;
 
+    private mandant: string;
+
     private constructor(
-        public id: Persisted<string, WasPersisted> | undefined,
-        public createdAt: Persisted<Date, WasPersisted> | undefined,
-        public updatedAt: Persisted<Date, WasPersisted> | undefined,
-        public keycloakUserId: string,
-        public mandant: string,
+        public id: Persisted<string, WasPersisted>,
+        public createdAt: Persisted<Date, WasPersisted>,
+        public updatedAt: Persisted<Date, WasPersisted>,
         public familienname: string,
         public vorname: string,
         public revision: string,
-        public username: string,
-        public password: string,
+        public username?: string,
+        public password?: string,
+        public keycloakUserId?: string,
         public referrer?: string,
         public stammorganisation?: string,
         public initialenFamilienname?: string,
@@ -44,16 +44,13 @@ export class Person<WasPersisted extends boolean> {
         public vertrauensstufe?: Vertrauensstufe,
         public auskunftssperre?: boolean,
     ) {
-        this.state = { pristine: this.keycloakUserId.length == 0, passwordReset: false };
-        this.newPasswordInternal = this.password;
+        this.state = { passwordReset: false };
+        this.newPasswordInternal = this.password ?? 'unset';
+        this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
     }
 
     private get needsSaving(): boolean {
         return this.state.passwordReset;
-    }
-
-    private get new(): boolean {
-        return this.state.pristine;
     }
 
     public get newPassword(): string {
@@ -65,7 +62,6 @@ export class Person<WasPersisted extends boolean> {
         createdAt: Date,
         updatedAt: Date,
         keycloakUserId: string,
-        mandant: string,
         familienname: string,
         vorname: string,
         revision: string,
@@ -92,13 +88,62 @@ export class Person<WasPersisted extends boolean> {
             id,
             createdAt,
             updatedAt,
-            keycloakUserId,
-            mandant,
             familienname,
             vorname,
             revision,
             username,
             password,
+            keycloakUserId,
+            referrer,
+            stammorganisation,
+            initialenFamilienname,
+            initialenVorname,
+            rufname,
+            nameTitel,
+            nameAnrede,
+            namePraefix,
+            nameSuffix,
+            nameSortierindex,
+            geburtsdatum,
+            geburtsort,
+            geschlecht,
+            lokalisierung,
+            vertrauensstufe,
+            auskunftssperre,
+        );
+    }
+
+    public static createNew(
+        familienname: string,
+        vorname: string,
+        referrer?: string,
+        stammorganisation?: string,
+        initialenFamilienname?: string,
+        initialenVorname?: string,
+        rufname?: string,
+        nameTitel?: string,
+        nameAnrede?: string[],
+        namePraefix?: string[],
+        nameSuffix?: string[],
+        nameSortierindex?: string,
+        geburtsdatum?: Date,
+        geburtsort?: string,
+        geschlecht?: Geschlecht,
+        lokalisierung?: string,
+        vertrauensstufe?: Vertrauensstufe,
+        auskunftssperre?: boolean,
+    ): Person<false> {
+
+        return new Person(
+            undefined,
+            undefined,
+            undefined,
+            familienname,
+            vorname,
+            '1',
+            undefined,
+            undefined,
+            undefined,
             referrer,
             stammorganisation,
             initialenFamilienname,
@@ -119,12 +164,16 @@ export class Person<WasPersisted extends boolean> {
     }
 
     // Only for now until ticket 403
-    public async saveUser(kcUserService: KeycloakUserService): Promise<void> {
-        if (!(this.needsSaving || this.new)) {
+    public async saveUser(
+        kcUserService: KeycloakUserService,
+        usernameGenerator: UsernameGeneratorService,
+    ): Promise<void> {
+        if (!(this.needsSaving || !this.keycloakUserId)) {
             return;
         }
 
-        if (this.new) {
+        if (!this.keycloakUserId) {
+            this.username = await usernameGenerator.generateUsername(this.vorname, this.familienname);
             const userDo: UserDo<false> = {
                 username: this.username,
             } as UserDo<false>;
@@ -139,9 +188,9 @@ export class Person<WasPersisted extends boolean> {
             this.newPassword,
         );
         if (!setPasswordResult.ok) {
-            if (this.state.pristine) {
+            if (this.keycloakUserId) {
                 await kcUserService.delete(this.keycloakUserId);
-                this.keycloakUserId = '';
+                this.keycloakUserId = undefined;
             }
             throw setPasswordResult.error;
         }
