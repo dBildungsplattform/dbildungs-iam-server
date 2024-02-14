@@ -162,8 +162,8 @@ export class OrganisationController {
         if (result instanceof SchulConnexError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
         }
-
         const response: PagedResponse<OrganisationResponse> = new PagedResponse(result);
+
         return response;
     }
 
@@ -202,6 +202,7 @@ export class OrganisationController {
         const result: Paged<OrganisationResponse> | SchulConnexError = await this.uc.findZugehoerigZu(
             params.organisationId,
         );
+
         if (result instanceof SchulConnexError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
         }

@@ -261,6 +261,7 @@ describe('OrganisationController', () => {
         const params: OrganisationByIdParams = {
             organisationId: faker.string.uuid(),
         };
+
         describe('when usecase returns a OrganisationResponse', () => {
             it('should return all organizations that match', async () => {
                 const response1: OrganisationResponse = {
@@ -298,6 +299,7 @@ describe('OrganisationController', () => {
                 expect(result.items.length).toEqual(2);
             });
         });
+
         describe('when usecase returns a SchulConnexError', () => {
             it('should throw a HttpException', async () => {
                 organisationUcMock.findAdministriertVon.mockResolvedValueOnce(

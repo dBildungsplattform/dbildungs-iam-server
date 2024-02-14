@@ -260,6 +260,8 @@ describe('OrganisationUc', () => {
                 const result: Paged<OrganisationResponse> | SchulConnexError =
                     await organisationUc.findAdministriertVon('');
 
+                expect(result).not.toBeInstanceOf(SchulConnexError);
+
                 if (!(result instanceof SchulConnexError)) {
                     expect(result.total).toBe(2);
                     expect(result.items).toHaveLength(2);
@@ -308,6 +310,8 @@ describe('OrganisationUc', () => {
 
                 const result: Paged<OrganisationResponse> | SchulConnexError =
                     await organisationUc.findZugehoerigZu('');
+
+                expect(result).not.toBeInstanceOf(SchulConnexError);
 
                 if (!(result instanceof SchulConnexError)) {
                     expect(result.total).toBe(2);
