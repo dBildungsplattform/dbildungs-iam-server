@@ -9,6 +9,7 @@ import { UserModule } from '../user/user.module.js';
 import { PersonFrontendController } from './api/person.frontend.controller.js';
 import { PersonenkontextUc } from '../personenkontext/api/personenkontext.uc.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
+import { UsernameGeneratorService } from '../user/username-generator.service.js';
 
 @Module({
     imports: [
@@ -18,7 +19,7 @@ import { PersonenKontextModule } from '../personenkontext/personenkontext.module
         UserModule,
         LoggerModule.register(PersonApiModule.name),
     ],
-    providers: [PersonApiMapperProfile, PersonUc, PersonenkontextUc],
+    providers: [PersonApiMapperProfile, PersonUc, PersonenkontextUc, UsernameGeneratorService],
     controllers: [PersonController, PersonFrontendController],
 })
 export class PersonApiModule {}

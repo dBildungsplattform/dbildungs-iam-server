@@ -15,7 +15,7 @@ export class Person<WasPersisted extends boolean> {
 
     private newPasswordInternal: string;
 
-    private mandant: string;
+    public readonly mandant: string;
 
     private constructor(
         public id: Persisted<string, WasPersisted>,
@@ -50,7 +50,7 @@ export class Person<WasPersisted extends boolean> {
     }
 
     private get needsSaving(): boolean {
-        return this.state.passwordReset;
+        return this.state.passwordReset || this.keycloakUserId === undefined;
     }
 
     public get newPassword(): string {
@@ -168,7 +168,7 @@ export class Person<WasPersisted extends boolean> {
         kcUserService: KeycloakUserService,
         usernameGenerator: UsernameGeneratorService,
     ): Promise<void> {
-        if (!(this.needsSaving || !this.keycloakUserId)) {
+        if (!this.needsSaving) {
             return;
         }
 
