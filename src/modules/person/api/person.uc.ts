@@ -38,8 +38,6 @@ export class PersonUc {
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
-    public static readonly CREATE_PERSON_DTO_MANDANT_UUID: string = '8c6a9447-c23e-4e70-8595-3bcc88a5577a';
-
     public async createPerson(personDto: CreatePersonDto): Promise<PersonDto | SchulConnexError> {
         if (!personDto.vorname) {
             return new SchulConnexError({
@@ -72,7 +70,7 @@ export class PersonUc {
         const personDo: PersonDo<false> = this.mapper.map(personDto, CreatePersonDto, PersonDo);
         personDo.keycloakUserId = person.keycloakUserId;
         personDo.referrer = person.username;
-        personDo.mandant = PersonUc.CREATE_PERSON_DTO_MANDANT_UUID;
+        personDo.mandant = person.mandant;
 
         const result: Result<PersonDo<true>, DomainError> = await this.personService.createPerson(personDo);
         if (result.ok) {
