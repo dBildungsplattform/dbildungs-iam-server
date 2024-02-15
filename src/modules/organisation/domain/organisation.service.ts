@@ -15,10 +15,19 @@ import { SchuleZuTraegerError } from '../specification/error/schule-zu-traeger.e
 import { TraegerZuTraegerError } from '../specification/error/traeger-zu-traeger.error.js';
 import { AdministriertZyklus } from '../specification/administriert-zyklus.js';
 import { AdministriertZyklusError } from '../specification/error/administriert-zyklus.error.js';
+import { ConfigService } from '@nestjs/config';
+import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 
 @Injectable()
 export class OrganisationService {
-    public constructor(private readonly organisationRepo: OrganisationRepo) {}
+    private readonly ROOT_ORGANISATION_ID: string;
+
+    public constructor(
+        private readonly organisationRepo: OrganisationRepo,
+        config: ConfigService<ServerConfig>,
+    ) {
+        this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+    }
 
     public async createOrganisation(
         organisationDo: OrganisationDo<false>,
@@ -136,7 +145,10 @@ export class OrganisationService {
         if (!(await traegerAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
             return { ok: false, error: new TraegerZuTraegerError(childOrganisation.id, 'TraegerZuTraeger') };
         }
-        const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(this.organisationRepo);
+        const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(
+            this.organisationRepo,
+            this.ROOT_ORGANISATION_ID,
+        );
         if (await administriertZyklus.isSatisfiedBy(childOrganisation)) {
             return { ok: false, error: new AdministriertZyklusError(childOrganisation.id, 'ZyklusInAdministiertVon') };
         }

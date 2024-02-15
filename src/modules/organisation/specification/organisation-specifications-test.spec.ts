@@ -30,6 +30,7 @@ describe('OrganisationSpecificationTests', () => {
     let schule2: OrganisationDo<true>;
     let traeger1: OrganisationDo<true>;
     let traeger2: OrganisationDo<true>;
+    let traeger3: OrganisationDo<true>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -50,16 +51,26 @@ describe('OrganisationSpecificationTests', () => {
         await DatabaseTestModule.clearDatabase(orm);
 
         let traeger: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+            id: 'a10852ab-1d75-45a7-9421-b1cbd8abe693',
             name: 'Traeger1',
             typ: OrganisationsTyp.TRAEGER,
+            administriertVon: undefined,
         });
         traeger1 = await repo.save(traeger);
         traeger = DoFactory.createOrganisation(false, {
+            id: '2',
             name: 'Traeger2',
             typ: OrganisationsTyp.TRAEGER,
             administriertVon: traeger1.id,
         });
         traeger2 = await repo.save(traeger);
+        traeger = DoFactory.createOrganisation(false, {
+            id: '3',
+            name: 'Traeger3',
+            typ: OrganisationsTyp.TRAEGER,
+            administriertVon: traeger2.id,
+        });
+        traeger3 = await repo.save(traeger);
         let schule: OrganisationDo<false> = DoFactory.createOrganisation(false, {
             name: 'Schule1',
             typ: OrganisationsTyp.SCHULE,
@@ -169,53 +180,28 @@ describe('OrganisationSpecificationTests', () => {
     });
 
     describe('AdministriertVon circle reference test', () => {
-        it('should be satisfied because chaining is building a circular reference', async () => {
-            let traeger: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
-                name: 'Traeger4',
-                administriertVon: undefined,
-                typ: OrganisationsTyp.TRAEGER,
-            });
-            const traeger4: OrganisationDo<true> = await repo.save(traeger);
-            traeger = DoFactory.createOrganisation(false, {
-                name: 'Traeger5',
-                administriertVon: traeger4.id,
-                typ: OrganisationsTyp.TRAEGER,
-            });
-            const traeger5: OrganisationDo<true> = await repo.save(traeger);
-            traeger = DoFactory.createOrganisation(false, {
-                name: 'Traeger6',
-                administriertVon: traeger5.id,
-                typ: OrganisationsTyp.TRAEGER,
-            });
-            const traeger6: OrganisationDo<true> = await repo.save(traeger);
+        it('should be satisfied, circular reference in two non-root organisations', async () => {
+            traeger2.administriertVon = traeger3.id;
+            const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(repo, traeger1.id);
+            expect(await administriertZyklus.isSatisfiedBy(traeger2)).toBeTruthy();
+        });
 
-            traeger4.administriertVon = traeger6.id;
-            const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(repo);
-            expect(await administriertZyklus.isSatisfiedBy(traeger4)).toBeTruthy();
+        it('should be satisfied, circular reference between non-root and root organisation', async () => {
+            traeger1.administriertVon = traeger3.id;
+            const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(repo, traeger1.id);
+            expect(await administriertZyklus.isSatisfiedBy(traeger1)).toBeTruthy();
+        });
+
+        it('should not be satisfied, when circular reference is in the root organisation', async () => {
+            traeger1.administriertVon = traeger1.id;
+            await repo.save(traeger1);
+            const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(repo, traeger1.id);
+            expect(await administriertZyklus.isSatisfiedBy(traeger3)).toBeFalsy();
         });
 
         it('should not be satisfied because chaining is not building a circular reference', async () => {
-            let traeger: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
-                name: 'Traeger4',
-                administriertVon: undefined,
-                typ: OrganisationsTyp.TRAEGER,
-            });
-            const traeger4: OrganisationDo<true> = await repo.save(traeger);
-            traeger = DoFactory.createOrganisation(false, {
-                name: 'Traeger5',
-                administriertVon: traeger4.id,
-                typ: OrganisationsTyp.TRAEGER,
-            });
-            const traeger5: OrganisationDo<true> = await repo.save(traeger);
-            traeger = DoFactory.createOrganisation(false, {
-                name: 'Traeger6',
-                administriertVon: traeger5.id,
-                typ: OrganisationsTyp.TRAEGER,
-            });
-            await repo.save(traeger);
-
-            const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(repo);
-            expect(await administriertZyklus.isSatisfiedBy(traeger4)).toBeFalsy();
+            const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(repo, traeger1.id);
+            expect(await administriertZyklus.isSatisfiedBy(traeger3)).toBeFalsy();
         });
     });
 });
