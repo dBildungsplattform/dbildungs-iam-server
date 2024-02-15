@@ -26,7 +26,7 @@ spec:
           volumeMounts:
             {{- toYaml .volumeMounts | nindent 12 }}
           securityContext:
-            {{- toYaml $.Values.containerSecurityContext | nindent 12 }}
+            {{- toYaml $.Values.initcontainerSecurityContext | nindent 12 }}
         {{- end }}
       containers:
         - name: {{ .Values.rediscontainer.image.name }}

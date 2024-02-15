@@ -23,7 +23,7 @@ spec:
         - name: {{ .name }}
           image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
           securityContext:
-            {{- toYaml $.Values.containerSecurityContext | nindent 12 }}
+            {{- toYaml $.Values.initcontainerSecurityContext | nindent 12 }}
           {{- if eq .name "db-init" }}
           command: ["node", "dist/src/console/main.js", "db", "init"]
           {{- else if eq .name "db-seeding" }}

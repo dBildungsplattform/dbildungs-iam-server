@@ -74,6 +74,9 @@ containerSecurityContext:
   seccompProfile:
       type: RuntimeDefault
 
+initcontainerSecurityContext:
+  allowPrivilegeEscalation: false
+
 containerResources:
   requests:
     cpu: 200m
