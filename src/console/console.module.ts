@@ -12,8 +12,7 @@ import { DbInitConsole } from './db-init.console.js';
 import { LoggerModule } from '../core/logging/logger.module.js';
 import { DbSeedConsole } from './dbseed/db-seed.console.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
-import { UserModule } from '../modules/user/user.module.js';
-import { UsernameGeneratorService } from '../modules/user/username-generator.service.js';
+import { UsernameGeneratorService } from '../modules/person/domain/username-generator.service.js';
 import { DbSeedMapper } from './dbseed/db-seed-mapper.js';
 import { DbSeedService } from './dbseed/db-seed.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
@@ -22,7 +21,6 @@ import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloa
     imports: [
         KeycloakConfigModule,
         KeycloakAdministrationModule,
-        UserModule,
         LoggerModule.register(ConsoleModule.name),
         ConfigModule.forRoot({
             isGlobal: true,

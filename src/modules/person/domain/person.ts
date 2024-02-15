@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { DomainError} from '../../../shared/error/index.js';
 import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
-import { UsernameGeneratorService } from '../../user/username-generator.service.js';
+import { UsernameGeneratorService } from './username-generator.service.js';
 
 type State = {
     passwordReset: boolean;
@@ -61,12 +61,12 @@ export class Person<WasPersisted extends boolean> {
         id: string,
         createdAt: Date,
         updatedAt: Date,
-        keycloakUserId: string,
         familienname: string,
         vorname: string,
         revision: string,
-        username: string,
-        password: string,
+        username?: string,
+        password?: string,
+        keycloakUserId?: string,
         referrer?: string,
         stammorganisation?: string,
         initialenFamilienname?: string,

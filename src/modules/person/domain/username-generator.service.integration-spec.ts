@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsernameGeneratorService } from './username-generator.service.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { FindUserFilter, KeycloakUserService, UserDo } from '../keycloak-administration/index.js';
+import { FindUserFilter, KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
 import { UserRepository } from './user.repository.js';
-import { EntityNotFoundError, KeycloakClientError } from '../../shared/error/index.js';
+import { EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 
 describe('The UsernameGenerator Service', () => {
     let module: TestingModule;

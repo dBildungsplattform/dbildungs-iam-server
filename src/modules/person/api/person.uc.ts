@@ -17,23 +17,22 @@ import { FindPersonenkontextDto } from '../../personenkontext/api/find-personenk
 import { PersonDto } from './person.dto.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonenkontextDto } from '../../personenkontext/api/personenkontext.dto.js';
-import { UserRepository } from '../../user/user.repository.js';
-import { User } from '../../user/user.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { KeycloakClientError } from '../../../shared/error/index.js';
+import { EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { UpdatePersonDto } from './update-person.dto.js';
 import { HttpStatusCode } from 'axios';
 import { Person } from '../domain/person.js';
-import { UsernameGeneratorService } from '../../user/username-generator.service.js';
+import { UsernameGeneratorService } from '../domain/username-generator.service.js';
+import { PersonRepository } from '../persistence/person.repository.js';
 
 @Injectable()
 export class PersonUc {
     public constructor(
         private readonly personService: PersonService,
+        private readonly personRepository: PersonRepository,
         private readonly usernameGenerator: UsernameGeneratorService,
         private readonly personenkontextService: PersonenkontextService,
         private readonly userService: KeycloakUserService,
-        private readonly userRepository: UserRepository,
         private readonly logger: ClassLogger,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
@@ -158,12 +157,18 @@ export class PersonUc {
             if (!personResult.ok) {
                 return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResult.error);
             }
-            const person: PersonDo<true> = personResult.value;
-            const keycloakUser: User = await this.userRepository.loadUser(person.keycloakUserId);
+            const person: Option<Person<true>> = await this.personRepository.findByKeycloakUserId(
+                personResult.value.keycloakUserId,
+            );
+            if (!person) {
+                return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', personResult.value.id),
+                );
+            }
 
-            keycloakUser.resetPassword();
-            await keycloakUser.save(this.userService);
-            return { ok: true, value: keycloakUser.newPassword };
+            person.resetPassword();
+            await person.saveUser(this.userService, this.usernameGenerator);
+            return { ok: true, value: person.newPassword };
         } catch (error) {
             this.logger.error(JSON.stringify(error));
             if (error instanceof DomainError) {
