@@ -155,8 +155,14 @@ export class OrganisationController {
     public async getAdministrierteOrganisationen(
         @Param() params: OrganisationByIdParams,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const organisations: Paged<OrganisationResponse> = await this.uc.findAdministriertVon(params.organisationId);
-        const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
+        const result: Paged<OrganisationResponse> | SchulConnexError = await this.uc.findAdministriertVon(
+            params.organisationId,
+        );
+
+        if (result instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse(result);
 
         return response;
     }
@@ -193,8 +199,14 @@ export class OrganisationController {
     public async getZugehoerigeOrganisationen(
         @Param() params: OrganisationByIdParams,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const organisations: Paged<OrganisationResponse> = await this.uc.findZugehoerigZu(params.organisationId);
-        const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
+        const result: Paged<OrganisationResponse> | SchulConnexError = await this.uc.findZugehoerigZu(
+            params.organisationId,
+        );
+
+        if (result instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse(result);
 
         return response;
     }
