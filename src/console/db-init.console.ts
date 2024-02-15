@@ -12,16 +12,20 @@ export class DbInitConsole extends CommandRunner {
     }
 
     public override async run(_passedParams: string[], _options?: Record<string, unknown>): Promise<void> {
-        this.logger.info('Initializing database...');
-        this.logger.info(this.orm.config.getClientUrl());
-        await this.orm.getSchemaGenerator().ensureDatabase();
+        try {
+            this.logger.info('Initializing database...');
+            this.logger.info(this.orm.config.getClientUrl());
+            await this.orm.getSchemaGenerator().ensureDatabase();
 
-        this.logger.info('Dropping Schema');
-        await this.orm.getSchemaGenerator().dropSchema({ wrap: false });
+            this.logger.info('Dropping Schema');
+            await this.orm.getSchemaGenerator().dropSchema({ wrap: false });
 
-        this.logger.info('Creating Schema');
-        await this.orm.getSchemaGenerator().createSchema({ wrap: false });
+            this.logger.info('Creating Schema');
+            await this.orm.getSchemaGenerator().createSchema({ wrap: false });
 
-        this.logger.info('Initialized database');
+            this.logger.info('Initialized database');
+        } catch (e) {
+            this.command.error(String(e));
+        }
     }
 }

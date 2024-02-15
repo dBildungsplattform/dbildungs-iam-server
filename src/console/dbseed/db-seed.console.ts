@@ -22,6 +22,7 @@ import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rol
 export interface SeedFile {
     entityName: string;
 }
+
 export interface EntityFile<T> extends SeedFile {
     entities: T[];
 }
@@ -85,6 +86,7 @@ export class DbSeedConsole extends CommandRunner {
         } catch (err) {
             this.logger.error('Seed data could not be created!');
             await this.deleteAllCreatedKeycloakUsers();
+            this.command.error(String(err));
             throw err;
         }
     }
