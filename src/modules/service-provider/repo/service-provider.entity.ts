@@ -17,9 +17,9 @@ export class ServiceProviderEntity extends TimestampedEntity {
     @Enum(() => ServiceProviderKategorie)
     public kategorie!: ServiceProviderKategorie;
 
-    @Property()
-    public logoMimeType!: string;
+    @Property({ type: BlobType, nullable: true })
+    public logo?: Buffer;
 
-    @Property({ type: BlobType })
-    public logo!: Buffer;
+    @Property({ nullable: true })
+    public logoMimeType?: string;
 }

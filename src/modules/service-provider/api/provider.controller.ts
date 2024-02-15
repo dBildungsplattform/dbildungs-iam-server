@@ -6,6 +6,8 @@ import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('provider')
@@ -18,29 +20,41 @@ export class ProviderController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
     @ApiOkResponse({ type: [ServiceProviderResponse] })
     public async getServiceProvidersByPersonId(): Promise<ServiceProviderResponse[]> {
-        const serviceProviders: ServiceProvider<true, false>[] = await this.serviceProviderRepo.find(false);
+        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find({ withLogo: false });
 
         const response: ServiceProviderResponse[] = serviceProviders.map(
-            (serviceProvider: ServiceProvider<true, false>) => new ServiceProviderResponse(serviceProvider),
+            (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );
 
         return response;
     }
 
-    @Get('angebot/:angebotId/logo')
+    @Get(':angebotId/logo')
     @ApiUnauthorizedResponse({ description: 'Not authorized to get service provider logo.' })
     @ApiOkResponse({
         description: 'The logo for the service provider',
         content: { 'image/*': { schema: { type: 'file', format: 'binary' } } },
     })
     public async getServiceProviderLogo(@Param() params: AngebotByIdParams): Promise<StreamableFile> {
-        const serviceProvider: Option<ServiceProvider<true, true>> = await this.serviceProviderRepo.findById(
+        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
             params.angebotId,
-            true,
+            { withLogo: true },
         );
 
         if (!serviceProvider) {
-            throw new Error('Not found');
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('ServiceProvider', params.angebotId),
+                ),
+            );
+        }
+
+        if (!serviceProvider.logo || !serviceProvider.logoMimeType) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('ServiceProviderLogo', params.angebotId),
+                ),
+            );
         }
 
         const logoFile: StreamableFile = new StreamableFile(serviceProvider.logo, {

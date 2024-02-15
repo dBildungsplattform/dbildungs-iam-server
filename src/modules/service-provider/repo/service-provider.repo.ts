@@ -4,8 +4,11 @@ import { Injectable } from '@nestjs/common';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
 
-function mapAggregateToData(
-    serviceProvider: ServiceProvider<boolean, true>,
+/**
+ * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
+ */
+export function mapAggregateToData(
+    serviceProvider: ServiceProvider<boolean>,
 ): RequiredEntityData<ServiceProviderEntity> {
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
@@ -13,13 +16,13 @@ function mapAggregateToData(
         name: serviceProvider.name,
         url: serviceProvider.url,
         kategorie: serviceProvider.kategorie,
-        logoMimeType: serviceProvider.logoMimeType,
-        logo: serviceProvider.logo,
         providedOnSchulstrukturknoten: serviceProvider.providedOnSchulstrukturknoten,
+        logo: serviceProvider.logo,
+        logoMimeType: serviceProvider.logoMimeType,
     };
 }
 
-function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<boolean, boolean> {
+function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<boolean> {
     return ServiceProvider.construct(
         entity.id,
         entity.createdAt,
@@ -27,21 +30,22 @@ function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<bo
         entity.name,
         entity.url,
         entity.kategorie,
-        entity.logoMimeType,
-        entity.logo,
         entity.providedOnSchulstrukturknoten,
+        entity.logo,
+        entity.logoMimeType,
     );
 }
+
+type ServiceProviderFindOptions = {
+    withLogo?: boolean;
+};
 
 @Injectable()
 export class ServiceProviderRepo {
     public constructor(private readonly em: EntityManager) {}
 
-    public async findById<WithLogo extends boolean>(
-        id: string,
-        loadLogo: WithLogo,
-    ): Promise<Option<ServiceProvider<true, WithLogo>>> {
-        const exclude: readonly ['logo'] | undefined = loadLogo ? undefined : ['logo'];
+    public async findById(id: string, options?: ServiceProviderFindOptions): Promise<Option<ServiceProvider<true>>> {
+        const exclude: readonly ['logo'] | undefined = options?.withLogo ? undefined : ['logo'];
 
         const serviceProvider: Option<ServiceProviderEntity> = (await this.em.findOne(
             ServiceProviderEntity,
@@ -52,8 +56,8 @@ export class ServiceProviderRepo {
         return serviceProvider && mapEntityToAggregate(serviceProvider);
     }
 
-    public async find<WithLogo extends boolean>(loadLogo: WithLogo): Promise<ServiceProvider<true, WithLogo>[]> {
-        const exclude: readonly ['logo'] | undefined = loadLogo ? undefined : ['logo'];
+    public async find(options?: ServiceProviderFindOptions): Promise<ServiceProvider<true>[]> {
+        const exclude: readonly ['logo'] | undefined = options?.withLogo ? undefined : ['logo'];
 
         const serviceProviders: ServiceProviderEntity[] = (await this.em.findAll(ServiceProviderEntity, {
             exclude,
@@ -62,7 +66,7 @@ export class ServiceProviderRepo {
         return serviceProviders.map(mapEntityToAggregate);
     }
 
-    public async save(serviceProvider: ServiceProvider<boolean, true>): Promise<ServiceProvider<true, true>> {
+    public async save(serviceProvider: ServiceProvider<boolean>): Promise<ServiceProvider<true>> {
         if (serviceProvider.id) {
             return this.update(serviceProvider);
         } else {
@@ -70,7 +74,7 @@ export class ServiceProviderRepo {
         }
     }
 
-    private async create(serviceProvider: ServiceProvider<false, true>): Promise<ServiceProvider<true, true>> {
+    private async create(serviceProvider: ServiceProvider<false>): Promise<ServiceProvider<true>> {
         const serviceProviderEntity: ServiceProviderEntity = this.em.create(
             ServiceProviderEntity,
             mapAggregateToData(serviceProvider),
@@ -81,7 +85,7 @@ export class ServiceProviderRepo {
         return mapEntityToAggregate(serviceProviderEntity);
     }
 
-    private async update(serviceProvider: ServiceProvider<true, true>): Promise<ServiceProvider<true, true>> {
+    private async update(serviceProvider: ServiceProvider<true>): Promise<ServiceProvider<true>> {
         const serviceProviderEntity: Loaded<ServiceProviderEntity> = await this.em.findOneOrFail(
             ServiceProviderEntity,
             serviceProvider.id,

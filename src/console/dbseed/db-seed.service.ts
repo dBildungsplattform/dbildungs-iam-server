@@ -5,6 +5,8 @@ import { OrganisationFile } from './file/organisation-file.js';
 import { PersonFile } from './file/person-file.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { ConstructorCall, EntityFile } from './db-seed.console.js';
+import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
+import { ServiceProviderFile } from './file/service-provider-file.js';
 
 @Injectable()
 export class DbSeedService {
@@ -15,6 +17,8 @@ export class DbSeedService {
     private personMap: Map<string, PersonFile> = new Map<string, PersonFile>();
 
     private rolleMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
+
+    private serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
@@ -69,6 +73,32 @@ export class DbSeedService {
         }
 
         return rollen;
+    }
+
+    public readServiceProvider(fileContentAsStr: string): ServiceProvider<true>[] {
+        const { entities }: EntityFile<ServiceProviderFile> = JSON.parse(
+            fileContentAsStr,
+        ) as EntityFile<ServiceProviderFile>;
+
+        const serviceProviders: ServiceProvider<true>[] = entities.map((data: ServiceProviderFile) =>
+            ServiceProvider.construct(
+                data.id,
+                new Date(),
+                new Date(),
+                data.name,
+                data.url,
+                data.kategorie,
+                data.logoMimeType,
+                Buffer.from(data.logoBase64, 'base64'),
+                data.providedOnSchulstrukturknoten,
+            ),
+        );
+
+        for (const serviceProvider of serviceProviders) {
+            this.serviceProviderMap.set(serviceProvider.id, serviceProvider);
+        }
+
+        return serviceProviders;
     }
 
     /* Setting as RolleEntity is required, eg. RolleFile would not work, persisting would fail due to saving one RolleEntity and one RolleFile

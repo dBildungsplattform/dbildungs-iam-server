@@ -16,7 +16,7 @@ export class ServiceProviderResponse {
     @ApiProperty({ enum: ServiceProviderKategorie })
     public kategorie: ServiceProviderKategorie;
 
-    public constructor(serviceProvider: ServiceProvider<true, boolean>) {
+    public constructor(serviceProvider: ServiceProvider<true>) {
         this.id = serviceProvider.id;
         this.name = serviceProvider.name;
         this.url = serviceProvider.url;

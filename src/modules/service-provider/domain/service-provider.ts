@@ -1,6 +1,7 @@
+// import imageType, { ImageTypeResult } from 'image-type';
 import { ServiceProviderKategorie } from './service-provider.enum.js';
 
-export class ServiceProvider<WasPersisted extends boolean, WithLogo extends boolean> {
+export class ServiceProvider<WasPersisted extends boolean> {
     private constructor(
         public id: Persisted<string, WasPersisted>,
         public createdAt: Persisted<Date, WasPersisted>,
@@ -8,19 +9,24 @@ export class ServiceProvider<WasPersisted extends boolean, WithLogo extends bool
         public name: string,
         public url: string,
         public kategorie: ServiceProviderKategorie,
-        public logoMimeType: string,
-        public logo: Persisted<Buffer, WithLogo>,
         public providedOnSchulstrukturknoten: string,
+        public logo: Buffer | undefined,
+        public logoMimeType: string | undefined,
     ) {}
 
-    public static createNew(
+    public static async createNew(
         name: string,
         url: string,
         kategorie: ServiceProviderKategorie,
-        logoMimeType: string,
-        logo: Buffer,
         providedOnSchulstrukturknoten: string,
-    ): ServiceProvider<false, true> {
+        logo: Buffer | undefined,
+    ): Promise<ServiceProvider<false>> {
+        //const typeResult: ImageTypeResult | undefined = await imageType(logo);
+
+        //if (!typeResult) throw new Error('Logo is not a valid image');
+
+        await Promise.resolve();
+
         return new ServiceProvider(
             undefined,
             undefined,
@@ -28,23 +34,23 @@ export class ServiceProvider<WasPersisted extends boolean, WithLogo extends bool
             name,
             url,
             kategorie,
-            logoMimeType,
-            logo,
             providedOnSchulstrukturknoten,
+            logo,
+            'TODO', //typeResult.mime,
         );
     }
 
-    public static construct<WasPersisted extends boolean = false, WithLogo extends boolean = false>(
+    public static construct<WasPersisted extends boolean = false>(
         id: string,
         createdAt: Date,
         updatedAt: Date,
         name: string,
         url: string,
         kategorie: ServiceProviderKategorie,
-        logoMimeType: string,
-        logo: Persisted<Buffer, WithLogo>,
         providedOnSchulstrukturknoten: string,
-    ): ServiceProvider<WasPersisted, WithLogo> {
+        logo: Buffer | undefined,
+        logoMimeType: string | undefined,
+    ): ServiceProvider<WasPersisted> {
         return new ServiceProvider(
             id,
             createdAt,
@@ -52,9 +58,9 @@ export class ServiceProvider<WasPersisted extends boolean, WithLogo extends bool
             name,
             url,
             kategorie,
-            logoMimeType,
-            logo,
             providedOnSchulstrukturknoten,
+            logo,
+            logoMimeType,
         );
     }
 }
