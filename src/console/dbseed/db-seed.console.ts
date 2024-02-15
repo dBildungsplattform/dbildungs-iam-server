@@ -85,6 +85,7 @@ export class DbSeedConsole extends CommandRunner {
             this.logger.info('Created seed data successfully.');
         } catch (err) {
             this.logger.error('Seed data could not be created!');
+            this.logger.error(String(err));
             await this.deleteAllCreatedKeycloakUsers();
             throw err;
         }
