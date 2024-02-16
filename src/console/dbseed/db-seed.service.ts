@@ -8,7 +8,6 @@ import { ConstructorCall, EntityFile } from './db-seed.console.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderFile } from './file/service-provider-file.js';
 import { plainToInstance } from 'class-transformer';
-import { ClassLogger } from '../../core/logging/class-logger.js';
 
 @Injectable()
 export class DbSeedService {
@@ -21,8 +20,6 @@ export class DbSeedService {
     private rolleMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
 
     private serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
-
-    public constructor(private readonly logger: ClassLogger) {}
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
@@ -80,17 +77,11 @@ export class DbSeedService {
     }
 
     public readServiceProvider(fileContentAsStr: string): ServiceProvider<true>[] {
-        this.logger.info(fileContentAsStr);
-
         const serviceProviderFile: EntityFile<ServiceProviderFile> = JSON.parse(
             fileContentAsStr,
         ) as EntityFile<ServiceProviderFile>;
 
-        this.logger.info(JSON.stringify(serviceProviderFile));
-
         const entities: ServiceProviderFile[] = plainToInstance(ServiceProviderFile, serviceProviderFile.entities);
-
-        this.logger.info(JSON.stringify(entities));
 
         const serviceProviders: ServiceProvider<true>[] = entities.map((data: ServiceProviderFile) =>
             ServiceProvider.construct(
