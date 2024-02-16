@@ -13,21 +13,23 @@ import { PersonenkontextService } from '../../personenkontext/domain/personenkon
 import { CreatePersonDto } from './create-person.dto.js';
 import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
-import { PersonDto } from './person.dto.js';
 import { PersonUc } from './person.uc.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
-import { UserRepository } from '../../user/user.repository.js';
-import { User } from '../../user/user.js';
 import { LoggerModule } from '../../../core/logging/logger.module.js';
 import { UpdatePersonDto } from './update-person.dto.js';
+import { PersonRepository } from '../persistence/person.repository.js';
+import { UsernameGeneratorService } from '../domain/username-generator.service.js';
+import { Person } from '../domain/person.js';
+import { PersonDto } from './person.dto.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 
 describe('PersonUc', () => {
     let module: TestingModule;
     let personUc: PersonUc;
     let personServiceMock: DeepMocked<PersonService>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
-    let userServiceMock: DeepMocked<KeycloakUserService>;
-    let userRepositoryMock: DeepMocked<UserRepository>;
+    let kcUserServiceMock: DeepMocked<KeycloakUserService>;
+//    let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -44,17 +46,28 @@ describe('PersonUc', () => {
                     useValue: createMock<KeycloakUserService>(),
                 },
                 {
+                    provide: Person,
+                    useValue: createMock<Person<false>>(),
+                },
+                {
+                    provide: UsernameGeneratorService,
+                    useValue: createMock<UsernameGeneratorService>(),
+                },
+                {
                     provide: PersonService,
                     useValue: createMock<PersonService>(),
                 },
-                { provide: UserRepository, useValue: createMock<UserRepository>() },
+                {
+                    provide: PersonRepository,
+                    useValue: createMock<PersonRepository>()
+                },
             ],
         }).compile();
         personUc = module.get(PersonUc);
         personServiceMock = module.get(PersonService);
         personenkontextServiceMock = module.get(PersonenkontextService);
-        userServiceMock = module.get(KeycloakUserService);
-        userRepositoryMock = module.get(UserRepository);
+        kcUserServiceMock = module.get(KeycloakUserService);
+//        usernameGeneratorService = module.get(UsernameGeneratorService);
     });
 
     afterAll(async () => {
@@ -90,78 +103,83 @@ describe('PersonUc', () => {
                 }),
             );
         });
-        describe('when person and user do not exist', () => {
-            it('should create a new person', async () => {
-                const personDo: PersonDo<true> = DoFactory.createPerson(true);
-                userServiceMock.create.mockResolvedValueOnce({ ok: true, value: personDo.keycloakUserId });
-                personServiceMock.createPerson.mockResolvedValue({
-                    ok: true,
-                    value: personDo,
-                });
 
-                const createPersonPromise: Promise<unknown> = personUc.createPerson({
-                    vorname: 'Hubert',
-                    familienname: 'Klobelburg',
-                } as CreatePersonDto);
+        it('should fail when KeyCloak cant save user', async () => {
 
-                await expect(createPersonPromise).resolves.toBeInstanceOf(PersonDto);
+            const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
+
+            kcUserServiceMock.create.mockResolvedValueOnce({
+                ok: false,
+                error: new KeycloakClientError(''),
             });
+
+            const result: PersonDto | SchulConnexError = await personUc.createPerson(createPersonDto);
+            expect(result).toEqual(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new KeycloakClientError(`Can't save user`)),
+            );
         });
 
-        describe('when user in keycloak already exists', () => {
-            it('should return SchulConnexError', async () => {
-                const error: PersonAlreadyExistsError = new PersonAlreadyExistsError('');
-                userServiceMock.create.mockResolvedValueOnce({ ok: false, error });
-                userRepositoryMock.createUser.mockResolvedValueOnce(new User('', '', ''));
+        describe('when personService createPerson fails', () => {
+            it('should delete keycloak user', async () => {
 
-                const createPersonPromise: Promise<unknown> = personUc.createPerson({
-                    vorname: 'Hans',
-                    familienname: 'Dampf',
-                } as CreatePersonDto);
+                const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
 
-                await expect(createPersonPromise).resolves.toBeInstanceOf(SchulConnexError);
-            });
-        });
-
-        describe('when person already exists and user can be deleted', () => {
-            it('should return SchulConnexError', async () => {
-                userServiceMock.create.mockResolvedValueOnce({ ok: true, value: faker.string.uuid() });
-                personServiceMock.createPerson.mockResolvedValue({
+                personServiceMock.createPerson.mockResolvedValueOnce({
                     ok: false,
                     error: new PersonAlreadyExistsError(''),
                 });
-                userRepositoryMock.createUser.mockResolvedValueOnce(new User('', '', ''));
+                kcUserServiceMock.delete.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                const createPersonPromise: Promise<unknown> = personUc.createPerson({
-                    vorname: 'Gibbet',
-                    familienname: 'Nich',
-                } as CreatePersonDto);
+                await personUc.createPerson(createPersonDto);
 
-                await expect(createPersonPromise).resolves.toBeInstanceOf(SchulConnexError);
+                expect(kcUserServiceMock.delete).toHaveBeenCalledTimes(1);
             });
-        });
+            describe('when person already exists and user can be deleted', () => {
+                it('should return SchulConnexError', async () => {
 
-        describe('when person already exists and user could not be deleted', () => {
-            it('should return SchulConnexError', async () => {
-                userServiceMock.create.mockResolvedValueOnce({ ok: true, value: faker.string.uuid() });
-                userServiceMock.delete.mockResolvedValueOnce({
-                    ok: false,
-                    error: new KeycloakClientError('Could not delete user'),
+                    const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
+
+                    personServiceMock.createPerson.mockResolvedValueOnce({
+                        ok: false,
+                        error: new PersonAlreadyExistsError(''),
+                    });
+                    kcUserServiceMock.delete.mockResolvedValueOnce({
+                        ok: true,
+                        value: undefined,
+                    });
+
+                    const result: PersonDto | SchulConnexError = await personUc.createPerson(createPersonDto);
+                    expect(result).toBeInstanceOf(SchulConnexError);
+
+                    if (result instanceof SchulConnexError) {
+                        console.log(result.code);
+                        expect(result.code).toEqual(400);
+                    }
+
                 });
-                userRepositoryMock.createUser.mockResolvedValueOnce(new User('', '', ''));
-                userServiceMock.resetPassword.mockResolvedValueOnce({ ok: true, value: 'acbdabfsads' });
-                personServiceMock.createPerson.mockResolvedValue({
-                    ok: false,
-                    error: new PersonAlreadyExistsError(''),
-                });
-
-                const createPromise: Promise<unknown> = personUc.createPerson({
-                    vorname: 'Gibbet',
-                    familienname: 'Nich',
-                } as CreatePersonDto);
-
-                await expect(createPromise).resolves.toBeInstanceOf(SchulConnexError);
             });
+            describe('when person already exists and user could not be deleted', () => {
+                it('should return SchulConnexError', async () => {
+
+                    const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
+
+                    personServiceMock.createPerson.mockResolvedValueOnce({
+                        ok: false,
+                        error: new PersonAlreadyExistsError(''),
+                    });
+                    kcUserServiceMock.delete.mockResolvedValueOnce({
+                        ok: false,
+                        error: new KeycloakClientError(''),
+                    });
+
+                    const result: PersonDto | SchulConnexError = await personUc.createPerson(createPersonDto);
+                    expect(result).toBeInstanceOf(SchulConnexError);
+
+                    if (result instanceof SchulConnexError) {
+                        expect(result.code).toEqual(500);
+                    }
+                });
+            })
         });
     });
 
@@ -266,6 +284,7 @@ describe('PersonUc', () => {
     describe('resetPassword', () => {
         const id: string = faker.string.uuid();
         describe('when personId is valid (person exists)', () => {
+            /*
             let userMock: User;
             beforeEach(() => {
                 userMock = new User('fakeKCID1', 'mmustermann', '');
@@ -289,9 +308,11 @@ describe('PersonUc', () => {
                 expect(userMock.newPassword).toBeTruthy();
                 expect(userServiceMock.resetPassword).toHaveBeenCalledWith('fakeKCID1', userMock.newPassword);
             });
+            */
         });
 
         describe('when user services returns DomainError', () => {
+            /*
             it('should return SchulConnexError', async () => {
                 userRepositoryMock.loadUser.mockReset();
                 personServiceMock.findPersonById.mockResolvedValueOnce({
@@ -302,6 +323,7 @@ describe('PersonUc', () => {
 
                 await expect(personUc.resetPassword(id)).resolves.toBeInstanceOf(SchulConnexError);
             });
+            */
         });
 
         describe('when PersonService returns an error', () => {

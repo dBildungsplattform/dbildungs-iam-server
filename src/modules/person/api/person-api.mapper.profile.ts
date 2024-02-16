@@ -94,8 +94,6 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     (dest: CreatePersonDto) => dest.geburtsort,
                     mapFrom((src: CreatePersonBodyParams) => src.geburt?.geburtsort),
                 ),
-                forMember((dest: CreatePersonDto) => dest.username, ignore()),
-                forMember((dest: CreatePersonDto) => dest.mandant, ignore()),
             );
             createMap(
                 mapper,

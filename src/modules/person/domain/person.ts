@@ -176,8 +176,11 @@ export class Person<WasPersisted extends boolean> {
             this.username = await usernameGenerator.generateUsername(this.vorname, this.familienname);
             const userDo: UserDo<false> = {
                 username: this.username,
-            } as UserDo<false>;
+                id: undefined,
+                createdDate: undefined,
+            } satisfies UserDo<false>;
             const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
+            console.log("!!!!!! ",creationResult)
             if (!creationResult.ok) {
                 throw creationResult.error;
             }
