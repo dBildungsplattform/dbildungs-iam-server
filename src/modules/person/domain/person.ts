@@ -180,7 +180,7 @@ export class Person<WasPersisted extends boolean> {
                 createdDate: undefined,
             } satisfies UserDo<false>;
             const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
-            console.log("!!!!!! ",creationResult)
+            console.log("!!!CR:",creationResult)
             if (!creationResult.ok) {
                 throw creationResult.error;
             }

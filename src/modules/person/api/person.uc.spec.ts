@@ -29,7 +29,7 @@ describe('PersonUc', () => {
     let personServiceMock: DeepMocked<PersonService>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
     let kcUserServiceMock: DeepMocked<KeycloakUserService>;
-//    let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
+    let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -59,7 +59,7 @@ describe('PersonUc', () => {
                 },
                 {
                     provide: PersonRepository,
-                    useValue: createMock<PersonRepository>()
+                    useValue: createMock<PersonRepository>(),
                 },
             ],
         }).compile();
@@ -67,7 +67,7 @@ describe('PersonUc', () => {
         personServiceMock = module.get(PersonService);
         personenkontextServiceMock = module.get(PersonenkontextService);
         kcUserServiceMock = module.get(KeycloakUserService);
-//        usernameGeneratorService = module.get(UsernameGeneratorService);
+        usernameGeneratorService = module.get(UsernameGeneratorService);
     });
 
     afterAll(async () => {
@@ -83,6 +83,11 @@ describe('PersonUc', () => {
     });
 
     describe('createPerson', () => {
+        beforeEach(() => {
+            jest.resetAllMocks();
+            jest.resetModules();
+        });
+
         it('should fail when there is no first name given', async () => {
             await expect(personUc.createPerson({} as CreatePersonDto)).resolves.toStrictEqual(
                 new SchulConnexError({
@@ -105,9 +110,9 @@ describe('PersonUc', () => {
         });
 
         it('should fail when KeyCloak cant save user', async () => {
-
             const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
 
+            usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
             kcUserServiceMock.create.mockResolvedValueOnce({
                 ok: false,
                 error: new KeycloakClientError(''),
@@ -120,56 +125,107 @@ describe('PersonUc', () => {
         });
 
         describe('when personService createPerson fails', () => {
-            it('should delete keycloak user', async () => {
+            //PROBLEM
 
-                const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
-
-                personServiceMock.createPerson.mockResolvedValueOnce({
-                    ok: false,
-                    error: new PersonAlreadyExistsError(''),
-                });
-                kcUserServiceMock.delete.mockResolvedValueOnce({ ok: true, value: undefined });
-
-                await personUc.createPerson(createPersonDto);
-
-                expect(kcUserServiceMock.delete).toHaveBeenCalledTimes(1);
+            beforeEach(() => {
+                jest.resetAllMocks();
+                jest.resetModules();
             });
-            describe('when person already exists and user can be deleted', () => {
-                it('should return SchulConnexError', async () => {
+            describe('T', () => {
+                beforeEach(() => {
+                    jest.resetAllMocks();
+                    jest.resetModules();
+                });
 
+                it('should delete keycloak user', async () => {
                     const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
+
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+
+                    kcUserServiceMock.create.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.resetPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.delete.mockResolvedValueOnce({ ok: true, value: undefined });
 
                     personServiceMock.createPerson.mockResolvedValueOnce({
                         ok: false,
                         error: new PersonAlreadyExistsError(''),
                     });
+
+                    await personUc.createPerson(createPersonDto);
+
+                    expect(kcUserServiceMock.delete).toHaveBeenCalledTimes(1);
+                });
+            });
+
+            describe('when person already exists and user can be deleted', () => {
+                beforeEach(() => {
+                    jest.resetAllMocks();
+                    jest.resetModules();
+                });
+
+                it('should return SchulConnexError', async () => {
+                    const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
+
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+
+                    kcUserServiceMock.create.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.resetPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+
                     kcUserServiceMock.delete.mockResolvedValueOnce({
                         ok: true,
                         value: undefined,
+                    });
+                    personServiceMock.createPerson.mockResolvedValueOnce({
+                        ok: false,
+                        error: new PersonAlreadyExistsError(''),
                     });
 
                     const result: PersonDto | SchulConnexError = await personUc.createPerson(createPersonDto);
                     expect(result).toBeInstanceOf(SchulConnexError);
 
                     if (result instanceof SchulConnexError) {
-                        console.log(result.code);
                         expect(result.code).toEqual(400);
                     }
-
                 });
             });
             describe('when person already exists and user could not be deleted', () => {
-                it('should return SchulConnexError', async () => {
+                beforeEach(() => {
+                    jest.resetAllMocks();
+                    jest.resetModules();
+                });
 
+                it('should return SchulConnexError', async () => {
                     const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
 
-                    personServiceMock.createPerson.mockResolvedValueOnce({
-                        ok: false,
-                        error: new PersonAlreadyExistsError(''),
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+                    kcUserServiceMock.create.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.resetPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
                     });
                     kcUserServiceMock.delete.mockResolvedValueOnce({
                         ok: false,
                         error: new KeycloakClientError(''),
+                    });
+
+                    personServiceMock.createPerson.mockResolvedValueOnce({
+                        ok: false,
+                        error: new PersonAlreadyExistsError(''),
                     });
 
                     const result: PersonDto | SchulConnexError = await personUc.createPerson(createPersonDto);
@@ -179,7 +235,7 @@ describe('PersonUc', () => {
                         expect(result.code).toEqual(500);
                     }
                 });
-            })
+            });
         });
     });
 
