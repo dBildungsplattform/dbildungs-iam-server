@@ -1,69 +1,77 @@
-import { AutoMap } from '@automapper/classes';
-import { IsArray, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Jahrgangsstufe } from '../../person/domain/personenkontext.enums.js';
 import { ApiProperty } from '@nestjs/swagger';
-import { Faecherkanon } from '../domain/group.enums.js';
+import {
+    Bildungsziele,
+    Faecherkanon,
+    Geuppenbereich,
+    GruppenTyp,
+    Gruppendifferenzierung,
+    Gruppenoption,
+} from '../domain/gruppe.enums.js';
+import { Referenzgruppen } from '../persistence/referenzgruppen.js';
+import { Laufzeit } from '../persistence/laufzeit.js';
+import { Type } from 'class-transformer';
 
 export class CreateGroupBodyParams {
-    @AutoMap()
     @IsString()
-    public readonly referrer?: string;
+    @ApiProperty({ required: false })
+    public readonly orgid!: string;
 
-    @AutoMap()
     @IsString()
-    public readonly bezeichnung?: string;
+    @ApiProperty({ required: false })
+    public readonly referrer!: string;
 
-    @AutoMap()
     @IsString()
-    public readonly thema?: string;
+    @ApiProperty({ required: false })
+    public readonly bezeichnung!: string;
 
-    @AutoMap()
     @IsString()
-    public readonly beschreibung?: string;
+    @ApiProperty({ required: false })
+    public readonly thema!: string;
 
-    @AutoMap()
     @IsString()
-    public readonly typ?: string;
+    @ApiProperty({ required: false })
+    public readonly beschreibung!: string;
 
-    @AutoMap()
     @IsString()
-    public readonly bereich?: string;
+    @ApiProperty({ required: false })
+    public readonly typ!: GruppenTyp;
 
-    @AutoMap()
     @IsString()
-    public readonly optionen?: string;
+    @ApiProperty({ required: false })
+    public readonly bereich!: Geuppenbereich;
 
-    @AutoMap()
     @IsString()
-    public readonly differenzierung?: string;
+    @ApiProperty({ required: false })
+    public readonly optionen!: Gruppenoption;
 
-    @AutoMap()
     @IsString()
-    public readonly bildungsziele?: string;
+    @ApiProperty({ required: false })
+    public readonly differenzierung!: Gruppendifferenzierung;
 
-    @AutoMap(() => [String])
+    @IsString()
+    @IsOptional()
+    @ApiProperty({ enum: Bildungsziele, required: false })
+    public readonly bildungsziele!: Bildungsziele[];
+
     @IsArray()
     @IsOptional()
-    @ApiProperty({ type: Jahrgangsstufe, required: false })
-    public readonly jahrganagsstufen?: Jahrgangsstufe[];
+    @ApiProperty({ enum: Jahrgangsstufe, required: false })
+    public readonly jahrganagsstufen!: Jahrgangsstufe[];
 
-    @AutoMap(() => [String])
     @IsArray()
     @IsOptional()
-    @ApiProperty({ type: Faecherkanon, required: false })
-    public readonly faecher?: Faecherkanon[];
+    @ApiProperty({ enum: Faecherkanon, required: false })
+    public readonly faecher!: Faecherkanon[];
 
-    // public readonly referenzgruppen?: Referenzgruppen;
+    @ValidateNested()
+    @Type(() => Referenzgruppen)
+    @ApiProperty({ type: Referenzgruppen, required: true })
+    public readonly referenzgruppen!: Referenzgruppen[];
 
-    // public readonly laufzeit?: Laufzeit;
-
-    // @AutoMap(() => String)
-    // @IsEnum(SichtfreigabeType)
-    // @IsOptional()
-    // @ApiProperty({ enum: SichtfreigabeType, required: false })
-    // public readonly sichtfreigabe?: SichtfreigabeType;
-
-    // @AutoMap()
-    // @IsString()
-    // public readonly revision?: string;
+    @ValidateNested()
+    @Type(() => Laufzeit)
+    @ApiProperty({ type: Laufzeit, required: true })
+    public readonly laufzeit!: Laufzeit;
 }

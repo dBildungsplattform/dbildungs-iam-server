@@ -1,4 +1,4 @@
-import { Entity, Enum, EnumArrayType, Property } from '@mikro-orm/core';
+import { ArrayType, Entity, Enum, EnumArrayType, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import {
     Bildungsziele,
@@ -7,11 +7,13 @@ import {
     GruppenTyp,
     Gruppendifferenzierung,
     Gruppenoption,
-} from '../domain/group.enums.js';
-import { Jahrgangsstufe } from '../../person/domain/personenkontext.enums.js';
+} from '../domain/gruppe.enums.js';
+import { Jahrgangsstufe, SichtfreigabeType } from '../../person/domain/personenkontext.enums.js';
+import { Referenzgruppen } from './referenzgruppen.js';
+import { Laufzeit } from './laufzeit.js';
 
 @Entity({ tableName: 'gruppe' })
-export class Gruppe extends TimestampedEntity {
+export class GruppeEntity extends TimestampedEntity {
     public constructor() {
         super();
     }
@@ -59,15 +61,16 @@ export class Gruppe extends TimestampedEntity {
     @Property({ nullable: true, type: EnumArrayType })
     public faecher!: Faecherkanon[];
 
-    @Property()
-    public referenzgruppen!: string;
+    @Property({ nullable: true, type: ArrayType })
+    public referenzgruppen!: Referenzgruppen[];
+
+    @Property({ nullable: false, type: Laufzeit })
+    public laufzeit!: Laufzeit;
 
     @Property()
-    public laufzeit!: string;
+    @Enum({ items: () => SichtfreigabeType, nullable: true })
+    public sichtfreigabe!: SichtfreigabeType;
 
-    @Property()
-    public sichtfreigabe!: string;
-
-    @Property()
+    @Property({ nullable: false, default: '1' })
     public revision!: string;
 }
