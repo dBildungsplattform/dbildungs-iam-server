@@ -83,6 +83,7 @@ export class DbSeedService {
 
         const entities: ServiceProviderFile[] = plainToInstance(ServiceProviderFile, serviceProviderFile.entities);
 
+        // eslint-disable-next-line no-console
         console.log(entities);
 
         const serviceProviders: ServiceProvider<true>[] = entities.map((data: ServiceProviderFile) =>
