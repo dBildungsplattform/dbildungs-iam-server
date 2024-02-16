@@ -124,33 +124,88 @@ describe('PersonUc', () => {
             );
         });
 
-        describe('when personService createPerson fails', () => {
-            describe('T', () => {
+        describe('when saveUser returns undefined keycloakUserId', () => {
+            it('should return SchulConnex Error', async () => {
+                const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
 
-                it('should delete keycloak user', async () => {
-                    const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
 
-                    usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
-
-                    kcUserServiceMock.create.mockResolvedValueOnce({
-                        ok: true,
-                        value: '',
-                    });
-                    kcUserServiceMock.resetPassword.mockResolvedValueOnce({
-                        ok: true,
-                        value: '',
-                    });
-                    kcUserServiceMock.delete.mockResolvedValueOnce({ ok: true, value: undefined });
-
-                    personServiceMock.createPerson.mockResolvedValueOnce({
-                        ok: false,
-                        error: new PersonAlreadyExistsError(''),
-                    });
-
-                    await personUc.createPerson(createPersonDto);
-
-                    expect(kcUserServiceMock.delete).toHaveBeenCalledTimes(1);
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined as unknown as string,
                 });
+                kcUserServiceMock.resetPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.delete.mockResolvedValueOnce({ ok: true, value: undefined });
+
+                personServiceMock.createPerson.mockResolvedValueOnce({
+                    ok: false,
+                    error: new PersonAlreadyExistsError(''),
+                });
+
+                const result: PersonDto | SchulConnexError = await personUc.createPerson(createPersonDto);
+
+                expect(result).toBeInstanceOf(SchulConnexError);
+            });
+        })
+
+        describe('when personService createPerson succeeds', () => {
+            it('should return PersonDto', async () => {
+                const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
+
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.resetPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+
+                kcUserServiceMock.delete.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+                personServiceMock.createPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: new PersonDo<true>
+                });
+
+                const result: PersonDto | SchulConnexError = await personUc.createPerson(createPersonDto);
+                expect(result).toBeInstanceOf(PersonDto);
+
+            });
+        });
+
+        describe('when personService createPerson fails', () => {
+
+            it('should delete keycloak user', async () => {
+                const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
+
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.resetPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.delete.mockResolvedValueOnce({ ok: true, value: undefined });
+
+                personServiceMock.createPerson.mockResolvedValueOnce({
+                    ok: false,
+                    error: new PersonAlreadyExistsError(''),
+                });
+
+                await personUc.createPerson(createPersonDto);
+
+                expect(kcUserServiceMock.delete).toHaveBeenCalledTimes(1);
             });
 
             describe('when person already exists and user can be deleted', () => {

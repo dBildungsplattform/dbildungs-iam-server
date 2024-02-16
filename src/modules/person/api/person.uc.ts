@@ -80,7 +80,6 @@ export class PersonUc {
 
         // delete user if person could not be created
         const deleteUserResult: Result<void, DomainError> = await this.userService.delete(person.keycloakUserId);
-        console.log("!!! deleteUserResult",deleteUserResult)
         if (deleteUserResult.ok) {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
         } else {
