@@ -13,7 +13,7 @@ export class ServiceProviderResponse {
     @ApiProperty()
     public url: string;
 
-    @ApiProperty({ enum: ServiceProviderKategorie })
+    @ApiProperty({ enum: ServiceProviderKategorie, enumName: 'ServiceProviderKategorie' })
     public kategorie: ServiceProviderKategorie;
 
     public constructor(serviceProvider: ServiceProvider<true>) {
