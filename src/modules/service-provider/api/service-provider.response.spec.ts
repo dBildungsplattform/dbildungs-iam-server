@@ -3,25 +3,13 @@ import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 
 describe('ServiceProviderResponse', () => {
-    describe('when provider has logo and mime-type', () => {
+    describe('when provider has mime-type', () => {
         it('should set hasLogo to true', () => {
             const provider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
 
             const response: ServiceProviderResponse = new ServiceProviderResponse(provider);
 
             expect(response.hasLogo).toBe(true);
-        });
-    });
-
-    describe('when provider has no logo', () => {
-        it('should set hasLogo to false', () => {
-            const provider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
-                logo: undefined,
-            });
-
-            const response: ServiceProviderResponse = new ServiceProviderResponse(provider);
-
-            expect(response.hasLogo).toBe(false);
         });
     });
 

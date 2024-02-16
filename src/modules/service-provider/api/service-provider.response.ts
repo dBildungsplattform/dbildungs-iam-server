@@ -24,6 +24,6 @@ export class ServiceProviderResponse {
         this.name = serviceProvider.name;
         this.url = serviceProvider.url;
         this.kategorie = serviceProvider.kategorie;
-        this.hasLogo = !!(serviceProvider.logo && serviceProvider.logoMimeType);
+        this.hasLogo = !!serviceProvider.logoMimeType; // serviceProvider.logo might not be loaded, so just check the mime-type
     }
 }
