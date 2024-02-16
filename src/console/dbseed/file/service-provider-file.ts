@@ -11,7 +11,7 @@ export class ServiceProviderFile {
 
     public kategorie!: ServiceProviderKategorie;
 
-    public logoMimeType!: string;
+    public logoBase64?: string;
 
-    public logoBase64!: string;
+    public logoMimeType?: string;
 }
