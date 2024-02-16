@@ -13,6 +13,8 @@ import { OrganisationFile } from './file/organisation-file.js';
 import { DataProviderFile } from './file/data-provider-file.js';
 import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enums.js';
 import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
+import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
+import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -120,6 +122,32 @@ describe('DbSeedService', () => {
         });
     });
 
+    describe('readServiceProvider', () => {
+        describe('readServiceProvider with one entity', () => {
+            it('should have length 1', () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./sql/seeding-integration-test/all/03_service-provider.json`,
+                    'utf-8',
+                );
+
+                const serviceprovider: ServiceProvider<true>[] = dbSeedService.readServiceProvider(fileContentAsStr);
+
+                expect(serviceprovider).toHaveLength(1);
+                expect(serviceprovider[0]).toEqual({
+                    id: 'ca0e17c5-8e48-403b-af92-28eff21c64bb',
+                    name: 'Provider1',
+                    url: 'https://example.com/',
+                    kategorie: ServiceProviderKategorie.UNTERRICHT,
+                    logoMimeType: 'image/png',
+                    logo: expect.any(Buffer) as Buffer,
+                    providedOnSchulstrukturknoten: '1',
+                    createdAt: expect.any(Date) as Date,
+                    updatedAt: expect.any(Date) as Date,
+                });
+            });
+        });
+    });
+
     describe('getRolle', () => {
         describe('getRolle by id after loading test rolle', () => {
             it('should return the loaded rolle', () => {
@@ -139,7 +167,7 @@ describe('DbSeedService', () => {
         describe('getEntityFileNames in directory sql/seeding-integration-test', () => {
             it('should return all files in directory', () => {
                 const entityFileNames: string[] = dbSeedService.getEntityFileNames('seeding-integration-test/all');
-                expect(entityFileNames).toHaveLength(5);
+                expect(entityFileNames).toHaveLength(6);
             });
         });
     });

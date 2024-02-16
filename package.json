@@ -52,7 +52,6 @@
         "express": "^4.18.2",
         "express-session": "^1.18.0",
         "generate-password-ts": "^1.6.5",
-        "image-type": "^5.2.0",
         "lodash-es": "^4.17.21",
         "nest-commander": "~3.10",
         "nest-keycloak-connect": "^1.9.5",

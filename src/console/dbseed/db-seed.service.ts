@@ -7,6 +7,7 @@ import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { ConstructorCall, EntityFile } from './db-seed.console.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderFile } from './file/service-provider-file.js';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class DbSeedService {
@@ -76,9 +77,11 @@ export class DbSeedService {
     }
 
     public readServiceProvider(fileContentAsStr: string): ServiceProvider<true>[] {
-        const { entities }: EntityFile<ServiceProviderFile> = JSON.parse(
+        const serviceProviderFile: EntityFile<ServiceProviderFile> = JSON.parse(
             fileContentAsStr,
         ) as EntityFile<ServiceProviderFile>;
+
+        const entities: ServiceProviderFile[] = plainToInstance(ServiceProviderFile, serviceProviderFile.entities);
 
         const serviceProviders: ServiceProvider<true>[] = entities.map((data: ServiceProviderFile) =>
             ServiceProvider.construct(
@@ -88,9 +91,9 @@ export class DbSeedService {
                 data.name,
                 data.url,
                 data.kategorie,
-                data.logoMimeType,
-                Buffer.from(data.logoBase64, 'base64'),
                 data.providedOnSchulstrukturknoten,
+                Buffer.from(data.logoBase64, 'base64'),
+                data.logoMimeType,
             ),
         );
 
