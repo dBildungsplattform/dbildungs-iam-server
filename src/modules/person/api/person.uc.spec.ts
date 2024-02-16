@@ -125,17 +125,7 @@ describe('PersonUc', () => {
         });
 
         describe('when personService createPerson fails', () => {
-            //PROBLEM
-
-            beforeEach(() => {
-                jest.resetAllMocks();
-                jest.resetModules();
-            });
             describe('T', () => {
-                beforeEach(() => {
-                    jest.resetAllMocks();
-                    jest.resetModules();
-                });
 
                 it('should delete keycloak user', async () => {
                     const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
@@ -164,10 +154,6 @@ describe('PersonUc', () => {
             });
 
             describe('when person already exists and user can be deleted', () => {
-                beforeEach(() => {
-                    jest.resetAllMocks();
-                    jest.resetModules();
-                });
 
                 it('should return SchulConnexError', async () => {
                     const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
@@ -201,10 +187,6 @@ describe('PersonUc', () => {
                 });
             });
             describe('when person already exists and user could not be deleted', () => {
-                beforeEach(() => {
-                    jest.resetAllMocks();
-                    jest.resetModules();
-                });
 
                 it('should return SchulConnexError', async () => {
                     const createPersonDto: CreatePersonDto = { vorname: 'Test', familienname: 'User' };
