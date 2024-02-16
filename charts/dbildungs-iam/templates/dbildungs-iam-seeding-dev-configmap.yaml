@@ -4,18 +4,5 @@ kind: ConfigMap
 metadata:
   name: {{.Values.seeding.configmap}}
 data:
-  00_data-provider.json: |-
-    {{ .Files.Get "seeding/dev/00_data-provider.json" | nindent 4 }}
-  01_organisation.json: |-
-    {{ .Files.Get "seeding/dev/01_organisation.json" | nindent 4 }}
-  02_person.json: |-
-    {{ .Files.Get "seeding/dev/02_person.json" | nindent 4 }}
-  03_service-provider.json: |-
-    {{ .Files.Get "seeding/dev/03_service-provider.json" | nindent 4 }}
-  04_rolle.json: |-
-    {{ .Files.Get "seeding/dev/04_rolle.json" | nindent 4 }}
-  05_person-rollen-zuweisung.json: |-
-    {{ .Files.Get "seeding/dev/05_person-rollen-zuweisung.json" | nindent 4 }}
-  06_service-provider-zugriff.json: |-
-    {{ .Files.Get "seeding/dev/06_service-provider-zugriff.json" | nindent 4 }}
+{{ (.Files.Glob "seeding/dev/*").AsConfig | indent 2 }}
 {{end}}
