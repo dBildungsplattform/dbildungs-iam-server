@@ -123,8 +123,8 @@ describe('DbSeedService', () => {
     });
 
     describe('readServiceProvider', () => {
-        describe('readServiceProvider with one entity', () => {
-            it('should have length 1', () => {
+        describe('readServiceProvider with two entities', () => {
+            it('should have length 2', () => {
                 const fileContentAsStr: string = fs.readFileSync(
                     `./sql/seeding-integration-test/all/03_service-provider.json`,
                     'utf-8',
@@ -132,14 +132,23 @@ describe('DbSeedService', () => {
 
                 const serviceprovider: ServiceProvider<true>[] = dbSeedService.readServiceProvider(fileContentAsStr);
 
-                expect(serviceprovider).toHaveLength(1);
+                expect(serviceprovider).toHaveLength(2);
                 expect(serviceprovider[0]).toEqual({
                     id: 'ca0e17c5-8e48-403b-af92-28eff21c64bb',
-                    name: 'Provider1',
+                    name: 'Provider With Logo',
                     url: 'https://example.com/',
                     kategorie: ServiceProviderKategorie.UNTERRICHT,
                     logoMimeType: 'image/png',
                     logo: expect.any(Buffer) as Buffer,
+                    providedOnSchulstrukturknoten: '1',
+                    createdAt: expect.any(Date) as Date,
+                    updatedAt: expect.any(Date) as Date,
+                });
+                expect(serviceprovider[1]).toEqual({
+                    id: 'd96ddc00-a8ed-4d4c-b498-24958fb64604',
+                    name: 'Provider Without Logo',
+                    url: 'https://example.com/',
+                    kategorie: ServiceProviderKategorie.UNTERRICHT,
                     providedOnSchulstrukturknoten: '1',
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,

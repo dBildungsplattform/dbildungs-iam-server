@@ -92,7 +92,7 @@ export class DbSeedService {
                 data.url,
                 data.kategorie,
                 data.providedOnSchulstrukturknoten,
-                Buffer.from(data.logoBase64, 'base64'),
+                data.logoBase64 ? Buffer.from(data.logoBase64, 'base64') : undefined,
                 data.logoMimeType,
             ),
         );
