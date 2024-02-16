@@ -77,9 +77,15 @@ export class DbSeedService {
     }
 
     public readServiceProvider(fileContentAsStr: string): ServiceProvider<true>[] {
+        // eslint-disable-next-line no-console
+        console.log(fileContentAsStr);
+
         const serviceProviderFile: EntityFile<ServiceProviderFile> = JSON.parse(
             fileContentAsStr,
         ) as EntityFile<ServiceProviderFile>;
+
+        // eslint-disable-next-line no-console
+        console.log(serviceProviderFile);
 
         const entities: ServiceProviderFile[] = plainToInstance(ServiceProviderFile, serviceProviderFile.entities);
 
