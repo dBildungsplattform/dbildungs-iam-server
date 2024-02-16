@@ -16,10 +16,14 @@ export class ServiceProviderResponse {
     @ApiProperty({ enum: ServiceProviderKategorie, enumName: 'ServiceProviderKategorie' })
     public kategorie: ServiceProviderKategorie;
 
+    @ApiProperty()
+    public hasLogo: boolean;
+
     public constructor(serviceProvider: ServiceProvider<true>) {
         this.id = serviceProvider.id;
         this.name = serviceProvider.name;
         this.url = serviceProvider.url;
         this.kategorie = serviceProvider.kategorie;
+        this.hasLogo = !!(serviceProvider.logo && serviceProvider.logoMimeType);
     }
 }
