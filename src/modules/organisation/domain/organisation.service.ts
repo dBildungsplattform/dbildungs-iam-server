@@ -15,19 +15,11 @@ import { SchuleZuTraegerError } from '../specification/error/schule-zu-traeger.e
 import { TraegerZuTraegerError } from '../specification/error/traeger-zu-traeger.error.js';
 import { AdministriertZyklus } from '../specification/administriert-zyklus.js';
 import { AdministriertZyklusError } from '../specification/error/administriert-zyklus.error.js';
-import { ConfigService } from '@nestjs/config';
-import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
+import { RootOrganisationImmutableError } from '../specification/error/root-organisation-immutable.error.js';
 
 @Injectable()
 export class OrganisationService {
-    private readonly ROOT_ORGANISATION_ID: string;
-
-    public constructor(
-        private readonly organisationRepo: OrganisationRepo,
-        config: ConfigService<ServerConfig>,
-    ) {
-        this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
-    }
+    public constructor(private readonly organisationRepo: OrganisationRepo) {}
 
     public async createOrganisation(
         organisationDo: OrganisationDo<false>,
@@ -119,24 +111,33 @@ export class OrganisationService {
                 error: new EntityNotFoundError('Organisation', childId),
             };
         }
+        // MUST be called before administriertVon is altered
+        const validationResult: Result<boolean, DomainError> = await this.validateAdministriertVon(
+            childOrganisation,
+            parentId,
+        );
 
         childOrganisation.administriertVon = parentId;
-        const validationResult: Result<boolean, DomainError> = await this.validateAdministriertVon(childOrganisation);
         if (!validationResult.ok) {
             return { ok: false, error: validationResult.error };
         }
 
-        const organisation: OrganisationDo<true> = await this.organisationRepo.save(childOrganisation);
-        if (organisation) {
+        try {
+            await this.organisationRepo.save(childOrganisation);
             return { ok: true, value: undefined };
+        } catch (e) {
+            return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
         }
-
-        return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
     }
 
     private async validateAdministriertVon(
         childOrganisation: OrganisationDo<true>,
+        parentId: string,
     ): Promise<Result<boolean, DomainError>> {
+        //check version from DB before administriertVon is altered
+        if (!childOrganisation.administriertVon) return { ok: false, error: new RootOrganisationImmutableError() };
+
+        childOrganisation.administriertVon = parentId;
         const schuleAdministriertVonTraeger: SchuleZuTraeger = new SchuleZuTraeger(this.organisationRepo);
         if (!(await schuleAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
             return { ok: false, error: new SchuleZuTraegerError(childOrganisation.id, 'SchuleZuTraeger') };
@@ -145,12 +146,9 @@ export class OrganisationService {
         if (!(await traegerAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
             return { ok: false, error: new TraegerZuTraegerError(childOrganisation.id, 'TraegerZuTraeger') };
         }
-        const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(
-            this.organisationRepo,
-            this.ROOT_ORGANISATION_ID,
-        );
+        const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(this.organisationRepo);
         if (await administriertZyklus.isSatisfiedBy(childOrganisation)) {
-            return { ok: false, error: new AdministriertZyklusError(childOrganisation.id, 'ZyklusInAdministiertVon') };
+            return { ok: false, error: new AdministriertZyklusError(childOrganisation.id, 'ZyklusInAdministriertVon') };
         }
         return { ok: true, value: true };
     }

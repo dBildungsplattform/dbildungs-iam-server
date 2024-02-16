@@ -14,6 +14,7 @@ import { Paged } from '../../../shared/paging/index.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/index.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { OrganisationsTyp } from './organisation.enums.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -196,22 +197,6 @@ describe('OrganisationService', () => {
     });
 
     describe('setAdministriertVon', () => {
-        it('should update the organisation', async () => {
-            const parentId: string = faker.string.uuid();
-            const childId: string = faker.string.uuid();
-            organisationRepoMock.exists.mockResolvedValueOnce(true);
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
-            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
-            organisationRepoMock.save.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
-
-            const result: Result<void> = await organisationService.setAdministriertVon(parentId, childId);
-
-            expect(result).toEqual<Result<void>>({
-                ok: true,
-                value: undefined,
-            });
-        });
-
         it('should return a domain error if parent organisation does not exist', async () => {
             const parentId: string = faker.string.uuid();
             const childId: string = faker.string.uuid();
@@ -240,16 +225,30 @@ describe('OrganisationService', () => {
         });
 
         it('should return a domain error if the organisation could not be updated', async () => {
-            const parentId: string = faker.string.uuid();
-            const childId: string = faker.string.uuid();
-            organisationRepoMock.exists.mockResolvedValueOnce(true);
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            const rootDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                id: '1',
+                name: 'Root',
+                administriertVon: undefined,
+                typ: OrganisationsTyp.TRAEGER,
+            });
+            const traegerDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                id: '2',
+                name: 'Träger1',
+                administriertVon: '1',
+                typ: OrganisationsTyp.TRAEGER,
+            });
 
-            const result: Result<void> = await organisationService.setAdministriertVon(parentId, childId);
+            organisationRepoMock.exists.mockResolvedValueOnce(true);
+            organisationRepoMock.findById.mockResolvedValueOnce(traegerDo);
+            organisationRepoMock.findById.mockResolvedValueOnce(rootDo); //called in TraegerZuTraeger
+            organisationRepoMock.findById.mockResolvedValueOnce(rootDo); //called in ZyklusAdministriert
+
+            organisationRepoMock.save.mockRejectedValueOnce(new Error());
+            const result: Result<void> = await organisationService.setAdministriertVon(rootDo.id, traegerDo.id);
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new EntityCouldNotBeUpdated('Organisation', childId),
+                error: new EntityCouldNotBeUpdated('Organisation', traegerDo.id),
             });
         });
     });

@@ -3,10 +3,7 @@ import { OrganisationDo } from '../domain/organisation.do.js';
 import { OrganisationRepo } from '../persistence/organisation.repo.js';
 
 export class AdministriertZyklus extends CompositeSpecification<OrganisationDo<true>> {
-    public constructor(
-        private readonly organisationRepo: OrganisationRepo,
-        private readonly rootOrganisation: string,
-    ) {
+    public constructor(private readonly organisationRepo: OrganisationRepo) {
         super();
     }
 
@@ -17,11 +14,6 @@ export class AdministriertZyklus extends CompositeSpecification<OrganisationDo<t
     private async isCircularReference(orga: OrganisationDo<true>, list: OrganisationDo<true>[]): Promise<boolean> {
         for (const item of list) {
             if (item.id === orga.id) {
-                if (orga.id === this.rootOrganisation) {
-                    if (orga.administriertVon === orga.id) {
-                        return false;
-                    }
-                }
                 return true;
             }
         }
