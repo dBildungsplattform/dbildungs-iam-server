@@ -7,6 +7,22 @@
             "name": "Root Organisation",
             "kuerzel": "Root",
             "typ": "SCHULE"
+        },
+        {
+            "kennung": "Organisation1",
+            "name": "Schule1",
+            "namensergaenzung": "Keine",
+            "kuerzel": "O1",
+            "typ": "SCHULE"
+        },
+        {
+            "kennung": "Organisation2",
+            "name": "Anbieter1",
+            "namensergaenzung": "Keine",
+            "kuerzel": "O2",
+            "typ": "ANBIETER"
         }
     ]
 }
+
+

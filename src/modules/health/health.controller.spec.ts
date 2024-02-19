@@ -11,6 +11,7 @@ import { SqlEntityManager } from '@mikro-orm/postgresql';
 import { ConfigService } from '@nestjs/config';
 import { KeycloakConfig } from '../../shared/config/index.js';
 import { KeycloakHealthIndicator } from './keycloak.health-indicator.js';
+import { RedisHealthIndicator } from './redis.health-indicator.js';
 
 describe('HealthController', () => {
     let controller: HealthController;
@@ -29,6 +30,7 @@ describe('HealthController', () => {
         CLIENT_ID: '',
         CLIENT_SECRET: '',
     };
+    let redisHealthIndicator: RedisHealthIndicator;
     let configService: DeepMocked<ConfigService>;
 
     beforeEach(async () => {
@@ -38,6 +40,7 @@ describe('HealthController', () => {
         httpHealthIndicator = createMock<HttpHealthIndicator>();
         configService = createMock<ConfigService>();
         keycloakHealthIndicator = createMock<KeycloakHealthIndicator>();
+        redisHealthIndicator = createMock<RedisHealthIndicator>();
 
         configService.getOrThrow.mockReturnValue(keycloakConfig);
 
@@ -51,6 +54,7 @@ describe('HealthController', () => {
                 { provide: KeycloakConfig, useValue: keycloakConfig },
                 { provide: ConfigService, useValue: configService },
                 { provide: KeycloakHealthIndicator, useValue: keycloakHealthIndicator },
+                { provide: RedisHealthIndicator, useValue: redisHealthIndicator },
             ],
         }).compile();
 
@@ -74,5 +78,6 @@ describe('HealthController', () => {
 
         expect(mikroOrmHealthIndicator.pingCheck).toHaveBeenCalled();
         expect(keycloakHealthIndicator.check).toHaveBeenCalled();
+        expect(redisHealthIndicator.check).toHaveBeenCalled();
     });
 });
