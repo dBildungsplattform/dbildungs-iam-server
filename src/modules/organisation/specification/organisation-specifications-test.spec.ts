@@ -42,7 +42,7 @@ describe('OrganisationSpecificationTests', () => {
 
     afterAll(async () => {
         await module.close();
-    });
+    }, 100000);
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);

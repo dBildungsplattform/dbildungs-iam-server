@@ -6,13 +6,15 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { OrganisationsTyp } from './organisation.enums.js';
-import { SchuleZuTraegerError } from '../specification/error/schule-zu-traeger.error.js';
 import { MikroORM } from '@mikro-orm/core';
 import { MapperTestModule } from '../../../../test/utils/index.js';
 import { OrganisationPersistenceMapperProfile } from '../persistence/organisation-persistence.mapper.profile.js';
-import { TraegerZuTraegerError } from '../specification/error/traeger-zu-traeger.error.js';
 import { CircularReferenceError } from '../specification/error/circular-reference.error.js';
 import { RootOrganisationImmutableError } from '../specification/error/root-organisation-immutable.error.js';
+import { SchuleAdministriertVonTraegerError } from '../specification/error/schule-administriert-von-traeger.error.js';
+import { TraegerAdministriertVonTraegerError } from '../specification/error/traeger-administriert-von-traeger.error.js';
+import { SchuleZugehoerigZuTraegerError } from '../specification/error/schule-zugehoerig-zu-traeger.error.js';
+import { TraegerZugehoerigZuTraegerError } from '../specification/error/traeger-zugehoerig-zu-traeger.error.js';
 
 describe('OrganisationServiceSpecificationTest', () => {
     let module: TestingModule;
@@ -32,7 +34,7 @@ describe('OrganisationServiceSpecificationTest', () => {
         orm = module.get(MikroORM);
 
         await DatabaseTestModule.setupDatabase(orm);
-    });
+    }, 100000);
 
     afterAll(async () => {
         await module.close();
@@ -55,7 +57,6 @@ describe('OrganisationServiceSpecificationTest', () => {
             typ: OrganisationsTyp.TRAEGER,
         });
         traeger1 = await organisationRepo.save(traeger1Do);
-
     });
 
     it('should be defined', () => {
@@ -124,7 +125,7 @@ describe('OrganisationServiceSpecificationTest', () => {
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new SchuleZuTraegerError(schule2.id, 'SchuleAdministriertVonTraeger'),
+                error: new SchuleAdministriertVonTraegerError(schule2.id),
             });
         });
 
@@ -140,7 +141,7 @@ describe('OrganisationServiceSpecificationTest', () => {
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new TraegerZuTraegerError(traeger1.id, 'TraegerAdministriertVonTraeger'),
+                error: new TraegerAdministriertVonTraegerError(traeger1.id),
             });
         });
 
@@ -226,7 +227,7 @@ describe('OrganisationServiceSpecificationTest', () => {
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new SchuleZuTraegerError(schule2.id, 'SchuleZugehoerigZuTraeger'),
+                error: new SchuleZugehoerigZuTraegerError(schule2.id),
             });
         });
 
@@ -243,7 +244,7 @@ describe('OrganisationServiceSpecificationTest', () => {
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new TraegerZuTraegerError(traeger1.id, 'TraegerZugehoerigZuTraeger'),
+                error: new TraegerZugehoerigZuTraegerError(traeger1.id),
             });
         });
 

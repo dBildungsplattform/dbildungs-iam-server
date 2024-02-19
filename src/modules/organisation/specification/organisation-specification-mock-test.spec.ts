@@ -1,11 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DatabaseTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    DoFactory,
-    MapperTestModule,
-} from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { OrganisationRepo } from '../persistence/organisation.repo.js';
 import { OrganisationPersistenceMapperProfile } from '../persistence/organisation-persistence.mapper.profile.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
@@ -32,7 +26,7 @@ describe('OrganisationSpecificationMockedRepoTests', () => {
             ],
         }).compile();
         repoMock = module.get(OrganisationRepo);
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+    }, 100000);
 
     afterAll(async () => {
         await module.close();

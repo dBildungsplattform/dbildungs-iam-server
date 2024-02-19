@@ -11,14 +11,16 @@ import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { SchuleAdministriertVonTraeger } from '../specification/schule-administriert-von-traeger.js';
 import { TraegerAdministriertVonTraeger } from '../specification/traeger-administriert-von-traeger.js';
-import { SchuleZuTraegerError } from '../specification/error/schule-zu-traeger.error.js';
-import { TraegerZuTraegerError } from '../specification/error/traeger-zu-traeger.error.js';
 import { RootOrganisationImmutableError } from '../specification/error/root-organisation-immutable.error.js';
 import { ZyklusInZugehoerigZu } from '../specification/zyklus-in-zugehoerig-zu.js';
 import { ZyklusInAdministriertVon } from '../specification/zyklus-in-administriert-von.js';
 import { CircularReferenceError } from '../specification/error/circular-reference.error.js';
 import { SchuleZugehoerigZuTraeger } from '../specification/schule-zugehoerig-zu-traeger.js';
 import { TraegerZugehoerigZuTraeger } from '../specification/traeger-zugehoerig-zu-traeger.js';
+import { SchuleAdministriertVonTraegerError } from '../specification/error/schule-administriert-von-traeger.error.js';
+import { SchuleZugehoerigZuTraegerError } from '../specification/error/schule-zugehoerig-zu-traeger.error.js';
+import { TraegerZugehoerigZuTraegerError } from '../specification/error/traeger-zugehoerig-zu-traeger.error.js';
+import { TraegerAdministriertVonTraegerError } from '../specification/error/traeger-administriert-von-traeger.error.js';
 
 @Injectable()
 export class OrganisationService {
@@ -200,14 +202,14 @@ export class OrganisationService {
         if (!(await schuleAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
             return {
                 ok: false,
-                error: new SchuleZuTraegerError(childOrganisation.id, 'SchuleAdministriertVonTraeger'),
+                error: new SchuleAdministriertVonTraegerError(childOrganisation.id),
             };
         }
         const schuleZugehoerigZuTraeger: SchuleZugehoerigZuTraeger = new SchuleZugehoerigZuTraeger(
             this.organisationRepo,
         );
         if (!(await schuleZugehoerigZuTraeger.isSatisfiedBy(childOrganisation))) {
-            return { ok: false, error: new SchuleZuTraegerError(childOrganisation.id, 'SchuleZugehoerigZuTraeger') };
+            return { ok: false, error: new SchuleZugehoerigZuTraegerError(childOrganisation.id) };
         }
         const traegerAdministriertVonTraeger: TraegerAdministriertVonTraeger = new TraegerAdministriertVonTraeger(
             this.organisationRepo,
@@ -215,14 +217,14 @@ export class OrganisationService {
         if (!(await traegerAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
             return {
                 ok: false,
-                error: new TraegerZuTraegerError(childOrganisation.id, 'TraegerAdministriertVonTraeger'),
+                error: new TraegerAdministriertVonTraegerError(childOrganisation.id),
             };
         }
         const traegerZugehoerigZuTraeger: TraegerZugehoerigZuTraeger = new TraegerZugehoerigZuTraeger(
             this.organisationRepo,
         );
         if (!(await traegerZugehoerigZuTraeger.isSatisfiedBy(childOrganisation))) {
-            return { ok: false, error: new TraegerZuTraegerError(childOrganisation.id, 'TraegerZugehoerigZuTraeger') };
+            return { ok: false, error: new TraegerZugehoerigZuTraegerError(childOrganisation.id) };
         }
         const zyklusInAdministriertVon: ZyklusInAdministriertVon = new ZyklusInAdministriertVon(this.organisationRepo);
         if (await zyklusInAdministriertVon.isSatisfiedBy(childOrganisation)) {
