@@ -13,6 +13,7 @@ import { SchuleAdministriertVonTraegerError } from '../../modules/organisation/s
 import { SchuleZugehoerigZuTraegerError } from '../../modules/organisation/specification/error/schule-zugehoerig-zu-traeger.error.js';
 import { TraegerAdministriertVonTraegerError } from '../../modules/organisation/specification/error/traeger-administriert-von-traeger.error.js';
 import { TraegerZugehoerigZuTraegerError } from '../../modules/organisation/specification/error/traeger-zugehoerig-zu-traeger.error.js';
+import { RootOrganisationImmutableError } from '../../modules/organisation/specification/error/root-organisation-immutable.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -106,7 +107,7 @@ export class SchulConnexErrorMapper {
                 subcode: '00',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
                 beschreibung:
-                    'Die Spezifikation für die Zuordnung von Träger-administriert-Träger wurde nicht erfüllt.',
+                    'Die Spezifikation für die Zuordnung von Träger-administriert-von-Träger wurde nicht erfüllt.',
             }),
         ],
         [
@@ -124,7 +125,16 @@ export class SchulConnexErrorMapper {
                 code: 400,
                 subcode: '00',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Zyklus in der administriertVon- oder zugehoerigZu-Beziehung entdeckt.',
+                beschreibung: 'Zyklus in der administriertVon- oder zugehörigZu-Beziehung entdeckt.',
+            }),
+        ],
+        [
+            RootOrganisationImmutableError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '00',
+                titel: 'Spezifikation von Organisation nicht erfüllt',
+                beschreibung: 'Die Root-Organisation ist bzgl. administriertVon und zugehörigZu unveränderlich.',
             }),
         ],
     ]);
