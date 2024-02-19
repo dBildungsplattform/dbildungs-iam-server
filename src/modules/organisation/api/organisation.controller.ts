@@ -1,8 +1,9 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Param, Post, Query, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
+    ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
@@ -11,7 +12,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Public } from 'nest-keycloak-connect';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
@@ -25,12 +25,15 @@ import { FindOrganisationDto } from './find-organisation.dto.js';
 import { OrganisationByIdParams } from './organisation-by-id.params.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationUc } from './organisation.uc.js';
+import { UpdateOrganisationBodyParams } from './update-organisation.body.params.js';
+import { UpdateOrganisationDto } from './update-organisation.dto.js';
+import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
+@ApiBearerAuth()
 @Controller({ path: 'organisationen' })
-@Public()
 export class OrganisationController {
     public constructor(
         private readonly uc: OrganisationUc,
@@ -55,6 +58,31 @@ export class OrganisationController {
             return this.mapper.map(result, CreatedOrganisationDto, OrganisationResponse);
         }
         throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+    }
+
+    @Put(':organisationId')
+    @ApiOkResponse({
+        description: 'The organisation was successfully updated.',
+        type: OrganisationResponse,
+    })
+    @ApiBadRequestResponse({ description: 'Request has wrong format.' })
+    @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
+    @ApiNotFoundResponse({ description: 'The organisation was not found.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
+    @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
+    public async updateOrganisation(
+        @Param() params: OrganisationByIdParams,
+        @Body() body: UpdateOrganisationBodyParams,
+    ): Promise<OrganisationResponse> {
+        const dto: UpdateOrganisationDto = this.mapper.map(body, UpdateOrganisationBodyParams, UpdateOrganisationDto);
+        dto.id = params.organisationId;
+
+        const response: UpdatedOrganisationDto | SchulConnexError = await this.uc.updateOrganisation(dto);
+
+        if (response instanceof UpdatedOrganisationDto) {
+            return this.mapper.map(response, UpdatedOrganisationDto, OrganisationResponse);
+        }
+        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
     }
 
     @Get('root')
@@ -127,8 +155,14 @@ export class OrganisationController {
     public async getAdministrierteOrganisationen(
         @Param() params: OrganisationByIdParams,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const organisations: Paged<OrganisationResponse> = await this.uc.findAdministriertVon(params.organisationId);
-        const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
+        const result: Paged<OrganisationResponse> | SchulConnexError = await this.uc.findAdministriertVon(
+            params.organisationId,
+        );
+
+        if (result instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse(result);
 
         return response;
     }
@@ -165,8 +199,14 @@ export class OrganisationController {
     public async getZugehoerigeOrganisationen(
         @Param() params: OrganisationByIdParams,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const organisations: Paged<OrganisationResponse> = await this.uc.findZugehoerigZu(params.organisationId);
-        const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
+        const result: Paged<OrganisationResponse> | SchulConnexError = await this.uc.findZugehoerigZu(
+            params.organisationId,
+        );
+
+        if (result instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse(result);
 
         return response;
     }
