@@ -5,17 +5,10 @@ import { KeycloakAdministrationService } from './domain/keycloak-admin-client.se
 import { UserMapperProfile } from './domain/keycloak-client/user.mapper.profile.js';
 import { KeycloakUserService } from './domain/keycloak-user.service.js';
 import { LoggerModule } from '../../core/logging/logger.module.js';
-import { KeycloakInstanceConfig } from './keycloak-instance-config.js';
 
 @Module({
     imports: [LoggerModule.register(KeycloakAdministrationModule.name)],
-    providers: [
-        UserMapperProfile,
-        KeycloakAdminClient,
-        KeycloakUserService,
-        KeycloakAdministrationService,
-        KeycloakInstanceConfig,
-    ],
+    providers: [UserMapperProfile, KeycloakAdminClient, KeycloakUserService, KeycloakAdministrationService],
     exports: [KeycloakUserService],
 })
 export class KeycloakAdministrationModule {}
