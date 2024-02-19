@@ -10,7 +10,7 @@ import { SchulConnexError } from './schul-connex.error.js';
 import { EntityCouldNotBeDeleted } from './entity-could-not-be-deleted.error.js';
 import { SchuleZuTraegerError } from '../../modules/organisation/specification/error/schule-zu-traeger.error.js';
 import { TraegerZuTraegerError } from '../../modules/organisation/specification/error/traeger-zu-traeger.error.js';
-import { AdministriertZyklusError } from '../../modules/organisation/specification/error/administriert-zyklus.error.js';
+import { CircularReferenceError } from '../../modules/organisation/specification/error/circular-reference.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -97,12 +97,12 @@ export class SchulConnexErrorMapper {
             }),
         ],
         [
-            AdministriertZyklusError.name,
+            CircularReferenceError.name,
             new SchulConnexError({
                 code: 400,
                 subcode: '00',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Zyklus in der administriertVon-Beziehung ist nicht erlaubt.',
+                beschreibung: 'Zyklus in der administriertVon- oder zugehoerigZu-Beziehung entdeckt.',
             }),
         ],
     ]);

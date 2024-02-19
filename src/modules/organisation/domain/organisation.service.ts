@@ -9,13 +9,16 @@ import {
 import { OrganisationDo } from './organisation.do.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
-import { SchuleZuTraeger } from '../specification/schule-zu-traeger.js';
-import { TraegerZuTraeger } from '../specification/traeger-zu-traeger.js';
+import { SchuleAdministriertVonTraeger } from '../specification/schule-administriert-von-traeger.js';
+import { TraegerAdministriertVonTraeger } from '../specification/traeger-administriert-von-traeger.js';
 import { SchuleZuTraegerError } from '../specification/error/schule-zu-traeger.error.js';
 import { TraegerZuTraegerError } from '../specification/error/traeger-zu-traeger.error.js';
-import { AdministriertZyklus } from '../specification/administriert-zyklus.js';
-import { AdministriertZyklusError } from '../specification/error/administriert-zyklus.error.js';
 import { RootOrganisationImmutableError } from '../specification/error/root-organisation-immutable.error.js';
+import { ZyklusInZugehoerigZu } from '../specification/zyklus-in-zugehoerig-zu.js';
+import { ZyklusInAdministriertVon } from '../specification/zyklus-in-administriert-von.js';
+import { CircularReferenceError } from '../specification/error/circular-reference.error.js';
+import { SchuleZugehoerigZuTraeger } from '../specification/schule-zugehoerig-zu-traeger.js';
+import { TraegerZugehoerigZuTraeger } from '../specification/traeger-zugehoerig-zu-traeger.js';
 
 @Injectable()
 export class OrganisationService {
@@ -117,10 +120,10 @@ export class OrganisationService {
             parentId,
         );
 
-        childOrganisation.administriertVon = parentId;
         if (!validationResult.ok) {
             return { ok: false, error: validationResult.error };
         }
+        childOrganisation.administriertVon = parentId;
 
         try {
             await this.organisationRepo.save(childOrganisation);
@@ -136,21 +139,9 @@ export class OrganisationService {
     ): Promise<Result<boolean, DomainError>> {
         //check version from DB before administriertVon is altered
         if (!childOrganisation.administriertVon) return { ok: false, error: new RootOrganisationImmutableError() };
-
         childOrganisation.administriertVon = parentId;
-        const schuleAdministriertVonTraeger: SchuleZuTraeger = new SchuleZuTraeger(this.organisationRepo);
-        if (!(await schuleAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
-            return { ok: false, error: new SchuleZuTraegerError(childOrganisation.id, 'SchuleZuTraeger') };
-        }
-        const traegerAdministriertVonTraeger: TraegerZuTraeger = new TraegerZuTraeger(this.organisationRepo);
-        if (!(await traegerAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
-            return { ok: false, error: new TraegerZuTraegerError(childOrganisation.id, 'TraegerZuTraeger') };
-        }
-        const administriertZyklus: AdministriertZyklus = new AdministriertZyklus(this.organisationRepo);
-        if (await administriertZyklus.isSatisfiedBy(childOrganisation)) {
-            return { ok: false, error: new AdministriertZyklusError(childOrganisation.id, 'ZyklusInAdministriertVon') };
-        }
-        return { ok: true, value: true };
+
+        return this.validateSpecifications(childOrganisation);
     }
 
     public async setZugehoerigZu(parentId: string, childId: string): Promise<Result<void, DomainError>> {
@@ -170,14 +161,78 @@ export class OrganisationService {
             };
         }
 
-        childOrganisation.zugehoerigZu = parentId;
-
-        const organisation: OrganisationDo<true> = await this.organisationRepo.save(childOrganisation);
-        if (organisation) {
-            return { ok: true, value: undefined };
+        // MUST be called before zugehoerigZu is altered
+        const validationResult: Result<boolean, DomainError> = await this.validateZugehoerigZu(
+            childOrganisation,
+            parentId,
+        );
+        if (!validationResult.ok) {
+            return { ok: false, error: validationResult.error };
         }
 
-        return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
+        childOrganisation.zugehoerigZu = parentId;
+
+        try {
+            await this.organisationRepo.save(childOrganisation);
+            return { ok: true, value: undefined };
+        } catch (e) {
+            return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
+        }
+    }
+
+    private async validateZugehoerigZu(
+        childOrganisation: OrganisationDo<true>,
+        parentId: string,
+    ): Promise<Result<boolean, DomainError>> {
+        //check version from DB before zugehoerigZu is altered
+        if (!childOrganisation.zugehoerigZu) return { ok: false, error: new RootOrganisationImmutableError() };
+        childOrganisation.zugehoerigZu = parentId;
+
+        return this.validateSpecifications(childOrganisation);
+    }
+
+    private async validateSpecifications(
+        childOrganisation: OrganisationDo<true>,
+    ): Promise<Result<boolean, DomainError>> {
+        const schuleAdministriertVonTraeger: SchuleAdministriertVonTraeger = new SchuleAdministriertVonTraeger(
+            this.organisationRepo,
+        );
+        if (!(await schuleAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
+            return {
+                ok: false,
+                error: new SchuleZuTraegerError(childOrganisation.id, 'SchuleAdministriertVonTraeger'),
+            };
+        }
+        const schuleZugehoerigZuTraeger: SchuleZugehoerigZuTraeger = new SchuleZugehoerigZuTraeger(
+            this.organisationRepo,
+        );
+        if (!(await schuleZugehoerigZuTraeger.isSatisfiedBy(childOrganisation))) {
+            return { ok: false, error: new SchuleZuTraegerError(childOrganisation.id, 'SchuleZugehoerigZuTraeger') };
+        }
+        const traegerAdministriertVonTraeger: TraegerAdministriertVonTraeger = new TraegerAdministriertVonTraeger(
+            this.organisationRepo,
+        );
+        if (!(await traegerAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
+            return {
+                ok: false,
+                error: new TraegerZuTraegerError(childOrganisation.id, 'TraegerAdministriertVonTraeger'),
+            };
+        }
+        const traegerZugehoerigZuTraeger: TraegerZugehoerigZuTraeger = new TraegerZugehoerigZuTraeger(
+            this.organisationRepo,
+        );
+        if (!(await traegerZugehoerigZuTraeger.isSatisfiedBy(childOrganisation))) {
+            return { ok: false, error: new TraegerZuTraegerError(childOrganisation.id, 'TraegerZugehoerigZuTraeger') };
+        }
+        const zyklusInAdministriertVon: ZyklusInAdministriertVon = new ZyklusInAdministriertVon(this.organisationRepo);
+        if (await zyklusInAdministriertVon.isSatisfiedBy(childOrganisation)) {
+            return { ok: false, error: new CircularReferenceError(childOrganisation.id, 'ZyklusInAdministriertVon') };
+        }
+        const zyklusInZugehoerigZu: ZyklusInZugehoerigZu = new ZyklusInZugehoerigZu(this.organisationRepo);
+        if (await zyklusInZugehoerigZu.isSatisfiedBy(childOrganisation)) {
+            return { ok: false, error: new CircularReferenceError(childOrganisation.id, 'ZyklusInZugehoerigZu') };
+        }
+        return { ok: true, value: true };
     }
 
     public async findAllAdministriertVon(

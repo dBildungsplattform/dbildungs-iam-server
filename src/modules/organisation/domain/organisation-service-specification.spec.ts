@@ -11,7 +11,7 @@ import { MikroORM } from '@mikro-orm/core';
 import { MapperTestModule } from '../../../../test/utils/index.js';
 import { OrganisationPersistenceMapperProfile } from '../persistence/organisation-persistence.mapper.profile.js';
 import { TraegerZuTraegerError } from '../specification/error/traeger-zu-traeger.error.js';
-import { AdministriertZyklusError } from '../specification/error/administriert-zyklus.error.js';
+import { CircularReferenceError } from '../specification/error/circular-reference.error.js';
 import { RootOrganisationImmutableError } from '../specification/error/root-organisation-immutable.error.js';
 
 describe('OrganisationServiceSpecificationTest', () => {
@@ -19,6 +19,8 @@ describe('OrganisationServiceSpecificationTest', () => {
     let organisationService: OrganisationService;
     let organisationRepo: OrganisationRepo;
     let orm: MikroORM;
+    let root: OrganisationDo<true>;
+    let traeger1: OrganisationDo<true>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -39,6 +41,21 @@ describe('OrganisationServiceSpecificationTest', () => {
     beforeEach(async () => {
         jest.resetAllMocks();
         await DatabaseTestModule.clearDatabase(orm);
+        const rootDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+            name: 'Root',
+            administriertVon: undefined,
+            zugehoerigZu: undefined,
+            typ: OrganisationsTyp.TRAEGER,
+        });
+        root = await organisationRepo.save(rootDo);
+        const traeger1Do: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+            name: 'Träger1',
+            administriertVon: root.id,
+            zugehoerigZu: root.id,
+            typ: OrganisationsTyp.TRAEGER,
+        });
+        traeger1 = await organisationRepo.save(traeger1Do);
+
     });
 
     it('should be defined', () => {
@@ -47,30 +64,21 @@ describe('OrganisationServiceSpecificationTest', () => {
 
     describe('setAdministriertVon', () => {
         it('should update the organisation', async () => {
-            const rootDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
-                name: 'Root',
-                administriertVon: undefined,
-                typ: OrganisationsTyp.TRAEGER,
-            });
-            const root: OrganisationDo<true> = await organisationRepo.save(rootDo);
-            const traeger1Do: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
-                name: 'Träger1',
-                administriertVon: root.id,
-                typ: OrganisationsTyp.TRAEGER,
-            });
-            const traeger1: OrganisationDo<true> = await organisationRepo.save(traeger1Do);
             const traeger2Do: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Träger2',
                 administriertVon: root.id,
+                zugehoerigZu: root.id,
                 typ: OrganisationsTyp.TRAEGER,
             });
             const traeger2: OrganisationDo<true> = await organisationRepo.save(traeger2Do);
             const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Schule',
                 administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
                 typ: OrganisationsTyp.SCHULE,
             });
             schuleDo.administriertVon = root.id;
+            schuleDo.zugehoerigZu = root.id;
             const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
 
             const result: Result<void> = await organisationService.setAdministriertVon(traeger2.id, schule.id);
@@ -82,17 +90,11 @@ describe('OrganisationServiceSpecificationTest', () => {
         });
 
         it('should return a domain error if adminstriertVon property of root organisation should be altered', async () => {
-            const rootDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
-                name: 'Root',
-                administriertVon: undefined,
-                typ: OrganisationsTyp.TRAEGER,
-            });
             const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Schule',
                 administriertVon: undefined,
                 typ: OrganisationsTyp.SCHULE,
             });
-            const root: OrganisationDo<true> = await organisationRepo.save(rootDo);
             schuleDo.administriertVon = root.id;
             const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
 
@@ -104,13 +106,7 @@ describe('OrganisationServiceSpecificationTest', () => {
             });
         });
 
-        it('should return a domain error if the SchuleZuTraeger specification is not met', async () => {
-            const rootDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
-                name: 'Root',
-                administriertVon: undefined,
-                typ: OrganisationsTyp.TRAEGER,
-            });
-            const root: OrganisationDo<true> = await organisationRepo.save(rootDo);
+        it('should return a domain error if the SchuleAdministriertVonTraeger specification is not met', async () => {
             const schule1Do: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Schule',
                 administriertVon: root.id,
@@ -128,54 +124,31 @@ describe('OrganisationServiceSpecificationTest', () => {
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new SchuleZuTraegerError(schule2.id, 'SchuleZuTraeger'),
+                error: new SchuleZuTraegerError(schule2.id, 'SchuleAdministriertVonTraeger'),
             });
         });
 
-        it('should return a domain error if the TraegerZuTraeger specification is not met', async () => {
-            const rootDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
-                name: 'Root',
-                administriertVon: undefined,
-                typ: OrganisationsTyp.TRAEGER,
-            });
-            const root: OrganisationDo<true> = await organisationRepo.save(rootDo);
+        it('should return a domain error if the TraegerAdministriertVonTraeger specification is not met', async () => {
             const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Schule',
                 administriertVon: root.id,
                 typ: OrganisationsTyp.SCHULE,
             });
-            const traegerDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
-                name: 'Traeger',
-                administriertVon: root.id,
-                typ: OrganisationsTyp.TRAEGER,
-            });
             const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
-            const traeger: OrganisationDo<true> = await organisationRepo.save(traegerDo);
 
-            const result: Result<void> = await organisationService.setAdministriertVon(schule.id, traeger.id);
+            const result: Result<void> = await organisationService.setAdministriertVon(schule.id, traeger1.id);
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new TraegerZuTraegerError(traeger.id, 'TraegerZuTraeger'),
+                error: new TraegerZuTraegerError(traeger1.id, 'TraegerAdministriertVonTraeger'),
             });
         });
 
-        it('should return a domain error if the AdministriertZyklus specification is not met', async () => {
-            const rootDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
-                name: 'Root',
-                administriertVon: undefined,
-                typ: OrganisationsTyp.TRAEGER,
-            });
-            const root: OrganisationDo<true> = await organisationRepo.save(rootDo);
-            const traeger1Do: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
-                name: 'Traeger1',
-                administriertVon: root.id,
-                typ: OrganisationsTyp.TRAEGER,
-            });
-            const traeger1: OrganisationDo<true> = await organisationRepo.save(traeger1Do);
+        it('should return a domain error if the ZyklusInAdministriertVon specification is not met', async () => {
             const traeger2Do: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Traeger2',
                 administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
                 typ: OrganisationsTyp.TRAEGER,
             });
             const traeger2: OrganisationDo<true> = await organisationRepo.save(traeger2Do);
@@ -184,7 +157,110 @@ describe('OrganisationServiceSpecificationTest', () => {
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new AdministriertZyklusError(traeger1.id, 'ZyklusInAdministriertVon'),
+                error: new CircularReferenceError(traeger1.id, 'ZyklusInAdministriertVon'),
+            });
+        });
+    });
+
+    describe('setZugehoerigZu', () => {
+        it('should update the organisation', async () => {
+            const traeger2Do: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Träger2',
+                administriertVon: root.id,
+                zugehoerigZu: root.id,
+                typ: OrganisationsTyp.TRAEGER,
+            });
+            const traeger2: OrganisationDo<true> = await organisationRepo.save(traeger2Do);
+            const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Schule',
+                administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
+                typ: OrganisationsTyp.SCHULE,
+            });
+            schuleDo.zugehoerigZu = root.id;
+            const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
+
+            const result: Result<void> = await organisationService.setZugehoerigZu(traeger2.id, schule.id);
+
+            expect(result).toEqual<Result<void>>({
+                ok: true,
+                value: undefined,
+            });
+        });
+
+        it('should return a domain error if zugehoerigZu property of root organisation should be altered', async () => {
+            const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Schule',
+                administriertVon: undefined,
+                zugehoerigZu: undefined,
+                typ: OrganisationsTyp.SCHULE,
+            });
+            schuleDo.zugehoerigZu = root.id;
+            const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
+
+            const result: Result<void> = await organisationService.setZugehoerigZu(schule.id, root.id);
+
+            expect(result).toEqual<Result<void>>({
+                ok: false,
+                error: new RootOrganisationImmutableError({}),
+            });
+        });
+
+        it('should return a domain error if the SchuleZugehoerigZuTraeger specification is not met', async () => {
+            const schule1Do: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Schule',
+                administriertVon: root.id,
+                zugehoerigZu: root.id,
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const schule2Do: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Schule',
+                administriertVon: root.id,
+                zugehoerigZu: root.id,
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const schule1: OrganisationDo<true> = await organisationRepo.save(schule1Do);
+            const schule2: OrganisationDo<true> = await organisationRepo.save(schule2Do);
+
+            const result: Result<void> = await organisationService.setZugehoerigZu(schule1.id, schule2.id);
+
+            expect(result).toEqual<Result<void>>({
+                ok: false,
+                error: new SchuleZuTraegerError(schule2.id, 'SchuleZugehoerigZuTraeger'),
+            });
+        });
+
+        it('should return a domain error if the TraegerZugehoerigZuTraeger specification is not met', async () => {
+            const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Schule',
+                administriertVon: root.id,
+                zugehoerigZu: root.id,
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
+
+            const result: Result<void> = await organisationService.setZugehoerigZu(schule.id, traeger1.id);
+
+            expect(result).toEqual<Result<void>>({
+                ok: false,
+                error: new TraegerZuTraegerError(traeger1.id, 'TraegerZugehoerigZuTraeger'),
+            });
+        });
+
+        it('should return a domain error if the ZyklusInZugehoerigZu specification is not met', async () => {
+            const traeger2Do: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Traeger2',
+                administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
+                typ: OrganisationsTyp.TRAEGER,
+            });
+            const traeger2: OrganisationDo<true> = await organisationRepo.save(traeger2Do);
+
+            const result: Result<void> = await organisationService.setZugehoerigZu(traeger2.id, traeger1.id);
+
+            expect(result).toEqual<Result<void>>({
+                ok: false,
+                error: new CircularReferenceError(traeger1.id, 'ZyklusInZugehoerigZu'),
             });
         });
     });

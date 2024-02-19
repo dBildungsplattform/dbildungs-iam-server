@@ -2,7 +2,7 @@ import { CompositeSpecification } from '../../specification/specifications.js';
 import { OrganisationDo } from '../domain/organisation.do.js';
 import { OrganisationRepo } from '../persistence/organisation.repo.js';
 
-export class AdministriertZyklus extends CompositeSpecification<OrganisationDo<true>> {
+export class ZyklusInZugehoerigZu extends CompositeSpecification<OrganisationDo<true>> {
     public constructor(private readonly organisationRepo: OrganisationRepo) {
         super();
     }
@@ -17,8 +17,8 @@ export class AdministriertZyklus extends CompositeSpecification<OrganisationDo<t
                 return true;
             }
         }
-        if (orga.administriertVon) {
-            const parent: Option<OrganisationDo<true>> = await this.organisationRepo.findById(orga.administriertVon);
+        if (orga.zugehoerigZu) {
+            const parent: Option<OrganisationDo<true>> = await this.organisationRepo.findById(orga.zugehoerigZu);
             if (parent) {
                 list.push(orga);
                 return this.isCircularReference(parent, list);

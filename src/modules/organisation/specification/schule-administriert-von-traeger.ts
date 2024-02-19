@@ -3,13 +3,13 @@ import { OrganisationDo } from '../domain/organisation.do.js';
 import { OrganisationRepo } from '../persistence/organisation.repo.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 
-export class TraegerZuTraeger extends CompositeSpecification<OrganisationDo<true>> {
+export class SchuleAdministriertVonTraeger extends CompositeSpecification<OrganisationDo<true>> {
     public constructor(private readonly organisationRepo: OrganisationRepo) {
         super();
     }
 
     public async isSatisfiedBy(t: OrganisationDo<true>): Promise<boolean> {
-        if (t.typ !== OrganisationsTyp.TRAEGER) return true;
+        if (t.typ !== OrganisationsTyp.SCHULE) return true;
         if (!t.administriertVon) return false;
         const parent: Option<OrganisationDo<true>> = await this.organisationRepo.findById(t.administriertVon);
         if (!parent) return false;
