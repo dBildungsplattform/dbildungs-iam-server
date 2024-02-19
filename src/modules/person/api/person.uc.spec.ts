@@ -27,6 +27,7 @@ describe('PersonUc', () => {
     let module: TestingModule;
     let personUc: PersonUc;
     let personServiceMock: DeepMocked<PersonService>;
+    let personRepositoryMock: DeepMocked<PersonRepository>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
     let kcUserServiceMock: DeepMocked<KeycloakUserService>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
@@ -65,6 +66,7 @@ describe('PersonUc', () => {
         }).compile();
         personUc = module.get(PersonUc);
         personServiceMock = module.get(PersonService);
+        personRepositoryMock = module.get(PersonRepository);
         personenkontextServiceMock = module.get(PersonenkontextService);
         kcUserServiceMock = module.get(KeycloakUserService);
         usernameGeneratorService = module.get(UsernameGeneratorService);
@@ -375,48 +377,53 @@ describe('PersonUc', () => {
     });
 
     describe('resetPassword', () => {
-        const id: string = faker.string.uuid();
         describe('when personId is valid (person exists)', () => {
-            /*
-            let userMock: User;
-            beforeEach(() => {
-                userMock = new User('fakeKCID1', 'mmustermann', '');
-            });
+            it('should return new Password', async () => {
+                const person: Person<true> = Person.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.person.lastName(),
+                    faker.person.firstName(),
+                    '1',
+                    faker.lorem.word(),
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                );
 
-            it('should return a generated password caused by password-reset', async () => {
                 personServiceMock.findPersonById.mockResolvedValue({
                     ok: true,
-                    value: { id: 'fakeid_1', keycloakUserId: 'fakeKCID1' } as PersonDo<true>,
+                    value: new PersonDo<true>,
                 });
-                userRepositoryMock.loadUser.mockResolvedValue(userMock);
-                userServiceMock.resetPassword.mockResolvedValueOnce({ ok: true, value: 'abcdefgh' });
+                personRepositoryMock.findByKeycloakUserId.mockResolvedValue(person);
+                kcUserServiceMock.resetPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
 
-                const resetResult: { ok: true; value: string } | { ok: false; error: Error } | SchulConnexError =
-                    await personUc.resetPassword('fakeid_1');
-                expect((resetResult as { ok: boolean; value: string }).ok).toBeTruthy();
-                expect((resetResult as { ok: boolean; value: string }).value).toBeTruthy();
+                const result: Result<string> | SchulConnexError = await personUc.resetPassword(faker.string.uuid());
 
-                expect(personServiceMock.findPersonById).toHaveBeenCalledWith('fakeid_1');
-                expect(userRepositoryMock.loadUser).toHaveBeenCalledWith('fakeKCID1');
-                expect(userMock.newPassword).toBeTruthy();
-                expect(userServiceMock.resetPassword).toHaveBeenCalledWith('fakeKCID1', userMock.newPassword);
+                expect(result).not.toBeInstanceOf(SchulConnexError);
+
+                if (!(result instanceof SchulConnexError)) {
+                    expect(result.ok).toBeTruthy();
+                }
             });
-            */
         });
 
-        describe('when user services returns DomainError', () => {
-            /*
+        describe('when person for KeyCLoakUserId can not be found', () => {
             it('should return SchulConnexError', async () => {
-                userRepositoryMock.loadUser.mockReset();
-                personServiceMock.findPersonById.mockResolvedValueOnce({
+                personServiceMock.findPersonById.mockResolvedValue({
                     ok: true,
-                    value: { id: 'fakeid_2', keycloakUserId: 'KCID02' } as PersonDo<true>,
+                    value: new PersonDo<true>,
                 });
-                userRepositoryMock.loadUser.mockRejectedValue(new KeycloakClientError(''));
+                personRepositoryMock.findByKeycloakUserId.mockResolvedValue(undefined);
 
-                await expect(personUc.resetPassword(id)).resolves.toBeInstanceOf(SchulConnexError);
+                const result: Result<string> | SchulConnexError = await personUc.resetPassword('ABC');
+
+                expect(result).toBeInstanceOf(SchulConnexError);
+
             });
-            */
         });
 
         describe('when PersonService returns an error', () => {

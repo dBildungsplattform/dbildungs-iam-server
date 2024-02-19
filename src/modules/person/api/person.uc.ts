@@ -171,9 +171,6 @@ export class PersonUc {
             return { ok: true, value: person.newPassword };
         } catch (error) {
             this.logger.error(JSON.stringify(error));
-            if (error instanceof DomainError) {
-                return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(error);
-            }
             if (error instanceof Error) {
                 return { ok: false, error: error };
             } else {
