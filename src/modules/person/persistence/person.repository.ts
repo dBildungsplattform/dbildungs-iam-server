@@ -1,4 +1,4 @@
-import { EntityManager, EntityName } from "@mikro-orm/core";
+import { EntityManager} from "@mikro-orm/core";
 import { Injectable } from "@nestjs/common";
 import { PersonEntity } from "./person.entity.js";
 import { Person } from '../domain/person.js';
@@ -36,10 +36,6 @@ function mapEntityToAggregate(entity: PersonEntity): Person<true> {
 @Injectable()
 export class PersonRepository {
     public constructor(private readonly em: EntityManager) {}
-
-    public get entityName(): EntityName<PersonEntity> {
-        return PersonEntity;
-    }
 
     public async findByKeycloakUserId(keycloakUserId: string): Promise<Option<Person<true>>> {
         const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { keycloakUserId });

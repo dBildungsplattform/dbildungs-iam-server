@@ -435,7 +435,7 @@ describe('PersonUc', () => {
             });
 
             it('should translate domain errors thrown by the person service', async () => {
-                await expect(personUc.resetPassword(id)).resolves.toBeInstanceOf(SchulConnexError);
+                await expect(personUc.resetPassword(faker.string.uuid())).resolves.toBeInstanceOf(SchulConnexError);
             });
         });
 
