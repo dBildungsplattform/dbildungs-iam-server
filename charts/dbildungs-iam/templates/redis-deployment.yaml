@@ -27,6 +27,13 @@ spec:
               name: tls-data
             - mountPath: "/data"
               name: data
+          resources:
+            requests:
+              cpu: {{.Values.dbildungsIamRedisCpuRequest}}
+              memory: {{.Values.dbildungsIamRedisMemRequest}}
+            limits:
+              cpu: {{.Values.dbildungsIamRedisCpuMax}}
+              memory: {{.Values.dbildungsIamRedisMemMax}}
       containers:
         - name: redis
           image: redis:7.2.2
