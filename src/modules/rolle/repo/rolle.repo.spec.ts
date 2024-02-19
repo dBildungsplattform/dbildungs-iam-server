@@ -63,6 +63,21 @@ describe('RolleRepo', () => {
         });
     });
 
+    describe('find', () => {
+        it('should return all rollen', async () => {
+            const rollen: Rolle<true>[] = await Promise.all([
+                sut.save(DoFactory.createRolle(false)),
+                sut.save(DoFactory.createRolle(false)),
+                sut.save(DoFactory.createRolle(false)),
+            ]);
+
+            const rollenResult: Rolle<true>[] = await sut.find();
+
+            expect(rollenResult).toHaveLength(3);
+            expect(rollenResult).toEqual(rollen);
+        });
+    });
+
     describe('findById', () => {
         it('should return the rolle', async () => {
             const rolle: Rolle<true> = await sut.save(DoFactory.createRolle(false));

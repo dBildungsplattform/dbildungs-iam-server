@@ -8,6 +8,9 @@ import { OrganisationResponse } from './organisation.response.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
 import { FindOrganisationDto } from './find-organisation.dto.js';
+import { UpdateOrganisationBodyParams } from './update-organisation.body.params.js';
+import { UpdateOrganisationDto } from './update-organisation.dto.js';
+import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 
 @Injectable()
 export class OrganisationApiMapperProfile extends AutomapperProfile {
@@ -20,7 +23,21 @@ export class OrganisationApiMapperProfile extends AutomapperProfile {
             createMap(mapper, CreateOrganisationBodyParams, CreateOrganisationDto);
             createMap(
                 mapper,
+                UpdateOrganisationBodyParams,
+                UpdateOrganisationDto,
+                forMember((dest: UpdateOrganisationDto) => dest.id, ignore()),
+            );
+            createMap(
+                mapper,
                 CreateOrganisationDto,
+                OrganisationDo<false>,
+                forMember((dest: OrganisationDo<boolean>) => dest.id, ignore()),
+                forMember((dest: OrganisationDo<boolean>) => dest.createdAt, ignore()),
+                forMember((dest: OrganisationDo<boolean>) => dest.updatedAt, ignore()),
+            );
+            createMap(
+                mapper,
+                UpdateOrganisationDto,
                 OrganisationDo<false>,
                 forMember((dest: OrganisationDo<boolean>) => dest.id, ignore()),
                 forMember((dest: OrganisationDo<boolean>) => dest.createdAt, ignore()),
@@ -35,7 +52,17 @@ export class OrganisationApiMapperProfile extends AutomapperProfile {
                     mapFrom((src: OrganisationDo<true>) => src.id),
                 ),
             );
+            createMap(
+                mapper,
+                OrganisationDo<true>,
+                UpdatedOrganisationDto,
+                forMember(
+                    (dest: UpdatedOrganisationDto) => dest.id,
+                    mapFrom((src: OrganisationDo<true>) => src.id),
+                ),
+            );
             createMap(mapper, CreatedOrganisationDto, OrganisationResponse);
+            createMap(mapper, UpdatedOrganisationDto, OrganisationResponse);
             createMap(
                 mapper,
                 OrganisationDo,

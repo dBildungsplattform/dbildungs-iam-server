@@ -1,6 +1,7 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
+    ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
@@ -8,7 +9,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Public } from 'nest-keycloak-connect';
 
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
@@ -22,13 +22,24 @@ import { RolleResponse } from './rolle.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
+@ApiBearerAuth()
 @Controller({ path: 'rolle' })
-@Public()
 export class RolleController {
     public constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly orgService: OrganisationService,
     ) {}
+
+    @Get()
+    @ApiOperation({ description: 'List all rollen.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get rollen.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollen.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all rollen.' })
+    public async findRollen(): Promise<RolleResponse[]> {
+        const rollen: Rolle<true>[] = await this.rolleRepo.find();
+
+        return rollen;
+    }
 
     @Post()
     @HttpCode(HttpStatus.CREATED)

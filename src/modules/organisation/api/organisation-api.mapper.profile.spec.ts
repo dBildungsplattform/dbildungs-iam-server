@@ -12,6 +12,9 @@ import { OrganisationDo } from '../domain/organisation.do.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { FindOrganisationDto } from './find-organisation.dto.js';
+import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
+import { UpdateOrganisationBodyParams } from './update-organisation.body.params.js';
+import { UpdateOrganisationDto } from './update-organisation.dto.js';
 
 describe('OrganisationApiMapperProfile', () => {
     let module: TestingModule;
@@ -58,6 +61,14 @@ describe('OrganisationApiMapperProfile', () => {
             );
         });
 
+        it('should map UpdateOrganisationBodyParams to UpdateOrganisationDto', () => {
+            const params: UpdateOrganisationBodyParams = options;
+
+            expect(() => sut.map(params, UpdateOrganisationBodyParams, UpdateOrganisationDto)).not.toThrowError(
+                MappingError,
+            );
+        });
+
         it('should map CreateOrganisationDto to OrganisationDo', () => {
             const createOrganisationDto: CreateOrganisationDto = options;
 
@@ -86,6 +97,21 @@ describe('OrganisationApiMapperProfile', () => {
 
             expect(() =>
                 sut.map(createdOrganisationDto, CreatedOrganisationDto, OrganisationResponse),
+            ).not.toThrowError(MappingError);
+        });
+
+        it('should map UpdatedOrganisationDto to OrganisationResponse', () => {
+            const updatedOrganisationDto: UpdatedOrganisationDto = {
+                id: faker.string.uuid(),
+                kennung: options.kennung,
+                kuerzel: options.kuerzel,
+                name: options.name,
+                namensergaenzung: options.namensergaenzung,
+                typ: options.typ,
+            };
+
+            expect(() =>
+                sut.map(updatedOrganisationDto, UpdatedOrganisationDto, OrganisationResponse),
             ).not.toThrowError(MappingError);
         });
 
