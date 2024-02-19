@@ -9,12 +9,14 @@ import {
     ConfigTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
+    DoFactory,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
+import { RolleRepo } from '../repo/rolle.repo.js';
 import { RolleApiModule } from '../rolle-api.module.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { RolleResponse } from './rolle.response.js';
@@ -23,6 +25,7 @@ describe('Rolle API', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let em: EntityManager;
+    let rolleRepo: RolleRepo;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -42,6 +45,7 @@ describe('Rolle API', () => {
 
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
+        rolleRepo = module.get(RolleRepo);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
@@ -164,6 +168,24 @@ describe('Rolle API', () => {
                 .send(params);
 
             expect(response.status).toBe(400);
+        });
+    });
+
+    describe('/GET rollen', () => {
+        it('should return all rollen', async () => {
+            await Promise.all([
+                rolleRepo.save(DoFactory.createRolle(false)),
+                rolleRepo.save(DoFactory.createRolle(false)),
+                rolleRepo.save(DoFactory.createRolle(false)),
+            ]);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Array);
+            expect(response.body).toHaveLength(3);
         });
     });
 });
