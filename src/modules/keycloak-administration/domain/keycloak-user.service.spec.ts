@@ -17,7 +17,7 @@ describe('KeycloakUserService', () => {
     let service: KeycloakUserService;
     let adminService: DeepMocked<KeycloakAdministrationService>;
     let kcUsersMock: DeepMocked<KeycloakAdminClient['users']>;
-//    let personService: DeepMocked<PersonService>;
+    //    let personService: DeepMocked<PersonService>;
 
     beforeAll(async () => {
         kcUsersMock = createMock<KeycloakAdminClient['users']>();
@@ -46,7 +46,7 @@ describe('KeycloakUserService', () => {
                 },
             ],
         }).compile();
- //       personService = module.get(PersonService);
+        //       personService = module.get(PersonService);
         service = module.get(KeycloakUserService);
         adminService = module.get(KeycloakAdministrationService);
     });

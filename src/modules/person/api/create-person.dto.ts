@@ -2,7 +2,6 @@ import { AutoMap } from '@automapper/classes';
 import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 
 export class CreatePersonDto {
-
     @AutoMap()
     public readonly email?: string;
 

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DomainError} from '../../../shared/error/index.js';
+import { DomainError } from '../../../shared/error/index.js';
 import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
@@ -133,7 +133,6 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
     ): Person<false> {
-
         return new Person(
             undefined,
             undefined,

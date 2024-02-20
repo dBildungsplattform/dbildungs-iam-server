@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { TestingModule, Test } from '@nestjs/testing';
 import { MapperTestModule, ConfigTestModule, DatabaseTestModule } from '../../../../test/utils/index.js';
@@ -46,9 +45,7 @@ describe('Person', () => {
                 it('should have keycloakUserId & username after save', async () => {
                     const keycloakId: string = faker.string.uuid();
                     const person: Person<false> = Person.createNew(faker.person.lastName(), faker.person.firstName());
-
                     usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
-
                     kcUserServiceMock.create.mockResolvedValueOnce({
                         ok: true,
                         value: keycloakId,
@@ -71,9 +68,7 @@ describe('Person', () => {
             describe('when kcUserService create operation fails', () => {
                 it('should throw a Domain Error', async () => {
                     const person: Person<false> = Person.createNew(faker.person.lastName(), faker.person.firstName());
-
                     usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
-
                     kcUserServiceMock.create.mockResolvedValueOnce({
                         ok: false,
                         error: new KeycloakClientError('Demo Error'),
@@ -104,9 +99,7 @@ describe('Person', () => {
                         faker.lorem.word(),
                         faker.string.uuid(),
                     );
-
                     usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
-
                     kcUserServiceMock.create.mockResolvedValueOnce({
                         ok: true,
                         value: '',
@@ -116,12 +109,12 @@ describe('Person', () => {
                         error: new KeycloakClientError('Demo Error'),
                     });
                     kcUserServiceMock.delete.mockResolvedValueOnce({ ok: true, value: undefined });
-
-                    person.resetPassword(); // needed to that state is set dirty
+                    person.resetPassword(); // needed so that state is set dirty
 
                     await expect(person.saveUser(kcUserServiceMock, usernameGeneratorService)).rejects.toThrow(
                         KeycloakClientError,
                     );
+
                     expect(kcUserServiceMock.delete).toHaveBeenCalled();
                 });
             });

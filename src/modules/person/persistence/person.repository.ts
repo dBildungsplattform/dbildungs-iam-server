@@ -1,6 +1,6 @@
-import { EntityManager} from "@mikro-orm/core";
-import { Injectable } from "@nestjs/common";
-import { PersonEntity } from "./person.entity.js";
+import { EntityManager } from '@mikro-orm/core';
+import { Injectable } from '@nestjs/common';
+import { PersonEntity } from './person.entity.js';
 import { Person } from '../domain/person.js';
 
 function mapEntityToAggregate(entity: PersonEntity): Person<true> {
@@ -42,6 +42,7 @@ export class PersonRepository {
         if (person) {
             return mapEntityToAggregate(person);
         }
+
         return null;
-}
+    }
 }

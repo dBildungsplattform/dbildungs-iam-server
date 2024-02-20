@@ -55,7 +55,9 @@ describe('PersonRepository', () => {
             it('should return found person', async () => {
                 const person: PersonDo<true> = DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() });
                 await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
+
                 const foundPerson: Option<Person<true>> = await sut.findByKeycloakUserId(person.keycloakUserId);
+
                 expect(foundPerson).toBeInstanceOf(Person);
             });
         });
@@ -63,6 +65,7 @@ describe('PersonRepository', () => {
         describe('when not found by keycloakUserId', () => {
             it('should return null', async () => {
                 const foundPerson: Option<Person<true>> = await sut.findByKeycloakUserId(faker.string.uuid());
+
                 expect(foundPerson).toBeNull();
             });
         });
