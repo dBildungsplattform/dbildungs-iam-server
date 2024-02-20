@@ -37,6 +37,14 @@ function mapEntityToAggregate(entity: PersonEntity): Person<true> {
 export class PersonRepository {
     public constructor(private readonly em: EntityManager) {}
 
+    public async findById(id: string): Promise<Option<Person<true>>> {
+        const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { id });
+        if (person) {
+            return mapEntityToAggregate(person);
+        }
+        return null;
+    }
+
     public async findByKeycloakUserId(keycloakUserId: string): Promise<Option<Person<true>>> {
         const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { keycloakUserId });
         if (person) {
