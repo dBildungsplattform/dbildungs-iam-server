@@ -27,6 +27,7 @@ export class PersonService {
         return { ok: true, value: newPerson };
     }
 
+    // DONE --> COULD BE REMOVED
     public async findPersonById(id: string): Promise<Result<PersonDo<true>, DomainError>> {
         const person: Option<PersonDo<true>> = await this.personRepo.findById(id);
         if (person) {

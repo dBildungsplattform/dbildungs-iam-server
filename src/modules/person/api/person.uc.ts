@@ -87,6 +87,7 @@ export class PersonUc {
         }
     }
 
+    // DONE --> COULD BE REMOVED
     public async findPersonById(id: string): Promise<PersonendatensatzDto | SchulConnexError> {
         const result: Result<PersonDo<true>, DomainError> = await this.personService.findPersonById(id);
 
