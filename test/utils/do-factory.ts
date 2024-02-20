@@ -13,6 +13,8 @@ import {
 import { RollenArt, RollenMerkmal } from '../../src/modules/rolle/domain/rolle.enums.js';
 import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
 import { DoBase } from '../../src/shared/types/do-base.js';
+import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
+import { ServiceProviderKategorie } from '../../src/modules/service-provider/domain/service-provider.enum.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -116,5 +118,32 @@ export class DoFactory {
             updatedAt: withId ? faker.date.recent() : undefined,
         };
         return Object.assign(Object.create(RolleAggregate.prototype) as RolleAggregate<boolean>, rolle, props);
+    }
+
+    public static createServiceProvider<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        props?: Partial<ServiceProvider<WasPersisted>>,
+    ): ServiceProvider<WasPersisted> {
+        const serviceProvider: Partial<ServiceProvider<WasPersisted>> = {
+            id: withId ? faker.string.uuid() : undefined,
+            createdAt: withId ? faker.date.past() : undefined,
+            updatedAt: withId ? faker.date.recent() : undefined,
+            name: faker.word.noun(),
+            url: faker.internet.url(),
+            kategorie: faker.helpers.enumValue(ServiceProviderKategorie),
+            logoMimeType: 'image/png',
+            // 1x1 black PNG
+            logo: Buffer.from(
+                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==',
+                'base64',
+            ),
+            providedOnSchulstrukturknoten: faker.string.uuid(),
+        };
+        return Object.assign(
+            Object.create(ServiceProvider.prototype) as ServiceProvider<boolean>,
+            serviceProvider,
+            props,
+        );
     }
 }
