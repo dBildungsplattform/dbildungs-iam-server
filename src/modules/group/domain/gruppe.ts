@@ -5,7 +5,7 @@ import { Referenzgruppen } from '../persistence/referenzgruppen.js';
 import {
     Bildungsziele,
     Faecherkanon,
-    Geuppenbereich,
+    Gruppenbereich,
     GruppenTyp,
     Gruppendifferenzierung,
     Gruppenoption,
@@ -24,7 +24,7 @@ export class Gruppe {
 
     private typ: GruppenTyp;
 
-    private bereich: Geuppenbereich;
+    private bereich: Gruppenbereich;
 
     private optionen: Gruppenoption;
 
@@ -64,7 +64,7 @@ export class Gruppe {
         return this.typ;
     }
 
-    public getBereich(): Geuppenbereich {
+    public getBereich(): Gruppenbereich {
         return this.bereich;
     }
 

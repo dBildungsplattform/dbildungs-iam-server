@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
     Bildungsziele,
     Faecherkanon,
-    Geuppenbereich,
+    Gruppenbereich,
     GruppenTyp,
     Gruppendifferenzierung,
     Gruppenoption,
@@ -40,7 +40,7 @@ export class CreateGroupBodyParams {
 
     @IsString()
     @ApiProperty({ required: false })
-    public readonly bereich!: Geuppenbereich;
+    public readonly bereich!: Gruppenbereich;
 
     @IsString()
     @ApiProperty({ required: false })

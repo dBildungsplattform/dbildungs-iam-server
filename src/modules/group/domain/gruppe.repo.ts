@@ -29,6 +29,5 @@ export class GruppenRepository {
         gruppeEntity.referenzgruppen = gruppe.getReferenzgruppen();
         gruppeEntity.laufzeit = gruppe.getLaufzeit();
         return gruppeEntity;
-
     }
 }

@@ -3,7 +3,7 @@ import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import {
     Bildungsziele,
     Faecherkanon,
-    Geuppenbereich,
+    Gruppenbereich,
     GruppenTyp,
     Gruppendifferenzierung,
     Gruppenoption,
@@ -41,8 +41,8 @@ export class GruppeEntity extends TimestampedEntity {
     public typ!: GruppenTyp;
 
     @Property()
-    @Enum({ items: () => Geuppenbereich, nullable: true })
-    public bereich!: Geuppenbereich;
+    @Enum({ items: () => Gruppenbereich, nullable: true })
+    public bereich!: Gruppenbereich;
 
     @Property()
     @Enum({ items: () => Gruppenoption, nullable: true })

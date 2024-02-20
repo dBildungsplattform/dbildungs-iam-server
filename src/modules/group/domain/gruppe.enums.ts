@@ -48,7 +48,7 @@ export enum GruppenTyp {
     SONSTIG = 'Sonstige Gruppe',
 }
 
-export enum Geuppenbereich {
+export enum Gruppenbereich {
     PFLICHT = 'Pflicht',
     WAHL = 'Wahl',
     WAHLPFLICHT = 'Wahlpflicht',
