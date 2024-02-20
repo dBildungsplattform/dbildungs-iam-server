@@ -1,5 +1,4 @@
 import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { Jahrgangsstufe } from '../../person/domain/personenkontext.enums.js';
 import { ApiProperty } from '@nestjs/swagger';
 import {
     Bildungsziele,
@@ -12,6 +11,7 @@ import {
 import { Referenzgruppen } from '../persistence/referenzgruppen.js';
 import { Laufzeit } from '../persistence/laufzeit.js';
 import { Type } from 'class-transformer';
+import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enums.js';
 
 export class CreateGroupBodyParams {
     @IsString()

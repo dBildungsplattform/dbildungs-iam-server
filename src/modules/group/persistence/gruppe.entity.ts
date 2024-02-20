@@ -8,9 +8,9 @@ import {
     Gruppendifferenzierung,
     Gruppenoption,
 } from '../domain/gruppe.enums.js';
-import { Jahrgangsstufe, SichtfreigabeType } from '../../person/domain/personenkontext.enums.js';
 import { Referenzgruppen } from './referenzgruppen.js';
 import { Laufzeit } from './laufzeit.js';
+import { Jahrgangsstufe, SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
 
 @Entity({ tableName: 'gruppe' })
 export class GruppeEntity extends TimestampedEntity {

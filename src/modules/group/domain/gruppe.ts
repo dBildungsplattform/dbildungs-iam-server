@@ -1,4 +1,4 @@
-import { Jahrgangsstufe } from '../../person/domain/personenkontext.enums.js';
+import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enums.js';
 import { CreateGroupBodyParams } from '../api/create-group.body.params.js';
 import { Laufzeit } from '../persistence/laufzeit.js';
 import { Referenzgruppen } from '../persistence/referenzgruppen.js';
