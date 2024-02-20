@@ -20,6 +20,7 @@ import { KeycloakInstanceConfig } from '../modules/keycloak-administration/keycl
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 import { AuthenticationApiModule } from '../modules/authentication/authentication-api.module.js';
 import { GruppenModule } from '../modules/group/gruppe.module.js';
+import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 
 @Module({
     imports: [
@@ -70,6 +71,7 @@ import { GruppenModule } from '../modules/group/gruppe.module.js';
         KeycloakAdministrationModule,
         HealthModule,
         RolleApiModule,
+        ServiceProviderApiModule,
         ErrorModule,
         KeycloakConfigModule,
         GruppenModule,
