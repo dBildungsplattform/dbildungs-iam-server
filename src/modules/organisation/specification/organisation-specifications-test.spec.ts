@@ -17,6 +17,7 @@ import { TraegerAdministriertVonTraeger } from './traeger-administriert-von-trae
 import { ZyklusInZugehoerigZu } from './zyklus-in-zugehoerig-zu.js';
 import { SchuleZugehoerigZuTraeger } from './schule-zugehoerig-zu-traeger.js';
 import { TraegerZugehoerigZuTraeger } from './traeger-zugehoerig-zu-traeger.js';
+import { NurKlasseKursUnterSchule } from './nur-klasse-kurs-unter-schule.js';
 
 describe('OrganisationSpecificationTests', () => {
     let module: TestingModule;
@@ -219,6 +220,42 @@ describe('OrganisationSpecificationTests', () => {
             t1.zugehoerigZu = t3.id;
             const zyklusInZugehoerigZu: ZyklusInZugehoerigZu = new ZyklusInZugehoerigZu(repo);
             expect(await zyklusInZugehoerigZu.isSatisfiedBy(t1)).toBeTruthy();
+        });
+    });
+
+    describe('nur-klasse-kurs-unter-schule', () => {
+        it('should be satisfied when typ is undefined and parent has typ SCHULE', async () => {
+            const klasseDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+                name: 'Klasse1',
+                typ: undefined,
+                administriertVon: schule1.id,
+                zugehoerigZu: schule1.id,
+            });
+            const klasse: OrganisationDo<true> = await repo.save(klasseDo);
+            const nurKlasseKursUnterSchule: NurKlasseKursUnterSchule = new NurKlasseKursUnterSchule(repo);
+            expect(await nurKlasseKursUnterSchule.isSatisfiedBy(klasse)).toBeTruthy();
+        });
+        it('should not be satisfied when typ is TRAEGER and parent via administriertVon has typ SCHULE', async () => {
+            const traegerDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+                name: 'EinTraeger',
+                typ: OrganisationsTyp.TRAEGER,
+                administriertVon: schule1.id,
+                zugehoerigZu: undefined,
+            });
+            const einTraeger: OrganisationDo<true> = await repo.save(traegerDo);
+            const nurKlasseKursUnterSchule: NurKlasseKursUnterSchule = new NurKlasseKursUnterSchule(repo);
+            expect(await nurKlasseKursUnterSchule.isSatisfiedBy(einTraeger)).toBeFalsy();
+        });
+        it('should not be satisfied when typ is TRAEGER and parent via zugehoerigZu has typ SCHULE', async () => {
+            const traegerDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+                name: 'EinTraeger',
+                typ: OrganisationsTyp.TRAEGER,
+                administriertVon: undefined,
+                zugehoerigZu: schule1.id,
+            });
+            const einTraeger: OrganisationDo<true> = await repo.save(traegerDo);
+            const nurKlasseKursUnterSchule: NurKlasseKursUnterSchule = new NurKlasseKursUnterSchule(repo);
+            expect(await nurKlasseKursUnterSchule.isSatisfiedBy(einTraeger)).toBeFalsy();
         });
     });
 });

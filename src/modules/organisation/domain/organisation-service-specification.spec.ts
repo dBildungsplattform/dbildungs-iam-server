@@ -15,6 +15,7 @@ import { SchuleAdministriertVonTraegerError } from '../specification/error/schul
 import { TraegerAdministriertVonTraegerError } from '../specification/error/traeger-administriert-von-traeger.error.js';
 import { SchuleZugehoerigZuTraegerError } from '../specification/error/schule-zugehoerig-zu-traeger.error.js';
 import { TraegerZugehoerigZuTraegerError } from '../specification/error/traeger-zugehoerig-zu-traeger.error.js';
+import { NurKlasseKursUnterSchuleError } from '../specification/error/nur-klasse-kurs-unter-schule.error.js';
 
 describe('OrganisationServiceSpecificationTest', () => {
     let module: TestingModule;
@@ -161,6 +162,30 @@ describe('OrganisationServiceSpecificationTest', () => {
                 error: new CircularReferenceError(traeger1.id, 'ZyklusInAdministriertVon'),
             });
         });
+
+        it('should return a domain error if the NurKlasseKursUnterSchule specification is not met', async () => {
+            const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Schule',
+                administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
+            const sonstigeDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Sonstige1',
+                administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
+                typ: OrganisationsTyp.SONSTIGE,
+            });
+            const sonstige: OrganisationDo<true> = await organisationRepo.save(sonstigeDo);
+
+            const result: Result<void> = await organisationService.setAdministriertVon(schule.id, sonstige.id);
+
+            expect(result).toEqual<Result<void>>({
+                ok: false,
+                error: new NurKlasseKursUnterSchuleError(sonstige.id),
+            });
+        });
     });
 
     describe('setZugehoerigZu', () => {
@@ -262,6 +287,30 @@ describe('OrganisationServiceSpecificationTest', () => {
             expect(result).toEqual<Result<void>>({
                 ok: false,
                 error: new CircularReferenceError(traeger1.id, 'ZyklusInZugehoerigZu'),
+            });
+        });
+
+        it('should return a domain error if the NurKlasseKursUnterSchule specification is not met', async () => {
+            const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Schule',
+                administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
+            const sonstigeDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Sonstige1',
+                administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
+                typ: OrganisationsTyp.SONSTIGE,
+            });
+            const sonstige: OrganisationDo<true> = await organisationRepo.save(sonstigeDo);
+
+            const result: Result<void> = await organisationService.setZugehoerigZu(schule.id, sonstige.id);
+
+            expect(result).toEqual<Result<void>>({
+                ok: false,
+                error: new NurKlasseKursUnterSchuleError(sonstige.id),
             });
         });
     });

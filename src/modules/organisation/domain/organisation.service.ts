@@ -21,6 +21,8 @@ import { SchuleAdministriertVonTraegerError } from '../specification/error/schul
 import { SchuleZugehoerigZuTraegerError } from '../specification/error/schule-zugehoerig-zu-traeger.error.js';
 import { TraegerZugehoerigZuTraegerError } from '../specification/error/traeger-zugehoerig-zu-traeger.error.js';
 import { TraegerAdministriertVonTraegerError } from '../specification/error/traeger-administriert-von-traeger.error.js';
+import { NurKlasseKursUnterSchule } from '../specification/nur-klasse-kurs-unter-schule.js';
+import { NurKlasseKursUnterSchuleError } from '../specification/error/nur-klasse-kurs-unter-schule.error.js';
 
 @Injectable()
 export class OrganisationService {
@@ -225,6 +227,10 @@ export class OrganisationService {
         );
         if (!(await traegerZugehoerigZuTraeger.isSatisfiedBy(childOrganisation))) {
             return { ok: false, error: new TraegerZugehoerigZuTraegerError(childOrganisation.id) };
+        }
+        const nurKlasseKursUnterSchule: NurKlasseKursUnterSchule = new NurKlasseKursUnterSchule(this.organisationRepo);
+        if (!(await nurKlasseKursUnterSchule.isSatisfiedBy(childOrganisation))) {
+            return { ok: false, error: new NurKlasseKursUnterSchuleError(childOrganisation.id) };
         }
         const zyklusInAdministriertVon: ZyklusInAdministriertVon = new ZyklusInAdministriertVon(this.organisationRepo);
         if (await zyklusInAdministriertVon.isSatisfiedBy(childOrganisation)) {

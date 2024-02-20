@@ -14,6 +14,7 @@ import { SchuleZugehoerigZuTraegerError } from '../../modules/organisation/speci
 import { TraegerAdministriertVonTraegerError } from '../../modules/organisation/specification/error/traeger-administriert-von-traeger.error.js';
 import { TraegerZugehoerigZuTraegerError } from '../../modules/organisation/specification/error/traeger-zugehoerig-zu-traeger.error.js';
 import { RootOrganisationImmutableError } from '../../modules/organisation/specification/error/root-organisation-immutable.error.js';
+import { NurKlasseKursUnterSchuleError } from '../../modules/organisation/specification/error/nur-klasse-kurs-unter-schule.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -117,6 +118,15 @@ export class SchulConnexErrorMapper {
                 subcode: '00',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
                 beschreibung: 'Die Spezifikation für die Zuordnung von Träger-zugehörig-zu-Träger wurde nicht erfüllt.',
+            }),
+        ],
+        [
+            NurKlasseKursUnterSchuleError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '00',
+                titel: 'Spezifikation von Organisation nicht erfüllt',
+                beschreibung: 'Nur Klassen und Kurse können zugehörig sein oder administriert werden von Schulen.',
             }),
         ],
         [

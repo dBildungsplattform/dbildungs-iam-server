@@ -35,6 +35,27 @@
             "namensergaenzung": "Keine",
             "kuerzel": "O4",
             "typ": "TRAEGER"
+        },
+        {
+            "kennung": "Organisation5",
+            "name": "Anbieter1",
+            "namensergaenzung": "Keine",
+            "kuerzel": "O5",
+            "typ": "ANBIETER"
+        },
+        {
+            "kennung": "Organisation6",
+            "name": "Sonstige1",
+            "namensergaenzung": "Keine",
+            "kuerzel": "O6",
+            "typ": "SONSTIGE ORGANISATION / EINRICHTUNG"
+        },
+        {
+            "kennung": "Organisation7",
+            "name": "Sonstige1",
+            "namensergaenzung": "Keine",
+            "kuerzel": "O7",
+            "typ": "UNBESTAETIGT"
         }
     ]
 }

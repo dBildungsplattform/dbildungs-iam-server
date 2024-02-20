@@ -9,6 +9,7 @@ import { TraegerAdministriertVonTraeger } from './traeger-administriert-von-trae
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { TraegerZugehoerigZuTraeger } from './traeger-zugehoerig-zu-traeger.js';
 import { SchuleZugehoerigZuTraeger } from './schule-zugehoerig-zu-traeger.js';
+import { NurKlasseKursUnterSchule } from './nur-klasse-kurs-unter-schule.js';
 
 describe('OrganisationSpecificationMockedRepoTests', () => {
     let module: TestingModule;
@@ -161,6 +162,27 @@ describe('OrganisationSpecificationMockedRepoTests', () => {
             });
             repoMock.findById.mockResolvedValueOnce(null);
             expect(await traegerZugehoerigZuTraeger.isSatisfiedBy(traeger)).toBeFalsy();
+        });
+    });
+
+    describe('nur-klasse-kurs-unter-schule', () => {
+        it('should be satisfied when organisation referenced by administriertVon cannot be found', async () => {
+            const nurKlasseKursUnterSchule: NurKlasseKursUnterSchule = new NurKlasseKursUnterSchule(repoMock);
+            const traeger: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.TRAEGER,
+                administriertVon: '1',
+            });
+            repoMock.findById.mockResolvedValueOnce(null);
+            expect(await nurKlasseKursUnterSchule.isSatisfiedBy(traeger)).toBeTruthy();
+        });
+        it('should be satisfied when organisation referenced by zugehoerigZu cannot be found', async () => {
+            const nurKlasseKursUnterSchule: NurKlasseKursUnterSchule = new NurKlasseKursUnterSchule(repoMock);
+            const traeger: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.TRAEGER,
+                zugehoerigZu: '1',
+            });
+            repoMock.findById.mockResolvedValueOnce(null);
+            expect(await nurKlasseKursUnterSchule.isSatisfiedBy(traeger)).toBeTruthy();
         });
     });
 });
