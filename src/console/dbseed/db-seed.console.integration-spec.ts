@@ -18,6 +18,7 @@ import { OrganisationEntity } from '../../modules/organisation/persistence/organ
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rolle/repo/rolle.repo.js';
+import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -83,7 +84,10 @@ describe('DbSeedConsole', () => {
                 const organisation: Option<OrganisationEntity> = await orm.em.findOne(OrganisationEntity, {
                     id: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
                 });
-                if (!dataProvider || !rolle || !organisation) {
+                const serviceProvider: Option<ServiceProviderEntity> = await orm.em.findOne(ServiceProviderEntity, {
+                    id: 'ca0e17c5-8e48-403b-af92-28eff21c64bb',
+                });
+                if (!dataProvider || !rolle || !organisation || !serviceProvider) {
                     throw Error('At least one entity was not persisted correctly!');
                 }
             });
