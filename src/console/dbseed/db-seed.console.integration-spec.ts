@@ -10,7 +10,6 @@ import {
 } from '../../../test/utils/index.js';
 import { DbSeedService } from './db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
-import { UserModule } from '../../modules/user/user.module.js';
 import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
 import { DbSeedMapper } from './db-seed-mapper.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
@@ -31,7 +30,6 @@ describe('DbSeedConsole', () => {
             imports: [
                 KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }),
                 ConfigTestModule,
-                UserModule,
                 KeycloakAdministrationModule,
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
