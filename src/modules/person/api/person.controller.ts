@@ -51,6 +51,10 @@ import { PersonenkontextResponse } from '../../personenkontext/api/personenkonte
 import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { UpdatePersonDto } from './update-person.dto.js';
+import { PersonRepository } from '../persistence/person.repository.js';
+import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { Person } from '../domain/person.js';
+import { PersonendatensatzResponseDDD } from './personendatensatz.responseDDD.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -60,6 +64,7 @@ export class PersonController {
     public constructor(
         private readonly personUc: PersonUc,
         private readonly personenkontextUc: PersonenkontextUc,
+        private readonly personRepository: PersonRepository,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -91,25 +96,23 @@ export class PersonController {
     }
 
     @Get(':personId')
-    @ApiOkResponse({ description: 'The person was successfully returned.', type: PersonendatensatzResponse })
+    @ApiOkResponse({ description: 'The person was successfully returned.', type: PersonendatensatzResponseDDD })
     @ApiBadRequestResponse({ description: 'Person ID is required' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the person.' })
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the person.' })
-    public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonendatensatzResponse> {
-        const result: PersonendatensatzDto | SchulConnexError = await this.personUc.findPersonById(params.personId);
-
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+    public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonendatensatzResponseDDD> {
+        const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
+        if (!person) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError(`Person with the following ID ${params.personId} does not exist`),
+                ),
+            );
         }
 
-        const response: PersonendatensatzResponse = this.mapper.map(
-            result,
-            PersonendatensatzDto,
-            PersonendatensatzResponse,
-        );
-        return response;
+        return new PersonendatensatzResponseDDD(person);
     }
 
     @Post(':personId/personenkontexte')
