@@ -11,11 +11,9 @@ import { MapperTestModule } from '../../../../test/utils/index.js';
 import { OrganisationPersistenceMapperProfile } from '../persistence/organisation-persistence.mapper.profile.js';
 import { CircularReferenceError } from '../specification/error/circular-reference.error.js';
 import { RootOrganisationImmutableError } from '../specification/error/root-organisation-immutable.error.js';
-import { SchuleAdministriertVonTraegerError } from '../specification/error/schule-administriert-von-traeger.error.js';
-import { TraegerAdministriertVonTraegerError } from '../specification/error/traeger-administriert-von-traeger.error.js';
-import { SchuleZugehoerigZuTraegerError } from '../specification/error/schule-zugehoerig-zu-traeger.error.js';
-import { TraegerZugehoerigZuTraegerError } from '../specification/error/traeger-zugehoerig-zu-traeger.error.js';
 import { NurKlasseKursUnterSchuleError } from '../specification/error/nur-klasse-kurs-unter-schule.error.js';
+import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
+import { TraegerInTraegerError } from '../specification/error/traeger-in-traeger.error.js';
 
 describe('OrganisationServiceSpecificationTest', () => {
     let module: TestingModule;
@@ -108,7 +106,7 @@ describe('OrganisationServiceSpecificationTest', () => {
             });
         });
 
-        it('should return a domain error if the SchuleAdministriertVonTraeger specification is not met', async () => {
+        it('should return a domain error if the SchuleUnterTraeger specification is not met', async () => {
             const schule1Do: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Schule',
                 administriertVon: root.id,
@@ -126,11 +124,11 @@ describe('OrganisationServiceSpecificationTest', () => {
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new SchuleAdministriertVonTraegerError(schule2.id),
+                error: new SchuleUnterTraegerError(schule2.id),
             });
         });
 
-        it('should return a domain error if the TraegerAdministriertVonTraeger specification is not met', async () => {
+        it('should return a domain error if the TraegerInTraeger specification is not met', async () => {
             const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Schule',
                 administriertVon: root.id,
@@ -142,7 +140,7 @@ describe('OrganisationServiceSpecificationTest', () => {
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new TraegerAdministriertVonTraegerError(traeger1.id),
+                error: new TraegerInTraegerError(traeger1.id),
             });
         });
 
@@ -232,7 +230,7 @@ describe('OrganisationServiceSpecificationTest', () => {
             });
         });
 
-        it('should return a domain error if the SchuleZugehoerigZuTraeger specification is not met', async () => {
+        it('should return a domain error if the SchuleUnterTraeger specification is not met', async () => {
             const schule1Do: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Schule',
                 administriertVon: root.id,
@@ -252,11 +250,11 @@ describe('OrganisationServiceSpecificationTest', () => {
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new SchuleZugehoerigZuTraegerError(schule2.id),
+                error: new SchuleUnterTraegerError(schule2.id),
             });
         });
 
-        it('should return a domain error if the TraegerZugehoerigZuTraeger specification is not met', async () => {
+        it('should return a domain error if the TraegerInTraeger specification is not met', async () => {
             const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Schule',
                 administriertVon: root.id,
@@ -269,7 +267,7 @@ describe('OrganisationServiceSpecificationTest', () => {
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new TraegerZugehoerigZuTraegerError(traeger1.id),
+                error: new TraegerInTraegerError(traeger1.id),
             });
         });
 

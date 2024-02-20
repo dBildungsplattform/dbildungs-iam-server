@@ -9,12 +9,10 @@ import { PersonAlreadyExistsError } from './person-already-exists.error.js';
 import { SchulConnexError } from './schul-connex.error.js';
 import { EntityCouldNotBeDeleted } from './entity-could-not-be-deleted.error.js';
 import { CircularReferenceError } from '../../modules/organisation/specification/error/circular-reference.error.js';
-import { SchuleAdministriertVonTraegerError } from '../../modules/organisation/specification/error/schule-administriert-von-traeger.error.js';
-import { SchuleZugehoerigZuTraegerError } from '../../modules/organisation/specification/error/schule-zugehoerig-zu-traeger.error.js';
-import { TraegerAdministriertVonTraegerError } from '../../modules/organisation/specification/error/traeger-administriert-von-traeger.error.js';
-import { TraegerZugehoerigZuTraegerError } from '../../modules/organisation/specification/error/traeger-zugehoerig-zu-traeger.error.js';
 import { RootOrganisationImmutableError } from '../../modules/organisation/specification/error/root-organisation-immutable.error.js';
 import { NurKlasseKursUnterSchuleError } from '../../modules/organisation/specification/error/nur-klasse-kurs-unter-schule.error.js';
+import { SchuleUnterTraegerError } from '../../modules/organisation/specification/error/schule-unter-traeger.error.js';
+import { TraegerInTraegerError } from '../../modules/organisation/specification/error/traeger-in-traeger.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -83,41 +81,21 @@ export class SchulConnexErrorMapper {
             }),
         ],
         [
-            SchuleAdministriertVonTraegerError.name,
+            SchuleUnterTraegerError.name,
             new SchulConnexError({
                 code: 400,
                 subcode: '00',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung:
-                    'Die Spezifikation für die Zuordnung von Schule-administriert-von-Träger wurde nicht erfüllt.',
+                beschreibung: 'Schulen können nur Trägern zugeordnet werden / von Trägern administriert werden.',
             }),
         ],
         [
-            SchuleZugehoerigZuTraegerError.name,
+            TraegerInTraegerError.name,
             new SchulConnexError({
                 code: 400,
                 subcode: '00',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Die Spezifikation für die Zuordnung von Schule-zugehörig-zu-Träger wurde nicht erfüllt.',
-            }),
-        ],
-        [
-            TraegerAdministriertVonTraegerError.name,
-            new SchulConnexError({
-                code: 400,
-                subcode: '00',
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung:
-                    'Die Spezifikation für die Zuordnung von Träger-administriert-von-Träger wurde nicht erfüllt.',
-            }),
-        ],
-        [
-            TraegerZugehoerigZuTraegerError.name,
-            new SchulConnexError({
-                code: 400,
-                subcode: '00',
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Die Spezifikation für die Zuordnung von Träger-zugehörig-zu-Träger wurde nicht erfüllt.',
+                beschreibung: 'Träger können nur Trägern zugeordnet werden und von diesen administriert werden.',
             }),
         ],
         [

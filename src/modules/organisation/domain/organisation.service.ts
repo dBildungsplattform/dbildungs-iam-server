@@ -9,20 +9,16 @@ import {
 import { OrganisationDo } from './organisation.do.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
-import { SchuleAdministriertVonTraeger } from '../specification/schule-administriert-von-traeger.js';
-import { TraegerAdministriertVonTraeger } from '../specification/traeger-administriert-von-traeger.js';
 import { RootOrganisationImmutableError } from '../specification/error/root-organisation-immutable.error.js';
 import { ZyklusInZugehoerigZu } from '../specification/zyklus-in-zugehoerig-zu.js';
 import { ZyklusInAdministriertVon } from '../specification/zyklus-in-administriert-von.js';
 import { CircularReferenceError } from '../specification/error/circular-reference.error.js';
-import { SchuleZugehoerigZuTraeger } from '../specification/schule-zugehoerig-zu-traeger.js';
-import { TraegerZugehoerigZuTraeger } from '../specification/traeger-zugehoerig-zu-traeger.js';
-import { SchuleAdministriertVonTraegerError } from '../specification/error/schule-administriert-von-traeger.error.js';
-import { SchuleZugehoerigZuTraegerError } from '../specification/error/schule-zugehoerig-zu-traeger.error.js';
-import { TraegerZugehoerigZuTraegerError } from '../specification/error/traeger-zugehoerig-zu-traeger.error.js';
-import { TraegerAdministriertVonTraegerError } from '../specification/error/traeger-administriert-von-traeger.error.js';
 import { NurKlasseKursUnterSchule } from '../specification/nur-klasse-kurs-unter-schule.js';
 import { NurKlasseKursUnterSchuleError } from '../specification/error/nur-klasse-kurs-unter-schule.error.js';
+import { SchuleUnterTraeger } from '../specification/schule-unter-traeger.js';
+import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
+import { TraegerInTraeger } from '../specification/traeger-in-traeger.js';
+import { TraegerInTraegerError } from '../specification/error/traeger-in-traeger.error.js';
 
 @Injectable()
 export class OrganisationService {
@@ -198,7 +194,11 @@ export class OrganisationService {
     private async validateSpecifications(
         childOrganisation: OrganisationDo<true>,
     ): Promise<Result<boolean, DomainError>> {
-        const schuleAdministriertVonTraeger: SchuleAdministriertVonTraeger = new SchuleAdministriertVonTraeger(
+        const schuleUnterTraeger: SchuleUnterTraeger = new SchuleUnterTraeger(this.organisationRepo);
+        if (!(await schuleUnterTraeger.isSatisfiedBy(childOrganisation))) {
+            return { ok: false, error: new SchuleUnterTraegerError(childOrganisation.id) };
+        }
+        /* const schuleAdministriertVonTraeger: SchuleAdministriertVonTraeger = new SchuleAdministriertVonTraeger(
             this.organisationRepo,
         );
         if (!(await schuleAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
@@ -212,8 +212,12 @@ export class OrganisationService {
         );
         if (!(await schuleZugehoerigZuTraeger.isSatisfiedBy(childOrganisation))) {
             return { ok: false, error: new SchuleZugehoerigZuTraegerError(childOrganisation.id) };
+        }*/
+        const traegerInTraeger: TraegerInTraeger = new TraegerInTraeger(this.organisationRepo);
+        if (!(await traegerInTraeger.isSatisfiedBy(childOrganisation))) {
+            return { ok: false, error: new TraegerInTraegerError(childOrganisation.id) };
         }
-        const traegerAdministriertVonTraeger: TraegerAdministriertVonTraeger = new TraegerAdministriertVonTraeger(
+        /*const traegerAdministriertVonTraeger: TraegerAdministriertVonTraeger = new TraegerAdministriertVonTraeger(
             this.organisationRepo,
         );
         if (!(await traegerAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
@@ -227,7 +231,7 @@ export class OrganisationService {
         );
         if (!(await traegerZugehoerigZuTraeger.isSatisfiedBy(childOrganisation))) {
             return { ok: false, error: new TraegerZugehoerigZuTraegerError(childOrganisation.id) };
-        }
+        }*/
         const nurKlasseKursUnterSchule: NurKlasseKursUnterSchule = new NurKlasseKursUnterSchule(this.organisationRepo);
         if (!(await nurKlasseKursUnterSchule.isSatisfiedBy(childOrganisation))) {
             return { ok: false, error: new NurKlasseKursUnterSchuleError(childOrganisation.id) };
