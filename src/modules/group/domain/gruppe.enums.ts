@@ -55,8 +55,8 @@ export enum Gruppenbereich {
 }
 
 export enum Gruppenoption {
-    _01 = 'bilingual',
-    _02 = 'herkunftssprachlich',
+    BILINGUAL = '01',
+    HERKUNFTSSPRACHLICH = '02',
 }
 
 export enum Gruppendifferenzierung {

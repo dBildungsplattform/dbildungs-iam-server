@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Gruppe } from './gruppe.js';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { GruppeEntity } from '../persistence/gruppe.entity.js';
-
 @Injectable()
 export class GruppenRepository {
     public constructor(private readonly em: EntityManager) {}
@@ -14,7 +13,8 @@ export class GruppenRepository {
     private mapGruppeToGruppeEntity(gruppe: Gruppe): GruppeEntity {
         // map Gruppe to GruppeEntity
         const gruppeEntity: GruppeEntity = new GruppeEntity();
-        gruppeEntity.orgid = gruppe.getOrgid();
+        gruppeEntity.mandant = 'test-mandant';
+        gruppeEntity.orgid = 'test-orgid';
         gruppeEntity.referrer = gruppe.getReferrer();
         gruppeEntity.bezeichnung = gruppe.getBezeichnung();
         gruppeEntity.thema = gruppe.getThema();
@@ -27,7 +27,7 @@ export class GruppenRepository {
         gruppeEntity.jahrgangsstufen = gruppe.getJahrgangsstufen();
         gruppeEntity.faecher = gruppe.getFaecher();
         gruppeEntity.referenzgruppen = gruppe.getReferenzgruppen();
-        gruppeEntity.laufzeit = gruppe.getLaufzeit();
+        // gruppeEntity.laufzeit = gruppe.getLaufzeit();
         return gruppeEntity;
     }
 }

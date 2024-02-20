@@ -1,4 +1,4 @@
-import { ArrayType, Entity, Enum, EnumArrayType, Property } from '@mikro-orm/core';
+import { Entity, Enum, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import {
     Bildungsziele,
@@ -9,7 +9,6 @@ import {
     Gruppenoption,
 } from '../domain/gruppe.enums.js';
 import { Referenzgruppen } from './referenzgruppen.js';
-import { Laufzeit } from './laufzeit.js';
 import { Jahrgangsstufe, SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
 
 @Entity({ tableName: 'gruppe' })
@@ -18,10 +17,10 @@ export class GruppeEntity extends TimestampedEntity {
         super();
     }
 
-    @Property()
+    @Property({ nullable: true })
     public mandant!: string;
 
-    @Property()
+    @Property({ nullable: true })
     public orgid!: string;
 
     @Property()
@@ -36,39 +35,34 @@ export class GruppeEntity extends TimestampedEntity {
     @Property()
     public beschreibung!: string;
 
-    @Property()
     @Enum({ items: () => GruppenTyp, nullable: false })
     public typ!: GruppenTyp;
 
-    @Property()
     @Enum({ items: () => Gruppenbereich, nullable: true })
     public bereich!: Gruppenbereich;
 
-    @Property()
     @Enum({ items: () => Gruppenoption, nullable: true })
-    public optionen!: Gruppenoption;
+    public optionen!: Gruppenoption[];
 
-    @Property()
     @Enum({ items: () => Gruppendifferenzierung, nullable: true })
     public differenzierung!: Gruppendifferenzierung;
 
-    @Property({ nullable: true, type: EnumArrayType })
+    @Enum({ items: () => Bildungsziele, nullable: true })
     public bildungsziele!: Bildungsziele[];
 
-    @Property({ nullable: true, type: EnumArrayType })
+    @Enum({ items: () => Jahrgangsstufe, nullable: true })
     public jahrgangsstufen!: Jahrgangsstufe[];
 
-    @Property({ nullable: true, type: EnumArrayType })
+    @Enum({ items: () => Faecherkanon, nullable: true })
     public faecher!: Faecherkanon[];
 
-    @Property({ nullable: true, type: ArrayType })
+    @Property({ nullable: true, type: Referenzgruppen })
     public referenzgruppen!: Referenzgruppen[];
 
-    @Property({ nullable: false, type: Laufzeit })
-    public laufzeit!: Laufzeit;
+    // @Property({ nullable: false, type: Laufzeit })
+    // public laufzeit!: Laufzeit;
 
-    @Property()
-    @Enum({ items: () => SichtfreigabeType, nullable: true })
+    @Property({ nullable: false, default: SichtfreigabeType.NEIN })
     public sichtfreigabe!: SichtfreigabeType;
 
     @Property({ nullable: false, default: '1' })
