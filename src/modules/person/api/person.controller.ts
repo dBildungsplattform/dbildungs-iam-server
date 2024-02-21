@@ -55,6 +55,9 @@ import { PersonRepository } from '../persistence/person.repository.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { Person } from '../domain/person.js';
 import { PersonendatensatzResponseDDD } from './personendatensatz.responseDDD.js';
+import { PersonScope } from '../persistence/person.scope.js';
+import { ScopeOrder } from '../../../shared/persistence/index.js';
+import { PersonDo } from '../domain/person.do.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -95,6 +98,7 @@ export class PersonController {
         return personendatensatzResponse;
     }
 
+    // --403 DONE--
     @Get(':personId')
     @ApiOkResponse({ description: 'The person was successfully returned.', type: PersonendatensatzResponseDDD })
     @ApiBadRequestResponse({ description: 'Person ID is required' })
@@ -191,6 +195,7 @@ export class PersonController {
     public async findPersons(
         @Query() queryParams: PersonenQueryParams,
     ): Promise<PagedResponse<PersonendatensatzResponse>> {
+        /*
         const findDto: FindPersonendatensatzDto = this.mapper.map(
             queryParams,
             PersonenQueryParams,
@@ -205,6 +210,26 @@ export class PersonController {
         });
 
         return response;
+        */
+
+        const findDto: FindPersonendatensatzDto = this.mapper.map(
+            queryParams,
+            PersonenQueryParams,
+            FindPersonendatensatzDto,
+        );
+
+        const personDo: Partial<PersonDo<false>> = this.mapper.map(findDto, FindPersonendatensatzDto, PersonDo);
+
+        const scope: PersonScope = new PersonScope()
+            .findBy({
+                vorname: personDo.vorname,
+                familienname: personDo.familienname,
+                geburtsdatum: personDo.geburtsdatum,
+            })
+            .sortBy('vorname', ScopeOrder.ASC)
+            .paged(queryParams.offset, queryParams.limit);
+
+        const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
     }
 
     @Put(':personId')
