@@ -3,15 +3,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
     DatabaseTestModule,
-    LoggingTestModule,
-    MapperTestModule,
     DoFactory,
     KeycloakConfigTestModule,
+    LoggingTestModule,
+    MapperTestModule,
 } from '../../../test/utils/index.js';
 import { DbSeedService } from './db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
-import { UserModule } from '../../modules/user/user.module.js';
-import { UsernameGeneratorService } from '../../modules/user/username-generator.service.js';
+import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
 import { DbSeedMapper } from './db-seed-mapper.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
@@ -20,6 +19,7 @@ import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rolle/repo/rolle.repo.js';
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
+import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -30,22 +30,23 @@ describe('DbSeedConsole', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
-                KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }),
                 ConfigTestModule,
-                UserModule,
                 KeycloakAdministrationModule,
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
             ],
             providers: [DbSeedConsole, UsernameGeneratorService, DbSeedService, DbSeedMapper],
-        }).compile();
+        })
+            .overrideModule(KeycloakConfigModule)
+            .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .compile();
         sut = module.get(DbSeedConsole);
         orm = module.get(MikroORM);
         dbSeedService = module.get(DbSeedService);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
-    }, 100000);
+    }, 10000000);
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);

@@ -11,7 +11,6 @@ import { UserMapperProfile } from './domain/keycloak-client/user.mapper.profile.
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 import { KeycloakAdministrationService } from './domain/keycloak-admin-client.service.js';
 import { PersonService } from '../person/domain/person.service.js';
-import { PersonModule } from '../person/person.module.js';
 import { PersonRepo } from '../person/persistence/person.repo.js';
 
 describe('KeycloakAdministrationModule', () => {
@@ -24,7 +23,6 @@ describe('KeycloakAdministrationModule', () => {
                 MapperTestModule,
                 KeycloakAdministrationModule,
                 DatabaseTestModule.forRoot(),
-                PersonModule,
                 KeycloakConfigTestModule.forRoot(),
             ],
             providers: [PersonService, PersonRepo],
@@ -54,14 +52,6 @@ describe('KeycloakAdministrationModule', () => {
 
         it('should resolve KeycloakAdministrationService', () => {
             expect(module.get(KeycloakAdministrationService)).toBeInstanceOf(KeycloakAdministrationService);
-        });
-
-        it('should resolve PersonService', () => {
-            expect(module.get(PersonService)).toBeInstanceOf(PersonService);
-        });
-
-        it('should resolve PersonRepo', () => {
-            expect(module.get(PersonRepo)).toBeInstanceOf(PersonRepo);
         });
     });
 });

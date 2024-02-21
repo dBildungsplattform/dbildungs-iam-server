@@ -77,8 +77,6 @@ describe('PersonApiMapperProfile', () => {
 
         it('should map CreatePersonDto to PersonDo', () => {
             const dto: CreatePersonDto = {
-                username: faker.internet.userName(),
-                mandant: faker.string.uuid(),
                 vorname: 'john',
                 familienname: 'doe',
                 lokalisierung: 'de-DE',
