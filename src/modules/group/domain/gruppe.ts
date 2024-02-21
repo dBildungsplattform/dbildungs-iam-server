@@ -33,7 +33,7 @@ export class Gruppe {
 
     private faecher?: Faecherkanon[];
 
-    private referenzgruppen: Referenzgruppen[];
+    private referenzgruppen?: Referenzgruppen[];
 
     // private laufzeit: Laufzeit;
 
@@ -82,7 +82,7 @@ export class Gruppe {
     }
 
     public getReferenzgruppen(): Referenzgruppen[] {
-        return this.referenzgruppen;
+        return this.referenzgruppen ?? [];
     }
 
     // public getLaufzeit(): Laufzeit {

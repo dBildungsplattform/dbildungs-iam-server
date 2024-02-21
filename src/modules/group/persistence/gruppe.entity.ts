@@ -1,4 +1,4 @@
-import { Entity, Enum, Property } from '@mikro-orm/core';
+import { Embedded, Entity, Enum, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import {
     Bildungsziele,
@@ -8,8 +8,8 @@ import {
     Gruppendifferenzierung,
     Gruppenoption,
 } from '../domain/gruppe.enums.js';
-import { Referenzgruppen } from './referenzgruppen.js';
 import { Jahrgangsstufe, SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
+import { Referenzgruppen } from './referenzgruppen.js';
 
 @Entity({ tableName: 'gruppe' })
 export class GruppeEntity extends TimestampedEntity {
@@ -17,47 +17,47 @@ export class GruppeEntity extends TimestampedEntity {
         super();
     }
 
-    @Property({ nullable: true })
+    @Property({ nullable: false })
     public mandant!: string;
 
     @Property({ nullable: true })
-    public orgid!: string;
+    public organisationId?: string;
 
-    @Property()
-    public referrer!: string;
+    @Property({ nullable: true })
+    public referrer?: string;
 
-    @Property()
+    @Property({ nullable: false })
     public bezeichnung!: string;
 
     @Property()
     public thema!: string;
 
-    @Property()
-    public beschreibung!: string;
+    @Property({ nullable: true })
+    public beschreibung?: string;
 
     @Enum({ items: () => GruppenTyp, nullable: false })
     public typ!: GruppenTyp;
 
     @Enum({ items: () => Gruppenbereich, nullable: true })
-    public bereich!: Gruppenbereich;
+    public bereich?: Gruppenbereich;
 
-    @Enum({ items: () => Gruppenoption, nullable: true })
-    public optionen!: Gruppenoption[];
+    @Enum({ items: () => Gruppenoption, nullable: true, array: true })
+    public optionen?: Gruppenoption[];
 
     @Enum({ items: () => Gruppendifferenzierung, nullable: true })
-    public differenzierung!: Gruppendifferenzierung;
+    public differenzierung?: Gruppendifferenzierung;
 
-    @Enum({ items: () => Bildungsziele, nullable: true })
-    public bildungsziele!: Bildungsziele[];
+    @Enum({ items: () => Bildungsziele, nullable: true, array: true })
+    public bildungsziele?: Bildungsziele[];
 
-    @Enum({ items: () => Jahrgangsstufe, nullable: true })
-    public jahrgangsstufen!: Jahrgangsstufe[];
+    @Enum({ items: () => Jahrgangsstufe, nullable: true, array: true })
+    public jahrgangsstufen?: Jahrgangsstufe[];
 
-    @Enum({ items: () => Faecherkanon, nullable: true })
-    public faecher!: Faecherkanon[];
+    @Enum({ items: () => Faecherkanon, nullable: true, array: true })
+    public faecher?: Faecherkanon[];
 
-    @Property({ nullable: true, type: Referenzgruppen })
-    public referenzgruppen!: Referenzgruppen[];
+    @Embedded(() => Referenzgruppen, { nullable: true, array: true })
+    public referenzgruppen?: Referenzgruppen[];
 
     // @Property({ nullable: false, type: Laufzeit })
     // public laufzeit!: Laufzeit;

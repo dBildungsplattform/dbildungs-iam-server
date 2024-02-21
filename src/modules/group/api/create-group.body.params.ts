@@ -8,10 +8,9 @@ import {
     Gruppendifferenzierung,
     Gruppenoption,
 } from '../domain/gruppe.enums.js';
-import { Referenzgruppen } from '../persistence/referenzgruppen.js';
-import { Type } from 'class-transformer';
 import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enums.js';
-
+import { Type } from 'class-transformer';
+import { Referenzgruppen } from '../persistence/referenzgruppen.js';
 export class CreateGroupBodyParams {
     @IsString()
     @ApiProperty({ required: false })
@@ -67,8 +66,8 @@ export class CreateGroupBodyParams {
     @IsArray()
     @ValidateNested()
     @Type(() => Referenzgruppen)
-    @ApiProperty({ type: Referenzgruppen, required: true, isArray: true })
-    public readonly referenzgruppen!: Referenzgruppen[];
+    @ApiProperty({ type: Referenzgruppen, required: false, isArray: true })
+    public readonly referenzgruppen?: Referenzgruppen[];
 
     // @ValidateNested()
     // @Type(() => Laufzeit)

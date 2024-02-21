@@ -14,7 +14,7 @@ export class GruppenRepository {
         // map Gruppe to GruppeEntity
         const gruppeEntity: GruppeEntity = new GruppeEntity();
         gruppeEntity.mandant = 'test-mandant';
-        gruppeEntity.orgid = 'test-orgid';
+        gruppeEntity.organisationId = 'test-orgid';
         gruppeEntity.referrer = gruppe.getReferrer();
         gruppeEntity.bezeichnung = gruppe.getBezeichnung();
         gruppeEntity.thema = gruppe.getThema();
