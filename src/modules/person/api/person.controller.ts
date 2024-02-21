@@ -38,7 +38,6 @@ import { CreatePersonDto } from './create-person.dto.js';
 import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from '../../personenkontext/api/create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
-import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
 import { FindPersonenkontextDto } from '../../personenkontext/api/find-personenkontext.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonDto } from './person.dto.js';
@@ -57,7 +56,6 @@ import { Person } from '../domain/person.js';
 import { PersonendatensatzResponseDDD } from './personendatensatz.responseDDD.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { ScopeOrder } from '../../../shared/persistence/index.js';
-import { PersonDo } from '../domain/person.do.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -182,6 +180,7 @@ export class PersonController {
         });
     }
 
+    // --403 DONE--
     @Get()
     @ApiOkResponse({
         description:
@@ -194,42 +193,27 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
     public async findPersons(
         @Query() queryParams: PersonenQueryParams,
-    ): Promise<PagedResponse<PersonendatensatzResponse>> {
-        /*
-        const findDto: FindPersonendatensatzDto = this.mapper.map(
-            queryParams,
-            PersonenQueryParams,
-            FindPersonendatensatzDto,
-        );
-        const pagedDtos: Paged<PersonendatensatzDto> = await this.personUc.findAll(findDto);
-        const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse({
-            offset: pagedDtos.offset,
-            limit: pagedDtos.limit,
-            total: pagedDtos.total,
-            items: this.mapper.mapArray(pagedDtos.items, PersonendatensatzDto, PersonendatensatzResponse),
-        });
-
-        return response;
-        */
-
-        const findDto: FindPersonendatensatzDto = this.mapper.map(
-            queryParams,
-            PersonenQueryParams,
-            FindPersonendatensatzDto,
-        );
-
-        const personDo: Partial<PersonDo<false>> = this.mapper.map(findDto, FindPersonendatensatzDto, PersonDo);
+    ): Promise<PagedResponse<PersonendatensatzResponseDDD>> {
 
         const scope: PersonScope = new PersonScope()
             .findBy({
-                vorname: personDo.vorname,
-                familienname: personDo.familienname,
-                geburtsdatum: personDo.geburtsdatum,
+                vorname: undefined,
+                familienname: undefined,
+                geburtsdatum: undefined,
             })
             .sortBy('vorname', ScopeOrder.ASC)
             .paged(queryParams.offset, queryParams.limit);
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
+
+        const response: PagedResponse<PersonendatensatzResponseDDD> = new PagedResponse({
+            offset: queryParams.offset ?? 0,
+            limit: queryParams.limit ?? total,
+            total: total,
+            items: persons.map((person: Person<true>) => new PersonendatensatzResponseDDD(person)),
+        });
+
+        return response;
     }
 
     @Put(':personId')

@@ -4,19 +4,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
-import { Paged } from '../../../shared/paging/index.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonService } from '../domain/person.service.js';
-import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
-import { SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
-import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { CreatePersonDto } from './create-person.dto.js';
-import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
-import { FindPersonenkontextDto } from '../../personenkontext/api/find-personenkontext.dto.js';
 import { PersonDto } from './person.dto.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
-import { PersonenkontextDto } from '../../personenkontext/api/personenkontext.dto.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { UpdatePersonDto } from './update-person.dto.js';
@@ -31,7 +24,6 @@ export class PersonUc {
         private readonly personService: PersonService,
         private readonly personRepository: PersonRepository,
         private readonly usernameGenerator: UsernameGeneratorService,
-        private readonly personenkontextService: PersonenkontextService,
         private readonly userService: KeycloakUserService,
         private readonly logger: ClassLogger,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
@@ -87,70 +79,6 @@ export class PersonUc {
         }
     }
 
-    // DONE --> COULD BE REMOVED
-    public async findPersonById(id: string): Promise<PersonendatensatzDto | SchulConnexError> {
-        const result: Result<PersonDo<true>, DomainError> = await this.personService.findPersonById(id);
-
-        if (!result.ok) {
-            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
-        }
-
-        const personDto: PersonDto = this.mapper.map(result.value, PersonDo, PersonDto);
-        const personenkontexteDto: PersonenkontextDto[] = await this.findPersonenkontexteForPerson(
-            id,
-            SichtfreigabeType.NEIN,
-        );
-
-        return new PersonendatensatzDto({
-            person: personDto,
-            personenkontexte: personenkontexteDto,
-        });
-    }
-
-    public async findAll(personDto: FindPersonendatensatzDto): Promise<Paged<PersonendatensatzDto>> {
-        const personDo: PersonDo<false> = this.mapper.map(personDto, FindPersonendatensatzDto, PersonDo);
-        const result: Paged<PersonDo<true>> = await this.personService.findAllPersons(
-            personDo,
-            personDto.offset,
-            personDto.limit,
-        );
-
-        if (result.total === 0) {
-            return {
-                total: result.total,
-                offset: result.offset,
-                limit: result.limit,
-                items: [],
-            };
-        }
-
-        const personDtos: PersonDto[] = result.items.map((person: PersonDo<true>) =>
-            this.mapper.map(person, PersonDo, PersonDto),
-        );
-        const personendatensatzDtos: PersonendatensatzDto[] = [];
-
-        for (const person of personDtos) {
-            const personenkontextDtos: PersonenkontextDto[] = await this.findPersonenkontexteForPerson(
-                person.id,
-                personDto.sichtfreigabe,
-            );
-
-            personendatensatzDtos.push(
-                new PersonendatensatzDto({
-                    person,
-                    personenkontexte: personenkontextDtos,
-                }),
-            );
-        }
-
-        return {
-            total: result.total,
-            offset: result.offset,
-            limit: result.limit,
-            items: personendatensatzDtos,
-        };
-    }
-
     public async resetPassword(personId: string): Promise<Result<string> | SchulConnexError> {
         try {
             const personResult: { ok: true; value: PersonDo<true> } | { ok: false; error: DomainError } =
@@ -178,22 +106,6 @@ export class PersonUc {
                 return { ok: false, error: new Error('Unknown error occurred') };
             }
         }
-    }
-
-    private async findPersonenkontexteForPerson(
-        personId: string,
-        sichtfreigabe: SichtfreigabeType,
-    ): Promise<PersonenkontextDto[]> {
-        const personenkontextFilter: FindPersonenkontextDto = {
-            personId: personId,
-            sichtfreigabe: sichtfreigabe,
-        };
-
-        const result: Paged<PersonenkontextDo<true>> = await this.personenkontextService.findAllPersonenkontexte(
-            this.mapper.map(personenkontextFilter, FindPersonenkontextDto, PersonenkontextDo),
-        );
-
-        return this.mapper.mapArray(result.items, PersonenkontextDo, PersonenkontextDto);
     }
 
     public async updatePerson(updateDto: UpdatePersonDto): Promise<PersonendatensatzDto | SchulConnexError> {
