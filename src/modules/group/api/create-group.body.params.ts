@@ -10,7 +10,7 @@ import {
 } from '../domain/gruppe.enums.js';
 import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enums.js';
 import { Type } from 'class-transformer';
-import { Referenzgruppen } from '../persistence/referenzgruppen.js';
+import { Referenzgruppen } from '../domain/referenzgruppen.js';
 export class CreateGroupBodyParams {
     @IsString()
     @ApiProperty({ required: false })

@@ -1,7 +1,7 @@
 import { Embeddable, Enum, Property } from '@mikro-orm/core';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, IsString } from 'class-validator';
-import { Gruppenrollen } from '../domain/gruppe.enums.js';
+import { Gruppenrollen } from './gruppe.enums.js';
 
 @Embeddable()
 export class Referenzgruppen {

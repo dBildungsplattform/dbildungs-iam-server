@@ -9,7 +9,7 @@ import {
     Gruppenoption,
 } from '../domain/gruppe.enums.js';
 import { Jahrgangsstufe, SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
-import { Referenzgruppen } from './referenzgruppen.js';
+import { Referenzgruppen } from '../domain/referenzgruppen.js';
 
 @Entity({ tableName: 'gruppe' })
 export class GruppeEntity extends TimestampedEntity {

@@ -1,6 +1,6 @@
 import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enums.js';
 import { CreateGroupBodyParams } from '../api/create-group.body.params.js';
-import { Referenzgruppen } from '../persistence/referenzgruppen.js';
+import { Referenzgruppen } from './referenzgruppen.js';
 import {
     Bildungsziele,
     Faecherkanon,
