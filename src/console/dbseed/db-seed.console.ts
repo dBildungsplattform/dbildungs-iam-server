@@ -21,6 +21,7 @@ import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rol
 import { mapAggregateToData as mapServiceProviderAggregateToData } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
+import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
 
 export interface SeedFile {
     entityName: string;
@@ -152,12 +153,30 @@ export class DbSeedConsole extends CommandRunner {
         this.logger.info(`Insert ${aggregates.length} entities of type ${aggregateName}`);
     }
 
-    private handleOrganisation(entities: Entity[], entityName: string): void {
-        for (const entity of entities) {
-            const mappedEntity: OrganisationEntity = this.mapper.map(entity, OrganisationFile, OrganisationEntity);
-            this.forkedEm.persist(mappedEntity);
+    private handleOrganisation(organisationDos: OrganisationDo<true>[], aggregateName: string): void {
+        for (const organisationDo of organisationDos) {
+            const organisation: RequiredEntityData<OrganisationEntity> = this.forkedEm.create(
+                OrganisationEntity,
+                this.mapOrganisation(organisationDo),
+            );
+            this.forkedEm.persist(organisation);
         }
-        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
+        this.logger.info(`Insert ${organisationDos.length} entities of type ${aggregateName}`);
+    }
+
+    private mapOrganisation(organisationDo: OrganisationDo<boolean>): RequiredEntityData<OrganisationEntity> {
+        return {
+            // Don't assign createdAt and updatedAt, they are auto-generated!
+            id: organisationDo.id,
+            administriertVon: organisationDo.administriertVon,
+            zugehoerigZu: organisationDo.zugehoerigZu,
+            kennung: organisationDo.kennung,
+            name: organisationDo.name,
+            namensergaenzung: organisationDo.namensergaenzung,
+            kuerzel: organisationDo.kuerzel,
+            typ: organisationDo.typ,
+            traegerschaft: organisationDo.traegerschaft,
+        };
     }
 
     private async handlePerson(fileContentAsStr: string, entityName: string): Promise<void> {
