@@ -9,7 +9,7 @@ import { OrganisationsTyp } from './organisation.enums.js';
 import { MikroORM } from '@mikro-orm/core';
 import { MapperTestModule } from '../../../../test/utils/index.js';
 import { OrganisationPersistenceMapperProfile } from '../persistence/organisation-persistence.mapper.profile.js';
-import { CircularReferenceError } from '../specification/error/circular-reference.error.js';
+import { ZyklusInOrganisationenError } from '../specification/error/zyklus-in-organisationen.error.js';
 import { RootOrganisationImmutableError } from '../specification/error/root-organisation-immutable.error.js';
 import { NurKlasseKursUnterSchuleError } from '../specification/error/nur-klasse-kurs-unter-schule.error.js';
 import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
@@ -157,7 +157,7 @@ describe('OrganisationServiceSpecificationTest', () => {
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new CircularReferenceError(traeger1.id, 'ZyklusInAdministriertVon'),
+                error: new ZyklusInOrganisationenError(traeger1.id),
             });
         });
 
@@ -284,7 +284,7 @@ describe('OrganisationServiceSpecificationTest', () => {
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new CircularReferenceError(traeger1.id, 'ZyklusInZugehoerigZu'),
+                error: new ZyklusInOrganisationenError(traeger1.id),
             });
         });
 

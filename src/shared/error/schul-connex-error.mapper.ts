@@ -8,7 +8,7 @@ import { MismatchedRevisionError } from './mismatched-revision.error.js';
 import { PersonAlreadyExistsError } from './person-already-exists.error.js';
 import { SchulConnexError } from './schul-connex.error.js';
 import { EntityCouldNotBeDeleted } from './entity-could-not-be-deleted.error.js';
-import { CircularReferenceError } from '../../modules/organisation/specification/error/circular-reference.error.js';
+import { ZyklusInOrganisationenError } from '../../modules/organisation/specification/error/zyklus-in-organisationen.error.js';
 import { RootOrganisationImmutableError } from '../../modules/organisation/specification/error/root-organisation-immutable.error.js';
 import { NurKlasseKursUnterSchuleError } from '../../modules/organisation/specification/error/nur-klasse-kurs-unter-schule.error.js';
 import { SchuleUnterTraegerError } from '../../modules/organisation/specification/error/schule-unter-traeger.error.js';
@@ -108,7 +108,7 @@ export class SchulConnexErrorMapper {
             }),
         ],
         [
-            CircularReferenceError.name,
+            ZyklusInOrganisationenError.name,
             new SchulConnexError({
                 code: 400,
                 subcode: '00',

@@ -10,15 +10,14 @@ import { OrganisationDo } from './organisation.do.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { RootOrganisationImmutableError } from '../specification/error/root-organisation-immutable.error.js';
-import { ZyklusInZugehoerigZu } from '../specification/zyklus-in-zugehoerig-zu.js';
-import { ZyklusInAdministriertVon } from '../specification/zyklus-in-administriert-von.js';
-import { CircularReferenceError } from '../specification/error/circular-reference.error.js';
+import { ZyklusInOrganisationenError } from '../specification/error/zyklus-in-organisationen.error.js';
 import { NurKlasseKursUnterSchule } from '../specification/nur-klasse-kurs-unter-schule.js';
 import { NurKlasseKursUnterSchuleError } from '../specification/error/nur-klasse-kurs-unter-schule.error.js';
 import { SchuleUnterTraeger } from '../specification/schule-unter-traeger.js';
 import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
 import { TraegerInTraeger } from '../specification/traeger-in-traeger.js';
 import { TraegerInTraegerError } from '../specification/error/traeger-in-traeger.error.js';
+import { ZyklusInOrganisationen } from '../specification/zyklus-in-organisationen.js';
 
 @Injectable()
 export class OrganisationService {
@@ -198,51 +197,17 @@ export class OrganisationService {
         if (!(await schuleUnterTraeger.isSatisfiedBy(childOrganisation))) {
             return { ok: false, error: new SchuleUnterTraegerError(childOrganisation.id) };
         }
-        /* const schuleAdministriertVonTraeger: SchuleAdministriertVonTraeger = new SchuleAdministriertVonTraeger(
-            this.organisationRepo,
-        );
-        if (!(await schuleAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
-            return {
-                ok: false,
-                error: new SchuleAdministriertVonTraegerError(childOrganisation.id),
-            };
-        }
-        const schuleZugehoerigZuTraeger: SchuleZugehoerigZuTraeger = new SchuleZugehoerigZuTraeger(
-            this.organisationRepo,
-        );
-        if (!(await schuleZugehoerigZuTraeger.isSatisfiedBy(childOrganisation))) {
-            return { ok: false, error: new SchuleZugehoerigZuTraegerError(childOrganisation.id) };
-        }*/
         const traegerInTraeger: TraegerInTraeger = new TraegerInTraeger(this.organisationRepo);
         if (!(await traegerInTraeger.isSatisfiedBy(childOrganisation))) {
             return { ok: false, error: new TraegerInTraegerError(childOrganisation.id) };
         }
-        /*const traegerAdministriertVonTraeger: TraegerAdministriertVonTraeger = new TraegerAdministriertVonTraeger(
-            this.organisationRepo,
-        );
-        if (!(await traegerAdministriertVonTraeger.isSatisfiedBy(childOrganisation))) {
-            return {
-                ok: false,
-                error: new TraegerAdministriertVonTraegerError(childOrganisation.id),
-            };
-        }
-        const traegerZugehoerigZuTraeger: TraegerZugehoerigZuTraeger = new TraegerZugehoerigZuTraeger(
-            this.organisationRepo,
-        );
-        if (!(await traegerZugehoerigZuTraeger.isSatisfiedBy(childOrganisation))) {
-            return { ok: false, error: new TraegerZugehoerigZuTraegerError(childOrganisation.id) };
-        }*/
         const nurKlasseKursUnterSchule: NurKlasseKursUnterSchule = new NurKlasseKursUnterSchule(this.organisationRepo);
         if (!(await nurKlasseKursUnterSchule.isSatisfiedBy(childOrganisation))) {
             return { ok: false, error: new NurKlasseKursUnterSchuleError(childOrganisation.id) };
         }
-        const zyklusInAdministriertVon: ZyklusInAdministriertVon = new ZyklusInAdministriertVon(this.organisationRepo);
-        if (await zyklusInAdministriertVon.isSatisfiedBy(childOrganisation)) {
-            return { ok: false, error: new CircularReferenceError(childOrganisation.id, 'ZyklusInAdministriertVon') };
-        }
-        const zyklusInZugehoerigZu: ZyklusInZugehoerigZu = new ZyklusInZugehoerigZu(this.organisationRepo);
-        if (await zyklusInZugehoerigZu.isSatisfiedBy(childOrganisation)) {
-            return { ok: false, error: new CircularReferenceError(childOrganisation.id, 'ZyklusInZugehoerigZu') };
+        const zyklusInOrganisationen: ZyklusInOrganisationen = new ZyklusInOrganisationen(this.organisationRepo);
+        if (await zyklusInOrganisationen.isSatisfiedBy(childOrganisation)) {
+            return { ok: false, error: new ZyklusInOrganisationenError(childOrganisation.id) };
         }
         return { ok: true, value: true };
     }

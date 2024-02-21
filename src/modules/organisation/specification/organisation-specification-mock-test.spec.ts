@@ -27,6 +27,10 @@ describe('OrganisationSpecificationMockedRepoTest', () => {
         repoMock = module.get(OrganisationRepo);
     }, 100000);
 
+    beforeEach(() => {
+        jest.resetAllMocks();
+    });
+
     afterAll(async () => {
         await module.close();
     });
