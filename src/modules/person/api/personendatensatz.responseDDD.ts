@@ -8,7 +8,8 @@ export class PersonendatensatzResponseDDD {
     @ApiProperty()
     public person!: PersonResponseDDD;
 
-    public constructor(person: Person<true>, withStartPasswort?: boolean) {
+    public constructor(person: Person<true>, withStartPasswort: boolean = true) {
+        console.log(withStartPasswort);
         const personResponseName: PersonNameParams = {
             familienname: person.familienname,
             vorname: person.vorname,

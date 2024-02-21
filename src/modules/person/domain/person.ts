@@ -49,7 +49,7 @@ export class Person<WasPersisted extends boolean> {
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
     }
 
-    private get needsSaving(): boolean {
+    public get needsSaving(): boolean {
         return this.state.passwordReset || this.keycloakUserId === undefined;
     }
 

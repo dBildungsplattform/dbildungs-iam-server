@@ -34,13 +34,11 @@ import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/pagin
 import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
 import { PersonUc } from '../api/person.uc.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
-import { CreatePersonDto } from './create-person.dto.js';
 import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from '../../personenkontext/api/create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
 import { FindPersonenkontextDto } from '../../personenkontext/api/find-personenkontext.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
-import { PersonDto } from './person.dto.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
@@ -51,11 +49,13 @@ import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { UpdatePersonDto } from './update-person.dto.js';
 import { PersonRepository } from '../persistence/person.repository.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { Person } from '../domain/person.js';
 import { PersonendatensatzResponseDDD } from './personendatensatz.responseDDD.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { ScopeOrder } from '../../../shared/persistence/index.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -66,9 +66,12 @@ export class PersonController {
         private readonly personUc: PersonUc,
         private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
+        private readonly usernameGenerator: UsernameGeneratorService,
+        private readonly kcUserService: KeycloakUserService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
+    // --403 DONE--
     @Post()
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({ description: 'The person was successfully created.', type: PersonendatensatzResponse })
@@ -76,24 +79,41 @@ export class PersonController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the person.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
-    public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
-        const dto: CreatePersonDto = this.mapper.map(params, CreatePersonBodyParams, CreatePersonDto);
-        const result: PersonDto | SchulConnexError = await this.personUc.createPerson(dto);
+    public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponseDDD> {
+        const person: Person<false> = Person.createNew(
+            params.name.familienname,
+            params.name.vorname,
+            params.referrer,
+            params.stammorganisation,
+            params.name.initialenfamilienname,
+            params.name.initialenvorname,
+            params.name.rufname,
+            params.name.titel,
+            params.name.anrede,
+            params.name.namenspraefix,
+            params.name.namenssuffix,
+            params.name.sortierindex,
+            params.geburt?.datum,
+            params.geburt?.geburtsort,
+            params.geschlecht,
+            params.lokalisierung,
+            params.vertrauensstufe,
+            params.auskunftssperre,
+        );
 
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        const result: Person<true> | DomainError = await this.personRepository.create(
+            person,
+            this.kcUserService,
+            this.usernameGenerator,
+        );
+
+        if (result instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
         }
 
-        const personendatensatzDto: PersonendatensatzDto = {
-            person: result,
-            personenkontexte: [],
-        };
-        const personendatensatzResponse: PersonendatensatzResponse = this.mapper.map(
-            personendatensatzDto,
-            PersonendatensatzDto,
-            PersonendatensatzResponse,
-        );
-        return personendatensatzResponse;
+        return new PersonendatensatzResponseDDD(result);
     }
 
     // --403 DONE--
@@ -114,9 +134,10 @@ export class PersonController {
             );
         }
 
-        return new PersonendatensatzResponseDDD(person);
+        return new PersonendatensatzResponseDDD(person, true);
     }
 
+    // -- 403 NOT IN SCOPE ?
     @Post(':personId/personenkontexte')
     @HttpCode(200)
     @ApiOkResponse({ description: 'The personenkontext was successfully created.' })
@@ -145,6 +166,7 @@ export class PersonController {
         return this.mapper.map(result, CreatedPersonenkontextDto, PersonenkontextResponse);
     }
 
+    // -- 403 NOT IN SCOPE ?
     @Get(':personId/personenkontexte')
     @ApiOkResponse({ description: 'The personenkontexte were successfully pulled.', headers: PagingHeadersObject })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get personenkontexte.' })
@@ -194,7 +216,6 @@ export class PersonController {
     public async findPersons(
         @Query() queryParams: PersonenQueryParams,
     ): Promise<PagedResponse<PersonendatensatzResponseDDD>> {
-
         const scope: PersonScope = new PersonScope()
             .findBy({
                 vorname: undefined,
