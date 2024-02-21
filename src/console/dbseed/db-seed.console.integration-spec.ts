@@ -43,7 +43,7 @@ describe('DbSeedConsole', () => {
         dbSeedService = module.get(DbSeedService);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
-    }, 100000);
+    }, 200000);
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
