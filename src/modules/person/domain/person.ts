@@ -133,7 +133,7 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
     ): Person<false> {
-        const person = new Person(
+        const person: Person<boolean> = new Person(
             undefined,
             undefined,
             undefined,
