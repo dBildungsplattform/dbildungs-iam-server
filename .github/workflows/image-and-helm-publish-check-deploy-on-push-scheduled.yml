@@ -1,4 +1,5 @@
-name: "Publish image and helm chart on push and (scheduled) trivy, deployment on push, delete namespace on branch deletion"
+# Publish image and helm chart on push and (scheduled) trivy, deployment on push, delete namespace on branch deletion
+name: "Dev Pipeline"
 
 # All triggers have to be in one file, so that the trivy results can be compared to identify introduced vulnerabilities
 # See DBP-340
