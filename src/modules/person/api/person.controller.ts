@@ -39,7 +39,6 @@ import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-per
 import { FindPersonenkontextDto } from '../../personenkontext/api/find-personenkontext.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonenQueryParams } from './personen-query.param.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/personenkontext-query.params.js';
 import { PersonenkontextDto } from '../../personenkontext/api/personenkontext.dto.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/personenkontext.response.js';
@@ -70,7 +69,7 @@ export class PersonController {
     // --403 DONE--
     @Post()
     @HttpCode(HttpStatus.CREATED)
-    @ApiCreatedResponse({ description: 'The person was successfully created.', type: PersonendatensatzResponse })
+    @ApiCreatedResponse({ description: 'The person was successfully created.', type: PersonendatensatzResponseDDD })
     @ApiBadRequestResponse({ description: 'A username was given. Creation with username is not supported' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the person.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
@@ -203,7 +202,7 @@ export class PersonController {
     @ApiOkResponse({
         description:
             'The persons were successfully returned. WARNING: This endpoint returns all persons as default when no paging parameters were set.',
-        type: [PersonendatensatzResponse],
+        type: [PersonendatensatzResponseDDD],
         headers: PagingHeadersObject,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
@@ -237,7 +236,7 @@ export class PersonController {
     @Put(':personId')
     @ApiOkResponse({
         description: 'The person was successfully updated.',
-        type: PersonendatensatzResponse,
+        type: PersonendatensatzResponseDDD,
     })
     @ApiBadRequestResponse({ description: 'Request has wrong format.' })
     @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
