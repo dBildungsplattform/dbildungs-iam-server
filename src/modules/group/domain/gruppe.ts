@@ -9,23 +9,32 @@ import {
     Gruppendifferenzierung,
     Gruppenoption,
 } from './gruppe.enums.js';
+export class Gruppe<WasPersisted extends boolean> {
+    public static readonly CREATE_GROUP_MANDANT_UUID: string = '00000000-0000-0000-0000-000000000000';
 
-export class Gruppe {
-    private referrer: string;
+    public static readonly CREATE_GROUP_ORGANISATION_UUID: string = '00000000-0000-0000-0000-000000000000';
 
-    private bezeichnung: string;
+    private readonly id?: Persisted<string, WasPersisted>;
 
-    private thema: string;
+    private readonly mandant: Persisted<string, WasPersisted> = Gruppe.CREATE_GROUP_MANDANT_UUID;
 
-    private beschreibung: string;
+    private readonly organisationId: Persisted<string, WasPersisted> = Gruppe.CREATE_GROUP_ORGANISATION_UUID;
 
-    private typ: GruppenTyp;
+    private referrer?: string;
 
-    private bereich: Gruppenbereich;
+    private bezeichnung!: string;
 
-    private optionen: Gruppenoption[];
+    private thema?: string;
 
-    private differenzierung: Gruppendifferenzierung;
+    private beschreibung?: string;
+
+    private typ!: GruppenTyp;
+
+    private bereich?: Gruppenbereich;
+
+    private optionen?: Gruppenoption[];
+
+    private differenzierung?: Gruppendifferenzierung;
 
     private bildungsziele?: Bildungsziele[];
 
@@ -37,8 +46,20 @@ export class Gruppe {
 
     // private laufzeit: Laufzeit;
 
+    public getId(): string {
+        return this.id ?? '';
+    }
+
+    public getMandant(): string {
+        return this.mandant ?? '';
+    }
+
+    public getOrganisationId(): string {
+        return this.organisationId ?? '';
+    }
+
     public getReferrer(): string {
-        return this.referrer;
+        return this.referrer ?? '';
     }
 
     public getBezeichnung(): string {
@@ -46,26 +67,26 @@ export class Gruppe {
     }
 
     public getThema(): string {
-        return this.thema;
+        return this.thema ?? '';
     }
 
     public getBeschreibung(): string {
-        return this.beschreibung;
+        return this.beschreibung ?? '';
     }
 
     public getTyp(): GruppenTyp {
         return this.typ;
     }
 
-    public getBereich(): Gruppenbereich {
+    public getBereich(): Gruppenbereich | undefined {
         return this.bereich;
     }
 
     public getOptionen(): Gruppenoption[] {
-        return this.optionen;
+        return this.optionen ?? [];
     }
 
-    public getDifferenzierung(): Gruppendifferenzierung {
+    public getDifferenzierung(): Gruppendifferenzierung | undefined {
         return this.differenzierung;
     }
 
@@ -89,23 +110,94 @@ export class Gruppe {
     //     return this.laufzeit;
     // }
 
-    private constructor(createGroupBodyParams: CreateGroupBodyParams) {
-        this.referrer = createGroupBodyParams.referrer ?? '';
-        this.bezeichnung = createGroupBodyParams.bezeichnung ?? '';
-        this.thema = createGroupBodyParams.thema ?? '';
-        this.beschreibung = createGroupBodyParams.beschreibung ?? '';
-        this.typ = createGroupBodyParams.typ ?? GruppenTyp.SONSTIG;
-        this.bereich = createGroupBodyParams.bereich ?? Gruppenbereich.PFLICHT;
-        this.optionen = createGroupBodyParams.optionen ?? [];
-        this.differenzierung = createGroupBodyParams.differenzierung ?? Gruppendifferenzierung.E;
-        this.bildungsziele = createGroupBodyParams.bildungsziele;
-        this.jahrgangsstufen = createGroupBodyParams.jahrganagsstufen;
-        this.faecher = createGroupBodyParams.faecher;
-        this.referenzgruppen = createGroupBodyParams.referenzgruppen;
+    private constructor(
+        id: Persisted<string, WasPersisted>,
+        mandant: Persisted<string, WasPersisted>,
+        organisationId: Persisted<string, WasPersisted>,
+        bezeichnung: string,
+        typ: GruppenTyp,
+        referrer?: string,
+        thema?: string,
+        beschreibung?: string,
+        bereich?: Gruppenbereich,
+        optionen?: Gruppenoption[],
+        differenzierung?: Gruppendifferenzierung,
+        bildungsziele?: Bildungsziele[],
+        jahrgangsstufen?: Jahrgangsstufe[],
+        faecher?: Faecherkanon[],
+        referenzgruppen?: Referenzgruppen[],
+    ) {
+        this.id = id;
+        this.mandant = mandant;
+        this.organisationId = organisationId;
+        this.bezeichnung = bezeichnung ?? '';
+        this.typ = typ ?? GruppenTyp.SONSTIG;
+        this.referrer = referrer;
+        this.thema = thema;
+        this.beschreibung = beschreibung;
+        this.bereich = bereich;
+        this.optionen = optionen;
+        this.differenzierung = differenzierung;
+        this.bildungsziele = bildungsziele;
+        this.jahrgangsstufen = jahrgangsstufen;
+        this.faecher = faecher;
+        this.referenzgruppen = referenzgruppen;
         // this.laufzeit = createGroupBodyParams.laufzeit;
     }
 
-    public static createGroup(createGroupBodyParams: CreateGroupBodyParams): Gruppe {
-        return new Gruppe(createGroupBodyParams);
+    public static construct<WasPersisted extends boolean = false>(
+        id: string,
+        mandant: string,
+        organisationId: string,
+        bezeichnung: string,
+        typ: GruppenTyp,
+        referrer?: string,
+        thema?: string,
+        beschreibung?: string,
+        bereich?: Gruppenbereich,
+        optionen?: Gruppenoption[],
+        differenzierung?: Gruppendifferenzierung,
+        bildungsziele?: Bildungsziele[],
+        jahrgangsstufen?: Jahrgangsstufe[],
+        faecher?: Faecherkanon[],
+        referenzgruppen?: Referenzgruppen[],
+    ): Gruppe<WasPersisted> {
+        return new Gruppe(
+            id,
+            mandant,
+            organisationId,
+            bezeichnung,
+            typ,
+            referrer,
+            thema,
+            beschreibung,
+            bereich,
+            optionen,
+            differenzierung,
+            bildungsziele,
+            jahrgangsstufen,
+            faecher,
+            referenzgruppen,
+        );
+    }
+
+    public static createGroup(createGroupBodyParams: CreateGroupBodyParams): Gruppe<false> {
+        return new Gruppe(
+            undefined,
+            undefined,
+            undefined,
+            createGroupBodyParams.bezeichnung,
+            createGroupBodyParams.typ,
+            createGroupBodyParams.referrer,
+            createGroupBodyParams.thema,
+            createGroupBodyParams.beschreibung,
+            createGroupBodyParams.bereich,
+            createGroupBodyParams.optionen,
+            createGroupBodyParams.differenzierung,
+            createGroupBodyParams.bildungsziele,
+            createGroupBodyParams.jahrgangsstufen,
+            createGroupBodyParams.faecher,
+            createGroupBodyParams.referenzgruppen,
+        );
     }
 }

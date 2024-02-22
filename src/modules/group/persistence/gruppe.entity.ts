@@ -29,8 +29,8 @@ export class GruppeEntity extends TimestampedEntity {
     @Property({ nullable: false })
     public bezeichnung!: string;
 
-    @Property()
-    public thema!: string;
+    @Property({ nullable: true })
+    public thema?: string;
 
     @Property({ nullable: true })
     public beschreibung?: string;

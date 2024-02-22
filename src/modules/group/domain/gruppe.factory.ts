@@ -4,7 +4,7 @@ import { Gruppe } from './gruppe.js';
 
 @Injectable()
 export class GruppenFactory {
-    public createGroup(createGroupBodyParams: CreateGroupBodyParams): Gruppe {
+    public createGroup(createGroupBodyParams: CreateGroupBodyParams): Gruppe<false> {
         return Gruppe.createGroup(createGroupBodyParams);
     }
 }

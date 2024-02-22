@@ -17,8 +17,8 @@ export class CreateGroupBodyParams {
     public readonly referrer?: string;
 
     @IsString()
-    @ApiProperty({ required: false })
-    public readonly bezeichnung?: string;
+    @ApiProperty({ required: true })
+    public readonly bezeichnung!: string;
 
     @IsString()
     @ApiProperty({ required: false })
@@ -29,8 +29,8 @@ export class CreateGroupBodyParams {
     public readonly beschreibung?: string;
 
     @IsEnum(GruppenTyp)
-    @ApiProperty({ enum: GruppenTyp, required: false })
-    public readonly typ?: GruppenTyp;
+    @ApiProperty({ enum: GruppenTyp, required: true })
+    public readonly typ!: GruppenTyp;
 
     @IsEnum(Gruppenbereich)
     @ApiProperty({ enum: Gruppenbereich, required: false })
@@ -55,7 +55,7 @@ export class CreateGroupBodyParams {
     @IsOptional()
     @IsEnum(Jahrgangsstufe, { each: true })
     @ApiProperty({ enum: Jahrgangsstufe, required: false, isArray: true })
-    public readonly jahrganagsstufen?: Jahrgangsstufe[];
+    public readonly jahrgangsstufen?: Jahrgangsstufe[];
 
     @IsArray()
     @IsOptional()
