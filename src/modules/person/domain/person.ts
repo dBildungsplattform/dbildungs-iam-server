@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DomainError, KeycloakClientError } from '../../../shared/error/index.js';
+import { DomainError } from '../../../shared/error/index.js';
 import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
@@ -187,12 +187,9 @@ export class Person<WasPersisted extends boolean> {
             this.keycloakUserId = creationResult.value;
         }
         if (this.state.passwordReset) {
-            if (this.newPassword == undefined) {
-                throw new KeycloakClientError('Password reset with empty password requested');
-            }
             const setPasswordResult: Result<string, DomainError> = await kcUserService.resetPassword(
                 this.keycloakUserId,
-                this.newPassword,
+                this.newPassword!,
             );
             if (!setPasswordResult.ok) {
                 if (this.keycloakUserId) {
