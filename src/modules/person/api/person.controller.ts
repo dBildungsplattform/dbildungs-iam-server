@@ -40,14 +40,12 @@ import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-per
 import { FindPersonenkontextDto } from '../../personenkontext/api/find-personenkontext.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonenQueryParams } from './personen-query.param.js';
-import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/personenkontext-query.params.js';
 import { PersonenkontextDto } from '../../personenkontext/api/personenkontext.dto.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/personenkontext.response.js';
 import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
-import { UpdatePersonDto } from './update-person.dto.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { Person } from '../domain/person.js';
@@ -250,17 +248,47 @@ export class PersonController {
     public async updatePerson(
         @Param() params: PersonByIdParams,
         @Body() body: UpdatePersonBodyParams,
-    ): Promise<PersonendatensatzResponse> {
-        const dto: UpdatePersonDto = this.mapper.map(body, UpdatePersonBodyParams, UpdatePersonDto);
-        dto.id = params.personId;
-
-        const response: PersonendatensatzDto | SchulConnexError = await this.personUc.updatePerson(dto);
-
-        if (response instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
+    ): Promise<PersonendatensatzResponseDDD> {
+        const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
+        if (!person) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError(`Person with the following ID ${params.personId} does not exist`),
+                ),
+            );
         }
 
-        return this.mapper.map(response, PersonendatensatzDto, PersonendatensatzResponse);
+        const updateResult: void | DomainError = person.update(
+            body.revision,
+            body.name.familienname,
+            body.name.vorname,
+            body.referrer,
+            body.stammorganisation,
+            body.name.initialenfamilienname,
+            body.name.initialenvorname,
+            body.name.rufname,
+            body.name.titel,
+            body.name.anrede,
+            body.name.namenspraefix,
+            body.name.namenssuffix,
+            body.name.sortierindex,
+            body.geburt?.datum,
+            body.geburt?.geburtsort,
+            body.geschlecht,
+            body.lokalisierung,
+            body.vertrauensstufe,
+            body.auskunftssperre,
+        );
+
+        if (updateResult instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updateResult)
+            );
+        }
+
+        await this.personRepository.update(person);
+        return new PersonendatensatzResponseDDD(person, false);
+
     }
 
     @Patch(':personId/password')
