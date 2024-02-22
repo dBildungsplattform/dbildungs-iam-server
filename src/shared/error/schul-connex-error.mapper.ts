@@ -86,7 +86,7 @@ export class SchulConnexErrorMapper {
                 code: 400,
                 subcode: '00',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Schulen können nur Trägern zugeordnet werden / von Trägern administriert werden.',
+                beschreibung: 'Schulen können nur Trägern zugeordnet / von Trägern administriert werden.',
             }),
         ],
         [
@@ -95,7 +95,7 @@ export class SchulConnexErrorMapper {
                 code: 400,
                 subcode: '00',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Träger können nur Trägern zugeordnet werden und von diesen administriert werden.',
+                beschreibung: 'Träger können nur Trägern zugeordnet / von diesen administriert werden.',
             }),
         ],
         [
@@ -113,7 +113,8 @@ export class SchulConnexErrorMapper {
                 code: 400,
                 subcode: '00',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Zyklus in der administriertVon- oder zugehörigZu-Beziehung entdeckt.',
+                beschreibung:
+                    'Die administriertVon- oder zugehörigZu-Beziehung kann nicht erstellt werden, da keine Zyklen erlaubt sind.',
             }),
         ],
         [
