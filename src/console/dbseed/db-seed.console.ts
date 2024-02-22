@@ -130,15 +130,15 @@ export class DbSeedConsole extends CommandRunner {
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }
 
-    private handleRolle(entities: Rolle<true>[], entityName: string): void {
-        for (const entity of entities) {
+    private handleRolle(aggregates: Rolle<true>[], aggregateName: string): void {
+        for (const aggregate of aggregates) {
             const rolle: RequiredEntityData<RolleEntity> = this.forkedEm.create(
                 RolleEntity,
-                mapRolleAggregateToData(entity),
+                mapRolleAggregateToData(aggregate),
             );
             this.forkedEm.persist(rolle);
         }
-        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
+        this.logger.info(`Insert ${aggregates.length} entities of type ${aggregateName}`);
     }
 
     private handleServiceProvider(aggregates: ServiceProvider<true>[], aggregateName: string): void {

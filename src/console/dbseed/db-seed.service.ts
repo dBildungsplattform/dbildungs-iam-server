@@ -66,6 +66,7 @@ export class DbSeedService {
                 rolleData.administeredBySchulstrukturknoten,
                 rolleData.rollenart,
                 rolleData.merkmale,
+                rolleData.systemrechte,
             ),
         );
 

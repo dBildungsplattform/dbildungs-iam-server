@@ -14,7 +14,7 @@ import {
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
-import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { RolleApiModule } from '../rolle-api.module.js';
@@ -72,6 +72,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -91,6 +92,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -107,6 +109,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: faker.string.uuid(),
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -125,6 +128,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: 'INVALID' as RollenArt,
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -143,6 +147,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: ['INVALID' as RollenMerkmal],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -161,6 +166,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT, RollenMerkmal.BEFRISTUNG_PFLICHT],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)

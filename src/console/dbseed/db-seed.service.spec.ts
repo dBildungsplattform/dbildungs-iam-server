@@ -113,6 +113,7 @@ describe('DbSeedService', () => {
                     administeredBySchulstrukturknoten: '1',
                     rollenart: RollenArt.LERN,
                     merkmale: [],
+                    systemrechte: undefined,
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,
                 };

@@ -67,6 +67,7 @@ export class RolleController {
             params.administeredBySchulstrukturknoten,
             params.rollenart,
             params.merkmale,
+            params.systemrechte,
         );
 
         const result: Rolle<true> = await this.rolleRepo.save(rolle);
