@@ -13,13 +13,12 @@ export class GruppenRepository {
     ) {}
 
     public async createGruppe(gruppe: Gruppe<boolean>): Promise<Gruppe<true> | DomainError> {
+        const gruppeEntity: GruppeEntity = this.mapper.mapGruppeToGruppeEntity(gruppe);
         try {
-            const gruppeEntity: GruppeEntity = this.mapper.mapGruppeToGruppeEntity(gruppe);
             await this.em.persistAndFlush(gruppeEntity);
         } catch (error) {
             return new EntityCouldNotBeCreated(`Gruppe could not be created`);
         }
-       // return this.mapper.mapGruppeEntityToGruppe(gruppeEntity);
-        return gruppe;
+        return this.mapper.mapGruppeEntityToGruppe(gruppeEntity);
     }
 }
