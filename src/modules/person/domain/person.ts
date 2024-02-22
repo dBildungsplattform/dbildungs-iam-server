@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DomainError } from '../../../shared/error/index.js';
+import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
@@ -160,6 +160,56 @@ export class Person<WasPersisted extends boolean> {
             vertrauensstufe,
             auskunftssperre,
         );
+    }
+
+    public update(
+        revision: string,
+        familienname?: string,
+        vorname?: string,
+        referrer?: string,
+        stammorganisation?: string,
+        initialenFamilienname?: string,
+        initialenVorname?: string,
+        rufname?: string,
+        nameTitel?: string,
+        nameAnrede?: string[],
+        namePraefix?: string[],
+        nameSuffix?: string[],
+        nameSortierindex?: string,
+        geburtsdatum?: Date,
+        geburtsort?: string,
+        geschlecht?: Geschlecht,
+        lokalisierung?: string,
+        vertrauensstufe?: Vertrauensstufe,
+        auskunftssperre?: boolean,
+    ): void | DomainError {
+        if (this.revision !== revision) {
+            return new MismatchedRevisionError(
+                `Revision ${revision} does not match revision ${this.revision} of stored person.`,
+            );
+        }
+
+        const newRevision: string = (parseInt(this.revision) + 1).toString();
+
+        this.familienname = familienname ?? this.familienname;
+        this.vorname = vorname ?? this.vorname;
+        this.referrer = referrer;
+        this.stammorganisation = stammorganisation;
+        this.initialenFamilienname = initialenFamilienname;
+        this.initialenVorname = initialenVorname;
+        this.rufname = rufname;
+        this.nameTitel = nameTitel;
+        this.nameAnrede = nameAnrede;
+        this.namePraefix = namePraefix;
+        this.nameSuffix = nameSuffix;
+        this.nameSortierindex = nameSortierindex;
+        this.geburtsdatum = geburtsdatum;
+        this.geburtsort = geburtsort;
+        this.geschlecht = geschlecht;
+        this.lokalisierung = lokalisierung;
+        this.vertrauensstufe = vertrauensstufe;
+        this.auskunftssperre = auskunftssperre;
+        this.revision = newRevision;
     }
 
     // Only for now until ticket 403
