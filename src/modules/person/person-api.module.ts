@@ -5,14 +5,20 @@ import { PersonController } from './api/person.controller.js';
 import { PersonUc } from './api/person.uc.js';
 import { PersonModule } from './person.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
-import { PersonenkontextUc } from './api/personenkontext.uc.js';
-import { PersonenkontextController } from './api/personenkontext.controller.js';
-import { UserModule } from '../user/user.module.js';
 import { PersonFrontendController } from './api/person.frontend.controller.js';
+import { PersonenkontextUc } from '../personenkontext/api/personenkontext.uc.js';
+import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
+import { UsernameGeneratorService } from './domain/username-generator.service.js';
+import { PersonRepository } from './persistence/person.repository.js';
 
 @Module({
-    imports: [PersonModule, KeycloakAdministrationModule, UserModule, LoggerModule.register(PersonApiModule.name)],
-    providers: [PersonApiMapperProfile, PersonUc, PersonenkontextUc],
-    controllers: [PersonController, PersonenkontextController, PersonFrontendController],
+    imports: [
+        PersonModule,
+        PersonenKontextModule,
+        KeycloakAdministrationModule,
+        LoggerModule.register(PersonApiModule.name),
+    ],
+    providers: [PersonApiMapperProfile, PersonUc, PersonenkontextUc, UsernameGeneratorService, PersonRepository],
+    controllers: [PersonController, PersonFrontendController],
 })
 export class PersonApiModule {}

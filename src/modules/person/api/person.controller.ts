@@ -30,25 +30,25 @@ import {
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { ApiOkResponsePaginated, Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
 import { PersonUc } from '../api/person.uc.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from './create-person.dto.js';
-import { CreatePersonenkontextBodyParams } from './create-personenkontext.body.params.js';
-import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
-import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
+import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/create-personenkontext.body.params.js';
+import { CreatePersonenkontextDto } from '../../personenkontext/api/create-personenkontext.dto.js';
+import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
 import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
-import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
+import { FindPersonenkontextDto } from '../../personenkontext/api/find-personenkontext.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonDto } from './person.dto.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
-import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
-import { PersonenkontextDto } from './personenkontext.dto.js';
-import { PersonenkontextResponse } from './personenkontext.response.js';
-import { PersonenkontextUc } from './personenkontext.uc.js';
+import { PersonenkontextQueryParams } from '../../personenkontext/api/personenkontext-query.params.js';
+import { PersonenkontextDto } from '../../personenkontext/api/personenkontext.dto.js';
+import { PersonenkontextResponse } from '../../personenkontext/api/personenkontext.response.js';
+import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { UpdatePersonDto } from './update-person.dto.js';
 
@@ -141,7 +141,10 @@ export class PersonController {
     }
 
     @Get(':personId/personenkontexte')
-    @ApiOkResponse({ description: 'The personenkontexte were successfully pulled.', headers: PagingHeadersObject })
+    @ApiOkResponsePaginated(PersonenkontextResponse, {
+        description: 'The personenkontexte were successfully pulled.',
+        headers: PagingHeadersObject,
+    })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get personenkontexte.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get personenkontexte.' })
     @ApiNotFoundResponse({ description: 'No personenkontexte were found.' })
