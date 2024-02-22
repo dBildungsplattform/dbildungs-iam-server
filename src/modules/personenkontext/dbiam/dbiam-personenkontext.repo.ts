@@ -14,13 +14,6 @@ export function mapAggregateToData(
         personId: personenKontext.personId,
         organisationId: personenKontext.organisationId,
         rolleId: personenKontext.rolleId,
-        referrer: personenKontext.referrer,
-        mandant: personenKontext.mandant,
-        personenstatus: personenKontext.personenstatus,
-        jahrgangsstufe: personenKontext.jahrgangsstufe,
-        sichtfreigabe: personenKontext.sichtfreigabe,
-        loeschungZeitpunkt: personenKontext.loeschungZeitpunkt,
-        revision: personenKontext.revision,
         rolle: Rolle.LERNENDER, // Placeholder, until rolle is removed from entity
     };
 }
@@ -33,25 +26,12 @@ function mapEntityToAggregate(entity: PersonenkontextEntity): Personenkontext<bo
         entity.personId,
         entity.organisationId,
         entity.rolleId,
-        entity.referrer,
-        entity.mandant,
-        entity.personenstatus,
-        entity.jahrgangsstufe,
-        entity.sichtfreigabe,
-        entity.loeschungZeitpunkt,
-        entity.revision,
     );
 }
 
 @Injectable()
 export class DBiamPersonenkontextRepo {
     public constructor(private readonly em: EntityManager) {}
-
-    public async find(): Promise<Personenkontext<true>[]> {
-        const personenKontexte: PersonenkontextEntity[] = await this.em.findAll(PersonenkontextEntity, {});
-
-        return personenKontexte.map(mapEntityToAggregate);
-    }
 
     public async findByPerson(personId: string): Promise<Personenkontext<true>[]> {
         const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
@@ -61,7 +41,7 @@ export class DBiamPersonenkontextRepo {
         return personenKontexte.map(mapEntityToAggregate);
     }
 
-    public async exists(personId: string, rolleId: string, organisationId: string): Promise<boolean> {
+    public async exists(personId: string, organisationId: string, rolleId: string): Promise<boolean> {
         const personenKontext: Option<PersonenkontextEntity> = await this.em.findOne(PersonenkontextEntity, {
             personId,
             rolleId,

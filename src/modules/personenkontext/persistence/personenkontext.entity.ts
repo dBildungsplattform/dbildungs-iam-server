@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { DateTimeType, Entity, Enum, Property, Unique } from '@mikro-orm/core';
+import { DateTimeType, Entity, Enum, Opt, Property, Unique } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 
@@ -49,7 +49,7 @@ export class PersonenkontextEntity extends TimestampedEntity {
     @Property({ nullable: true, type: DateTimeType })
     public loeschungZeitpunkt?: Date;
 
-    @AutoMap()
+    @AutoMap(() => String)
     @Property({ nullable: false, default: '1' })
-    public revision!: string;
+    public revision!: string & Opt;
 }
