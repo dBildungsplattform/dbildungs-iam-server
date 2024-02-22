@@ -4,7 +4,6 @@ import { LernperiodenType } from '../domain/gruppe.enums.js';
 
 @Entity({ tableName: 'lernperiode' })
 export class LernperiodeEntity extends TimestampedEntity {
-
     @Property({ nullable: false })
     public code?: string;
 

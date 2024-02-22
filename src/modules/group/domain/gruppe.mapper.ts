@@ -22,7 +22,7 @@ export class GruppeMapper {
         gruppeEntity.referenzgruppen = gruppe.getReferenzgruppen();
         // gruppeEntity.laufzeit = gruppe.getLaufzeit();
         return gruppeEntity;
-    };
+    }
 
     public mapGruppeEntityToGruppe(entity: GruppeEntity): Gruppe<true> {
         return Gruppe.construct(
