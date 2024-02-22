@@ -175,6 +175,9 @@ describe('PersonUc', () => {
                 const result: PersonDto | SchulConnexError = await personUc.createPerson(createPersonDto);
 
                 expect(result).toBeInstanceOf(PersonDto);
+                const returnedPerson: PersonDto = result as PersonDto;
+                expect(returnedPerson.startpasswort).not.toBeUndefined();
+                expect(returnedPerson.startpasswort).not.toBe('unset');
             });
         });
 
@@ -257,6 +260,44 @@ describe('PersonUc', () => {
                     if (result instanceof SchulConnexError) {
                         expect(result.code).toEqual(500);
                     }
+                });
+            });
+            describe('when a person has no password set but requests a save of password', () => {
+                let person: Person<false>;
+                beforeEach(() => {
+                    person = Person.construct(
+                        '',
+                        new Date(),
+                        new Date(),
+                        '',
+                        '',
+                        '',
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                    );
+                });
+                it('should throw an error on save', async () => {
+                    person['state'].passwordReset = true;
+                    await expect(
+                        person.saveUser(createMock<KeycloakUserService>(), createMock<UsernameGeneratorService>()),
+                    ).rejects.toThrow(new KeycloakClientError("Password reset with empty password requested"));
                 });
             });
         });
