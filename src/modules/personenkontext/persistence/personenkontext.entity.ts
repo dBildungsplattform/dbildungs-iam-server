@@ -1,53 +1,38 @@
-import { AutoMap } from '@automapper/classes';
-import { DateTimeType, Entity, Enum, Property } from '@mikro-orm/core';
+import { DateTimeType, Entity, Enum, Property, Unique } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 
-@Entity({ tableName: 'personenkontext' })
+@Entity({ tableName: 'personen_kontext' })
+@Unique({ properties: ['rolleId', 'personId', 'organisationId'] })
 export class PersonenkontextEntity extends TimestampedEntity {
-    public constructor() {
-        super();
-    }
-
-    @AutoMap()
-    @Property({ nullable: false })
+    @Property()
     public personId!: string;
 
-    @AutoMap()
+    @Property()
+    public organisationId!: string;
+
+    @Property()
+    public rolleId!: string;
+
     @Property({ nullable: true })
     public referrer?: string;
 
     // TODO EW-636: mandant is related to organizations so it is not set for now. When implemented should be set to nullable: false
-    @AutoMap()
     @Property({ nullable: true })
-    public mandant!: string;
+    public mandant?: string;
 
-    // TODO EW-636: get from access_token, see SchulConneX (Version 1.003.003.000) page 91
-    @AutoMap()
-    @Property({ nullable: true })
-    public organisationId!: string;
-
-    @AutoMap(() => String)
-    @Enum({ nullable: false, items: () => Rolle })
-    public rolle!: Rolle;
-
-    @AutoMap(() => String)
     @Enum({ nullable: true, items: () => Personenstatus })
     public personenstatus?: Personenstatus;
 
-    @AutoMap(() => String)
     @Enum({ nullable: true, items: () => Jahrgangsstufe })
     public jahrgangsstufe?: Jahrgangsstufe;
 
-    @AutoMap(() => String)
     @Property({ nullable: true, default: SichtfreigabeType.NEIN })
     public sichtfreigabe?: SichtfreigabeType;
 
-    @AutoMap(() => Date)
     @Property({ nullable: true, type: DateTimeType })
     public loeschungZeitpunkt?: Date;
 
-    @AutoMap()
     @Property({ nullable: false, default: '1' })
     public revision!: string;
 }

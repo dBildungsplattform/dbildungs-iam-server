@@ -1,70 +1,110 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
-import { Loaded } from '@mikro-orm/core';
+import { Loaded, RequiredEntityData } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
-import { Inject, Injectable } from '@nestjs/common';
-import { PersonenkontextDo } from '../domain/personenkontext.do.js';
-import { PersonenkontextEntity } from './personenkontext.entity.js';
-import { PersonenkontextScope } from './personenkontext.scope.js';
+import { Injectable } from '@nestjs/common';
+import { Personenkontext } from '../domain/personenkontext.js';
+import { PersonenkontextEntity } from '../persistence/personenkontext.entity.js';
+import { PersonenkontextScope } from '../persistence/personenkontext.scope.js';
+
+export function mapAggregateToData(
+    personenKontext: Personenkontext<boolean>,
+): RequiredEntityData<PersonenkontextEntity> {
+    return {
+        personId: personenKontext.personId,
+        organisationId: personenKontext.organisationId,
+        rolleId: personenKontext.rolleId,
+        referrer: personenKontext.referrer,
+        mandant: personenKontext.mandant,
+        personenstatus: personenKontext.personenstatus,
+        jahrgangsstufe: personenKontext.jahrgangsstufe,
+        sichtfreigabe: personenKontext.sichtfreigabe,
+        loeschungZeitpunkt: personenKontext.loeschungZeitpunkt,
+        revision: personenKontext.revision,
+    };
+}
+
+function mapEntityToAggregate(entity: PersonenkontextEntity): Personenkontext<boolean> {
+    return Personenkontext.construct(
+        entity.id,
+        entity.createdAt,
+        entity.updatedAt,
+        entity.personId,
+        entity.organisationId,
+        entity.rolleId,
+        entity.referrer,
+        entity.mandant,
+        entity.personenstatus,
+        entity.jahrgangsstufe,
+        entity.sichtfreigabe,
+        entity.loeschungZeitpunkt,
+        entity.revision,
+    );
+}
 
 @Injectable()
 export class PersonenkontextRepo {
-    public constructor(
-        private readonly em: EntityManager,
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
-    ) {}
+    public constructor(private readonly em: EntityManager) {}
 
-    public async save(personenkontextDo: PersonenkontextDo<boolean>): Promise<Option<PersonenkontextDo<true>>> {
-        if (personenkontextDo.id) {
-            return this.update(personenkontextDo);
-        }
-        return this.create(personenkontextDo);
+    public async find(): Promise<Personenkontext<true>[]> {
+        const personenKontexte: PersonenkontextEntity[] = await this.em.findAll(PersonenkontextEntity, {});
+
+        return personenKontexte.map(mapEntityToAggregate);
     }
 
-    public async findBy(scope: PersonenkontextScope): Promise<Counted<PersonenkontextDo<true>>> {
+    public async findBy(scope: PersonenkontextScope): Promise<Counted<Personenkontext<true>>> {
         const [entities, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(this.em);
-        const dos: PersonenkontextDo<true>[] = this.mapper.mapArray(entities, PersonenkontextEntity, PersonenkontextDo);
 
-        return [dos, total];
+        const personenKontexte: Personenkontext<true>[] = entities.map(mapEntityToAggregate);
+
+        return [personenKontexte, total];
     }
 
-    public async findById(id: string): Promise<Option<PersonenkontextDo<true>>> {
-        const entity: Option<Loaded<PersonenkontextEntity>> = await this.em.findOne(PersonenkontextEntity, { id });
-        const result: Option<PersonenkontextDo<true>> = entity
-            ? this.mapper.map(entity, PersonenkontextEntity, PersonenkontextDo)
-            : null;
+    public async findByPerson(personId: string): Promise<Personenkontext<true>[]> {
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
+            personId,
+        });
 
-        return result;
+        return personenKontexte.map(mapEntityToAggregate);
     }
 
-    private async create(personenkontextDo: PersonenkontextDo<false>): Promise<Option<PersonenkontextDo<true>>> {
-        const personenkontext: PersonenkontextEntity = this.mapper.map(
-            personenkontextDo,
-            PersonenkontextDo,
-            PersonenkontextEntity,
-        );
+    public async exists(personId: string, rolleId: string, organisationId: string): Promise<boolean> {
+        const personenKontext: Option<PersonenkontextEntity> = await this.em.findOne(PersonenkontextEntity, {
+            personId,
+            rolleId,
+            organisationId,
+        });
 
-        await this.em.persistAndFlush(personenkontext);
-
-        return this.mapper.map(personenkontext, PersonenkontextEntity, PersonenkontextDo);
+        return !!personenKontext;
     }
 
-    private async update(personenkontextDo: PersonenkontextDo<true>): Promise<Option<PersonenkontextDo<true>>> {
-        let personenkontext: Option<Loaded<PersonenkontextEntity, never>> = await this.em.findOne(
-            PersonenkontextEntity,
-            {
-                id: personenkontextDo.id,
-            },
-        );
-        if (personenkontext) {
-            personenkontext.assign(this.mapper.map(personenkontextDo, PersonenkontextDo, PersonenkontextEntity));
+    public async save(personenKontext: Personenkontext<boolean>): Promise<Personenkontext<true>> {
+        if (personenKontext.id) {
+            return this.update(personenKontext);
         } else {
-            personenkontext = this.mapper.map(personenkontextDo, PersonenkontextDo, PersonenkontextEntity);
+            return this.create(personenKontext);
         }
+    }
 
-        await this.em.persistAndFlush(personenkontext);
+    private async create(personenKontext: Personenkontext<false>): Promise<Personenkontext<true>> {
+        const personenKontextEntity: PersonenkontextEntity = this.em.create(
+            PersonenkontextEntity,
+            mapAggregateToData(personenKontext),
+        );
 
-        return this.mapper.map(personenkontext, PersonenkontextEntity, PersonenkontextDo);
+        await this.em.persistAndFlush(personenKontextEntity);
+
+        return mapEntityToAggregate(personenKontextEntity);
+    }
+
+    private async update(personenKontext: Personenkontext<true>): Promise<Personenkontext<true>> {
+        const personenKontextEntity: Loaded<PersonenkontextEntity> = await this.em.findOneOrFail(
+            PersonenkontextEntity,
+            personenKontext.id,
+        );
+        personenKontextEntity.assign(mapAggregateToData(personenKontext));
+
+        await this.em.persistAndFlush(personenKontextEntity);
+
+        return mapEntityToAggregate(personenKontextEntity);
     }
 
     public async deleteById(id: string): Promise<number> {
