@@ -127,8 +127,8 @@ export class PersonRepository {
         return mapEntityToAggregate(personEntity);
     }
 
-    private async saveUser(
-        person: Person<false>,
+    public async saveUser(
+        person: Person<boolean>,
         kcUserService: KeycloakUserService,
         usernameGenerator: UsernameGeneratorService,
     ): Promise<Person<boolean> | DomainError> {

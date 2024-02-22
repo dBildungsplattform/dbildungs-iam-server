@@ -32,7 +32,6 @@ import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
-import { PersonUc } from '../api/person.uc.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from '../../personenkontext/api/create-personenkontext.dto.js';
@@ -61,7 +60,6 @@ import { UsernameGeneratorService } from '../domain/username-generator.service.j
 @Controller({ path: 'personen' })
 export class PersonController {
     public constructor(
-        private readonly personUc: PersonUc,
         private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
         private readonly usernameGenerator: UsernameGeneratorService,
@@ -235,6 +233,7 @@ export class PersonController {
         return response;
     }
 
+    // --403 DONE--
     @Put(':personId')
     @ApiOkResponse({
         description: 'The person was successfully updated.',
@@ -282,13 +281,12 @@ export class PersonController {
 
         if (updateResult instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updateResult)
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updateResult),
             );
         }
 
         await this.personRepository.update(person);
         return new PersonendatensatzResponseDDD(person, false);
-
     }
 
     @Patch(':personId/password')
@@ -298,12 +296,27 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
     @UseInterceptors(ResultInterceptor)
     public async resetPasswordByPersonId(@Param() params: PersonByIdParams): Promise<Result<string>> {
-        const result: Result<string> | SchulConnexError = await this.personUc.resetPassword(params.personId);
+        const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
+        if (!person) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError(`Person with the following ID ${params.personId} does not exist`),
+                ),
+            );
+        }
+        person.resetPassword();
+        const saveResult: Person<true> | DomainError = await this.personRepository.saveUser(
+            person,
+            this.kcUserService,
+            this.usernameGenerator,
+        );
 
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        if (saveResult instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult),
+            );
         }
 
-        return result;
+        return { ok: true, value: person.newPassword };
     }
 }
