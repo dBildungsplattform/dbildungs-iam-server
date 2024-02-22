@@ -5,7 +5,7 @@ import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
 import { Inject } from '@nestjs/common';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
-import { UsernameGeneratorService } from '../../modules/user/username-generator.service.js';
+import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
 import { DbSeedService } from './db-seed.service.js';
 import { PersonFile } from './file/person-file.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
@@ -18,6 +18,9 @@ import { KeycloakUserService } from '../../modules/keycloak-administration/domai
 import { UserDo } from '../../modules/keycloak-administration/domain/user.do.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rolle/repo/rolle.repo.js';
+import { mapAggregateToData as mapServiceProviderAggregateToData } from '../../modules/service-provider/repo/service-provider.repo.js';
+import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
+import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
 
 export interface SeedFile {
     entityName: string;
@@ -108,6 +111,12 @@ export class DbSeedConsole extends CommandRunner {
             case 'Rolle':
                 this.handleRolle(this.dbSeedService.readRolle(fileContentAsStr), seedFile.entityName);
                 break;
+            case 'ServiceProvider':
+                this.handleServiceProvider(
+                    this.dbSeedService.readServiceProvider(fileContentAsStr),
+                    seedFile.entityName,
+                );
+                break;
             default:
                 throw new Error(`Unsupported EntityName / EntityType: ${seedFile.entityName}`);
         }
@@ -130,6 +139,17 @@ export class DbSeedConsole extends CommandRunner {
             this.forkedEm.persist(rolle);
         }
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
+    }
+
+    private handleServiceProvider(aggregates: ServiceProvider<true>[], aggregateName: string): void {
+        for (const aggregate of aggregates) {
+            const serviceProvider: RequiredEntityData<ServiceProviderEntity> = this.forkedEm.create(
+                ServiceProviderEntity,
+                mapServiceProviderAggregateToData(aggregate),
+            );
+            this.forkedEm.persist(serviceProvider);
+        }
+        this.logger.info(`Insert ${aggregates.length} entities of type ${aggregateName}`);
     }
 
     private handleOrganisation(entities: Entity[], entityName: string): void {

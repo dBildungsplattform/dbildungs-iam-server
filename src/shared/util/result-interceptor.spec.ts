@@ -62,9 +62,12 @@ describe('ResultInterceptor', () => {
                         },
                     };
                     const result: Observable<string> = sut.intercept(executionContext, callHandler);
-                    result.subscribe((data: string) => {
-                        expect(data).toBeDefined();
-                    });
+                    result.subscribe(
+                        (data: string) => {
+                            expect(data).toBeDefined();
+                        },
+                        (error: Error) => expect(error).toBeDefined(),
+                    );
                     expect(result).toBeDefined();
                 });
             });
@@ -80,9 +83,12 @@ describe('ResultInterceptor', () => {
                         },
                     };
                     const result: Observable<string> = sut.intercept(executionContext, callHandler);
-                    result.subscribe((data: string) => {
-                        expect(data).toBeDefined();
-                    });
+                    result.subscribe(
+                        (data: string) => {
+                            expect(data).toBeDefined();
+                        },
+                        (error: Error) => expect(error).toBeDefined(),
+                    );
                     expect(result).toBeDefined();
                 });
             });

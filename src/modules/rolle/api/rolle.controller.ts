@@ -5,6 +5,7 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiOkResponse,
     ApiOperation,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -32,6 +33,7 @@ export class RolleController {
 
     @Get()
     @ApiOperation({ description: 'List all rollen.' })
+    @ApiOkResponse({ description: 'The rollen were successfully returned', type: [RolleResponse] })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get rollen.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollen.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all rollen.' })

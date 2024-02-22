@@ -1,12 +1,15 @@
 dbildungsIamExternalPort: 80
 dbildungsIamCpuMax: 2
 dbildungsIamMemMax: 4G
-dbildungsIamCpuRequest: 200m
-dbildungsIamMemRequest: 200Mi
+dbildungsIamRedisCpuMax: 2
+dbildungsIamRedisMemMax: 4G
+dbildungsIamRedisCpuRequest: 200m
+dbildungsIamRedisMemRequest: 200Mi
 dbildungsIamReplications: 1
 environment: prod
 backendHostname: ""
 keycloakHostname: ""
+imagePullPolicy: "Always"
 seeding:
   configmap: spsh-seeding-data-configmap
   database: dev
