@@ -167,10 +167,7 @@ export class PersonUc {
                 );
             }
             await person.saveUser(this.userService, this.usernameGenerator);
-            if (person.newPassword == undefined) {
-                throw new KeycloakClientError('Password Reset led to empty password');
-            }
-            return { ok: true, value: person.newPassword };
+            return { ok: true, value: person.newPassword! };
         } catch (error) {
             this.logger.error(JSON.stringify(error));
             if (error instanceof Error) {
