@@ -1,19 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { OrganisationService } from './organisation.service.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { OrganisationRepo } from '../persistence/organisation.repo.js';
 import { Mapper } from '@automapper/core';
-import { OrganisationDo } from './organisation.do.js';
-import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { Dictionary } from '@mikro-orm/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { Dictionary } from '@mikro-orm/core';
+import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { Paged } from '../../../shared/paging/index.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/index.js';
-import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { Paged } from '../../../shared/paging/index.js';
+import { OrganisationRepo } from '../persistence/organisation.repo.js';
+import { OrganisationDo } from './organisation.do.js';
+import { OrganisationService } from './organisation.service.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -23,7 +22,7 @@ describe('OrganisationService', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
+            imports: [ConfigTestModule],
             providers: [
                 OrganisationService,
                 {
