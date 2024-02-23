@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { EntityNotFoundError, KeycloakClientError, PersonAlreadyExistsError } from '../../../shared/error/index.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged } from '../../../shared/paging/index.js';
@@ -34,7 +34,7 @@ describe('PersonUc', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [MapperTestModule, ConfigTestModule, DatabaseTestModule.forRoot(), LoggerModule.register('Test')],
+            imports: [MapperTestModule, ConfigTestModule, LoggerModule.register('Test')],
             providers: [
                 PersonUc,
                 PersonApiMapperProfile,
