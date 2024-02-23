@@ -30,7 +30,7 @@ import {
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { ApiOkResponsePaginated, Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/create-personenkontext.body.params.js';
@@ -163,7 +163,10 @@ export class PersonController {
 
     // -- 403 NOT IN SCOPE ?
     @Get(':personId/personenkontexte')
-    @ApiOkResponse({ description: 'The personenkontexte were successfully pulled.', headers: PagingHeadersObject })
+    @ApiOkResponsePaginated(PersonenkontextResponse, {
+        description: 'The personenkontexte were successfully pulled.',
+        headers: PagingHeadersObject,
+    })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get personenkontexte.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get personenkontexte.' })
     @ApiNotFoundResponse({ description: 'No personenkontexte were found.' })

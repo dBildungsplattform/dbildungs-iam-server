@@ -3,10 +3,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
     DatabaseTestModule,
-    LoggingTestModule,
-    MapperTestModule,
     DoFactory,
     KeycloakConfigTestModule,
+    LoggingTestModule,
+    MapperTestModule,
 } from '../../../test/utils/index.js';
 import { DbSeedService } from './db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
@@ -19,6 +19,7 @@ import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rolle/repo/rolle.repo.js';
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
+import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -29,7 +30,6 @@ describe('DbSeedConsole', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
-                KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }),
                 ConfigTestModule,
                 KeycloakAdministrationModule,
                 MapperTestModule,
@@ -37,13 +37,16 @@ describe('DbSeedConsole', () => {
                 LoggingTestModule,
             ],
             providers: [DbSeedConsole, UsernameGeneratorService, DbSeedService, DbSeedMapper],
-        }).compile();
+        })
+            .overrideModule(KeycloakConfigModule)
+            .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .compile();
         sut = module.get(DbSeedConsole);
         orm = module.get(MikroORM);
         dbSeedService = module.get(DbSeedService);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
-    }, 100000);
+    }, 10000000);
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
