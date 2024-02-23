@@ -29,12 +29,12 @@ export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<
         lokalisierung: person.lokalisierung,
         vertrauensstufe: person.vertrauensstufe,
         auskunftssperre: person.auskunftssperre,
-        dataProvider: undefined,
+        dataProvider: undefined, //TODO: CLARIFY!
         revision: person.revision,
     };
 }
 
-function mapEntityToAggregate(entity: PersonEntity): Person<true> {
+export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
     return Person.construct(
         entity.id,
         entity.createdAt,
@@ -64,7 +64,7 @@ function mapEntityToAggregate(entity: PersonEntity): Person<true> {
     );
 }
 
-function mapEntityToAggregateInplace(entity: PersonEntity, person: Person<boolean>): Person<true> {
+export function mapEntityToAggregateInplace(entity: PersonEntity, person: Person<boolean>): Person<true> {
     person.id = entity.id;
     person.createdAt = entity.createdAt;
     person.updatedAt = entity.updatedAt;
