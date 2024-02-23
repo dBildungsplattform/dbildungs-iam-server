@@ -175,6 +175,9 @@ describe('PersonUc', () => {
                 const result: PersonDto | SchulConnexError = await personUc.createPerson(createPersonDto);
 
                 expect(result).toBeInstanceOf(PersonDto);
+                const returnedPerson: PersonDto = result as PersonDto;
+                expect(returnedPerson.startpasswort).not.toBeUndefined();
+                expect(returnedPerson.startpasswort).not.toBe('unset');
             });
         });
 
