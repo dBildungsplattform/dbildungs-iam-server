@@ -15,6 +15,7 @@ import { EntityCouldNotBeUpdated } from '../../../shared/error/index.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { OrganisationsTyp } from './organisation.enums.js';
+import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -92,6 +93,22 @@ describe('OrganisationService', () => {
             });
         });
 
+        it('should return a domain error if kennung is not set and type is schule', async () => {
+            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+                typ: OrganisationsTyp.SCHULE,
+                kennung: undefined,
+            });
+            organisationRepoMock.save.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
+            mapperMock.map.mockReturnValue(organisationDo as unknown as Dictionary<unknown>);
+
+            const result: Result<OrganisationDo<true>> = await organisationService.createOrganisation(organisationDo);
+
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new KennungRequiredForSchuleError(),
+            });
+        });
+
         it('should return a domain error', async () => {
             const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
             organisationDo.id = faker.string.uuid();
@@ -122,6 +139,21 @@ describe('OrganisationService', () => {
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: false,
                 error: new EntityCouldNotBeUpdated(`Organization could not be updated`, organisationDo.id),
+            });
+        });
+
+        it('should return a domain error if kennung is not set and type is schule', async () => {
+            const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.SCHULE,
+                kennung: undefined,
+            });
+            organisationRepoMock.findById.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
+
+            const result: Result<OrganisationDo<true>> = await organisationService.updateOrganisation(organisationDo);
+
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new KennungRequiredForSchuleError(),
             });
         });
 

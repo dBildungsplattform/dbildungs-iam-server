@@ -9,7 +9,7 @@ export class KennungRequiredForSchule extends CompositeSpecification<Organisatio
     // eslint-disable-next-line @typescript-eslint/require-await
     public async isSatisfiedBy(t: OrganisationDo<boolean>): Promise<boolean> {
         if (t.typ === OrganisationsTyp.SCHULE) {
-            return !t.kennung;
+            return !!t.kennung;
         } else {
             return true;
         }
