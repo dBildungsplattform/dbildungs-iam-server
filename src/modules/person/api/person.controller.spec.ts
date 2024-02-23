@@ -183,7 +183,7 @@ describe('PersonController', () => {
             faker.date.past(),
             faker.date.recent(),
             faker.name.lastName(),
-            faker.name.firstName(),
+            'Moritz',
             '1',
             faker.lorem.word(),
             faker.lorem.word(),
@@ -204,9 +204,13 @@ describe('PersonController', () => {
         it('should get all persons', async () => {
             personRepositoryMock.findBy.mockResolvedValue([[person1, person2], 2]);
 
-            await personController.findPersons(queryParams);
-
+            const result: PagedResponse<PersonendatensatzResponseDDD> = await personController.findPersons(queryParams);
             expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
+            expect(result.total).toEqual(2);
+            expect(result.limit).toEqual(2);
+            expect(result.offset).toEqual(0);
+            expect(result.items.length).toEqual(2);
+            expect(result.items.at(0)?.person.name.vorname).toEqual('Moritz');
         });
     });
 

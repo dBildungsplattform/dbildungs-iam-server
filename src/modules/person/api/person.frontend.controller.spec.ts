@@ -2,26 +2,19 @@ import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MapperTestModule } from '../../../../test/utils/index.js';
-import { PagedResponse } from '../../../shared/paging/index.js';
-import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 import { SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
-import { PersonBirthParams } from './person-birth.params.js';
-import { PersonDto } from './person.dto.js';
 import { PersonFrontendController } from './person.frontend.controller.js';
-import { PersonUc } from './person.uc.js';
 import { PersonenQueryParams } from './personen-query.param.js';
-import { PersonendatensatzDto } from './personendatensatz.dto.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { Person } from '../domain/person.js';
+import { PersonRepository } from '../persistence/person.repository.js';
+import { PagedResponse } from '../../../shared/paging/index.js';
+import { PersonendatensatzResponseDDD } from './personendatensatz.responseDDD.js';
 
 describe('PersonFrontendController', () => {
     let module: TestingModule;
     let personController: PersonFrontendController;
-    let personUcMock: DeepMocked<PersonUc>;
-    const mockBirthParams: PersonBirthParams = {
-        datum: faker.date.anytime(),
-        geburtsort: faker.string.alpha(),
-    };
+    let personRepositoryMock: DeepMocked<PersonRepository>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -30,13 +23,13 @@ describe('PersonFrontendController', () => {
                 PersonFrontendController,
                 PersonApiMapperProfile,
                 {
-                    provide: PersonUc,
-                    useValue: createMock<PersonUc>(),
+                    provide: PersonRepository,
+                    useValue: createMock<PersonRepository>(),
                 },
             ],
         }).compile();
         personController = module.get(PersonFrontendController);
-        personUcMock = module.get(PersonUc);
+        personRepositoryMock = module.get(PersonRepository);
     });
 
     afterAll(async () => {
@@ -67,57 +60,39 @@ describe('PersonFrontendController', () => {
             vorname: options.firstName,
             sichtfreigabe: SichtfreigabeType.NEIN,
         };
+        const person1: Person<true> = Person.construct(
+            faker.string.uuid(),
+            faker.date.past(),
+            faker.date.recent(),
+            faker.name.lastName(),
+            'Max',
+            '1',
+            faker.lorem.word(),
+            faker.lorem.word(),
+            faker.string.uuid(),
+        );
+        const person2: Person<true> = Person.construct(
+            faker.string.uuid(),
+            faker.date.past(),
+            faker.date.recent(),
+            faker.name.lastName(),
+            faker.name.firstName(),
+            '1',
+            faker.lorem.word(),
+            faker.lorem.word(),
+            faker.string.uuid(),
+        );
 
         it('should get all persons', async () => {
-            const person1: PersonDto = {
-                id: faker.string.uuid(),
-                name: {
-                    familienname: options.lastName,
-                    vorname: options.firstName,
-                },
-                referrer: options.referrer,
-                geburt: mockBirthParams,
-                geschlecht: Geschlecht.M,
-                lokalisierung: '',
-                vertrauensstufe: Vertrauensstufe.VOLL,
-            } as PersonDto;
-            const person2: PersonDto = {
-                id: faker.string.uuid(),
-                name: {
-                    familienname: options.lastName,
-                    vorname: options.firstName,
-                },
-                referrer: options.referrer,
-                geburt: mockBirthParams,
-                geschlecht: Geschlecht.M,
-                lokalisierung: '',
-                vertrauensstufe: Vertrauensstufe.VOLL,
-            } as PersonDto;
+            personRepositoryMock.findBy.mockResolvedValue([[person1, person2], 2]);
 
-            const mockPersondatensatz1: PersonendatensatzDto = {
-                person: person1,
-                personenkontexte: [],
-            };
-            const mockPersondatensatz2: PersonendatensatzDto = {
-                person: person2,
-                personenkontexte: [],
-            };
-            const mockPersondatensatz: PagedResponse<PersonendatensatzDto> = new PagedResponse({
-                offset: 0,
-                limit: 10,
-                total: 2,
-                items: [mockPersondatensatz1, mockPersondatensatz2],
-            });
-
-            personUcMock.findAll.mockResolvedValue(mockPersondatensatz);
-
-            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(queryParams);
-
-            expect(personUcMock.findAll).toHaveBeenCalledTimes(1);
-            expect(result.items.at(0)?.person.referrer).toEqual(queryParams.referrer);
-            expect(result.items.at(0)?.person.name.vorname).toEqual(queryParams.vorname);
-            expect(result.items.at(0)?.person.name.familienname).toEqual(queryParams.familienname);
-            expect(result).toEqual(mockPersondatensatz);
+            const result: PagedResponse<PersonendatensatzResponseDDD> = await personController.findPersons(queryParams);
+            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
+            expect(result.total).toEqual(2);
+            expect(result.limit).toEqual(2);
+            expect(result.offset).toEqual(0);
+            expect(result.items.length).toEqual(2);
+            expect(result.items.at(0)?.person.name.vorname).toEqual('Max');
         });
     });
 });
