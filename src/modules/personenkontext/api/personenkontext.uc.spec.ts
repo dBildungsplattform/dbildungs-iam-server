@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
@@ -20,12 +20,20 @@ import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonendatensatzDto } from '../../person/api/personendatensatz.dto.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
+import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { Personenkontext } from '../domain/personenkontext.js';
+import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
 
 describe('PersonenkontextUc', () => {
     let module: TestingModule;
     let sut: PersonenkontextUc;
     let personServiceMock: DeepMocked<PersonService>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
+    let rolleRepoMock: DeepMocked<RolleRepo>;
+    let organisationRepoMock: DeepMocked<OrganisationRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -33,6 +41,14 @@ describe('PersonenkontextUc', () => {
             providers: [
                 PersonenkontextUc,
                 PersonApiMapperProfile,
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
+                {
+                    provide: OrganisationRepo,
+                    useValue: createMock<OrganisationRepo>(),
+                },
                 {
                     provide: PersonService,
                     useValue: createMock<PersonService>(),
@@ -46,6 +62,8 @@ describe('PersonenkontextUc', () => {
         sut = module.get(PersonenkontextUc);
         personServiceMock = module.get(PersonService);
         personenkontextServiceMock = module.get(PersonenkontextService);
+        rolleRepoMock = module.get(RolleRepo);
+        organisationRepoMock = module.get(OrganisationRepo);
     });
 
     afterAll(async () => {
@@ -203,6 +221,43 @@ describe('PersonenkontextUc', () => {
                     fail('Expected SchulConnexError');
                 }
                 expect(result.code).toBe(404);
+            });
+        });
+    });
+
+    describe('hatSystemRecht', () => {
+        describe('when verifiying whether person has SystemRecht', () => {
+            it('should return a PersonendatensatzDto', async () => {
+                const personenkontexte: Personenkontext<true>[] = [
+                    {
+                        id: '1',
+                        personId: '1',
+                        rolleId: '1',
+                        organisationId: '1',
+                        createdAt: faker.date.past(),
+                        updatedAt: faker.date.recent(),
+                    },
+                ];
+                const rolle: RolleAggregate<true> = RolleAggregate.construct(
+                    '1',
+                    faker.date.past(),
+                    faker.date.recent(),
+                    'Rolle1',
+                    '1',
+                    RollenArt.LEHR,
+                    [],
+                    [],
+                );
+
+                rolleRepoMock.findById.mockResolvedValue(rolle);
+                const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+                organisationRepoMock.findById.mockResolvedValue(organisation);
+                personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
+                const result: OrganisationDo<true>[] = await sut.hatSystemRecht(
+                    '1',
+                    RollenSystemRecht.ROLLEN_VERWALTEN,
+                );
+                expect(result).toBeTruthy();
             });
         });
     });

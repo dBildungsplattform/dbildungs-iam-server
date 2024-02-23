@@ -54,7 +54,7 @@ export class RolleRepo {
         const rolle: Option<RolleEntity> = await this.em.findOne(
             this.entityName,
             { id },
-            { populate: ['merkmale'] as const },
+            { populate: ['merkmale', 'systemRechte'] as const },
         );
 
         return rolle && mapEntityToAggregate(rolle);

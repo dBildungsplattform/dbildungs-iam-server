@@ -10,11 +10,15 @@ import { PersonenkontextUc } from '../personenkontext/api/personenkontext.uc.js'
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { UsernameGeneratorService } from './domain/username-generator.service.js';
 import { PersonRepository } from './persistence/person.repository.js';
+import { RolleModule } from '../rolle/rolle.module.js';
+import { OrganisationModule } from '../organisation/organisation.module.js';
 
 @Module({
     imports: [
         PersonModule,
+        RolleModule,
         PersonenKontextModule,
+        OrganisationModule,
         KeycloakAdministrationModule,
         LoggerModule.register(PersonApiModule.name),
     ],

@@ -44,6 +44,9 @@ import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.p
 import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
+import { PersonenkontextSystemrechtResponse } from './personenkontext-systemrecht.response.js';
+import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
+import { HatSystemrechtBodyParams } from './hat-systemrecht.body.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontexte')
@@ -120,6 +123,17 @@ export class PersonenkontextController {
             offset: result.offset,
             limit: result.limit,
         });
+
+        return response;
+    }
+
+    @Get(':personId/hatSystemrecht')
+    public async hatSystemRecht(
+        @Param() personByIdParams: PersonByIdParams,
+        @Body() hatSystemrechtBodyParams: HatSystemrechtBodyParams,
+    ): Promise<PersonenkontextSystemrechtResponse> {
+        await this.personenkontextUc.hatSystemRecht(personByIdParams.personId, hatSystemrechtBodyParams.systemRecht);
+        const response: PersonenkontextSystemrechtResponse = new PersonenkontextSystemrechtResponse();
 
         return response;
     }
