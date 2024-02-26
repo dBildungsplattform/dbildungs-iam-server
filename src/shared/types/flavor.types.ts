@@ -34,12 +34,3 @@ export type Flavor<T, F> = T & { [type]?: F };
  * const personId: PersonID = "test-id" as PersonID;
  */
 export type Brand<T, B> = T & { [type]: B };
-
-declare const personSymbol: unique symbol;
-export type PersonID = Flavor<string, typeof personSymbol>;
-
-declare const organisationSymbol: unique symbol;
-export type OrganisationID = Flavor<string, typeof organisationSymbol>;
-
-declare const rolleSymbol: unique symbol;
-export type RolleID = Flavor<string, typeof rolleSymbol>;

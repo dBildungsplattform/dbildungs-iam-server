@@ -2,6 +2,10 @@
 
 This document explains the advantages of flavored/branded types and how to use them.
 
+General Infos:
+- Define shared ID-types in [src/shared/types/aggregate-ids.types.ts](/src/shared/types/aggregate-ids.types.ts)
+- Use unique symbols for ID-types
+
 ## What are flavored types
 
 Flavored types allow differentiating between equal types.
