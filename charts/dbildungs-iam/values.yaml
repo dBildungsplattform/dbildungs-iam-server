@@ -6,13 +6,9 @@ dbildungsIamRedisMemMax: 4G
 dbildungsIamRedisCpuRequest: 200m
 dbildungsIamRedisMemRequest: 200Mi
 dbildungsIamReplications: 1
-environment: prod
 backendHostname: ""
 keycloakHostname: ""
 imagePullPolicy: "Always"
-seeding:
-  configmap: spsh-seeding-data-configmap
-  database: dev
 # Configuration of necessary secrets
 # Name of the secrets to inject
 configmap:
@@ -29,7 +25,6 @@ replicaCount: 1
 image:
   repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
   tag: ""
-database:
   pullPolicy: Always
 
 restartPolicy: Always
@@ -55,9 +50,6 @@ environment: prod
 
 secrets:
   name: dbildungs-iam-secrets
-
-configmap:
-  name: dbildungs-iam-configmap
 
 service:
   name: dbiam-backend

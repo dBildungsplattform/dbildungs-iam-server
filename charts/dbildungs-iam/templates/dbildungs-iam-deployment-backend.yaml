@@ -23,14 +23,10 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
           securityContext:
-            {{- toYaml $.Values.initcontainerSecurityContext | nindent 12 }}
-          {{- if eq .name "db-init" }}
-          command: ["node", "dist/src/console/main.js", "db", "init"]
-          {{- else if eq .name "db-seeding" }}
-          command: ["node", "dist/src/console/main.js", "db", "seed", "dev", ""]
-          {{- end }}
+            allowPrivilegeEscalation: false
+          command: [ "node", "dist/src/console/main.js", "db", "init" ]
           env:
-            {{- include "dbiam-backend-envs" $ | nindent 12 }}
+            {{- include "dbiam-backend-envs" . | indent  12}}
           volumeMounts:
             - mountPath: /app/config/config.json
               subPath: config-json
@@ -79,9 +75,10 @@ spec:
               memory: {{.Values.dbildungsIamMemMax}}
       {{end}}
       containers:
-        - name: dbildungs-iam-backend
+        - name: {{ .Values.backend.commonLabels.name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
+          {{- if .Values.enabledcontainerSecurityContext }}
           securityContext:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           {{- end }}
