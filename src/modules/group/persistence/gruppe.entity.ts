@@ -10,6 +10,7 @@ import {
 } from '../domain/gruppe.enums.js';
 import { Jahrgangsstufe, SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
 import { Referenzgruppen } from '../domain/referenzgruppen.js';
+import { Laufzeit } from './laufzeit.js';
 
 @Entity({ tableName: 'gruppe' })
 export class GruppeEntity extends TimestampedEntity {
@@ -59,8 +60,8 @@ export class GruppeEntity extends TimestampedEntity {
     @Embedded(() => Referenzgruppen, { nullable: true, array: true })
     public referenzgruppen?: Referenzgruppen[];
 
-    // @Property({ nullable: false, type: Laufzeit })
-    // public laufzeit!: Laufzeit;
+    @Embedded(() => Laufzeit, { nullable: false })
+    public laufzeit?: Laufzeit;
 
     @Property({ nullable: false, default: SichtfreigabeType.NEIN })
     public sichtfreigabe!: SichtfreigabeType;

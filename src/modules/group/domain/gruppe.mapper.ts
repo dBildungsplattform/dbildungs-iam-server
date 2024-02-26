@@ -20,7 +20,7 @@ export class GruppeMapper {
         gruppeEntity.jahrgangsstufen = gruppe.getJahrgangsstufen();
         gruppeEntity.faecher = gruppe.getFaecher();
         gruppeEntity.referenzgruppen = gruppe.getReferenzgruppen();
-        // gruppeEntity.laufzeit = gruppe.getLaufzeit();
+        gruppeEntity.laufzeit = gruppe.getLaufzeit()
         return gruppeEntity;
     }
 
@@ -41,7 +41,7 @@ export class GruppeMapper {
             entity.jahrgangsstufen,
             entity.faecher,
             entity.referenzgruppen,
-            // gruppeEntity.laufzeit,
+            entity.laufzeit,
         );
     }
 }

@@ -11,6 +11,7 @@ import {
 import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enums.js';
 import { Type } from 'class-transformer';
 import { Referenzgruppen } from '../domain/referenzgruppen.js';
+import { Laufzeit } from '../persistence/laufzeit.js';
 export class CreateGroupBodyParams {
     @IsString()
     @ApiProperty({ required: false })
@@ -69,8 +70,8 @@ export class CreateGroupBodyParams {
     @ApiProperty({ type: Referenzgruppen, required: false, isArray: true })
     public readonly referenzgruppen?: Referenzgruppen[];
 
-    // @ValidateNested()
-    // @Type(() => Laufzeit)
-    // @ApiProperty({ type: Laufzeit, required: true })
-    // public readonly laufzeit!: Laufzeit;
+    @ValidateNested()
+    @Type(() => Laufzeit)
+    @ApiProperty({ type: Laufzeit, required: false })
+    public readonly laufzeit!: Laufzeit;
 }

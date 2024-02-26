@@ -9,6 +9,7 @@ import {
     Gruppendifferenzierung,
     Gruppenoption,
 } from './gruppe.enums.js';
+import { Laufzeit } from '../persistence/laufzeit.js';
 export class Gruppe<WasPersisted extends boolean> {
     public static readonly CREATE_GROUP_MANDANT_UUID: string = '00000000-0000-0000-0000-000000000000';
 
@@ -44,7 +45,7 @@ export class Gruppe<WasPersisted extends boolean> {
 
     private referenzgruppen?: Referenzgruppen[];
 
-    // private laufzeit: Laufzeit;
+    private laufzeit?: Laufzeit;
 
     public getId(): string {
         return this.id ?? '';
@@ -106,9 +107,9 @@ export class Gruppe<WasPersisted extends boolean> {
         return this.referenzgruppen ?? [];
     }
 
-    // public getLaufzeit(): Laufzeit {
-    //     return this.laufzeit;
-    // }
+    public getLaufzeit(): Laufzeit | undefined {
+        return this.laufzeit ?? undefined;
+    }
 
     private constructor(
         id: Persisted<string, WasPersisted>,
@@ -126,6 +127,7 @@ export class Gruppe<WasPersisted extends boolean> {
         jahrgangsstufen?: Jahrgangsstufe[],
         faecher?: Faecherkanon[],
         referenzgruppen?: Referenzgruppen[],
+        laufzeit?: Laufzeit,
     ) {
         this.id = id;
         this.mandant = mandant;
@@ -142,7 +144,7 @@ export class Gruppe<WasPersisted extends boolean> {
         this.jahrgangsstufen = jahrgangsstufen;
         this.faecher = faecher;
         this.referenzgruppen = referenzgruppen;
-        // this.laufzeit = createGroupBodyParams.laufzeit;
+        this.laufzeit = laufzeit;
     }
 
     public static construct<WasPersisted extends boolean = false>(
@@ -161,6 +163,7 @@ export class Gruppe<WasPersisted extends boolean> {
         jahrgangsstufen?: Jahrgangsstufe[],
         faecher?: Faecherkanon[],
         referenzgruppen?: Referenzgruppen[],
+        laufzeit?: Laufzeit,
     ): Gruppe<WasPersisted> {
         return new Gruppe(
             id,
@@ -178,6 +181,7 @@ export class Gruppe<WasPersisted extends boolean> {
             jahrgangsstufen,
             faecher,
             referenzgruppen,
+            laufzeit,
         );
     }
 
@@ -198,6 +202,7 @@ export class Gruppe<WasPersisted extends boolean> {
             createGroupBodyParams.jahrgangsstufen,
             createGroupBodyParams.faecher,
             createGroupBodyParams.referenzgruppen,
+            createGroupBodyParams.laufzeit,
         );
     }
 }

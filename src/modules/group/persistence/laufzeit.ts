@@ -1,18 +1,35 @@
-import { DateTimeType } from '@mikro-orm/core';
+import { Embeddable, Property } from '@mikro-orm/core';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsDate, IsOptional, IsString } from 'class-validator';
 
+@Embeddable()
 export class Laufzeit {
-    @ApiProperty({ type: DateTimeType, required: false })
-    public von?: Date;
+    @IsDate()
+    @IsOptional()
+    @Type(() => Date)
+    @ApiProperty({ required: false, nullable: true })
+    @Property({ nullable: true })
+    public readonly von?: Date;
 
-    // @ApiProperty({ required: false })
-    // public vonLernperiode!: string;
+    @IsString()
+    @IsOptional()
+    @ApiProperty({ required: false, nullable: true })
+    @Property({ nullable: true })
+    public readonly vonLernperiode?: string;
 
-    @ApiProperty({ type: DateTimeType, required: false })
-    public bis?: Date;
+    @IsDate()
+    @IsOptional()
+    @Type(() => Date)
+    @ApiProperty({ required: false, nullable: true })
+    @Property({ nullable: true })
+    public readonly bis?: Date;
 
-    // @ApiProperty({ required: false })
-    // public bisLernperiode!: string;
+    @IsString()
+    @IsOptional()
+    @ApiProperty({ required: false, nullable: true })
+    @Property({ nullable: true })
+    public readonly bisLernperiode?: string;
 
     public constructor(props: Readonly<Laufzeit>) {
         Object.assign(this, props);

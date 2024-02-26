@@ -11,7 +11,6 @@ export class Referenzgruppen {
     @Property({ nullable: false })
     public id!: string;
 
-    // Gruppenrollen aus der  Gruppenzugehörigkeit von Personen.
     @IsArray()
     @ApiProperty({ enum: Gruppenrollen, nullable: true, isArray: true })
     @Enum({ items: () => Gruppenrollen, nullable: true, array: true })
