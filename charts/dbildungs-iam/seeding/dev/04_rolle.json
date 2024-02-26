@@ -4,9 +4,16 @@
         {
             "id": "cef7240e-fd08-4961-927e-c9ea0c5a37c5",
             "administeredBySchulstrukturknoten": "1",
+            "name": "Sysadmin",
+            "rollenart": "SYSADMIN",
+            "merkmale": []
+        },
+        {
+            "id": "cef7240e-fd08-4961-927e-c9ea0c5a37c5",
+            "administeredBySchulstrukturknoten": "1",
             "name": "Rolle 1",
             "rollenart": "LERN",
-            "merkmale": []
+            "merkmale": ["BEFRISTUNG_PFLICHT"]
         },
         {
             "id": "6a69fadb-af89-42ed-ae12-28d164c0f9b7",

@@ -1,7 +1,7 @@
 import { CommandRunner, SubCommand } from 'nest-commander';
 import fs from 'fs';
 import { ClassLogger } from '../../core/logging/class-logger.js';
-import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
+import { MikroORM, RequiredEntityData } from '@mikro-orm/core';
 import { Inject } from '@nestjs/common';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
@@ -17,10 +17,10 @@ import { PersonEntity } from '../../modules/person/persistence/person.entity.js'
 import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';
 import { UserDo } from '../../modules/keycloak-administration/domain/user.do.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
-import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rolle/repo/rolle.repo.js';
 import { mapAggregateToData as mapServiceProviderAggregateToData } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
+import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
 
 export interface SeedFile {
     entityName: string;
@@ -41,20 +41,18 @@ export interface Reference {
 
 @SubCommand({ name: 'seed', description: 'creates seed data in the database' })
 export class DbSeedConsole extends CommandRunner {
-    private forkedEm: EntityManager;
-
     private createdKeycloakUsers: [string, string][] = [];
 
     public constructor(
-        orm: MikroORM,
+        private orm: MikroORM,
         private readonly logger: ClassLogger,
         private readonly dbSeedService: DbSeedService,
         private readonly usernameGenerator: UsernameGeneratorService,
         private readonly keycloakUserService: KeycloakUserService,
+        private readonly rolleSeedingRepo: RolleSeedingRepo,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {
         super();
-        this.forkedEm = orm.em.fork();
     }
 
     private getDirectory(_passedParams: string[]): string {
@@ -84,7 +82,7 @@ export class DbSeedConsole extends CommandRunner {
             for (const entityFileName of entityFileNames) {
                 await this.processEntityFile(entityFileName, directory);
             }
-            await this.forkedEm.flush();
+            await this.orm.em.flush();
             this.logger.info('Created seed data successfully.');
         } catch (err) {
             this.logger.error('Seed data could not be created!');
@@ -109,7 +107,7 @@ export class DbSeedConsole extends CommandRunner {
                 await this.handlePerson(fileContentAsStr, seedFile.entityName);
                 break;
             case 'Rolle':
-                this.handleRolle(this.dbSeedService.readRolle(fileContentAsStr), seedFile.entityName);
+                await this.handleRolle(this.dbSeedService.readRolle(fileContentAsStr), seedFile.entityName);
                 break;
             case 'ServiceProvider':
                 this.handleServiceProvider(
@@ -125,12 +123,12 @@ export class DbSeedConsole extends CommandRunner {
     private handleDataProvider(entities: Entity[], entityName: string): void {
         for (const entity of entities) {
             const mappedEntity: DataProviderEntity = this.mapper.map(entity, DataProviderFile, DataProviderEntity);
-            this.forkedEm.persist(mappedEntity);
+            this.orm.em.persist(mappedEntity);
         }
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }
 
-    private handleRolle(entities: Rolle<true>[], entityName: string): void {
+    /*   private handleRolleOld(entities: Rolle<true>[], entityName: string): void {
         for (const entity of entities) {
             const rolle: RequiredEntityData<RolleEntity> = this.forkedEm.create(
                 RolleEntity,
@@ -139,15 +137,22 @@ export class DbSeedConsole extends CommandRunner {
             this.forkedEm.persist(rolle);
         }
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
+    }*/
+
+    private async handleRolle(entities: Rolle<true>[], entityName: string): Promise<void> {
+        for (const entity of entities) {
+            await this.rolleSeedingRepo.save(entity);
+        }
+        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }
 
     private handleServiceProvider(aggregates: ServiceProvider<true>[], aggregateName: string): void {
         for (const aggregate of aggregates) {
-            const serviceProvider: RequiredEntityData<ServiceProviderEntity> = this.forkedEm.create(
+            const serviceProvider: RequiredEntityData<ServiceProviderEntity> = this.orm.em.create(
                 ServiceProviderEntity,
                 mapServiceProviderAggregateToData(aggregate),
             );
-            this.forkedEm.persist(serviceProvider);
+            this.orm.em.persist(serviceProvider);
         }
         this.logger.info(`Insert ${aggregates.length} entities of type ${aggregateName}`);
     }
@@ -155,7 +160,7 @@ export class DbSeedConsole extends CommandRunner {
     private handleOrganisation(entities: Entity[], entityName: string): void {
         for (const entity of entities) {
             const mappedEntity: OrganisationEntity = this.mapper.map(entity, OrganisationFile, OrganisationEntity);
-            this.forkedEm.persist(mappedEntity);
+            this.orm.em.persist(mappedEntity);
         }
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }
@@ -165,7 +170,7 @@ export class DbSeedConsole extends CommandRunner {
         for (const entity of entities) {
             await this.createPerson(entity);
             const mappedEntity: PersonEntity = this.mapper.map(entity, PersonFile, PersonEntity);
-            this.forkedEm.persist(mappedEntity);
+            this.orm.em.persist(mappedEntity);
         }
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }

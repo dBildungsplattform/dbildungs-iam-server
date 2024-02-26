@@ -25,7 +25,10 @@ export function mapAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<Ro
     };
 }
 
-function mapEntityToAggregate(entity: RolleEntity): Rolle<boolean> {
+/**
+ * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
+ */
+export function mapEntityToAggregate(entity: RolleEntity): Rolle<boolean> {
     const merkmale: RollenMerkmal[] = entity.merkmale.map((merkmalEntity: RolleMerkmalEntity) => merkmalEntity.merkmal);
 
     return Rolle.construct(
@@ -40,7 +43,7 @@ function mapEntityToAggregate(entity: RolleEntity): Rolle<boolean> {
 }
 @Injectable()
 export class RolleRepo {
-    public constructor(private readonly em: EntityManager) {}
+    public constructor(protected readonly em: EntityManager) {}
 
     public get entityName(): EntityName<RolleEntity> {
         return RolleEntity;
