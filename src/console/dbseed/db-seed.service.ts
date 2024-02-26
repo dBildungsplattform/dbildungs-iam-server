@@ -8,6 +8,8 @@ import { ConstructorCall, EntityFile } from './db-seed.console.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderFile } from './file/service-provider-file.js';
 import { plainToInstance } from 'class-transformer';
+import { PersonenkontextFile } from './file/personenkontext-file.js';
+import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 
 @Injectable()
 export class DbSeedService {
@@ -20,6 +22,8 @@ export class DbSeedService {
     private rolleMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
 
     private serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
+
+    private personenkontextMap: Map<string, Personenkontext<true>> = new Map();
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
@@ -103,6 +107,27 @@ export class DbSeedService {
         }
 
         return serviceProviders;
+    }
+
+    public readPersonenkontext(fileContentAsStr: string): Personenkontext<true>[] {
+        const personenkontextFile: EntityFile<PersonenkontextFile> = JSON.parse(
+            fileContentAsStr,
+        ) as EntityFile<PersonenkontextFile>;
+        const entities: PersonenkontextFile[] = plainToInstance(PersonenkontextFile, personenkontextFile.entities);
+        const personenkontexte: Personenkontext<true>[] = entities.map((data: PersonenkontextFile) =>
+            Personenkontext.construct(
+                data.id,
+                new Date(),
+                new Date(),
+                data.personId,
+                data.organisationId,
+                data.rolleId,
+            ),
+        );
+        for (const personenkontext of personenkontexte) {
+            this.personenkontextMap.set(personenkontext.id, personenkontext);
+        }
+        return personenkontexte;
     }
 
     /* Setting as RolleEntity is required, eg. RolleFile would not work, persisting would fail due to saving one RolleEntity and one RolleFile

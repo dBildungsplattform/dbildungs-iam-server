@@ -21,6 +21,9 @@ import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rol
 import { mapAggregateToData as mapServiceProviderAggregateToData } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
+import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
+import { PersonenkontextEntity } from '../../modules/personenkontext/persistence/personenkontext.entity.js';
+import { mapAggregateToData } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 
 export interface SeedFile {
     entityName: string;
@@ -117,6 +120,12 @@ export class DbSeedConsole extends CommandRunner {
                     seedFile.entityName,
                 );
                 break;
+            case 'Personenkontext':
+                this.handlePersonenkontext(
+                    this.dbSeedService.readPersonenkontext(fileContentAsStr),
+                    seedFile.entityName,
+                );
+                break;
             default:
                 throw new Error(`Unsupported EntityName / EntityType: ${seedFile.entityName}`);
         }
@@ -148,6 +157,17 @@ export class DbSeedConsole extends CommandRunner {
                 mapServiceProviderAggregateToData(aggregate),
             );
             this.forkedEm.persist(serviceProvider);
+        }
+        this.logger.info(`Insert ${aggregates.length} entities of type ${aggregateName}`);
+    }
+
+    private handlePersonenkontext(aggregates: Personenkontext<true>[], aggregateName: string): void {
+        for (const aggregate of aggregates) {
+            const personenKontext: RequiredEntityData<PersonenkontextEntity> = this.forkedEm.create(
+                PersonenkontextEntity,
+                mapAggregateToData(aggregate),
+            );
+            this.forkedEm.persist(personenKontext);
         }
         this.logger.info(`Insert ${aggregates.length} entities of type ${aggregateName}`);
     }
