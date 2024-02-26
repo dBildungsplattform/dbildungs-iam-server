@@ -37,8 +37,6 @@ import { PersonenkontextResponse } from '../../personenkontext/api/personenkonte
 import { PersonenkontextdatensatzResponse } from '../../personenkontext/api/personenkontextdatensatz.response.js';
 import { UpdatePersonenkontextDto } from '../../personenkontext/api/update-personenkontext.dto.js';
 import { UpdatePersonenkontextBodyParams } from '../../personenkontext/api/update-personenkontext.body.params.js';
-import { UpdatePersonBodyParams } from './update-person.body.params.js';
-import { UpdatePersonDto } from './update-person.dto.js';
 
 describe('PersonApiMapperProfile', () => {
     let module: TestingModule;
@@ -215,25 +213,6 @@ describe('PersonApiMapperProfile', () => {
             expect(() =>
                 sut.map({} as UpdatePersonenkontextDto, UpdatePersonenkontextDto, PersonenkontextDo),
             ).not.toThrow(MappingError);
-        });
-
-        it('should map UpdatePersonBodyParams to UpdatePersonDto', () => {
-            const params: UpdatePersonBodyParams = {
-                stammorganisation: faker.string.uuid(),
-                referrer: 'referrer',
-                name: {
-                    vorname: 'john',
-                    familienname: 'doe',
-                },
-                geburt: {},
-                lokalisierung: 'de-DE',
-                revision: '1',
-            };
-            expect(() => sut.map(params, UpdatePersonBodyParams, UpdatePersonDto)).not.toThrow(MappingError);
-        });
-
-        it('should map UpdatePersonDto to PersonDo', () => {
-            expect(() => sut.map({} as UpdatePersonDto, UpdatePersonDto, PersonDo)).not.toThrow(MappingError);
         });
     });
 });
