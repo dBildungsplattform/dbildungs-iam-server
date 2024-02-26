@@ -7,12 +7,7 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import {
-    ApiOkResponsePaginated,
-    DisablePagingInterceptor,
-    PagedResponse,
-    RawPagedResponse,
-} from '../../../shared/paging/index.js';
+import { ApiOkResponsePaginated, DisablePagingInterceptor, RawPagedResponse } from '../../../shared/paging/index.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { Person } from '../domain/person.js';
@@ -50,7 +45,7 @@ export class PersonFrontendController {
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
 
-        const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse({
+        const response: RawPagedResponse<PersonendatensatzResponse> = new RawPagedResponse({
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? total,
             total: total,
