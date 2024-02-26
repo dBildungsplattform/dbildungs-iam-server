@@ -154,7 +154,7 @@ describe('dbiam Personenkontext API', () => {
         });
 
         it('should return error if references do not exist', async () => {
-            const personenkontext: Personenkontext<true> = await personenkontextRepo.save(createPersonenkontext(false));
+            const personenkontext: Personenkontext<false> = createPersonenkontext(false);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/dbiam/personenkontext')
@@ -164,7 +164,7 @@ describe('dbiam Personenkontext API', () => {
                     rolleId: personenkontext.rolleId,
                 });
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(404);
         });
     });
 });
