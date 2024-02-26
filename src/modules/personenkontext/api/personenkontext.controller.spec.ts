@@ -162,7 +162,10 @@ describe('PersonenkontextController', () => {
 
                 personenkontextUcMock.updatePersonenkontext.mockResolvedValue(mockResonse);
 
-                const response: PersonendatensatzResponseAutomapper = await sut.updatePersonenkontextWithId(idParams, bodyParams);
+                const response: PersonendatensatzResponseAutomapper = await sut.updatePersonenkontextWithId(
+                    idParams,
+                    bodyParams,
+                );
 
                 expect(response).toBeInstanceOf(PersonendatensatzResponseAutomapper);
                 expect(personenkontextUcMock.updatePersonenkontext).toHaveBeenCalledTimes(1);

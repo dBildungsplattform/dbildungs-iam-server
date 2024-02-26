@@ -80,7 +80,6 @@ describe('PersonController', () => {
     describe('createPerson', () => {
         describe('when creating a person is successful', () => {
             it('should return PersonendatensatzResponse', async () => {
-
                 const firstName: string = faker.person.firstName();
                 const lastName: string = faker.person.lastName();
 
@@ -105,14 +104,11 @@ describe('PersonController', () => {
 
                 personRepositoryMock.create.mockResolvedValue(person);
 
-                await expect(personController.createPerson(params)).resolves.toBeInstanceOf(
-                    PersonendatensatzResponse,
-                );
+                await expect(personController.createPerson(params)).resolves.toBeInstanceOf(PersonendatensatzResponse);
                 expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
                 const result: PersonendatensatzResponse = await personController.createPerson(params);
                 expect(result.person.name.vorname).toEqual(firstName);
                 expect(result.person.name.familienname).toEqual(lastName);
-
             });
         });
 
@@ -360,7 +356,6 @@ describe('PersonController', () => {
             );
 
             it('should throw HttpException', async () => {
-
                 personRepositoryMock.findById.mockResolvedValue(person);
                 personRepositoryMock.saveUser.mockResolvedValue(new KeycloakClientError(''));
                 await expect(personController.resetPasswordByPersonId(params)).rejects.toThrow(HttpException);
@@ -386,7 +381,6 @@ describe('PersonController', () => {
             );
 
             it('should throw HttpException', async () => {
-
                 personRepositoryMock.findById.mockResolvedValue(undefined);
                 personRepositoryMock.saveUser.mockResolvedValue(person);
                 await expect(personController.resetPasswordByPersonId(params)).rejects.toThrow(HttpException);
@@ -450,7 +444,6 @@ describe('PersonController', () => {
             );
 
             it('should throw HttpException', async () => {
-
                 personRepositoryMock.findById.mockResolvedValue(undefined);
                 personRepositoryMock.update.mockResolvedValue(person);
 
@@ -475,7 +468,6 @@ describe('PersonController', () => {
             person.revision = '10';
 
             it('should throw HttpException', async () => {
-
                 personRepositoryMock.findById.mockResolvedValue(person);
                 personRepositoryMock.update.mockResolvedValue(person);
 
