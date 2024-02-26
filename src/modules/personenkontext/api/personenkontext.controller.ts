@@ -47,6 +47,7 @@ import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 import { PersonenkontextSystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 import { HatSystemrechtBodyParams } from './hat-systemrecht.body.params.js';
+import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontexte')
@@ -132,9 +133,13 @@ export class PersonenkontextController {
         @Param() personByIdParams: PersonByIdParams,
         @Body() hatSystemrechtBodyParams: HatSystemrechtBodyParams,
     ): Promise<PersonenkontextSystemrechtResponse> {
-        await this.personenkontextUc.hatSystemRecht(personByIdParams.personId, hatSystemrechtBodyParams.systemRecht);
+        const organisations: OrganisationDo<true>[] = await this.personenkontextUc.hatSystemRecht(
+            personByIdParams.personId,
+            hatSystemrechtBodyParams.systemRecht,
+        );
         const response: PersonenkontextSystemrechtResponse = new PersonenkontextSystemrechtResponse();
-
+        response.rechtName = hatSystemrechtBodyParams.systemRecht.toString();
+        response.ssk = organisations;
         return response;
     }
 

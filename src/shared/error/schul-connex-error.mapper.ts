@@ -8,6 +8,7 @@ import { MismatchedRevisionError } from './mismatched-revision.error.js';
 import { PersonAlreadyExistsError } from './person-already-exists.error.js';
 import { SchulConnexError } from './schul-connex.error.js';
 import { EntityCouldNotBeDeleted } from './entity-could-not-be-deleted.error.js';
+import { AddSystemrechtError } from './add-systemrecht.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -73,6 +74,15 @@ export class SchulConnexErrorMapper {
                 subcode: '00',
                 titel: 'Fehlerhafte Anfrage',
                 beschreibung: 'Die Anfrage ist fehlerhaft: Die Person existiert bereits.',
+            }),
+        ],
+        [
+            AddSystemrechtError.name,
+            new SchulConnexError({
+                code: 500,
+                subcode: '00',
+                titel: 'Fehlerhafte Anfrage',
+                beschreibung: 'Systemrecht konnte Rolle nicht hinzugefügt werden.',
             }),
         ],
     ]);

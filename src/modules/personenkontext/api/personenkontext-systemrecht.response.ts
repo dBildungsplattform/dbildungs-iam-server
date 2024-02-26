@@ -9,5 +9,5 @@ export class PersonenkontextSystemrechtResponse {
 
     @AutoMap(() => [OrganisationDo<true>])
     @ApiProperty({ type: [OrganisationDo<true>] })
-    public ssks!: OrganisationDo<true>[];
+    public ssk!: OrganisationDo<true>[];
 }
