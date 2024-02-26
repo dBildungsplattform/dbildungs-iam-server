@@ -20,6 +20,7 @@ import { KeycloakInstanceConfig } from '../modules/keycloak-administration/keycl
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 import { AuthenticationApiModule } from '../modules/authentication/authentication-api.module.js';
 import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
+import { PersonenKontextApiModule } from '../modules/personenkontext/personenkontext-api.module.js';
 
 @Module({
     imports: [
@@ -71,6 +72,7 @@ import { ServiceProviderApiModule } from '../modules/service-provider/service-pr
         HealthModule,
         RolleApiModule,
         ServiceProviderApiModule,
+        PersonenKontextApiModule,
         ErrorModule,
         KeycloakConfigModule,
     ],
