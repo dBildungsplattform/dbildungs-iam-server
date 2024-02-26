@@ -1,8 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
-import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
-import { UsernameGeneratorService } from './username-generator.service.js';
 
 type State = {
     passwordReset: boolean;
@@ -210,41 +208,6 @@ export class Person<WasPersisted extends boolean> {
         this.vertrauensstufe = vertrauensstufe;
         this.auskunftssperre = auskunftssperre;
         this.revision = newRevision;
-    }
-
-    // Only for now until ticket 403
-    public async saveUser(
-        kcUserService: KeycloakUserService,
-        usernameGenerator: UsernameGeneratorService,
-    ): Promise<void> {
-        if (!this.needsSaving) {
-            return;
-        }
-
-        if (!this.keycloakUserId) {
-            this.username = await usernameGenerator.generateUsername(this.vorname, this.familienname);
-            const userDo: UserDo<false> = {
-                username: this.username,
-                id: undefined,
-                createdDate: undefined,
-            } satisfies UserDo<false>;
-            const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
-            if (!creationResult.ok) {
-                throw creationResult.error;
-            }
-            this.keycloakUserId = creationResult.value;
-        }
-        const setPasswordResult: Result<string, DomainError> = await kcUserService.resetPassword(
-            this.keycloakUserId,
-            this.newPassword,
-        );
-        if (!setPasswordResult.ok) {
-            if (this.keycloakUserId) {
-                await kcUserService.delete(this.keycloakUserId);
-                this.keycloakUserId = undefined;
-            }
-            throw setPasswordResult.error;
-        }
     }
 
     public resetPassword(): void {

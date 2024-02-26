@@ -66,7 +66,6 @@ export class PersonController {
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
-    // --403 DONE--
     @Post()
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({ description: 'The person was successfully created.', type: PersonendatensatzResponse })
@@ -111,7 +110,6 @@ export class PersonController {
         return new PersonendatensatzResponse(result, true);
     }
 
-    // --403 DONE--
     @Get(':personId')
     @ApiOkResponse({ description: 'The person was successfully returned.', type: PersonendatensatzResponse })
     @ApiBadRequestResponse({ description: 'Person ID is required' })
@@ -132,7 +130,6 @@ export class PersonController {
         return new PersonendatensatzResponse(person, false);
     }
 
-    // -- 403 NOT IN SCOPE ?
     @Post(':personId/personenkontexte')
     @HttpCode(200)
     @ApiOkResponse({ description: 'The personenkontext was successfully created.' })
@@ -161,7 +158,6 @@ export class PersonController {
         return this.mapper.map(result, CreatedPersonenkontextDto, PersonenkontextResponse);
     }
 
-    // -- 403 NOT IN SCOPE ?
     @Get(':personId/personenkontexte')
     @ApiOkResponsePaginated(PersonenkontextResponse, {
         description: 'The personenkontexte were successfully pulled.',
@@ -200,7 +196,6 @@ export class PersonController {
         });
     }
 
-    // --403 DONE--
     @Get()
     @ApiOkResponse({
         description:
@@ -235,7 +230,6 @@ export class PersonController {
         return response;
     }
 
-    // --403 DONE--
     @Put(':personId')
     @ApiOkResponse({
         description: 'The person was successfully updated.',
@@ -258,7 +252,6 @@ export class PersonController {
                 ),
             );
         }
-
         const updateResult: void | DomainError = person.update(
             body.revision,
             body.name.familienname,
@@ -280,14 +273,13 @@ export class PersonController {
             body.vertrauensstufe,
             body.auskunftssperre,
         );
-
         if (updateResult instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updateResult),
             );
         }
-
         await this.personRepository.update(person);
+
         return new PersonendatensatzResponse(person, false);
     }
 

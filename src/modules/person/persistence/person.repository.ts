@@ -29,7 +29,7 @@ export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<
         lokalisierung: person.lokalisierung,
         vertrauensstufe: person.vertrauensstufe,
         auskunftssperre: person.auskunftssperre,
-        dataProvider: undefined, //TODO: CLARIFY!
+        dataProvider: undefined,
         revision: person.revision,
     };
 }
