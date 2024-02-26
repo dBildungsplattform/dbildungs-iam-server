@@ -8,7 +8,7 @@ export class RolleSystemrechtEntity extends BaseEntity {
     public rolle!: Rel<RolleEntity>;
 
     @Enum({ primary: true, items: () => RollenSystemRecht })
-    public systemRecht!: RollenSystemRecht;
+    public systemrecht!: RollenSystemRecht;
 
     public [PrimaryKeyProp]?: ['rolle', 'systemrecht'];
 }

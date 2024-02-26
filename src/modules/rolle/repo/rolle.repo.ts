@@ -5,7 +5,7 @@ import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
-import { RolleSystemRechtEntity } from '../entity/rolle-system-recht.entity.js';
+import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -15,6 +15,12 @@ export function mapAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<Ro
         rolle: rolle.id,
         merkmal,
     }));
+    const systemrechte: EntityData<RolleSystemrechtEntity>[] = rolle.systemrechte.map(
+        (systemrecht: RollenSystemRecht) => ({
+            rolle: rolle.id,
+            systemrecht,
+        }),
+    );
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
         id: rolle.id,
@@ -22,6 +28,7 @@ export function mapAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<Ro
         administeredBySchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
         rollenart: rolle.rollenart,
         merkmale,
+        systemrechte,
     };
 }
 
@@ -30,8 +37,8 @@ export function mapAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<Ro
  */
 export function mapEntityToAggregate(entity: RolleEntity): Rolle<boolean> {
     const merkmale: RollenMerkmal[] = entity.merkmale.map((merkmalEntity: RolleMerkmalEntity) => merkmalEntity.merkmal);
-    const systemrechte: RollenSystemRecht[] = entity.systemRechte.map(
-        (systemRechtEntity: RolleSystemRechtEntity) => systemRechtEntity.systemRecht,
+    const systemrechte: RollenSystemRecht[] = entity.systemrechte.map(
+        (systemRechtEntity: RolleSystemrechtEntity) => systemRechtEntity.systemrecht,
     );
 
     return Rolle.construct(
@@ -57,7 +64,7 @@ export class RolleRepo {
         const rolle: Option<RolleEntity> = await this.em.findOne(
             this.entityName,
             { id },
-            { populate: ['merkmale', 'systemRechte'] as const },
+            { populate: ['merkmale', 'systemrechte'] as const },
         );
 
         return rolle && mapEntityToAggregate(rolle);
@@ -65,7 +72,7 @@ export class RolleRepo {
 
     public async find(): Promise<Rolle<true>[]> {
         const rollen: RolleEntity[] = await this.em.findAll(RolleEntity, {
-            populate: ['merkmale', 'systemRechte'] as const,
+            populate: ['merkmale', 'systemrechte'] as const,
         });
 
         return rollen.map(mapEntityToAggregate);
@@ -88,8 +95,10 @@ export class RolleRepo {
     }
 
     private async update(rolle: Rolle<true>): Promise<Rolle<true>> {
-        const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, rolle.id);
-        rolleEntity.assign(mapAggregateToData(rolle), { merge: true });
+        const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, rolle.id, {
+            populate: ['merkmale', 'systemrechte'] as const,
+        });
+        rolleEntity.assign(mapAggregateToData(rolle), { updateNestedEntities: true });
 
         await this.em.persistAndFlush(rolleEntity);
 

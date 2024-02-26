@@ -2,7 +2,7 @@ import { Cascade, Collection, Entity, Enum, OneToMany, Property } from '@mikro-o
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { RollenArt } from '../domain/rolle.enums.js';
 import { RolleMerkmalEntity } from './rolle-merkmal.entity.js';
-import { RolleSystemRechtEntity } from './rolle-system-recht.entity.js';
+import { RolleSystemrechtEntity } from './rolle-systemrecht.entity.js';
 
 @Entity({ tableName: 'rolle' })
 export class RolleEntity extends TimestampedEntity {
@@ -27,10 +27,10 @@ export class RolleEntity extends TimestampedEntity {
     public merkmale: Collection<RolleMerkmalEntity> = new Collection<RolleMerkmalEntity>(this);
 
     @OneToMany({
-        entity: () => RolleSystemRechtEntity,
+        entity: () => RolleSystemrechtEntity,
         mappedBy: 'rolle',
         orphanRemoval: true,
         cascade: [Cascade.ALL],
     })
-    public systemRechte: Collection<RolleSystemRechtEntity> = new Collection<RolleSystemRechtEntity>(this);
+    public systemrechte: Collection<RolleSystemrechtEntity> = new Collection<RolleSystemrechtEntity>(this);
 }
