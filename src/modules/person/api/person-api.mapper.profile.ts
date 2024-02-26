@@ -23,10 +23,10 @@ import { PersonIdResponse } from './person-id.response.js';
 import { PersonNameDto } from './person-name.dto.js';
 import { PersonNameParams } from './person-name.params.js';
 import { PersonDto } from './person.dto.js';
-import { PersonResponse } from './person.response.js';
+import { PersonResponseAutomapper } from './person.response-automapper.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { PersonendatensatzResponseAutomapper } from './personendatensatz.response-automapper.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/personenkontext-query.params.js';
 import { PersonenkontextDto } from '../../personenkontext/api/personenkontext.dto.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/personenkontext.response.js';
@@ -109,77 +109,77 @@ export class PersonApiMapperProfile extends AutomapperProfile {
             createMap(
                 mapper,
                 PersonDo,
-                PersonendatensatzResponse,
+                PersonendatensatzResponseAutomapper,
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.id,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.id,
                     mapFrom((src: PersonDo<true>) => src.id),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.mandant,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.mandant,
                     mapFrom((src: PersonDo<true>) => src.mandant),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.referrer,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.referrer,
                     mapFrom((src: PersonDo<true>) => src.referrer),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.name.vorname,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.name.vorname,
                     mapFrom((src: PersonDo<true>) => src.vorname),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.name.rufname,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.name.rufname,
                     mapFrom((src: PersonDo<true>) => src.rufname),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.name.familienname,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.name.familienname,
                     mapFrom((src: PersonDo<true>) => src.familienname),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.name.initialenvorname,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.name.initialenvorname,
                     mapFrom((src: PersonDo<true>) => src.initialenVorname),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.name.initialenfamilienname,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.name.initialenfamilienname,
                     mapFrom((src: PersonDo<true>) => src.initialenFamilienname),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.name.sortierindex,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.name.sortierindex,
                     mapFrom((src: PersonDo<true>) => src.nameSortierindex),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.geburt.datum,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.geburt.datum,
                     mapFrom((src: PersonDo<true>) => src.geburtsdatum),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.geburt.geburtsort,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.geburt.geburtsort,
                     mapFrom((src: PersonDo<true>) => src.geburtsort),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.vertrauensstufe,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.vertrauensstufe,
                     mapFrom((src: PersonDo<true>) => src.vertrauensstufe),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.geschlecht,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.geschlecht,
                     mapFrom((src: PersonDo<true>) => src.geschlecht),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.lokalisierung,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.lokalisierung,
                     mapFrom((src: PersonDo<true>) => src.lokalisierung),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.stammorganisation,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.stammorganisation,
                     mapFrom((src: PersonDo<true>) => src.stammorganisation),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.name.anrede,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.name.anrede,
                     mapFrom((src: PersonDo<true>) => src.nameAnrede),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.name.namenssuffix,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.name.namenssuffix,
                     mapFrom((src: PersonDo<true>) => src.nameSuffix),
                 ),
                 forMember(
-                    (dest: PersonendatensatzResponse) => dest.person.name.namenspraefix,
+                    (dest: PersonendatensatzResponseAutomapper) => dest.person.name.namenspraefix,
                     mapFrom((src: PersonDo<true>) => src.namePraefix),
                 ),
             );
@@ -341,9 +341,9 @@ export class PersonApiMapperProfile extends AutomapperProfile {
             createMap(
                 mapper,
                 PersonDto,
-                PersonResponse,
+                PersonResponseAutomapper,
                 forMember(
-                    (dest: PersonResponse) => dest.startpasswort,
+                    (dest: PersonResponseAutomapper) => dest.startpasswort,
                     mapFrom((src: PersonDto) => src.startpasswort),
                 ),
             );
@@ -352,7 +352,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
 
             createMap(mapper, PersonGeburtDto, PersonBirthParams);
 
-            createMap(mapper, PersonendatensatzDto, PersonendatensatzResponse);
+            createMap(mapper, PersonendatensatzDto, PersonendatensatzResponseAutomapper);
 
             createMap(
                 mapper,

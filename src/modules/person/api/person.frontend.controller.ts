@@ -14,11 +14,10 @@ import {
     RawPagedResponse,
 } from '../../../shared/paging/index.js';
 import { PersonenQueryParams } from './personen-query.param.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { Person } from '../domain/person.js';
 import { PersonScope } from '../persistence/person.scope.js';
-import { PersonendatensatzResponseDDD } from './personendatensatz.responseDDD.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
@@ -39,7 +38,7 @@ export class PersonFrontendController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
     public async findPersons(
         @Query() queryParams: PersonenQueryParams,
-    ): Promise<RawPagedResponse<PersonendatensatzResponseDDD>> {
+    ): Promise<RawPagedResponse<PersonendatensatzResponse>> {
         const scope: PersonScope = new PersonScope()
             .findBy({
                 vorname: undefined,
@@ -51,11 +50,11 @@ export class PersonFrontendController {
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
 
-        const response: PagedResponse<PersonendatensatzResponseDDD> = new PagedResponse({
+        const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse({
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? total,
             total: total,
-            items: persons.map((person: Person<true>) => new PersonendatensatzResponseDDD(person)),
+            items: persons.map((person: Person<true>) => new PersonendatensatzResponse(person)),
         });
 
         return response;

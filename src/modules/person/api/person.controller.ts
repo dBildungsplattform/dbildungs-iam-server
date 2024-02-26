@@ -47,7 +47,7 @@ import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { Person } from '../domain/person.js';
-import { PersonendatensatzResponseDDD } from './personendatensatz.responseDDD.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { ScopeOrder } from '../../../shared/persistence/index.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
@@ -69,12 +69,12 @@ export class PersonController {
     // --403 DONE--
     @Post()
     @HttpCode(HttpStatus.CREATED)
-    @ApiCreatedResponse({ description: 'The person was successfully created.', type: PersonendatensatzResponseDDD })
+    @ApiCreatedResponse({ description: 'The person was successfully created.', type: PersonendatensatzResponse })
     @ApiBadRequestResponse({ description: 'A username was given. Creation with username is not supported' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the person.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
-    public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponseDDD> {
+    public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
         const person: Person<false> = Person.createNew(
             params.name.familienname,
             params.name.vorname,
@@ -108,18 +108,18 @@ export class PersonController {
             );
         }
 
-        return new PersonendatensatzResponseDDD(result);
+        return new PersonendatensatzResponse(result);
     }
 
     // --403 DONE--
     @Get(':personId')
-    @ApiOkResponse({ description: 'The person was successfully returned.', type: PersonendatensatzResponseDDD })
+    @ApiOkResponse({ description: 'The person was successfully returned.', type: PersonendatensatzResponse })
     @ApiBadRequestResponse({ description: 'Person ID is required' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the person.' })
     @ApiNotFoundResponse({ description: 'The person does not exist.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the person.' })
-    public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonendatensatzResponseDDD> {
+    public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonendatensatzResponse> {
         const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
         if (!person) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -129,7 +129,7 @@ export class PersonController {
             );
         }
 
-        return new PersonendatensatzResponseDDD(person, true);
+        return new PersonendatensatzResponse(person, true);
     }
 
     // -- 403 NOT IN SCOPE ?
@@ -205,7 +205,7 @@ export class PersonController {
     @ApiOkResponse({
         description:
             'The persons were successfully returned. WARNING: This endpoint returns all persons as default when no paging parameters were set.',
-        type: [PersonendatensatzResponseDDD],
+        type: [PersonendatensatzResponse],
         headers: PagingHeadersObject,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get persons.' })
@@ -213,7 +213,7 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
     public async findPersons(
         @Query() queryParams: PersonenQueryParams,
-    ): Promise<PagedResponse<PersonendatensatzResponseDDD>> {
+    ): Promise<PagedResponse<PersonendatensatzResponse>> {
         const scope: PersonScope = new PersonScope()
             .findBy({
                 vorname: undefined,
@@ -225,11 +225,11 @@ export class PersonController {
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
 
-        const response: PagedResponse<PersonendatensatzResponseDDD> = new PagedResponse({
+        const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse({
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? total,
             total: total,
-            items: persons.map((person: Person<true>) => new PersonendatensatzResponseDDD(person)),
+            items: persons.map((person: Person<true>) => new PersonendatensatzResponse(person)),
         });
 
         return response;
@@ -239,7 +239,7 @@ export class PersonController {
     @Put(':personId')
     @ApiOkResponse({
         description: 'The person was successfully updated.',
-        type: PersonendatensatzResponseDDD,
+        type: PersonendatensatzResponse,
     })
     @ApiBadRequestResponse({ description: 'Request has wrong format.' })
     @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
@@ -249,7 +249,7 @@ export class PersonController {
     public async updatePerson(
         @Param() params: PersonByIdParams,
         @Body() body: UpdatePersonBodyParams,
-    ): Promise<PersonendatensatzResponseDDD> {
+    ): Promise<PersonendatensatzResponse> {
         const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
         if (!person) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -288,7 +288,7 @@ export class PersonController {
         }
 
         await this.personRepository.update(person);
-        return new PersonendatensatzResponseDDD(person, false);
+        return new PersonendatensatzResponse(person, false);
     }
 
     @Patch(':personId/password')

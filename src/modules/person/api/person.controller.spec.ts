@@ -27,7 +27,7 @@ import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { Person } from '../domain/person.js';
-import { PersonendatensatzResponseDDD } from './personendatensatz.responseDDD.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
 
 describe('PersonController', () => {
@@ -106,10 +106,10 @@ describe('PersonController', () => {
                 personRepositoryMock.create.mockResolvedValue(person);
 
                 await expect(personController.createPerson(params)).resolves.toBeInstanceOf(
-                    PersonendatensatzResponseDDD,
+                    PersonendatensatzResponse,
                 );
                 expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
-                const result: PersonendatensatzResponseDDD = await personController.createPerson(params);
+                const result: PersonendatensatzResponse = await personController.createPerson(params);
                 expect(result.person.name.vorname).toEqual(firstName);
                 expect(result.person.name.familienname).toEqual(lastName);
 
@@ -204,7 +204,7 @@ describe('PersonController', () => {
         it('should get all persons', async () => {
             personRepositoryMock.findBy.mockResolvedValue([[person1, person2], 2]);
 
-            const result: PagedResponse<PersonendatensatzResponseDDD> = await personController.findPersons(queryParams);
+            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(queryParams);
             expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
             expect(result.total).toEqual(2);
             expect(result.limit).toEqual(2);
@@ -429,7 +429,7 @@ describe('PersonController', () => {
                 personRepositoryMock.update.mockResolvedValue(person);
 
                 await expect(personController.updatePerson(params, body)).resolves.toBeInstanceOf(
-                    PersonendatensatzResponseDDD,
+                    PersonendatensatzResponse,
                 );
                 expect(personRepositoryMock.findById).toHaveBeenCalledTimes(1);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(1);

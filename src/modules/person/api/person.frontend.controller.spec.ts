@@ -9,7 +9,7 @@ import { PersonenQueryParams } from './personen-query.param.js';
 import { Person } from '../domain/person.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
-import { PersonendatensatzResponseDDD } from './personendatensatz.responseDDD.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
 
 describe('PersonFrontendController', () => {
     let module: TestingModule;
@@ -86,7 +86,7 @@ describe('PersonFrontendController', () => {
         it('should get all persons', async () => {
             personRepositoryMock.findBy.mockResolvedValue([[person1, person2], 2]);
 
-            const result: PagedResponse<PersonendatensatzResponseDDD> = await personController.findPersons(queryParams);
+            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(queryParams);
             expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
             expect(result.total).toEqual(2);
             expect(result.limit).toEqual(2);
