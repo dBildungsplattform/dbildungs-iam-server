@@ -12,6 +12,7 @@ import {
     Gruppenrollen,
 } from './gruppe.enums.js';
 import { Referenzgruppen } from './referenzgruppen.js';
+import { CreateGroupBodyParams } from '../api/create-group.body.params.js';
 
 describe('Gruppe', () => {
     describe('construct', () => {
@@ -40,6 +41,40 @@ describe('Gruppe', () => {
                 new Laufzeit({ von: new Date(), bis: new Date() }),
             );
             expect(gruppe).toBeInstanceOf(Gruppe);
+        });
+    });
+
+    describe('createGroup', () => {
+        it('should return a new Gruppe instance', () => {
+            const createGroupBodyParams: CreateGroupBodyParams = {
+                bezeichnung: faker.lorem.word(),
+                typ: GruppenTyp.KLASSE,
+                bereich: Gruppenbereich.PFLICHT,
+                differenzierung: Gruppendifferenzierung.E,
+                bildungsziele: [],
+                jahrgangsstufen: [],
+                faecher: [],
+                referenzgruppen: [],
+                laufzeit: {},
+            };
+            const gruppe: Gruppe<false> = Gruppe.createGroup(createGroupBodyParams);
+            expect(gruppe).toBeInstanceOf(Gruppe);
+            expect(gruppe.getId()).toBe('');
+            expect(gruppe.getMandant()).toBe('');
+            expect(gruppe.getOrganisationId()).toBe('');
+            expect(gruppe.getReferrer()).toBe('');
+            expect(gruppe.getBezeichnung()).toBe(createGroupBodyParams.bezeichnung);
+            expect(gruppe.getThema()).toBe('');
+            expect(gruppe.getBeschreibung()).toBe('');
+            expect(gruppe.getTyp()).toBe(createGroupBodyParams.typ);
+            expect(gruppe.getBereich()).toBe(createGroupBodyParams.bereich);
+            expect(gruppe.getOptionen()).toEqual([]);
+            expect(gruppe.getDifferenzierung()).toBe(createGroupBodyParams.differenzierung);
+            expect(gruppe.getBildungsziele()).toEqual([]);
+            expect(gruppe.getJahrgangsstufen()).toEqual([]);
+            expect(gruppe.getFaecher()).toEqual([]);
+            expect(gruppe.getReferenzgruppen()).toEqual([]);
+            expect(gruppe.getLaufzeit()).toEqual({});
         });
     });
 });
