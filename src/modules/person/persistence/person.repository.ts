@@ -79,6 +79,7 @@ export class PersonRepository {
     public async findBy(scope: PersonScope): Promise<Counted<Person<true>>> {
         const [entities, total]: Counted<PersonEntity> = await scope.executeQuery(this.em);
         const persons: Person<true>[] = entities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
+
         return [persons, total];
     }
 
@@ -87,6 +88,7 @@ export class PersonRepository {
         if (person) {
             return mapEntityToAggregate(person);
         }
+
         return null;
     }
 
@@ -109,12 +111,11 @@ export class PersonRepository {
             kcUserService,
             usernameGenerator,
         );
-
         if (personWithKeycloakUser instanceof DomainError) {
             return personWithKeycloakUser;
         }
-
         const personEntity: PersonEntity = this.em.create(PersonEntity, mapAggregateToData(personWithKeycloakUser));
+
         await this.em.persistAndFlush(personEntity);
 
         return mapEntityToAggregateInplace(personEntity, personWithKeycloakUser);
@@ -123,7 +124,9 @@ export class PersonRepository {
     public async update(person: Person<true>): Promise<Person<true>> {
         const personEntity: Loaded<PersonEntity> = await this.em.findOneOrFail(PersonEntity, person.id);
         personEntity.assign(mapAggregateToData(person));
+
         await this.em.persistAndFlush(personEntity);
+
         return mapEntityToAggregate(personEntity);
     }
 
@@ -135,7 +138,6 @@ export class PersonRepository {
         if (!person.needsSaving) {
             return person;
         }
-
         if (!person.keycloakUserId) {
             const generatedUsername: string = await usernameGenerator.generateUsername(
                 person.vorname,
