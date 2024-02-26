@@ -8,9 +8,12 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { EntityAlreadyExistsError } from '../../../shared/error/entity-already-exists.error.js';
+import { DomainError, EntityAlreadyExistsError } from '../../../shared/error/index.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
+import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
+import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkontext.body.params.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personenkontext-by-personid.params.js';
@@ -22,7 +25,12 @@ import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.j
 @ApiBearerAuth()
 @Controller({ path: 'dbiam/personenkontext' })
 export class DBiamPersonenkontextController {
-    public constructor(private readonly repo: DBiamPersonenkontextRepo) {}
+    public constructor(
+        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly personRepo: PersonRepo,
+        private readonly organisationRepo: OrganisationRepo,
+        private readonly rolleRepo: RolleRepo,
+    ) {}
 
     @Get(':personId')
     @ApiOkResponse({
@@ -35,7 +43,7 @@ export class DBiamPersonenkontextController {
     public async findPersonenkontextsByPerson(
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
     ): Promise<DBiamPersonenkontextResponse[]> {
-        const personenkontexte: Personenkontext<true>[] = await this.repo.findByPerson(params.personId);
+        const personenkontexte: Personenkontext<true>[] = await this.personenkontextRepo.findByPerson(params.personId);
 
         const response: DBiamPersonenkontextResponse[] = personenkontexte.map(
             (k: Personenkontext<true>) => new DBiamPersonenkontextResponse(k),
@@ -56,7 +64,12 @@ export class DBiamPersonenkontextController {
     public async createPersonenkontext(
         @Body() params: DBiamCreatePersonenkontextBodyParams,
     ): Promise<DBiamPersonenkontextResponse> {
-        const exists: boolean = await this.repo.exists(params.personId, params.organisationId, params.rolleId);
+        // Check if personenkontext already exists
+        const exists: boolean = await this.personenkontextRepo.exists(
+            params.personId,
+            params.organisationId,
+            params.rolleId,
+        );
 
         if (exists) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -66,13 +79,28 @@ export class DBiamPersonenkontextController {
             );
         }
 
+        // Construct new personenkontext
         const newPersonenkontext: Personenkontext<false> = Personenkontext.createNew(
             params.personId,
             params.organisationId,
             params.rolleId,
         );
 
-        const savedPersonenkontext: Personenkontext<true> = await this.repo.save(newPersonenkontext);
+        // Check if all references are valid
+        const referenceError: Option<DomainError> = await newPersonenkontext.checkReferences(
+            this.personRepo,
+            this.organisationRepo,
+            this.rolleRepo,
+        );
+
+        if (referenceError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(referenceError),
+            );
+        }
+
+        // Save personenkontext
+        const savedPersonenkontext: Personenkontext<true> = await this.personenkontextRepo.save(newPersonenkontext);
 
         return new DBiamPersonenkontextResponse(savedPersonenkontext);
     }

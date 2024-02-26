@@ -8,9 +8,11 @@ import { PersonenkontextRepo } from './persistence/personenkontext.repo.js';
 import { PersonRepo } from '../person/persistence/person.repo.js';
 import { DBiamPersonenkontextController } from './dbiam/dbiam-personenkontext.controller.js';
 import { DBiamPersonenkontextRepo } from './dbiam/dbiam-personenkontext.repo.js';
+import { OrganisationModule } from '../organisation/organisation.module.js';
+import { RolleModule } from '../rolle/rolle.module.js';
 
 @Module({
-    imports: [PersonModule, LoggerModule.register(PersonenKontextApiModule.name)],
+    imports: [PersonModule, OrganisationModule, RolleModule, LoggerModule.register(PersonenKontextApiModule.name)],
     providers: [PersonenkontextUc, PersonenkontextService, PersonenkontextRepo, PersonRepo, DBiamPersonenkontextRepo],
     controllers: [PersonenkontextController, DBiamPersonenkontextController],
 })

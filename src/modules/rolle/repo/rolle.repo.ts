@@ -5,6 +5,7 @@ import { RollenMerkmal } from '../domain/rolle.enums.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
+import { RolleID } from '../../../shared/types/index.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -60,6 +61,16 @@ export class RolleRepo {
         const rollen: RolleEntity[] = await this.em.findAll(RolleEntity, { populate: ['merkmale'] as const });
 
         return rollen.map(mapEntityToAggregate);
+    }
+
+    public async exists(id: RolleID): Promise<boolean> {
+        const rolle: Option<Loaded<RolleEntity, never, 'id', never>> = await this.em.findOne(
+            RolleEntity,
+            { id },
+            { fields: ['id'] as const },
+        );
+
+        return !!rolle;
     }
 
     public async save(rolle: Rolle<boolean>): Promise<Rolle<true>> {

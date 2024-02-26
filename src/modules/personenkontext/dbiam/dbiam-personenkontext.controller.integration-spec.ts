@@ -9,8 +9,19 @@ import {
     ConfigTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
+    DoFactory,
+    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
+import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { OrganisationModule } from '../../organisation/organisation.module.js';
+import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
+import { PersonDo } from '../../person/domain/person.do.js';
+import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { PersonModule } from '../../person/person.module.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RolleModule } from '../../rolle/rolle.module.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextController } from './dbiam-personenkontext.controller.js';
 import { DBiamPersonenkontextRepo } from './dbiam-personenkontext.repo.js';
@@ -39,9 +50,20 @@ describe('dbiam Personenkontext API', () => {
     let orm: MikroORM;
     let personenkontextRepo: DBiamPersonenkontextRepo;
 
+    let personRepo: PersonRepo;
+    let organisationRepo: OrganisationRepo;
+    let rolleRepo: RolleRepo;
+
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
+            imports: [
+                MapperTestModule,
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                PersonModule,
+                OrganisationModule,
+                RolleModule,
+            ],
             controllers: [DBiamPersonenkontextController],
             providers: [
                 DBiamPersonenkontextRepo,
@@ -54,6 +76,9 @@ describe('dbiam Personenkontext API', () => {
 
         orm = module.get(MikroORM);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
+        personRepo = module.get(PersonRepo);
+        organisationRepo = module.get(OrganisationRepo);
+        rolleRepo = module.get(RolleRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
@@ -98,14 +123,37 @@ describe('dbiam Personenkontext API', () => {
 
     describe('/POST create personenkontext', () => {
         it('should return created personenkontext', async () => {
+            const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+            const organisation: OrganisationDo<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/dbiam/personenkontext')
-                .send({ personId: '0', organisationId: '1', rolleId: '3' });
+                .send({ personId: person.id, organisationId: organisation.id, rolleId: rolle.id });
 
             expect(response.status).toBe(201);
         });
 
         it('should return error if personenkontext already exists', async () => {
+            const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+            const organisation: OrganisationDo<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+            const personenkontext: Personenkontext<true> = await personenkontextRepo.save(
+                Personenkontext.createNew(person.id, organisation.id, rolle.id),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/dbiam/personenkontext')
+                .send({
+                    personId: personenkontext.personId,
+                    organisationId: personenkontext.organisationId,
+                    rolleId: personenkontext.rolleId,
+                });
+
+            expect(response.status).toBe(400);
+        });
+
+        it('should return error if references do not exist', async () => {
             const personenkontext: Personenkontext<true> = await personenkontextRepo.save(createPersonenkontext(false));
 
             const response: Response = await request(app.getHttpServer() as App)

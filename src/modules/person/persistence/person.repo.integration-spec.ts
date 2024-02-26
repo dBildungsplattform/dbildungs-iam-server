@@ -199,4 +199,20 @@ describe('PersonRepo', () => {
             });
         });
     });
+
+    describe('exists', () => {
+        it('should return true, if the person exists', async () => {
+            const person: PersonDo<true> = await sut.save(DoFactory.createPerson(false));
+
+            const exists: boolean = await sut.exists(person.id);
+
+            expect(exists).toBe(true);
+        });
+
+        it('should return false, if the person does not exists', async () => {
+            const exists: boolean = await sut.exists('');
+
+            expect(exists).toBe(false);
+        });
+    });
 });

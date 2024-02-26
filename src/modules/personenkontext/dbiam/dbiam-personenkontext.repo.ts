@@ -43,7 +43,7 @@ export class DBiamPersonenkontextRepo {
     }
 
     public async exists(personId: PersonID, organisationId: OrganisationID, rolleId: RolleID): Promise<boolean> {
-        const personenKontext: Option<PersonenkontextEntity> = (await this.em.findOne(
+        const personenKontext: Option<Loaded<PersonenkontextEntity, never, 'id', never>> = await this.em.findOne(
             PersonenkontextEntity,
             {
                 personId,
@@ -51,7 +51,7 @@ export class DBiamPersonenkontextRepo {
                 organisationId,
             },
             { fields: ['id'] as const },
-        )) as Option<PersonenkontextEntity>;
+        );
 
         return !!personenKontext;
     }
