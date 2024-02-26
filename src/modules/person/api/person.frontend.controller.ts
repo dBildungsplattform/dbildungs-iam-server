@@ -54,7 +54,7 @@ export class PersonFrontendController {
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? total,
             total: total,
-            items: persons.map((person: Person<true>) => new PersonendatensatzResponse(person)),
+            items: persons.map((person: Person<true>) => new PersonendatensatzResponse(person, false)),
         });
 
         return response;

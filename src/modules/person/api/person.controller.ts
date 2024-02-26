@@ -108,7 +108,7 @@ export class PersonController {
             );
         }
 
-        return new PersonendatensatzResponse(result);
+        return new PersonendatensatzResponse(result, true);
     }
 
     // --403 DONE--
@@ -129,7 +129,7 @@ export class PersonController {
             );
         }
 
-        return new PersonendatensatzResponse(person, true);
+        return new PersonendatensatzResponse(person, false);
     }
 
     // -- 403 NOT IN SCOPE ?
@@ -229,7 +229,7 @@ export class PersonController {
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? total,
             total: total,
-            items: persons.map((person: Person<true>) => new PersonendatensatzResponse(person)),
+            items: persons.map((person: Person<true>) => new PersonendatensatzResponse(person, false)),
         });
 
         return response;
