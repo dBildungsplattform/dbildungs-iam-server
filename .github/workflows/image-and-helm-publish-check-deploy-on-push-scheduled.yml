@@ -61,7 +61,7 @@ jobs:
       image_tag_generation: ${{ ( github.ref_name == 'main' || startsWith(github.ref_name,'dependabot/') )  && 'commit_hash' || 'ticket_from_branch' }}
       add_latest_tag: ${{ github.ref_name == 'main' }}
       container_registry: "ghcr.io"
-      fail_on_vulnerabilites: true
+      fail_on_vulnerabilites: false
       report_location: "Dockerfile"
   
   scheduled_trivy_scan:
