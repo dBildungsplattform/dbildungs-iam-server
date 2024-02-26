@@ -61,7 +61,7 @@ We use a unique symbol as the discriminator key, to make the discriminator impos
 
 ## How to create/use them
 
-We have helper-types in [src/shared/types/flavored-types.ts](/src/shared/types/flavored-types.ts)
+We have helper-types in [src/shared/types/flavor.types.ts](/src/shared/types/flavor.types.ts)
 
 You can create flavored/branded types like this:
 ```typescript
