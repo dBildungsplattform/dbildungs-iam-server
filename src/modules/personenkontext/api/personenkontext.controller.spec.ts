@@ -158,12 +158,14 @@ describe('PersonenkontextController', () => {
                     systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
                 };
                 const organisations: OrganisationDo<true>[] = [DoFactory.createOrganisation(true)];
-
-                personenkontextUcMock.hatSystemRecht.mockResolvedValue(organisations);
-
+                const personenkontextSystemrechtResponse: PersonenkontextSystemrechtResponse = {
+                    ssk: organisations,
+                    rechtName: RollenSystemRecht.ROLLEN_VERWALTEN,
+                };
+                personenkontextUcMock.hatSystemRecht.mockResolvedValue(personenkontextSystemrechtResponse);
                 const response: PersonenkontextSystemrechtResponse = await sut.hatSystemRecht(idParams, bodyParams);
-
-                expect(response).toBeInstanceOf(PersonenkontextSystemrechtResponse);
+                expect(response.ssk).toHaveLength(1);
+                expect(response.rechtName).toEqual(RollenSystemRecht.ROLLEN_VERWALTEN);
                 expect(personenkontextUcMock.hatSystemRecht).toHaveBeenCalledTimes(1);
             });
         });

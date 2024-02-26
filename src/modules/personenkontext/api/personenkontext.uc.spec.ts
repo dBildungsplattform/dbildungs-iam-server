@@ -26,6 +26,8 @@ import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js'
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
+import { PersonenkontextSystemrechtResponse } from './personenkontext-systemrecht.response.js';
+import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 
 function createPersonenkontext(): Personenkontext<true>[] {
     return [
@@ -51,6 +53,7 @@ describe('PersonenkontextUc', () => {
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let organisationRepoMock: DeepMocked<OrganisationRepo>;
+    let organisationServiceMock: DeepMocked<OrganisationService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -67,6 +70,10 @@ describe('PersonenkontextUc', () => {
                     useValue: createMock<OrganisationRepo>(),
                 },
                 {
+                    provide: OrganisationService,
+                    useValue: createMock<OrganisationService>(),
+                },
+                {
                     provide: PersonService,
                     useValue: createMock<PersonService>(),
                 },
@@ -81,6 +88,7 @@ describe('PersonenkontextUc', () => {
         personenkontextServiceMock = module.get(PersonenkontextService);
         rolleRepoMock = module.get(RolleRepo);
         organisationRepoMock = module.get(OrganisationRepo);
+        organisationServiceMock = module.get(OrganisationService);
     });
 
     afterAll(async () => {
@@ -244,19 +252,35 @@ describe('PersonenkontextUc', () => {
 
     describe('hatSystemRecht', () => {
         describe('when personenkontext is referencing rolle with a systemrecht in systemrechte array', () => {
-            it('should return an array with the matching organisation as SSK', async () => {
+            it('should return an array with the matching organisation as SSK, parent and children', async () => {
                 const personenkontexte: Personenkontext<true>[] = createPersonenkontext();
                 const rolle: RolleAggregate<true> = createRolle();
                 rolle.systemrechte = [RollenSystemRecht.ROLLEN_VERWALTEN];
                 const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
                 rolleRepoMock.findById.mockResolvedValue(rolle);
                 organisationRepoMock.findById.mockResolvedValue(organisation);
+
+                const children: OrganisationDo<true>[] = [
+                    DoFactory.createOrganisation(true),
+                    DoFactory.createOrganisation(true),
+                    DoFactory.createOrganisation(true),
+                ];
+
+                const findAllAdministriertVon: Paged<OrganisationDo<true>> = {
+                    items: children,
+                    offset: 0,
+                    limit: children.length,
+                    total: children.length,
+                };
+                organisationServiceMock.findAllAdministriertVon.mockResolvedValue(findAllAdministriertVon);
                 personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
-                const result: OrganisationDo<true>[] = await sut.hatSystemRecht(
+                const result: PersonenkontextSystemrechtResponse = await sut.hatSystemRecht(
                     '1',
                     RollenSystemRecht.ROLLEN_VERWALTEN,
                 );
-                expect(result).toHaveLength(1);
+                expect(result.rechtName).toEqual(RollenSystemRecht.ROLLEN_VERWALTEN.toString());
+                expect(result.ssk).toBeTruthy();
+                expect(result.ssk).toHaveLength(4);
             });
         });
 
@@ -268,11 +292,13 @@ describe('PersonenkontextUc', () => {
                 rolleRepoMock.findById.mockResolvedValue(rolle);
                 organisationRepoMock.findById.mockResolvedValue(organisation);
                 personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
-                const result: OrganisationDo<true>[] = await sut.hatSystemRecht(
+                const result: PersonenkontextSystemrechtResponse = await sut.hatSystemRecht(
                     '1',
                     RollenSystemRecht.ROLLEN_VERWALTEN,
                 );
-                expect(result).toHaveLength(0);
+                expect(result.rechtName).toEqual(RollenSystemRecht.ROLLEN_VERWALTEN.toString());
+                expect(result.ssk).toBeTruthy();
+                expect(result.ssk).toHaveLength(0);
             });
         });
 
@@ -283,11 +309,13 @@ describe('PersonenkontextUc', () => {
                 rolleRepoMock.findById.mockResolvedValue(rolle);
                 organisationRepoMock.findById.mockResolvedValue(undefined);
                 personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
-                const result: OrganisationDo<true>[] = await sut.hatSystemRecht(
+                const result: PersonenkontextSystemrechtResponse = await sut.hatSystemRecht(
                     '1',
                     RollenSystemRecht.ROLLEN_VERWALTEN,
                 );
-                expect(result).toHaveLength(0);
+                expect(result.rechtName).toEqual(RollenSystemRecht.ROLLEN_VERWALTEN.toString());
+                expect(result.ssk).toBeTruthy();
+                expect(result.ssk).toHaveLength(0);
             });
         });
 
@@ -296,11 +324,13 @@ describe('PersonenkontextUc', () => {
                 const personenkontexte: Personenkontext<true>[] = createPersonenkontext();
                 rolleRepoMock.findById.mockResolvedValue(undefined);
                 personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
-                const result: OrganisationDo<true>[] = await sut.hatSystemRecht(
+                const result: PersonenkontextSystemrechtResponse = await sut.hatSystemRecht(
                     '1',
                     RollenSystemRecht.ROLLEN_VERWALTEN,
                 );
-                expect(result).toHaveLength(0);
+                expect(result.rechtName).toEqual(RollenSystemRecht.ROLLEN_VERWALTEN.toString());
+                expect(result.ssk).toBeTruthy();
+                expect(result.ssk).toHaveLength(0);
             });
         });
     });
