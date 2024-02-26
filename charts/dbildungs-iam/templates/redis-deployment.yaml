@@ -26,8 +26,20 @@ spec:
           volumeMounts:
             {{- toYaml .volumeMounts | nindent 12 }}
           securityContext:
-            {{- toYaml $.Values.initcontainerSecurityContext | nindent 12 }}
-        {{- end }}
+            allowPrivilegeEscalation: false
+          command: ["/bin/sh","-c", "apk add --no-cache openssl bash;/bin/bash /tls/copy-tls.sh"]
+          volumeMounts:
+            - mountPath: "/tls"
+              name: tls-data
+            - mountPath: "/data"
+              name: data
+          resources:
+            requests:
+              cpu: {{.Values.dbildungsIamRedisCpuRequest}}
+              memory: {{.Values.dbildungsIamRedisMemRequest}}
+            limits:
+              cpu: {{.Values.dbildungsIamRedisCpuMax}}
+              memory: {{.Values.dbildungsIamRedisMemMax}}
       containers:
         - name: {{ .Values.rediscontainer.image.name }}
           image: {{ .Values.rediscontainer.image.repository }}:{{ .Values.rediscontainer.image.tag }}

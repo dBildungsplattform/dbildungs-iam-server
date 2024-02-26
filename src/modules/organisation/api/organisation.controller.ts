@@ -41,7 +41,7 @@ export class OrganisationController {
     ) {}
 
     @Post()
-    @ApiCreatedResponse({ description: 'The organisation was successfully created.' })
+    @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponse })
     @ApiBadRequestResponse({ description: 'The organisation already exists.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
@@ -86,7 +86,7 @@ export class OrganisationController {
     }
 
     @Get('root')
-    @ApiOkResponse({ description: 'The organization was successfully pulled.' })
+    @ApiOkResponse({ description: 'The organization was successfully pulled.', type: OrganisationResponse })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the organization.' })
     @ApiNotFoundResponse({ description: 'The organization does not exist.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
@@ -102,7 +102,7 @@ export class OrganisationController {
     }
 
     @Get(':organisationId')
-    @ApiOkResponse({ description: 'The organization was successfully pulled.' })
+    @ApiOkResponse({ description: 'The organization was successfully pulled.', type: OrganisationResponse })
     @ApiBadRequestResponse({ description: 'Organization ID is required' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the organization.' })
     @ApiNotFoundResponse({ description: 'The organization does not exist.' })
@@ -155,8 +155,14 @@ export class OrganisationController {
     public async getAdministrierteOrganisationen(
         @Param() params: OrganisationByIdParams,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const organisations: Paged<OrganisationResponse> = await this.uc.findAdministriertVon(params.organisationId);
-        const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
+        const result: Paged<OrganisationResponse> | SchulConnexError = await this.uc.findAdministriertVon(
+            params.organisationId,
+        );
+
+        if (result instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse(result);
 
         return response;
     }
@@ -193,8 +199,14 @@ export class OrganisationController {
     public async getZugehoerigeOrganisationen(
         @Param() params: OrganisationByIdParams,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const organisations: Paged<OrganisationResponse> = await this.uc.findZugehoerigZu(params.organisationId);
-        const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
+        const result: Paged<OrganisationResponse> | SchulConnexError = await this.uc.findZugehoerigZu(
+            params.organisationId,
+        );
+
+        if (result instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse(result);
 
         return response;
     }

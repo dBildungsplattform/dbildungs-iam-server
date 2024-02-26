@@ -3,25 +3,23 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
     DatabaseTestModule,
-    LoggingTestModule,
-    MapperTestModule,
     DoFactory,
     KeycloakConfigTestModule,
+    LoggingTestModule,
+    MapperTestModule,
 } from '../../../test/utils/index.js';
 import { DbSeedService } from './db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
-import { UserModule } from '../../modules/user/user.module.js';
-import { UsernameGeneratorService } from '../../modules/user/username-generator.service.js';
+import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
 import { DbSeedMapper } from './db-seed-mapper.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
-import { PersonRollenZuweisungEntity } from '../../modules/rolle/entity/person-rollen-zuweisung.entity.js';
-import { ServiceProviderZugriffEntity } from '../../modules/rolle/entity/service-provider-zugriff.entity.js';
 import { OrganisationEntity } from '../../modules/organisation/persistence/organisation.entity.js';
-import { ServiceProviderEntity } from '../../modules/rolle/entity/service-provider.entity.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rolle/repo/rolle.repo.js';
+import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
+import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -32,22 +30,23 @@ describe('DbSeedConsole', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
-                KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }),
                 ConfigTestModule,
-                UserModule,
                 KeycloakAdministrationModule,
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
             ],
             providers: [DbSeedConsole, UsernameGeneratorService, DbSeedService, DbSeedMapper],
-        }).compile();
+        })
+            .overrideModule(KeycloakConfigModule)
+            .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .compile();
         sut = module.get(DbSeedConsole);
         orm = module.get(MikroORM);
         dbSeedService = module.get(DbSeedService);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
-    }, 100000);
+    }, 10000000);
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
@@ -82,22 +81,16 @@ describe('DbSeedConsole', () => {
                 const dataProvider: Option<DataProviderEntity> = await orm.em.findOne(DataProviderEntity, {
                     id: '431d8433-759c-4dbe-aaab-00b9a781f467',
                 });
-                const prz: Option<PersonRollenZuweisungEntity> = await orm.em.findOne(PersonRollenZuweisungEntity, {
-                    id: '27ff7c36-35ea-4fcb-9faa-ed7794afaece',
-                });
                 const rolle: Option<RolleEntity> = await orm.em.findOne(RolleEntity, {
                     id: '301457e9-4fe5-42a6-8084-fec927dc00df',
-                });
-                const serviceProvider: Option<ServiceProviderEntity> = await orm.em.findOne(ServiceProviderEntity, {
-                    id: 'af314073-539c-45ed-b94a-a2e1b9c976e3',
-                });
-                const spz: Option<ServiceProviderZugriffEntity> = await orm.em.findOne(ServiceProviderZugriffEntity, {
-                    id: '0e23c772-07b3-4d40-a71c-71848712fb96',
                 });
                 const organisation: Option<OrganisationEntity> = await orm.em.findOne(OrganisationEntity, {
                     id: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
                 });
-                if (!dataProvider || !prz || !rolle || !serviceProvider || !spz || !organisation) {
+                const serviceProvider: Option<ServiceProviderEntity> = await orm.em.findOne(ServiceProviderEntity, {
+                    id: 'ca0e17c5-8e48-403b-af92-28eff21c64bb',
+                });
+                if (!dataProvider || !rolle || !organisation || !serviceProvider) {
                     throw Error('At least one entity was not persisted correctly!');
                 }
             });
@@ -108,42 +101,6 @@ describe('DbSeedConsole', () => {
                 const params: string[] = ['seeding-integration-test/nonExistingEntity'];
                 await expect(sut.run(params)).rejects.toThrow(
                     new Error(`Unsupported EntityName / EntityType: NonExistingEntityType`),
-                );
-            });
-        });
-
-        describe('when new rolle-entity is used in PersonRollenZuweisung', () => {
-            it('should succeed', async () => {
-                const params: string[] = ['seeding-integration-test/newRolle'];
-                await expect(sut.run(params)).resolves.not.toThrow();
-                const prz: Option<PersonRollenZuweisungEntity> = await orm.em.findOne(PersonRollenZuweisungEntity, {
-                    id: '27ff7c36-35ea-4fcb-9faa-ed7794afaece',
-                });
-                const rolle: Option<RolleEntity> = await orm.em.findOne(RolleEntity, {
-                    id: '3ca85c16-96b2-46c8-a4fd-27e73d7ab96c',
-                });
-                if (!prz || !rolle) {
-                    throw Error('PersonRollenZuweisung or Rolle was not persisted correctly!');
-                }
-                expect(rolle.id).toEqual('3ca85c16-96b2-46c8-a4fd-27e73d7ab96c');
-                expect(prz.rolle).toEqual('3ca85c16-96b2-46c8-a4fd-27e73d7ab96c');
-            });
-        });
-
-        describe('when foreign (persisted) rolle-entity used in PersonRollenZuweisung does not exist', () => {
-            it('should fail', async () => {
-                const params: string[] = ['seeding-integration-test/persistedRolleMissing'];
-                await expect(sut.run(params)).rejects.toThrow(
-                    new Error(`Foreign RolleEntity with id 8a2fb3e4-2d24-4917-b8fc-7fccb98d10f1 could not be found!`),
-                );
-            });
-        });
-
-        describe('when virtual (non-persisted) rolle-entity used in PersonRollenZuweisung does not exist', () => {
-            it('should fail', async () => {
-                const params: string[] = ['seeding-integration-test/newRolleMissing'];
-                await expect(sut.run(params)).rejects.toThrow(
-                    new Error(`No rolle with id fa49e432-0d77-4286-b68f-01bba5ae7f2c`),
                 );
             });
         });

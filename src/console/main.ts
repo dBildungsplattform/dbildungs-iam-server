@@ -3,7 +3,15 @@ import { CommandFactory } from 'nest-commander';
 import { ConsoleModule } from './console.module.js';
 
 async function bootstrap(): Promise<void> {
-    await CommandFactory.run(ConsoleModule, ['warn']);
+    await CommandFactory.run(ConsoleModule, {
+        logger: ['warn'],
+        errorHandler: (_err: Error) => {
+            process.exit(1);
+        },
+        serviceErrorHandler: (_err: Error) => {
+            process.exit(1);
+        },
+    });
 }
 
-bootstrap().catch((error: unknown) => console.error('Failed to run command with error: ', error));
+void bootstrap();

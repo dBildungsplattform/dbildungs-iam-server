@@ -1,19 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import fs from 'fs';
-import { PersonRollenZuweisungFile } from './file/person-rollen-zuweisung-file.js';
 import { DataProviderFile } from './file/data-provider-file.js';
-import { ServiceProviderFile } from './file/service-provider-file.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { PersonFile } from './file/person-file.js';
-import { ServiceProviderZugriffFile } from './file/service-provider-zugriff-file.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { ConstructorCall, EntityFile } from './db-seed.console.js';
+import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
+import { ServiceProviderFile } from './file/service-provider-file.js';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class DbSeedService {
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
-
-    private serviceProviderMap: Map<string, ServiceProviderFile> = new Map<string, ServiceProviderFile>();
 
     private organisationMap: Map<string, OrganisationFile> = new Map<string, OrganisationFile>();
 
@@ -21,9 +19,7 @@ export class DbSeedService {
 
     private rolleMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
 
-    private spzMap: Map<string, ServiceProviderZugriffFile> = new Map<string, ServiceProviderZugriffFile>();
-
-    private przMap: Map<string, PersonRollenZuweisungFile> = new Map<string, PersonRollenZuweisungFile>();
+    private serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
@@ -32,17 +28,6 @@ export class DbSeedService {
         );
         for (const entity of entities) {
             this.dataProviderMap.set(entity.id, entity);
-        }
-        return entities;
-    }
-
-    public readServiceProvider(fileContentAsStr: string): ServiceProviderFile[] {
-        const entities: ServiceProviderFile[] = this.readEntityFromJSONFile<ServiceProviderFile>(
-            fileContentAsStr,
-            () => new ServiceProviderFile(),
-        );
-        for (const entity of entities) {
-            this.serviceProviderMap.set(entity.id, entity);
         }
         return entities;
     }
@@ -91,26 +76,32 @@ export class DbSeedService {
         return rollen;
     }
 
-    public readServiceProviderZugriff(fileContentAsStr: string): ServiceProviderZugriffFile[] {
-        const entities: ServiceProviderZugriffFile[] = this.readEntityFromJSONFile<ServiceProviderZugriffFile>(
+    public readServiceProvider(fileContentAsStr: string): ServiceProvider<true>[] {
+        const serviceProviderFile: EntityFile<ServiceProviderFile> = JSON.parse(
             fileContentAsStr,
-            () => new ServiceProviderZugriffFile(),
-        );
-        for (const entity of entities) {
-            this.spzMap.set(entity.id, entity);
-        }
-        return entities;
-    }
+        ) as EntityFile<ServiceProviderFile>;
 
-    public readPersonRollenZuweisung(fileContentAsStr: string): PersonRollenZuweisungFile[] {
-        const entities: PersonRollenZuweisungFile[] = this.readEntityFromJSONFile<PersonRollenZuweisungFile>(
-            fileContentAsStr,
-            () => new PersonRollenZuweisungFile(),
+        const entities: ServiceProviderFile[] = plainToInstance(ServiceProviderFile, serviceProviderFile.entities);
+
+        const serviceProviders: ServiceProvider<true>[] = entities.map((data: ServiceProviderFile) =>
+            ServiceProvider.construct(
+                data.id,
+                new Date(),
+                new Date(),
+                data.name,
+                data.url,
+                data.kategorie,
+                data.providedOnSchulstrukturknoten,
+                data.logoBase64 ? Buffer.from(data.logoBase64, 'base64') : undefined,
+                data.logoMimeType,
+            ),
         );
-        for (const entity of entities) {
-            this.przMap.set(entity.id, entity);
+
+        for (const serviceProvider of serviceProviders) {
+            this.serviceProviderMap.set(serviceProvider.id, serviceProvider);
         }
-        return entities;
+
+        return serviceProviders;
     }
 
     /* Setting as RolleEntity is required, eg. RolleFile would not work, persisting would fail due to saving one RolleEntity and one RolleFile

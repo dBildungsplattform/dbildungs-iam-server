@@ -13,16 +13,37 @@ spec:
       http:
         paths:
           - path: /api
-            pathType: {{ .Values.ingress.pathType }}
-            backend: 
+            pathType: Prefix
+            backend:
               service:
                 name: {{ .Values.service.name }}
                 port:
-                  number: {{ (index .Values.backendports 0).port }}
+                  number: 80
           - path: /docs
             pathType: {{ .Values.ingress.pathType }}
             backend: 
               service:
                 name: {{ .Values.service.name }}
                 port:
-                  number: {{ (index .Values.backendports 0).port }}
+                  number: 80
+          - path: /docs-json
+            pathType: Prefix
+            backend:
+              service:
+                name: dbiam-backend
+                port:
+                  number: 80
+          - path: /docs-json
+            pathType: Prefix
+            backend:
+              service:
+                name: dbiam-backend
+                port:
+                  number: 80
+          - path: /docs-yaml
+            pathType: Prefix
+            backend:
+              service:
+                name: dbiam-backend
+                port:
+                  number: 80

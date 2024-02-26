@@ -17,25 +17,25 @@ import { FindPersonenkontextDto } from '../../personenkontext/api/find-personenk
 import { PersonDto } from './person.dto.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonenkontextDto } from '../../personenkontext/api/personenkontext.dto.js';
-import { UserRepository } from '../../user/user.repository.js';
-import { User } from '../../user/user.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { KeycloakClientError } from '../../../shared/error/index.js';
+import { EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { UpdatePersonDto } from './update-person.dto.js';
 import { HttpStatusCode } from 'axios';
+import { Person } from '../domain/person.js';
+import { UsernameGeneratorService } from '../domain/username-generator.service.js';
+import { PersonRepository } from '../persistence/person.repository.js';
 
 @Injectable()
 export class PersonUc {
     public constructor(
         private readonly personService: PersonService,
+        private readonly personRepository: PersonRepository,
+        private readonly usernameGenerator: UsernameGeneratorService,
         private readonly personenkontextService: PersonenkontextService,
         private readonly userService: KeycloakUserService,
-        private readonly userRepository: UserRepository,
         private readonly logger: ClassLogger,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
-
-    public static readonly CREATE_PERSON_DTO_MANDANT_UUID: string = '8c6a9447-c23e-4e70-8595-3bcc88a5577a';
 
     public async createPerson(personDto: CreatePersonDto): Promise<PersonDto | SchulConnexError> {
         if (!personDto.vorname) {
@@ -54,30 +54,33 @@ export class PersonUc {
                 beschreibung: 'Nachname nicht angegeben, wird für die Erzeugung des Benutzernamens gebraucht',
             });
         }
-        // create user
-        let user: User;
+
+        const person: Person<false> = Person.createNew(personDto.familienname, personDto.vorname);
+        person.resetPassword();
         try {
-            user = await this.userRepository.createUser(personDto.vorname, personDto.familienname);
-            await user.save(this.userService);
+            await person.saveUser(this.userService, this.usernameGenerator);
+            if (person.keycloakUserId === undefined) {
+                throw new KeycloakClientError(`Can't save user`);
+            }
         } catch (error) {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new KeycloakClientError(`Can't save user`));
         }
 
         // create person
         const personDo: PersonDo<false> = this.mapper.map(personDto, CreatePersonDto, PersonDo);
-        personDo.keycloakUserId = user.id;
-        personDo.referrer = user.username;
-        personDo.mandant = PersonUc.CREATE_PERSON_DTO_MANDANT_UUID;
+        personDo.keycloakUserId = person.keycloakUserId;
+        personDo.referrer = person.username;
+        personDo.mandant = person.mandant;
 
         const result: Result<PersonDo<true>, DomainError> = await this.personService.createPerson(personDo);
         if (result.ok) {
             const resPersonDto: PersonDto = this.mapper.map(personDo, PersonDo, PersonDto);
-            resPersonDto.startpasswort = user.newPassword;
+            resPersonDto.startpasswort = person.newPassword;
             return resPersonDto;
         }
 
         // delete user if person could not be created
-        const deleteUserResult: Result<void, DomainError> = await this.userService.delete(user.id);
+        const deleteUserResult: Result<void, DomainError> = await this.userService.delete(person.keycloakUserId);
         if (deleteUserResult.ok) {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
         } else {
@@ -155,17 +158,18 @@ export class PersonUc {
             if (!personResult.ok) {
                 return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResult.error);
             }
-            const person: PersonDo<true> = personResult.value;
-            const keycloakUser: User = await this.userRepository.loadUser(person.keycloakUserId);
-
-            keycloakUser.resetPassword();
-            await keycloakUser.save(this.userService);
-            return { ok: true, value: keycloakUser.newPassword };
+            const person: Option<Person<true>> = await this.personRepository.findByKeycloakUserId(
+                personResult.value.keycloakUserId,
+            );
+            if (!person) {
+                return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', personResult.value.id),
+                );
+            }
+            await person.saveUser(this.userService, this.usernameGenerator);
+            return { ok: true, value: person.newPassword! };
         } catch (error) {
             this.logger.error(JSON.stringify(error));
-            if (error instanceof DomainError) {
-                return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(error);
-            }
             if (error instanceof Error) {
                 return { ok: false, error: error };
             } else {

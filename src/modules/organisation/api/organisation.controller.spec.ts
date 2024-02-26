@@ -262,40 +262,53 @@ describe('OrganisationController', () => {
             organisationId: faker.string.uuid(),
         };
 
-        it('should return all organizations that match', async () => {
-            const response1: OrganisationResponse = {
-                id: faker.string.uuid(),
-                kennung: faker.lorem.word(),
-                name: faker.lorem.word(),
-                namensergaenzung: faker.lorem.word(),
-                kuerzel: faker.lorem.word(),
-                typ: OrganisationsTyp.SONSTIGE,
-            };
+        describe('when usecase returns a OrganisationResponse', () => {
+            it('should return all organizations that match', async () => {
+                const response1: OrganisationResponse = {
+                    id: faker.string.uuid(),
+                    kennung: faker.lorem.word(),
+                    name: faker.lorem.word(),
+                    namensergaenzung: faker.lorem.word(),
+                    kuerzel: faker.lorem.word(),
+                    typ: OrganisationsTyp.SONSTIGE,
+                };
 
-            const response2: OrganisationResponse = {
-                id: faker.string.uuid(),
-                kennung: faker.lorem.word(),
-                name: faker.lorem.word(),
-                namensergaenzung: faker.lorem.word(),
-                kuerzel: faker.lorem.word(),
-                typ: OrganisationsTyp.SONSTIGE,
-            };
+                const response2: OrganisationResponse = {
+                    id: faker.string.uuid(),
+                    kennung: faker.lorem.word(),
+                    name: faker.lorem.word(),
+                    namensergaenzung: faker.lorem.word(),
+                    kuerzel: faker.lorem.word(),
+                    typ: OrganisationsTyp.SONSTIGE,
+                };
 
-            const mockedPagedResponse: Paged<OrganisationResponse> = {
-                items: [response1, response2],
-                limit: 10,
-                offset: 0,
-                total: 2,
-            };
+                const mockedPagedResponse: Paged<OrganisationResponse> = {
+                    items: [response1, response2],
+                    limit: 10,
+                    offset: 0,
+                    total: 2,
+                };
 
-            organisationUcMock.findAdministriertVon.mockResolvedValue(mockedPagedResponse);
+                organisationUcMock.findAdministriertVon.mockResolvedValueOnce(mockedPagedResponse);
 
-            const result: Paged<OrganisationResponse> =
-                await organisationController.getAdministrierteOrganisationen(params);
+                const result: Paged<OrganisationResponse> =
+                    await organisationController.getAdministrierteOrganisationen(params);
 
-            expect(result).toEqual(mockedPagedResponse);
-            expect(organisationUcMock.findAdministriertVon).toHaveBeenCalledTimes(1);
-            expect(result.items.length).toEqual(2);
+                expect(result).toEqual(mockedPagedResponse);
+                expect(organisationUcMock.findAdministriertVon).toHaveBeenCalledTimes(1);
+                expect(result.items.length).toEqual(2);
+            });
+        });
+
+        describe('when usecase returns a SchulConnexError', () => {
+            it('should throw a HttpException', async () => {
+                organisationUcMock.findAdministriertVon.mockResolvedValueOnce(
+                    new SchulConnexError({ code: 500, subcode: '', titel: '', beschreibung: '' }),
+                );
+                await expect(organisationController.getAdministrierteOrganisationen(params)).rejects.toThrow(
+                    HttpException,
+                );
+            });
         });
     });
 
@@ -304,40 +317,53 @@ describe('OrganisationController', () => {
             organisationId: faker.string.uuid(),
         };
 
-        it('should return all organizations that match', async () => {
-            const response1: OrganisationResponse = {
-                id: faker.string.uuid(),
-                kennung: faker.lorem.word(),
-                name: faker.lorem.word(),
-                namensergaenzung: faker.lorem.word(),
-                kuerzel: faker.lorem.word(),
-                typ: OrganisationsTyp.SONSTIGE,
-            };
+        describe('when usecase returns a OrganisationResponse', () => {
+            it('should return all organizations that match', async () => {
+                const response1: OrganisationResponse = {
+                    id: faker.string.uuid(),
+                    kennung: faker.lorem.word(),
+                    name: faker.lorem.word(),
+                    namensergaenzung: faker.lorem.word(),
+                    kuerzel: faker.lorem.word(),
+                    typ: OrganisationsTyp.SONSTIGE,
+                };
 
-            const response2: OrganisationResponse = {
-                id: faker.string.uuid(),
-                kennung: faker.lorem.word(),
-                name: faker.lorem.word(),
-                namensergaenzung: faker.lorem.word(),
-                kuerzel: faker.lorem.word(),
-                typ: OrganisationsTyp.SONSTIGE,
-            };
+                const response2: OrganisationResponse = {
+                    id: faker.string.uuid(),
+                    kennung: faker.lorem.word(),
+                    name: faker.lorem.word(),
+                    namensergaenzung: faker.lorem.word(),
+                    kuerzel: faker.lorem.word(),
+                    typ: OrganisationsTyp.SONSTIGE,
+                };
 
-            const mockedPagedResponse: Paged<OrganisationResponse> = {
-                items: [response1, response2],
-                limit: 10,
-                offset: 0,
-                total: 2,
-            };
+                const mockedPagedResponse: Paged<OrganisationResponse> = {
+                    items: [response1, response2],
+                    limit: 10,
+                    offset: 0,
+                    total: 2,
+                };
 
-            organisationUcMock.findZugehoerigZu.mockResolvedValue(mockedPagedResponse);
+                organisationUcMock.findZugehoerigZu.mockResolvedValue(mockedPagedResponse);
 
-            const result: Paged<OrganisationResponse> =
-                await organisationController.getZugehoerigeOrganisationen(params);
+                const result: Paged<OrganisationResponse> =
+                    await organisationController.getZugehoerigeOrganisationen(params);
 
-            expect(result).toEqual(mockedPagedResponse);
-            expect(organisationUcMock.findZugehoerigZu).toHaveBeenCalledTimes(1);
-            expect(result.items.length).toEqual(2);
+                expect(result).toEqual(mockedPagedResponse);
+                expect(organisationUcMock.findZugehoerigZu).toHaveBeenCalledTimes(1);
+                expect(result.items.length).toEqual(2);
+            });
+        });
+
+        describe('when usecase returns a SchulConnexError', () => {
+            it('should throw a HttpException', async () => {
+                organisationUcMock.findZugehoerigZu.mockResolvedValueOnce(
+                    new SchulConnexError({ code: 500, subcode: '', titel: '', beschreibung: '' }),
+                );
+                await expect(organisationController.getZugehoerigeOrganisationen(params)).rejects.toThrow(
+                    HttpException,
+                );
+            });
         });
     });
 

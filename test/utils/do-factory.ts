@@ -10,14 +10,11 @@ import {
     Rolle,
     SichtfreigabeType,
 } from '../../src/modules/personenkontext/domain/personenkontext.enums.js';
-import { PersonRollenZuweisungDo } from '../../src/modules/rolle/domain/person-rollen-zuweisung.do.js';
-import { RolleBerechtigungsZuweisungDo } from '../../src/modules/rolle/domain/rolle-berechtigungs-zuweisung.do.js';
-import { RolleRechtDo } from '../../src/modules/rolle/domain/rolle-recht.do.js';
 import { RollenArt, RollenMerkmal } from '../../src/modules/rolle/domain/rolle.enums.js';
 import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
-import { ServiceProviderZugriffDo } from '../../src/modules/rolle/domain/service-provider-zugriff.do.js';
-import { ServiceProviderDo } from '../../src/modules/rolle/domain/service-provider.do.js';
 import { DoBase } from '../../src/shared/types/do-base.js';
+import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
+import { ServiceProviderKategorie } from '../../src/modules/service-provider/domain/service-provider.enum.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -106,34 +103,6 @@ export class DoFactory {
         return Object.assign(new PersonenkontextDo<WasPersisted>(), user, props);
     }
 
-    public static createServiceProvider<WasPersisted extends boolean>(
-        withId: WasPersisted,
-        props?: Partial<ServiceProviderDo<WasPersisted>>,
-    ): ServiceProviderDo<WasPersisted> {
-        const serviceProvider: ServiceProviderDo<false> = {
-            name: faker.internet.domainWord(),
-            url: faker.internet.url(),
-            providedOnSchulstrukturknoten: faker.string.numeric(),
-            id: withId ? faker.string.numeric() : undefined,
-            createdAt: withId ? faker.date.past() : undefined,
-            updatedAt: withId ? faker.date.recent() : undefined,
-        };
-        return Object.assign(new ServiceProviderDo<WasPersisted>(), serviceProvider, props);
-    }
-
-    public static createServiceProviderZugriff<WasPersisted extends boolean>(
-        withId: WasPersisted,
-        props?: Partial<ServiceProviderZugriffDo<WasPersisted>>,
-    ): ServiceProviderZugriffDo<WasPersisted> {
-        const serviceProviderZugriff: ServiceProviderZugriffDo<false> = {
-            serviceProvider: faker.lorem.word(),
-            id: withId ? faker.string.uuid() : undefined,
-            createdAt: withId ? faker.date.past() : undefined,
-            updatedAt: withId ? faker.date.recent() : undefined,
-        };
-        return Object.assign(new ServiceProviderZugriffDo<WasPersisted>(), serviceProviderZugriff, props);
-    }
-
     public static createRolle<WasPersisted extends boolean>(
         this: void,
         withId: WasPersisted,
@@ -151,51 +120,30 @@ export class DoFactory {
         return Object.assign(Object.create(RolleAggregate.prototype) as RolleAggregate<boolean>, rolle, props);
     }
 
-    public static createRolleRecht<WasPersisted extends boolean>(
+    public static createServiceProvider<WasPersisted extends boolean>(
+        this: void,
         withId: WasPersisted,
-        props?: Partial<RolleRechtDo<WasPersisted>>,
-    ): RolleRechtDo<WasPersisted> {
-        const rolleRecht: RolleRechtDo<false> = {
+        props?: Partial<ServiceProvider<WasPersisted>>,
+    ): ServiceProvider<WasPersisted> {
+        const serviceProvider: Partial<ServiceProvider<WasPersisted>> = {
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
+            name: faker.word.noun(),
+            url: faker.internet.url(),
+            kategorie: faker.helpers.enumValue(ServiceProviderKategorie),
+            logoMimeType: 'image/png',
+            // 1x1 black PNG
+            logo: Buffer.from(
+                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==',
+                'base64',
+            ),
+            providedOnSchulstrukturknoten: faker.string.uuid(),
         };
-        return Object.assign(new RolleRechtDo<WasPersisted>(), rolleRecht, props);
-    }
-
-    public static createPersonRollenZuweisung<WasPersisted extends boolean>(
-        personId: string,
-        rolleId: string,
-        withId: WasPersisted,
-        props?: Partial<PersonRollenZuweisungDo<WasPersisted>>,
-    ): PersonRollenZuweisungDo<WasPersisted> {
-        const personRollenZuweisung: PersonRollenZuweisungDo<false> = {
-            person: personId,
-            rolle: rolleId,
-            schulstrukturknoten: faker.string.numeric(),
-            id: withId ? faker.string.uuid() : undefined,
-            createdAt: withId ? faker.date.past() : undefined,
-            updatedAt: withId ? faker.date.recent() : undefined,
-        };
-        return Object.assign(new PersonRollenZuweisungDo<WasPersisted>(), personRollenZuweisung, props);
-    }
-
-    public static createRolleBerechtigungsZuweisung<WasPersisted extends boolean>(
-        rolleId: string,
-        rolleRecht: RolleRechtDo<boolean>,
-        withId: WasPersisted,
-        props?: Partial<RolleBerechtigungsZuweisungDo<WasPersisted>>,
-    ): RolleBerechtigungsZuweisungDo<WasPersisted> {
-        const rolleBerechtigungsZuweisung: RolleBerechtigungsZuweisungDo<false> = {
-            rolleId: rolleId,
-            rolleRecht: rolleRecht,
-            validForAdministrativeParents: false,
-            validForOrganisationalChildren: false,
-            schulstrukturknoten: faker.string.numeric(),
-            id: withId ? faker.string.uuid() : undefined,
-            createdAt: withId ? faker.date.past() : undefined,
-            updatedAt: withId ? faker.date.recent() : undefined,
-        };
-        return Object.assign(new RolleBerechtigungsZuweisungDo<WasPersisted>(), rolleBerechtigungsZuweisung, props);
+        return Object.assign(
+            Object.create(ServiceProvider.prototype) as ServiceProvider<boolean>,
+            serviceProvider,
+            props,
+        );
     }
 }

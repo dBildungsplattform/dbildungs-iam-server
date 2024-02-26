@@ -19,9 +19,9 @@ spec:
     spec:
       {{- if .Values.seeding.enabled }}
       initContainers:
-        {{- range .Values.initContainers }}
-        - name: {{ .name }}
-          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
+        - name: db-init
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
           securityContext:
             {{- toYaml $.Values.initcontainerSecurityContext | nindent 12 }}
           {{- if eq .name "db-init" }}
@@ -32,21 +32,56 @@ spec:
           env:
             {{- include "dbiam-backend-envs" $ | nindent 12 }}
           volumeMounts:
-            {{- range .volumeMounts }}
-            - name: {{ .name }}
-              mountPath: {{ .mountPath }}
-              subPath: {{ .subPath | default "" }}
-              readOnly: {{ .readOnly }}
-            {{- end }}
-          resources: 
-            {{- toYaml $.Values.containerResources | nindent 12 }}
-        {{- end }}
-      {{- end }}
+            - mountPath: /app/config/config.json
+              subPath: config-json
+              name: config-volume
+              readOnly: true
+            - mountPath: /app/config/secrets.json
+              subPath: secrets-json
+              name: secret-volume
+              readOnly: true
+            - mountPath: /app/sql/{{.Values.seeding.database}}
+              name: seeding-volume
+              readOnly: true
+          resources:
+            requests:
+              cpu: {{.Values.dbildungsIamCpuRequest}}
+              memory: {{.Values.dbildungsIamMemRequest}}
+            limits:
+              cpu: {{.Values.dbildungsIamCpuMax}}
+              memory: {{.Values.dbildungsIamMemMax}}
+        - name: db-seeding
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
+          securityContext:
+            allowPrivilegeEscalation: false
+          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
+          env:
+            {{- include "dbiam-backend-envs" . | indent  12}}
+          volumeMounts:
+            - mountPath: /app/config/config.json
+              subPath: config-json
+              name: config-volume
+              readOnly: true
+            - mountPath: /app/config/secrets.json
+              subPath: secrets-json
+              name: secret-volume
+              readOnly: true
+            - mountPath: /app/sql/{{.Values.seeding.database}}
+              name: seeding-volume
+              readOnly: true
+          resources:
+            requests:
+              cpu: {{.Values.dbildungsIamCpuRequest}}
+              memory: {{.Values.dbildungsIamMemRequest}}
+            limits:
+              cpu: {{.Values.dbildungsIamCpuMax}}
+              memory: {{.Values.dbildungsIamMemMax}}
+      {{end}}
       containers:
-        - name: {{ .Values.backend.commonLabels.name }}
-          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if .Values.enabledcontainerSecurityContext }}
+        - name: dbildungs-iam-backend
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
           securityContext:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           {{- end }}
@@ -70,8 +105,13 @@ spec:
             name: {{ .Values.configmap.name }}
         - name: {{ (index .Values.backendcontainer.volumeMounts 1).name }}
           secret:
-            secretName: {{ .Values.secrets.name }}
-        {{- if .Values.seeding }}
+            {{- if .Values.auth.existingSecret }}
+            secretName: {{ .Values.auth.existingSecret }}
+            {{- end }}
+            {{- if not .Values.auth.existingSecret }}
+            secretName: {{.Values.auth.name}}
+            {{- end }}
+        {{if .Values.seeding}}
         - name: seeding-volume
           configMap:
             name: {{ .Values.seeding.configmap }}
