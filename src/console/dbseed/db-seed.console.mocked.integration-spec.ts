@@ -9,7 +9,7 @@ import {
 } from '../../../test/utils/index.js';
 import { DbSeedService } from './db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
-import { UsernameGeneratorService } from '../../modules/user/username-generator.service.js';
+import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
 import { DbSeedMapper } from './db-seed-mapper.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';

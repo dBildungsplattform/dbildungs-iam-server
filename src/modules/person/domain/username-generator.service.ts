@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { KeycloakUserService, UserDo } from '../keycloak-administration/index.js';
-import { DomainError, EntityNotFoundError } from '../../shared/error/index.js';
+import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 
 @Injectable()
 export class UsernameGeneratorService {

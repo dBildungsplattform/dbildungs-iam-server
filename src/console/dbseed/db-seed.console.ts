@@ -5,7 +5,7 @@ import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
 import { Inject } from '@nestjs/common';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
-import { UsernameGeneratorService } from '../../modules/user/username-generator.service.js';
+import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
 import { DbSeedService } from './db-seed.service.js';
 import { PersonFile } from './file/person-file.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
