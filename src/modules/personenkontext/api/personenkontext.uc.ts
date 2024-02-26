@@ -18,11 +18,23 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
+import { Personenkontext } from '../domain/personenkontext.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
+import { OrganisationService } from '../../organisation/domain/organisation.service.js';
+import { PersonenkontextSystemrechtResponse } from './personenkontext-systemrecht.response.js';
+
 @Injectable()
 export class PersonenkontextUc {
     public constructor(
         private readonly personService: PersonService,
         private readonly personenkontextService: PersonenkontextService,
+        private readonly rolleRepo: RolleRepo,
+        private readonly organisationRepo: OrganisationRepo,
+        private readonly organisationService: OrganisationService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -96,6 +108,34 @@ export class PersonenkontextUc {
             person: this.mapper.map(personResult.value, PersonDo, PersonDto),
             personenkontexte: [this.mapper.map(personenkontextResult.value, PersonenkontextDo, PersonenkontextDto)],
         });
+    }
+
+    public async hatSystemRecht(
+        personId: string,
+        systemRecht: RollenSystemRecht,
+    ): Promise<PersonenkontextSystemrechtResponse> {
+        const results: OrganisationDo<true>[] = [];
+        const personenkontexte: Personenkontext<true>[] =
+            await this.personenkontextService.findPersonenkontexteByPersonId(personId);
+        for (const personenkontext of personenkontexte) {
+            const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(personenkontext.rolleId);
+            if (!rolle) continue;
+            if (rolle.hasSystemRecht(systemRecht)) {
+                const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(
+                    personenkontext.organisationId,
+                );
+                if (organisation) {
+                    results.push(organisation);
+                    const children: Option<Paged<OrganisationDo<true>>> =
+                        await this.organisationService.findAllAdministriertVon(personenkontext.organisationId);
+                    children.items.forEach((child: OrganisationDo<true>) => results.push(child));
+                }
+            }
+        }
+        const response: PersonenkontextSystemrechtResponse = new PersonenkontextSystemrechtResponse();
+        response.rechtName = systemRecht.toString();
+        response.ssk = results;
+        return response;
     }
 
     public async updatePersonenkontext(

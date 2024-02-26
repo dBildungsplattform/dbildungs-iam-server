@@ -7,6 +7,6 @@ import { OrganisationPersistenceMapperProfile } from './persistence/organisation
 @Module({
     imports: [LoggerModule.register(OrganisationModule.name)],
     providers: [OrganisationPersistenceMapperProfile, OrganisationRepo, OrganisationService],
-    exports: [OrganisationService],
+    exports: [OrganisationService, OrganisationRepo],
 })
 export class OrganisationModule {}

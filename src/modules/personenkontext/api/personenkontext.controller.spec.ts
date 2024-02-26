@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { MapperTestModule } from '../../../../test/utils/index.js';
+import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
@@ -19,6 +19,11 @@ import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.res
 import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
+import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
+import { HatSystemrechtBodyParams } from './hat-systemrecht.body.params.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { PersonenkontextSystemrechtResponse } from './personenkontext-systemrecht.response.js';
+import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
@@ -139,6 +144,29 @@ describe('PersonenkontextController', () => {
                 expect(result.items[0]?.person.id).toBe(personenkontext.personId);
                 expect(result.items[0]?.personenkontexte.length).toBe(1);
                 expect(result.items[0]?.personenkontexte[0]?.id).toBe(personenkontext.id);
+            });
+        });
+    });
+
+    describe('hatSystemRecht', () => {
+        describe('when verifying user has SystemRecht', () => {
+            it('should return PersonenkontextSystemrechtResponse', async () => {
+                const idParams: PersonByIdParams = {
+                    personId: '1',
+                };
+                const bodyParams: HatSystemrechtBodyParams = {
+                    systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
+                };
+                const organisations: OrganisationDo<true>[] = [DoFactory.createOrganisation(true)];
+                const personenkontextSystemrechtResponse: PersonenkontextSystemrechtResponse = {
+                    ssk: organisations,
+                    rechtName: RollenSystemRecht.ROLLEN_VERWALTEN,
+                };
+                personenkontextUcMock.hatSystemRecht.mockResolvedValue(personenkontextSystemrechtResponse);
+                const response: PersonenkontextSystemrechtResponse = await sut.hatSystemRecht(idParams, bodyParams);
+                expect(response.ssk).toHaveLength(1);
+                expect(response.rechtName).toEqual(RollenSystemRecht.ROLLEN_VERWALTEN);
+                expect(personenkontextUcMock.hatSystemRecht).toHaveBeenCalledTimes(1);
             });
         });
     });

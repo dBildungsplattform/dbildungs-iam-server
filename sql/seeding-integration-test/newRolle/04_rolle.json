@@ -6,7 +6,8 @@
             "name": "Rolle9988",
             "administeredBySchulstrukturknoten": "1",
             "rollenart": "LERN",
-            "merkmale": []
+            "merkmale": [],
+            "systemRechte": []
         }
     ]
 }
