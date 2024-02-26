@@ -120,7 +120,7 @@ spec:
         - name: secret-volume
           secret:
             {{- if .Values.auth.existingSecret }}
-            name: {{ .Values.auth.existingSecret }}
+            secretName: {{ .Values.auth.existingSecret }}
             {{- end }}
             {{- if not .Values.auth.existingSecret }}
             secretName: {{.Values.auth.name}}
