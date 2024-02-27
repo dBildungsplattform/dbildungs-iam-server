@@ -1,6 +1,6 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { TestingModule, Test } from '@nestjs/testing';
-import { MapperTestModule, ConfigTestModule, DatabaseTestModule } from '../../../../test/utils/index.js';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
 import { LoggerModule } from '../../../core/logging/logger.module.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
@@ -157,7 +157,7 @@ describe('Person', () => {
                         faker.string.uuid(),
                     );
 
-                    expect(person.newPassword).toEqual('unset');
+                    expect(person.newPassword).toBeUndefined();
                     person.resetPassword();
                     expect(person.newPassword).toBeDefined();
                 });

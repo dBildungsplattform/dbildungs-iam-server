@@ -13,7 +13,7 @@ export class Person<WasPersisted extends boolean> {
 
     private state: State;
 
-    private newPasswordInternal: string;
+    private newPasswordInternal?: string;
 
     public readonly mandant: string;
 
@@ -45,7 +45,7 @@ export class Person<WasPersisted extends boolean> {
         public auskunftssperre?: boolean,
     ) {
         this.state = { passwordReset: false };
-        this.newPasswordInternal = this.password ?? 'unset';
+        this.newPasswordInternal = this.password;
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
     }
 
@@ -53,7 +53,7 @@ export class Person<WasPersisted extends boolean> {
         return this.state.passwordReset || this.keycloakUserId === undefined;
     }
 
-    public get newPassword(): string {
+    public get newPassword(): string | undefined {
         return this.newPasswordInternal;
     }
 
@@ -133,7 +133,7 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
     ): Person<false> {
-        return new Person(
+        const person: Person<boolean> = new Person(
             undefined,
             undefined,
             undefined,
@@ -160,6 +160,8 @@ export class Person<WasPersisted extends boolean> {
             vertrauensstufe,
             auskunftssperre,
         );
+        person.resetPassword();
+        return person;
     }
 
     // Only for now until ticket 403
@@ -184,16 +186,18 @@ export class Person<WasPersisted extends boolean> {
             }
             this.keycloakUserId = creationResult.value;
         }
-        const setPasswordResult: Result<string, DomainError> = await kcUserService.resetPassword(
-            this.keycloakUserId,
-            this.newPassword,
-        );
-        if (!setPasswordResult.ok) {
-            if (this.keycloakUserId) {
-                await kcUserService.delete(this.keycloakUserId);
-                this.keycloakUserId = undefined;
+        if (this.state.passwordReset) {
+            const setPasswordResult: Result<string, DomainError> = await kcUserService.resetPassword(
+                this.keycloakUserId,
+                this.newPassword!,
+            );
+            if (!setPasswordResult.ok) {
+                if (this.keycloakUserId) {
+                    await kcUserService.delete(this.keycloakUserId);
+                    this.keycloakUserId = undefined;
+                }
+                throw setPasswordResult.error;
             }
-            throw setPasswordResult.error;
         }
     }
 

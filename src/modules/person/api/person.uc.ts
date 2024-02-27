@@ -56,6 +56,7 @@ export class PersonUc {
         }
 
         const person: Person<false> = Person.createNew(personDto.familienname, personDto.vorname);
+        person.resetPassword();
         try {
             await person.saveUser(this.userService, this.usernameGenerator);
             if (person.keycloakUserId === undefined) {
@@ -165,10 +166,8 @@ export class PersonUc {
                     new EntityNotFoundError('Person', personResult.value.id),
                 );
             }
-
-            person.resetPassword();
             await person.saveUser(this.userService, this.usernameGenerator);
-            return { ok: true, value: person.newPassword };
+            return { ok: true, value: person.newPassword! };
         } catch (error) {
             this.logger.error(JSON.stringify(error));
             if (error instanceof Error) {
