@@ -11,7 +11,7 @@ export class Person<WasPersisted extends boolean> {
 
     private state: State;
 
-    private newPasswordInternal: string;
+    private newPasswordInternal?: string;
 
     public readonly mandant: string;
 
@@ -43,7 +43,7 @@ export class Person<WasPersisted extends boolean> {
         public auskunftssperre?: boolean,
     ) {
         this.state = { passwordReset: false };
-        this.newPasswordInternal = this.password ?? 'unset';
+        this.newPasswordInternal = this.password;
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
     }
 
@@ -51,8 +51,8 @@ export class Person<WasPersisted extends boolean> {
         return this.state.passwordReset || this.keycloakUserId === undefined;
     }
 
-    public get newPassword(): string {
-        return this.newPasswordInternal;
+    public get newPassword(): string | undefined {
+        return this.newPasswordInternal ?? undefined;
     }
 
     public static construct<WasPersisted extends boolean = false>(

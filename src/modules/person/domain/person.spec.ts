@@ -22,7 +22,7 @@ describe('Person', () => {
                     faker.string.uuid(),
                 );
 
-                expect(person.newPassword).toEqual('unset');
+                expect(person.newPassword).toEqual(undefined);
                 person.resetPassword();
                 expect(person.newPassword).toBeDefined();
             });

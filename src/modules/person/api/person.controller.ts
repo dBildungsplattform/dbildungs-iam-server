@@ -311,6 +311,6 @@ export class PersonController {
             );
         }
 
-        return { ok: true, value: person.newPassword };
+        return { ok: true, value: person.newPassword! };
     }
 }

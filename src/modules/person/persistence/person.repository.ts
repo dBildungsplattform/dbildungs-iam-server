@@ -160,7 +160,7 @@ export class PersonRepository {
         }
         const setPasswordResult: Result<string, DomainError> = await kcUserService.resetPassword(
             person.keycloakUserId,
-            person.newPassword,
+            person.newPassword!,
         );
         if (!setPasswordResult.ok) {
             if (person.keycloakUserId) {
