@@ -32,9 +32,9 @@ export class PersonendatensatzResponse {
             name: personResponseName,
             geburt: personResponseBirth,
             stammorganisation: person.stammorganisation,
-            geschlecht: person.geschlecht!,
-            lokalisierung: person.lokalisierung!,
-            vertrauensstufe: person.vertrauensstufe!,
+            geschlecht: person.geschlecht,
+            lokalisierung: person.lokalisierung,
+            vertrauensstufe: person.vertrauensstufe,
             revision: person.revision,
             startpasswort: withStartPasswort === true ? person.newPassword : undefined,
         };

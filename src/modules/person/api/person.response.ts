@@ -11,15 +11,15 @@ export class PersonResponse {
 
     public name!: PersonNameParams;
 
-    public geburt!: PersonBirthParams;
+    public geburt?: PersonBirthParams;
 
     public readonly stammorganisation?: string;
 
-    public geschlecht!: string;
+    public geschlecht?: string;
 
-    public lokalisierung!: string;
+    public lokalisierung?: string;
 
-    public vertrauensstufe!: Vertrauensstufe;
+    public vertrauensstufe?: Vertrauensstufe;
 
     public revision!: string;
 
