@@ -14,16 +14,13 @@ import {
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { OrganisationModule } from '../../organisation/organisation.module.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { PersonDo } from '../../person/domain/person.do.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
-import { PersonModule } from '../../person/person.module.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { RolleModule } from '../../rolle/rolle.module.js';
 import { Personenkontext } from '../domain/personenkontext.js';
-import { DBiamPersonenkontextController } from './dbiam-personenkontext.controller.js';
+import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { DBiamPersonenkontextRepo } from './dbiam-personenkontext.repo.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
@@ -60,13 +57,9 @@ describe('dbiam Personenkontext API', () => {
                 MapperTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                PersonModule,
-                OrganisationModule,
-                RolleModule,
+                PersonenKontextApiModule,
             ],
-            controllers: [DBiamPersonenkontextController],
             providers: [
-                DBiamPersonenkontextRepo,
                 {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
