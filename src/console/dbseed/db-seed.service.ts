@@ -6,9 +6,6 @@ import { PersonFile } from './file/person-file.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { ConstructorCall, EntityFile } from './db-seed.console.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
-import { ServiceProviderFile } from './file/service-provider-file.js';
-import { plainToInstance } from 'class-transformer';
-import { PersonenkontextFile } from './file/personenkontext-file.js';
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 
 @Injectable()
@@ -24,6 +21,7 @@ export class DbSeedService {
     private serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
 
     private personenkontextMap: Map<string, Personenkontext<true>> = new Map();
+
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
@@ -82,46 +80,41 @@ export class DbSeedService {
     }
 
     public readServiceProvider(fileContentAsStr: string): ServiceProvider<true>[] {
-        const serviceProviderFile: EntityFile<ServiceProviderFile> = JSON.parse(
-            fileContentAsStr,
-        ) as EntityFile<ServiceProviderFile>;
-
-        const entities: ServiceProviderFile[] = plainToInstance(ServiceProviderFile, serviceProviderFile.entities);
-
-        const serviceProviders: ServiceProvider<true>[] = entities.map((data: ServiceProviderFile) =>
+        const { entities }: EntityFile<ServiceProvider<true>> = JSON.parse(fileContentAsStr) as EntityFile<
+            ServiceProvider<true>
+        >;
+        const serviceProviders: ServiceProvider<true>[] = entities.map((serviceProviderData: ServiceProvider<true>) =>
             ServiceProvider.construct(
-                data.id,
+                serviceProviderData.id,
                 new Date(),
                 new Date(),
-                data.name,
-                data.url,
-                data.kategorie,
-                data.providedOnSchulstrukturknoten,
-                data.logoBase64 ? Buffer.from(data.logoBase64, 'base64') : undefined,
-                data.logoMimeType,
+                serviceProviderData.name,
+                serviceProviderData.url,
+                serviceProviderData.kategorie,
+                serviceProviderData.providedOnSchulstrukturknoten,
+                serviceProviderData.logo,
+                serviceProviderData.logoMimeType,
             ),
         );
-
         for (const serviceProvider of serviceProviders) {
             this.serviceProviderMap.set(serviceProvider.id, serviceProvider);
         }
-
         return serviceProviders;
     }
 
     public readPersonenkontext(fileContentAsStr: string): Personenkontext<true>[] {
-        const personenkontextFile: EntityFile<PersonenkontextFile> = JSON.parse(
-            fileContentAsStr,
-        ) as EntityFile<PersonenkontextFile>;
-        const entities: PersonenkontextFile[] = plainToInstance(PersonenkontextFile, personenkontextFile.entities);
-        const personenkontexte: Personenkontext<true>[] = entities.map((data: PersonenkontextFile) =>
+        const { entities }: EntityFile<Personenkontext<true>> = JSON.parse(fileContentAsStr) as EntityFile<
+            Personenkontext<true>
+        >;
+
+        const personenkontexte: Personenkontext<true>[] = entities.map((pkData: Personenkontext<true>) =>
             Personenkontext.construct(
-                data.id,
+                pkData.id,
                 new Date(),
                 new Date(),
-                data.personId,
-                data.organisationId,
-                data.rolleId,
+                pkData.personId,
+                pkData.organisationId,
+                pkData.rolleId,
             ),
         );
         for (const personenkontext of personenkontexte) {
