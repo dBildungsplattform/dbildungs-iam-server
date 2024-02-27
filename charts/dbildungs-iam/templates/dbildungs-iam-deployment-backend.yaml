@@ -22,8 +22,10 @@ spec:
         - name: db-init
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
+          {{- if .Values.enabledcontainerSecurityContext }}
           securityContext:
-            allowPrivilegeEscalation: false
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          {{- end }}
           command: [ "node", "dist/src/console/main.js", "db", "init" ]
           env:
             {{- include "dbiam-backend-envs" . | indent  12}}
@@ -49,8 +51,10 @@ spec:
         - name: db-seeding
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
+          {{- if .Values.enabledcontainerSecurityContext }}
           securityContext:
-            allowPrivilegeEscalation: false
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          {{- end }}
           command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
           env:
             {{- include "dbiam-backend-envs" . | indent  12}}
