@@ -15,8 +15,6 @@ seeding:
   database: dev
 # Configuration of necessary secrets
 # Name of the secrets to inject
-secrets:
-  name: dbildungs-iam-secrets
 configmap:
   name: dbildungs-iam-configmap
 # If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
@@ -27,5 +25,17 @@ redisEnabled: true
 image:
   repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
   tag: ""
-db:
+database:
   name: ""
+  db_host: ""
+  db_password: ""
+  db_username: ""
+
+auth:
+  existingSecret: ""
+  # Name of the secrets to inject
+  name: dbildungs-iam
+  keycloak_adminSecret: ""
+  keycloak_clientSecret: ""
+  secrets_json: ""
+  frontend_sessionSecret: ""
