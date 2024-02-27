@@ -122,7 +122,7 @@ export class PersonController {
         if (!person) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError(`Person with the following ID ${params.personId} does not exist`),
+                    new EntityNotFoundError('Person', params.personId),
                 ),
             );
         }
@@ -248,7 +248,7 @@ export class PersonController {
         if (!person) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError(`Person with the following ID ${params.personId} does not exist`),
+                    new EntityNotFoundError('Person', params.personId),
                 ),
             );
         }
@@ -294,7 +294,7 @@ export class PersonController {
         if (!person) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError(`Person with the following ID ${params.personId} does not exist`),
+                    new EntityNotFoundError('Person', params.personId),
                 ),
             );
         }

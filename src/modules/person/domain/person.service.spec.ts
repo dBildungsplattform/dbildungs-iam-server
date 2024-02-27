@@ -68,7 +68,7 @@ describe('PersonService', () => {
                 const result: Result<PersonDo<true>> | Error = await personService.findPersonById(person.id);
                 expect(result).toEqual<Result<PersonDo<true>>>({
                     ok: false,
-                    error: new EntityNotFoundError(`Person with the following ID ${person.id} does not exist`),
+                    error: new EntityNotFoundError('Person', person.id),
                 });
             });
         });
