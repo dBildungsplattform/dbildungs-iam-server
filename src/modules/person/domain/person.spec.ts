@@ -1,24 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
-import { LoggerModule } from '../../../core/logging/logger.module.js';
 import { faker } from '@faker-js/faker';
 import { Person } from './person.js';
 import { DomainError } from '../../../shared/error/index.js';
 
 describe('Person', () => {
-    let module: TestingModule;
-
-    beforeAll(async () => {
-        module = await Test.createTestingModule({
-            imports: [MapperTestModule, ConfigTestModule, DatabaseTestModule.forRoot(), LoggerModule.register('Test')],
-            providers: [],
-        }).compile();
-    });
-
-    afterAll(async () => {
-        await module.close();
-    });
-
     beforeEach(() => {
         jest.resetAllMocks();
     });
