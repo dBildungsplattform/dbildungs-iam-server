@@ -21,7 +21,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
-import { DBiamPersonenkontextRepo } from './dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,

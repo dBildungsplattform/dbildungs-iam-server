@@ -17,7 +17,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkontext.body.params.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personenkontext-by-personid.params.js';
-import { DBiamPersonenkontextRepo } from './dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)

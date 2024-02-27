@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { Rolle } from '../domain/personenkontext.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
-import { PersonenkontextEntity } from '../persistence/personenkontext.entity.js';
+import { PersonenkontextEntity } from './personenkontext.entity.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,

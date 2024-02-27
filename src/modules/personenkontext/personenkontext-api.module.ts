@@ -6,8 +6,8 @@ import { PersonModule } from '../person/person.module.js';
 import { PersonenkontextService } from './domain/personenkontext.service.js';
 import { PersonenkontextRepo } from './persistence/personenkontext.repo.js';
 import { PersonRepo } from '../person/persistence/person.repo.js';
-import { DBiamPersonenkontextController } from './dbiam/dbiam-personenkontext.controller.js';
-import { DBiamPersonenkontextRepo } from './dbiam/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextController } from './api/dbiam-personenkontext.controller.js';
+import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { RolleModule } from '../rolle/rolle.module.js';
 
