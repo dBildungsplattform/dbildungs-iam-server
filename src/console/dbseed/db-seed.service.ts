@@ -22,7 +22,6 @@ export class DbSeedService {
 
     private personenkontextMap: Map<string, Personenkontext<true>> = new Map();
 
-
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
             fileContentAsStr,

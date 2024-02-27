@@ -141,7 +141,7 @@ describe('DbSeedService', () => {
                     url: 'https://example.com/',
                     kategorie: ServiceProviderKategorie.UNTERRICHT,
                     logoMimeType: 'image/png',
-                    logo: expect.any(Buffer) as Buffer,
+                    logo: expect.any(String) as string,
                     providedOnSchulstrukturknoten: '1',
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,
