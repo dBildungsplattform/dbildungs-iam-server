@@ -25,7 +25,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
-import { PersonenkontextSystemrechtResponse } from './personenkontext-systemrecht.response.js';
+import { PersonenkontextSystemrechtResponse, SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -110,10 +110,7 @@ export class PersonenkontextUc {
         });
     }
 
-    public async hatSystemRecht(
-        personId: string,
-        systemRecht: RollenSystemRecht,
-    ): Promise<PersonenkontextSystemrechtResponse> {
+    public async hatSystemRecht(personId: string, systemRecht: RollenSystemRecht): Promise<SystemrechtResponse> {
         const results: OrganisationDo<true>[] = [];
         const personenkontexte: Personenkontext<true>[] =
             await this.personenkontextService.findPersonenkontexteByPersonId(personId);
@@ -132,10 +129,11 @@ export class PersonenkontextUc {
                 }
             }
         }
-        const response: PersonenkontextSystemrechtResponse = new PersonenkontextSystemrechtResponse();
-        response.rechtName = systemRecht.toString();
-        response.ssk = results;
-        return response;
+        const personenkontextSystemrechtResponse: PersonenkontextSystemrechtResponse =
+            new PersonenkontextSystemrechtResponse();
+        personenkontextSystemrechtResponse.rechtName = systemRecht.toString();
+        personenkontextSystemrechtResponse.ssk = results;
+        return personenkontextSystemrechtResponse.response;
     }
 
     public async updatePersonenkontext(

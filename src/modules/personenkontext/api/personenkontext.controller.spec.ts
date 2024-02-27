@@ -22,7 +22,7 @@ import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.
 import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 import { HatSystemrechtBodyParams } from './hat-systemrecht.body.params.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { PersonenkontextSystemrechtResponse } from './personenkontext-systemrecht.response.js';
+import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 
 describe('PersonenkontextController', () => {
@@ -158,14 +158,12 @@ describe('PersonenkontextController', () => {
                     systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
                 };
                 const organisations: OrganisationDo<true>[] = [DoFactory.createOrganisation(true)];
-                const personenkontextSystemrechtResponse: PersonenkontextSystemrechtResponse = {
-                    ssk: organisations,
-                    rechtName: RollenSystemRecht.ROLLEN_VERWALTEN,
+                const personenkontextSystemrechtResponse: SystemrechtResponse = {
+                    ROLLEN_VERWALTEN: organisations,
                 };
                 personenkontextUcMock.hatSystemRecht.mockResolvedValue(personenkontextSystemrechtResponse);
-                const response: PersonenkontextSystemrechtResponse = await sut.hatSystemRecht(idParams, bodyParams);
-                expect(response.ssk).toHaveLength(1);
-                expect(response.rechtName).toEqual(RollenSystemRecht.ROLLEN_VERWALTEN);
+                const response: SystemrechtResponse = await sut.hatSystemRecht(idParams, bodyParams);
+                expect(response['ROLLEN_VERWALTEN']).toHaveLength(1);
                 expect(personenkontextUcMock.hatSystemRecht).toHaveBeenCalledTimes(1);
             });
         });

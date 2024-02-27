@@ -26,7 +26,7 @@ import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js'
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
-import { PersonenkontextSystemrechtResponse } from './personenkontext-systemrecht.response.js';
+import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 
 function createPersonenkontext(): Personenkontext<true>[] {
@@ -274,13 +274,9 @@ describe('PersonenkontextUc', () => {
                 };
                 organisationServiceMock.findAllAdministriertVon.mockResolvedValue(findAllAdministriertVon);
                 personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
-                const result: PersonenkontextSystemrechtResponse = await sut.hatSystemRecht(
-                    '1',
-                    RollenSystemRecht.ROLLEN_VERWALTEN,
-                );
-                expect(result.rechtName).toEqual(RollenSystemRecht.ROLLEN_VERWALTEN.toString());
-                expect(result.ssk).toBeTruthy();
-                expect(result.ssk).toHaveLength(4);
+                const result: SystemrechtResponse = await sut.hatSystemRecht('1', RollenSystemRecht.ROLLEN_VERWALTEN);
+                expect(result['ROLLEN_VERWALTEN']).toBeTruthy();
+                expect(result['ROLLEN_VERWALTEN']).toHaveLength(4);
             });
         });
 
@@ -292,13 +288,9 @@ describe('PersonenkontextUc', () => {
                 rolleRepoMock.findById.mockResolvedValue(rolle);
                 organisationRepoMock.findById.mockResolvedValue(organisation);
                 personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
-                const result: PersonenkontextSystemrechtResponse = await sut.hatSystemRecht(
-                    '1',
-                    RollenSystemRecht.ROLLEN_VERWALTEN,
-                );
-                expect(result.rechtName).toEqual(RollenSystemRecht.ROLLEN_VERWALTEN.toString());
-                expect(result.ssk).toBeTruthy();
-                expect(result.ssk).toHaveLength(0);
+                const result: SystemrechtResponse = await sut.hatSystemRecht('1', RollenSystemRecht.ROLLEN_VERWALTEN);
+                expect(result['ROLLEN_VERWALTEN']).toBeTruthy();
+                expect(result['ROLLEN_VERWALTEN']).toHaveLength(0);
             });
         });
 
@@ -309,13 +301,9 @@ describe('PersonenkontextUc', () => {
                 rolleRepoMock.findById.mockResolvedValue(rolle);
                 organisationRepoMock.findById.mockResolvedValue(undefined);
                 personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
-                const result: PersonenkontextSystemrechtResponse = await sut.hatSystemRecht(
-                    '1',
-                    RollenSystemRecht.ROLLEN_VERWALTEN,
-                );
-                expect(result.rechtName).toEqual(RollenSystemRecht.ROLLEN_VERWALTEN.toString());
-                expect(result.ssk).toBeTruthy();
-                expect(result.ssk).toHaveLength(0);
+                const result: SystemrechtResponse = await sut.hatSystemRecht('1', RollenSystemRecht.ROLLEN_VERWALTEN);
+                expect(result['ROLLEN_VERWALTEN']).toBeTruthy();
+                expect(result['ROLLEN_VERWALTEN']).toHaveLength(0);
             });
         });
 
@@ -324,13 +312,9 @@ describe('PersonenkontextUc', () => {
                 const personenkontexte: Personenkontext<true>[] = createPersonenkontext();
                 rolleRepoMock.findById.mockResolvedValue(undefined);
                 personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
-                const result: PersonenkontextSystemrechtResponse = await sut.hatSystemRecht(
-                    '1',
-                    RollenSystemRecht.ROLLEN_VERWALTEN,
-                );
-                expect(result.rechtName).toEqual(RollenSystemRecht.ROLLEN_VERWALTEN.toString());
-                expect(result.ssk).toBeTruthy();
-                expect(result.ssk).toHaveLength(0);
+                const result: SystemrechtResponse = await sut.hatSystemRecht('1', RollenSystemRecht.ROLLEN_VERWALTEN);
+                expect(result['ROLLEN_VERWALTEN']).toBeTruthy();
+                expect(result['ROLLEN_VERWALTEN']).toHaveLength(0);
             });
         });
     });

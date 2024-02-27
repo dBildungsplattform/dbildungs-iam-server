@@ -44,7 +44,7 @@ import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.p
 import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
-import { PersonenkontextSystemrechtResponse } from './personenkontext-systemrecht.response.js';
+import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 import { HatSystemrechtBodyParams } from './hat-systemrecht.body.params.js';
 
@@ -128,11 +128,16 @@ export class PersonenkontextController {
     }
 
     @Get(':personId/hatSystemrecht')
+    @ApiOkResponse({
+        description: 'The SchulStrukturKnoten associated with this personId and systemrecht.',
+        type: [SystemrechtResponse],
+        isArray: true,
+    })
     public async hatSystemRecht(
         @Param() personByIdParams: PersonByIdParams,
         @Body() hatSystemrechtBodyParams: HatSystemrechtBodyParams,
-    ): Promise<PersonenkontextSystemrechtResponse> {
-        const response: PersonenkontextSystemrechtResponse = await this.personenkontextUc.hatSystemRecht(
+    ): Promise<SystemrechtResponse> {
+        const response: SystemrechtResponse = await this.personenkontextUc.hatSystemRecht(
             personByIdParams.personId,
             hatSystemrechtBodyParams.systemRecht,
         );
