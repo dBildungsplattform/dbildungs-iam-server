@@ -275,7 +275,7 @@ describe('PersonRepository', () => {
                     if (result instanceof DomainError) {
                         return;
                     }
-                    expect(result.newPassword).toBeDefined()
+                    expect(result.newPassword).toBeDefined();
                     expect(result.keycloakUserId).toBeDefined();
                     expect(result.vorname).toEqual(person.vorname);
                     expect(result.familienname).toEqual(person.familienname);
