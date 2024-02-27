@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { CreateGroupBodyParams } from '../api/create-group.body.params.js';
-import { GruppenDo } from './gruppe.do.js';
 import { GruppenTyp, Gruppenbereich, Gruppendifferenzierung } from './gruppe.enums.js';
 import { Gruppe } from './gruppe.js';
 import { EntityManager } from '@mikro-orm/postgresql';
@@ -44,7 +43,6 @@ describe('GruppeRepo', () => {
             await module.close();
         });
 
-
         beforeEach(() => {
             jest.resetAllMocks();
         });
@@ -65,10 +63,10 @@ describe('GruppeRepo', () => {
             mapper.mapGruppeToGruppeEntity.mockReturnValue(new GruppeEntity());
             em.persistAndFlush.mockRejectedValue(new Error('Error'));
 
-            const result: GruppenDo<true> | DomainError = await repo.createGruppe(gruppe);
+            const result: Result<GruppeEntity, DomainError> = await repo.createGruppe(gruppe);
 
             expect(result).toBeDefined();
-            expect(result).toBeInstanceOf(EntityCouldNotBeCreated);
+            expect(result).toEqual({ ok: false, error: new EntityCouldNotBeCreated('Gruppe') });
         });
     });
 });

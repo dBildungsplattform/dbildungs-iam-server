@@ -43,7 +43,6 @@ export class GruppeMapper {
         );
     }
 
-
     public mapGruppeEntityToGruppnDo(entity: GruppeEntity): GruppenDo<true> {
         const gruppeDo: GruppenDo<true> = new GruppenDo();
         gruppeDo.id = entity.id;
@@ -66,5 +65,4 @@ export class GruppeMapper {
         gruppeDo.laufzeit = entity.laufzeit;
         return gruppeDo;
     }
-
 }

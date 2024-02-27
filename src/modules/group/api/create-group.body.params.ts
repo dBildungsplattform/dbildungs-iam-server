@@ -13,6 +13,7 @@ import { Type } from 'class-transformer';
 import { Referenzgruppen } from '../domain/referenzgruppen.js';
 import { Laufzeit } from '../persistence/laufzeit.js';
 export class CreateGroupBodyParams {
+    @IsOptional()
     @IsString()
     @ApiProperty({ required: false })
     public readonly referrer?: string;
@@ -21,10 +22,12 @@ export class CreateGroupBodyParams {
     @ApiProperty({ required: true })
     public readonly bezeichnung!: string;
 
+    @IsOptional()
     @IsString()
     @ApiProperty({ required: false })
     public readonly thema?: string;
 
+    @IsOptional()
     @IsString()
     @ApiProperty({ required: false })
     public readonly beschreibung?: string;
@@ -33,15 +36,18 @@ export class CreateGroupBodyParams {
     @ApiProperty({ enum: GruppenTyp, required: true })
     public readonly typ!: GruppenTyp;
 
+    @IsOptional()
     @IsEnum(Gruppenbereich)
     @ApiProperty({ enum: Gruppenbereich, required: false })
     public readonly bereich?: Gruppenbereich;
 
+    @IsOptional()
     @IsArray()
     @IsEnum(Gruppenoption, { each: true })
     @ApiProperty({ enum: Gruppenoption, required: false, isArray: true })
     public readonly optionen?: Gruppenoption[];
 
+    @IsOptional()
     @IsEnum(Gruppendifferenzierung)
     @ApiProperty({ enum: Gruppendifferenzierung, required: false })
     public readonly differenzierung?: Gruppendifferenzierung;
@@ -65,6 +71,7 @@ export class CreateGroupBodyParams {
     public readonly faecher?: Faecherkanon[];
 
     @IsArray()
+    @IsOptional()
     @ValidateNested()
     @Type(() => Referenzgruppen)
     @ApiProperty({ type: Referenzgruppen, required: false, isArray: true })

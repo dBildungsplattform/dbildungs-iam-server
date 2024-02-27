@@ -23,7 +23,6 @@ import { Referenzgruppen } from './referenzgruppen.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { GruppeMapper } from './gruppe.mapper.js';
 import { GruppeEntity } from '../persistence/gruppe.entity.js';
-import { GruppenDo } from './gruppe.do.js';
 describe('GruppenRepository', () => {
     let module: TestingModule;
     let repo: GruppenRepository;
@@ -77,10 +76,10 @@ describe('GruppenRepository', () => {
                     new Laufzeit({ von: new Date(), bis: new Date() }),
                 );
 
-                const result: GruppenDo<boolean> | DomainError = await repo.createGruppe(gruppe);
+                const result: Result<GruppeEntity, DomainError> = await repo.createGruppe(gruppe);
 
                 expect(result).toBeDefined();
-                expect(result).toBeInstanceOf(GruppenDo);
+                expect(result).toEqual({ ok: true, value: expect.any(GruppeEntity) as GruppeEntity });
                 await expect(em.find(GruppeEntity, {})).resolves.toHaveLength(1);
             });
         });
