@@ -35,10 +35,7 @@ describe('createGroup', () => {
         },
     };
 
-    const gruppe: Gruppe<false> = Gruppe.construct(
-        '',
-        '',
-        '',
+    const gruppe: Gruppe = Gruppe.construct(
         createGroupBodyParams.bezeichnung,
         createGroupBodyParams.typ,
         faker.lorem.word(),
@@ -62,7 +59,7 @@ describe('createGroup', () => {
         it('should create a group', () => {
             jest.spyOn(Gruppe, 'createGroup').mockReturnValue(gruppe);
 
-            const result: Gruppe<false> = factory.createGroup(createGroupBodyParams);
+            const result: Gruppe = factory.createGroup(createGroupBodyParams);
 
             expect(result).toEqual(gruppe);
             expect(result.getBeschreibung()).toEqual(gruppe.getBeschreibung());

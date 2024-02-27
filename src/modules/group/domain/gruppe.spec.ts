@@ -17,10 +17,7 @@ import { CreateGroupBodyParams } from '../api/create-group.body.params.js';
 describe('Gruppe', () => {
     describe('construct', () => {
         it('should return a new Gruppe instance', () => {
-            const gruppe: Gruppe<false> = Gruppe.construct(
-                faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
+            const gruppe: Gruppe = Gruppe.construct(
                 faker.lorem.word(),
                 GruppenTyp.KLASSE,
                 faker.lorem.word(),
@@ -57,11 +54,8 @@ describe('Gruppe', () => {
                 referenzgruppen: [],
                 laufzeit: {},
             };
-            const gruppe: Gruppe<false> = Gruppe.createGroup(createGroupBodyParams);
+            const gruppe: Gruppe = Gruppe.createGroup(createGroupBodyParams);
             expect(gruppe).toBeInstanceOf(Gruppe);
-            expect(gruppe.getId()).toBe('');
-            expect(gruppe.getMandant()).toBe('');
-            expect(gruppe.getOrganisationId()).toBe('');
             expect(gruppe.getReferrer()).toBe('');
             expect(gruppe.getBezeichnung()).toBe(createGroupBodyParams.bezeichnung);
             expect(gruppe.getThema()).toBe('');

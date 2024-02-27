@@ -23,6 +23,7 @@ import { Referenzgruppen } from './referenzgruppen.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { GruppeMapper } from './gruppe.mapper.js';
 import { GruppeEntity } from '../persistence/gruppe.entity.js';
+import { GruppenDo } from './gruppe.do.js';
 describe('GruppenRepository', () => {
     let module: TestingModule;
     let repo: GruppenRepository;
@@ -55,10 +56,7 @@ describe('GruppenRepository', () => {
     describe('createGruppe', () => {
         describe('when creating gruppe', () => {
             it('should create gruppe', async () => {
-                const gruppe: Gruppe<false> = Gruppe.construct(
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
+                const gruppe: Gruppe = Gruppe.construct(
                     faker.lorem.word(),
                     GruppenTyp.KLASSE,
                     faker.lorem.word(),
@@ -79,34 +77,12 @@ describe('GruppenRepository', () => {
                     new Laufzeit({ von: new Date(), bis: new Date() }),
                 );
 
-                const result: Gruppe<boolean> | DomainError = await repo.createGruppe(gruppe);
+                const result: GruppenDo<boolean> | DomainError = await repo.createGruppe(gruppe);
 
                 expect(result).toBeDefined();
-                expect(result).toBeInstanceOf(Gruppe);
+                expect(result).toBeInstanceOf(GruppenDo);
                 await expect(em.find(GruppeEntity, {})).resolves.toHaveLength(1);
             });
         });
-
-        // describe('when creating gruppe with invalid data', () => {
-        //     it('should return Domain error', async () => {
-        //         const createGroupBodyParams: CreateGroupBodyParams = {
-        //             bezeichnung: faker.lorem.word(),
-        //             typ: GruppenTyp.KLASSE,
-        //             bereich: Gruppenbereich.PFLICHT,
-        //             differenzierung: Gruppendifferenzierung.E,
-        //             bildungsziele: [],
-        //             jahrgangsstufen: [],
-        //             faecher: [],
-        //             referenzgruppen: [],
-        //             laufzeit: {},
-        //         };
-        //         const gruppe: Gruppe<false> = Gruppe.createGroup(createGroupBodyParams);
-
-        //         const result: Gruppe<boolean> | DomainError = await repo.createGruppe(gruppe);
-
-        //         expect(result).toBeDefined();
-        //         expect(result).toBeInstanceOf(DomainError);
-        //     });
-        // });
     });
 });

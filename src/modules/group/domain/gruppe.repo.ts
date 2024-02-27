@@ -5,6 +5,7 @@ import { GruppeMapper } from './gruppe.mapper.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { GruppeEntity } from '../persistence/gruppe.entity.js';
+import { GruppenDo } from './gruppe.do.js';
 @Injectable()
 export class GruppenRepository {
     public constructor(
@@ -12,13 +13,13 @@ export class GruppenRepository {
         private readonly mapper: GruppeMapper,
     ) {}
 
-    public async createGruppe(gruppe: Gruppe<boolean>): Promise<Gruppe<true> | DomainError> {
+    public async createGruppe(gruppe: Gruppe): Promise<GruppenDo<true> | DomainError> {
         const gruppeEntity: GruppeEntity = this.mapper.mapGruppeToGruppeEntity(gruppe);
         try {
             await this.em.persistAndFlush(gruppeEntity);
         } catch (error) {
-            return new EntityCouldNotBeCreated(`Gruppe could not be created`);
+            return new EntityCouldNotBeCreated(`Gruppe`);
         }
-        return this.mapper.mapGruppeEntityToGruppe(gruppeEntity);
+        return this.mapper.mapGruppeEntityToGruppnDo(gruppeEntity);
     }
 }

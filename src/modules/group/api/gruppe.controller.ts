@@ -16,6 +16,7 @@ import { Gruppe } from '../domain/gruppe.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { GruppenDo } from '../domain/gruppe.do.js';
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('gruppen')
 @ApiBearerAuth()
@@ -33,9 +34,9 @@ export class GruppenController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
-    public async createGroup(@Body() params: CreateGroupBodyParams): Promise<Gruppe<true> | SchulConnexError> {
-        const gruppe: Gruppe<boolean> = this.gruppenFactory.createGroup(params);
-        const result: Gruppe<true> | DomainError = await this.gruppenRepository.createGruppe(gruppe);
+    public async createGroup(@Body() params: CreateGroupBodyParams): Promise<GruppenDo<true> | SchulConnexError> {
+        const gruppe: Gruppe = this.gruppenFactory.createGroup(params);
+        const result: GruppenDo<true> | DomainError = await this.gruppenRepository.createGruppe(gruppe);
         if (result instanceof DomainError) {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result);
         }
