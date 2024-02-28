@@ -12,7 +12,6 @@ import {
 import { Referenzgruppen } from './referenzgruppen.js';
 
 export class GruppenDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
-
     public id!: Persisted<string, WasPersisted>;
 
     public createdAt!: Persisted<Date, WasPersisted>;
