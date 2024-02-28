@@ -11,34 +11,34 @@ import {
 } from './gruppe.enums.js';
 import { Laufzeit } from '../persistence/laufzeit.js';
 export class Gruppe {
-    private referrer?: string;
+    private referrer: string;
 
-    private bezeichnung!: string;
+    private bezeichnung: string;
 
-    private thema?: string;
+    private thema: string;
 
-    private beschreibung?: string;
+    private beschreibung: string;
 
-    private typ!: GruppenTyp;
+    private typ: GruppenTyp;
 
-    private bereich?: Gruppenbereich;
+    private bereich: Gruppenbereich;
 
-    private optionen?: Gruppenoption[];
+    private optionen: Gruppenoption[];
 
-    private differenzierung?: Gruppendifferenzierung;
+    private differenzierung: Gruppendifferenzierung;
 
-    private bildungsziele?: Bildungsziele[];
+    private bildungsziele: Bildungsziele[];
 
-    private jahrgangsstufen?: Jahrgangsstufe[];
+    private jahrgangsstufen: Jahrgangsstufe[];
 
-    private faecher?: Faecherkanon[];
+    private faecher: Faecherkanon[];
 
-    private referenzgruppen?: Referenzgruppen[];
+    private referenzgruppen: Referenzgruppen[];
 
-    private laufzeit?: Laufzeit;
+    private laufzeit: Laufzeit;
 
     public getReferrer(): string {
-        return this.referrer ?? '';
+        return this.referrer;
     }
 
     public getBezeichnung(): string {
@@ -46,11 +46,11 @@ export class Gruppe {
     }
 
     public getThema(): string {
-        return this.thema ?? '';
+        return this.thema;
     }
 
     public getBeschreibung(): string {
-        return this.beschreibung ?? '';
+        return this.beschreibung;
     }
 
     public getTyp(): GruppenTyp {
@@ -62,7 +62,7 @@ export class Gruppe {
     }
 
     public getOptionen(): Gruppenoption[] {
-        return this.optionen ?? [];
+        return this.optionen;
     }
 
     public getDifferenzierung(): Gruppendifferenzierung | undefined {
@@ -70,23 +70,23 @@ export class Gruppe {
     }
 
     public getBildungsziele(): Bildungsziele[] {
-        return this.bildungsziele ?? [];
+        return this.bildungsziele;
     }
 
     public getJahrgangsstufen(): Jahrgangsstufe[] {
-        return this.jahrgangsstufen ?? [];
+        return this.jahrgangsstufen;
     }
 
     public getFaecher(): Faecherkanon[] {
-        return this.faecher ?? [];
+        return this.faecher;
     }
 
     public getReferenzgruppen(): Referenzgruppen[] {
-        return this.referenzgruppen ?? [];
+        return this.referenzgruppen;
     }
 
-    public getLaufzeit(): Laufzeit | undefined {
-        return this.laufzeit ?? undefined;
+    public getLaufzeit(): Laufzeit {
+        return this.laufzeit;
     }
 
     private constructor(
@@ -104,19 +104,19 @@ export class Gruppe {
         referenzgruppen?: Referenzgruppen[],
         laufzeit?: Laufzeit,
     ) {
-        this.bezeichnung = bezeichnung ?? '';
-        this.typ = typ ?? GruppenTyp.SONSTIG;
-        this.referrer = referrer;
-        this.thema = thema;
-        this.beschreibung = beschreibung;
-        this.bereich = bereich;
-        this.optionen = optionen;
-        this.differenzierung = differenzierung;
-        this.bildungsziele = bildungsziele;
-        this.jahrgangsstufen = jahrgangsstufen;
-        this.faecher = faecher;
-        this.referenzgruppen = referenzgruppen;
-        this.laufzeit = laufzeit;
+        this.bezeichnung = bezeichnung;
+        this.typ = typ;
+        this.referrer = referrer ?? '';
+        this.thema = thema ?? '';
+        this.beschreibung = beschreibung ?? '';
+        this.bereich = bereich ?? Gruppenbereich.PFLICHT;
+        this.optionen = optionen ?? [];
+        this.differenzierung = differenzierung ?? Gruppendifferenzierung.E;
+        this.bildungsziele = bildungsziele ?? [];
+        this.jahrgangsstufen = jahrgangsstufen ?? [];
+        this.faecher = faecher ?? [];
+        this.referenzgruppen = referenzgruppen ?? [];
+        this.laufzeit = laufzeit ?? new Laufzeit({});
     }
 
     public static construct(
