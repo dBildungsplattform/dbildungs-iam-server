@@ -28,17 +28,15 @@ import { PersonGeburtDto } from './person-geburt.dto.js';
 import { PersonNameDto } from './person-name.dto.js';
 import { PersonNameParams } from './person-name.params.js';
 import { PersonDto } from './person.dto.js';
-import { PersonResponse } from './person.response.js';
+import { PersonResponseAutomapper } from './person.response-automapper.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { PersonendatensatzResponseAutomapper } from './personendatensatz.response-automapper.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/personenkontext-query.params.js';
 import { PersonenkontextDto } from '../../personenkontext/api/personenkontext.dto.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/personenkontext.response.js';
 import { PersonenkontextdatensatzResponse } from '../../personenkontext/api/personenkontextdatensatz.response.js';
 import { UpdatePersonenkontextDto } from '../../personenkontext/api/update-personenkontext.dto.js';
 import { UpdatePersonenkontextBodyParams } from '../../personenkontext/api/update-personenkontext.body.params.js';
-import { UpdatePersonBodyParams } from './update-person.body.params.js';
-import { UpdatePersonDto } from './update-person.dto.js';
 
 describe('PersonApiMapperProfile', () => {
     let module: TestingModule;
@@ -178,7 +176,7 @@ describe('PersonApiMapperProfile', () => {
         });
 
         it('should map PersonDto to PersonResponse', () => {
-            expect(() => sut.map({} as PersonDto, PersonDto, PersonResponse)).not.toThrow(MappingError);
+            expect(() => sut.map({} as PersonDto, PersonDto, PersonResponseAutomapper)).not.toThrow(MappingError);
         });
 
         it('should map PersonNameDto to PersonNameParams', () => {
@@ -189,9 +187,9 @@ describe('PersonApiMapperProfile', () => {
             expect(() => sut.map({} as PersonGeburtDto, PersonGeburtDto, PersonBirthParams)).not.toThrow(MappingError);
         });
 
-        it('should map PersonendatensatzDto to PersonendatensatzResponse', () => {
+        it('should map PersonendatensatzDto to PersonendatensatzResponseAutomapper', () => {
             expect(() =>
-                sut.map({} as PersonendatensatzDto, PersonendatensatzDto, PersonendatensatzResponse),
+                sut.map({} as PersonendatensatzDto, PersonendatensatzDto, PersonendatensatzResponseAutomapper),
             ).not.toThrow(MappingError);
         });
 
@@ -215,25 +213,6 @@ describe('PersonApiMapperProfile', () => {
             expect(() =>
                 sut.map({} as UpdatePersonenkontextDto, UpdatePersonenkontextDto, PersonenkontextDo),
             ).not.toThrow(MappingError);
-        });
-
-        it('should map UpdatePersonBodyParams to UpdatePersonDto', () => {
-            const params: UpdatePersonBodyParams = {
-                stammorganisation: faker.string.uuid(),
-                referrer: 'referrer',
-                name: {
-                    vorname: 'john',
-                    familienname: 'doe',
-                },
-                geburt: {},
-                lokalisierung: 'de-DE',
-                revision: '1',
-            };
-            expect(() => sut.map(params, UpdatePersonBodyParams, UpdatePersonDto)).not.toThrow(MappingError);
-        });
-
-        it('should map UpdatePersonDto to PersonDo', () => {
-            expect(() => sut.map({} as UpdatePersonDto, UpdatePersonDto, PersonDo)).not.toThrow(MappingError);
         });
     });
 });

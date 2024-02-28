@@ -10,7 +10,7 @@ import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.para
 import { PersonApiMapperProfile } from '../../person/api/person-api.mapper.profile.js';
 import { PersonDto } from '../../person/api/person.dto.js';
 import { PersonendatensatzDto } from '../../person/api/personendatensatz.dto.js';
-import { PersonendatensatzResponse } from '../../person/api/personendatensatz.response.js';
+import { PersonendatensatzResponseAutomapper } from '../../person/api/personendatensatz.response-automapper.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextController } from './personenkontext.controller.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
@@ -71,9 +71,9 @@ describe('PersonenkontextController', () => {
 
                 personenkontextUcMock.findPersonenkontextById.mockResolvedValue(dtoMock);
 
-                const response: PersonendatensatzResponse = await sut.findPersonenkontextById(params);
+                const response: PersonendatensatzResponseAutomapper = await sut.findPersonenkontextById(params);
 
-                expect(response).toBeInstanceOf(PersonendatensatzResponse);
+                expect(response).toBeInstanceOf(PersonendatensatzResponseAutomapper);
                 expect(personenkontextUcMock.findPersonenkontextById).toBeCalledTimes(1);
             });
         });
@@ -188,9 +188,12 @@ describe('PersonenkontextController', () => {
 
                 personenkontextUcMock.updatePersonenkontext.mockResolvedValue(mockResonse);
 
-                const response: PersonendatensatzResponse = await sut.updatePersonenkontextWithId(idParams, bodyParams);
+                const response: PersonendatensatzResponseAutomapper = await sut.updatePersonenkontextWithId(
+                    idParams,
+                    bodyParams,
+                );
 
-                expect(response).toBeInstanceOf(PersonendatensatzResponse);
+                expect(response).toBeInstanceOf(PersonendatensatzResponseAutomapper);
                 expect(personenkontextUcMock.updatePersonenkontext).toHaveBeenCalledTimes(1);
             });
         });
