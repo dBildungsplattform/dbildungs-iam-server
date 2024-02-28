@@ -1,10 +1,10 @@
 import { faker } from '@faker-js/faker';
+import { PersonResponseAutomapper } from './person.response-automapper.js';
 import { Vertrauensstufe } from '../domain/person.enums.js';
 import { plainToInstance } from 'class-transformer';
-import { PersonResponse } from './person.response.js';
 
-describe('PersonResponseDDD', () => {
-    const personResponse: PersonResponse = {
+describe('PersonResponse-Automapper', () => {
+    const personResponse: PersonResponseAutomapper = {
         id: faker.string.uuid(),
         name: {
             vorname: faker.person.firstName(),
@@ -42,8 +42,8 @@ describe('PersonResponseDDD', () => {
             vertrauensstufe: personResponse.vertrauensstufe,
             revision: personResponse.revision,
         };
-        const mappedParams: PersonResponse = plainToInstance(PersonResponse, person, {});
-        expect(mappedParams).toBeInstanceOf(PersonResponse);
+        const mappedParams: PersonResponseAutomapper = plainToInstance(PersonResponseAutomapper, person, {});
+        expect(mappedParams).toBeInstanceOf(PersonResponseAutomapper);
         expect(mappedParams).toEqual(personResponse);
     });
 });
