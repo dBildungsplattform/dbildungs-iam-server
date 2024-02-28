@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { LoggerModule } from '../../core/logging/logger.module.js';
 import { PersonApiMapperProfile } from './api/person-api.mapper.profile.js';
 import { PersonController } from './api/person.controller.js';
-import { PersonUc } from './api/person.uc.js';
 import { PersonModule } from './person.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { PersonFrontendController } from './api/person.frontend.controller.js';
@@ -22,7 +21,7 @@ import { OrganisationModule } from '../organisation/organisation.module.js';
         KeycloakAdministrationModule,
         LoggerModule.register(PersonApiModule.name),
     ],
-    providers: [PersonApiMapperProfile, PersonUc, PersonenkontextUc, UsernameGeneratorService, PersonRepository],
+    providers: [PersonApiMapperProfile, PersonenkontextUc, UsernameGeneratorService, PersonRepository],
     controllers: [PersonController, PersonFrontendController],
 })
 export class PersonApiModule {}
