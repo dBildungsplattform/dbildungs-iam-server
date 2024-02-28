@@ -38,7 +38,8 @@ export class GruppenController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
     public async createGroup(@Body() params: CreateGroupBodyParams): Promise<GruppenDo<true> | HttpException> {
         const gruppe: Gruppe = this.gruppenFactory.createGroup(params);
-        const result: Result<GruppeEntity, DomainError> = await this.gruppenRepository.createGruppe(gruppe);
+        const mappedGruppeEntity: GruppeEntity = this.mapper.mapGruppeToGruppeEntity(gruppe);
+        const result: Result<GruppeEntity, DomainError> = await this.gruppenRepository.createGruppe(mappedGruppeEntity);
         if (!result.ok) {
             return SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),

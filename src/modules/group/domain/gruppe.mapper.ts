@@ -5,10 +5,9 @@ import { GruppenDo } from './gruppe.do.js';
 @Injectable()
 export class GruppeMapper {
     public mapGruppeToGruppeEntity(gruppe: Gruppe): GruppeEntity {
-        // map Gruppe aggregate to GruppeEntity
         const gruppeEntity: GruppeEntity = new GruppeEntity();
-        gruppeEntity.mandant = 'test-mandant';
-        gruppeEntity.organisationId = 'test-orgid';
+        gruppeEntity.mandant = '';
+        gruppeEntity.organisationId = '';
         gruppeEntity.referrer = gruppe.getReferrer();
         gruppeEntity.bezeichnung = gruppe.getBezeichnung();
         gruppeEntity.thema = gruppe.getThema();

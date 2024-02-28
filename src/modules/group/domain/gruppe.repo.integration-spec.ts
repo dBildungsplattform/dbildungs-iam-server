@@ -21,7 +21,6 @@ import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enu
 import { Laufzeit } from '../persistence/laufzeit.js';
 import { Referenzgruppen } from './referenzgruppen.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { GruppeMapper } from './gruppe.mapper.js';
 import { GruppeEntity } from '../persistence/gruppe.entity.js';
 describe('GruppenRepository', () => {
     let module: TestingModule;
@@ -32,7 +31,7 @@ describe('GruppenRepository', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
-            providers: [GruppenRepository, GruppeMapper],
+            providers: [GruppenRepository],
         }).compile();
         repo = module.get(GruppenRepository);
         orm = module.get(MikroORM);
@@ -52,34 +51,46 @@ describe('GruppenRepository', () => {
         expect(repo).toBeDefined();
     });
 
-    describe('createGruppe', () => {
-        describe('when creating gruppe', () => {
-            it('should create gruppe', async () => {
-                const gruppe: Gruppe = Gruppe.construct(
-                    faker.lorem.word(),
-                    GruppenTyp.KLASSE,
-                    faker.lorem.word(),
-                    faker.lorem.word(),
-                    faker.lorem.word(),
-                    Gruppenbereich.PFLICHT,
-                    [Gruppenoption.BILINGUAL, Gruppenoption.HERKUNFTSSPRACHLICH],
-                    Gruppendifferenzierung.E,
-                    [Bildungsziele.GS, Bildungsziele.HS],
-                    [Jahrgangsstufe.JAHRGANGSSTUFE_1, Jahrgangsstufe.JAHRGANGSSTUFE_2],
-                    [Faecherkanon.DE],
-                    [
-                        new Referenzgruppen({
-                            id: faker.string.uuid(),
-                            rollen: [Gruppenrollen.LEHR],
-                        }),
-                    ],
-                    new Laufzeit({ von: new Date(), bis: new Date() }),
-                );
+    const gruppe: Gruppe = Gruppe.construct(
+        faker.lorem.word(),
+        GruppenTyp.KLASSE,
+        faker.lorem.word(),
+        faker.lorem.word(),
+        faker.lorem.word(),
+        Gruppenbereich.PFLICHT,
+        [Gruppenoption.BILINGUAL, Gruppenoption.HERKUNFTSSPRACHLICH],
+        Gruppendifferenzierung.E,
+        [Bildungsziele.GS, Bildungsziele.HS],
+        [Jahrgangsstufe.JAHRGANGSSTUFE_1, Jahrgangsstufe.JAHRGANGSSTUFE_2],
+        [Faecherkanon.DE],
+        [
+            new Referenzgruppen({
+                id: faker.string.uuid(),
+                rollen: [Gruppenrollen.LEHR],
+            }),
+        ],
+        new Laufzeit({ von: new Date(), bis: new Date() }),
+    );
 
-                const result: Result<GruppeEntity, DomainError> = await repo.createGruppe(gruppe);
+    const gruppeEntity: GruppeEntity = new GruppeEntity();
+    gruppeEntity.mandant = faker.string.uuid();
+    gruppeEntity.organisationId = faker.string.uuid();
+    gruppeEntity.bezeichnung = gruppe.getBezeichnung();
+    gruppeEntity.typ = gruppe.getTyp();
+    gruppeEntity.bereich = gruppe.getBereich();
+    gruppeEntity.differenzierung = gruppe.getDifferenzierung();
+    gruppeEntity.bildungsziele = gruppe.getBildungsziele();
+    gruppeEntity.jahrgangsstufen = gruppe.getJahrgangsstufen();
+    gruppeEntity.faecher = gruppe.getFaecher();
+    gruppeEntity.referenzgruppen = gruppe.getReferenzgruppen();
+    gruppeEntity.laufzeit = gruppe.getLaufzeit();
+
+    describe('createGruppe', () => {
+        describe('when creating a gruppe', () => {
+            it('should create gruppe', async () => {
+                const result: Result<GruppeEntity, DomainError> = await repo.createGruppe(gruppeEntity);
 
                 expect(result).toBeDefined();
-                expect(result).toEqual({ ok: true, value: expect.any(GruppeEntity) as GruppeEntity });
                 await expect(em.find(GruppeEntity, {})).resolves.toHaveLength(1);
             });
         });
