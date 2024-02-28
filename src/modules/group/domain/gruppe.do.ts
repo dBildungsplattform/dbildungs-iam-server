@@ -12,8 +12,6 @@ import {
 import { Referenzgruppen } from './referenzgruppen.js';
 
 export class GruppenDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
-    // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-    public constructor() {}
 
     public id!: Persisted<string, WasPersisted>;
 
