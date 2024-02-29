@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Issuer } from 'openid-client';
 
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
+import { ConfigTestModule, MapperTestModule } from '../../../test/utils/index.js';
 import { AuthenticationController } from './api/authentication.controller.js';
 import { OIDC_CLIENT } from './services/oidc-client.service.js';
 import { AuthenticationApiModule } from './authentication-api.module.js';
@@ -11,7 +11,7 @@ describe('AuthenticationApiModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, AuthenticationApiModule],
+            imports: [ConfigTestModule, MapperTestModule, AuthenticationApiModule],
         })
             .overrideProvider(OIDC_CLIENT)
             .useValue(new new Issuer({ issuer: 'oidc' }).Client({ client_id: 'DummyId' }))
