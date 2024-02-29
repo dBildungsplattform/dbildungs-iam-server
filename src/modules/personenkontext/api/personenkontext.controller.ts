@@ -131,7 +131,6 @@ export class PersonenkontextController {
     @ApiOkResponse({
         description: 'The SchulStrukturKnoten associated with this personId and systemrecht.',
         type: [SystemrechtResponse],
-        isArray: true,
     })
     public async hatSystemRecht(
         @Param() personByIdParams: PersonByIdParams,
