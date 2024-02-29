@@ -10,13 +10,19 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=dbildungs-iam
   keycloak:
-    image: quay.io/keycloak/keycloak:23.0.4
+    image: ghcr.io/dbildungsplattform/dbildungs-iam:latest
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
+    entrypoint: '/opt/keycloak/bin/kc.sh start-dev'
     command:
-      - 'start-dev'
-      - '--health-enabled=true'
+      # Internal DB but still persisted in container
+      - '--db=dev-file'
+      # No caching
+      - '--cache=local'
+      # We have no way of checking for the health probe so we might just as well turn it off
+      - '--health-enabled=false'
+      # Import SPSH-Realm
       - '--import-realm'
     ports:
       - 8080:8080
