@@ -24,6 +24,7 @@ import { HatSystemrechtBodyParams } from './hat-systemrecht.body.params.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import {EntityNotFoundError} from "../../../shared/error";
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
@@ -149,7 +150,7 @@ describe('PersonenkontextController', () => {
     });
 
     describe('hatSystemRecht', () => {
-        describe('when verifying user has SystemRecht', () => {
+        describe('when verifying user has existing SystemRecht', () => {
             it('should return PersonenkontextSystemrechtResponse', async () => {
                 const idParams: PersonByIdParams = {
                     personId: '1',
@@ -164,6 +165,20 @@ describe('PersonenkontextController', () => {
                 personenkontextUcMock.hatSystemRecht.mockResolvedValue(personenkontextSystemrechtResponse);
                 const response: SystemrechtResponse = await sut.hatSystemRecht(idParams, bodyParams);
                 expect(response['ROLLEN_VERWALTEN']).toHaveLength(1);
+                expect(personenkontextUcMock.hatSystemRecht).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when verifying user has non-existing SystemRecht', () => {
+            it('should return 404', async () => {
+                const idParams: PersonByIdParams = {
+                    personId: '1',
+                };
+                const bodyParams: HatSystemrechtBodyParams = {
+                    systemRecht: "FALSCHER_RECHTE_NAME",
+                };
+                personenkontextUcMock.hatSystemRecht.mockRejectedValue(new EntityNotFoundError());
+                await expect(sut.hatSystemRecht(idParams, bodyParams)).rejects.toThrow(HttpException);
                 expect(personenkontextUcMock.hatSystemRecht).toHaveBeenCalledTimes(1);
             });
         });
