@@ -9,6 +9,15 @@ import {
 import { OrganisationDo } from './organisation.do.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
+import { RootOrganisationImmutableError } from '../specification/error/root-organisation-immutable.error.js';
+import { ZyklusInOrganisationenError } from '../specification/error/zyklus-in-organisationen.error.js';
+import { NurKlasseKursUnterSchule } from '../specification/nur-klasse-kurs-unter-schule.js';
+import { NurKlasseKursUnterSchuleError } from '../specification/error/nur-klasse-kurs-unter-schule.error.js';
+import { SchuleUnterTraeger } from '../specification/schule-unter-traeger.js';
+import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
+import { TraegerInTraeger } from '../specification/traeger-in-traeger.js';
+import { TraegerInTraegerError } from '../specification/error/traeger-in-traeger.error.js';
+import { ZyklusInOrganisationen } from '../specification/zyklus-in-organisationen.js';
 
 @Injectable()
 export class OrganisationService {
@@ -104,15 +113,34 @@ export class OrganisationService {
                 error: new EntityNotFoundError('Organisation', childId),
             };
         }
+        // MUST be called before administriertVon is altered
+        const validationResult: Result<boolean, DomainError> = await this.validateAdministriertVon(
+            childOrganisation,
+            parentId,
+        );
 
+        if (!validationResult.ok) {
+            return { ok: false, error: validationResult.error };
+        }
         childOrganisation.administriertVon = parentId;
 
-        const organisation: OrganisationDo<true> = await this.organisationRepo.save(childOrganisation);
-        if (organisation) {
+        try {
+            await this.organisationRepo.save(childOrganisation);
             return { ok: true, value: undefined };
+        } catch (e) {
+            return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
         }
+    }
 
-        return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
+    private async validateAdministriertVon(
+        childOrganisation: OrganisationDo<true>,
+        parentId: string,
+    ): Promise<Result<boolean, DomainError>> {
+        //check version from DB before administriertVon is altered
+        if (!childOrganisation.administriertVon) return { ok: false, error: new RootOrganisationImmutableError() };
+        childOrganisation.administriertVon = parentId;
+
+        return this.validateSpecifications(childOrganisation);
     }
 
     public async setZugehoerigZu(parentId: string, childId: string): Promise<Result<void, DomainError>> {
@@ -132,14 +160,56 @@ export class OrganisationService {
             };
         }
 
-        childOrganisation.zugehoerigZu = parentId;
-
-        const organisation: OrganisationDo<true> = await this.organisationRepo.save(childOrganisation);
-        if (organisation) {
-            return { ok: true, value: undefined };
+        // MUST be called before zugehoerigZu is altered
+        const validationResult: Result<boolean, DomainError> = await this.validateZugehoerigZu(
+            childOrganisation,
+            parentId,
+        );
+        if (!validationResult.ok) {
+            return { ok: false, error: validationResult.error };
         }
 
-        return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
+        childOrganisation.zugehoerigZu = parentId;
+
+        try {
+            await this.organisationRepo.save(childOrganisation);
+            return { ok: true, value: undefined };
+        } catch (e) {
+            return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
+        }
+    }
+
+    private async validateZugehoerigZu(
+        childOrganisation: OrganisationDo<true>,
+        parentId: string,
+    ): Promise<Result<boolean, DomainError>> {
+        //check version from DB before zugehoerigZu is altered
+        if (!childOrganisation.zugehoerigZu) return { ok: false, error: new RootOrganisationImmutableError() };
+        childOrganisation.zugehoerigZu = parentId;
+
+        return this.validateSpecifications(childOrganisation);
+    }
+
+    private async validateSpecifications(
+        childOrganisation: OrganisationDo<true>,
+    ): Promise<Result<boolean, DomainError>> {
+        const schuleUnterTraeger: SchuleUnterTraeger = new SchuleUnterTraeger(this.organisationRepo);
+        if (!(await schuleUnterTraeger.isSatisfiedBy(childOrganisation))) {
+            return { ok: false, error: new SchuleUnterTraegerError(childOrganisation.id) };
+        }
+        const traegerInTraeger: TraegerInTraeger = new TraegerInTraeger(this.organisationRepo);
+        if (!(await traegerInTraeger.isSatisfiedBy(childOrganisation))) {
+            return { ok: false, error: new TraegerInTraegerError(childOrganisation.id) };
+        }
+        const nurKlasseKursUnterSchule: NurKlasseKursUnterSchule = new NurKlasseKursUnterSchule(this.organisationRepo);
+        if (!(await nurKlasseKursUnterSchule.isSatisfiedBy(childOrganisation))) {
+            return { ok: false, error: new NurKlasseKursUnterSchuleError(childOrganisation.id) };
+        }
+        const zyklusInOrganisationen: ZyklusInOrganisationen = new ZyklusInOrganisationen(this.organisationRepo);
+        if (await zyklusInOrganisationen.isSatisfiedBy(childOrganisation)) {
+            return { ok: false, error: new ZyklusInOrganisationenError(childOrganisation.id) };
+        }
+        return { ok: true, value: true };
     }
 
     public async findAllAdministriertVon(

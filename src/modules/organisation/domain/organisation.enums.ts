@@ -1,4 +1,5 @@
 export enum OrganisationsTyp {
+    TRAEGER = 'TRAEGER',
     SCHULE = 'SCHULE',
     ANBIETER = 'ANBIETER',
     SONSTIGE = 'SONSTIGE ORGANISATION / EINRICHTUNG',

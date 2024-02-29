@@ -7,12 +7,14 @@ import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { ConstructorCall, EntityFile } from './db-seed.console.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
+import { plainToInstance } from 'class-transformer';
+import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
 
 @Injectable()
 export class DbSeedService {
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
 
-    private organisationMap: Map<string, OrganisationFile> = new Map<string, OrganisationFile>();
+    private organisationMap: Map<string, OrganisationDo<true>> = new Map<string, OrganisationDo<true>>();
 
     private personMap: Map<string, PersonFile> = new Map<string, PersonFile>();
 
@@ -33,15 +35,37 @@ export class DbSeedService {
         return entities;
     }
 
-    public readOrganisation(fileContentAsStr: string): OrganisationFile[] {
-        const entities: OrganisationFile[] = this.readEntityFromJSONFile<OrganisationFile>(
+    //to be refactored when organisation becomes DomainDriven
+    private static constructOrganisation(data: OrganisationFile): OrganisationDo<true> {
+        const organisationDo: OrganisationDo<true> = new OrganisationDo<true>();
+        organisationDo.id = data.id;
+        organisationDo.administriertVon = data.administriertVon ?? undefined;
+        organisationDo.zugehoerigZu = data.zugehoerigZu ?? undefined;
+        organisationDo.kennung = data.kennung ?? undefined;
+        organisationDo.name = data.name ?? undefined;
+        organisationDo.namensergaenzung = data.namensergaenzung ?? undefined;
+        organisationDo.kuerzel = data.kuerzel ?? undefined;
+        organisationDo.typ = data.typ ?? undefined;
+        organisationDo.traegerschaft = data.traegerschaft ?? undefined;
+        return organisationDo;
+    }
+
+    public readOrganisation(fileContentAsStr: string): OrganisationDo<true>[] {
+        const organisationFile: EntityFile<OrganisationFile> = JSON.parse(
             fileContentAsStr,
-            () => new OrganisationFile(),
+        ) as EntityFile<OrganisationFile>;
+
+        const entities: OrganisationFile[] = plainToInstance(OrganisationFile, organisationFile.entities);
+
+        const organisations: OrganisationDo<true>[] = entities.map((organisationData: OrganisationFile) =>
+            DbSeedService.constructOrganisation(organisationData),
         );
-        for (const entity of entities) {
-            this.organisationMap.set(entity.id, entity);
+
+        for (const organisation of organisations) {
+            this.organisationMap.set(organisation.id, organisation);
         }
-        return entities;
+
+        return organisations;
     }
 
     public readPerson(fileContentAsStr: string): PersonFile[] {

@@ -11,7 +11,7 @@ import { PersonEntity } from '../../modules/person/persistence/person.entity.js'
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { DataProviderFile } from './file/data-provider-file.js';
-import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enums.js';
+import { OrganisationsTyp, Traegerschaft } from '../../modules/organisation/domain/organisation.enums.js';
 import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
@@ -65,7 +65,7 @@ describe('DbSeedService', () => {
     });
 
     describe('readOrganisation', () => {
-        describe('readOrganisation with one entity', () => {
+        describe('readOrganisation with one entity and properties defined', () => {
             it('should have length 1 and be mappable', () => {
                 const fileContentAsStr: string = fs.readFileSync(
                     `./sql/seeding-integration-test/all/01_organisation.json`,
@@ -75,11 +75,37 @@ describe('DbSeedService', () => {
                 const entity: OrganisationFile | undefined = entities[0];
                 const organisation: Partial<OrganisationFile> = {
                     id: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
+                    administriertVon: undefined,
+                    zugehoerigZu: undefined,
                     typ: OrganisationsTyp.SCHULE,
                     kuerzel: '01',
                     namensergaenzung: 'Keine',
                     name: 'Schule1',
                     kennung: 'Organisation1',
+                    traegerschaft: Traegerschaft.KIRCHLICH,
+                };
+                expect(entities).toHaveLength(1);
+                expect(entity).toEqual(organisation);
+            });
+        });
+        describe('readOrganisation with one entity and optional properties are undefined', () => {
+            it('should have length 1 and be mappable', () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./sql/seeding-integration-test/organisationUndefinedProperties/01_organisation.json`,
+                    'utf-8',
+                );
+                const entities: OrganisationFile[] = dbSeedService.readOrganisation(fileContentAsStr);
+                const entity: OrganisationFile | undefined = entities[0];
+                const organisation: Partial<OrganisationFile> = {
+                    id: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
+                    administriertVon: undefined,
+                    zugehoerigZu: undefined,
+                    typ: undefined,
+                    kuerzel: undefined,
+                    namensergaenzung: undefined,
+                    name: undefined,
+                    kennung: undefined,
+                    traegerschaft: undefined,
                 };
                 expect(entities).toHaveLength(1);
                 expect(entity).toEqual(organisation);
