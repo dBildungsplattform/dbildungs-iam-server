@@ -4,7 +4,7 @@
         {
             "id": "d324b498-25c8-4f4f-bc48-2d4e5bbaadc0",
             "code": "2022",
-            "Bezeichnung": "Schuljahr 2022/23",
+            "bezeichnung": "Schuljahr 2022/23",
             "beginn": "2022-08-01",
             "ende": "2023-07-31",
             "typ": "Schuljahr"
@@ -12,7 +12,7 @@
         {
             "id": "aa1c544b-09c5-4616-99f6-c1f53db0c603",
             "code": "2022-1",
-            "Bezeichnung": "1. Halbj. 22/23",
+            "bezeichnung": "1. Halbj. 22/23",
             "beginn": "2022-08-01",
             "ende": "2023-01-31",
             "typ": "Schulhalbjahr"
@@ -20,7 +20,7 @@
         {
             "id": "e51c110f-4a2a-4c21-9ec6-75ee02b0f9eb",
             "code": "2022-2",
-            "Bezeichnung": "2. Halbj. 22/23",
+            "bezeichnung": "2. Halbj. 22/23",
             "beginn": "2023-02-01",
             "ende": "2023-07-31",
             "typ": "Schulhalbjahr"
@@ -28,7 +28,7 @@
         {
             "id": "753ce8f4-f425-4339-8553-31947dd4d557",
             "code": "2023",
-            "Bezeichnung": "Schuljahr 2023/24",
+            "bezeichnung": "Schuljahr 2023/24",
             "beginn": "2023-08-01",
             "ende": "2024-07-31",
             "typ": "Schuljahr"
@@ -36,7 +36,7 @@
         {
             "id": "8de47950-786d-4531-8ef2-e2eb459cd50c",
             "code": "2023-1",
-            "Bezeichnung": "1. Halbj. 23/24",
+            "bezeichnung": "1. Halbj. 23/24",
             "beginn": "2023-08-01",
             "ende": "2024-01-31",
             "typ": "Schulhalbjahr"
@@ -44,7 +44,7 @@
         {
             "id": "97ceb055-e65b-4cf3-a7c7-7fed861a5483",
             "code": "2023-2",
-            "Bezeichnung": "2. Halbj. 23/24",
+            "bezeichnung": "2. Halbj. 23/24",
             "beginn": "2024-02-01",
             "ende": "2024-07-31",
             "typ": "Schulhalbjahr"
@@ -52,7 +52,7 @@
         {
             "id": "193cde1c-4920-453a-957d-73be022515e2",
             "code": "2024",
-            "Bezeichnung": "Schuljahr 2024/25",
+            "bezeichnung": "Schuljahr 2024/25",
             "beginn": "2024-08-01",
             "ende": "2025-07-31",
             "typ": "Schuljahr"
@@ -60,7 +60,7 @@
         {
             "id": "fecee5f1-f807-4370-a8a5-6470e0a04725",
             "code": "2024-1",
-            "Bezeichnung": "1. Halbj. 24/25",
+            "bezeichnung": "1. Halbj. 24/25",
             "beginn": "2024-08-01",
             "ende": "2025-01-31",
             "typ": "Schulhalbjahr"
@@ -68,7 +68,7 @@
         {
             "id": "4167850b-5bab-4e42-baa4-553d8f51c08c",
             "code": "2024-2",
-            "Bezeichnung": "2. Halbj. 24/25",
+            "bezeichnung": "2. Halbj. 24/25",
             "beginn": "2024-02-01",
             "ende": "2025-07-31",
             "typ": "Schulhalbjahr"
@@ -76,7 +76,7 @@
         {
             "id": "f8175ee5-7724-43fd-808b-1a5301d72423",
             "code": "2025",
-            "Bezeichnung": "Schuljahr 2025/26",
+            "bezeichnung": "Schuljahr 2025/26",
             "beginn": "2025-08-01",
             "ende": "2026-07-31",
             "typ": "Schuljahr"
@@ -84,7 +84,7 @@
         {
             "id": "c6f79c3e-0e94-4cda-a710-eeed4476a631",
             "code": "2025-1",
-            "Bezeichnung": "1. Halbj. 25/26",
+            "bezeichnung": "1. Halbj. 25/26",
             "beginn": "2025-08-01",
             "ende": "2026-01-31",
             "typ": "Schulhalbjahr"
@@ -92,7 +92,7 @@
         {
             "id": "c974c02f-9924-4bb2-86d8-8ea916a021c3",
             "code": "2025-2",
-            "Bezeichnung": "2. Halbj. 25/26",
+            "bezeichnung": "2. Halbj. 25/26",
             "beginn": "2026-02-01",
             "ende": "2026-07-31",
             "typ": "Schulhalbjahr"
@@ -100,7 +100,7 @@
         {
             "id": "42907703-1f04-4b56-9013-418856d0978f",
             "code": "2026",
-            "Bezeichnung": "Schuljahr 2026/27",
+            "bezeichnung": "Schuljahr 2026/27",
             "beginn": "2026-08-01",
             "ende": "2027-07-31",
             "typ": "Schuljahr"
@@ -108,7 +108,7 @@
         {
             "id": "f3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e",
             "code": "2026-1",
-            "Bezeichnung": "1. Halbj. 26/27",
+            "bezeichnung": "1. Halbj. 26/27",
             "beginn": "2026-08-01",
             "ende": "2027-01-31",
             "typ": "Schulhalbjahr"
@@ -116,7 +116,7 @@
         {
             "id": "4a002a2e-cb03-481d-9be3-8ae348097223",
             "code": "2026-2",
-            "Bezeichnung": "2. Halbj. 26/27",
+            "bezeichnung": "2. Halbj. 26/27",
             "beginn": "2027-02-01",
             "ende": "2027-07-31",
             "typ": "Schulhalbjahr"
@@ -124,7 +124,7 @@
         {
             "id": "2ea30623-2a8d-4f83-bb05-e617c07abd54",
             "code": "2027",
-            "Bezeichnung": "Schuljahr 2027/28",
+            "bezeichnung": "Schuljahr 2027/28",
             "beginn": "2027-08-01",
             "ende": "2028-07-31",
             "typ": "Schuljahr"
@@ -132,7 +132,7 @@
         {
             "id": "16a4637a-a8c0-49a5-8e72-35c315945c1a",
             "code": "2027-1",
-            "Bezeichnung": "1. Halbj. 27/28",
+            "bezeichnung": "1. Halbj. 27/28",
             "beginn": "2027-08-01",
             "ende": "2028-01-31",
             "typ": "Schulhalbjahr"
@@ -140,7 +140,7 @@
         {
             "id": "1ab8f266-18b6-409d-a4f0-401164393b39",
             "code": "2027-2",
-            "Bezeichnung": "2. Halbj. 27/28",
+            "bezeichnung": "2. Halbj. 27/28",
             "beginn": "2028-02-01",
             "ende": "2028-07-31",
             "typ": "Schulhalbjahr"

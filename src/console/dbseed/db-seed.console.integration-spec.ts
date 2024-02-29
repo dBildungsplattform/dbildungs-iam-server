@@ -92,7 +92,7 @@ describe('DbSeedConsole', () => {
                     id: 'ca0e17c5-8e48-403b-af92-28eff21c64bb',
                 });
                 const lernperiode: Option<LernperiodeEntity> = await orm.em.findOne(LernperiodeEntity, {
-                    id: 'd324b498-25c8-4f4f-bc48-2d4e5bbaadc0',
+                    code: '2022',
                 });
                 if (!dataProvider || !rolle || !organisation || !serviceProvider || !lernperiode) {
                     throw Error('At least one entity was not persisted correctly!');

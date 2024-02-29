@@ -23,7 +23,6 @@ import { ServiceProvider } from '../../modules/service-provider/domain/service-p
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
 import { LernperiodeFile } from './file/lernperiode-file.js';
 import { LernperiodeEntity } from '../../modules/group/persistence/lernperiode.entity.js';
-
 export interface SeedFile {
     entityName: string;
 }
@@ -130,6 +129,7 @@ export class DbSeedConsole extends CommandRunner {
     private handleLernperiode(entities: LernperiodeFile[], entityName: string): void {
         for (const entity of entities) {
             const mappedEntity: LernperiodeEntity = new LernperiodeEntity();
+            // mappedEntity.id = entity.id;- id is not set because its readonly in the entity
             mappedEntity.code = entity.code;
             mappedEntity.typ = entity.typ;
             mappedEntity.bezeichnung = entity.bezeichnung;

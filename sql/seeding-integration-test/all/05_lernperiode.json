@@ -2,9 +2,9 @@
     "entityName": "Lernperiode",
     "entities": [
         {
-            "id": "d324b498-25c8-4f4f-bc48-2d4e5bbaadc0",
+            "id": "bdc9c687-fb1e-45dc-9f22-814704c074a7",
             "code": "2022",
-            "Bezeichnung": "Schuljahr 2022/23",
+            "bezeichnung": "Schuljahr 2022/23",
             "beginn": "2022-08-01",
             "ende": "2023-07-31",
             "typ": "Schuljahr"

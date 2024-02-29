@@ -16,7 +16,6 @@ import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
 import { LernperiodeFile } from './file/lernperiode-file.js';
-
 describe('DbSeedService', () => {
     let module: TestingModule;
     let dbSeedService: DbSeedService;
