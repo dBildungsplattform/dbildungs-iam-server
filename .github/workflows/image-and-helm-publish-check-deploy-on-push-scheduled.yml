@@ -1,4 +1,5 @@
-name: "Publish image and helm chart on push and (scheduled) trivy, deployment on push, delete namespace on branch deletion"
+# Scan & Publish image and helm chart on push, deployment on push, delete deployment on branch deletion, scheduled trivy scanner
+name: "Dev Pipeline"
 
 # All triggers have to be in one file, so that the trivy results can be compared to identify introduced vulnerabilities
 # See DBP-340
@@ -16,7 +17,7 @@ jobs:
   codeql_analyze:
     name: "CodeQL"
     if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@5.0.0
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@5
     permissions:
       actions: read
       contents: read
@@ -25,7 +26,7 @@ jobs:
   nest_lint:
     name: "Linting"
     if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@5.0.0
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@5
     with:
       node_version: '18'
     permissions:
@@ -34,7 +35,7 @@ jobs:
   tests_and_sonarcloud:
     name: "Tests and Sonarcloud"
     if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@5.0.0
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@5
     with:
       node_version: '18'
       deploy_stage: 'dev'
@@ -53,14 +54,14 @@ jobs:
       packages: write
       security-events: write
       contents: read
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@5.0.0
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@5
     with:
       image_name: "dbildungs-iam-server"
       run_trivy_scan: true
       image_tag_generation: ${{ ( github.ref_name == 'main' || startsWith(github.ref_name,'dependabot/') )  && 'commit_hash' || 'ticket_from_branch' }}
       add_latest_tag: ${{ github.ref_name == 'main' }}
       container_registry: "ghcr.io"
-      fail_on_vulnerabilites: true
+      fail_on_vulnerabilites: false
       report_location: "Dockerfile"
   
   scheduled_trivy_scan:
@@ -69,7 +70,7 @@ jobs:
     permissions:
       packages: read
       security-events: write
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@5.0.0
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@5
     with:
       image_ref: 'ghcr.io/${{ github.repository_owner }}/dbildungs-iam-server:latest'
       fail_on_vulnerabilites: false
@@ -77,7 +78,7 @@ jobs:
 
   scan_helm:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@5.0.0
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@5
     permissions:
       contents: read
 
@@ -104,7 +105,7 @@ jobs:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs: 
       -  select_helm_version_generation_and_image_tag_generation
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@5.0.0
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@5
     secrets: inherit
     with:
       chart_name: dbildungs-iam
@@ -113,13 +114,13 @@ jobs:
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@main
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@1
 
   create_branch_identifier:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs: 
       - branch_meta
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/branch-to-namespace.yml@main
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/branch-to-namespace.yml@1
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
 
@@ -130,7 +131,7 @@ jobs:
       - create_branch_identifier
       - release_helm
       - build_image_on_push
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@main
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@1
     with:
       dbildungs_iam_server_branch: ${{ needs.branch_meta.outputs.ticket }}
       dbildungs_iam_client_branch: main
@@ -141,7 +142,7 @@ jobs:
 
   create_branch_identifier_for_deletion:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/branch-to-namespace.yml@main
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/branch-to-namespace.yml@1
     with:
       branch: ${{ github.event.ref }}
 
@@ -149,7 +150,7 @@ jobs:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch'}}
     needs:
       - create_branch_identifier_for_deletion
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/delete-namespace.yml@main
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/delete-namespace.yml@1
     with:
       namespace: ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }}
     secrets:

@@ -1,21 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dbiam-server-redis-deployment
+  name: {{ include "common.names.releasename" . }}-redis
+  namespace: {{ .Values.namespace }}
   labels:
-    app.kubernetes.io/name: {{.Chart.Name}}
-    app.kubernetes.io/version: {{.Chart.Version}}
+    app.kubernetes.io/name: {{ .Values.dbiam.commonLabels.name }}
+    app.kubernetes.io/version: {{ .Chart.Version }}
 spec:
   selector:
     matchLabels:
-      layer: dbildungs-iam-redis
-  replicas: 1
+      app.kubernetes.io/layer: {{ .Values.redis.selector.layer }}
+  replicas: {{ .Values.replicaCount }}
   template:
     metadata:
-      name: dbildungs-iam-redis
       labels:
-        layer: dbildungs-iam-redis
+        app.kubernetes.io/name: {{ .Values.redis.commonLabels.name }}
+        app.kubernetes.io/layer: {{ .Values.redis.selector.layer }}
     spec:
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       initContainers:
         - name: copy-tls-data
           image: alpine
@@ -35,22 +37,23 @@ spec:
               cpu: {{.Values.dbildungsIamRedisCpuMax}}
               memory: {{.Values.dbildungsIamRedisMemMax}}
       containers:
-        - name: redis
-          image: redis:7.2.2
+        - name: {{ .Values.rediscontainer.image.name }}
+          image: {{ .Values.rediscontainer.image.repository }}:{{ .Values.rediscontainer.image.tag }}
+          imagePullPolicy: {{ .Values.rediscontainer.image.pullPolicy }}
           securityContext:
-            allowPrivilegeEscalation: false
-          volumeMounts:
-            - mountPath: "/data"
-              name: data
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           ports:
-            - name: redis-port
-              containerPort: 6379
-              protocol: TCP
-          args:
-            - "/data/tls/redis.conf"
+            {{- toYaml .Values.rediscontainer.ports | nindent 12 }}
+          volumeMounts:
+            {{- toYaml .Values.rediscontainer.volumeMounts | nindent 12 }}
+          resources:
+            {{- toYaml .Values.containerResources | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.rediscontainer.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.rediscontainer.readinessProbe | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.rediscontainer.startupProbe | nindent 12 }}
       volumes:
-        - name: tls-data
-          configMap:
-            name: dbiam-redis-tls-config
-        - name: data
-          emptyDir: {}
+        {{- toYaml .Values.redisvolumes | nindent 8 }}
+      restartPolicy: {{ .Values.restartPolicy }}

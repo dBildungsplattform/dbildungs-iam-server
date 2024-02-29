@@ -41,7 +41,7 @@ export class OrganisationController {
     ) {}
 
     @Post()
-    @ApiCreatedResponse({ description: 'The organisation was successfully created.' })
+    @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponse })
     @ApiBadRequestResponse({ description: 'The organisation already exists.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
