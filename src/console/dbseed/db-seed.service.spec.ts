@@ -15,6 +15,7 @@ import { OrganisationsTyp } from '../../modules/organisation/domain/organisation
 import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
+import { LernperiodeFile } from './file/lernperiode-file.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -82,6 +83,21 @@ describe('DbSeedService', () => {
                 };
                 expect(entities).toHaveLength(1);
                 expect(entity).toEqual(organisation);
+            });
+        });
+    });
+
+    describe('readLernperiode', () => {
+        describe('readLernperiode with one entity', () => {
+            it('should have length 1 and be mapped', () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./sql/seeding-integration-test/all/05_lernperiode.json`,
+                    'utf-8',
+                );
+                const entities: LernperiodeFile[] = dbSeedService.readLernperiode(fileContentAsStr);
+
+                expect(entities).toBeDefined();
+                expect(entities).toHaveLength(1);
             });
         });
     });
@@ -176,7 +192,7 @@ describe('DbSeedService', () => {
         describe('getEntityFileNames in directory sql/seeding-integration-test', () => {
             it('should return all files in directory', () => {
                 const entityFileNames: string[] = dbSeedService.getEntityFileNames('seeding-integration-test/all');
-                expect(entityFileNames).toHaveLength(6);
+                expect(entityFileNames).toHaveLength(7);
             });
         });
     });

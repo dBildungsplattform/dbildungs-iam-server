@@ -20,6 +20,7 @@ import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rolle/repo/rolle.repo.js';
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
 import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
+import { LernperiodeEntity } from '../../modules/group/persistence/lernperiode.entity.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -90,7 +91,10 @@ describe('DbSeedConsole', () => {
                 const serviceProvider: Option<ServiceProviderEntity> = await orm.em.findOne(ServiceProviderEntity, {
                     id: 'ca0e17c5-8e48-403b-af92-28eff21c64bb',
                 });
-                if (!dataProvider || !rolle || !organisation || !serviceProvider) {
+                const lernperiode: Option<LernperiodeEntity> = await orm.em.findOne(LernperiodeEntity, {
+                    id: 'd324b498-25c8-4f4f-bc48-2d4e5bbaadc0',
+                });
+                if (!dataProvider || !rolle || !organisation || !serviceProvider || !lernperiode) {
                     throw Error('At least one entity was not persisted correctly!');
                 }
             });
