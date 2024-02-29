@@ -1,4 +1,4 @@
-import { EntityName, Reference } from '@mikro-orm/core';
+import { EntityName } from '@mikro-orm/core';
 import { ScopeBase, ScopeOperator } from '../../../shared/persistence/index.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
@@ -30,7 +30,7 @@ export class OrganisationScope extends ScopeBase<OrganisationEntity> {
     public findAdministrierteVon(parentOrganisationId: string): this {
         this.findByInternal(
             {
-                administriertVon: Reference.createFromPK(OrganisationEntity, parentOrganisationId),
+                administriertVon: parentOrganisationId,
             },
             ScopeOperator.AND,
         );
@@ -41,7 +41,7 @@ export class OrganisationScope extends ScopeBase<OrganisationEntity> {
     public findZugehoerigeZu(parentOrganisationId: string): this {
         this.findByInternal(
             {
-                zugehoerigZu: Reference.createFromPK(OrganisationEntity, parentOrganisationId),
+                zugehoerigZu: parentOrganisationId,
             },
             ScopeOperator.AND,
         );

@@ -1,19 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { OrganisationService } from './organisation.service.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { OrganisationRepo } from '../persistence/organisation.repo.js';
 import { Mapper } from '@automapper/core';
-import { OrganisationDo } from './organisation.do.js';
-import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { Dictionary } from '@mikro-orm/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { Dictionary } from '@mikro-orm/core';
+import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { Paged } from '../../../shared/paging/index.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/index.js';
-import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { Paged } from '../../../shared/paging/index.js';
+import { OrganisationRepo } from '../persistence/organisation.repo.js';
+import { OrganisationDo } from './organisation.do.js';
+import { OrganisationService } from './organisation.service.js';
 import { OrganisationsTyp } from './organisation.enums.js';
 import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
 
@@ -25,7 +24,7 @@ describe('OrganisationService', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
+            imports: [ConfigTestModule],
             providers: [
                 OrganisationService,
                 {
@@ -288,22 +287,6 @@ describe('OrganisationService', () => {
     });
 
     describe('setZugehoerigZu', () => {
-        /*  it('should update the organisation', async () => {
-            const parentId: string = faker.string.uuid();
-            const childId: string = faker.string.uuid();
-            organisationRepoMock.exists.mockResolvedValueOnce(true);
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
-            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
-            organisationRepoMock.save.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
-
-            const result: Result<void> = await organisationService.setZugehoerigZu(parentId, childId);
-
-            expect(result).toEqual<Result<void>>({
-                ok: true,
-                value: undefined,
-            });
-        });*/
-
         it('should return a domain error if parent organisation does not exist', async () => {
             const parentId: string = faker.string.uuid();
             const childId: string = faker.string.uuid();
@@ -331,19 +314,35 @@ describe('OrganisationService', () => {
             });
         });
 
-        /* it('should return a domain error if the organisation could not be updated', async () => {
-            const parentId: string = faker.string.uuid();
-            const childId: string = faker.string.uuid();
-            organisationRepoMock.exists.mockResolvedValueOnce(true);
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+        it('should return a domain error if the organisation could not be updated', async () => {
+            const rootDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                id: '1',
+                name: 'Root',
+                administriertVon: undefined,
+                zugehoerigZu: undefined,
+                typ: OrganisationsTyp.TRAEGER,
+            });
+            const traegerDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                id: '2',
+                name: 'Träger1',
+                administriertVon: '1',
+                zugehoerigZu: '1',
+                typ: OrganisationsTyp.TRAEGER,
+            });
 
-            const result: Result<void> = await organisationService.setZugehoerigZu(parentId, childId);
+            organisationRepoMock.exists.mockResolvedValueOnce(true);
+            organisationRepoMock.findById.mockResolvedValueOnce(traegerDo);
+            organisationRepoMock.findById.mockResolvedValueOnce(rootDo); //called in TraegerAdministriertVonTraeger
+            organisationRepoMock.findById.mockResolvedValueOnce(rootDo); //called in ZyklusInZugehoerigZu
+
+            organisationRepoMock.save.mockRejectedValueOnce(new Error());
+            const result: Result<void> = await organisationService.setZugehoerigZu(rootDo.id, traegerDo.id);
 
             expect(result).toEqual<Result<void>>({
                 ok: false,
-                error: new EntityCouldNotBeUpdated('Organisation', childId),
+                error: new EntityCouldNotBeUpdated('Organisation', traegerDo.id),
             });
-        });*/
+        });
 
         it('should return a domain error if the organisation could not be updated', async () => {
             const rootDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {

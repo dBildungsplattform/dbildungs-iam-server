@@ -34,7 +34,7 @@ import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js'
 import { FindPersonenkontextByIdParams } from './find-personenkontext-by-id.params.js';
 import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
 import { PersonendatensatzDto } from '../../person/api/personendatensatz.dto.js';
-import { PersonendatensatzResponse } from '../../person/api/personendatensatz.response.js';
+import { PersonendatensatzResponseAutomapper } from '../../person/api/personendatensatz.response-automapper.js';
 import { PersonenkontextQueryParams } from './personenkontext-query.params.js';
 import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';
@@ -58,7 +58,7 @@ export class PersonenkontextController {
     @Get(':personenkontextId')
     @ApiOkResponse({
         description: 'The personenkontext was successfully returned.',
-        type: PersonendatensatzResponse,
+        type: PersonendatensatzResponseAutomapper,
     })
     @ApiBadRequestResponse({ description: 'Request has wrong format.' })
     @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
@@ -67,7 +67,7 @@ export class PersonenkontextController {
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
     public async findPersonenkontextById(
         @Param() params: FindPersonenkontextByIdParams,
-    ): Promise<PersonendatensatzResponse> {
+    ): Promise<PersonendatensatzResponseAutomapper> {
         const request: FindPersonenkontextByIdDto = this.mapper.map(
             params,
             FindPersonenkontextByIdParams,
@@ -80,10 +80,10 @@ export class PersonenkontextController {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
         }
 
-        const response: PersonendatensatzResponse = this.mapper.map(
+        const response: PersonendatensatzResponseAutomapper = this.mapper.map(
             result,
             PersonendatensatzDto,
-            PersonendatensatzResponse,
+            PersonendatensatzResponseAutomapper,
         );
 
         return response;
@@ -92,7 +92,7 @@ export class PersonenkontextController {
     @Get()
     @ApiOkResponse({
         description: 'The personenkontexte were successfully returned.',
-        type: [PersonendatensatzResponse],
+        type: [PersonendatensatzResponseAutomapper],
         headers: PagingHeadersObject,
     })
     @ApiBadRequestResponse({ description: 'Request has wrong format.' })
@@ -137,7 +137,7 @@ export class PersonenkontextController {
     public async updatePersonenkontextWithId(
         @Param() params: FindPersonenkontextByIdParams,
         @Body() body: UpdatePersonenkontextBodyParams,
-    ): Promise<PersonendatensatzResponse> {
+    ): Promise<PersonendatensatzResponseAutomapper> {
         const dto: UpdatePersonenkontextDto = this.mapper.map(
             body,
             UpdatePersonenkontextBodyParams,
@@ -152,7 +152,7 @@ export class PersonenkontextController {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
         }
 
-        return this.mapper.map(response, PersonendatensatzDto, PersonendatensatzResponse);
+        return this.mapper.map(response, PersonendatensatzDto, PersonendatensatzResponseAutomapper);
     }
 
     @Delete(':personenkontextId')
