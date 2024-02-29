@@ -24,7 +24,7 @@ import { HatSystemrechtBodyParams } from './hat-systemrecht.body.params.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import {EntityNotFoundError} from "../../../shared/error";
+import { EntityNotFoundError } from '../../../shared/error/index.js';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
@@ -175,7 +175,7 @@ describe('PersonenkontextController', () => {
                     personId: '1',
                 };
                 const bodyParams: HatSystemrechtBodyParams = {
-                    systemRecht: "FALSCHER_RECHTE_NAME",
+                    systemRecht: 'FALSCHER_RECHTE_NAME',
                 };
                 personenkontextUcMock.hatSystemRecht.mockRejectedValue(new EntityNotFoundError());
                 await expect(sut.hatSystemRecht(idParams, bodyParams)).rejects.toThrow(HttpException);
