@@ -130,6 +130,8 @@ export class Person<WasPersisted extends boolean> {
         lokalisierung?: string,
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
+        username?: string,
+        password?: string,
     ): Person<false> {
         return new Person(
             undefined,
@@ -138,8 +140,8 @@ export class Person<WasPersisted extends boolean> {
             familienname,
             vorname,
             '1',
-            undefined,
-            undefined,
+            username,
+            password,
             undefined,
             referrer,
             stammorganisation,
