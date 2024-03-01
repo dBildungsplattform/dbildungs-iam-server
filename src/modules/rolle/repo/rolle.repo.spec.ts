@@ -94,4 +94,21 @@ describe('RolleRepo', () => {
             expect(rolle).toBeNull();
         });
     });
+
+    describe('findByName', () => {
+        it('should return the rolle', async () => {
+            const rolle: Rolle<true> = await sut.save(DoFactory.createRolle(false));
+
+            const rolleResult: Option<Rolle<true>[]> = await sut.findByName(rolle.name);
+
+            expect(rolleResult).toBeDefined();
+            expect(rolleResult).toHaveLength(1);
+        });
+
+        it('should return undefined if the entity does not exist', async () => {
+            const rolleResult: Option<Rolle<true>[]> = await sut.findByName(faker.string.alpha());
+            expect(rolleResult).toBeDefined();
+            expect(rolleResult).toHaveLength(0);
+        });
+    });
 });

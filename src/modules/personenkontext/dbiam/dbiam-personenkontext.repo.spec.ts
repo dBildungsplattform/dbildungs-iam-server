@@ -9,7 +9,7 @@ import {
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from './dbiam-personenkontext.repo.js';
 
-function createPersonenkontext<WasPersisted extends boolean>(
+export function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
     withId: WasPersisted,
     params: Partial<Personenkontext<boolean>> = {},
@@ -69,6 +69,14 @@ describe('dbiam Personenkontext Repo', () => {
 
             const personenkontexte: Personenkontext<true>[] = await sut.findByPerson('0');
 
+            expect(personenkontexte).toHaveLength(1);
+        });
+    });
+
+    describe('findByRolle', () => {
+        it('should return all personenkontexte for a rolle', async () => {
+            await Promise.all([sut.save(createPersonenkontext(false, { rolleId: '0' }))]);
+            const personenkontexte: Personenkontext<true>[] = await sut.findByRolle('0');
             expect(personenkontexte).toHaveLength(1);
         });
     });

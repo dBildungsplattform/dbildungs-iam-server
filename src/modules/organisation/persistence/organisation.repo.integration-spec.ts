@@ -136,4 +136,26 @@ describe('OrganisationRepo', () => {
             });
         });
     });
+
+    describe('findByName', () => {
+        describe('when matching organisations were found', () => {
+            it('should return found organizations', async () => {
+                const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                const organisation: OrganisationDo<boolean> = await sut.save(organisationDo);
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findByName(
+                    organisation.name as string,
+                );
+                expect(foundOrganisations).toBeInstanceOf(Array);
+                expect(foundOrganisations).toHaveLength(1);
+            });
+        });
+
+        describe('when no matching organisations were found', () => {
+            it('should return null', async () => {
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findByName('notExisting');
+                expect(foundOrganisations).toBeInstanceOf(Array);
+                expect(foundOrganisations).toHaveLength(0);
+            });
+        });
+    });
 });

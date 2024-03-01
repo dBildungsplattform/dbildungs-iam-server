@@ -27,7 +27,7 @@ export class PersonenkontextAnlage {
     public async findSchulstrukturknoten(rolleId: string, sskName: string): Promise<OrganisationDo<true>[]> {
         this.rolleId = rolleId;
         const ssks: Option<OrganisationDo<true>[]> = await this.organisationRepo.findByName(sskName);
-        if (!ssks) return [];
+        if (!ssks || ssks.length === 0) return [];
         const personenkontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByRolle(this.rolleId);
         return personenkontexte.filter((pk: Personenkontext<true>) =>
             ssks.some((ssk: OrganisationDo<true>) => ssk.id === pk.organisationId),

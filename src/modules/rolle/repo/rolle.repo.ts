@@ -59,7 +59,7 @@ export class RolleRepo {
     public async findByName(name: string): Promise<Option<Rolle<true>[]>> {
         const rollen: Option<RolleEntity[]> = await this.em.find(
             this.entityName,
-            { $like: name },
+            { name: { $like: name } },
             { populate: ['merkmale'] as const },
         );
 
