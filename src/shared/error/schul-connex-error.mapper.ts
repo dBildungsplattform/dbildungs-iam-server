@@ -15,6 +15,7 @@ import { SchuleUnterTraegerError } from '../../modules/organisation/specificatio
 import { TraegerInTraegerError } from '../../modules/organisation/specification/error/traeger-in-traeger.error.js';
 import { InvalidCharacterSetError } from './invalid-character-set.error.js';
 import { InvalidAttributeLengthError } from './invalid-attribute-length.error.js';
+import { InvalidNameError } from './invalid-name.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -144,6 +145,15 @@ export class SchulConnexErrorMapper {
                 subcode: '08',
                 titel: 'Attributwerte entsprechen nicht dem gültigen Zeichensatz',
                 beschreibung: 'Text entspricht nicht dem Zeichensatz',
+            }),
+        ],
+        [
+            InvalidNameError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '00',
+                titel: 'Fehlerhafte Anfrage',
+                beschreibung: 'Die Anfrage ist fehlerhaft: Es konnte kein Benutzername generiert werden',
             }),
         ],
     ]);
