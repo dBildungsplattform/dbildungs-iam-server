@@ -139,10 +139,8 @@ export class PersonRepository {
             return person;
         }
         if (!person.keycloakUserId) {
-            const generatedUsername: string = await usernameGenerator.generateUsername(
-                person.vorname,
-                person.familienname,
-            );
+            const generatedUsername: string =
+                person.username ?? (await usernameGenerator.generateUsername(person.vorname, person.familienname));
             person.username = generatedUsername;
             person.referrer = generatedUsername;
 
@@ -156,11 +154,13 @@ export class PersonRepository {
                 return creationResult.error;
             }
             person.keycloakUserId = creationResult.value;
-            person.resetPassword();
+            if (!person.password){
+                person.resetPassword();
+            }
         }
         const setPasswordResult: Result<string, DomainError> = await kcUserService.resetPassword(
             person.keycloakUserId,
-            person.newPassword!,
+            person.password ?? person.newPassword!,
         );
         if (!setPasswordResult.ok) {
             if (person.keycloakUserId) {
