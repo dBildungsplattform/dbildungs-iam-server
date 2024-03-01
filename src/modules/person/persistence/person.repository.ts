@@ -154,7 +154,7 @@ export class PersonRepository {
                 return creationResult.error;
             }
             person.keycloakUserId = creationResult.value;
-            if (!person.password){
+            if (!person.password) {
                 person.resetPassword();
             }
         }
