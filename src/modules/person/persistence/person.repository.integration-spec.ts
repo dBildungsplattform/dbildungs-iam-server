@@ -249,6 +249,63 @@ describe('PersonRepository', () => {
     });
 
     describe('saveUser', () => {
+        describe('when fixed username and password', () => {
+            it('should return person with keycloakUser and fixed credentials', async () => {
+                const person: Person<false> = Person.createNew(
+                    faker.person.lastName(),
+                    faker.person.firstName(),
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    'fixedusername',
+                    'fixedpassword',
+                );
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce('randomusername');
+                kcUserServiceMock.create.mockResolvedValue({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.resetPassword.mockResolvedValue({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.delete.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+                const result: Person<true> | DomainError = await sut.saveUser(
+                    person,
+                    kcUserServiceMock,
+                    usernameGeneratorService,
+                );
+                expect(result).not.toBeInstanceOf(DomainError);
+                if (result instanceof DomainError) {
+                    return;
+                }
+                expect(result.newPassword).toBeDefined();
+                expect(result.keycloakUserId).toBeDefined();
+                expect(result.vorname).toEqual(person.vorname);
+                expect(result.familienname).toEqual(person.familienname);
+                expect(result.username).toEqual('fixedusername');
+                expect(result.password).toEqual('fixedpassword');
+                expect(kcUserServiceMock.create).toHaveBeenCalled();
+                expect(kcUserServiceMock.resetPassword).toHaveBeenCalled();
+                expect(usernameGeneratorService.generateUsername).not.toHaveBeenCalled();
+            });
+        });
         describe('when person needs saving', () => {
             describe('when succeeds', () => {
                 it('should return person with keycloakUser', async () => {
