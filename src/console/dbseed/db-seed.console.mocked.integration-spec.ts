@@ -78,7 +78,7 @@ describe('DbSeedConsoleMockedKeycloak', () => {
                     error: error,
                 };
                 keycloakUserServiceMock.create.mockResolvedValueOnce(result);
-                userNameGeneratorServiceMock.generateUsername.mockResolvedValueOnce('timtester1');
+                userNameGeneratorServiceMock.generateUsername.mockResolvedValueOnce({ ok: true, value: 'timtester1' });
                 await expect(sut.run(params)).rejects.toThrow();
             });
         });

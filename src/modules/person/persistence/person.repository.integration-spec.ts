@@ -158,7 +158,7 @@ describe('PersonRepository', () => {
                     faker.person.firstName(),
                 );
                 personWithKeycloak.keycloakUserId = faker.string.uuid();
-                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
                 kcUserServiceMock.create.mockResolvedValueOnce({
                     ok: true,
                     value: '',
@@ -184,7 +184,7 @@ describe('PersonRepository', () => {
         describe('when creation of keyCloakUser fails', () => {
             it('should return Domain Error', async () => {
                 const person: Person<false> = Person.createNew(faker.person.lastName(), faker.person.firstName());
-                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
                 kcUserServiceMock.create.mockResolvedValueOnce({
                     ok: false,
                     error: new KeycloakClientError(''),
@@ -253,7 +253,10 @@ describe('PersonRepository', () => {
             describe('when succeeds', () => {
                 it('should return person with keycloakUser', async () => {
                     const person: Person<false> = Person.createNew(faker.person.lastName(), faker.person.firstName());
-                    usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                        ok: true,
+                        value: 'testusername',
+                    });
                     kcUserServiceMock.create.mockResolvedValue({
                         ok: true,
                         value: '',
@@ -289,7 +292,10 @@ describe('PersonRepository', () => {
                     person.keycloakUserId = faker.string.uuid();
                     person.resetPassword(); //necessary to have dirty state & but with keycloakUSerId
 
-                    usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                        ok: true,
+                        value: 'testusername',
+                    });
                     kcUserServiceMock.create.mockResolvedValueOnce({
                         ok: true,
                         value: '',
@@ -316,7 +322,7 @@ describe('PersonRepository', () => {
             it('should return person without calling any services', async () => {
                 const person: Person<false> = Person.createNew(faker.person.lastName(), faker.person.firstName());
                 person.keycloakUserId = faker.string.uuid();
-                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
                 kcUserServiceMock.create.mockResolvedValueOnce({
                     ok: true,
                     value: '',
