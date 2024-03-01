@@ -20,6 +20,9 @@ import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonendatensatzDto } from '../../person/api/personendatensatz.dto.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
+import { DBiamPersonenkontextRepo } from '../dbiam/dbiam-personenkontext.repo.js';
 
 describe('PersonenkontextUc', () => {
     let module: TestingModule;
@@ -33,6 +36,18 @@ describe('PersonenkontextUc', () => {
             providers: [
                 PersonenkontextUc,
                 PersonApiMapperProfile,
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
+                {
+                    provide: OrganisationRepo,
+                    useValue: createMock<OrganisationRepo>(),
+                },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                },
                 {
                     provide: PersonService,
                     useValue: createMock<PersonService>(),

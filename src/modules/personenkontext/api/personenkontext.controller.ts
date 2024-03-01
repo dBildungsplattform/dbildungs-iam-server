@@ -44,6 +44,10 @@ import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.p
 import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
+import { FindPersonenkontextRollenBodyParams } from './find-personenkontext-rollen.body.params.js';
+import { FindPersonenkontextSchulstrukturknotenBodyParams } from './find-personenkontext-schulstrukturknoten.body.params.js';
+import { FindRollenResponse } from './find-rollen.response.js';
+import { FindSchulstrukturknotenResponse } from './find-schulstrukturknoten.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontexte')
@@ -122,6 +126,18 @@ export class PersonenkontextController {
         });
 
         return response;
+    }
+
+    @Get('/rollen')
+    public async findRollen(@Body() params: FindPersonenkontextRollenBodyParams): Promise<FindRollenResponse> {
+        return this.personenkontextUc.findRollen(params);
+    }
+
+    @Get('/schulstrukturknoten')
+    public async findSchulstrukturknoten(
+        @Body() params: FindPersonenkontextSchulstrukturknotenBodyParams,
+    ): Promise<FindSchulstrukturknotenResponse> {
+        return this.personenkontextUc.findSchulstrukturknoten(params);
     }
 
     @Put(':personenkontextId')

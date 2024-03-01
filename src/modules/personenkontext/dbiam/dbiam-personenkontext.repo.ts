@@ -41,6 +41,14 @@ export class DBiamPersonenkontextRepo {
         return personenKontexte.map(mapEntityToAggregate);
     }
 
+    public async findByRolle(rolleId: string): Promise<Personenkontext<true>[]> {
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
+            rolleId,
+        });
+
+        return personenKontexte.map(mapEntityToAggregate);
+    }
+
     public async exists(personId: string, organisationId: string, rolleId: string): Promise<boolean> {
         const personenKontext: Option<PersonenkontextEntity> = await this.em.findOne(PersonenkontextEntity, {
             personId,

@@ -56,6 +56,16 @@ export class RolleRepo {
         return rolle && mapEntityToAggregate(rolle);
     }
 
+    public async findByName(name: string): Promise<Option<Rolle<true>[]>> {
+        const rollen: Option<RolleEntity[]> = await this.em.find(
+            this.entityName,
+            { $like: name },
+            { populate: ['merkmale'] as const },
+        );
+
+        return rollen.map(mapEntityToAggregate);
+    }
+
     public async find(): Promise<Rolle<true>[]> {
         const rollen: RolleEntity[] = await this.em.findAll(RolleEntity, { populate: ['merkmale'] as const });
 

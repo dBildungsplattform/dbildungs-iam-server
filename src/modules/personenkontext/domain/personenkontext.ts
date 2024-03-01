@@ -8,6 +8,10 @@ export class Personenkontext<WasPersisted extends boolean> {
         public readonly rolleId: string,
     ) {}
 
+    public static createNew(personId: string, organisationId: string, rolleId: string): Personenkontext<false> {
+        return new Personenkontext(undefined, undefined, undefined, personId, organisationId, rolleId);
+    }
+
     public static construct<WasPersisted extends boolean = false>(
         id: Persisted<string, WasPersisted>,
         createdAt: Persisted<Date, WasPersisted>,
