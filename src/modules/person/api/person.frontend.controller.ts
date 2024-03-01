@@ -1,6 +1,4 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
-import { Controller, Get, Inject, Query, UseFilters } from '@nestjs/common';
+import { Controller, Get, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
@@ -9,27 +7,20 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import {
-    ApiOkResponsePaginated,
-    DisablePagingInterceptor,
-    Paged,
-    RawPagedResponse,
-} from '../../../shared/paging/index.js';
-import { PersonUc } from '../api/person.uc.js';
-import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
+import { ApiOkResponsePaginated, DisablePagingInterceptor, RawPagedResponse } from '../../../shared/paging/index.js';
 import { PersonenQueryParams } from './personen-query.param.js';
-import { PersonendatensatzDto } from './personendatensatz.dto.js';
+import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { Person } from '../domain/person.js';
+import { PersonScope } from '../persistence/person.scope.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { PersonRepository } from '../persistence/person.repository.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen-frontend')
 @ApiBearerAuth()
 @Controller({ path: 'personen-frontend' })
 export class PersonFrontendController {
-    public constructor(
-        private readonly personUc: PersonUc,
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
-    ) {}
+    public constructor(private readonly personRepository: PersonRepository) {}
 
     @Get()
     @DisablePagingInterceptor()
@@ -43,17 +34,22 @@ export class PersonFrontendController {
     public async findPersons(
         @Query() queryParams: PersonenQueryParams,
     ): Promise<RawPagedResponse<PersonendatensatzResponse>> {
-        const findDto: FindPersonendatensatzDto = this.mapper.map(
-            queryParams,
-            PersonenQueryParams,
-            FindPersonendatensatzDto,
-        );
-        const pagedDtos: Paged<PersonendatensatzDto> = await this.personUc.findAll(findDto);
+        const scope: PersonScope = new PersonScope()
+            .findBy({
+                vorname: undefined,
+                familienname: undefined,
+                geburtsdatum: undefined,
+            })
+            .sortBy('vorname', ScopeOrder.ASC)
+            .paged(queryParams.offset, queryParams.limit);
+
+        const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
+
         const response: RawPagedResponse<PersonendatensatzResponse> = new RawPagedResponse({
-            offset: pagedDtos.offset,
-            limit: pagedDtos.limit,
-            total: pagedDtos.total,
-            items: this.mapper.mapArray(pagedDtos.items, PersonendatensatzDto, PersonendatensatzResponse),
+            offset: queryParams.offset ?? 0,
+            limit: queryParams.limit ?? total,
+            total: total,
+            items: persons.map((person: Person<true>) => new PersonendatensatzResponse(person, false)),
         });
 
         return response;

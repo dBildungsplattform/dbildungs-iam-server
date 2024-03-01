@@ -6,7 +6,6 @@ import {
     KeycloakConfigTestModule,
 } from '../../../test/utils/index.js';
 import { PersonController } from './api/person.controller.js';
-import { PersonUc } from './api/person.uc.js';
 import { PersonenkontextUc } from '../personenkontext/api/personenkontext.uc.js';
 import { PersonApiModule } from './person-api.module.js';
 import { PersonFrontendController } from './api/person.frontend.controller.js';
@@ -42,10 +41,6 @@ describe('PersonApiModule', () => {
 
         it('should resolve PersonFrontendController', () => {
             expect(module.get(PersonFrontendController)).toBeInstanceOf(PersonFrontendController);
-        });
-
-        it('should resolve PersonUc', () => {
-            expect(module.get(PersonUc)).toBeInstanceOf(PersonUc);
         });
 
         it('should resolve PersonenkontextUc', () => {

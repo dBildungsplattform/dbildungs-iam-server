@@ -1,8 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { DomainError } from '../../../shared/error/index.js';
-import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
+import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
-import { UsernameGeneratorService } from './username-generator.service.js';
 
 type State = {
     passwordReset: boolean;
@@ -49,12 +47,12 @@ export class Person<WasPersisted extends boolean> {
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
     }
 
-    private get needsSaving(): boolean {
+    public get needsSaving(): boolean {
         return this.state.passwordReset || this.keycloakUserId === undefined;
     }
 
     public get newPassword(): string | undefined {
-        return this.newPasswordInternal;
+        return this.newPasswordInternal ?? undefined;
     }
 
     public static construct<WasPersisted extends boolean = false>(
@@ -133,7 +131,7 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
     ): Person<false> {
-        const person: Person<boolean> = new Person(
+        return new Person(
             undefined,
             undefined,
             undefined,
@@ -160,45 +158,56 @@ export class Person<WasPersisted extends boolean> {
             vertrauensstufe,
             auskunftssperre,
         );
-        person.resetPassword();
-        return person;
     }
 
-    // Only for now until ticket 403
-    public async saveUser(
-        kcUserService: KeycloakUserService,
-        usernameGenerator: UsernameGeneratorService,
-    ): Promise<void> {
-        if (!this.needsSaving) {
-            return;
+    public update(
+        revision: string,
+        familienname?: string,
+        vorname?: string,
+        referrer?: string,
+        stammorganisation?: string,
+        initialenFamilienname?: string,
+        initialenVorname?: string,
+        rufname?: string,
+        nameTitel?: string,
+        nameAnrede?: string[],
+        namePraefix?: string[],
+        nameSuffix?: string[],
+        nameSortierindex?: string,
+        geburtsdatum?: Date,
+        geburtsort?: string,
+        geschlecht?: Geschlecht,
+        lokalisierung?: string,
+        vertrauensstufe?: Vertrauensstufe,
+        auskunftssperre?: boolean,
+    ): void | DomainError {
+        if (this.revision !== revision) {
+            return new MismatchedRevisionError(
+                `Revision ${revision} does not match revision ${this.revision} of stored person.`,
+            );
         }
 
-        if (!this.keycloakUserId) {
-            this.username = await usernameGenerator.generateUsername(this.vorname, this.familienname);
-            const userDo: UserDo<false> = {
-                username: this.username,
-                id: undefined,
-                createdDate: undefined,
-            } satisfies UserDo<false>;
-            const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
-            if (!creationResult.ok) {
-                throw creationResult.error;
-            }
-            this.keycloakUserId = creationResult.value;
-        }
-        if (this.state.passwordReset) {
-            const setPasswordResult: Result<string, DomainError> = await kcUserService.resetPassword(
-                this.keycloakUserId,
-                this.newPassword!,
-            );
-            if (!setPasswordResult.ok) {
-                if (this.keycloakUserId) {
-                    await kcUserService.delete(this.keycloakUserId);
-                    this.keycloakUserId = undefined;
-                }
-                throw setPasswordResult.error;
-            }
-        }
+        const newRevision: string = (parseInt(this.revision) + 1).toString();
+
+        this.familienname = familienname ?? this.familienname;
+        this.vorname = vorname ?? this.vorname;
+        this.referrer = referrer;
+        this.stammorganisation = stammorganisation;
+        this.initialenFamilienname = initialenFamilienname;
+        this.initialenVorname = initialenVorname;
+        this.rufname = rufname;
+        this.nameTitel = nameTitel;
+        this.nameAnrede = nameAnrede;
+        this.namePraefix = namePraefix;
+        this.nameSuffix = nameSuffix;
+        this.nameSortierindex = nameSortierindex;
+        this.geburtsdatum = geburtsdatum;
+        this.geburtsort = geburtsort;
+        this.geschlecht = geschlecht;
+        this.lokalisierung = lokalisierung;
+        this.vertrauensstufe = vertrauensstufe;
+        this.auskunftssperre = auskunftssperre;
+        this.revision = newRevision;
     }
 
     public resetPassword(): void {

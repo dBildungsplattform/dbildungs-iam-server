@@ -32,25 +32,26 @@ import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { ApiOkResponsePaginated, Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
-import { PersonUc } from '../api/person.uc.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
-import { CreatePersonDto } from './create-person.dto.js';
 import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from '../../personenkontext/api/create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
-import { FindPersonendatensatzDto } from './find-personendatensatz.dto.js';
 import { FindPersonenkontextDto } from '../../personenkontext/api/find-personenkontext.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
-import { PersonDto } from './person.dto.js';
 import { PersonenQueryParams } from './personen-query.param.js';
-import { PersonendatensatzDto } from './personendatensatz.dto.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/personenkontext-query.params.js';
 import { PersonenkontextDto } from '../../personenkontext/api/personenkontext.dto.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/personenkontext.response.js';
 import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
-import { UpdatePersonDto } from './update-person.dto.js';
+import { PersonRepository } from '../persistence/person.repository.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { Person } from '../domain/person.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { PersonScope } from '../persistence/person.scope.js';
+import { ScopeOrder } from '../../../shared/persistence/index.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -58,8 +59,10 @@ import { UpdatePersonDto } from './update-person.dto.js';
 @Controller({ path: 'personen' })
 export class PersonController {
     public constructor(
-        private readonly personUc: PersonUc,
         private readonly personenkontextUc: PersonenkontextUc,
+        private readonly personRepository: PersonRepository,
+        private readonly usernameGenerator: UsernameGeneratorService,
+        private readonly kcUserService: KeycloakUserService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -71,23 +74,40 @@ export class PersonController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
     public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
-        const dto: CreatePersonDto = this.mapper.map(params, CreatePersonBodyParams, CreatePersonDto);
-        const result: PersonDto | SchulConnexError = await this.personUc.createPerson(dto);
+        const person: Person<false> = Person.createNew(
+            params.name.familienname,
+            params.name.vorname,
+            params.referrer,
+            params.stammorganisation,
+            params.name.initialenfamilienname,
+            params.name.initialenvorname,
+            params.name.rufname,
+            params.name.titel,
+            params.name.anrede,
+            params.name.namenspraefix,
+            params.name.namenssuffix,
+            params.name.sortierindex,
+            params.geburt?.datum,
+            params.geburt?.geburtsort,
+            params.geschlecht,
+            params.lokalisierung,
+            params.vertrauensstufe,
+            params.auskunftssperre,
+        );
 
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        const result: Person<true> | DomainError = await this.personRepository.create(
+            person,
+            this.kcUserService,
+            this.usernameGenerator,
+        );
+
+        if (result instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
         }
 
-        const personendatensatzDto: PersonendatensatzDto = {
-            person: result,
-            personenkontexte: [],
-        };
-        const personendatensatzResponse: PersonendatensatzResponse = this.mapper.map(
-            personendatensatzDto,
-            PersonendatensatzDto,
-            PersonendatensatzResponse,
-        );
-        return personendatensatzResponse;
+        return new PersonendatensatzResponse(result, true);
     }
 
     @Get(':personId')
@@ -98,18 +118,16 @@ export class PersonController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the person.' })
     public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonendatensatzResponse> {
-        const result: PersonendatensatzDto | SchulConnexError = await this.personUc.findPersonById(params.personId);
-
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
+        if (!person) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', params.personId),
+                ),
+            );
         }
 
-        const response: PersonendatensatzResponse = this.mapper.map(
-            result,
-            PersonendatensatzDto,
-            PersonendatensatzResponse,
-        );
-        return response;
+        return new PersonendatensatzResponse(person, false);
     }
 
     @Post(':personId/personenkontexte')
@@ -191,17 +209,22 @@ export class PersonController {
     public async findPersons(
         @Query() queryParams: PersonenQueryParams,
     ): Promise<PagedResponse<PersonendatensatzResponse>> {
-        const findDto: FindPersonendatensatzDto = this.mapper.map(
-            queryParams,
-            PersonenQueryParams,
-            FindPersonendatensatzDto,
-        );
-        const pagedDtos: Paged<PersonendatensatzDto> = await this.personUc.findAll(findDto);
+        const scope: PersonScope = new PersonScope()
+            .findBy({
+                vorname: undefined,
+                familienname: undefined,
+                geburtsdatum: undefined,
+            })
+            .sortBy('vorname', ScopeOrder.ASC)
+            .paged(queryParams.offset, queryParams.limit);
+
+        const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
+
         const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse({
-            offset: pagedDtos.offset,
-            limit: pagedDtos.limit,
-            total: pagedDtos.total,
-            items: this.mapper.mapArray(pagedDtos.items, PersonendatensatzDto, PersonendatensatzResponse),
+            offset: queryParams.offset ?? 0,
+            limit: queryParams.limit ?? total,
+            total: total,
+            items: persons.map((person: Person<true>) => new PersonendatensatzResponse(person, false)),
         });
 
         return response;
@@ -221,16 +244,43 @@ export class PersonController {
         @Param() params: PersonByIdParams,
         @Body() body: UpdatePersonBodyParams,
     ): Promise<PersonendatensatzResponse> {
-        const dto: UpdatePersonDto = this.mapper.map(body, UpdatePersonBodyParams, UpdatePersonDto);
-        dto.id = params.personId;
-
-        const response: PersonendatensatzDto | SchulConnexError = await this.personUc.updatePerson(dto);
-
-        if (response instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
+        const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
+        if (!person) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', params.personId),
+                ),
+            );
         }
+        const updateResult: void | DomainError = person.update(
+            body.revision,
+            body.name.familienname,
+            body.name.vorname,
+            body.referrer,
+            body.stammorganisation,
+            body.name.initialenfamilienname,
+            body.name.initialenvorname,
+            body.name.rufname,
+            body.name.titel,
+            body.name.anrede,
+            body.name.namenspraefix,
+            body.name.namenssuffix,
+            body.name.sortierindex,
+            body.geburt?.datum,
+            body.geburt?.geburtsort,
+            body.geschlecht,
+            body.lokalisierung,
+            body.vertrauensstufe,
+            body.auskunftssperre,
+        );
+        if (updateResult instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updateResult),
+            );
+        }
+        await this.personRepository.update(person);
 
-        return this.mapper.map(response, PersonendatensatzDto, PersonendatensatzResponse);
+        return new PersonendatensatzResponse(person, false);
     }
 
     @Patch(':personId/password')
@@ -240,12 +290,27 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
     @UseInterceptors(ResultInterceptor)
     public async resetPasswordByPersonId(@Param() params: PersonByIdParams): Promise<Result<string>> {
-        const result: Result<string> | SchulConnexError = await this.personUc.resetPassword(params.personId);
+        const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
+        if (!person) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', params.personId),
+                ),
+            );
+        }
+        person.resetPassword();
+        const saveResult: Person<true> | DomainError = await this.personRepository.saveUser(
+            person,
+            this.kcUserService,
+            this.usernameGenerator,
+        );
 
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        if (saveResult instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult),
+            );
         }
 
-        return result;
+        return { ok: true, value: person.newPassword! };
     }
 }
