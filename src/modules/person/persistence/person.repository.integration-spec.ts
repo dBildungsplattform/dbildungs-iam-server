@@ -163,7 +163,7 @@ describe('PersonRepository', () => {
                     ok: true,
                     value: '',
                 });
-                kcUserServiceMock.resetPassword.mockResolvedValueOnce({
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
                     ok: true,
                     value: '',
                 });
@@ -189,7 +189,7 @@ describe('PersonRepository', () => {
                     ok: false,
                     error: new KeycloakClientError(''),
                 });
-                kcUserServiceMock.resetPassword.mockResolvedValueOnce({
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
                     ok: true,
                     value: '',
                 });
@@ -278,7 +278,7 @@ describe('PersonRepository', () => {
                     ok: true,
                     value: '',
                 });
-                kcUserServiceMock.resetPassword.mockResolvedValue({
+                kcUserServiceMock.setPassword.mockResolvedValue({
                     ok: true,
                     value: '',
                 });
@@ -302,7 +302,8 @@ describe('PersonRepository', () => {
                 expect(result.username).toEqual('fixedusername');
                 expect(result.password).toEqual('fixedpassword');
                 expect(kcUserServiceMock.create).toHaveBeenCalled();
-                expect(kcUserServiceMock.resetPassword).toHaveBeenCalled();
+                expect(kcUserServiceMock.setPassword).toHaveBeenCalled();
+                expect(kcUserServiceMock.setPassword).toHaveBeenCalledWith('', 'fixedpassword', false);
                 expect(usernameGeneratorService.generateUsername).not.toHaveBeenCalled();
             });
         });
@@ -315,7 +316,7 @@ describe('PersonRepository', () => {
                         ok: true,
                         value: '',
                     });
-                    kcUserServiceMock.resetPassword.mockResolvedValue({
+                    kcUserServiceMock.setPassword.mockResolvedValue({
                         ok: true,
                         value: '',
                     });
@@ -351,7 +352,7 @@ describe('PersonRepository', () => {
                         ok: true,
                         value: '',
                     });
-                    kcUserServiceMock.resetPassword.mockResolvedValueOnce({
+                    kcUserServiceMock.setPassword.mockResolvedValueOnce({
                         ok: false,
                         error: new KeycloakClientError(''),
                     });
@@ -363,7 +364,7 @@ describe('PersonRepository', () => {
                     );
                     expect(result).toBeInstanceOf(DomainError);
                     if (result instanceof DomainError) {
-                        expect(kcUserServiceMock.resetPassword).toHaveBeenCalled();
+                        expect(kcUserServiceMock.setPassword).toHaveBeenCalled();
                         expect(kcUserServiceMock.delete).toHaveBeenCalled();
                     }
                 });
@@ -378,7 +379,7 @@ describe('PersonRepository', () => {
                     ok: true,
                     value: '',
                 });
-                kcUserServiceMock.resetPassword.mockResolvedValueOnce({
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
                     ok: true,
                     value: '',
                 });

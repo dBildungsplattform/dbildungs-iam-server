@@ -158,9 +158,11 @@ export class PersonRepository {
                 person.resetPassword();
             }
         }
-        const setPasswordResult: Result<string, DomainError> = await kcUserService.resetPassword(
+        const isPasswordTemporary: boolean = person.password ? false : true;
+        const setPasswordResult: Result<string, DomainError> = await kcUserService.setPassword(
             person.keycloakUserId,
             person.password ?? person.newPassword!,
+            isPasswordTemporary,
         );
         if (!setPasswordResult.ok) {
             if (person.keycloakUserId) {

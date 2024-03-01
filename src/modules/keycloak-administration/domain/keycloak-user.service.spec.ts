@@ -353,7 +353,7 @@ describe('KeycloakUserService', () => {
         });
     });
 
-    describe('resetPassword', () => {
+    describe('setPassword', () => {
         describe('will be executed successfully', () => {
             it('should return result with ok:true and new password', async () => {
                 const userId: string = faker.string.numeric();
@@ -362,7 +362,7 @@ describe('KeycloakUserService', () => {
                     casing: 'mixed',
                 });
                 kcUsersMock.resetPassword.mockResolvedValueOnce();
-                const result: Result<string, DomainError> = await service.resetPassword(userId, generatedPassword);
+                const result: Result<string, DomainError> = await service.setPassword(userId, generatedPassword);
                 expect(result).toStrictEqual({
                     ok: true,
                     value: generatedPassword,
@@ -377,7 +377,7 @@ describe('KeycloakUserService', () => {
                     casing: 'mixed',
                 });
                 kcUsersMock.resetPassword.mockRejectedValueOnce(new Error());
-                const result: Result<string, DomainError> = await service.resetPassword(userId, generatedPassword);
+                const result: Result<string, DomainError> = await service.setPassword(userId, generatedPassword);
                 expect(result).toStrictEqual({
                     ok: false,
                     error: new KeycloakClientError('Could not authorize with Keycloak'),
@@ -393,7 +393,7 @@ describe('KeycloakUserService', () => {
                     error: new KeycloakClientError('Could not authenticate'),
                 };
                 adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
-                const result: Result<string, DomainError> = await service.resetPassword(userId, generatedPassword);
+                const result: Result<string, DomainError> = await service.setPassword(userId, generatedPassword);
                 expect(result).toStrictEqual({
                     ok: false,
                     error: new KeycloakClientError('Could not authenticate'),
