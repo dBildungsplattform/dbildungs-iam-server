@@ -54,7 +54,6 @@ describe('OrganisationSpecificationTests', () => {
         });
         traeger1 = await repo.save(traeger);
         traeger = DoFactory.createOrganisation(false, {
-            id: '2',
             name: 'Traeger2',
             typ: OrganisationsTyp.TRAEGER,
             administriertVon: traeger1.id,
@@ -62,7 +61,6 @@ describe('OrganisationSpecificationTests', () => {
         });
         traeger2 = await repo.save(traeger);
         traeger = DoFactory.createOrganisation(false, {
-            id: '3',
             name: 'Traeger3',
             typ: OrganisationsTyp.TRAEGER,
             administriertVon: traeger2.id,
