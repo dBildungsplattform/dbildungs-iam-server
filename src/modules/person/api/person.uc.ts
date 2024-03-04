@@ -74,7 +74,7 @@ export class PersonUc {
 
         const result: Result<PersonDo<true>, DomainError> = await this.personService.createPerson(personDo);
         if (result.ok) {
-            const resPersonDto: PersonDto = this.mapper.map(personDo, PersonDo, PersonDto);
+            const resPersonDto: PersonDto = this.mapper.map(result.value, PersonDo, PersonDto);
             resPersonDto.startpasswort = person.newPassword;
             return resPersonDto;
         }
