@@ -354,12 +354,12 @@ describe('PersonenkontextUc', () => {
                         id: '1',
                     },
                 ];
-                organisationRepoMock.findByName.mockResolvedValue(ssks);
+                organisationRepoMock.findByNameOrKennung.mockResolvedValue(ssks);
                 dbiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);
                 const result: FindSchulstrukturknotenResponse = await sut.findSchulstrukturknoten(params);
                 expect(result).toBeTruthy();
                 expect(result.moeglicheSkks).toHaveLength(1);
-                expect(organisationRepoMock.findByName).toHaveBeenCalledTimes(1);
+                expect(organisationRepoMock.findByNameOrKennung).toHaveBeenCalledTimes(1);
                 expect(dbiamPersonenkontextRepoMock.findByRolle).toHaveBeenCalledTimes(1);
             });
         });
@@ -386,12 +386,12 @@ describe('PersonenkontextUc', () => {
                         id: '1',
                     },
                 ];
-                organisationRepoMock.findByName.mockResolvedValue([]);
+                organisationRepoMock.findByNameOrKennung.mockResolvedValue([]);
                 dbiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);
                 const result: FindSchulstrukturknotenResponse = await sut.findSchulstrukturknoten(params);
                 expect(result).toBeTruthy();
                 expect(result.moeglicheSkks).toHaveLength(0);
-                expect(organisationRepoMock.findByName).toHaveBeenCalledTimes(1);
+                expect(organisationRepoMock.findByNameOrKennung).toHaveBeenCalledTimes(1);
                 expect(dbiamPersonenkontextRepoMock.findByRolle).toHaveBeenCalledTimes(0);
             });
         });

@@ -142,7 +142,7 @@ describe('OrganisationRepo', () => {
             it('should return found organizations', async () => {
                 const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
                 const organisation: OrganisationDo<boolean> = await sut.save(organisationDo);
-                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findByName(
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findByNameOrKennung(
                     organisation.name as string,
                 );
                 expect(foundOrganisations).toBeInstanceOf(Array);
@@ -152,7 +152,7 @@ describe('OrganisationRepo', () => {
 
         describe('when no matching organisations were found', () => {
             it('should return null', async () => {
-                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findByName('notExisting');
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findByNameOrKennung('notExisting');
                 expect(foundOrganisations).toBeInstanceOf(Array);
                 expect(foundOrganisations).toHaveLength(0);
             });
