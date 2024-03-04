@@ -1,9 +1,9 @@
 import { faker } from '@faker-js/faker';
-import { PersonResponse } from './person.response.js';
 import { Vertrauensstufe } from '../domain/person.enums.js';
 import { plainToInstance } from 'class-transformer';
+import { PersonResponse } from './person.response.js';
 
-describe('PersonResponse', () => {
+describe('PersonResponseDDD', () => {
     const personResponse: PersonResponse = {
         id: faker.string.uuid(),
         name: {
