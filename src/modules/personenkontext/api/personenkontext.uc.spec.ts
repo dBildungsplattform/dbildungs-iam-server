@@ -28,6 +28,7 @@ import { Personenkontext } from '../domain/personenkontext.js';
 import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
 import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
+import { OrganisationApiMapperProfile } from '../../organisation/api/organisation-api.mapper.profile.js';
 
 function createPersonenkontext(): Personenkontext<true>[] {
     return [
@@ -61,6 +62,7 @@ describe('PersonenkontextUc', () => {
             providers: [
                 PersonenkontextUc,
                 PersonApiMapperProfile,
+                OrganisationApiMapperProfile,
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
@@ -275,8 +277,8 @@ describe('PersonenkontextUc', () => {
                 organisationServiceMock.findAllAdministriertVon.mockResolvedValue(findAllAdministriertVon);
                 personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
                 const result: SystemrechtResponse = await sut.hatSystemRecht('1', RollenSystemRecht.ROLLEN_VERWALTEN);
-                expect(result['ROLLEN_VERWALTEN']).toBeTruthy();
-                expect(result['ROLLEN_VERWALTEN']).toHaveLength(4);
+                expect(result.ROLLEN_VERWALTEN).toBeTruthy();
+                expect(result.ROLLEN_VERWALTEN).toHaveLength(4);
             });
         });
 
@@ -289,8 +291,8 @@ describe('PersonenkontextUc', () => {
                 organisationRepoMock.findById.mockResolvedValue(organisation);
                 personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
                 const result: SystemrechtResponse = await sut.hatSystemRecht('1', RollenSystemRecht.ROLLEN_VERWALTEN);
-                expect(result['ROLLEN_VERWALTEN']).toBeTruthy();
-                expect(result['ROLLEN_VERWALTEN']).toHaveLength(0);
+                expect(result.ROLLEN_VERWALTEN).toBeTruthy();
+                expect(result.ROLLEN_VERWALTEN).toHaveLength(0);
             });
         });
 
@@ -302,8 +304,8 @@ describe('PersonenkontextUc', () => {
                 organisationRepoMock.findById.mockResolvedValue(undefined);
                 personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
                 const result: SystemrechtResponse = await sut.hatSystemRecht('1', RollenSystemRecht.ROLLEN_VERWALTEN);
-                expect(result['ROLLEN_VERWALTEN']).toBeTruthy();
-                expect(result['ROLLEN_VERWALTEN']).toHaveLength(0);
+                expect(result.ROLLEN_VERWALTEN).toBeTruthy();
+                expect(result.ROLLEN_VERWALTEN).toHaveLength(0);
             });
         });
 
@@ -313,8 +315,8 @@ describe('PersonenkontextUc', () => {
                 rolleRepoMock.findById.mockResolvedValue(undefined);
                 personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
                 const result: SystemrechtResponse = await sut.hatSystemRecht('1', RollenSystemRecht.ROLLEN_VERWALTEN);
-                expect(result['ROLLEN_VERWALTEN']).toBeTruthy();
-                expect(result['ROLLEN_VERWALTEN']).toHaveLength(0);
+                expect(result.ROLLEN_VERWALTEN).toBeTruthy();
+                expect(result.ROLLEN_VERWALTEN).toHaveLength(0);
             });
         });
     });

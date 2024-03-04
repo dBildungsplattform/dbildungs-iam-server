@@ -49,6 +49,7 @@ import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 import { HatSystemrechtBodyParams } from './hat-systemrecht.body.params.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { isEnum } from 'class-validator';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontexte')
@@ -131,39 +132,25 @@ export class PersonenkontextController {
 
     @Get(':personId/hatSystemrecht')
     @ApiOkResponse({
+        type: SystemrechtResponse,
         description: 'The SchulStrukturKnoten associated with this personId and systemrecht.',
-        schema: {
-            example: {
-                ROLLEN_VERWALTEN: [
-                    {
-                        kennung: 'stenkelfeld1',
-                        name: 'Claudia-Schiffer-Gymnasium',
-                        namensergaenzung: 'Keine',
-                        kuerzel: 'CSG',
-                        typ: 'SCHULE',
-                    },
-                ],
-            },
-        },
     })
     @ApiNotFoundResponse({ description: 'The systemrecht could not be found.' })
     public async hatSystemRecht(
         @Param() personByIdParams: PersonByIdParams,
         @Body() hatSystemrechtBodyParams: HatSystemrechtBodyParams,
     ): Promise<SystemrechtResponse> {
-        try {
-            const systemrecht: RollenSystemRecht =
-                RollenSystemRecht[hatSystemrechtBodyParams.systemRecht as keyof typeof RollenSystemRecht];
-            const response: SystemrechtResponse = await this.personenkontextUc.hatSystemRecht(
-                personByIdParams.personId,
-                systemrecht,
-            );
-            return response;
-        } catch (e) {
+        if (!isEnum(hatSystemrechtBodyParams.systemRecht, RollenSystemRecht)) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError()),
             );
         }
+        const systemrecht: RollenSystemRecht = hatSystemrechtBodyParams.systemRecht as RollenSystemRecht;
+        const response: SystemrechtResponse = await this.personenkontextUc.hatSystemRecht(
+            personByIdParams.personId,
+            systemrecht,
+        );
+        return response;
     }
 
     @Put(':personenkontextId')
