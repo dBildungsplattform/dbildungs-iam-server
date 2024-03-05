@@ -10,11 +10,16 @@ import { PersonenkontextUc } from '../api/personenkontext.uc.js';
 import { FindPersonenkontextRollenBodyParams } from '../api/find-personenkontext-rollen.body.params.js';
 import { FindRollenResponse } from '../api/find-rollen.response.js';
 import { FindSchulstrukturknotenResponse } from '../api/find-schulstrukturknoten.response.js';
+import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { Mapper } from '@automapper/core';
+import { getMapperToken } from '@automapper/nestjs';
+import { OrganisationApiMapperProfile } from '../../organisation/api/organisation-api.mapper.profile.js';
 
 describe('DbiamPersonenkontextController', () => {
     let module: TestingModule;
     let sut: DBiamPersonenkontextController;
     let personenkontextUcMock: DeepMocked<PersonenkontextUc>;
+    let mapper: Mapper;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -22,12 +27,14 @@ describe('DbiamPersonenkontextController', () => {
             providers: [
                 DBiamPersonenkontextController,
                 PersonApiMapperProfile,
+                OrganisationApiMapperProfile,
                 {
                     provide: PersonenkontextUc,
                     useValue: createMock<PersonenkontextUc>(),
                 },
             ],
         }).compile();
+        mapper = module.get(getMapperToken());
         sut = module.get(DBiamPersonenkontextController);
         personenkontextUcMock = module.get(PersonenkontextUc);
     });
@@ -83,12 +90,13 @@ describe('DbiamPersonenkontextController', () => {
     describe('findSchulstrukturknoten', () => {
         it('should return list of schulstrukturknoten', async () => {
             const ssks: OrganisationDo<true>[] = [DoFactory.createOrganisation(true)];
+            const sskResponses: OrganisationResponse[] = mapper.mapArray(ssks, OrganisationDo, OrganisationResponse);
             personenkontextUcMock.findSchulstrukturknoten.mockResolvedValue({
-                moeglicheSkks: ssks,
+                moeglicheSkks: sskResponses,
                 total: 1,
             });
             const expected: FindSchulstrukturknotenResponse = new FindSchulstrukturknotenResponse();
-            expected.moeglicheSkks = ssks;
+            expected.moeglicheSkks = sskResponses;
             expected.total = 1;
             const result: FindSchulstrukturknotenResponse = await sut.findSchulstrukturknoten({
                 sskName: faker.string.alpha(),

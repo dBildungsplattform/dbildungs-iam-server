@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
 
 export class FindSchulstrukturknotenResponse {
-    @ApiProperty({ type: [OrganisationDo<true>] })
-    public moeglicheSkks!: OrganisationDo<true>[];
+    @ApiProperty({ type: [OrganisationResponse] })
+    public moeglicheSkks!: OrganisationResponse[];
 
     @ApiProperty({ type: Number })
     public total!: number;

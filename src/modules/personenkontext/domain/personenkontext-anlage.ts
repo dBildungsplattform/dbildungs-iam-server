@@ -32,8 +32,8 @@ export class PersonenkontextAnlage {
         const ssks: Option<OrganisationDo<true>[]> = await this.organisationRepo.findByNameOrKennung(sskName);
         if (!ssks || ssks.length === 0) return [];
         const personenkontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByRolle(this.rolleId);
-        return personenkontexte.filter((pk: Personenkontext<true>) =>
-            ssks.some((ssk: OrganisationDo<true>) => ssk.id === pk.organisationId),
+        return ssks.filter((ssk: OrganisationDo<true>) =>
+            personenkontexte.some((pk: Personenkontext<true>) => ssk.id === pk.organisationId),
         );
     }
 

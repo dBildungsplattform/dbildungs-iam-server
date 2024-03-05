@@ -28,6 +28,7 @@ import { FindPersonenkontextSchulstrukturknotenBodyParams } from './find-persone
 import { FindSchulstrukturknotenResponse } from './find-schulstrukturknoten.response.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
+import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -179,8 +180,9 @@ export class PersonenkontextUc {
             this.dBiamPersonenkontextRepo,
         );
         const ssks: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(params.rolleId, params.sskName);
+        const sskResponses: OrganisationResponse[] = this.mapper.mapArray(ssks, OrganisationDo, OrganisationResponse);
         const response: FindSchulstrukturknotenResponse = {
-            moeglicheSkks: ssks,
+            moeglicheSkks: sskResponses,
             total: ssks.length,
         };
         return response;

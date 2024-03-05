@@ -31,6 +31,7 @@ import { FindSchulstrukturknotenResponse } from './find-schulstrukturknoten.resp
 import { FindPersonenkontextSchulstrukturknotenBodyParams } from './find-personenkontext-schulstrukturknoten.body.params.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { Personenkontext } from '../domain/personenkontext.js';
+import { OrganisationApiMapperProfile } from '../../organisation/api/organisation-api.mapper.profile.js';
 
 describe('PersonenkontextUc', () => {
     let module: TestingModule;
@@ -47,6 +48,7 @@ describe('PersonenkontextUc', () => {
             providers: [
                 PersonenkontextUc,
                 PersonApiMapperProfile,
+                OrganisationApiMapperProfile,
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),

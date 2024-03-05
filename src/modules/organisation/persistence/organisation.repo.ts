@@ -67,8 +67,8 @@ export class OrganisationRepo {
 
     public async findByNameOrKennung(searchStr: string): Promise<Option<OrganisationDo<true>[]>> {
         const organisations: OrganisationEntity[] = await this.em.find(OrganisationEntity, {
-            $or: [{ name: { $like: searchStr } }, { kennung: { $like: searchStr } }],
+            $or: [{ name: { $ilike: '%' + searchStr + '%' } }, { kennung: { $ilike: '%' + searchStr + '%' } }],
         });
-        return organisations.map((o: OrganisationEntity) => this.mapper.map(o, OrganisationEntity, OrganisationDo));
+        return this.mapper.mapArray(organisations, OrganisationEntity, OrganisationDo);
     }
 }
