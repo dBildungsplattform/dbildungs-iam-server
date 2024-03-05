@@ -29,6 +29,7 @@ import { PersonRepository } from '../persistence/person.repository.js';
 import { Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
+import { PersonFactory } from '../domain/person.factory.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -41,6 +42,7 @@ describe('PersonController', () => {
             imports: [MapperTestModule],
             providers: [
                 PersonController,
+                PersonFactory,
                 PersonApiMapperProfile,
                 {
                     provide: PersonenkontextUc,
