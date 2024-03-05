@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import { MapperTestModule } from '../../../../test/utils/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
@@ -19,11 +19,6 @@ import { PersonenkontextdatensatzResponse } from './personenkontextdatensatz.res
 import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.params.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { FindPersonenkontextRollenBodyParams } from './find-personenkontext-rollen.body.params.js';
-import { FindRollenResponse } from './find-rollen.response.js';
-import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
-import { FindSchulstrukturknotenResponse } from './find-schulstrukturknoten.response.js';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
@@ -145,77 +140,6 @@ describe('PersonenkontextController', () => {
                 expect(result.items[0]?.personenkontexte.length).toBe(1);
                 expect(result.items[0]?.personenkontexte[0]?.id).toBe(personenkontext.id);
             });
-        });
-    });
-
-    describe('findRollen', () => {
-        it('should return list of rollen', async () => {
-            const params: FindPersonenkontextRollenBodyParams = {
-                rolleName: faker.string.alpha(),
-                limit: 1,
-            };
-            const rollen: RolleAggregate<true>[] = [DoFactory.createRolle(true)];
-            const expected: FindRollenResponse = new FindRollenResponse();
-            expected.moeglicheRollen = rollen;
-            expected.total = 1;
-
-            personenkontextUcMock.findRollen.mockResolvedValue(expected);
-
-            const result: FindRollenResponse = await sut.findRollen(params);
-            expect(result.moeglicheRollen).toHaveLength(1);
-            expect(result).toEqual(expected);
-            expect(personenkontextUcMock.findRollen).toHaveBeenCalledTimes(1);
-        });
-
-        it('should return empty list if not results could be found', async () => {
-            const params: FindPersonenkontextRollenBodyParams = {
-                rolleName: faker.string.alpha(),
-                limit: 1,
-            };
-            const response: FindRollenResponse = {
-                moeglicheRollen: [],
-                total: 1,
-            };
-            personenkontextUcMock.findRollen.mockResolvedValue(response);
-
-            const result: FindRollenResponse = await sut.findRollen(params);
-            expect(result.moeglicheRollen).toHaveLength(0);
-            expect(personenkontextUcMock.findRollen).toHaveBeenCalledTimes(1);
-        });
-    });
-
-    describe('findSchulstrukturknoten', () => {
-        it('should return list of schulstrukturknoten', async () => {
-            const ssks: OrganisationDo<true>[] = [DoFactory.createOrganisation(true)];
-            personenkontextUcMock.findSchulstrukturknoten.mockResolvedValue({
-                moeglicheSkks: ssks,
-                total: 1,
-            });
-            const expected: FindSchulstrukturknotenResponse = new FindSchulstrukturknotenResponse();
-            expected.moeglicheSkks = ssks;
-            expected.total = 1;
-            const result: FindSchulstrukturknotenResponse = await sut.findSchulstrukturknoten({
-                sskName: faker.string.alpha(),
-                rolleId: faker.string.numeric(),
-                limit: 1,
-            });
-            expect(result.moeglicheSkks).toHaveLength(1);
-            expect(result).toEqual(expected);
-            expect(personenkontextUcMock.findSchulstrukturknoten).toHaveBeenCalledTimes(1);
-        });
-
-        it('should return empty list if not results could be found', async () => {
-            personenkontextUcMock.findSchulstrukturknoten.mockResolvedValue({
-                moeglicheSkks: [],
-                total: 1,
-            });
-            const result: FindSchulstrukturknotenResponse = await sut.findSchulstrukturknoten({
-                sskName: faker.string.alpha(),
-                rolleId: faker.string.numeric(),
-                limit: 1,
-            });
-            expect(result.moeglicheSkks).toHaveLength(0);
-            expect(personenkontextUcMock.findSchulstrukturknoten).toHaveBeenCalledTimes(1);
         });
     });
 

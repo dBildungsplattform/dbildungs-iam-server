@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class FindPersonenkontextSchulstrukturknotenBodyParams {
@@ -12,7 +12,7 @@ export class FindPersonenkontextSchulstrukturknotenBodyParams {
     public readonly rolleId!: string;
 
     @IsNotEmpty()
-    @IsUUID()
+    @IsString()
     @ApiProperty({
         description: 'Organisation/SSK name used to filter for schulstrukturknoten in personenkontext.',
         required: true,
