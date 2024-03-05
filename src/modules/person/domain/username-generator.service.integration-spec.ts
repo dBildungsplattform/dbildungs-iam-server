@@ -89,14 +89,14 @@ describe('The UsernameGenerator Service', () => {
         });
     });
 
-    it('should remove non diacritical special chars', async () => {
+    it('should remove non-letters N1 (bnlreq) chars', async () => {
         kcUserService.findOne.mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError('None there') });
-        await expect(service.generateUsername('Ebru', 'Altınova')).resolves.toStrictEqual({
+        await expect(service.generateUsername('Ebru', 'Alt‡nova')).resolves.toStrictEqual({
             ok: true,
             value: 'ealtnova',
         });
         kcUserService.findOne.mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError('None there') });
-        await expect(service.generateUsername('ıre', 'Olsen')).resolves.toStrictEqual({
+        await expect(service.generateUsername('‡re', 'Olsen')).resolves.toStrictEqual({
             ok: true,
             value: 'rolsen',
         });
@@ -140,13 +140,13 @@ describe('The UsernameGenerator Service', () => {
 
     it('should return error if username can not be generated (cleaned names are of length 0)', async () => {
         kcUserService.findOne.mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError('None there') });
-        await expect(service.generateUsername('ııııı', 'Mustermann')).resolves.toStrictEqual({
+        await expect(service.generateUsername('‡‡', 'Mustermann')).resolves.toStrictEqual({
             ok: false,
             error: new InvalidNameError('Could not generate valid username'),
         });
 
         kcUserService.findOne.mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError('None there') });
-        await expect(service.generateUsername('Alex', 'ııııı')).resolves.toStrictEqual({
+        await expect(service.generateUsername('Alex', '‡‡')).resolves.toStrictEqual({
             ok: false,
             error: new InvalidNameError('Could not generate valid username'),
         });
