@@ -65,7 +65,7 @@ jobs:
       contents: read
 
   release_helm:
-    needs: scan
+    needs: scan_helm
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@5.0.0
     secrets: inherit
     with:
