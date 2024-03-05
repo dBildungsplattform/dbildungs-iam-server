@@ -210,7 +210,7 @@ describe('PersonRepo', () => {
         });
 
         it('should return false, if the person does not exists', async () => {
-            const exists: boolean = await sut.exists('');
+            const exists: boolean = await sut.exists(faker.string.uuid());
 
             expect(exists).toBe(false);
         });

@@ -88,14 +88,16 @@ describe('dbiam Personenkontext API', () => {
 
     describe('/GET personenkontexte for person', () => {
         it('should return all personenkontexte for the person', async () => {
+            const personA: string = faker.string.uuid();
+            const personB: string = faker.string.uuid();
             await Promise.all([
-                personenkontextRepo.save(createPersonenkontext(false, { personId: '0' })),
-                personenkontextRepo.save(createPersonenkontext(false, { personId: '0' })),
-                personenkontextRepo.save(createPersonenkontext(false, { personId: '1' })),
+                personenkontextRepo.save(createPersonenkontext(false, { personId: personA })),
+                personenkontextRepo.save(createPersonenkontext(false, { personId: personA })),
+                personenkontextRepo.save(createPersonenkontext(false, { personId: personB })),
             ]);
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/dbiam/personenkontext/0')
+                .get(`/dbiam/personenkontext/${personA}`)
                 .send();
 
             expect(response.status).toBe(200);
@@ -105,7 +107,7 @@ describe('dbiam Personenkontext API', () => {
 
         it('should return empty list', async () => {
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/dbiam/personenkontext/0')
+                .get(`/dbiam/personenkontext/${faker.string.uuid()}`)
                 .send();
 
             expect(response.status).toBe(200);
