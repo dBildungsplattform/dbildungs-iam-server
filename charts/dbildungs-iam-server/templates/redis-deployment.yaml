@@ -4,7 +4,7 @@ metadata:
   name: {{ include "common.names.releasename" . }}-redis
   namespace: {{ .Values.namespace }}
   labels:
-    app.kubernetes.io/name: {{ .Values.dbiam.commonLabels.name }}
+    app.kubernetes.io/name: {{ .Values.dbildungs-iam-server.commonLabels.name }}
     app.kubernetes.io/version: {{ .Chart.Version }}
 spec:
   selector:
@@ -31,11 +31,11 @@ spec:
               name: data
           resources:
             requests:
-              cpu: {{.Values.dbildungsIamRedisCpuRequest}}
-              memory: {{.Values.dbildungsIamRedisMemRequest}}
+              cpu: {{.Values.dbildungsIamServerRedisCpuRequest}}
+              memory: {{.Values.dbildungsIamServerRedisMemRequest}}
             limits:
-              cpu: {{.Values.dbildungsIamRedisCpuMax}}
-              memory: {{.Values.dbildungsIamRedisMemMax}}
+              cpu: {{.Values.dbildungsIamServerRedisCpuMax}}
+              memory: {{.Values.dbildungsIamServerRedisMemMax}}
       containers:
         - name: {{ .Values.rediscontainer.image.name }}
           image: {{ .Values.rediscontainer.image.repository }}:{{ .Values.rediscontainer.image.tag }}

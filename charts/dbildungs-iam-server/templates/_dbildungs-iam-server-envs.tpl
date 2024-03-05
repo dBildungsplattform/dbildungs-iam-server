@@ -1,4 +1,4 @@
-{{- define "dbiam-backend-envs" }}
+{{- define "dbildungs-iam-server-backend-envs" }}
 - name: NODE_ENV
   value: {{.Values.environment | quote}}
 - name: DEPLOY_STAGE

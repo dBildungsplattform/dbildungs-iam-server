@@ -5,7 +5,7 @@ metadata:
   name: {{ .Values.seeding.configmap }}
   namespace: {{ .Values.namespace }}
   labels: 
-    app.kubernetes.io/name: {{ .Values.dbiam.commonLabels.name }}
+    app.kubernetes.io/name: {{ .Values.dbildungs-iam-server.commonLabels.name }}
     app.kubernetes.io/version: {{.Chart.Version}}
 data:
 {{ (.Files.Glob "seeding/dev/*").AsConfig | indent 2 }}
