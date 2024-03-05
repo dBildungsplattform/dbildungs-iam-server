@@ -1,17 +1,17 @@
 import { faker } from '@faker-js/faker';
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
+import { UsernameGeneratorService } from './username-generator.service.js';
 
-type State = {
-    passwordReset: boolean;
-};
+type PasswordInternalState = { passwordInternal: string | undefined; isTemporary: boolean };
 
 export class Person<WasPersisted extends boolean> {
     public static readonly CREATE_PERSON_DTO_MANDANT_UUID: string = '8c6a9447-c23e-4e70-8595-3bcc88a5577a';
 
-    private state: State;
-
-    private newPasswordInternal?: string;
+    private passwordInternalState: PasswordInternalState = {
+        passwordInternal: undefined,
+        isTemporary: true,
+    };
 
     public readonly mandant: string;
 
@@ -23,7 +23,6 @@ export class Person<WasPersisted extends boolean> {
         public vorname: string,
         public revision: string,
         public username?: string,
-        public password?: string,
         public keycloakUserId?: string,
         public referrer?: string,
         public stammorganisation?: string,
@@ -42,17 +41,15 @@ export class Person<WasPersisted extends boolean> {
         public vertrauensstufe?: Vertrauensstufe,
         public auskunftssperre?: boolean,
     ) {
-        this.state = { passwordReset: false };
-        this.newPasswordInternal = this.password;
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
     }
 
-    public get needsSaving(): boolean {
-        return this.state.passwordReset || this.keycloakUserId === undefined;
+    public get newPassword(): string | undefined {
+        return this.passwordInternalState?.passwordInternal ?? undefined;
     }
 
-    public get newPassword(): string | undefined {
-        return this.newPasswordInternal ?? undefined;
+    public get isNewPasswordTemporary(): boolean {
+        return this.passwordInternalState.isTemporary;
     }
 
     public static construct<WasPersisted extends boolean = false>(
@@ -63,7 +60,6 @@ export class Person<WasPersisted extends boolean> {
         vorname: string,
         revision: string,
         username?: string,
-        password?: string,
         keycloakUserId?: string,
         referrer?: string,
         stammorganisation?: string,
@@ -90,7 +86,6 @@ export class Person<WasPersisted extends boolean> {
             vorname,
             revision,
             username,
-            password,
             keycloakUserId,
             referrer,
             stammorganisation,
@@ -111,7 +106,8 @@ export class Person<WasPersisted extends boolean> {
         );
     }
 
-    public static createNew(
+    public static async createNew(
+        usernameGenerator: UsernameGeneratorService,
         familienname: string,
         vorname: string,
         referrer?: string,
@@ -132,17 +128,16 @@ export class Person<WasPersisted extends boolean> {
         auskunftssperre?: boolean,
         username?: string,
         password?: string,
-    ): Person<false> {
-        return new Person(
+    ): Promise<Person<false>> {
+        const person: Person<false> = new Person(
             undefined,
             undefined,
             undefined,
             familienname,
             vorname,
             '1',
-            username,
-            password,
-            undefined,
+            undefined, //username
+            undefined, //keycloakUserId
             referrer,
             stammorganisation,
             initialenFamilienname,
@@ -160,6 +155,21 @@ export class Person<WasPersisted extends boolean> {
             vertrauensstufe,
             auskunftssperre,
         );
+
+        if (password) {
+            person.passwordInternalState.passwordInternal = password;
+            person.passwordInternalState.isTemporary = false;
+        } else {
+            person.resetPassword();
+        }
+
+        if (username) {
+            person.username = username;
+        } else {
+            person.username = await usernameGenerator.generateUsername(person.vorname, person.familienname);
+        }
+
+        return person;
     }
 
     public update(
@@ -213,10 +223,9 @@ export class Person<WasPersisted extends boolean> {
     }
 
     public resetPassword(): void {
-        this.newPasswordInternal = faker.string.alphanumeric({
+        this.passwordInternalState.passwordInternal = faker.string.alphanumeric({
             length: { min: 10, max: 10 },
             casing: 'mixed',
         });
-        this.state.passwordReset = true;
     }
 }

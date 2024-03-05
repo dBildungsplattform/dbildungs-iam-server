@@ -4,8 +4,7 @@ import { PersonEntity } from './person.entity.js';
 import { Person } from '../domain/person.js';
 import { PersonScope } from './person.scope.js';
 import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
-import { UsernameGeneratorService } from '../domain/username-generator.service.js';
-import { DomainError } from '../../../shared/error/index.js';
+import { DomainError, EntityCouldNotBeCreated } from '../../../shared/error/index.js';
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
     return {
@@ -42,7 +41,6 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.familienname,
         entity.vorname,
         entity.revision,
-        undefined,
         undefined,
         entity.keycloakUserId,
         entity.referrer,
@@ -104,71 +102,67 @@ export class PersonRepository {
     public async create(
         person: Person<false>,
         kcUserService: KeycloakUserService,
-        usernameGenerator: UsernameGeneratorService,
     ): Promise<Person<true> | DomainError> {
-        const personWithKeycloakUser: Person<false> | DomainError = await this.saveUser(
+        const personWithKeycloakUser: Person<false> | DomainError = await this.createKeycloakUser(
             person,
             kcUserService,
-            usernameGenerator,
         );
         if (personWithKeycloakUser instanceof DomainError) {
             return personWithKeycloakUser;
         }
         const personEntity: PersonEntity = this.em.create(PersonEntity, mapAggregateToData(personWithKeycloakUser));
-
         await this.em.persistAndFlush(personEntity);
 
         return mapEntityToAggregateInplace(personEntity, personWithKeycloakUser);
     }
 
-    public async update(person: Person<true>): Promise<Person<true>> {
+    public async update(person: Person<true>, kcUserService: KeycloakUserService): Promise<Person<true> | DomainError> {
         const personEntity: Loaded<PersonEntity> = await this.em.findOneOrFail(PersonEntity, person.id);
-        personEntity.assign(mapAggregateToData(person));
 
+        if (person.newPassword) {
+            const setPasswordResult: Result<string, DomainError> = await kcUserService.setPassword(
+                person.keycloakUserId!,
+                person.newPassword,
+                person.isNewPasswordTemporary,
+            );
+            if (!setPasswordResult.ok) {
+                return setPasswordResult.error;
+            }
+        }
+
+        personEntity.assign(mapAggregateToData(person));
         await this.em.persistAndFlush(personEntity);
 
         return mapEntityToAggregate(personEntity);
     }
 
-    public async saveUser(
+    private async createKeycloakUser(
         person: Person<boolean>,
         kcUserService: KeycloakUserService,
-        usernameGenerator: UsernameGeneratorService,
     ): Promise<Person<boolean> | DomainError> {
-        if (!person.needsSaving) {
-            return person;
+        if (person.keycloakUserId || !person.newPassword || !person.username) {
+            return new EntityCouldNotBeCreated('Person');
         }
-        if (!person.keycloakUserId) {
-            const generatedUsername: string =
-                person.username ?? (await usernameGenerator.generateUsername(person.vorname, person.familienname));
-            person.username = generatedUsername;
-            person.referrer = generatedUsername;
 
-            const userDo: UserDo<false> = {
-                username: person.username,
-                id: undefined,
-                createdDate: undefined,
-            } satisfies UserDo<false>;
-            const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
-            if (!creationResult.ok) {
-                return creationResult.error;
-            }
-            person.keycloakUserId = creationResult.value;
-            if (!person.password) {
-                person.resetPassword();
-            }
+        person.referrer = person.username;
+        const userDo: UserDo<false> = {
+            username: person.username,
+            id: undefined,
+            createdDate: undefined,
+        } satisfies UserDo<false>;
+        const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
+        if (!creationResult.ok) {
+            return creationResult.error;
         }
-        const isPasswordTemporary: boolean = person.password ? false : true;
+        person.keycloakUserId = creationResult.value;
+
         const setPasswordResult: Result<string, DomainError> = await kcUserService.setPassword(
             person.keycloakUserId,
-            person.password ?? person.newPassword!,
-            isPasswordTemporary,
+            person.newPassword,
+            person.isNewPasswordTemporary,
         );
         if (!setPasswordResult.ok) {
-            if (person.keycloakUserId) {
-                await kcUserService.delete(person.keycloakUserId);
-                person.keycloakUserId = undefined;
-            }
+            await kcUserService.delete(person.keycloakUserId);
             return setPasswordResult.error;
         }
 

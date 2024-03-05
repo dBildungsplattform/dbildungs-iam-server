@@ -332,9 +332,9 @@ describe('PersonController', () => {
 
             it('should reset password for person', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
-                personRepositoryMock.saveUser.mockResolvedValue(person);
+                personRepositoryMock.update.mockResolvedValue(person);
                 await expect(personController.resetPasswordByPersonId(params)).resolves.not.toThrow();
-                expect(personRepositoryMock.saveUser).toHaveBeenCalledTimes(1);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -357,9 +357,9 @@ describe('PersonController', () => {
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
-                personRepositoryMock.saveUser.mockResolvedValue(new KeycloakClientError(''));
+                personRepositoryMock.update.mockResolvedValue(new KeycloakClientError(''));
                 await expect(personController.resetPasswordByPersonId(params)).rejects.toThrow(HttpException);
-                expect(personRepositoryMock.saveUser).toHaveBeenCalledTimes(1);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -382,9 +382,9 @@ describe('PersonController', () => {
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(undefined);
-                personRepositoryMock.saveUser.mockResolvedValue(person);
+                personRepositoryMock.update.mockResolvedValue(person);
                 await expect(personController.resetPasswordByPersonId(params)).rejects.toThrow(HttpException);
-                expect(personRepositoryMock.saveUser).toHaveBeenCalledTimes(0);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
     });

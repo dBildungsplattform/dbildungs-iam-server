@@ -74,7 +74,8 @@ export class PersonController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
     public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
-        const person: Person<false> = Person.createNew(
+        const person: Person<false> = await Person.createNew(
+            this.usernameGenerator,
             params.name.familienname,
             params.name.vorname,
             params.referrer,
@@ -95,11 +96,7 @@ export class PersonController {
             params.auskunftssperre,
         );
 
-        const result: Person<true> | DomainError = await this.personRepository.create(
-            person,
-            this.kcUserService,
-            this.usernameGenerator,
-        );
+        const result: Person<true> | DomainError = await this.personRepository.create(person, this.kcUserService);
 
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -278,7 +275,7 @@ export class PersonController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updateResult),
             );
         }
-        await this.personRepository.update(person);
+        await this.personRepository.update(person, this.kcUserService);
 
         return new PersonendatensatzResponse(person, false);
     }
@@ -299,11 +296,7 @@ export class PersonController {
             );
         }
         person.resetPassword();
-        const saveResult: Person<true> | DomainError = await this.personRepository.saveUser(
-            person,
-            this.kcUserService,
-            this.usernameGenerator,
-        );
+        const saveResult: Person<true> | DomainError = await this.personRepository.update(person, this.kcUserService);
 
         if (saveResult instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(

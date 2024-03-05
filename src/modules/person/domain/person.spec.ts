@@ -1,8 +1,33 @@
 import { faker } from '@faker-js/faker';
 import { Person } from './person.js';
 import { DomainError } from '../../../shared/error/index.js';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { TestingModule, Test } from '@nestjs/testing';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
+import { UsernameGeneratorService } from './username-generator.service.js';
 
 describe('Person', () => {
+    let module: TestingModule;
+    let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
+
+    beforeAll(async () => {
+        module = await Test.createTestingModule({
+            imports: [ConfigTestModule, MapperTestModule],
+            providers: [
+                {
+                    provide: UsernameGeneratorService,
+                    useValue: createMock<UsernameGeneratorService>(),
+                },
+            ],
+        }).compile();
+        usernameGeneratorService = module.get(UsernameGeneratorService);
+    });
+
+    afterAll(async () => {
+        await module.close();
+    });
+
     beforeEach(() => {
         jest.resetAllMocks();
     });
@@ -50,12 +75,57 @@ describe('Person', () => {
     });
 
     describe('createNew', () => {
-        it('should return not persisted person', () => {
-            const person: Person<false> = Person.createNew(faker.person.lastName(), faker.person.firstName());
+        describe('without password & username', () => {
+            it('should return not persisted person with generated username & password', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValue('');
+                const person: Person<false> = await Person.createNew(
+                    usernameGeneratorService,
+                    faker.person.lastName(),
+                    faker.person.firstName(),
+                );
 
-            expect(person).toBeDefined();
-            expect(person).toBeInstanceOf(Person<false>);
-            expect(person.revision).toEqual('1');
+                expect(person).toBeDefined();
+                expect(person).toBeInstanceOf(Person<false>);
+                expect(person.username).toBeDefined();
+                expect(person.newPassword).toBeDefined();
+                expect(person.isNewPasswordTemporary).toEqual(true);
+                expect(person.revision).toEqual('1');
+            });
+        });
+        describe('with fixed password & username', () => {
+            it('should return not persisted person with fixed username & password', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValue('');
+                const person: Person<false> = await Person.createNew(
+                    usernameGeneratorService,
+                    faker.person.lastName(),
+                    faker.person.firstName(),
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    'testusername',
+                    'testpassword',
+                );
+
+                expect(person).toBeDefined();
+                expect(person).toBeInstanceOf(Person<false>);
+                expect(person.username).toEqual('testusername');
+                expect(person.newPassword).toEqual('testpassword');
+                expect(person.isNewPasswordTemporary).toEqual(false);
+                expect(person.revision).toEqual('1');
+            });
         });
     });
 
