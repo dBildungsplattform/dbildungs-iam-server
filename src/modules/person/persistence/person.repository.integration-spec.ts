@@ -150,8 +150,65 @@ describe('PersonRepository', () => {
     });
 
     describe('create', () => {
+        describe('when person has already keycloak user', () => {
+            it('should return Domain Error', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+                const person: Person<false> = await Person.createNew(
+                    usernameGeneratorService,
+                    faker.person.lastName(),
+                    faker.person.firstName(),
+                );
+                person.keycloakUserId = faker.string.uuid();
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.delete.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+                const result: Person<true> | DomainError = await sut.create(person, kcUserServiceMock);
+
+                expect(result).toBeInstanceOf(DomainError);
+                expect(kcUserServiceMock.create).not.toHaveBeenCalled();
+            });
+        });
+
+        describe('when parameters (username || password) is missing', () => {
+            it('should return Domain Error', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+                const person: Person<false> = await Person.createNew(
+                    usernameGeneratorService,
+                    faker.person.lastName(),
+                    faker.person.firstName(),
+                );
+                person.username = undefined;
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.delete.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+                const result: Person<true> | DomainError = await sut.create(person, kcUserServiceMock);
+
+                expect(result).toBeInstanceOf(DomainError);
+                expect(kcUserServiceMock.create).not.toHaveBeenCalled();
+            });
+        });
+
         describe('when successfull', () => {
             it('should return Person', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
                 const person: Person<false> = await Person.createNew(
                     usernameGeneratorService,
                     faker.person.lastName(),
@@ -163,7 +220,6 @@ describe('PersonRepository', () => {
                     faker.person.firstName(),
                 );
                 personWithKeycloak.keycloakUserId = faker.string.uuid();
-                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
                 kcUserServiceMock.create.mockResolvedValueOnce({
                     ok: true,
                     value: '',
@@ -184,12 +240,12 @@ describe('PersonRepository', () => {
 
         describe('when creation of keyCloakUser fails', () => {
             it('should return Domain Error', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
                 const person: Person<false> = await Person.createNew(
                     usernameGeneratorService,
                     faker.person.lastName(),
                     faker.person.firstName(),
                 );
-                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
                 kcUserServiceMock.create.mockResolvedValueOnce({
                     ok: false,
                     error: new KeycloakClientError(''),
@@ -214,12 +270,12 @@ describe('PersonRepository', () => {
 
         describe('when resetting password of keycloak user fails', () => {
             it('should return Domain Error && delete keycloak user', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
                 const person: Person<false> = await Person.createNew(
                     usernameGeneratorService,
                     faker.person.lastName(),
                     faker.person.firstName(),
                 );
-                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
                 kcUserServiceMock.create.mockResolvedValueOnce({
                     ok: true,
                     value: '',
@@ -262,12 +318,10 @@ describe('PersonRepository', () => {
                     );
                     await expect(sut.update(person, kcUserServiceMock)).resolves.toBeInstanceOf(Person<true>);
                     const result: Person<true> | DomainError = await sut.update(person, kcUserServiceMock);
-
                     expect(result).not.toBeInstanceOf(DomainError);
                     if (result instanceof DomainError) {
                         return;
                     }
-
                     expect(result.vorname).toEqual(person.vorname);
                     expect(result.familienname).toEqual(person.familienname);
                     expect(kcUserServiceMock.setPassword).not.toHaveBeenCalled();
@@ -298,12 +352,10 @@ describe('PersonRepository', () => {
 
                         await expect(sut.update(person, kcUserServiceMock)).resolves.toBeInstanceOf(Person<true>);
                         const result: Person<true> | DomainError = await sut.update(person, kcUserServiceMock);
-
                         expect(result).not.toBeInstanceOf(DomainError);
                         if (result instanceof DomainError) {
                             return;
                         }
-
                         expect(result.vorname).toEqual(person.vorname);
                         expect(result.familienname).toEqual(person.familienname);
                         expect(kcUserServiceMock.setPassword).toHaveBeenCalled();
@@ -333,12 +385,10 @@ describe('PersonRepository', () => {
 
                         await expect(sut.update(person, kcUserServiceMock)).resolves.toBeInstanceOf(DomainError);
                         const result: Person<true> | DomainError = await sut.update(person, kcUserServiceMock);
-
                         expect(result).not.toBeInstanceOf(Person<true>);
                         if (result instanceof Person) {
                             return;
                         }
-
                         expect(kcUserServiceMock.setPassword).toHaveBeenCalled();
                     });
                 });
