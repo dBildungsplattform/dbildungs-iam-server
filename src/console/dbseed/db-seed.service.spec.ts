@@ -16,6 +16,7 @@ import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
+import { Buffer } from 'buffer';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -167,7 +168,7 @@ describe('DbSeedService', () => {
                     url: 'https://example.com/',
                     kategorie: ServiceProviderKategorie.UNTERRICHT,
                     logoMimeType: 'image/png',
-                    logo: expect.any(String) as string,
+                    logo: expect.any(Buffer) as Buffer,
                     providedOnSchulstrukturknoten: '1',
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,

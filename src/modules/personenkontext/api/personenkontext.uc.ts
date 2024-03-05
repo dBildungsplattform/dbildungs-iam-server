@@ -126,13 +126,15 @@ export class PersonenkontextUc {
                     organisationDos.push(organisation);
                     const children: Option<Paged<OrganisationDo<true>>> =
                         await this.organisationService.findAllAdministriertVon(personenkontext.organisationId);
-                    children.items.forEach((child: OrganisationDo<true>) => organisationDos.push(child));
+                    organisationDos.push(...children.items);
                 }
             }
         }
         const systemrechtResponse: SystemrechtResponse = new SystemrechtResponse();
-        const organisationResponses: OrganisationResponse[] = organisationDos.map((o: OrganisationDo<true>) =>
-            this.mapper.map(o, OrganisationDo<true>, OrganisationResponse),
+        const organisationResponses: OrganisationResponse[] = this.mapper.mapArray(
+            organisationDos,
+            OrganisationDo,
+            OrganisationResponse,
         );
         systemrechtResponse[RollenSystemRecht.ROLLEN_VERWALTEN] = organisationResponses;
         return systemrechtResponse;

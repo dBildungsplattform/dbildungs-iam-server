@@ -9,6 +9,7 @@ import { ServiceProvider } from '../../modules/service-provider/domain/service-p
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { plainToInstance } from 'class-transformer';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
+import { ServiceProviderFile } from './file/service-provider-file.js';
 
 @Injectable()
 export class DbSeedService {
@@ -103,20 +104,23 @@ export class DbSeedService {
     }
 
     public readServiceProvider(fileContentAsStr: string): ServiceProvider<true>[] {
-        const { entities }: EntityFile<ServiceProvider<true>> = JSON.parse(fileContentAsStr) as EntityFile<
-            ServiceProvider<true>
-        >;
-        const serviceProviders: ServiceProvider<true>[] = entities.map((serviceProviderData: ServiceProvider<true>) =>
+        const serviceProviderFile: EntityFile<ServiceProviderFile> = JSON.parse(
+            fileContentAsStr,
+        ) as EntityFile<ServiceProviderFile>;
+
+        const entities: ServiceProviderFile[] = plainToInstance(ServiceProviderFile, serviceProviderFile.entities);
+
+        const serviceProviders: ServiceProvider<true>[] = entities.map((data: ServiceProviderFile) =>
             ServiceProvider.construct(
-                serviceProviderData.id,
+                data.id,
                 new Date(),
                 new Date(),
-                serviceProviderData.name,
-                serviceProviderData.url,
-                serviceProviderData.kategorie,
-                serviceProviderData.providedOnSchulstrukturknoten,
-                serviceProviderData.logo,
-                serviceProviderData.logoMimeType,
+                data.name,
+                data.url,
+                data.kategorie,
+                data.providedOnSchulstrukturknoten,
+                data.logoBase64 ? Buffer.from(data.logoBase64, 'base64') : undefined,
+                data.logoMimeType,
             ),
         );
         for (const serviceProvider of serviceProviders) {
