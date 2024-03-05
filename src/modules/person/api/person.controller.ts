@@ -51,7 +51,7 @@ import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { ScopeOrder } from '../../../shared/persistence/index.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { UsernameGeneratorService } from '../domain/username-generator.service.js';
+import { PersonFactory } from '../domain/person.factory.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -61,7 +61,7 @@ export class PersonController {
     public constructor(
         private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
-        private readonly usernameGenerator: UsernameGeneratorService,
+        private readonly personFactory: PersonFactory,
         private readonly kcUserService: KeycloakUserService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
@@ -74,8 +74,7 @@ export class PersonController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
     public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
-        const person: Person<false> = await Person.createNew(
-            this.usernameGenerator,
+        const person: Person<false> = await this.personFactory.createNew(
             params.name.familienname,
             params.name.vorname,
             params.referrer,
