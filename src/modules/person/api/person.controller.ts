@@ -50,7 +50,6 @@ import { Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { ScopeOrder } from '../../../shared/persistence/index.js';
-import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { PersonFactory } from '../domain/person.factory.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
@@ -62,7 +61,6 @@ export class PersonController {
         private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
         private readonly personFactory: PersonFactory,
-        private readonly kcUserService: KeycloakUserService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -95,7 +93,7 @@ export class PersonController {
             params.auskunftssperre,
         );
 
-        const result: Person<true> | DomainError = await this.personRepository.create(person, this.kcUserService);
+        const result: Person<true> | DomainError = await this.personRepository.create(person);
 
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -274,7 +272,7 @@ export class PersonController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updateResult),
             );
         }
-        await this.personRepository.update(person, this.kcUserService);
+        await this.personRepository.update(person);
 
         return new PersonendatensatzResponse(person, false);
     }
@@ -295,7 +293,7 @@ export class PersonController {
             );
         }
         person.resetPassword();
-        const saveResult: Person<true> | DomainError = await this.personRepository.update(person, this.kcUserService);
+        const saveResult: Person<true> | DomainError = await this.personRepository.update(person);
 
         if (saveResult instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(

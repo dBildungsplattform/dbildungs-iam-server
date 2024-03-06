@@ -72,7 +72,10 @@ export function mapEntityToAggregateInplace(entity: PersonEntity, person: Person
 
 @Injectable()
 export class PersonRepository {
-    public constructor(private readonly em: EntityManager) {}
+    public constructor(
+        private readonly kcUserService: KeycloakUserService,
+        private readonly em: EntityManager,
+    ) {}
 
     public async findBy(scope: PersonScope): Promise<Counted<Person<true>>> {
         const [entities, total]: Counted<PersonEntity> = await scope.executeQuery(this.em);
@@ -99,13 +102,10 @@ export class PersonRepository {
         return null;
     }
 
-    public async create(
-        person: Person<false>,
-        kcUserService: KeycloakUserService,
-    ): Promise<Person<true> | DomainError> {
+    public async create(person: Person<false>): Promise<Person<true> | DomainError> {
         const personWithKeycloakUser: Person<false> | DomainError = await this.createKeycloakUser(
             person,
-            kcUserService,
+            this.kcUserService,
         );
         if (personWithKeycloakUser instanceof DomainError) {
             return personWithKeycloakUser;
@@ -116,11 +116,11 @@ export class PersonRepository {
         return mapEntityToAggregateInplace(personEntity, personWithKeycloakUser);
     }
 
-    public async update(person: Person<true>, kcUserService: KeycloakUserService): Promise<Person<true> | DomainError> {
+    public async update(person: Person<true>): Promise<Person<true> | DomainError> {
         const personEntity: Loaded<PersonEntity> = await this.em.findOneOrFail(PersonEntity, person.id);
 
         if (person.newPassword) {
-            const setPasswordResult: Result<string, DomainError> = await kcUserService.setPassword(
+            const setPasswordResult: Result<string, DomainError> = await this.kcUserService.setPassword(
                 person.keycloakUserId!,
                 person.newPassword,
                 person.isNewPasswordTemporary,

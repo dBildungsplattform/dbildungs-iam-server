@@ -171,7 +171,7 @@ describe('PersonRepository', () => {
                     ok: true,
                     value: undefined,
                 });
-                const result: Person<true> | DomainError = await sut.create(person, kcUserServiceMock);
+                const result: Person<true> | DomainError = await sut.create(person);
 
                 expect(result).toBeInstanceOf(DomainError);
                 expect(kcUserServiceMock.create).not.toHaveBeenCalled();
@@ -199,7 +199,7 @@ describe('PersonRepository', () => {
                     ok: true,
                     value: undefined,
                 });
-                const result: Person<true> | DomainError = await sut.create(person, kcUserServiceMock);
+                const result: Person<true> | DomainError = await sut.create(person);
 
                 expect(result).toBeInstanceOf(DomainError);
                 expect(kcUserServiceMock.create).not.toHaveBeenCalled();
@@ -232,7 +232,7 @@ describe('PersonRepository', () => {
                     ok: true,
                     value: undefined,
                 });
-                const result: Person<true> | DomainError = await sut.create(person, kcUserServiceMock);
+                const result: Person<true> | DomainError = await sut.create(person);
 
                 expect(result).toBeInstanceOf(Person);
             });
@@ -258,7 +258,7 @@ describe('PersonRepository', () => {
                     ok: true,
                     value: undefined,
                 });
-                const result: Person<true> | DomainError = await sut.create(person, kcUserServiceMock);
+                const result: Person<true> | DomainError = await sut.create(person);
 
                 expect(result).toBeInstanceOf(DomainError);
                 if (result instanceof DomainError) {
@@ -288,7 +288,7 @@ describe('PersonRepository', () => {
                     ok: true,
                     value: undefined,
                 });
-                const result: Person<true> | DomainError = await sut.create(person, kcUserServiceMock);
+                const result: Person<true> | DomainError = await sut.create(person);
 
                 expect(result).toBeInstanceOf(DomainError);
                 if (result instanceof DomainError) {
@@ -316,8 +316,8 @@ describe('PersonRepository', () => {
                         faker.lorem.word(),
                         faker.string.uuid(),
                     );
-                    await expect(sut.update(person, kcUserServiceMock)).resolves.toBeInstanceOf(Person<true>);
-                    const result: Person<true> | DomainError = await sut.update(person, kcUserServiceMock);
+                    await expect(sut.update(person)).resolves.toBeInstanceOf(Person<true>);
+                    const result: Person<true> | DomainError = await sut.update(person);
                     expect(result).not.toBeInstanceOf(DomainError);
                     if (result instanceof DomainError) {
                         return;
@@ -350,8 +350,8 @@ describe('PersonRepository', () => {
                             value: '',
                         });
 
-                        await expect(sut.update(person, kcUserServiceMock)).resolves.toBeInstanceOf(Person<true>);
-                        const result: Person<true> | DomainError = await sut.update(person, kcUserServiceMock);
+                        await expect(sut.update(person)).resolves.toBeInstanceOf(Person<true>);
+                        const result: Person<true> | DomainError = await sut.update(person);
                         expect(result).not.toBeInstanceOf(DomainError);
                         if (result instanceof DomainError) {
                             return;
@@ -383,8 +383,8 @@ describe('PersonRepository', () => {
                             error: new KeycloakClientError(''),
                         });
 
-                        await expect(sut.update(person, kcUserServiceMock)).resolves.toBeInstanceOf(DomainError);
-                        const result: Person<true> | DomainError = await sut.update(person, kcUserServiceMock);
+                        await expect(sut.update(person)).resolves.toBeInstanceOf(DomainError);
+                        const result: Person<true> | DomainError = await sut.update(person);
                         expect(result).not.toBeInstanceOf(Person<true>);
                         if (result instanceof Person) {
                             return;
@@ -407,7 +407,7 @@ describe('PersonRepository', () => {
                     faker.lorem.word(),
                     faker.string.uuid(),
                 );
-                await expect(sut.update(person, kcUserServiceMock)).rejects.toBeDefined();
+                await expect(sut.update(person)).rejects.toBeDefined();
             });
         });
     });
