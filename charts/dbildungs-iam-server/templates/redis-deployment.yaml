@@ -4,7 +4,7 @@ metadata:
   name: {{ include "common.names.releasename" . }}-redis
   namespace: {{ .Values.namespace }}
   labels:
-    app.kubernetes.io/name: {{ .Values.dbildungs-iam-server.commonLabels.name }}
+    app.kubernetes.io/name: {{ .Values.dbildungsIamServer.commonLabels.name }}
     app.kubernetes.io/version: {{ .Chart.Version }}
 spec:
   selector:

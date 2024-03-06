@@ -54,7 +54,7 @@ service:
 redisservice:
   name: redis-service
 
-dbildungs-iam-server:
+dbildungsIamServer:
   selector:
     layer: dbildungs-iam-server
   commonLabels:

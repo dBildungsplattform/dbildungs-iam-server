@@ -3,8 +3,8 @@ name: Release Image and Helm Chart
 # maybe this can become a gha in dbp-github-workflow on there own?
 on:
   push:
-    # tags:
-    #   - '[0-9]+.[0-9]+.[0-9]+'
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
 
 concurrency:
   group: dbildungs-iam-server-image-chart
