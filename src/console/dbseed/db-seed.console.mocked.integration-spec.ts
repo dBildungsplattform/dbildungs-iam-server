@@ -14,6 +14,7 @@ import { DbSeedMapper } from './db-seed-mapper.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';
 import { DomainError, KeycloakClientError } from '../../shared/error/index.js';
+import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
 
 describe('DbSeedConsoleMockedKeycloak', () => {
     let module: TestingModule;
@@ -36,6 +37,7 @@ describe('DbSeedConsoleMockedKeycloak', () => {
                 DbSeedConsole,
                 DbSeedService,
                 DbSeedMapper,
+                RolleSeedingRepo,
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),

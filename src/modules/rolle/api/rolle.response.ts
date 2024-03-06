@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 
 export class RolleResponse {
     @ApiProperty()
@@ -22,4 +22,7 @@ export class RolleResponse {
 
     @ApiProperty({ enum: RollenMerkmal, isArray: true, uniqueItems: true })
     public merkmale!: RollenMerkmal[];
+
+    @ApiProperty({ enum: RollenSystemRecht, isArray: true, uniqueItems: true })
+    public systemrechte!: RollenSystemRecht[];
 }

@@ -19,6 +19,7 @@ import { DBiamPersonenkontextRepo } from '../personenkontext/dbiam/dbiam-persone
         RolleModule,
         OrganisationModule,
         PersonenKontextModule,
+        OrganisationModule,
         KeycloakAdministrationModule,
         LoggerModule.register(PersonApiModule.name),
     ],
