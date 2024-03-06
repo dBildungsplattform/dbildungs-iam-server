@@ -16,6 +16,7 @@ import { TraegerInTraegerError } from '../../modules/organisation/specification/
 import { InvalidCharacterSetError } from './invalid-character-set.error.js';
 import { InvalidAttributeLengthError } from './invalid-attribute-length.error.js';
 import { InvalidNameError } from './invalid-name.error.js';
+import { KennungRequiredForSchuleError } from '../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -81,6 +82,15 @@ export class SchulConnexErrorMapper {
                 subcode: '00',
                 titel: 'Fehlerhafte Anfrage',
                 beschreibung: 'Die Anfrage ist fehlerhaft: Die Person existiert bereits.',
+            }),
+        ],
+        [
+            KennungRequiredForSchuleError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '01',
+                titel: 'Fehlerhafte Anfrage',
+                beschreibung: "Das Feld 'kennung' darf nicht leer sein, wenn der Organisationstyp 'SCHULE' ist.",
             }),
         ],
         [
