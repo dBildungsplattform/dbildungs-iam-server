@@ -22,7 +22,7 @@ export class GruppeEntity extends TimestampedEntity {
     public mandant!: string;
 
     @Property({ nullable: true })
-    public organisationId?: string;
+    public organisationId!: string;
 
     @Property({ nullable: true })
     public referrer?: string;

@@ -22,6 +22,7 @@ import { Laufzeit } from '../persistence/laufzeit.js';
 import { Referenzgruppen } from './referenzgruppen.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { GruppeEntity } from '../persistence/gruppe.entity.js';
+import { GruppeMapper } from './gruppe.mapper.js';
 describe('GruppenRepository', () => {
     let module: TestingModule;
     let repo: GruppenRepository;
@@ -31,7 +32,7 @@ describe('GruppenRepository', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
-            providers: [GruppenRepository],
+            providers: [GruppenRepository, GruppeMapper],
         }).compile();
         repo = module.get(GruppenRepository);
         orm = module.get(MikroORM);
@@ -51,7 +52,12 @@ describe('GruppenRepository', () => {
         expect(repo).toBeDefined();
     });
 
-    const gruppe: Gruppe = Gruppe.construct(
+    const gruppe: Gruppe<false> = Gruppe.construct(
+        faker.string.uuid(),
+        faker.date.recent(),
+        faker.date.recent(),
+        faker.lorem.word(),
+        faker.string.uuid(),
         faker.lorem.word(),
         GruppenTyp.KLASSE,
         faker.lorem.word(),
@@ -72,26 +78,14 @@ describe('GruppenRepository', () => {
         new Laufzeit({ von: new Date(), bis: new Date() }),
     );
 
-    const gruppeEntity: GruppeEntity = new GruppeEntity();
-    gruppeEntity.mandant = faker.string.uuid();
-    gruppeEntity.organisationId = faker.string.uuid();
-    gruppeEntity.bezeichnung = gruppe.getBezeichnung();
-    gruppeEntity.typ = gruppe.getTyp();
-    gruppeEntity.bereich = gruppe.getBereich();
-    gruppeEntity.differenzierung = gruppe.getDifferenzierung();
-    gruppeEntity.bildungsziele = gruppe.getBildungsziele();
-    gruppeEntity.jahrgangsstufen = gruppe.getJahrgangsstufen();
-    gruppeEntity.faecher = gruppe.getFaecher();
-    gruppeEntity.referenzgruppen = gruppe.getReferenzgruppen();
-    gruppeEntity.laufzeit = gruppe.getLaufzeit();
-
     describe('createGruppe', () => {
         describe('when creating a gruppe', () => {
             it('should create gruppe', async () => {
-                const result: Result<GruppeEntity, DomainError> = await repo.createGruppe(gruppeEntity);
+                const result: Result<Gruppe<true>, DomainError> = await repo.save(gruppe);
 
                 expect(result).toBeDefined();
                 await expect(em.find(GruppeEntity, {})).resolves.toHaveLength(1);
+                expect(result.ok).toBe(true);
             });
         });
     });

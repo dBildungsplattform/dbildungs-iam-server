@@ -15,9 +15,6 @@ import { GruppenRepository } from '../domain/gruppe.repo.js';
 import { Gruppe } from '../domain/gruppe.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { GruppenDo } from '../domain/gruppe.do.js';
-import { GruppeEntity } from '../persistence/gruppe.entity.js';
-import { GruppeMapper } from '../domain/gruppe.mapper.js';
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('gruppen')
 @ApiBearerAuth()
@@ -26,25 +23,23 @@ export class GruppenController {
     public constructor(
         private readonly gruppenRepository: GruppenRepository,
         private readonly gruppenFactory: GruppenFactory,
-        private readonly mapper: GruppeMapper,
     ) {}
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
-    @ApiCreatedResponse({ description: 'The organisation was successfully created.' })
-    @ApiBadRequestResponse({ description: 'The organisation already exists.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
-    @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
-    public async createGroup(@Body() params: CreateGroupBodyParams): Promise<GruppenDo<true> | HttpException> {
-        const gruppe: Gruppe = this.gruppenFactory.createGroup(params);
-        const mappedGruppeEntity: GruppeEntity = this.mapper.mapGruppeToGruppeEntity(gruppe);
-        const result: Result<GruppeEntity, DomainError> = await this.gruppenRepository.createGruppe(mappedGruppeEntity);
+    @ApiCreatedResponse({ description: 'The group was successfully created.' })
+    @ApiBadRequestResponse({ description: 'The group already exists.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to create the group.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to create the group.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the group.' })
+    public async createGroup(@Body() params: CreateGroupBodyParams): Promise<Gruppe<true> | HttpException> {
+        const gruppe: Gruppe<false> = this.gruppenFactory.createGroup(params);
+        const result: Result<Gruppe<true>, DomainError> = await this.gruppenRepository.save(gruppe);
         if (!result.ok) {
             return SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
             );
         }
-        return this.mapper.mapGruppeEntityToGruppnDo(result.value);
+        return result.value;
     }
 }

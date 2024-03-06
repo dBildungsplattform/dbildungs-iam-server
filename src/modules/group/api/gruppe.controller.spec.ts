@@ -3,16 +3,14 @@ import { TestingModule, Test } from '@nestjs/testing';
 import { GruppenController } from './gruppe.controller.js';
 import { GruppenFactory } from '../domain/gruppe.factory.js';
 import { CreateGroupBodyParams } from './create-group.body.params.js';
-import { GruppenTyp, Gruppendifferenzierung } from '../domain/gruppe.enums.js';
+import { GruppenTyp, Gruppenbereich, Gruppendifferenzierung, Gruppenoption } from '../domain/gruppe.enums.js';
 import { Gruppe } from '../domain/gruppe.js';
 import { Laufzeit } from '../persistence/laufzeit.js';
-import { GruppeEntity } from '../persistence/gruppe.entity.js';
 import { GruppenRepository } from '../domain/gruppe.repo.js';
-import { GruppenDo } from '../domain/gruppe.do.js';
 import { HttpException } from '@nestjs/common';
-import { SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
 import { GruppeMapper } from '../domain/gruppe.mapper.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
+import { faker } from '@faker-js/faker';
 describe('GruppeController', () => {
     let module: TestingModule;
     let gruppenController: GruppenController;
@@ -53,7 +51,25 @@ describe('GruppeController', () => {
     });
 
     describe('createGroup', () => {
-        const gruppe: Gruppe = Gruppe.construct('test', GruppenTyp.KURS, Gruppendifferenzierung.E);
+        const gruppe: Gruppe<true> = Gruppe.construct(
+            faker.string.uuid(),
+            faker.date.recent(),
+            faker.date.recent(),
+            faker.lorem.word(),
+            faker.string.uuid(),
+            faker.lorem.word(),
+            GruppenTyp.KURS,
+            faker.lorem.word(),
+            faker.lorem.word(),
+            faker.lorem.word(),
+            Gruppenbereich.PFLICHT,
+            [Gruppenoption.BILINGUAL],
+            Gruppendifferenzierung.E,
+            [],
+            [],
+            [],
+            [],
+        );
 
         const params: CreateGroupBodyParams = {
             bezeichnung: 'test',
@@ -62,44 +78,27 @@ describe('GruppeController', () => {
             laufzeit: new Laufzeit({ von: new Date(), bis: new Date() }),
         };
         describe('when creating a group is successful', () => {
-            it('should return the created group', async () => {
-                const gruppeEntity: GruppeEntity = new GruppeEntity();
-                gruppeEntity.bezeichnung = gruppe.getBezeichnung();
-                gruppeEntity.typ = gruppe.getTyp();
-                gruppeEntity.differenzierung = gruppe.getDifferenzierung();
-                gruppeEntity.organisationId = '';
-                gruppeEntity.thema = '';
-                gruppeEntity.beschreibung = '';
-                gruppeEntity.bereich = undefined;
-                gruppeEntity.optionen = undefined;
-                gruppeEntity.bildungsziele = undefined;
-                gruppeEntity.jahrgangsstufen = undefined;
-                gruppeEntity.faecher = undefined;
-                gruppeEntity.referenzgruppen = undefined;
-                gruppeEntity.referrer = '';
-                gruppeEntity.laufzeit = new Laufzeit({ von: new Date(), bis: new Date() });
-                gruppeEntity.mandant = '';
-                gruppeEntity.sichtfreigabe = SichtfreigabeType.NEIN;
-                gruppeEntity.revision = '1';
+            it('should return the created group aggeragte', async () => {
 
-                gruppenFactoryMock.createGroup.mockReturnValue(gruppe);
-                repo.createGruppe.mockResolvedValue({ ok: true, value: gruppeEntity });
 
-                const result: GruppenDo<true> | HttpException = await gruppenController.createGroup(params);
+                gruppenFactoryMock.createGroup.mockReturnValue(gruppe as unknown as Gruppe<false>);
+                repo.save.mockResolvedValue({ ok: true, value: gruppe });
 
-                const returnedGruppe: GruppenDo<true> = result as GruppenDo<true>;
-                expect(returnedGruppe.typ).toBe(gruppe.getTyp());
-                expect(returnedGruppe.differenzierung).toBe(gruppe.getDifferenzierung());
-                expect(returnedGruppe.bezeichnung).toBe(gruppe.getBezeichnung());
+                const result: Gruppe<true> | HttpException = await gruppenController.createGroup(params);
+
+                const returnedGruppe: Gruppe<true> = result as Gruppe<true>;
+                expect(returnedGruppe.getTyp()).toBe(gruppe.getTyp());
+                expect(returnedGruppe.getDifferenzierung()).toBe(gruppe.getDifferenzierung());
+                expect(returnedGruppe.getBezeichnung()).toBe(gruppe.getBezeichnung());
             });
         });
 
         describe('when creating a group is not successful', () => {
             it('should return an HttpException', async () => {
-                gruppenFactoryMock.createGroup.mockReturnValue(gruppe);
-                repo.createGruppe.mockResolvedValue({ ok: false, error: new EntityCouldNotBeCreated('Gruppe') });
+                gruppenFactoryMock.createGroup.mockReturnValue(gruppe as unknown as Gruppe<false>);
+                repo.save.mockResolvedValue({ ok: false, error: new EntityCouldNotBeCreated('Gruppe') });
 
-                const result: GruppenDo<true> | HttpException = await gruppenController.createGroup(params);
+                const result: Gruppe<true> | HttpException = await gruppenController.createGroup(params);
 
                 expect(result).toBeInstanceOf(HttpException);
             });

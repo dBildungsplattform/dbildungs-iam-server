@@ -8,6 +8,7 @@ import {
     GruppenTyp,
     Gruppenbereich,
     Gruppendifferenzierung,
+    Gruppenoption,
     Gruppenrollen,
 } from './gruppe.enums.js';
 import { Referenzgruppen } from './referenzgruppen.js';
@@ -35,20 +36,24 @@ describe('createGroup', () => {
         },
     };
 
-    const gruppe: Gruppe = Gruppe.construct(
-        createGroupBodyParams.bezeichnung,
-        createGroupBodyParams.typ,
+    const gruppe: Gruppe<true> = Gruppe.construct(
+        faker.string.uuid(),
+        faker.date.recent(),
+        faker.date.recent(),
+        faker.lorem.word(),
+        faker.string.uuid(),
+        faker.lorem.word(),
+        GruppenTyp.KURS,
         faker.lorem.word(),
         faker.lorem.word(),
         faker.lorem.word(),
-        createGroupBodyParams.bereich,
-        createGroupBodyParams.optionen,
-        createGroupBodyParams.differenzierung,
-        createGroupBodyParams.bildungsziele,
-        createGroupBodyParams.jahrgangsstufen,
-        createGroupBodyParams.faecher,
-        createGroupBodyParams.referenzgruppen,
-        createGroupBodyParams.laufzeit,
+        Gruppenbereich.PFLICHT,
+        [Gruppenoption.BILINGUAL],
+        Gruppendifferenzierung.E,
+        [],
+        [],
+        [],
+        [],
     );
 
     beforeAll(() => {
@@ -56,10 +61,10 @@ describe('createGroup', () => {
     });
 
     describe('when creating a group', () => {
-        it('should create a group', () => {
-            jest.spyOn(Gruppe, 'createGroup').mockReturnValue(gruppe);
+        it('should create a group aggregate', () => {
+            jest.spyOn(Gruppe, 'createGroup').mockReturnValue(gruppe as unknown as Gruppe<false>);
 
-            const result: Gruppe = factory.createGroup(createGroupBodyParams);
+            const result: Gruppe<false> = factory.createGroup(createGroupBodyParams);
 
             expect(result).toEqual(gruppe);
             expect(result.getBeschreibung()).toEqual(gruppe.getBeschreibung());

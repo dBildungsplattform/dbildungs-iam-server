@@ -10,7 +10,17 @@ import {
     Gruppenoption,
 } from './gruppe.enums.js';
 import { Laufzeit } from '../persistence/laufzeit.js';
-export class Gruppe {
+export class Gruppe<WasPersisted extends boolean> {
+    private id!: Persisted<string, WasPersisted>;
+
+    private createdAt!: Persisted<Date, WasPersisted>;
+
+    private updatedAt!: Persisted<Date, WasPersisted>;
+
+    private mandant!: string;
+
+    private organisationId!: string;
+
     private referrer: string;
 
     private bezeichnung: string;
@@ -36,6 +46,26 @@ export class Gruppe {
     private referenzgruppen: Referenzgruppen[];
 
     private laufzeit: Laufzeit;
+
+    public getId(): Persisted<string, WasPersisted> {
+        return this.id;
+    }
+
+    public getCreatedAt(): Persisted<Date, WasPersisted> {
+        return this.createdAt;
+    }
+
+    public getUpdatedAt(): Persisted<Date, WasPersisted> {
+        return this.updatedAt;
+    }
+
+    public getMandant(): string {
+        return this.mandant;
+    }
+
+    public getOrganisationId(): string {
+        return this.organisationId;
+    }
 
     public getReferrer(): string {
         return this.referrer;
@@ -90,6 +120,11 @@ export class Gruppe {
     }
 
     private constructor(
+        id: Persisted<string, WasPersisted>,
+        createdAt: Persisted<Date, WasPersisted>,
+        updatedAt: Persisted<Date, WasPersisted>,
+        mandant: string,
+        organisationId: string,
         bezeichnung: string,
         typ: GruppenTyp,
         referrer?: string,
@@ -104,6 +139,11 @@ export class Gruppe {
         referenzgruppen?: Referenzgruppen[],
         laufzeit?: Laufzeit,
     ) {
+        this.id = id;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.mandant = mandant;
+        this.organisationId = organisationId;
         this.bezeichnung = bezeichnung;
         this.typ = typ;
         this.referrer = referrer ?? '';
@@ -119,7 +159,12 @@ export class Gruppe {
         this.laufzeit = laufzeit ?? new Laufzeit({});
     }
 
-    public static construct(
+    public static construct<WasPersisted extends boolean = false>(
+        id: string,
+        createdAt: Date,
+        updatedAt: Date,
+        mandant: string,
+        organisationId: string,
         bezeichnung: string,
         typ: GruppenTyp,
         referrer?: string,
@@ -133,8 +178,13 @@ export class Gruppe {
         faecher?: Faecherkanon[],
         referenzgruppen?: Referenzgruppen[],
         laufzeit?: Laufzeit,
-    ): Gruppe {
+    ): Gruppe<WasPersisted> {
         return new Gruppe(
+            id,
+            createdAt,
+            updatedAt,
+            mandant,
+            organisationId,
             bezeichnung,
             typ,
             referrer,
@@ -151,8 +201,13 @@ export class Gruppe {
         );
     }
 
-    public static createGroup(createGroupBodyParams: CreateGroupBodyParams): Gruppe {
+    public static createGroup(createGroupBodyParams: CreateGroupBodyParams): Gruppe<false> {
         return new Gruppe(
+            undefined,
+            undefined,
+            undefined,
+            '',
+            '',
             createGroupBodyParams.bezeichnung,
             createGroupBodyParams.typ,
             createGroupBodyParams.referrer,

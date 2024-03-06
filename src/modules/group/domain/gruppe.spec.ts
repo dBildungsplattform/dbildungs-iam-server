@@ -18,7 +18,12 @@ describe('Gruppe', () => {
     describe('construct', () => {
         describe('when constructing a group', () => {
             it('should return a new Gruppe instance', () => {
-                const gruppe: Gruppe = Gruppe.construct(
+                const gruppe: Gruppe<false> = Gruppe.construct(
+                    faker.string.uuid(),
+                    faker.date.recent(),
+                    faker.date.recent(),
+                    faker.lorem.word(),
+                    faker.string.uuid(),
                     faker.lorem.word(),
                     GruppenTyp.KLASSE,
                     faker.lorem.word(),
@@ -57,7 +62,7 @@ describe('Gruppe', () => {
                     referenzgruppen: [],
                     laufzeit: {},
                 };
-                const gruppe: Gruppe = Gruppe.createGroup(createGroupBodyParams);
+                const gruppe: Gruppe<false> = Gruppe.createGroup(createGroupBodyParams);
                 expect(gruppe).toBeInstanceOf(Gruppe);
                 expect(gruppe.getReferrer()).toBe('');
                 expect(gruppe.getBezeichnung()).toBe(createGroupBodyParams.bezeichnung);

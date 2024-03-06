@@ -28,7 +28,12 @@ describe('GruppeMapper', () => {
 
     describe('mapGruppeToGruppeEntity', () => {
         it('should map Gruppe to GruppeEntity', () => {
-            const gruppe: Gruppe = Gruppe.construct(
+            const gruppe: Gruppe<false> = Gruppe.construct(
+                faker.string.uuid(),
+                faker.date.recent(),
+                faker.date.recent(),
+                faker.lorem.word(),
+                faker.string.uuid(),
                 faker.lorem.word(),
                 GruppenTyp.KLASSE,
                 faker.lorem.word(),
@@ -99,7 +104,7 @@ describe('GruppeMapper', () => {
                 bisLernperiode: '2023',
             };
 
-            const result: Gruppe = gruppeMapper.mapGruppeEntityToGruppe(gruppeEntity);
+            const result: Gruppe<true> = gruppeMapper.mapGruppeEntityToGruppe(gruppeEntity);
 
             expect(result).toBeInstanceOf(Gruppe);
             expect(result.getBezeichnung()).toBe(gruppeEntity.bezeichnung);

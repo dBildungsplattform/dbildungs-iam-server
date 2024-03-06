@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { GruppeEntity } from '../persistence/gruppe.entity.js';
 import { Gruppe } from './gruppe.js';
-import { GruppenDo } from './gruppe.do.js';
 @Injectable()
 export class GruppeMapper {
-    public mapGruppeToGruppeEntity(gruppe: Gruppe): GruppeEntity {
+    public mapGruppeToGruppeEntity(gruppe: Gruppe<false>): GruppeEntity {
         const gruppeEntity: GruppeEntity = new GruppeEntity();
         gruppeEntity.mandant = '';
         gruppeEntity.organisationId = '';
@@ -24,8 +23,13 @@ export class GruppeMapper {
         return gruppeEntity;
     }
 
-    public mapGruppeEntityToGruppe(entity: GruppeEntity): Gruppe {
+    public mapGruppeEntityToGruppe(entity: GruppeEntity): Gruppe<true> {
         return Gruppe.construct(
+            entity.id,
+            entity.createdAt,
+            entity.updatedAt,
+            entity.mandant,
+            entity.organisationId,
             entity.bezeichnung,
             entity.typ,
             entity.referrer,
@@ -40,28 +44,5 @@ export class GruppeMapper {
             entity.referenzgruppen,
             entity.laufzeit,
         );
-    }
-
-    public mapGruppeEntityToGruppnDo(entity: GruppeEntity): GruppenDo<true> {
-        const gruppeDo: GruppenDo<true> = new GruppenDo();
-        gruppeDo.id = entity.id;
-        gruppeDo.createdAt = entity.createdAt;
-        gruppeDo.updatedAt = entity.updatedAt;
-        gruppeDo.mandant = entity.mandant;
-        gruppeDo.organisationId = entity.organisationId;
-        gruppeDo.referrer = entity.referrer;
-        gruppeDo.bezeichnung = entity.bezeichnung;
-        gruppeDo.thema = entity.thema;
-        gruppeDo.beschreibung = entity.beschreibung;
-        gruppeDo.typ = entity.typ;
-        gruppeDo.bereich = entity.bereich;
-        gruppeDo.optionen = entity.optionen;
-        gruppeDo.differenzierung = entity.differenzierung;
-        gruppeDo.bildungsziele = entity.bildungsziele;
-        gruppeDo.jahrgangsstufen = entity.jahrgangsstufen;
-        gruppeDo.faecher = entity.faecher;
-        gruppeDo.referenzgruppen = entity.referenzgruppen;
-        gruppeDo.laufzeit = entity.laufzeit;
-        return gruppeDo;
     }
 }
