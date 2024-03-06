@@ -32,8 +32,24 @@ export class PersonenkontextAnlage {
         const ssks: Option<OrganisationDo<true>[]> = await this.organisationRepo.findByNameOrKennung(sskName);
         if (!ssks || ssks.length === 0) return [];
         const personenkontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByRolle(this.rolleId);
+
+        const allOrganisations: OrganisationDo<true>[] = [];
+        for (const personenkontext of personenkontexte) {
+            const parentOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(
+                personenkontext.organisationId,
+            );
+            if (!parentOrganisation) continue;
+            allOrganisations.push(parentOrganisation);
+            const childOrganisations: OrganisationDo<true>[] = await this.findChildOrganisations(
+                personenkontext.organisationId,
+            );
+            if (childOrganisations.length > 0) {
+                allOrganisations.push(...childOrganisations);
+            }
+        }
+
         return ssks.filter((ssk: OrganisationDo<true>) =>
-            personenkontexte.some((pk: Personenkontext<true>) => ssk.id === pk.organisationId),
+            allOrganisations.some((organisation: OrganisationDo<true>) => ssk.id === organisation.id),
         );
     }
 
@@ -80,9 +96,7 @@ export class PersonenkontextAnlage {
             };
         if (organisation.id == rolleSSK.id) return { ok: true, value: true };
 
-        const scope: OrganisationScope = new OrganisationScope().findAdministrierteVon(rolleSSK.id);
-        const counted: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);
-        const children: OrganisationDo<true>[] = counted[0];
+        const children: OrganisationDo<true>[] = await this.findChildOrganisations(rolleSSK.id);
         if (children.some((c: OrganisationDo<true>) => c.id == organisation.id)) {
             return { ok: true, value: true };
         } else {
@@ -112,5 +126,12 @@ export class PersonenkontextAnlage {
         );
         const createdPersonenkontext: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(personenkontext);
         return { ok: true, value: createdPersonenkontext };
+    }
+
+    private async findChildOrganisations(parentOrganisationId: string): Promise<OrganisationDo<true>[]> {
+        const scope: OrganisationScope = new OrganisationScope().findAdministrierteVon(parentOrganisationId);
+        const counted: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);
+        const children: OrganisationDo<true>[] = counted[0];
+        return children;
     }
 }

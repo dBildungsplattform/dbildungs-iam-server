@@ -453,6 +453,8 @@ describe('PersonenkontextUc', () => {
                 ];
                 organisationRepoMock.findByNameOrKennung.mockResolvedValue(ssks);
                 dbiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);
+                organisationRepoMock.findById.mockResolvedValue(organisation);
+
                 const result: FindSchulstrukturknotenResponse = await sut.findSchulstrukturknoten(params);
                 expect(result).toBeTruthy();
                 expect(result.moeglicheSkks).toHaveLength(1);
