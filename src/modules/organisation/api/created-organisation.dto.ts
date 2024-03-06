@@ -6,16 +6,16 @@ export class CreatedOrganisationDto {
     public readonly id!: string;
 
     @AutoMap()
-    public readonly kennung!: string;
+    public readonly kennung?: string;
 
     @AutoMap()
     public readonly name!: string;
 
     @AutoMap()
-    public readonly namensergaenzung!: string;
+    public readonly namensergaenzung?: string;
 
     @AutoMap()
-    public readonly kuerzel!: string;
+    public readonly kuerzel?: string;
 
     @AutoMap(() => String)
     public readonly typ!: OrganisationsTyp;

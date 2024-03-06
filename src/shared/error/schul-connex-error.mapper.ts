@@ -13,6 +13,7 @@ import { RootOrganisationImmutableError } from '../../modules/organisation/speci
 import { NurKlasseKursUnterSchuleError } from '../../modules/organisation/specification/error/nur-klasse-kurs-unter-schule.error.js';
 import { SchuleUnterTraegerError } from '../../modules/organisation/specification/error/schule-unter-traeger.error.js';
 import { TraegerInTraegerError } from '../../modules/organisation/specification/error/traeger-in-traeger.error.js';
+import { KennungRequiredForSchuleError } from '../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -78,6 +79,15 @@ export class SchulConnexErrorMapper {
                 subcode: '00',
                 titel: 'Fehlerhafte Anfrage',
                 beschreibung: 'Die Anfrage ist fehlerhaft: Die Person existiert bereits.',
+            }),
+        ],
+        [
+            KennungRequiredForSchuleError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '01',
+                titel: 'Fehlerhafte Anfrage',
+                beschreibung: "Das Feld 'kennung' darf nicht leer sein, wenn der Organisationstyp 'SCHULE' ist.",
             }),
         ],
         [
