@@ -63,6 +63,7 @@ describe('GruppenRepository', () => {
         faker.lorem.word(),
         faker.lorem.word(),
         faker.lorem.word(),
+        faker.lorem.word(),
         Gruppenbereich.PFLICHT,
         [Gruppenoption.BILINGUAL, Gruppenoption.HERKUNFTSSPRACHLICH],
         Gruppendifferenzierung.E,

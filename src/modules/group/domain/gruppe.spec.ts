@@ -29,6 +29,7 @@ describe('Gruppe', () => {
                     faker.lorem.word(),
                     faker.lorem.word(),
                     faker.lorem.word(),
+                    faker.lorem.word(),
                     Gruppenbereich.PFLICHT,
                     [Gruppenoption.BILINGUAL, Gruppenoption.HERKUNFTSSPRACHLICH],
                     Gruppendifferenzierung.E,
@@ -64,6 +65,12 @@ describe('Gruppe', () => {
                 };
                 const gruppe: Gruppe<false> = Gruppe.createGroup(createGroupBodyParams);
                 expect(gruppe).toBeInstanceOf(Gruppe);
+                expect(gruppe.getId()).toBeUndefined();
+                expect(gruppe.getCreatedAt()).toBeUndefined();
+                expect(gruppe.getUpdatedAt()).toBeUndefined();
+                expect(gruppe.getRevision()).toBeDefined();
+                expect(gruppe.getMandant()).toBe('');
+                expect(gruppe.getOrganisationId()).toBe('');
                 expect(gruppe.getReferrer()).toBe('');
                 expect(gruppe.getBezeichnung()).toBe(createGroupBodyParams.bezeichnung);
                 expect(gruppe.getThema()).toBe('');

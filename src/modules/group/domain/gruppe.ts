@@ -19,33 +19,35 @@ export class Gruppe<WasPersisted extends boolean> {
 
     private mandant!: string;
 
-    private organisationId!: string;
+    private organisationId?: string;
 
-    private referrer: string;
+    private referrer?: string;
 
-    private bezeichnung: string;
+    private bezeichnung!: string;
 
-    private thema: string;
+    private thema?: string;
 
-    private beschreibung: string;
+    private beschreibung?: string;
 
-    private typ: GruppenTyp;
+    private typ!: GruppenTyp;
 
-    private bereich: Gruppenbereich;
+    private bereich?: Gruppenbereich;
 
-    private optionen: Gruppenoption[];
+    private optionen?: Gruppenoption[];
 
-    private differenzierung: Gruppendifferenzierung;
+    private differenzierung?: Gruppendifferenzierung;
 
-    private bildungsziele: Bildungsziele[];
+    private bildungsziele?: Bildungsziele[];
 
-    private jahrgangsstufen: Jahrgangsstufe[];
+    private jahrgangsstufen?: Jahrgangsstufe[];
 
-    private faecher: Faecherkanon[];
+    private faecher?: Faecherkanon[];
 
     private referenzgruppen: Referenzgruppen[];
 
-    private laufzeit: Laufzeit;
+    private laufzeit!: Laufzeit;
+
+    private revision!: string;
 
     public getId(): Persisted<string, WasPersisted> {
         return this.id;
@@ -64,11 +66,11 @@ export class Gruppe<WasPersisted extends boolean> {
     }
 
     public getOrganisationId(): string {
-        return this.organisationId;
+        return this.organisationId ?? '';
     }
 
     public getReferrer(): string {
-        return this.referrer;
+        return this.referrer ?? '';
     }
 
     public getBezeichnung(): string {
@@ -76,11 +78,11 @@ export class Gruppe<WasPersisted extends boolean> {
     }
 
     public getThema(): string {
-        return this.thema;
+        return this.thema ?? '';
     }
 
     public getBeschreibung(): string {
-        return this.beschreibung;
+        return this.beschreibung ?? '';
     }
 
     public getTyp(): GruppenTyp {
@@ -88,11 +90,11 @@ export class Gruppe<WasPersisted extends boolean> {
     }
 
     public getBereich(): Gruppenbereich | undefined {
-        return this.bereich;
+        return this.bereich ?? undefined;
     }
 
     public getOptionen(): Gruppenoption[] {
-        return this.optionen;
+        return this.optionen ?? [];
     }
 
     public getDifferenzierung(): Gruppendifferenzierung | undefined {
@@ -100,15 +102,15 @@ export class Gruppe<WasPersisted extends boolean> {
     }
 
     public getBildungsziele(): Bildungsziele[] {
-        return this.bildungsziele;
+        return this.bildungsziele ?? [];
     }
 
     public getJahrgangsstufen(): Jahrgangsstufe[] {
-        return this.jahrgangsstufen;
+        return this.jahrgangsstufen ?? [];
     }
 
     public getFaecher(): Faecherkanon[] {
-        return this.faecher;
+        return this.faecher ?? [];
     }
 
     public getReferenzgruppen(): Referenzgruppen[] {
@@ -119,6 +121,10 @@ export class Gruppe<WasPersisted extends boolean> {
         return this.laufzeit;
     }
 
+    public getRevision(): string {
+        return this.revision;
+    }
+
     private constructor(
         id: Persisted<string, WasPersisted>,
         createdAt: Persisted<Date, WasPersisted>,
@@ -127,6 +133,7 @@ export class Gruppe<WasPersisted extends boolean> {
         organisationId: string,
         bezeichnung: string,
         typ: GruppenTyp,
+        revision: string,
         referrer?: string,
         thema?: string,
         beschreibung?: string,
@@ -137,7 +144,7 @@ export class Gruppe<WasPersisted extends boolean> {
         jahrgangsstufen?: Jahrgangsstufe[],
         faecher?: Faecherkanon[],
         referenzgruppen?: Referenzgruppen[],
-        laufzeit?: Laufzeit,
+        laufzeit?: Laufzeit
     ) {
         this.id = id;
         this.createdAt = createdAt;
@@ -146,15 +153,16 @@ export class Gruppe<WasPersisted extends boolean> {
         this.organisationId = organisationId;
         this.bezeichnung = bezeichnung;
         this.typ = typ;
-        this.referrer = referrer ?? '';
-        this.thema = thema ?? '';
-        this.beschreibung = beschreibung ?? '';
-        this.bereich = bereich ?? Gruppenbereich.PFLICHT;
-        this.optionen = optionen ?? [];
-        this.differenzierung = differenzierung ?? Gruppendifferenzierung.E;
-        this.bildungsziele = bildungsziele ?? [];
-        this.jahrgangsstufen = jahrgangsstufen ?? [];
-        this.faecher = faecher ?? [];
+        this.revision = revision;
+        this.referrer = referrer;
+        this.thema = thema;
+        this.beschreibung = beschreibung;
+        this.bereich = bereich;
+        this.optionen = optionen;
+        this.differenzierung = differenzierung;
+        this.bildungsziele = bildungsziele;
+        this.jahrgangsstufen = jahrgangsstufen;
+        this.faecher = faecher;
         this.referenzgruppen = referenzgruppen ?? [];
         this.laufzeit = laufzeit ?? new Laufzeit({});
     }
@@ -167,6 +175,7 @@ export class Gruppe<WasPersisted extends boolean> {
         organisationId: string,
         bezeichnung: string,
         typ: GruppenTyp,
+        revision: string,
         referrer?: string,
         thema?: string,
         beschreibung?: string,
@@ -187,6 +196,7 @@ export class Gruppe<WasPersisted extends boolean> {
             organisationId,
             bezeichnung,
             typ,
+            revision,
             referrer,
             thema,
             beschreibung,
@@ -210,6 +220,7 @@ export class Gruppe<WasPersisted extends boolean> {
             '',
             createGroupBodyParams.bezeichnung,
             createGroupBodyParams.typ,
+            '',
             createGroupBodyParams.referrer,
             createGroupBodyParams.thema,
             createGroupBodyParams.beschreibung,

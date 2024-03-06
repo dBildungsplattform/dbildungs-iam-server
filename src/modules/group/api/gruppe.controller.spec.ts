@@ -62,6 +62,7 @@ describe('GruppeController', () => {
             faker.lorem.word(),
             faker.lorem.word(),
             faker.lorem.word(),
+            faker.lorem.word(),
             Gruppenbereich.PFLICHT,
             [Gruppenoption.BILINGUAL],
             Gruppendifferenzierung.E,

@@ -5,8 +5,8 @@ import { Gruppe } from './gruppe.js';
 export class GruppeMapper {
     public mapGruppeToGruppeEntity(gruppe: Gruppe<false>): GruppeEntity {
         const gruppeEntity: GruppeEntity = new GruppeEntity();
-        gruppeEntity.mandant = '';
-        gruppeEntity.organisationId = '';
+        gruppeEntity.mandant = gruppe.getMandant();
+        gruppeEntity.organisationId = gruppe.getOrganisationId();
         gruppeEntity.referrer = gruppe.getReferrer();
         gruppeEntity.bezeichnung = gruppe.getBezeichnung();
         gruppeEntity.thema = gruppe.getThema();
@@ -32,6 +32,7 @@ export class GruppeMapper {
             entity.organisationId,
             entity.bezeichnung,
             entity.typ,
+            entity.revision,
             entity.referrer,
             entity.thema,
             entity.beschreibung,
