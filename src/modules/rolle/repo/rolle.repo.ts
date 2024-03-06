@@ -5,6 +5,7 @@ import { RollenMerkmal } from '../domain/rolle.enums.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
+import { RolleFactory } from '../domain/rolle.factory.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -25,10 +26,10 @@ export function mapAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<Ro
     };
 }
 
-function mapEntityToAggregate(entity: RolleEntity): Rolle<boolean> {
+function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFactory): Rolle<boolean> {
     const merkmale: RollenMerkmal[] = entity.merkmale.map((merkmalEntity: RolleMerkmalEntity) => merkmalEntity.merkmal);
 
-    return Rolle.construct(
+    return rolleFactory.construct(
         entity.id,
         entity.createdAt,
         entity.updatedAt,
@@ -40,7 +41,10 @@ function mapEntityToAggregate(entity: RolleEntity): Rolle<boolean> {
 }
 @Injectable()
 export class RolleRepo {
-    public constructor(private readonly em: EntityManager) {}
+    public constructor(
+        private readonly rolleFactory: RolleFactory,
+        private readonly em: EntityManager,
+    ) {}
 
     public get entityName(): EntityName<RolleEntity> {
         return RolleEntity;
@@ -53,7 +57,7 @@ export class RolleRepo {
             { populate: ['merkmale', 'serviceProvider'] as const },
         );
 
-        return rolle && mapEntityToAggregate(rolle);
+        return rolle && mapEntityToAggregate(rolle, this.rolleFactory);
     }
 
     public async find(): Promise<Rolle<true>[]> {
@@ -61,7 +65,7 @@ export class RolleRepo {
             populate: ['merkmale', 'serviceProvider'] as const,
         });
 
-        return rollen.map(mapEntityToAggregate);
+        return rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
     }
 
     public async save(rolle: Rolle<boolean>): Promise<Rolle<true>> {
@@ -77,7 +81,7 @@ export class RolleRepo {
 
         await this.em.persistAndFlush(rolleEntity);
 
-        return mapEntityToAggregate(rolleEntity);
+        return mapEntityToAggregate(rolleEntity, this.rolleFactory);
     }
 
     private async update(rolle: Rolle<true>): Promise<Rolle<true>> {
@@ -86,6 +90,6 @@ export class RolleRepo {
 
         await this.em.persistAndFlush(rolleEntity);
 
-        return mapEntityToAggregate(rolleEntity);
+        return mapEntityToAggregate(rolleEntity, this.rolleFactory);
     }
 }

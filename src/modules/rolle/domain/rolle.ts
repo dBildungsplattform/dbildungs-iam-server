@@ -6,6 +6,7 @@ import { RollenArt, RollenMerkmal } from './rolle.enums.js';
 
 export class Rolle<WasPersisted extends boolean> {
     private constructor(
+        public serviceProviderRepo: ServiceProviderRepo,
         public id: Persisted<string, WasPersisted>,
         public createdAt: Persisted<Date, WasPersisted>,
         public updatedAt: Persisted<Date, WasPersisted>,
@@ -16,15 +17,26 @@ export class Rolle<WasPersisted extends boolean> {
     ) {}
 
     public static createNew(
+        serviceProviderRepo: ServiceProviderRepo,
         name: string,
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
     ): Rolle<false> {
-        return new Rolle(undefined, undefined, undefined, name, administeredBySchulstrukturknoten, rollenart, merkmale);
+        return new Rolle(
+            serviceProviderRepo,
+            undefined,
+            undefined,
+            undefined,
+            name,
+            administeredBySchulstrukturknoten,
+            rollenart,
+            merkmale,
+        );
     }
 
     public static construct<WasPersisted extends boolean = false>(
+        serviceProviderRepo: ServiceProviderRepo,
         id: string,
         createdAt: Date,
         updatedAt: Date,
@@ -33,7 +45,16 @@ export class Rolle<WasPersisted extends boolean> {
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
     ): Rolle<WasPersisted> {
-        return new Rolle(id, createdAt, updatedAt, name, administeredBySchulstrukturknoten, rollenart, merkmale);
+        return new Rolle(
+            serviceProviderRepo,
+            id,
+            createdAt,
+            updatedAt,
+            name,
+            administeredBySchulstrukturknoten,
+            rollenart,
+            merkmale,
+        );
     }
 
     public addMerkmal(merkmal: RollenMerkmal): void {
@@ -49,11 +70,9 @@ export class Rolle<WasPersisted extends boolean> {
         }
     }
 
-    public async attachServiceProvider(
-        serviceProviderRepo: ServiceProviderRepo,
-        serviceProviderId: string,
-    ): Promise<void | DomainError> {
-        const serviceProvider: Option<ServiceProvider<true>> = await serviceProviderRepo.findById(serviceProviderId);
+    public async attachServiceProvider(serviceProviderId: string): Promise<void | DomainError> {
+        const serviceProvider: Option<ServiceProvider<true>> =
+            await this.serviceProviderRepo.findById(serviceProviderId);
         if (!serviceProvider) {
             return new EntityNotFoundError('ServiceProvider', serviceProviderId);
         }
