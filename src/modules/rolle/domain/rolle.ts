@@ -1,3 +1,7 @@
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RollenArt, RollenMerkmal } from './rolle.enums.js';
 
 export class Rolle<WasPersisted extends boolean> {
@@ -42,6 +46,16 @@ export class Rolle<WasPersisted extends boolean> {
         const idx: number = this.merkmale.indexOf(merkmal);
         if (idx !== -1) {
             this.merkmale.splice(idx, 1);
+        }
+    }
+
+    public async attachServiceProvider(
+        serviceProviderRepo: ServiceProviderRepo,
+        serviceProviderId: string,
+    ): Promise<void | DomainError> {
+        const serviceProvider: Option<ServiceProvider<true>> = await serviceProviderRepo.findById(serviceProviderId);
+        if (!serviceProvider) {
+            return new EntityNotFoundError('ServiceProvider', serviceProviderId);
         }
     }
 }

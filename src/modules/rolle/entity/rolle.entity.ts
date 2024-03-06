@@ -2,6 +2,8 @@ import { Cascade, Collection, Entity, Enum, OneToMany, Property } from '@mikro-o
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { RollenArt } from '../domain/rolle.enums.js';
 import { RolleMerkmalEntity } from './rolle-merkmal.entity.js';
+import { RolleServiceProviderEntity } from './rolle-service-provider.entity.js';
+import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 
 @Entity({ tableName: 'rolle' })
 export class RolleEntity extends TimestampedEntity {
@@ -24,4 +26,12 @@ export class RolleEntity extends TimestampedEntity {
         cascade: [Cascade.ALL],
     })
     public merkmale: Collection<RolleMerkmalEntity> = new Collection<RolleMerkmalEntity>(this);
+
+    @OneToMany({
+        entity: () => RolleServiceProviderEntity,
+        mappedBy: 'rolle',
+        orphanRemoval: true,
+        cascade: [Cascade.ALL],
+    })
+    public serviceProvider: Collection<ServiceProviderEntity> = new Collection<ServiceProviderEntity>(this);
 }
