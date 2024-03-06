@@ -68,7 +68,7 @@ describe('GruppeRepo', () => {
 
             const gruppeEntity: GruppeEntity = new GruppeEntity();
             gruppeEntity.mandant = gruppe.getMandant();
-            gruppeEntity.organisationId = gruppe.getOrganisationId()
+            gruppeEntity.organisationId = gruppe.getOrganisationId();
             gruppeEntity.bezeichnung = gruppe.getBezeichnung();
             gruppeEntity.typ = gruppe.getTyp();
             gruppeEntity.bereich = gruppe.getBereich();

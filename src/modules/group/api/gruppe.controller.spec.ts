@@ -79,8 +79,6 @@ describe('GruppeController', () => {
         };
         describe('when creating a group is successful', () => {
             it('should return the created group aggeragte', async () => {
-
-
                 gruppenFactoryMock.createGroup.mockReturnValue(gruppe as unknown as Gruppe<false>);
                 repo.save.mockResolvedValue({ ok: true, value: gruppe });
 
