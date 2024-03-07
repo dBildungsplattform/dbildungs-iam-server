@@ -9,7 +9,7 @@ export class OrganisationResponse {
 
     @AutoMap()
     @ApiProperty()
-    public readonly kennung!: string;
+    public readonly kennung?: string;
 
     @AutoMap()
     @ApiProperty()
@@ -17,11 +17,11 @@ export class OrganisationResponse {
 
     @AutoMap()
     @ApiProperty()
-    public readonly namensergaenzung!: string;
+    public readonly namensergaenzung?: string;
 
     @AutoMap()
     @ApiProperty()
-    public readonly kuerzel!: string;
+    public readonly kuerzel?: string;
 
     @AutoMap(() => String)
     @ApiProperty({ enum: OrganisationsTyp })
