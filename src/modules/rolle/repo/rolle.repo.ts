@@ -6,6 +6,8 @@ import { Rolle } from '../domain/rolle.js';
 import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
+import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
+import { RolleServiceProviderEntity } from '../entity/rolle-service-provider.entity.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -28,6 +30,9 @@ export function mapAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<Ro
 
 function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFactory): Rolle<boolean> {
     const merkmale: RollenMerkmal[] = entity.merkmale.map((merkmalEntity: RolleMerkmalEntity) => merkmalEntity.merkmal);
+    const serviceProviderIds: string[] = entity.serviceProvider.map(
+        (serviceProvider: ServiceProviderEntity) => serviceProvider.id,
+    );
 
     return rolleFactory.construct(
         entity.id,
@@ -37,6 +42,7 @@ function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFactory): 
         entity.administeredBySchulstrukturknoten,
         entity.rollenart,
         merkmale,
+        serviceProviderIds,
     );
 }
 @Injectable()
@@ -69,27 +75,85 @@ export class RolleRepo {
     }
 
     public async save(rolle: Rolle<boolean>): Promise<Rolle<true>> {
+        let persistedRolleEntity: RolleEntity;
         if (rolle.id) {
-            return this.update(rolle);
+            persistedRolleEntity = await this.update(rolle);
         } else {
-            return this.create(rolle);
+            persistedRolleEntity = await this.create(rolle);
         }
+        await this.applyServiceProviderChanges(persistedRolleEntity, rolle);
+
+        const refreshedRolleEntity: RolleEntity = await this.em.findOneOrFail(RolleEntity, persistedRolleEntity.id);
+        return mapEntityToAggregate(refreshedRolleEntity, this.rolleFactory);
     }
 
-    private async create(rolle: Rolle<false>): Promise<Rolle<true>> {
+    private async create(rolle: Rolle<false>): Promise<RolleEntity> {
         const rolleEntity: RolleEntity = this.em.create(RolleEntity, mapAggregateToData(rolle));
 
         await this.em.persistAndFlush(rolleEntity);
 
-        return mapEntityToAggregate(rolleEntity, this.rolleFactory);
+        return rolleEntity;
     }
 
-    private async update(rolle: Rolle<true>): Promise<Rolle<true>> {
+    private async update(rolle: Rolle<true>): Promise<RolleEntity> {
         const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, rolle.id);
         rolleEntity.assign(mapAggregateToData(rolle), { merge: true });
 
         await this.em.persistAndFlush(rolleEntity);
 
-        return mapEntityToAggregate(rolleEntity, this.rolleFactory);
+        return rolleEntity;
+    }
+
+    private async applyServiceProviderChanges(rolleEntity: RolleEntity, rolle: Rolle<boolean>): Promise<void> {
+        const currentServiceProviderIds: string[] = rolleEntity.serviceProvider.map(
+            (sp: ServiceProviderEntity) => sp.id,
+        );
+        const newServiceProviderIds: string[] = rolle.serviceProviderIds;
+
+        // Determine service providers to attach
+        const serviceProviderIdsToAttach: string[] = newServiceProviderIds.filter(
+            (id: string) => !currentServiceProviderIds.includes(id),
+        );
+        // Attach
+        for (const id of serviceProviderIdsToAttach) {
+            await this.attachServiceProviderToRolle(rolleEntity, id);
+        }
+        // Determine service providers to detach
+        const serviceProviderIdsToDetach: string[] = currentServiceProviderIds.filter(
+            (id: string) => !newServiceProviderIds.includes(id),
+        );
+        // Detach
+        for (const id of serviceProviderIdsToDetach) {
+            await this.detachServiceProviderFromRolle(rolleEntity, id);
+        }
+
+        await this.em.persistAndFlush(rolleEntity);
+    }
+
+    private async attachServiceProviderToRolle(rolleEntity: RolleEntity, serviceProviderId: string): Promise<void> {
+        const serviceProvider: ServiceProviderEntity = await this.em.findOneOrFail(
+            ServiceProviderEntity,
+            serviceProviderId,
+        );
+        const rolleServiceProvider: RolleServiceProviderEntity = this.em.create(RolleServiceProviderEntity, {
+            rolle: rolleEntity,
+            serviceProvider: serviceProvider,
+        });
+
+        await this.em.persistAndFlush(rolleServiceProvider);
+    }
+
+    private async detachServiceProviderFromRolle(rolleEntity: RolleEntity, serviceProviderId: string): Promise<void> {
+        const rolleServiceProvider: RolleServiceProviderEntity = await this.em.findOneOrFail(
+            RolleServiceProviderEntity,
+            {
+                rolle: rolleEntity,
+                serviceProvider: serviceProviderId,
+            },
+        );
+
+        if (rolleServiceProvider) {
+            await this.em.removeAndFlush(rolleServiceProvider);
+        }
     }
 }
