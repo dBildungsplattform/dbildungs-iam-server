@@ -1,6 +1,6 @@
-import { Embeddable, Enum, Property } from '@mikro-orm/core';
+import { Embeddable, EnumArrayType, Property } from '@mikro-orm/core';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { Gruppenrollen } from './gruppe.enums.js';
 
 @Embeddable()
@@ -12,8 +12,9 @@ export class Referenzgruppen {
     public id!: string;
 
     @IsArray()
+    @IsEnum(Gruppenrollen, { each: true })
     @ApiProperty({ enum: Gruppenrollen, nullable: true, isArray: true })
-    @Enum({ items: () => Gruppenrollen, nullable: true, array: true })
+    @Property({ type: EnumArrayType<Gruppenrollen>, nullable: true })
     public rollen?: Gruppenrollen[];
 
     public constructor(props: Readonly<Referenzgruppen>) {
