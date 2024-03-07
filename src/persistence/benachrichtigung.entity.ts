@@ -10,12 +10,12 @@ export class BenachrichtigungEntity extends TimestampedEntity {
     /**
      * Links to Person
      */
-    @Property()
+    @Property({ columnType: 'uuid' })
     public source!: string;
 
     /**
      * Links to Person
      */
-    @Property()
+    @Property({ columnType: 'uuid' })
     public target!: string;
 }
