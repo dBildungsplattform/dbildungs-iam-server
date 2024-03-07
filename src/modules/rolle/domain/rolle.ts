@@ -1,10 +1,13 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
+import { EntityCouldNotBeDeleted } from '../../../shared/error/entity-could-not-be-deleted.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RollenArt, RollenMerkmal } from './rolle.enums.js';
 
 export class Rolle<WasPersisted extends boolean> {
+
     private constructor(
         public serviceProviderRepo: ServiceProviderRepo,
         public id: Persisted<string, WasPersisted>,
@@ -14,6 +17,7 @@ export class Rolle<WasPersisted extends boolean> {
         public administeredBySchulstrukturknoten: string,
         public rollenart: RollenArt,
         public merkmale: RollenMerkmal[],
+        public serviceProviderIds: string[],
     ) {}
 
     public static createNew(
@@ -22,8 +26,9 @@ export class Rolle<WasPersisted extends boolean> {
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
+        serviceProviderIds: string[],
     ): Rolle<false> {
-        return new Rolle(
+        const rolle: Rolle<false> = new Rolle(
             serviceProviderRepo,
             undefined,
             undefined,
@@ -32,7 +37,10 @@ export class Rolle<WasPersisted extends boolean> {
             administeredBySchulstrukturknoten,
             rollenart,
             merkmale,
+            serviceProviderIds,
         );
+
+        return rolle;
     }
 
     public static construct<WasPersisted extends boolean = false>(
@@ -44,6 +52,7 @@ export class Rolle<WasPersisted extends boolean> {
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
+        serviceProviderIds: string[],
     ): Rolle<WasPersisted> {
         return new Rolle(
             serviceProviderRepo,
@@ -54,6 +63,7 @@ export class Rolle<WasPersisted extends boolean> {
             administeredBySchulstrukturknoten,
             rollenart,
             merkmale,
+            serviceProviderIds,
         );
     }
 
@@ -76,5 +86,17 @@ export class Rolle<WasPersisted extends boolean> {
         if (!serviceProvider) {
             return new EntityNotFoundError('ServiceProvider', serviceProviderId);
         }
+
+        if (this.serviceProviderIds.includes(serviceProviderId)) {
+            return new EntityCouldNotBeCreated('Rolle ServiceProvider Verknüpfung');
+        }
+        this.serviceProviderIds.push(serviceProviderId);
+    }
+
+    public detatchServiceProvider(serviceProviderId: string): void | DomainError {
+        if (!this.serviceProviderIds.includes(serviceProviderId)) {
+            return new EntityCouldNotBeDeleted('Rolle ServiceProvider Verknüpfung', serviceProviderId);
+        }
+        this.serviceProviderIds = this.serviceProviderIds.filter((id: string) => id !== serviceProviderId);
     }
 }
