@@ -14,6 +14,7 @@ import { DbSeedMapper } from './db-seed-mapper.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';
 import { DomainError, KeycloakClientError } from '../../shared/error/index.js';
+import { PersonSeedingRepo } from './repo/person-seeding.repo.js';
 
 describe('DbSeedConsoleMockedKeycloak', () => {
     let module: TestingModule;
@@ -43,6 +44,10 @@ describe('DbSeedConsoleMockedKeycloak', () => {
                 {
                     provide: UsernameGeneratorService,
                     useValue: createMock<UsernameGeneratorService>(),
+                },
+                {
+                    provide: PersonSeedingRepo,
+                    useValue: createMock<PersonSeedingRepo>(),
                 },
             ],
         }).compile();

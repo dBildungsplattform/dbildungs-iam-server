@@ -2,21 +2,25 @@ import { Injectable } from '@nestjs/common';
 import fs from 'fs';
 import { DataProviderFile } from './file/data-provider-file.js';
 import { OrganisationFile } from './file/organisation-file.js';
-import { PersonFile } from './file/person-file.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { ConstructorCall, EntityFile } from './db-seed.console.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderFile } from './file/service-provider-file.js';
 import { plainToInstance } from 'class-transformer';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
+import { Person } from '../../modules/person/domain/person.js';
+import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
+import { PersonFile } from './file/person-file.js';
 
 @Injectable()
 export class DbSeedService {
+    public constructor(private readonly usernameGenerator: UsernameGeneratorService) {}
+
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
 
     private organisationMap: Map<string, OrganisationDo<true>> = new Map<string, OrganisationDo<true>>();
 
-    private personMap: Map<string, PersonFile> = new Map<string, PersonFile>();
+    //private personMap: Map<string, PersonFile> = new Map<string, PersonFile>();
 
     private rolleMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
 
@@ -65,7 +69,7 @@ export class DbSeedService {
 
         return organisations;
     }
-
+    /*
     public readPerson(fileContentAsStr: string): PersonFile[] {
         const entities: PersonFile[] = this.readEntityFromJSONFile<PersonFile>(
             fileContentAsStr,
@@ -75,7 +79,7 @@ export class DbSeedService {
             this.personMap.set(entity.id, entity);
         }
         return entities;
-    }
+    }*/
 
     public readRolle(fileContentAsStr: string): Rolle<true>[] {
         const { entities }: EntityFile<Rolle<true>> = JSON.parse(fileContentAsStr) as EntityFile<Rolle<true>>;
@@ -125,6 +129,40 @@ export class DbSeedService {
         }
 
         return serviceProviders;
+    }
+
+    public async readPerson(fileContentAsStr: string): Promise<Person<false>[]> {
+        const personFile: EntityFile<PersonFile> = JSON.parse(fileContentAsStr) as EntityFile<PersonFile>;
+        const entities: PersonFile[] = plainToInstance(PersonFile, personFile.entities);
+        const persons: Person<false>[] = [];
+        for (const entity of entities) {
+            const p: Person<false> = await Person.createNew(
+                this.usernameGenerator,
+                entity.familienname,
+                entity.vorname,
+                entity.referrer,
+                entity.stammorganisation,
+                entity.initialenFamilienname,
+                entity.initialenVorname,
+                entity.rufname,
+                entity.nameTitel,
+                entity.nameAnrede,
+                entity.namePraefix,
+                entity.nameSuffix,
+                entity.nameSortierindex,
+                entity.geburtsdatum,
+                entity.geburtsort,
+                entity.geschlecht,
+                entity.lokalisierung,
+                entity.vertrauensstufe,
+                entity.auskunftssperre,
+                entity.username,
+                entity.password,
+            );
+            persons.push(p);
+        }
+        //ids are ignored, filling of personMap will be implemented in the future, when id-referencing is solved differently
+        return persons;
     }
 
     /* Setting as RolleEntity is required, eg. RolleFile would not work, persisting would fail due to saving one RolleEntity and one RolleFile

@@ -20,6 +20,7 @@ import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rolle/repo/rolle.repo.js';
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
 import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
+import { PersonSeedingRepo } from './repo/person-seeding.repo.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -36,7 +37,7 @@ describe('DbSeedConsole', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
             ],
-            providers: [DbSeedConsole, UsernameGeneratorService, DbSeedService, DbSeedMapper],
+            providers: [DbSeedConsole, UsernameGeneratorService, DbSeedService, DbSeedMapper, PersonSeedingRepo],
         })
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))

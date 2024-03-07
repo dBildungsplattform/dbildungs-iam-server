@@ -5,7 +5,6 @@ import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
 import { Inject } from '@nestjs/common';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
-import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
 import { DbSeedService } from './db-seed.service.js';
 import { PersonFile } from './file/person-file.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
@@ -13,15 +12,15 @@ import { OrganisationEntity } from '../../modules/organisation/persistence/organ
 import { OrganisationFile } from './file/organisation-file.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { DataProviderFile } from './file/data-provider-file.js';
-import { PersonEntity } from '../../modules/person/persistence/person.entity.js';
 import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';
-import { UserDo } from '../../modules/keycloak-administration/domain/user.do.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rolle/repo/rolle.repo.js';
 import { mapAggregateToData as mapServiceProviderAggregateToData } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
+import { PersonSeedingRepo } from './repo/person-seeding.repo.js';
+import { Person } from '../../modules/person/domain/person.js';
 
 export interface SeedFile {
     entityName: string;
@@ -50,8 +49,8 @@ export class DbSeedConsole extends CommandRunner {
         orm: MikroORM,
         private readonly logger: ClassLogger,
         private readonly dbSeedService: DbSeedService,
-        private readonly usernameGenerator: UsernameGeneratorService,
         private readonly keycloakUserService: KeycloakUserService,
+        private readonly personSeedingRepo: PersonSeedingRepo,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {
         super();
@@ -107,7 +106,8 @@ export class DbSeedConsole extends CommandRunner {
                 this.handleOrganisation(this.dbSeedService.readOrganisation(fileContentAsStr), seedFile.entityName);
                 break;
             case 'Person':
-                await this.handlePerson(fileContentAsStr, seedFile.entityName);
+                await this.handlePersonA(await this.dbSeedService.readPerson(fileContentAsStr), seedFile.entityName);
+                //await this.handlePerson(fileContentAsStr, seedFile.entityName);
                 break;
             case 'Rolle':
                 this.handleRolle(this.dbSeedService.readRolle(fileContentAsStr), seedFile.entityName);
@@ -178,7 +178,7 @@ export class DbSeedConsole extends CommandRunner {
             traegerschaft: organisationDo.traegerschaft,
         };
     }
-
+    /*
     private async handlePerson(fileContentAsStr: string, entityName: string): Promise<void> {
         const entities: PersonFile[] = this.dbSeedService.readPerson(fileContentAsStr);
         for (const entity of entities) {
@@ -187,9 +187,16 @@ export class DbSeedConsole extends CommandRunner {
             this.forkedEm.persist(mappedEntity);
         }
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
+    }*/
+
+    private async handlePersonA(aggregates: Person<false>[], aggregateName: string): Promise<void> {
+        for (const aggregate of aggregates) {
+            await this.personSeedingRepo.create(aggregate);
+        }
+        this.logger.info(`Insert ${aggregates.length} entities of type ${aggregateName}`);
     }
 
-    private async createPerson(personEntity: PersonFile): Promise<void> {
+    /*    private async createPerson(personEntity: PersonFile): Promise<void> {
         this.logger.info('Start of createPerson');
         const username: string = await this.usernameGenerator.generateUsername(
             personEntity.vorname,
@@ -213,7 +220,7 @@ export class DbSeedConsole extends CommandRunner {
             throw userIdResult.error;
         }
         this.logger.info('End of createPerson');
-    }
+    }*/
 
     private async deleteAllCreatedKeycloakUsers(): Promise<void> {
         for (const userTuple of this.createdKeycloakUsers) {
