@@ -144,7 +144,7 @@ export class Gruppe<WasPersisted extends boolean> {
         jahrgangsstufen?: Jahrgangsstufe[],
         faecher?: Faecherkanon[],
         referenzgruppen?: Referenzgruppen[],
-        laufzeit?: Laufzeit
+        laufzeit?: Laufzeit,
     ) {
         this.id = id;
         this.createdAt = createdAt;
