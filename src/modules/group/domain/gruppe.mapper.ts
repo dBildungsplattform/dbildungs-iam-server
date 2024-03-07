@@ -5,21 +5,21 @@ import { Gruppe } from './gruppe.js';
 export class GruppeMapper {
     public mapGruppeToGruppeEntity(gruppe: Gruppe<false>): GruppeEntity {
         const gruppeEntity: GruppeEntity = new GruppeEntity();
-        gruppeEntity.mandant = gruppe.getMandant();
-        gruppeEntity.organisationId = gruppe.getOrganisationId();
-        gruppeEntity.referrer = gruppe.getReferrer();
-        gruppeEntity.bezeichnung = gruppe.getBezeichnung();
-        gruppeEntity.thema = gruppe.getThema();
-        gruppeEntity.beschreibung = gruppe.getBeschreibung();
-        gruppeEntity.typ = gruppe.getTyp();
-        gruppeEntity.bereich = gruppe.getBereich();
-        gruppeEntity.optionen = gruppe.getOptionen();
-        gruppeEntity.differenzierung = gruppe.getDifferenzierung();
-        gruppeEntity.bildungsziele = gruppe.getBildungsziele();
-        gruppeEntity.jahrgangsstufen = gruppe.getJahrgangsstufen();
-        gruppeEntity.faecher = gruppe.getFaecher();
-        gruppeEntity.referenzgruppen = gruppe.getReferenzgruppen();
-        gruppeEntity.laufzeit = gruppe.getLaufzeit();
+        gruppeEntity.mandant = gruppe.mandant;
+        gruppeEntity.organisationId = gruppe.organisationId;
+        gruppeEntity.referrer = gruppe.referrer;
+        gruppeEntity.bezeichnung = gruppe.bezeichnung;
+        gruppeEntity.thema = gruppe.thema;
+        gruppeEntity.beschreibung = gruppe.beschreibung;
+        gruppeEntity.typ = gruppe.typ;
+        gruppeEntity.bereich = gruppe.bereich;
+        gruppeEntity.optionen = gruppe.optionen;
+        gruppeEntity.differenzierung = gruppe.differenzierung;
+        gruppeEntity.bildungsziele = gruppe.bildungsziele;
+        gruppeEntity.jahrgangsstufen = gruppe.jahrgangsstufen;
+        gruppeEntity.faecher = gruppe.faecher;
+        gruppeEntity.referenzgruppen = gruppe.referenzgruppen;
+        gruppeEntity.laufzeit = gruppe.laufzeit;
         return gruppeEntity;
     }
 
@@ -28,8 +28,6 @@ export class GruppeMapper {
             entity.id,
             entity.createdAt,
             entity.updatedAt,
-            entity.mandant,
-            entity.organisationId,
             entity.bezeichnung,
             entity.typ,
             entity.revision,

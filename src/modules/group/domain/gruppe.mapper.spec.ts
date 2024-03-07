@@ -33,8 +33,6 @@ describe('GruppeMapper', () => {
                 faker.date.recent(),
                 faker.date.recent(),
                 faker.lorem.word(),
-                faker.string.uuid(),
-                faker.lorem.word(),
                 GruppenTyp.KLASSE,
                 faker.lorem.word(),
                 faker.lorem.word(),
@@ -60,19 +58,19 @@ describe('GruppeMapper', () => {
             expect(result).toBeInstanceOf(GruppeEntity);
             expect(result.mandant).toBeDefined();
             expect(result.organisationId).toBeDefined();
-            expect(result.referrer).toBe(gruppe.getReferrer());
-            expect(result.bezeichnung).toBe(gruppe.getBezeichnung());
-            expect(result.thema).toBe(gruppe.getThema());
-            expect(result.beschreibung).toBe(gruppe.getBeschreibung());
-            expect(result.typ).toBe(gruppe.getTyp());
-            expect(result.bereich).toBe(gruppe.getBereich());
-            expect(result.optionen).toBe(gruppe.getOptionen());
-            expect(result.differenzierung).toBe(gruppe.getDifferenzierung());
-            expect(result.bildungsziele).toBe(gruppe.getBildungsziele());
-            expect(result.jahrgangsstufen).toBe(gruppe.getJahrgangsstufen());
-            expect(result.faecher).toBe(gruppe.getFaecher());
-            expect(result.referenzgruppen).toBe(gruppe.getReferenzgruppen());
-            expect(result.laufzeit).toBe(gruppe.getLaufzeit());
+            expect(result.referrer).toBe(gruppe.referrer);
+            expect(result.bezeichnung).toBe(gruppe.bezeichnung);
+            expect(result.thema).toBe(gruppe.thema);
+            expect(result.beschreibung).toBe(gruppe.beschreibung);
+            expect(result.typ).toBe(gruppe.typ);
+            expect(result.bereich).toBe(gruppe.bereich);
+            expect(result.optionen).toBe(gruppe.optionen);
+            expect(result.differenzierung).toBe(gruppe.differenzierung);
+            expect(result.bildungsziele).toBe(gruppe.bildungsziele);
+            expect(result.jahrgangsstufen).toBe(gruppe.jahrgangsstufen);
+            expect(result.faecher).toBe(gruppe.faecher);
+            expect(result.referenzgruppen).toBe(gruppe.referenzgruppen);
+            expect(result.laufzeit).toBe(gruppe.laufzeit);
         });
     });
 
@@ -108,19 +106,20 @@ describe('GruppeMapper', () => {
             const result: Gruppe<true> = gruppeMapper.mapGruppeEntityToGruppe(gruppeEntity);
 
             expect(result).toBeInstanceOf(Gruppe);
-            expect(result.getBezeichnung()).toBe(gruppeEntity.bezeichnung);
-            expect(result.getTyp()).toBe(gruppeEntity.typ);
-            expect(result.getReferrer()).toBe(gruppeEntity.referrer);
-            expect(result.getThema()).toBe(gruppeEntity.thema);
-            expect(result.getBeschreibung()).toBe(gruppeEntity.beschreibung);
-            expect(result.getBereich()).toBe(gruppeEntity.bereich);
-            expect(result.getOptionen()).toBe(gruppeEntity.optionen);
-            expect(result.getDifferenzierung()).toBe(gruppeEntity.differenzierung);
-            expect(result.getBildungsziele()).toBe(gruppeEntity.bildungsziele);
-            expect(result.getJahrgangsstufen()).toBe(gruppeEntity.jahrgangsstufen);
-            expect(result.getFaecher()).toBe(gruppeEntity.faecher);
-            expect(result.getReferenzgruppen()).toBe(gruppeEntity.referenzgruppen);
-            expect(result.getLaufzeit()).toBe(gruppeEntity.laufzeit);
+            expect(result.bezeichnung).toBe(gruppeEntity.bezeichnung);
+            expect(result.typ).toBe(gruppeEntity.typ);
+            expect(result.revision).toBe(gruppeEntity.revision);
+            expect(result.referrer).toBe(gruppeEntity.referrer);
+            expect(result.thema).toBe(gruppeEntity.thema);
+            expect(result.beschreibung).toBe(gruppeEntity.beschreibung);
+            expect(result.bereich).toBe(gruppeEntity.bereich);
+            expect(result.optionen).toBe(gruppeEntity.optionen);
+            expect(result.differenzierung).toBe(gruppeEntity.differenzierung);
+            expect(result.bildungsziele).toBe(gruppeEntity.bildungsziele);
+            expect(result.jahrgangsstufen).toBe(gruppeEntity.jahrgangsstufen);
+            expect(result.faecher).toBe(gruppeEntity.faecher);
+            expect(result.referenzgruppen).toBe(gruppeEntity.referenzgruppen);
+            expect(result.laufzeit).toBe(gruppeEntity.laufzeit);
         });
     });
 });

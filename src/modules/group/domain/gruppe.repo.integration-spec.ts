@@ -57,8 +57,6 @@ describe('GruppenRepository', () => {
         faker.date.recent(),
         faker.date.recent(),
         faker.lorem.word(),
-        faker.string.uuid(),
-        faker.lorem.word(),
         GruppenTyp.KLASSE,
         faker.lorem.word(),
         faker.lorem.word(),

@@ -56,8 +56,6 @@ describe('GruppeController', () => {
             faker.date.recent(),
             faker.date.recent(),
             faker.lorem.word(),
-            faker.string.uuid(),
-            faker.lorem.word(),
             GruppenTyp.KURS,
             faker.lorem.word(),
             faker.lorem.word(),
@@ -86,9 +84,9 @@ describe('GruppeController', () => {
                 const result: Gruppe<true> | HttpException = await gruppenController.createGroup(params);
 
                 const returnedGruppe: Gruppe<true> = result as Gruppe<true>;
-                expect(returnedGruppe.getTyp()).toBe(gruppe.getTyp());
-                expect(returnedGruppe.getDifferenzierung()).toBe(gruppe.getDifferenzierung());
-                expect(returnedGruppe.getBezeichnung()).toBe(gruppe.getBezeichnung());
+                expect(returnedGruppe.typ).toBe(gruppe.typ);
+                expect(returnedGruppe.differenzierung).toBe(gruppe.differenzierung);
+                expect(returnedGruppe.bezeichnung).toBe(gruppe.bezeichnung);
             });
         });
 

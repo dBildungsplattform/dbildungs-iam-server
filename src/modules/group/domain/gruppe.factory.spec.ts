@@ -41,8 +41,6 @@ describe('createGroup', () => {
         faker.date.recent(),
         faker.date.recent(),
         faker.lorem.word(),
-        faker.string.uuid(),
-        faker.lorem.word(),
         GruppenTyp.KURS,
         faker.lorem.word(),
         faker.lorem.word(),
@@ -68,14 +66,16 @@ describe('createGroup', () => {
             const result: Gruppe<false> = factory.createGroup(createGroupBodyParams);
 
             expect(result).toEqual(gruppe);
-            expect(result.getBeschreibung()).toEqual(gruppe.getBeschreibung());
-            expect(result.getBezeichnung()).toEqual(gruppe.getBezeichnung());
-            expect(result.getBereich()).toEqual(gruppe.getBereich());
-            expect(result.getBildungsziele()).toEqual(gruppe.getBildungsziele());
-            expect(result.getDifferenzierung()).toEqual(gruppe.getDifferenzierung());
-            expect(result.getFaecher()).toEqual(gruppe.getFaecher());
-            expect(result.getTyp()).toEqual(gruppe.getTyp());
-            expect(result.getJahrgangsstufen()).toEqual(gruppe.getJahrgangsstufen());
+            expect(result.beschreibung).toEqual(gruppe.beschreibung);
+            expect(result.typ).toEqual(gruppe.typ);
+            expect(result.bereich).toEqual(gruppe.bereich);
+            expect(result.optionen).toEqual(gruppe.optionen);
+            expect(result.differenzierung).toEqual(gruppe.differenzierung);
+            expect(result.bildungsziele).toEqual(gruppe.bildungsziele);
+            expect(result.jahrgangsstufen).toEqual(gruppe.jahrgangsstufen);
+            expect(result.faecher).toEqual(gruppe.faecher);
+            expect(result.referenzgruppen).toEqual(gruppe.referenzgruppen);
+            expect(result.laufzeit).toEqual(gruppe.laufzeit);
         });
     });
 });

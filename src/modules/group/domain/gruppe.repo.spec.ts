@@ -51,8 +51,6 @@ describe('GruppeRepo', () => {
                 faker.date.recent(),
                 faker.date.recent(),
                 faker.lorem.word(),
-                faker.string.uuid(),
-                faker.lorem.word(),
                 GruppenTyp.KURS,
                 faker.lorem.word(),
                 faker.lorem.word(),
@@ -68,17 +66,17 @@ describe('GruppeRepo', () => {
             );
 
             const gruppeEntity: GruppeEntity = new GruppeEntity();
-            gruppeEntity.mandant = gruppe.getMandant();
-            gruppeEntity.organisationId = gruppe.getOrganisationId();
-            gruppeEntity.bezeichnung = gruppe.getBezeichnung();
-            gruppeEntity.typ = gruppe.getTyp();
-            gruppeEntity.bereich = gruppe.getBereich();
-            gruppeEntity.differenzierung = gruppe.getDifferenzierung();
-            gruppeEntity.bildungsziele = gruppe.getBildungsziele();
-            gruppeEntity.jahrgangsstufen = gruppe.getJahrgangsstufen();
-            gruppeEntity.faecher = gruppe.getFaecher();
-            gruppeEntity.referenzgruppen = gruppe.getReferenzgruppen();
-            gruppeEntity.laufzeit = gruppe.getLaufzeit();
+            gruppeEntity.mandant = gruppe.mandant;
+            gruppeEntity.organisationId = gruppe.organisationId;
+            gruppeEntity.bezeichnung = gruppe.bezeichnung;
+            gruppeEntity.typ = gruppe.typ;
+            gruppeEntity.bereich = gruppe.bereich;
+            gruppeEntity.differenzierung = gruppe.differenzierung;
+            gruppeEntity.bildungsziele = gruppe.bildungsziele;
+            gruppeEntity.jahrgangsstufen = gruppe.jahrgangsstufen;
+            gruppeEntity.faecher = gruppe.faecher;
+            gruppeEntity.referenzgruppen = gruppe.referenzgruppen;
+            gruppeEntity.laufzeit = gruppe.laufzeit;
 
             mapper.mapGruppeToGruppeEntity.mockReturnValue(gruppeEntity);
             em.persistAndFlush.mockRejectedValue(new Error('Error'));
