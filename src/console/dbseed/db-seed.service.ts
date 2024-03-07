@@ -9,6 +9,7 @@ import { ServiceProvider } from '../../modules/service-provider/domain/service-p
 import { ServiceProviderFile } from './file/service-provider-file.js';
 import { plainToInstance } from 'class-transformer';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
+import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 
 @Injectable()
 export class DbSeedService {
@@ -21,6 +22,8 @@ export class DbSeedService {
     private rolleMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
 
     private serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
+
+    public constructor(private readonly rolleFactory: RolleFactory) {}
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
@@ -80,17 +83,19 @@ export class DbSeedService {
     public readRolle(fileContentAsStr: string): Rolle<true>[] {
         const { entities }: EntityFile<Rolle<true>> = JSON.parse(fileContentAsStr) as EntityFile<Rolle<true>>;
 
-        const rollen: Rolle<true>[] = entities.map((rolleData: Rolle<true>) =>
-            Rolle.construct(
+        const rollen: Rolle<true>[] = entities.map((rolleData: Rolle<true>) => {
+            const rolle: Rolle<true> = this.rolleFactory.construct(
                 rolleData.id,
                 new Date(),
                 new Date(),
                 rolleData.name,
                 rolleData.administeredBySchulstrukturknoten,
                 rolleData.rollenart,
-                rolleData.merkmale,
-            ),
-        );
+                rolleData?.merkmale ?? [],
+                rolleData?.serviceProviderIds ?? [],
+            );
+            return rolle;
+        });
 
         for (const rolle of rollen) {
             this.rolleMap.set(rolle.id, rolle);

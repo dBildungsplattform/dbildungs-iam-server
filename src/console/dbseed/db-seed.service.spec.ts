@@ -12,9 +12,11 @@ import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { DataProviderFile } from './file/data-provider-file.js';
 import { OrganisationsTyp, Traegerschaft } from '../../modules/organisation/domain/organisation.enums.js';
-import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
+ import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
+import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -28,7 +30,7 @@ describe('DbSeedService', () => {
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
             ],
-            providers: [DbSeedService],
+            providers: [DbSeedService, RolleFactory, ServiceProviderRepo],
         }).compile();
         dbSeedService = module.get(DbSeedService);
     });
@@ -139,6 +141,7 @@ describe('DbSeedService', () => {
                     administeredBySchulstrukturknoten: '1',
                     rollenart: RollenArt.LERN,
                     merkmale: [],
+                    serviceProviderIds: [],
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,
                 };
@@ -147,6 +150,7 @@ describe('DbSeedService', () => {
             });
         });
     });
+
 
     describe('readServiceProvider', () => {
         describe('readServiceProvider with two entities', () => {

@@ -20,6 +20,7 @@ import { Rolle } from '../domain/rolle.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { RolleResponse } from './rolle.response.js';
+import { RolleFactory } from '../domain/rolle.factory.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
@@ -28,6 +29,7 @@ import { RolleResponse } from './rolle.response.js';
 export class RolleController {
     public constructor(
         private readonly rolleRepo: RolleRepo,
+        private readonly rolleFactory: RolleFactory,
         private readonly orgService: OrganisationService,
     ) {}
 
@@ -62,7 +64,7 @@ export class RolleController {
             );
         }
 
-        const rolle: Rolle<false> = Rolle.createNew(
+        const rolle: Rolle<false> = this.rolleFactory.createNew(
             params.name,
             params.administeredBySchulstrukturknoten,
             params.rollenart,

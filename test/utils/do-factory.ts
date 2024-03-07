@@ -113,6 +113,7 @@ export class DoFactory {
             administeredBySchulstrukturknoten: faker.string.numeric(),
             rollenart: faker.helpers.enumValue(RollenArt),
             merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+            serviceProviderIds: [],
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,

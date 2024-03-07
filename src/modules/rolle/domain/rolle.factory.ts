@@ -35,7 +35,7 @@ export class RolleFactory {
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
-        serviceProviderIds: string[],
+        serviceProviderIds?: string[],
     ): Rolle<false> {
         return Rolle.createNew(
             this.serviceProviderRepo,
@@ -43,7 +43,7 @@ export class RolleFactory {
             administeredBySchulstrukturknoten,
             rollenart,
             merkmale,
-            serviceProviderIds,
+            serviceProviderIds ?? [],
         );
     }
 }

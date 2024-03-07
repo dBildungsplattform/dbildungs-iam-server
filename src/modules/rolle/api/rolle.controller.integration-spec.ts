@@ -20,6 +20,8 @@ import { RolleRepo } from '../repo/rolle.repo.js';
 import { RolleApiModule } from '../rolle-api.module.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { RolleResponse } from './rolle.response.js';
+import { RolleFactory } from '../domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -40,6 +42,8 @@ describe('Rolle API', () => {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
                 },
+                RolleFactory,
+                ServiceProviderRepo,
             ],
         }).compile();
 

@@ -16,6 +16,8 @@ import { UsernameGeneratorService } from '../modules/person/domain/username-gene
 import { DbSeedMapper } from './dbseed/db-seed-mapper.js';
 import { DbSeedService } from './dbseed/db-seed.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
+import { RolleFactory } from '../modules/rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../modules/service-provider/repo/service-provider.repo.js';
 
 @Module({
     imports: [
@@ -50,6 +52,15 @@ import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloa
             inject: [ConfigService],
         }),
     ],
-    providers: [DbConsole, DbInitConsole, DbSeedConsole, UsernameGeneratorService, DbSeedMapper, DbSeedService],
+    providers: [
+        DbConsole,
+        DbInitConsole,
+        DbSeedConsole,
+        UsernameGeneratorService,
+        DbSeedMapper,
+        DbSeedService,
+        RolleFactory,
+        ServiceProviderRepo,
+    ],
 })
 export class ConsoleModule {}

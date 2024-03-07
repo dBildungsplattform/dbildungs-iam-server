@@ -10,6 +10,8 @@ import {
 } from '../../../../test/utils/index.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleRepo } from './rolle.repo.js';
+import { RolleFactory } from '../domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
@@ -20,7 +22,7 @@ describe('RolleRepo', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
-            providers: [RolleRepo],
+            providers: [RolleRepo, RolleFactory, ServiceProviderRepo],
         }).compile();
 
         sut = module.get(RolleRepo);
