@@ -55,7 +55,7 @@
         "lodash-es": "^4.17.21",
         "nest-commander": "~3.10",
         "nest-keycloak-connect": "^1.9.5",
-        "openid-client": "^5.6.4",
+        "openid-client": "^5.6.5",
         "passport": "^0.7.0",
         "redis": "^4.6.13",
         "reflect-metadata": "^0.1.14",
