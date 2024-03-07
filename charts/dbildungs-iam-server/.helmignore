@@ -21,4 +21,3 @@
 .idea/
 *.tmproj
 .vscode/
-dbildungs-iam-server-secret.template.yaml
