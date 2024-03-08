@@ -14,10 +14,11 @@ import { OrganisationsTyp, Traegerschaft } from '../../modules/organisation/doma
 import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
-import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
-import { createMock } from '@golevelup/ts-jest';
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { Buffer } from 'buffer';
+import { PersonFactory } from '../../modules/person/domain/person.factory.js';
+import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
+import { createMock } from '@golevelup/ts-jest';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -34,8 +35,12 @@ describe('DbSeedService', () => {
             providers: [
                 DbSeedService,
                 {
-                    provide: UsernameGeneratorService,
-                    useValue: createMock<UsernameGeneratorService>(),
+                    provide: PersonFactory,
+                    useValue: createMock<PersonFactory>(),
+                },
+                {
+                    provide: PersonRepository,
+                    useValue: createMock<PersonRepository>(),
                 },
             ],
         }).compile();

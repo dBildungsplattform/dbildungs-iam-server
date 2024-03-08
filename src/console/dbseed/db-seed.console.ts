@@ -12,7 +12,6 @@ import { OrganisationEntity } from '../../modules/organisation/persistence/organ
 import { OrganisationFile } from './file/organisation-file.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { DataProviderFile } from './file/data-provider-file.js';
-import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { mapAggregateToData as mapServiceProviderAggregateToData } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
@@ -22,9 +21,6 @@ import { Personenkontext } from '../../modules/personenkontext/domain/personenko
 import { PersonenkontextEntity } from '../../modules/personenkontext/persistence/personenkontext.entity.js';
 import { mapAggregateToData } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
-import { Person } from '../../modules/person/domain/person.js';
-import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
-import { DomainError } from '../../shared/error/index.js';
 
 export interface SeedFile {
     entityName: string;
@@ -40,14 +36,10 @@ export type ConstructorCall = () => Entity;
 
 @SubCommand({ name: 'seed', description: 'creates seed data in the database' })
 export class DbSeedConsole extends CommandRunner {
-    private createdKeycloakUsers: [string, string][] = [];
-
     public constructor(
         private orm: MikroORM,
         private readonly logger: ClassLogger,
         private readonly dbSeedService: DbSeedService,
-        private readonly keycloakUserService: KeycloakUserService,
-        private readonly personRepository: PersonRepository,
         private readonly rolleSeedingRepo: RolleSeedingRepo,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {
@@ -86,7 +78,6 @@ export class DbSeedConsole extends CommandRunner {
         } catch (err) {
             this.logger.error('Seed data could not be created!');
             this.logger.error(String(err));
-            await this.deleteAllCreatedKeycloakUsers();
             throw err;
         }
     }
@@ -103,7 +94,7 @@ export class DbSeedConsole extends CommandRunner {
                 this.handleOrganisation(this.dbSeedService.readOrganisation(fileContentAsStr), seedFile.entityName);
                 break;
             case 'Person':
-                await this.handlePerson(await this.dbSeedService.readPerson(fileContentAsStr), seedFile.entityName);
+                await this.dbSeedService.seedPerson(fileContentAsStr);
                 break;
             case 'Rolle':
                 await this.handleRolle(this.dbSeedService.readRolle(fileContentAsStr), seedFile.entityName);
@@ -186,22 +177,5 @@ export class DbSeedConsole extends CommandRunner {
             typ: organisationDo.typ,
             traegerschaft: organisationDo.traegerschaft,
         };
-    }
-
-    private async handlePerson(aggregates: Person<false>[], aggregateName: string): Promise<void> {
-        for (const aggregate of aggregates) {
-            const person: Person<true> | DomainError = await this.personRepository.create(aggregate);
-            if (person instanceof Person && person.username) {
-                this.createdKeycloakUsers.push([person.id, person.username]);
-            }
-        }
-        this.logger.info(`Insert ${aggregates.length} entities of type ${aggregateName}`);
-    }
-
-    private async deleteAllCreatedKeycloakUsers(): Promise<void> {
-        for (const userTuple of this.createdKeycloakUsers) {
-            await this.keycloakUserService.delete(userTuple[0]);
-            this.logger.info(`Removed keycloak-user with username ${userTuple[1]}`);
-        }
     }
 }

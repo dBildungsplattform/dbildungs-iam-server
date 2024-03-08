@@ -9,19 +9,26 @@ import { Personenkontext } from '../../modules/personenkontext/domain/personenko
 import { plainToInstance } from 'class-transformer';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
 import { Person } from '../../modules/person/domain/person.js';
-import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
 import { PersonFile } from './file/person-file.js';
 import { ServiceProviderFile } from './file/service-provider-file.js';
+import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
+import { PersonFactory } from '../../modules/person/domain/person.factory.js';
+import { DomainError } from '../../shared/error/index.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 @Injectable()
 export class DbSeedService {
-    public constructor(private readonly usernameGenerator: UsernameGeneratorService) {}
+    public constructor(
+        private readonly logger: ClassLogger,
+        private readonly personFactory: PersonFactory,
+        private readonly personRepository: PersonRepository,
+    ) {}
 
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
 
     private organisationMap: Map<string, OrganisationDo<true>> = new Map<string, OrganisationDo<true>>();
 
-    //private personMap: Map<string, PersonFile> = new Map<string, PersonFile>();
+    private personMap: Map<string, Person<true>> = new Map();
 
     private rolleMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
 
@@ -122,13 +129,12 @@ export class DbSeedService {
         return serviceProviders;
     }
 
-    public async readPerson(fileContentAsStr: string): Promise<Person<false>[]> {
+    public async seedPerson(fileContentAsStr: string): Promise<void> {
         const personFile: EntityFile<PersonFile> = JSON.parse(fileContentAsStr) as EntityFile<PersonFile>;
         const entities: PersonFile[] = plainToInstance(PersonFile, personFile.entities);
         const persons: Person<false>[] = [];
         for (const entity of entities) {
-            const p: Person<false> = await Person.createNew(
-                this.usernameGenerator,
+            const person: Person<false> = await this.personFactory.createNew(
                 entity.familienname,
                 entity.vorname,
                 entity.referrer,
@@ -150,10 +156,15 @@ export class DbSeedService {
                 entity.username,
                 entity.password,
             );
-            persons.push(p);
+            persons.push(person);
         }
-        //ids are ignored, filling of personMap will be implemented in the future, when id-referencing is solved differently
-        return persons;
+        for (const person of persons) {
+            const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
+            if (persistedPerson instanceof Person) {
+                this.personMap.set(persistedPerson.id, persistedPerson);
+            }
+        }
+        this.logger.info(`Insert ${persons.length} entities of type Person`);
     }
 
     public readPersonenkontext(fileContentAsStr: string): Personenkontext<true>[] {

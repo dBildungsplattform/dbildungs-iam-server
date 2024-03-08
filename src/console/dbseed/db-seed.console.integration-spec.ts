@@ -22,6 +22,7 @@ import { ServiceProviderEntity } from '../../modules/service-provider/repo/servi
 import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
 import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
+import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -44,6 +45,7 @@ describe('DbSeedConsole', () => {
                 DbSeedService,
                 DbSeedMapper,
                 PersonRepository,
+                PersonFactory,
                 RolleSeedingRepo,
             ],
         })
