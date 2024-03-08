@@ -1,0 +1,25 @@
+# Push image to GHCR and Helm Chart to helm-charts-registry
+name: Release Image and Helm Chart
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+concurrency:
+  group: dbildungs-iam-server-image-helm-chart
+  cancel-in-progress: true
+
+jobs:
+  release_image_and_helm_chart:
+    name: "Release image and Helm Chart"
+    secrets: inherit
+    permissions:
+      packages: write
+      security-events: write
+      contents: read
+      actions: read
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/release-image-and-helm-chart.yaml@5
+    with:
+      release_tag: ${{ github.ref_name }}
+      image_name: "dbildungs-iam-server"
+      helm_chart_name: "dbildungs-iam-server"

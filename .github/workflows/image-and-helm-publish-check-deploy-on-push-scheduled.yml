@@ -5,6 +5,8 @@ name: "Dev Pipeline"
 # See DBP-340
 on:
   push:
+    branches:
+      - "*"
   schedule:
     - cron:  '0 2 * * *'
   delete:
