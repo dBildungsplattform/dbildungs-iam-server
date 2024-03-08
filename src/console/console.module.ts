@@ -16,7 +16,7 @@ import { UsernameGeneratorService } from '../modules/person/domain/username-gene
 import { DbSeedMapper } from './dbseed/db-seed-mapper.js';
 import { DbSeedService } from './dbseed/db-seed.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
-import { PersonSeedingRepo } from './dbseed/repo/person-seeding.repo.js';
+import { PersonRepository } from '../modules/person/persistence/person.repository.js';
 
 @Module({
     imports: [
@@ -45,6 +45,7 @@ import { PersonSeedingRepo } from './dbseed/repo/person-seeding.repo.js';
                             ssl: config.getOrThrow<DbConfig>('DB').USE_SSL,
                         },
                     },
+                    allowGlobalContext: true,
                     connect: false,
                 });
             },
@@ -58,7 +59,7 @@ import { PersonSeedingRepo } from './dbseed/repo/person-seeding.repo.js';
         UsernameGeneratorService,
         DbSeedMapper,
         DbSeedService,
-        PersonSeedingRepo,
+        PersonRepository,
     ],
 })
 export class ConsoleModule {}

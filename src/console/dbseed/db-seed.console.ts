@@ -19,8 +19,9 @@ import { mapAggregateToData as mapServiceProviderAggregateToData } from '../../m
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
-import { PersonSeedingRepo } from './repo/person-seeding.repo.js';
 import { Person } from '../../modules/person/domain/person.js';
+import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
+import { DomainError } from '../../shared/error/index.js';
 
 export interface SeedFile {
     entityName: string;
@@ -34,11 +35,6 @@ export type Entity = DataProviderFile | PersonFile | OrganisationFile | RolleEnt
 
 export type ConstructorCall = () => Entity;
 
-export interface Reference {
-    id: string;
-    persisted: boolean;
-}
-
 @SubCommand({ name: 'seed', description: 'creates seed data in the database' })
 export class DbSeedConsole extends CommandRunner {
     private forkedEm: EntityManager;
@@ -50,7 +46,7 @@ export class DbSeedConsole extends CommandRunner {
         private readonly logger: ClassLogger,
         private readonly dbSeedService: DbSeedService,
         private readonly keycloakUserService: KeycloakUserService,
-        private readonly personSeedingRepo: PersonSeedingRepo,
+        private readonly personRepository: PersonRepository,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {
         super();
@@ -106,8 +102,7 @@ export class DbSeedConsole extends CommandRunner {
                 this.handleOrganisation(this.dbSeedService.readOrganisation(fileContentAsStr), seedFile.entityName);
                 break;
             case 'Person':
-                await this.handlePersonA(await this.dbSeedService.readPerson(fileContentAsStr), seedFile.entityName);
-                //await this.handlePerson(fileContentAsStr, seedFile.entityName);
+                await this.handlePerson(await this.dbSeedService.readPerson(fileContentAsStr), seedFile.entityName);
                 break;
             case 'Rolle':
                 this.handleRolle(this.dbSeedService.readRolle(fileContentAsStr), seedFile.entityName);
@@ -178,49 +173,16 @@ export class DbSeedConsole extends CommandRunner {
             traegerschaft: organisationDo.traegerschaft,
         };
     }
-    /*
-    private async handlePerson(fileContentAsStr: string, entityName: string): Promise<void> {
-        const entities: PersonFile[] = this.dbSeedService.readPerson(fileContentAsStr);
-        for (const entity of entities) {
-            await this.createPerson(entity);
-            const mappedEntity: PersonEntity = this.mapper.map(entity, PersonFile, PersonEntity);
-            this.forkedEm.persist(mappedEntity);
-        }
-        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
-    }*/
 
-    private async handlePersonA(aggregates: Person<false>[], aggregateName: string): Promise<void> {
+    private async handlePerson(aggregates: Person<false>[], aggregateName: string): Promise<void> {
         for (const aggregate of aggregates) {
-            await this.personSeedingRepo.create(aggregate);
+            const person: Person<true> | DomainError = await this.personRepository.create(aggregate);
+            if (person instanceof Person && person.username) {
+                this.createdKeycloakUsers.push([person.id, person.username]);
+            }
         }
         this.logger.info(`Insert ${aggregates.length} entities of type ${aggregateName}`);
     }
-
-    /*    private async createPerson(personEntity: PersonFile): Promise<void> {
-        this.logger.info('Start of createPerson');
-        const username: string = await this.usernameGenerator.generateUsername(
-            personEntity.vorname,
-            personEntity.familienname,
-        );
-        const userDo: UserDo<false> = {
-            username: username,
-            email: username + '@test.de',
-            id: null,
-            createdDate: null,
-        };
-        this.logger.info('Generated Username');
-        const userIdResult: Result<string> = await this.keycloakUserService.create(userDo, 'test');
-        this.logger.info('Created user');
-        if (userIdResult.ok) {
-            //should be always ture, because usernameGenerator.generateUsername calls getNextAvailableName
-            this.createdKeycloakUsers.push([userIdResult.value, username]);
-            personEntity.keycloakUserId = userIdResult.value;
-            this.logger.info(`Created Keycloak-user with username ${username}`);
-        } else {
-            throw userIdResult.error;
-        }
-        this.logger.info('End of createPerson');
-    }*/
 
     private async deleteAllCreatedKeycloakUsers(): Promise<void> {
         for (const userTuple of this.createdKeycloakUsers) {

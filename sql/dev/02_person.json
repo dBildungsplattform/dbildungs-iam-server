@@ -2,7 +2,9 @@
     "entityName": "Person",
     "entities": [
         {
-            "id": "1d0390a7-f400-4133-ac1d-2ae79410fbc1",
+            "seedId": 1,
+            "username": "autotester",
+            "password": "autotester",
             "referrer": null,
             "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
             "stammorganisation": null,
