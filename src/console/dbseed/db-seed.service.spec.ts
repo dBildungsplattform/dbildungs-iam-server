@@ -14,11 +14,11 @@ import { OrganisationsTyp, Traegerschaft } from '../../modules/organisation/doma
 import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
-import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { Buffer } from 'buffer';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
 import { createMock } from '@golevelup/ts-jest';
+import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -41,6 +41,10 @@ describe('DbSeedService', () => {
                 {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
+                },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
             ],
         }).compile();
@@ -180,28 +184,6 @@ describe('DbSeedService', () => {
                     logo: undefined,
                     logoMimeType: undefined,
                     providedOnSchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
-                    createdAt: expect.any(Date) as Date,
-                    updatedAt: expect.any(Date) as Date,
-                });
-            });
-        });
-    });
-
-    describe('readPersonenkontext', () => {
-        describe('readPersonenkontext with one entity', () => {
-            it('should have length 1', () => {
-                const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/05_personenkontext.json`,
-                    'utf-8',
-                );
-                const personenkontexte: Personenkontext<true>[] = dbSeedService.readPersonenkontext(fileContentAsStr);
-
-                expect(personenkontexte).toHaveLength(1);
-                expect(personenkontexte[0]).toEqual({
-                    id: 'a6cf487d-3b69-4105-bb4d-a022c2e1c67a',
-                    personId: 'ee510860-261a-4896-9d02-95d94d73c9f7',
-                    organisationId: 'bcc7ec17-37d5-4ec9-9129-c14bcfa53cd6',
-                    rolleId: 'abdcc2b9-5086-4bf2-bbee-03d6a013b7f8',
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,
                 });

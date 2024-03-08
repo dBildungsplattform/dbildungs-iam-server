@@ -13,8 +13,10 @@ import { PersonFile } from './file/person-file.js';
 import { ServiceProviderFile } from './file/service-provider-file.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
-import { DomainError } from '../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../shared/error/index.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
+import { PersonenkontextFile } from './file/personenkontext-file.js';
+import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 
 @Injectable()
 export class DbSeedService {
@@ -22,19 +24,18 @@ export class DbSeedService {
         private readonly logger: ClassLogger,
         private readonly personFactory: PersonFactory,
         private readonly personRepository: PersonRepository,
+        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
     ) {}
 
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
 
     private organisationMap: Map<string, OrganisationDo<true>> = new Map<string, OrganisationDo<true>>();
 
-    private personMap: Map<string, Person<true>> = new Map();
+    private personMap: Map<number, Person<true>> = new Map();
 
     private rolleMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
 
     private serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
-
-    private personenkontextMap: Map<string, Personenkontext<true>> = new Map();
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
@@ -131,61 +132,62 @@ export class DbSeedService {
 
     public async seedPerson(fileContentAsStr: string): Promise<void> {
         const personFile: EntityFile<PersonFile> = JSON.parse(fileContentAsStr) as EntityFile<PersonFile>;
-        const entities: PersonFile[] = plainToInstance(PersonFile, personFile.entities);
-        const persons: Person<false>[] = [];
-        for (const entity of entities) {
+        const files: PersonFile[] = plainToInstance(PersonFile, personFile.entities);
+        for (const file of files) {
             const person: Person<false> = await this.personFactory.createNew(
-                entity.familienname,
-                entity.vorname,
-                entity.referrer,
-                entity.stammorganisation,
-                entity.initialenFamilienname,
-                entity.initialenVorname,
-                entity.rufname,
-                entity.nameTitel,
-                entity.nameAnrede,
-                entity.namePraefix,
-                entity.nameSuffix,
-                entity.nameSortierindex,
-                entity.geburtsdatum,
-                entity.geburtsort,
-                entity.geschlecht,
-                entity.lokalisierung,
-                entity.vertrauensstufe,
-                entity.auskunftssperre,
-                entity.username,
-                entity.password,
+                file.familienname,
+                file.vorname,
+                file.referrer,
+                file.stammorganisation,
+                file.initialenFamilienname,
+                file.initialenVorname,
+                file.rufname,
+                file.nameTitel,
+                file.nameAnrede,
+                file.namePraefix,
+                file.nameSuffix,
+                file.nameSortierindex,
+                file.geburtsdatum,
+                file.geburtsort,
+                file.geschlecht,
+                file.lokalisierung,
+                file.vertrauensstufe,
+                file.auskunftssperre,
+                file.username,
+                file.password,
             );
-            persons.push(person);
-        }
-        for (const person of persons) {
             const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
-            if (persistedPerson instanceof Person) {
-                this.personMap.set(persistedPerson.id, persistedPerson);
+            if (persistedPerson instanceof Person && file.id) {
+                this.personMap.set(file.id, persistedPerson);
             }
         }
-        this.logger.info(`Insert ${persons.length} entities of type Person`);
+        this.logger.info(`Insert ${files.length} entities of type Person`);
     }
 
-    public readPersonenkontext(fileContentAsStr: string): Personenkontext<true>[] {
-        const { entities }: EntityFile<Personenkontext<true>> = JSON.parse(fileContentAsStr) as EntityFile<
-            Personenkontext<true>
-        >;
+    public async seedPersonenkontext(fileContentAsStr: string): Promise<Personenkontext<true>[]> {
+        const personenkontextFile: EntityFile<PersonenkontextFile> = JSON.parse(
+            fileContentAsStr,
+        ) as EntityFile<PersonenkontextFile>;
 
-        const personenkontexte: Personenkontext<true>[] = entities.map((pkData: Personenkontext<true>) =>
-            Personenkontext.construct(
-                pkData.id,
+        const files: PersonenkontextFile[] = plainToInstance(PersonenkontextFile, personenkontextFile.entities);
+        const persistedPersonenkontexte: Personenkontext<true>[] = [];
+        for (const file of files) {
+            const idOfPersistedPerson: Person<true> | undefined = this.personMap.get(file.personId);
+            if (!idOfPersistedPerson)
+                throw new EntityNotFoundError(`Referenced person for personenkontext not found, id=${file.personId}`);
+            const personenKontext: Personenkontext<false> = Personenkontext.construct(
+                undefined,
                 new Date(),
                 new Date(),
-                pkData.personId,
-                pkData.organisationId,
-                pkData.rolleId,
-            ),
-        );
-        for (const personenkontext of personenkontexte) {
-            this.personenkontextMap.set(personenkontext.id, personenkontext);
+                idOfPersistedPerson.id,
+                file.organisationId,
+                file.rolleId,
+            );
+            persistedPersonenkontexte.push(await this.dBiamPersonenkontextRepo.save(personenKontext));
+            //at the moment no saving of Personenkontext in a map for referencing
         }
-        return personenkontexte;
+        this.logger.info(`Insert ${files.length} entities of type Personenkontext`);
+        return persistedPersonenkontexte;
     }
 
     /* Setting as RolleEntity is required, eg. RolleFile would not work, persisting would fail due to saving one RolleEntity and one RolleFile

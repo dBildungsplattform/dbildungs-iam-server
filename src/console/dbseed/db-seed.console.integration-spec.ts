@@ -23,6 +23,8 @@ import { KeycloakConfigModule } from '../../modules/keycloak-administration/keyc
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
 import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
+import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
+import { EntityNotFoundError } from '../../shared/error/index.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -46,6 +48,7 @@ describe('DbSeedConsole', () => {
                 DbSeedMapper,
                 PersonRepository,
                 PersonFactory,
+                DBiamPersonenkontextRepo,
                 RolleSeedingRepo,
             ],
         })
@@ -112,6 +115,15 @@ describe('DbSeedConsole', () => {
                 const params: string[] = ['seeding-integration-test/nonExistingEntity'];
                 await expect(sut.run(params)).rejects.toThrow(
                     new Error(`Unsupported EntityName / EntityType: NonExistingEntityType`),
+                );
+            });
+        });
+
+        describe('when person referenced by personenkontext does not exist in seeding data', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const params: string[] = ['seeding-integration-test/missingPersonForPersonenkontext'];
+                await expect(sut.run(params)).rejects.toThrow(
+                    new EntityNotFoundError('Referenced person for personenkontext not found, id=9080706'),
                 );
             });
         });

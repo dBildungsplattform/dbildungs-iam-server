@@ -16,6 +16,7 @@ import { DomainError, KeycloakClientError } from '../../shared/error/index.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
 import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
+import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 
 describe('DbSeedConsoleMockedKeycloak', () => {
     let module: TestingModule;
@@ -49,6 +50,10 @@ describe('DbSeedConsoleMockedKeycloak', () => {
                 {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
+                },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
             ],
         }).compile();

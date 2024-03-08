@@ -19,6 +19,7 @@ import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloa
 import { PersonRepository } from '../modules/person/persistence/person.repository.js';
 import { RolleSeedingRepo } from './dbseed/repo/rolle-seeding.repo.js';
 import { PersonFactory } from '../modules/person/domain/person.factory.js';
+import { DBiamPersonenkontextRepo } from '../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 
 @Module({
     imports: [
@@ -64,6 +65,7 @@ import { PersonFactory } from '../modules/person/domain/person.factory.js';
         PersonRepository,
         PersonFactory,
         PersonRepository,
+        DBiamPersonenkontextRepo,
         RolleSeedingRepo,
     ],
 })
