@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 
 export class HatSystemrechtBodyParams {
-    @IsEnum(RollenSystemRecht)
+    @IsString()
     @IsNotEmpty()
     @ApiProperty({ enum: RollenSystemRecht, required: true })
-    public readonly systemRecht!: RollenSystemRecht;
+    public readonly systemRecht!: string;
 }

@@ -81,7 +81,7 @@ export class RolleController {
     @Patch(':rolleId')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ description: 'Add systemrecht to a rolle.' })
-    @ApiCreatedResponse({ description: 'The systemrecht was successfully added to rolle.' })
+    @ApiOkResponse({ description: 'The systemrecht was successfully added to rolle.' })
     @ApiBadRequestResponse({ description: 'The input was not valid.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the rolle.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rolle.' })

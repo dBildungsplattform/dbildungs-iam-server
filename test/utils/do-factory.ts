@@ -110,7 +110,7 @@ export class DoFactory {
     ): RolleAggregate<WasPersisted> {
         const rolle: Partial<RolleAggregate<WasPersisted>> = {
             name: faker.person.jobTitle(),
-            administeredBySchulstrukturknoten: faker.string.numeric(),
+            administeredBySchulstrukturknoten: faker.string.uuid(),
             rollenart: faker.helpers.enumValue(RollenArt),
             merkmale: [faker.helpers.enumValue(RollenMerkmal)],
             systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],

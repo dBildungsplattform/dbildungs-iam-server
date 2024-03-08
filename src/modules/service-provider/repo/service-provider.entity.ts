@@ -11,7 +11,7 @@ export class ServiceProviderEntity extends TimestampedEntity {
     @Property()
     public url!: string;
 
-    @Property()
+    @Property({ columnType: 'uuid' })
     public providedOnSchulstrukturknoten!: string;
 
     @Enum(() => ServiceProviderKategorie)

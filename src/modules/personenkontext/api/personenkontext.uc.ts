@@ -25,7 +25,8 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
-import { PersonenkontextSystemrechtResponse, SystemrechtResponse } from './personenkontext-systemrecht.response.js';
+import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
+import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -111,7 +112,7 @@ export class PersonenkontextUc {
     }
 
     public async hatSystemRecht(personId: string, systemRecht: RollenSystemRecht): Promise<SystemrechtResponse> {
-        const results: OrganisationDo<true>[] = [];
+        const organisationDos: OrganisationDo<true>[] = [];
         const personenkontexte: Personenkontext<true>[] =
             await this.personenkontextService.findPersonenkontexteByPersonId(personId);
         for (const personenkontext of personenkontexte) {
@@ -122,18 +123,21 @@ export class PersonenkontextUc {
                     personenkontext.organisationId,
                 );
                 if (organisation) {
-                    results.push(organisation);
+                    organisationDos.push(organisation);
                     const children: Option<Paged<OrganisationDo<true>>> =
                         await this.organisationService.findAllAdministriertVon(personenkontext.organisationId);
-                    children.items.forEach((child: OrganisationDo<true>) => results.push(child));
+                    organisationDos.push(...children.items);
                 }
             }
         }
-        const personenkontextSystemrechtResponse: PersonenkontextSystemrechtResponse =
-            new PersonenkontextSystemrechtResponse();
-        personenkontextSystemrechtResponse.rechtName = systemRecht.toString();
-        personenkontextSystemrechtResponse.ssk = results;
-        return personenkontextSystemrechtResponse.response;
+        const systemrechtResponse: SystemrechtResponse = new SystemrechtResponse();
+        const organisationResponses: OrganisationResponse[] = this.mapper.mapArray(
+            organisationDos,
+            OrganisationDo,
+            OrganisationResponse,
+        );
+        systemrechtResponse[RollenSystemRecht.ROLLEN_VERWALTEN] = organisationResponses;
+        return systemrechtResponse;
     }
 
     public async updatePersonenkontext(

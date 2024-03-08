@@ -7,16 +7,16 @@ import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../dom
 @Unique({ properties: ['personId', 'organisationId', 'rolleId'] })
 export class PersonenkontextEntity extends TimestampedEntity {
     @AutoMap()
-    @Property({ nullable: false })
+    @Property({ columnType: 'uuid', nullable: false })
     public personId!: string;
 
     // TODO EW-636: get from access_token, see SchulConneX (Version 1.003.003.000) page 91
     @AutoMap()
-    @Property({ nullable: true })
+    @Property({ columnType: 'uuid', nullable: true })
     public organisationId!: string;
 
     // Will be mandatory soon. PersonenkontextAggregate will always set ID.
-    @Property({ nullable: true })
+    @Property({ columnType: 'uuid', nullable: true })
     public rolleId!: string;
 
     @AutoMap()

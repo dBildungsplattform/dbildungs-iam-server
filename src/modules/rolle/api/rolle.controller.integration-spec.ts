@@ -215,11 +215,12 @@ describe('Rolle API', () => {
         describe('when rolle does not exist', () => {
             it('should return 200', async () => {
                 await rolleRepo.save(DoFactory.createRolle(false));
+                const validButNonExistingUUID: string = faker.string.uuid();
                 const params: AddSystemrechtBodyParams = {
                     systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
-                    .patch(`/rolle/1`)
+                    .patch(`/rolle/${validButNonExistingUUID}`)
                     .send(params);
 
                 expect(response.status).toBe(500);

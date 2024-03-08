@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class FindRolleByIdParams {
+    @IsString()
     @IsNotEmpty()
     @ApiProperty({
         description: 'The id for the rolle.',

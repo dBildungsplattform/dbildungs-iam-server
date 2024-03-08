@@ -16,6 +16,7 @@ import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
+import { Buffer } from 'buffer';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -137,7 +138,7 @@ describe('DbSeedService', () => {
                 const rolle: Partial<Rolle<true>> = {
                     id: '301457e9-4fe5-42a6-8084-fec927dc00df',
                     name: 'Rolle2222',
-                    administeredBySchulstrukturknoten: '1',
+                    administeredBySchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
                     rollenart: RollenArt.LERN,
                     merkmale: [],
                     systemrechte: [],
@@ -167,8 +168,8 @@ describe('DbSeedService', () => {
                     url: 'https://example.com/',
                     kategorie: ServiceProviderKategorie.UNTERRICHT,
                     logoMimeType: 'image/png',
-                    logo: expect.any(String) as string,
-                    providedOnSchulstrukturknoten: '1',
+                    logo: expect.any(Buffer) as Buffer,
+                    providedOnSchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,
                 });
@@ -177,7 +178,9 @@ describe('DbSeedService', () => {
                     name: 'Provider Without Logo',
                     url: 'https://example.com/',
                     kategorie: ServiceProviderKategorie.UNTERRICHT,
-                    providedOnSchulstrukturknoten: '1',
+                    logo: undefined,
+                    logoMimeType: undefined,
+                    providedOnSchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,
                 });
