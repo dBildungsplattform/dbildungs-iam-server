@@ -1,8 +1,8 @@
-import { IsString } from 'class-validator';
+import { IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PersonByIdParams {
-    @IsString()
+    @IsUUID()
     @ApiProperty({
         description: 'The id for the account.',
         required: true,
