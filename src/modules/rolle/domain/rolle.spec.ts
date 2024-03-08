@@ -160,4 +160,46 @@ describe('Rolle Aggregate', () => {
             });
         });
     });
+
+    describe('detachServiceProvider', () => {
+        describe('when successfull', () => {
+            it('should remove serviceProviderId to rolle field', () => {
+                const serviceProviderIdToDetach: string = faker.string.uuid();
+                const rolle: Rolle<true> = rolleFactory.construct(
+                    faker.string.uuid(),
+                    faker.date.anytime(),
+                    faker.date.anytime(),
+                    '',
+                    '',
+                    RollenArt.LEHR,
+                    [],
+                    [serviceProviderIdToDetach],
+                );
+
+                const result: void | DomainError = rolle.detatchServiceProvider(serviceProviderIdToDetach);
+
+                expect(result).not.toBeInstanceOf(DomainError);
+                expect(rolle.serviceProviderIds.includes(serviceProviderIdToDetach)).toBeFalsy();
+            });
+        });
+        describe('when serviceProvider is not attached', () => {
+            it('should return error', () => {
+                const serviceProviderIdToDetach: string = faker.string.uuid();
+                const rolle: Rolle<true> = rolleFactory.construct(
+                    faker.string.uuid(),
+                    faker.date.anytime(),
+                    faker.date.anytime(),
+                    '',
+                    '',
+                    RollenArt.LEHR,
+                    [],
+                    [],
+                );
+
+                const result: void | DomainError = rolle.detatchServiceProvider(serviceProviderIdToDetach);
+
+                expect(result).toBeInstanceOf(DomainError);
+            });
+        });
+    });
 });
