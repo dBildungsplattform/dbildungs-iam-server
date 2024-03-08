@@ -3,7 +3,7 @@
     "entities": [
         {
             "id": "8b622128-c952-4b08-8957-762af7e659bd",
-            "administeredBySchulstrukturknoten": "1",
+            "administeredBySchulstrukturknoten": "d39cb7cf-2f9b-45f1-849f-973661f2f057",
             "name": "Sysadmin",
             "rollenart": "SYSADMIN",
             "merkmale": [],
