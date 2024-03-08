@@ -7,15 +7,15 @@ import { Entity, OneToOne, Property } from '@mikro-orm/core';
     discriminatorMap: { traeger: 'traeger', organisation: 'organisation', group: 'gruppe' },
 })
 export abstract class SchulstrukturknotenEntity extends TimestampedEntity {
-    @OneToOne()
+    @OneToOne({ columnType: 'uuid' })
     public administrativeParent?: SchulstrukturknotenEntity;
 
-    @OneToOne()
+    @OneToOne({ columnType: 'uuid' })
     public organizationalParent?: SchulstrukturknotenEntity;
 
     /**
      * Points to DataProvider
      */
-    @Property()
+    @Property({ columnType: 'uuid' })
     public dataProvider?: string;
 }

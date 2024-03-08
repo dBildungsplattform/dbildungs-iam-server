@@ -151,7 +151,7 @@ describe('DbSeedService', () => {
                 const rolle: Partial<Rolle<true>> = {
                     id: '301457e9-4fe5-42a6-8084-fec927dc00df',
                     name: 'Rolle2222',
-                    administeredBySchulstrukturknoten: '1',
+                    administeredBySchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
                     rollenart: RollenArt.LERN,
                     merkmale: [],
                     createdAt: expect.any(Date) as Date,
@@ -181,7 +181,7 @@ describe('DbSeedService', () => {
                     kategorie: ServiceProviderKategorie.UNTERRICHT,
                     logoMimeType: 'image/png',
                     logo: expect.any(Buffer) as Buffer,
-                    providedOnSchulstrukturknoten: '1',
+                    providedOnSchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,
                 });
@@ -190,7 +190,9 @@ describe('DbSeedService', () => {
                     name: 'Provider Without Logo',
                     url: 'https://example.com/',
                     kategorie: ServiceProviderKategorie.UNTERRICHT,
-                    providedOnSchulstrukturknoten: '1',
+                    logo: undefined,
+                    logoMimeType: undefined,
+                    providedOnSchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,
                 });
