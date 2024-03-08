@@ -1,25 +1,26 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 
 export class CommonCreateUpdateOrganisationBodyParams {
     @AutoMap()
     @IsOptional()
-    @IsString()
+    @IsUUID()
     @ApiPropertyOptional()
     public readonly administriertVon?: string;
 
     @AutoMap()
     @IsOptional()
-    @IsString()
+    @IsUUID()
     @ApiPropertyOptional()
     public readonly zugehoerigZu?: string;
 
     @AutoMap()
+    @IsOptional()
     @IsString()
-    @ApiProperty({ required: true })
-    public readonly kennung!: string;
+    @ApiPropertyOptional({ description: 'Required, if `typ` is equal to `SCHULE`' })
+    public readonly kennung?: string;
 
     @AutoMap()
     @IsString()
@@ -27,14 +28,16 @@ export class CommonCreateUpdateOrganisationBodyParams {
     public readonly name!: string;
 
     @AutoMap()
+    @IsOptional()
     @IsString()
-    @ApiProperty({ required: true })
-    public readonly namensergaenzung!: string;
+    @ApiPropertyOptional()
+    public readonly namensergaenzung?: string;
 
     @AutoMap()
+    @IsOptional()
     @IsString()
-    @ApiProperty({ required: true })
-    public readonly kuerzel!: string;
+    @ApiPropertyOptional()
+    public readonly kuerzel?: string;
 
     @AutoMap(() => String)
     @IsEnum(OrganisationsTyp)

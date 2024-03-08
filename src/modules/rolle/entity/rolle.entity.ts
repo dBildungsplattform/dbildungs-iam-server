@@ -12,7 +12,7 @@ export class RolleEntity extends TimestampedEntity {
     /**
      * Points to Schulstrukturknoten
      */
-    @Property()
+    @Property({ columnType: 'uuid' })
     public administeredBySchulstrukturknoten!: string;
 
     @Enum(() => RollenArt)

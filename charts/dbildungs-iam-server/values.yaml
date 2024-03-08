@@ -1,18 +1,16 @@
-dbildungsIamExternalPort: 80
-dbildungsIamCpuMax: 2
-dbildungsIamMemMax: 4G
-dbildungsIamRedisCpuMax: 2
-dbildungsIamRedisMemMax: 4G
-dbildungsIamRedisCpuRequest: 200m
-dbildungsIamRedisMemRequest: 200Mi
-dbildungsIamReplications: 1
+dbildungsIamServerCpuMax: 2
+dbildungsIamServerMemMax: 4G
+dbildungsIamServerRedisCpuMax: 2
+dbildungsIamServerRedisMemMax: 4G
+dbildungsIamServerRedisCpuRequest: 200m
+dbildungsIamServerRedisMemRequest: 200Mi
 backendHostname: ""
 keycloakHostname: ""
 imagePullPolicy: "Always"
 # Configuration of necessary secrets
 # Name of the secrets to inject
 configmap:
-  name: dbildungs-iam-configmap
+  name: dbildungs-iam-server
 # If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
 enabledcontainerSecurityContext: true
 enabledbackendserviceport:  true
@@ -38,7 +36,7 @@ database:
 auth:
   existingSecret: ""
   # Name of the secrets to inject
-  name: dbildungs-iam
+  name: dbildungs-iam-server
   keycloak_adminSecret: ""
   keycloak_clientSecret: ""
   secrets_json: ""
@@ -49,30 +47,30 @@ namespace: ""
 environment: prod
 
 secrets:
-  name: dbildungs-iam-secrets
+  name: dbildungs-iam-server
 
 service:
-  name: dbiam-backend
+  name: dbildungs-iam-server-backend
 redisservice:
   name: redis-service
 
-dbiam:
+dbildungsIamServer:
   selector:
-    layer: dbildungs-iam
+    layer: dbildungs-iam-server
   commonLabels:
-    name: dbildungs-iam
+    name: dbildungs-iam-server
 
 backend:
   selector:
-    layer: dbildungs-iam-backend
+    layer: dbildungs-iam-server-backend
   commonLabels:
-    name: dbildungs-iam-backend
+    name: dbildungs-iam-server-backend
 
 redis:
   selector:
-    layer: dbildungs-iam-redis
+    layer: dbildungs-iam-server-redis
   commonLabels:
-    name: dbildungs-iam-redis
+    name: dbildungs-iam-server-redis
 
 redisservicetype: ClusterIP
 backendservicetype: ClusterIP
@@ -159,7 +157,7 @@ rediscontainer:
 redisvolumes:
   - name: tls-data
     configMap:
-      name: dbiam-redis-tls-config
+      name: dbildungs-iam-server-redis-tls-config
   - name: data
     emptyDir: {}
 
@@ -226,7 +224,7 @@ backendcontainer:
       readOnly: true
 
 backendports:
-  - port:  80
+  - port: 80
     targetPort: web
     protocol: TCP
     name: web
