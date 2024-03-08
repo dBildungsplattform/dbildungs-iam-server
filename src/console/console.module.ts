@@ -17,6 +17,7 @@ import { DbSeedMapper } from './dbseed/db-seed-mapper.js';
 import { DbSeedService } from './dbseed/db-seed.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 import { PersonRepository } from '../modules/person/persistence/person.repository.js';
+import { RolleSeedingRepo } from './dbseed/repo/rolle-seeding.repo.js';
 
 @Module({
     imports: [
@@ -60,6 +61,7 @@ import { PersonRepository } from '../modules/person/persistence/person.repositor
         DbSeedMapper,
         DbSeedService,
         PersonRepository,
+        RolleSeedingRepo,
     ],
 })
 export class ConsoleModule {}

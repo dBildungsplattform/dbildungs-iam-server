@@ -16,6 +16,8 @@ import { ServiceProvider } from '../../modules/service-provider/domain/service-p
 import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
 import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
 import { createMock } from '@golevelup/ts-jest';
+import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
+import { Buffer } from 'buffer';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -119,19 +121,6 @@ describe('DbSeedService', () => {
         });
     });
 
-    /*   describe('readPerson', () => {
-        describe('readPerson with one entity', () => {
-            it('should have length 1', () => {
-                const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/02_person.json`,
-                    'utf-8',
-                );
-                const entities: PersonEntity[] = dbSeedService.readPerson(fileContentAsStr);
-                expect(entities).toHaveLength(1);
-            });
-        });
-    });*/
-
     describe('readRolle', () => {
         describe('readRolle with one entity', () => {
             it('should have length 1', () => {
@@ -146,6 +135,7 @@ describe('DbSeedService', () => {
                     administeredBySchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
                     rollenart: RollenArt.LERN,
                     merkmale: [],
+                    systemrechte: [],
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,
                 };
@@ -192,6 +182,28 @@ describe('DbSeedService', () => {
         });
     });
 
+    describe('readPersonenkontext', () => {
+        describe('readPersonenkontext with one entity', () => {
+            it('should have length 1', () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./sql/seeding-integration-test/all/05_personenkontext.json`,
+                    'utf-8',
+                );
+                const personenkontexte: Personenkontext<true>[] = dbSeedService.readPersonenkontext(fileContentAsStr);
+
+                expect(personenkontexte).toHaveLength(1);
+                expect(personenkontexte[0]).toEqual({
+                    id: 'a6cf487d-3b69-4105-bb4d-a022c2e1c67a',
+                    personId: 'ee510860-261a-4896-9d02-95d94d73c9f7',
+                    organisationId: 'bcc7ec17-37d5-4ec9-9129-c14bcfa53cd6',
+                    rolleId: 'abdcc2b9-5086-4bf2-bbee-03d6a013b7f8',
+                    createdAt: expect.any(Date) as Date,
+                    updatedAt: expect.any(Date) as Date,
+                });
+            });
+        });
+    });
+
     describe('getRolle', () => {
         describe('getRolle by id after loading test rolle', () => {
             it('should return the loaded rolle', () => {
@@ -211,7 +223,7 @@ describe('DbSeedService', () => {
         describe('getEntityFileNames in directory sql/seeding-integration-test', () => {
             it('should return all files in directory', () => {
                 const entityFileNames: string[] = dbSeedService.getEntityFileNames('seeding-integration-test/all');
-                expect(entityFileNames).toHaveLength(6);
+                expect(entityFileNames).toHaveLength(7);
             });
         });
     });
