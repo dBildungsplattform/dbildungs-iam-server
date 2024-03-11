@@ -14,10 +14,10 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';
 import { DomainError, KeycloakClientError } from '../../shared/error/index.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
-import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 import { OrganisationModule } from '../../modules/organisation/organisation.module.js';
+import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
 
 describe('DbSeedConsoleMockedKeycloak', () => {
     let module: TestingModule;
@@ -40,7 +40,7 @@ describe('DbSeedConsoleMockedKeycloak', () => {
                 DbSeedConsole,
                 DbSeedService,
                 DbSeedMapper,
-                RolleSeedingRepo,
+                RolleRepo,
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),

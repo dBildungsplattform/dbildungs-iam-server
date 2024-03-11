@@ -17,10 +17,10 @@ import { DbSeedMapper } from './dbseed/db-seed-mapper.js';
 import { DbSeedService } from './dbseed/db-seed.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 import { PersonRepository } from '../modules/person/persistence/person.repository.js';
-import { RolleSeedingRepo } from './dbseed/repo/rolle-seeding.repo.js';
 import { PersonFactory } from '../modules/person/domain/person.factory.js';
 import { DBiamPersonenkontextRepo } from '../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 import { OrganisationModule } from '../modules/organisation/organisation.module.js';
+import { RolleRepo } from '../modules/rolle/repo/rolle.repo.js';
 
 @Module({
     imports: [
@@ -68,7 +68,7 @@ import { OrganisationModule } from '../modules/organisation/organisation.module.
         PersonFactory,
         PersonRepository,
         DBiamPersonenkontextRepo,
-        RolleSeedingRepo,
+        RolleRepo,
     ],
 })
 export class ConsoleModule {}

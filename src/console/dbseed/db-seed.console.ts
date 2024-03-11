@@ -11,11 +11,9 @@ import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { DataProviderFile } from './file/data-provider-file.js';
-import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { mapAggregateToData as mapServiceProviderAggregateToData } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
-import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
 
 export interface SeedFile {
     entityName: string;
@@ -35,7 +33,6 @@ export class DbSeedConsole extends CommandRunner {
         private readonly orm: MikroORM,
         private readonly logger: ClassLogger,
         private readonly dbSeedService: DbSeedService,
-        private readonly rolleSeedingRepo: RolleSeedingRepo,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {
         super();
@@ -92,7 +89,8 @@ export class DbSeedConsole extends CommandRunner {
                 await this.dbSeedService.seedPerson(fileContentAsStr);
                 break;
             case 'Rolle':
-                await this.handleRolle(this.dbSeedService.readRolle(fileContentAsStr), seedFile.entityName);
+                await this.dbSeedService.seedRolle(fileContentAsStr);
+                //await this.handleRolle(this.dbSeedService.readRolle(fileContentAsStr), seedFile.entityName);
                 break;
             case 'ServiceProvider':
                 this.handleServiceProvider(
@@ -116,12 +114,12 @@ export class DbSeedConsole extends CommandRunner {
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }
 
-    private async handleRolle(entities: Rolle<true>[], entityName: string): Promise<void> {
+    /* private async handleRolle(entities: Rolle<true>[], entityName: string): Promise<void> {
         for (const entity of entities) {
             await this.rolleSeedingRepo.save(entity);
         }
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
-    }
+    }*/
 
     private handleServiceProvider(aggregates: ServiceProvider<true>[], aggregateName: string): void {
         for (const aggregate of aggregates) {

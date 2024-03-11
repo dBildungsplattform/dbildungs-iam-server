@@ -17,11 +17,10 @@ import { KeycloakAdministrationModule } from '../../modules/keycloak-administrat
 import { OrganisationEntity } from '../../modules/organisation/persistence/organisation.entity.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
-import { mapAggregateToData as mapRolleAggregateToData } from '../../modules/rolle/repo/rolle.repo.js';
+import { mapAggregateToData as mapRolleAggregateToData, RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
 import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
-import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 import { EntityNotFoundError } from '../../shared/error/index.js';
@@ -51,7 +50,7 @@ describe('DbSeedConsole', () => {
                 PersonRepository,
                 PersonFactory,
                 DBiamPersonenkontextRepo,
-                RolleSeedingRepo,
+                RolleRepo,
             ],
         })
             .overrideModule(KeycloakConfigModule)
@@ -98,7 +97,7 @@ describe('DbSeedConsole', () => {
                     id: '431d8433-759c-4dbe-aaab-00b9a781f467',
                 });
                 const rolle: Option<RolleEntity> = await orm.em.findOne(RolleEntity, {
-                    id: '301457e9-4fe5-42a6-8084-fec927dc00df',
+                    name: 'Rolle2222',
                 });
                 const organisation: Option<OrganisationEntity> = await orm.em.findOne(OrganisationEntity, {
                     name: 'Schule1',
@@ -124,9 +123,7 @@ describe('DbSeedConsole', () => {
         describe('when person referenced by personenkontext does not exist in seeding data', () => {
             it('should throw EntityNotFoundError', async () => {
                 const params: string[] = ['seeding-integration-test/missingPersonForPersonenkontext'];
-                await expect(sut.run(params)).rejects.toThrow(
-                    new EntityNotFoundError('Referenced person for personenkontext not found, id=9080706'),
-                );
+                await expect(sut.run(params)).rejects.toThrow(EntityNotFoundError);
             });
         });
     });

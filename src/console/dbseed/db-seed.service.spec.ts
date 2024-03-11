@@ -8,9 +8,7 @@ import {
     MapperTestModule,
 } from '../../../test/utils/index.js';
 import fs from 'fs';
-import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { DataProviderFile } from './file/data-provider-file.js';
-import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
 import { Buffer } from 'buffer';
@@ -23,11 +21,14 @@ import { OrganisationDo } from '../../modules/organisation/domain/organisation.d
 import { EntityNotFoundError } from '../../shared/error/index.js';
 import { OrganisationsTyp, Traegerschaft } from '../../modules/organisation/domain/organisation.enums.js';
 import { faker } from '@faker-js/faker';
+import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
+import { Rolle } from '../../modules/rolle/domain/rolle.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
     let dbSeedService: DbSeedService;
     let organisationRepoMock: DeepMocked<OrganisationRepo>;
+    let rolleRepoMock: DeepMocked<RolleRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -55,10 +56,15 @@ describe('DbSeedService', () => {
                     provide: OrganisationRepo,
                     useValue: createMock<OrganisationRepo>(),
                 },
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
             ],
         }).compile();
         dbSeedService = module.get(DbSeedService);
         organisationRepoMock = module.get(OrganisationRepo);
+        rolleRepoMock = module.get(RolleRepo);
     });
 
     afterAll(async () => {
@@ -203,26 +209,46 @@ describe('DbSeedService', () => {
         });
     });
 
-    describe('readRolle', () => {
-        describe('readRolle with one entity', () => {
-            it('should have length 1', () => {
+    describe('seedRolle', () => {
+        describe('with existing organisation for administeredBySchulstrukturknoten', () => {
+            it('should insert one entity in database', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./seeding/seeding-integration-test/all/04_rolle.json`,
+                    `./seeding/seeding-integration-test/rolle/04_rolle-with-existing-ssk.json`,
                     'utf-8',
                 );
-                const rollen: Rolle<true>[] = dbSeedService.readRolle(fileContentAsStr);
-                const rolle: Partial<Rolle<true>> = {
-                    id: '301457e9-4fe5-42a6-8084-fec927dc00df',
-                    name: 'Rolle2222',
-                    administeredBySchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
-                    rollenart: RollenArt.LERN,
-                    merkmale: [],
-                    systemrechte: [],
-                    createdAt: expect.any(Date) as Date,
-                    updatedAt: expect.any(Date) as Date,
-                };
-                expect(rollen).toHaveLength(1);
-                expect(rollen[0]).toEqual(rolle);
+                const persistedRolle: Rolle<true> = DoFactory.createRolle(true);
+
+                const fileContentParentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/rolle/00_parent_organisation.json`,
+                    'utf-8',
+                );
+                const parent: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                    id: faker.string.uuid(),
+                    kennung: 'ParentOrganisation',
+                    name: 'Parent',
+                    namensergaenzung: 'Keine',
+                    kuerzel: '00',
+                    typ: OrganisationsTyp.TRAEGER,
+                    traegerschaft: Traegerschaft.KIRCHLICH,
+                });
+                organisationRepoMock.save.mockResolvedValueOnce(parent);
+                await dbSeedService.seedOrganisation(fileContentParentAsStr);
+
+                rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
+                await expect(dbSeedService.seedRolle(fileContentAsStr)).resolves.not.toThrow(EntityNotFoundError);
+            });
+        });
+
+        describe('with non-existing organisation for administeredBySchulstrukturknoten', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/rolle/05_rolle-with-non-existing-ssk.json`,
+                    'utf-8',
+                );
+                const persistedRolle: Rolle<true> = DoFactory.createRolle(true);
+
+                rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
+                await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
     });
@@ -260,21 +286,6 @@ describe('DbSeedService', () => {
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,
                 });
-            });
-        });
-    });
-
-    describe('getRolle', () => {
-        describe('getRolle by id after loading test rolle', () => {
-            it('should return the loaded rolle', () => {
-                const fileContentAsStr: string = fs.readFileSync(
-                    `./seeding/seeding-integration-test/all/04_rolle.json`,
-                    'utf-8',
-                );
-                const entities: Rolle<true>[] = dbSeedService.readRolle(fileContentAsStr);
-                const entity: Rolle<true> | undefined = entities[0];
-                const rolle: Rolle<true> | undefined = dbSeedService.getRolle(entity!.id);
-                expect(rolle).toBeTruthy();
             });
         });
     });

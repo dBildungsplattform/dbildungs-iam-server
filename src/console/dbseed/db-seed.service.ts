@@ -18,6 +18,8 @@ import { ClassLogger } from '../../core/logging/class-logger.js';
 import { PersonenkontextFile } from './file/personenkontext-file.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 import { OrganisationRepo } from '../../modules/organisation/persistence/organisation.repo.js';
+import { RolleFile } from './file/rolle-file.js';
+import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
 
 @Injectable()
 export class DbSeedService {
@@ -27,6 +29,7 @@ export class DbSeedService {
         private readonly personRepository: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly organisationRepo: OrganisationRepo,
+        private readonly rolleRepo: RolleRepo,
     ) {}
 
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
@@ -35,7 +38,7 @@ export class DbSeedService {
 
     private personMap: Map<number, Person<true>> = new Map();
 
-    private rolleMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
+    private rolleMap: Map<number, Rolle<true>> = new Map();
 
     private serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
 
@@ -99,7 +102,7 @@ export class DbSeedService {
         this.logger.info(`Insert ${entities.length} entities of type Organisation`);
     }
 
-    public readRolle(fileContentAsStr: string): Rolle<true>[] {
+    /*    public readRolle(fileContentAsStr: string): Rolle<true>[] {
         const { entities }: EntityFile<Rolle<true>> = JSON.parse(fileContentAsStr) as EntityFile<Rolle<true>>;
 
         const rollen: Rolle<true>[] = entities.map((rolleData: Rolle<true>) =>
@@ -120,6 +123,31 @@ export class DbSeedService {
         }
 
         return rollen;
+    }*/
+
+    public async seedRolle(fileContentAsStr: string): Promise<void> {
+        const rolleFile: EntityFile<RolleFile> = JSON.parse(fileContentAsStr) as EntityFile<RolleFile>;
+        const files: RolleFile[] = plainToInstance(RolleFile, rolleFile.entities);
+        for (const file of files) {
+            const persistedSSK: OrganisationDo<true> | undefined = this.organisationMap.get(
+                file.administeredBySchulstrukturknoten,
+            );
+            if (!persistedSSK)
+                throw new EntityNotFoundError('Organisation', file.administeredBySchulstrukturknoten.toString());
+            const rolle: Rolle<false> = Rolle.createNew(
+                file.name,
+                persistedSSK.id,
+                file.rollenart,
+                file.merkmale,
+                file.systemrechte,
+            );
+
+            const persistedRolle: Rolle<true> | DomainError = await this.rolleRepo.save(rolle);
+            if (file.id != null) {
+                this.rolleMap.set(file.id, persistedRolle);
+            }
+        }
+        this.logger.info(`Insert ${files.length} entities of type Rolle`);
     }
 
     public readServiceProvider(fileContentAsStr: string): ServiceProvider<true>[] {
@@ -175,7 +203,7 @@ export class DbSeedService {
                 file.password,
             );
             const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
-            if (persistedPerson instanceof Person && file.id) {
+            if (persistedPerson instanceof Person && file.id != null) {
                 this.personMap.set(file.id, persistedPerson);
             }
         }
@@ -190,14 +218,13 @@ export class DbSeedService {
         const files: PersonenkontextFile[] = plainToInstance(PersonenkontextFile, personenkontextFile.entities);
         const persistedPersonenkontexte: Personenkontext<true>[] = [];
         for (const file of files) {
-            const idOfPersistedPerson: Person<true> | undefined = this.personMap.get(file.personId);
-            if (!idOfPersistedPerson)
-                throw new EntityNotFoundError(`Referenced person for personenkontext not found, id=${file.personId}`);
+            const persistedPerson: Person<true> | undefined = this.personMap.get(file.personId);
+            if (!persistedPerson) throw new EntityNotFoundError('Person', file.personId.toString());
             const personenKontext: Personenkontext<false> = Personenkontext.construct(
                 undefined,
                 new Date(),
                 new Date(),
-                idOfPersistedPerson.id,
+                persistedPerson.id,
                 file.organisationId,
                 file.rolleId,
             );
@@ -208,11 +235,11 @@ export class DbSeedService {
         return persistedPersonenkontexte;
     }
 
-    /* Setting as RolleEntity is required, eg. RolleFile would not work, persisting would fail due to saving one RolleEntity and one RolleFile
-    for entitymanager it would not be the same entity */
+    /*  /!* Setting as RolleEntity is required, eg. RolleFile would not work, persisting would fail due to saving one RolleEntity and one RolleFile
+    for entitymanager it would not be the same entity *!/
     public getRolle(id: string): Rolle<true> | undefined {
         return this.rolleMap.get(id);
-    }
+    }*/
 
     private readEntityFromJSONFile<T>(fileContentAsStr: string, constructor: ConstructorCall): T[] {
         const entityFile: EntityFile<T> = JSON.parse(fileContentAsStr) as EntityFile<T>;
