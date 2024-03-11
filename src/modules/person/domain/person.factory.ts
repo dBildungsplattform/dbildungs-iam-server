@@ -8,11 +8,6 @@ export class PersonFactory {
     public constructor(private usernameGenerator: UsernameGeneratorService) {}
 
     public async createNew(creationParams: PersonCreationParams): Promise<Person<false>> {
-        const person: Person<false> = await Person.createNew(
-            this.usernameGenerator,
-            creationParams,
-        );
-
-        return person;
+        return Person.createNew(this.usernameGenerator, creationParams);
     }
 }
