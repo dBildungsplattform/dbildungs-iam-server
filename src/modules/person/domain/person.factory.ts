@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UsernameGeneratorService } from './username-generator.service.js';
-import { Person } from './person.js';
-import { PersonCreationParams } from './person.creation.params.js';
+import { Person, PersonCreationParams } from './person.js';
 
 @Injectable()
 export class PersonFactory {
