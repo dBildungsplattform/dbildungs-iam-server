@@ -6,6 +6,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
+import { PersonCreationParams } from './person.creation.params.js';
 
 describe('Person', () => {
     let module: TestingModule;
@@ -78,10 +79,12 @@ describe('Person', () => {
         describe('without password & username', () => {
             it('should return not persisted person with generated username & password', async () => {
                 usernameGeneratorService.generateUsername.mockResolvedValue('');
-                const person: Person<false> = await Person.createNew(usernameGeneratorService, {
+                // Extracted so that the coverage analysis picks up on the file imported and doesn't complain about it not being covered
+                const creationParams: PersonCreationParams = {
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
-                });
+                };
+                const person: Person<false> = await Person.createNew(usernameGeneratorService, creationParams);
 
                 expect(person).toBeDefined();
                 expect(person).toBeInstanceOf(Person<false>);
