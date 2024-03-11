@@ -77,7 +77,7 @@ describe('DbSeedService', () => {
         describe('readDataProvider with one entity', () => {
             it('should have length 1', () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/00_data-provider.json`,
+                    `./seeding/seeding-integration-test/all/00_data-provider.json`,
                     'utf-8',
                 );
                 const entities: DataProviderFile[] = dbSeedService.readDataProvider(fileContentAsStr);
@@ -95,7 +95,7 @@ describe('DbSeedService', () => {
         describe('without administriertVon and zugehoerigZu', () => {
             it('should insert one entity in database', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/01_organisation.json`,
+                    `./seeding/seeding-integration-test/all/01_organisation.json`,
                     'utf-8',
                 );
                 const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
@@ -110,7 +110,7 @@ describe('DbSeedService', () => {
         describe('with only nulls', () => {
             it('should insert one entity in database', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/organisation/00_organisation_with_only_nulls.json`,
+                    `./seeding/seeding-integration-test/organisation/00_organisation_with_only_nulls.json`,
                     'utf-8',
                 );
                 const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
@@ -125,11 +125,11 @@ describe('DbSeedService', () => {
         describe('with existing administriertVon', () => {
             it('should not throw EntityNotFoundError', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/organisation/01_organisation.json`,
+                    `./seeding/seeding-integration-test/organisation/01_organisation.json`,
                     'utf-8',
                 );
                 const fileContentParentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/organisation/03_parent_organisation.json`,
+                    `./seeding/seeding-integration-test/organisation/03_parent_organisation.json`,
                     'utf-8',
                 );
                 const parent: OrganisationDo<true> = DoFactory.createOrganisation(true, {
@@ -152,11 +152,11 @@ describe('DbSeedService', () => {
         describe('with existing zugehoerigZu', () => {
             it('should not throw EntityNotFoundError', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/organisation/02_organisation.json`,
+                    `./seeding/seeding-integration-test/organisation/02_organisation.json`,
                     'utf-8',
                 );
                 const fileContentParentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/organisation/03_parent_organisation.json`,
+                    `./seeding/seeding-integration-test/organisation/03_parent_organisation.json`,
                     'utf-8',
                 );
                 const parent: OrganisationDo<true> = DoFactory.createOrganisation(true, {
@@ -179,7 +179,7 @@ describe('DbSeedService', () => {
         describe('with non existing administriertVon', () => {
             it('should throw EntityNotFoundError', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/organisation/04_missing_administriert-von.json`,
+                    `./seeding/seeding-integration-test/organisation/04_missing_administriert-von.json`,
                     'utf-8',
                 );
                 const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
@@ -192,7 +192,7 @@ describe('DbSeedService', () => {
         describe('with non existing zugehoerigZu', () => {
             it('should throw EntityNotFoundError', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/organisation/05_missing_zugehoerig-zu.json`,
+                    `./seeding/seeding-integration-test/organisation/05_missing_zugehoerig-zu.json`,
                     'utf-8',
                 );
                 const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
@@ -207,7 +207,7 @@ describe('DbSeedService', () => {
         describe('readRolle with one entity', () => {
             it('should have length 1', () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/04_rolle.json`,
+                    `./seeding/seeding-integration-test/all/04_rolle.json`,
                     'utf-8',
                 );
                 const rollen: Rolle<true>[] = dbSeedService.readRolle(fileContentAsStr);
@@ -231,7 +231,7 @@ describe('DbSeedService', () => {
         describe('readServiceProvider with two entities', () => {
             it('should have length 2', () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/03_service-provider.json`,
+                    `./seeding/seeding-integration-test/all/03_service-provider.json`,
                     'utf-8',
                 );
 
@@ -268,7 +268,7 @@ describe('DbSeedService', () => {
         describe('getRolle by id after loading test rolle', () => {
             it('should return the loaded rolle', () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/04_rolle.json`,
+                    `./seeding/seeding-integration-test/all/04_rolle.json`,
                     'utf-8',
                 );
                 const entities: Rolle<true>[] = dbSeedService.readRolle(fileContentAsStr);

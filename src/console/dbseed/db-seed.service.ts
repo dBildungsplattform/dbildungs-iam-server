@@ -227,6 +227,6 @@ export class DbSeedService {
     }
 
     public getEntityFileNames(directory: string): string[] {
-        return fs.readdirSync(`./sql/${directory}`).filter((fileName: string) => fileName.endsWith('.json'));
+        return fs.readdirSync(`./seeding/${directory}`).filter((fileName: string) => fileName.endsWith('.json'));
     }
 }
