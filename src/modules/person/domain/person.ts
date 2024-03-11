@@ -2,9 +2,31 @@ import { faker } from '@faker-js/faker';
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
-import { PersonCreationParams } from './person.creation.params.js';
 
 type PasswordInternalState = { passwordInternal: string | undefined; isTemporary: boolean };
+
+export type PersonCreationParams = {
+    familienname: string;
+    vorname: string;
+    referrer?: string;
+    stammorganisation?: string;
+    initialenFamilienname?: string;
+    initialenVorname?: string;
+    rufname?: string;
+    nameTitel?: string;
+    nameAnrede?: string[];
+    namePraefix?: string[];
+    nameSuffix?: string[];
+    nameSortierindex?: string;
+    geburtsdatum?: Date;
+    geburtsort?: string;
+    geschlecht?: Geschlecht;
+    lokalisierung?: string;
+    vertrauensstufe?: Vertrauensstufe;
+    auskunftssperre?: boolean;
+    username?: string;
+    password?: string;
+};
 
 export class Person<WasPersisted extends boolean> {
     public static readonly CREATE_PERSON_DTO_MANDANT_UUID: string = '8c6a9447-c23e-4e70-8595-3bcc88a5577a';

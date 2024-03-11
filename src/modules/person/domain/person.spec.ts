@@ -1,12 +1,11 @@
 import { faker } from '@faker-js/faker';
-import { Person } from './person.js';
+import { Person, PersonCreationParams } from './person.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
-import { PersonCreationParams } from './person.creation.params.js';
 
 describe('Person', () => {
     let module: TestingModule;
