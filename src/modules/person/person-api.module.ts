@@ -10,6 +10,7 @@ import { UsernameGeneratorService } from './domain/username-generator.service.js
 import { PersonRepository } from './persistence/person.repository.js';
 import { RolleModule } from '../rolle/rolle.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
+import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 
 @Module({
     imports: [
