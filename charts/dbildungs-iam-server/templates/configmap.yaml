@@ -4,7 +4,7 @@ metadata:
   name: {{ .Values.configmap.name }}
   namespace: {{ .Values.namespace }}
   labels: 
-    app.kubernetes.io/name: {{ .Values.dbiam.commonLabels.name }}
+    app.kubernetes.io/name: {{ .Values.dbildungsIamServer.commonLabels.name }}
     app.kubernetes.io/version: {{.Chart.Version}}
 data:
   config-json: |-
