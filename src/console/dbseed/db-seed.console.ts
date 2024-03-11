@@ -114,13 +114,6 @@ export class DbSeedConsole extends CommandRunner {
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }
 
-    /* private async handleRolle(entities: Rolle<true>[], entityName: string): Promise<void> {
-        for (const entity of entities) {
-            await this.rolleSeedingRepo.save(entity);
-        }
-        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
-    }*/
-
     private handleServiceProvider(aggregates: ServiceProvider<true>[], aggregateName: string): void {
         for (const aggregate of aggregates) {
             const serviceProvider: RequiredEntityData<ServiceProviderEntity> = this.orm.em.create(

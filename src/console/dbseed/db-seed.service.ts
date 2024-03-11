@@ -102,29 +102,6 @@ export class DbSeedService {
         this.logger.info(`Insert ${entities.length} entities of type Organisation`);
     }
 
-    /*    public readRolle(fileContentAsStr: string): Rolle<true>[] {
-        const { entities }: EntityFile<Rolle<true>> = JSON.parse(fileContentAsStr) as EntityFile<Rolle<true>>;
-
-        const rollen: Rolle<true>[] = entities.map((rolleData: Rolle<true>) =>
-            Rolle.construct(
-                rolleData.id,
-                new Date(),
-                new Date(),
-                rolleData.name,
-                rolleData.administeredBySchulstrukturknoten,
-                rolleData.rollenart,
-                rolleData.merkmale,
-                rolleData.systemrechte,
-            ),
-        );
-
-        for (const rolle of rollen) {
-            this.rolleMap.set(rolle.id, rolle);
-        }
-
-        return rollen;
-    }*/
-
     public async seedRolle(fileContentAsStr: string): Promise<void> {
         const rolleFile: EntityFile<RolleFile> = JSON.parse(fileContentAsStr) as EntityFile<RolleFile>;
         const files: RolleFile[] = plainToInstance(RolleFile, rolleFile.entities);
@@ -234,12 +211,6 @@ export class DbSeedService {
         this.logger.info(`Insert ${files.length} entities of type Personenkontext`);
         return persistedPersonenkontexte;
     }
-
-    /*  /!* Setting as RolleEntity is required, eg. RolleFile would not work, persisting would fail due to saving one RolleEntity and one RolleFile
-    for entitymanager it would not be the same entity *!/
-    public getRolle(id: string): Rolle<true> | undefined {
-        return this.rolleMap.get(id);
-    }*/
 
     private readEntityFromJSONFile<T>(fileContentAsStr: string, constructor: ConstructorCall): T[] {
         const entityFile: EntityFile<T> = JSON.parse(fileContentAsStr) as EntityFile<T>;
