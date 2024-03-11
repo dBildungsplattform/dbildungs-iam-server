@@ -2,6 +2,8 @@ dbildungsIamServerCpuMax: 2
 dbildungsIamServerMemMax: 4G
 dbildungsIamServerRedisCpuMax: 2
 dbildungsIamServerRedisMemMax: 4G
+dbildungsIamServerCpuRequest: 200m
+dbildungsIamServerMemRequest: 200Mi
 dbildungsIamServerRedisCpuRequest: 200m
 dbildungsIamServerRedisMemRequest: 200Mi
 backendHostname: ""
