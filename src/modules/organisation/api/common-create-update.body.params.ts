@@ -1,18 +1,18 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 
 export class CommonCreateUpdateOrganisationBodyParams {
     @AutoMap()
     @IsOptional()
-    @IsString()
+    @IsUUID()
     @ApiPropertyOptional()
     public readonly administriertVon?: string;
 
     @AutoMap()
     @IsOptional()
-    @IsString()
+    @IsUUID()
     @ApiPropertyOptional()
     public readonly zugehoerigZu?: string;
 

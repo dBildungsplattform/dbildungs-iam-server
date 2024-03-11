@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsUUID } from 'class-validator';
 
 export class AngebotByIdParams {
-    @IsString()
+    @IsUUID()
     @ApiProperty({
         description: 'The id of the service provider',
         required: true,

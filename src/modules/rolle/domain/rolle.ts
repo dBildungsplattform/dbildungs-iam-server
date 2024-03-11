@@ -1,4 +1,4 @@
-import { RollenArt, RollenMerkmal } from './rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 
 export class Rolle<WasPersisted extends boolean> {
     private constructor(
@@ -9,6 +9,7 @@ export class Rolle<WasPersisted extends boolean> {
         public administeredBySchulstrukturknoten: string,
         public rollenart: RollenArt,
         public merkmale: RollenMerkmal[],
+        public systemrechte: RollenSystemRecht[],
     ) {}
 
     public static createNew(
@@ -16,8 +17,18 @@ export class Rolle<WasPersisted extends boolean> {
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
+        systemrechte: RollenSystemRecht[],
     ): Rolle<false> {
-        return new Rolle(undefined, undefined, undefined, name, administeredBySchulstrukturknoten, rollenart, merkmale);
+        return new Rolle(
+            undefined,
+            undefined,
+            undefined,
+            name,
+            administeredBySchulstrukturknoten,
+            rollenart,
+            merkmale,
+            systemrechte,
+        );
     }
 
     public static construct<WasPersisted extends boolean = false>(
@@ -28,8 +39,18 @@ export class Rolle<WasPersisted extends boolean> {
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
+        systemrechte: RollenSystemRecht[],
     ): Rolle<WasPersisted> {
-        return new Rolle(id, createdAt, updatedAt, name, administeredBySchulstrukturknoten, rollenart, merkmale);
+        return new Rolle(
+            id,
+            createdAt,
+            updatedAt,
+            name,
+            administeredBySchulstrukturknoten,
+            rollenart,
+            merkmale,
+            systemrechte,
+        );
     }
 
     public addMerkmal(merkmal: RollenMerkmal): void {
@@ -43,5 +64,15 @@ export class Rolle<WasPersisted extends boolean> {
         if (idx !== -1) {
             this.merkmale.splice(idx, 1);
         }
+    }
+
+    public addSystemRecht(systemRecht: RollenSystemRecht): void {
+        if (!this.systemrechte.includes(systemRecht)) {
+            this.systemrechte.push(systemRecht);
+        }
+    }
+
+    public hasSystemRecht(systemRecht: RollenSystemRecht): boolean {
+        return this.systemrechte.includes(systemRecht);
     }
 }
