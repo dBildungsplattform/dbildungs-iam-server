@@ -28,7 +28,7 @@ spec:
           {{- end }}
           command: [ "node", "dist/src/console/main.js", "db", "init" ]
           env:
-            {{- include "dbiam-backend-envs" . | indent  12}}
+            {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
           volumeMounts:
             - mountPath: /app/config/config.json
               subPath: config-json
@@ -46,8 +46,8 @@ spec:
               cpu: {{.Values.dbildungsIamCpuRequest}}
               memory: {{.Values.dbildungsIamMemRequest}}
             limits:
-              cpu: {{.Values.dbildungsIamCpuMax}}
-              memory: {{.Values.dbildungsIamMemMax}}
+              cpu: {{.Values.dbildungsIamServerCpuMax}}
+              memory: {{.Values.dbildungsIamServerMemMax}}
         - name: db-seeding
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
@@ -57,7 +57,7 @@ spec:
           {{- end }}
           command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
           env:
-            {{- include "dbiam-backend-envs" . | indent  12}}
+            {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
           volumeMounts:
             - mountPath: /app/config/config.json
               subPath: config-json
@@ -75,8 +75,8 @@ spec:
               cpu: {{.Values.dbildungsIamCpuRequest}}
               memory: {{.Values.dbildungsIamMemRequest}}
             limits:
-              cpu: {{.Values.dbildungsIamCpuMax}}
-              memory: {{.Values.dbildungsIamMemMax}}
+              cpu: {{.Values.dbildungsIamServerCpuMax}}
+              memory: {{.Values.dbildungsIamServerMemMax}}
       {{end}}
       containers:
         - name: {{ .Values.backend.commonLabels.name }}
@@ -90,7 +90,7 @@ spec:
             - name: {{ (index .Values.backendcontainer.ports 0).name }}
               containerPort: {{ (index .Values.backendcontainer.ports 0).containerPort }}
           env:
-            {{- include "dbiam-backend-envs" . | nindent 12 }}
+            {{- include "dbildungs-iam-server-backend-envs" . | nindent 12 }}
           volumeMounts:
             {{- toYaml .Values.backendcontainer.volumeMounts | nindent 12 }}
           resources:

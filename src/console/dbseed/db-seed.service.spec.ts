@@ -138,7 +138,7 @@ describe('DbSeedService', () => {
                 const rolle: Partial<Rolle<true>> = {
                     id: '301457e9-4fe5-42a6-8084-fec927dc00df',
                     name: 'Rolle2222',
-                    administeredBySchulstrukturknoten: '1',
+                    administeredBySchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
                     rollenart: RollenArt.LERN,
                     merkmale: [],
                     systemrechte: [],
@@ -169,7 +169,7 @@ describe('DbSeedService', () => {
                     kategorie: ServiceProviderKategorie.UNTERRICHT,
                     logoMimeType: 'image/png',
                     logo: expect.any(Buffer) as Buffer,
-                    providedOnSchulstrukturknoten: '1',
+                    providedOnSchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,
                 });
@@ -178,7 +178,31 @@ describe('DbSeedService', () => {
                     name: 'Provider Without Logo',
                     url: 'https://example.com/',
                     kategorie: ServiceProviderKategorie.UNTERRICHT,
-                    providedOnSchulstrukturknoten: '1',
+                    logo: undefined,
+                    logoMimeType: undefined,
+                    providedOnSchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
+                    createdAt: expect.any(Date) as Date,
+                    updatedAt: expect.any(Date) as Date,
+                });
+            });
+        });
+    });
+
+    describe('readPersonenkontext', () => {
+        describe('readPersonenkontext with one entity', () => {
+            it('should have length 1', () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./sql/seeding-integration-test/all/05_personenkontext.json`,
+                    'utf-8',
+                );
+                const personenkontexte: Personenkontext<true>[] = dbSeedService.readPersonenkontext(fileContentAsStr);
+
+                expect(personenkontexte).toHaveLength(1);
+                expect(personenkontexte[0]).toEqual({
+                    id: 'a6cf487d-3b69-4105-bb4d-a022c2e1c67a',
+                    personId: 'ee510860-261a-4896-9d02-95d94d73c9f7',
+                    organisationId: 'bcc7ec17-37d5-4ec9-9129-c14bcfa53cd6',
+                    rolleId: 'abdcc2b9-5086-4bf2-bbee-03d6a013b7f8',
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,
                 });
