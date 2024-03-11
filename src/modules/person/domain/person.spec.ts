@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { Person } from './person.js';
 import { DomainError } from '../../../shared/error/index.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { TestingModule, Test } from '@nestjs/testing';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
@@ -78,11 +78,10 @@ describe('Person', () => {
         describe('without password & username', () => {
             it('should return not persisted person with generated username & password', async () => {
                 usernameGeneratorService.generateUsername.mockResolvedValue('');
-                const person: Person<false> = await Person.createNew(
-                    usernameGeneratorService,
-                    faker.person.lastName(),
-                    faker.person.firstName(),
-                );
+                const person: Person<false> = await Person.createNew(usernameGeneratorService, {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                });
 
                 expect(person).toBeDefined();
                 expect(person).toBeInstanceOf(Person<false>);
@@ -95,29 +94,12 @@ describe('Person', () => {
         describe('with fixed password & username', () => {
             it('should return not persisted person with fixed username & password', async () => {
                 usernameGeneratorService.generateUsername.mockResolvedValue('');
-                const person: Person<false> = await Person.createNew(
-                    usernameGeneratorService,
-                    faker.person.lastName(),
-                    faker.person.firstName(),
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    'testusername',
-                    'testpassword',
-                );
+                const person: Person<false> = await Person.createNew(usernameGeneratorService, {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    username: 'testusername',
+                    password: 'testpassword',
+                });
 
                 expect(person).toBeDefined();
                 expect(person).toBeInstanceOf(Person<false>);
