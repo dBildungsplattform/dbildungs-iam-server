@@ -25,6 +25,7 @@ import { Personenkontext } from '../../modules/personenkontext/domain/personenko
 import { PersonenkontextEntity } from '../../modules/personenkontext/persistence/personenkontext.entity.js';
 import { mapAggregateToData } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
+import { DomainError } from '../../shared/error/domain.error.js';
 
 export interface SeedFile {
     entityName: string;
@@ -205,13 +206,16 @@ export class DbSeedConsole extends CommandRunner {
 
     private async createPerson(personEntity: PersonFile): Promise<void> {
         this.logger.info('Start of createPerson');
-        const username: string = await this.usernameGenerator.generateUsername(
+        const usernameResult: Result<string, DomainError> = await this.usernameGenerator.generateUsername(
             personEntity.vorname,
             personEntity.familienname,
         );
+
+        if (!usernameResult.ok) throw usernameResult.error;
+
         const userDo: UserDo<false> = {
-            username: username,
-            email: username + '@test.de',
+            username: usernameResult.value,
+            email: usernameResult.value + '@test.de',
             id: null,
             createdDate: null,
         };
@@ -220,9 +224,9 @@ export class DbSeedConsole extends CommandRunner {
         this.logger.info('Created user');
         if (userIdResult.ok) {
             //should be always ture, because usernameGenerator.generateUsername calls getNextAvailableName
-            this.createdKeycloakUsers.push([userIdResult.value, username]);
+            this.createdKeycloakUsers.push([userIdResult.value, usernameResult.value]);
             personEntity.keycloakUserId = userIdResult.value;
-            this.logger.info(`Created Keycloak-user with username ${username}`);
+            this.logger.info(`Created Keycloak-user with username ${usernameResult.value}`);
         } else {
             throw userIdResult.error;
         }

@@ -139,12 +139,17 @@ export class PersonRepository {
             return person;
         }
         if (!person.keycloakUserId) {
-            const generatedUsername: string = await usernameGenerator.generateUsername(
+            const usernameResult: Result<string, DomainError> = await usernameGenerator.generateUsername(
                 person.vorname,
                 person.familienname,
             );
-            person.username = generatedUsername;
-            person.referrer = generatedUsername;
+
+            if (!usernameResult.ok) {
+                return usernameResult.error;
+            }
+
+            person.username = usernameResult.value;
+            person.referrer = usernameResult.value;
 
             const userDo: UserDo<false> = {
                 username: person.username,
