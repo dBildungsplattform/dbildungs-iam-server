@@ -8,7 +8,8 @@
             "namensergaenzung": "Keine",
             "kuerzel": "01",
             "typ": "SCHULE",
-            "traegerschaft": "05"
+            "traegerschaft": "05",
+            "zugehoerigZu": 5
         }
     ]
 }

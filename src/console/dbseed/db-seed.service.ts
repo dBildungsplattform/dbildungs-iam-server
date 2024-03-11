@@ -17,6 +17,7 @@ import { DomainError, EntityNotFoundError } from '../../shared/error/index.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
 import { PersonenkontextFile } from './file/personenkontext-file.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
+import { OrganisationRepo } from '../../modules/organisation/persistence/organisation.repo.js';
 
 @Injectable()
 export class DbSeedService {
@@ -25,11 +26,12 @@ export class DbSeedService {
         private readonly personFactory: PersonFactory,
         private readonly personRepository: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly organisationRepo: OrganisationRepo,
     ) {}
 
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
 
-    private organisationMap: Map<string, OrganisationDo<true>> = new Map<string, OrganisationDo<true>>();
+    private organisationMap: Map<number, OrganisationDo<true>> = new Map();
 
     private personMap: Map<number, Person<true>> = new Map();
 
@@ -49,36 +51,52 @@ export class DbSeedService {
     }
 
     //to be refactored when organisation becomes DomainDriven
-    private static constructOrganisation(data: OrganisationFile): OrganisationDo<true> {
+    private async constructOrganisation(data: OrganisationFile): Promise<OrganisationDo<true>> {
         const organisationDo: OrganisationDo<true> = new OrganisationDo<true>();
-        organisationDo.id = data.id;
-        organisationDo.administriertVon = data.administriertVon ?? undefined;
-        organisationDo.zugehoerigZu = data.zugehoerigZu ?? undefined;
+        let administriertVon: string | undefined = undefined;
+        let zugehoerigZu: string | undefined = undefined;
+
+        if (data.administriertVon != null) {
+            const adminstriertVonOrganisation: OrganisationDo<true> | undefined = this.organisationMap.get(
+                data.administriertVon,
+            );
+            if (!adminstriertVonOrganisation)
+                throw new EntityNotFoundError('Organisation', data.administriertVon.toString());
+            administriertVon = adminstriertVonOrganisation.id;
+        }
+        if (data.zugehoerigZu != null) {
+            const zugehoerigZuOrganisation: OrganisationDo<true> | undefined = this.organisationMap.get(
+                data.zugehoerigZu,
+            );
+            if (!zugehoerigZuOrganisation) throw new EntityNotFoundError('Organisation', data.zugehoerigZu.toString());
+            zugehoerigZu = zugehoerigZuOrganisation.id;
+        }
+        organisationDo.administriertVon = administriertVon ?? undefined;
+        organisationDo.zugehoerigZu = zugehoerigZu ?? undefined;
         organisationDo.kennung = data.kennung ?? undefined;
         organisationDo.name = data.name ?? undefined;
         organisationDo.namensergaenzung = data.namensergaenzung ?? undefined;
         organisationDo.kuerzel = data.kuerzel ?? undefined;
         organisationDo.typ = data.typ ?? undefined;
         organisationDo.traegerschaft = data.traegerschaft ?? undefined;
+
+        const persistedOrganisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
+        this.organisationMap.set(data.id, persistedOrganisation);
+
         return organisationDo;
     }
 
-    public readOrganisation(fileContentAsStr: string): OrganisationDo<true>[] {
+    public async seedOrganisation(fileContentAsStr: string): Promise<void> {
         const organisationFile: EntityFile<OrganisationFile> = JSON.parse(
             fileContentAsStr,
         ) as EntityFile<OrganisationFile>;
 
         const entities: OrganisationFile[] = plainToInstance(OrganisationFile, organisationFile.entities);
 
-        const organisations: OrganisationDo<true>[] = entities.map((organisationData: OrganisationFile) =>
-            DbSeedService.constructOrganisation(organisationData),
-        );
-
-        for (const organisation of organisations) {
-            this.organisationMap.set(organisation.id, organisation);
+        for (const organisation of entities) {
+            await this.constructOrganisation(organisation);
         }
-
-        return organisations;
+        this.logger.info(`Insert ${entities.length} entities of type Organisation`);
     }
 
     public readRolle(fileContentAsStr: string): Rolle<true>[] {

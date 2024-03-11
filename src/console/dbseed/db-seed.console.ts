@@ -8,7 +8,6 @@ import { Mapper } from '@automapper/core';
 import { DbSeedService } from './db-seed.service.js';
 import { PersonFile } from './file/person-file.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
-import { OrganisationEntity } from '../../modules/organisation/persistence/organisation.entity.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { DataProviderFile } from './file/data-provider-file.js';
@@ -17,7 +16,6 @@ import { mapAggregateToData as mapServiceProviderAggregateToData } from '../../m
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
 import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
-import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
 
 export interface SeedFile {
     entityName: string;
@@ -34,7 +32,7 @@ export type ConstructorCall = () => Entity;
 @SubCommand({ name: 'seed', description: 'creates seed data in the database' })
 export class DbSeedConsole extends CommandRunner {
     public constructor(
-        private orm: MikroORM,
+        private readonly orm: MikroORM,
         private readonly logger: ClassLogger,
         private readonly dbSeedService: DbSeedService,
         private readonly rolleSeedingRepo: RolleSeedingRepo,
@@ -88,7 +86,7 @@ export class DbSeedConsole extends CommandRunner {
                 this.handleDataProvider(this.dbSeedService.readDataProvider(fileContentAsStr), seedFile.entityName);
                 break;
             case 'Organisation':
-                this.handleOrganisation(this.dbSeedService.readOrganisation(fileContentAsStr), seedFile.entityName);
+                await this.dbSeedService.seedOrganisation(fileContentAsStr);
                 break;
             case 'Person':
                 await this.dbSeedService.seedPerson(fileContentAsStr);
@@ -134,31 +132,5 @@ export class DbSeedConsole extends CommandRunner {
             this.orm.em.persist(serviceProvider);
         }
         this.logger.info(`Insert ${aggregates.length} entities of type ${aggregateName}`);
-    }
-
-    private handleOrganisation(organisationDos: OrganisationDo<true>[], aggregateName: string): void {
-        for (const organisationDo of organisationDos) {
-            const organisation: RequiredEntityData<OrganisationEntity> = this.orm.em.create(
-                OrganisationEntity,
-                this.mapOrganisation(organisationDo),
-            );
-            this.orm.em.persist(organisation);
-        }
-        this.logger.info(`Insert ${organisationDos.length} entities of type ${aggregateName}`);
-    }
-
-    private mapOrganisation(organisationDo: OrganisationDo<boolean>): RequiredEntityData<OrganisationEntity> {
-        return {
-            // Don't assign createdAt and updatedAt, they are auto-generated!
-            id: organisationDo.id,
-            administriertVon: organisationDo.administriertVon,
-            zugehoerigZu: organisationDo.zugehoerigZu,
-            kennung: organisationDo.kennung,
-            name: organisationDo.name,
-            namensergaenzung: organisationDo.namensergaenzung,
-            kuerzel: organisationDo.kuerzel,
-            typ: organisationDo.typ,
-            traegerschaft: organisationDo.traegerschaft,
-        };
     }
 }

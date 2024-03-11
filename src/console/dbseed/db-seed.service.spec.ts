@@ -3,26 +3,31 @@ import { DbSeedService } from './db-seed.service.js';
 import {
     ConfigTestModule,
     DatabaseTestModule,
+    DoFactory,
     LoggingTestModule,
     MapperTestModule,
 } from '../../../test/utils/index.js';
 import fs from 'fs';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
-import { OrganisationFile } from './file/organisation-file.js';
 import { DataProviderFile } from './file/data-provider-file.js';
-import { OrganisationsTyp, Traegerschaft } from '../../modules/organisation/domain/organisation.enums.js';
 import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
 import { Buffer } from 'buffer';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
+import { OrganisationRepo } from '../../modules/organisation/persistence/organisation.repo.js';
+import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
+import { EntityNotFoundError } from '../../shared/error/index.js';
+import { OrganisationsTyp, Traegerschaft } from '../../modules/organisation/domain/organisation.enums.js';
+import { faker } from '@faker-js/faker';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
     let dbSeedService: DbSeedService;
+    let organisationRepoMock: DeepMocked<OrganisationRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -46,9 +51,14 @@ describe('DbSeedService', () => {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
+                {
+                    provide: OrganisationRepo,
+                    useValue: createMock<OrganisationRepo>(),
+                },
             ],
         }).compile();
         dbSeedService = module.get(DbSeedService);
+        organisationRepoMock = module.get(OrganisationRepo);
     });
 
     afterAll(async () => {
@@ -81,51 +91,114 @@ describe('DbSeedService', () => {
         });
     });
 
-    describe('readOrganisation', () => {
-        describe('readOrganisation with one entity and properties defined', () => {
-            it('should have length 1 and be mappable', () => {
+    describe('seedOrganisation', () => {
+        describe('without administriertVon and zugehoerigZu', () => {
+            it('should insert one entity in database', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
                     `./sql/seeding-integration-test/all/01_organisation.json`,
                     'utf-8',
                 );
-                const entities: OrganisationFile[] = dbSeedService.readOrganisation(fileContentAsStr);
-                const entity: OrganisationFile | undefined = entities[0];
-                const organisation: Partial<OrganisationFile> = {
-                    id: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
-                    administriertVon: undefined,
-                    zugehoerigZu: undefined,
-                    typ: OrganisationsTyp.SCHULE,
-                    kuerzel: '01',
-                    namensergaenzung: 'Keine',
-                    name: 'Schule1',
-                    kennung: 'Organisation1',
-                    traegerschaft: Traegerschaft.KIRCHLICH,
-                };
-                expect(entities).toHaveLength(1);
-                expect(entity).toEqual(organisation);
+                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+
+                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
             });
         });
-        describe('readOrganisation with one entity and optional properties are undefined', () => {
-            it('should have length 1 and be mappable', () => {
+
+        describe('with only nulls', () => {
+            it('should insert one entity in database', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/organisationUndefinedProperties/01_organisation.json`,
+                    `./sql/seeding-integration-test/organisation/00_organisation_with_only_nulls.json`,
                     'utf-8',
                 );
-                const entities: OrganisationFile[] = dbSeedService.readOrganisation(fileContentAsStr);
-                const entity: OrganisationFile | undefined = entities[0];
-                const organisation: Partial<OrganisationFile> = {
-                    id: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
-                    administriertVon: undefined,
-                    zugehoerigZu: undefined,
-                    typ: undefined,
-                    kuerzel: undefined,
-                    namensergaenzung: undefined,
-                    name: undefined,
-                    kennung: undefined,
-                    traegerschaft: undefined,
-                };
-                expect(entities).toHaveLength(1);
-                expect(entity).toEqual(organisation);
+                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+
+                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
+        });
+
+        describe('with existing administriertVon', () => {
+            it('should not throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./sql/seeding-integration-test/organisation/01_organisation.json`,
+                    'utf-8',
+                );
+                const fileContentParentAsStr: string = fs.readFileSync(
+                    `./sql/seeding-integration-test/organisation/03_parent_organisation.json`,
+                    'utf-8',
+                );
+                const parent: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                    id: faker.string.uuid(),
+                    kennung: 'ParentOrganisation',
+                    name: 'Parent',
+                    namensergaenzung: 'Keine',
+                    kuerzel: '00',
+                    typ: OrganisationsTyp.TRAEGER,
+                    traegerschaft: Traegerschaft.KIRCHLICH,
+                });
+                organisationRepoMock.save.mockResolvedValueOnce(parent);
+                await dbSeedService.seedOrganisation(fileContentParentAsStr);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
+        });
+
+        describe('with existing zugehoerigZu', () => {
+            it('should not throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./sql/seeding-integration-test/organisation/02_organisation.json`,
+                    'utf-8',
+                );
+                const fileContentParentAsStr: string = fs.readFileSync(
+                    `./sql/seeding-integration-test/organisation/03_parent_organisation.json`,
+                    'utf-8',
+                );
+                const parent: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                    id: faker.string.uuid(),
+                    kennung: 'ParentOrganisation',
+                    name: 'Parent',
+                    namensergaenzung: 'Keine',
+                    kuerzel: '00',
+                    typ: OrganisationsTyp.TRAEGER,
+                    traegerschaft: Traegerschaft.KIRCHLICH,
+                });
+                organisationRepoMock.save.mockResolvedValueOnce(parent);
+                await dbSeedService.seedOrganisation(fileContentParentAsStr);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
+        });
+
+        describe('with non existing administriertVon', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./sql/seeding-integration-test/organisation/04_missing_administriert-von.json`,
+                    'utf-8',
+                );
+                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+
+                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+
+        describe('with non existing zugehoerigZu', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./sql/seeding-integration-test/organisation/05_missing_zugehoerig-zu.json`,
+                    'utf-8',
+                );
+                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+
+                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
     });

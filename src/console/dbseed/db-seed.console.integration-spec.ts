@@ -25,6 +25,7 @@ import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 import { EntityNotFoundError } from '../../shared/error/index.js';
+import { OrganisationModule } from '../../modules/organisation/organisation.module.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -36,6 +37,7 @@ describe('DbSeedConsole', () => {
         module = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
+                OrganisationModule,
                 KeycloakAdministrationModule,
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
@@ -99,7 +101,7 @@ describe('DbSeedConsole', () => {
                     id: '301457e9-4fe5-42a6-8084-fec927dc00df',
                 });
                 const organisation: Option<OrganisationEntity> = await orm.em.findOne(OrganisationEntity, {
-                    id: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
+                    name: 'Schule1',
                 });
                 const serviceProvider: Option<ServiceProviderEntity> = await orm.em.findOne(ServiceProviderEntity, {
                     id: 'ca0e17c5-8e48-403b-af92-28eff21c64bb',

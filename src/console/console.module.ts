@@ -20,9 +20,11 @@ import { PersonRepository } from '../modules/person/persistence/person.repositor
 import { RolleSeedingRepo } from './dbseed/repo/rolle-seeding.repo.js';
 import { PersonFactory } from '../modules/person/domain/person.factory.js';
 import { DBiamPersonenkontextRepo } from '../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
+import { OrganisationModule } from '../modules/organisation/organisation.module.js';
 
 @Module({
     imports: [
+        OrganisationModule,
         KeycloakConfigModule,
         KeycloakAdministrationModule,
         LoggerModule.register(ConsoleModule.name),
