@@ -3,7 +3,6 @@ import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { RollenArt } from '../domain/rolle.enums.js';
 import { RolleMerkmalEntity } from './rolle-merkmal.entity.js';
 import { RolleServiceProviderEntity } from './rolle-service-provider.entity.js';
-import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 
 @Entity({ tableName: 'rolle' })
 export class RolleEntity extends TimestampedEntity {
@@ -33,5 +32,5 @@ export class RolleEntity extends TimestampedEntity {
         orphanRemoval: true,
         cascade: [Cascade.ALL],
     })
-    public serviceProvider: Collection<ServiceProviderEntity> = new Collection<ServiceProviderEntity>(this);
+    public serviceProvider: Collection<RolleServiceProviderEntity> = new Collection<RolleServiceProviderEntity>(this);
 }

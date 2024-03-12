@@ -42,7 +42,7 @@ export class RolleController {
     public async findRollen(): Promise<RolleResponse[]> {
         const rollen: Rolle<true>[] = await this.rolleRepo.find();
 
-        return rollen;
+        return rollen.map((r: Rolle<true>) => new RolleResponse(r));
     }
 
     @Post()
@@ -73,6 +73,6 @@ export class RolleController {
 
         const result: Rolle<true> = await this.rolleRepo.save(rolle);
 
-        return result;
+        return new RolleResponse(result);
     }
 }
