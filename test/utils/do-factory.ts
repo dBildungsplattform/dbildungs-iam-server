@@ -114,7 +114,7 @@ export class DoFactory {
             rollenart: faker.helpers.enumValue(RollenArt),
             merkmale: [faker.helpers.enumValue(RollenMerkmal)],
             systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
-            serviceProviderIds: [],
+            serviceProviderIds: [faker.string.uuid()],
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
