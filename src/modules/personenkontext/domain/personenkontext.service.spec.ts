@@ -15,12 +15,16 @@ import { PersonenkontextService } from './personenkontext.service.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { EntityCouldNotBeDeleted } from '../../../shared/error/index.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { Personenkontext } from './personenkontext.js';
+import { faker } from '@faker-js/faker';
 
 describe('PersonenkontextService', () => {
     let module: TestingModule;
     let personenkontextService: PersonenkontextService;
     let personenkontextRepoMock: DeepMocked<PersonenkontextRepo>;
     let personRepoMock: DeepMocked<PersonRepo>;
+    let dbiamPersonenKontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let mapperMock: DeepMocked<Mapper>;
 
     beforeAll(async () => {
@@ -36,6 +40,10 @@ describe('PersonenkontextService', () => {
                     useValue: createMock<PersonRepo>(),
                 },
                 {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                },
+                {
                     provide: getMapperToken(),
                     useValue: createMock<Mapper>(),
                 },
@@ -44,6 +52,7 @@ describe('PersonenkontextService', () => {
         personenkontextService = module.get(PersonenkontextService);
         personenkontextRepoMock = module.get(PersonenkontextRepo);
         personRepoMock = module.get(PersonRepo);
+        dbiamPersonenKontextRepoMock = module.get(DBiamPersonenkontextRepo);
         mapperMock = module.get(getMapperToken());
     });
 
@@ -190,6 +199,18 @@ describe('PersonenkontextService', () => {
                     ok: false,
                     error: new EntityNotFoundError('Personenkontext', personenkontext.id),
                 });
+            });
+        });
+    });
+
+    describe('findPersonenkontexteByPersonId', () => {
+        describe('when finding personenkontext via personId', () => {
+            it('should return found personenkontext', async () => {
+                const personenkontexte: Personenkontext<true>[] = [
+                    Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
+                ];
+                dbiamPersonenKontextRepoMock.findByPerson.mockResolvedValue(personenkontexte);
+                expect(await personenkontextService.findPersonenkontexteByPersonId('1')).toHaveLength(1);
             });
         });
     });

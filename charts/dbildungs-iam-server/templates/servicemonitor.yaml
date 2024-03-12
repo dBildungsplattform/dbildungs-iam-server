@@ -1,0 +1,18 @@
+{{if .Values.enableServiceMonitor}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "common.names.releasename" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.dbildungsIamServer.commonLabels.name }}
+    app.kubernetes.io/version: {{ .Chart.Version }}
+spec:
+  namespaceSelector:
+    {{- toYaml .Values.serviceMonitor.namespaceSelector | nindent 4 }}
+  selector:
+    matchLabels: 
+      app.kubernetes.io/name: {{ .Values.dbildungsIamServer.commonLabels.name }}
+  endpoints:
+    {{- toYaml .Values.serviceMonitor.endpoints | nindent 4 }}
+{{end}}

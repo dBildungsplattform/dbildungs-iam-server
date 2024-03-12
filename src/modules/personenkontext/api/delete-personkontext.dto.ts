@@ -1,9 +1,9 @@
 import { AutoMap } from '@automapper/classes';
-import { IsNotEmpty } from 'class-validator';
+import { IsUUID } from 'class-validator';
 
 export class DeletePersonenkontextDto {
     @AutoMap()
-    @IsNotEmpty()
+    @IsUUID()
     public id!: string;
 
     @AutoMap()
