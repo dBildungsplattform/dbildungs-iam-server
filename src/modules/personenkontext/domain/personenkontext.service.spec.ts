@@ -15,7 +15,7 @@ import { PersonenkontextService } from './personenkontext.service.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { EntityCouldNotBeDeleted } from '../../../shared/error/index.js';
-import { DBiamPersonenkontextRepo } from '../dbiam/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
 import { faker } from '@faker-js/faker';
 
@@ -207,14 +207,7 @@ describe('PersonenkontextService', () => {
         describe('when finding personenkontext via personId', () => {
             it('should return found personenkontext', async () => {
                 const personenkontexte: Personenkontext<true>[] = [
-                    {
-                        id: '1',
-                        personId: '1',
-                        rolleId: '1',
-                        organisationId: '1',
-                        createdAt: faker.date.past(),
-                        updatedAt: faker.date.recent(),
-                    },
+                    Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
                 ];
                 dbiamPersonenKontextRepoMock.findByPerson.mockResolvedValue(personenkontexte);
                 expect(await personenkontextService.findPersonenkontexteByPersonId('1')).toHaveLength(1);

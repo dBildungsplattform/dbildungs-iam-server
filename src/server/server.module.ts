@@ -73,6 +73,7 @@ import { PersonenKontextApiModule } from '../modules/personenkontext/personenkon
         HealthModule,
         RolleApiModule,
         ServiceProviderApiModule,
+        PersonenKontextApiModule,
         ErrorModule,
         KeycloakConfigModule,
     ],
