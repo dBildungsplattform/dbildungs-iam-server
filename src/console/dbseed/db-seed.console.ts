@@ -23,7 +23,7 @@ import { ServiceProviderEntity } from '../../modules/service-provider/repo/servi
 import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { PersonenkontextEntity } from '../../modules/personenkontext/persistence/personenkontext.entity.js';
-import { mapAggregateToData } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
+import { mapAggregateToData } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
 import { DomainError } from '../../shared/error/domain.error.js';
 
