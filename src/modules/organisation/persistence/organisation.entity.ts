@@ -10,11 +10,11 @@ export class OrganisationEntity extends TimestampedEntity {
     }
 
     @AutoMap()
-    @Property({ nullable: true })
+    @Property({ columnType: 'uuid', nullable: true })
     public administriertVon?: string;
 
     @AutoMap()
-    @Property({ nullable: true })
+    @Property({ columnType: 'uuid', nullable: true })
     public zugehoerigZu?: string;
 
     @AutoMap()

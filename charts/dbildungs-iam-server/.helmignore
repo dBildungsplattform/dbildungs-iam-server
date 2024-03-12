@@ -21,4 +21,3 @@
 .idea/
 *.tmproj
 .vscode/
-dbildungs-iam-secrets.template.yaml

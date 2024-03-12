@@ -2,11 +2,11 @@
     "entityName": "Person",
     "entities": [
         {
-            "id": "1d0390a7-f400-4133-ac1d-2ae79410fbc1",
+            "id": "1850aef4-a771-40fd-8e84-3de483007bfa",
             "referrer": null,
-            "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
+            "mandant": "8c6a9447-c23e-4e70-8595-3bcc88a5577a",
             "stammorganisation": null,
-            "vorname": "Manuell",
+            "vorname": "",
             "familienname": "Mustermann",
             "initialenfamilienname": null,
             "initialenvorname": null,
@@ -17,17 +17,14 @@
             "namenspraefix": null,
             "sortierindex": null,
             "geburt": {
-                "datum": null,
+                "datum": "2023-08-26T20:28:01.000Z",
                 "geburtsort": "Hamburg"
             },
             "geschlecht": "m",
             "loaklisierung": null,
             "vertrauensstufe": null,
             "auskunftssperre": null,
-            "dataProvider": "d8f679f4-ea5c-4143-9233-01b96fe73196"
+            "dataProvider": "431d8433-759c-4dbe-aaab-00b9a781f467"
         }
     ]
 }
-
-
-

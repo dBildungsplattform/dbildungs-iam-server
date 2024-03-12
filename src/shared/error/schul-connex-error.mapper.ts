@@ -9,11 +9,15 @@ import { PersonAlreadyExistsError } from './person-already-exists.error.js';
 import { SchulConnexError } from './schul-connex.error.js';
 import { EntityCouldNotBeDeleted } from './entity-could-not-be-deleted.error.js';
 import { EntityAlreadyExistsError } from './entity-already-exists.error.js';
+import { AddSystemrechtError } from './add-systemrecht.error.js';
 import { ZyklusInOrganisationenError } from '../../modules/organisation/specification/error/zyklus-in-organisationen.error.js';
 import { RootOrganisationImmutableError } from '../../modules/organisation/specification/error/root-organisation-immutable.error.js';
 import { NurKlasseKursUnterSchuleError } from '../../modules/organisation/specification/error/nur-klasse-kurs-unter-schule.error.js';
 import { SchuleUnterTraegerError } from '../../modules/organisation/specification/error/schule-unter-traeger.error.js';
 import { TraegerInTraegerError } from '../../modules/organisation/specification/error/traeger-in-traeger.error.js';
+import { InvalidCharacterSetError } from './invalid-character-set.error.js';
+import { InvalidAttributeLengthError } from './invalid-attribute-length.error.js';
+import { InvalidNameError } from './invalid-name.error.js';
 import { KennungRequiredForSchuleError } from '../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
 
 export class SchulConnexErrorMapper {
@@ -92,6 +96,15 @@ export class SchulConnexErrorMapper {
             }),
         ],
         [
+            AddSystemrechtError.name,
+            new SchulConnexError({
+                code: 500,
+                subcode: '00',
+                titel: 'Fehlerhafte Anfrage',
+                beschreibung: 'Systemrecht konnte Rolle nicht hinzugefügt werden.',
+            }),
+        ],
+        [
             KennungRequiredForSchuleError.name,
             new SchulConnexError({
                 code: 400,
@@ -144,6 +157,33 @@ export class SchulConnexErrorMapper {
                 subcode: '00',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
                 beschreibung: 'Die Root-Organisation ist bzgl. administriertVon und zugehörigZu unveränderlich.',
+            }),
+        ],
+        [
+            InvalidAttributeLengthError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '07',
+                titel: 'Attributwerte haben eine ungültige Länge',
+                beschreibung: 'Textlänge ist nicht valide',
+            }),
+        ],
+        [
+            InvalidCharacterSetError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '08',
+                titel: 'Attributwerte entsprechen nicht dem gültigen Zeichensatz',
+                beschreibung: 'Text entspricht nicht dem Zeichensatz',
+            }),
+        ],
+        [
+            InvalidNameError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '00',
+                titel: 'Fehlerhafte Anfrage',
+                beschreibung: 'Die Anfrage ist fehlerhaft: Es konnte kein Benutzername generiert werden',
             }),
         ],
     ]);

@@ -67,6 +67,7 @@ import { PersonenKontextApiModule } from '../modules/personenkontext/personenkon
         LoggerModule.register(ServerModule.name),
         AuthenticationApiModule,
         PersonApiModule,
+        PersonenKontextApiModule,
         OrganisationApiModule,
         KeycloakAdministrationModule,
         HealthModule,
