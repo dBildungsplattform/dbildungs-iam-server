@@ -207,14 +207,7 @@ describe('PersonenkontextService', () => {
         describe('when finding personenkontext via personId', () => {
             it('should return found personenkontext', async () => {
                 const personenkontexte: Personenkontext<true>[] = [
-                    {
-                        id: '1',
-                        personId: '1',
-                        rolleId: '1',
-                        organisationId: '1',
-                        createdAt: faker.date.past(),
-                        updatedAt: faker.date.recent(),
-                    },
+                    Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
                 ];
                 dbiamPersonenKontextRepoMock.findByPerson.mockResolvedValue(personenkontexte);
                 expect(await personenkontextService.findPersonenkontexteByPersonId('1')).toHaveLength(1);
