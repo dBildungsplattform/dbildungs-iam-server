@@ -19,7 +19,6 @@ import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 import { PersonenkontextAnlage } from '../domain/personenkontext-anlage.js';
-import { DBiamPersonenkontextRepo } from '../dbiam/dbiam-personenkontext.repo.js';
 import { FindRollenResponse } from './find-rollen.response.js';
 import { FindPersonenkontextRollenBodyParams } from './find-personenkontext-rollen.body.params.js';
 import { FindPersonenkontextSchulstrukturknotenBodyParams } from './find-personenkontext-schulstrukturknoten.body.params.js';
@@ -33,6 +32,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 
 @Injectable()
 export class PersonenkontextUc {

@@ -1,9 +1,10 @@
 import { Loaded, RequiredEntityData } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
+import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { Rolle } from '../domain/personenkontext.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
-import { PersonenkontextEntity } from '../persistence/personenkontext.entity.js';
+import { PersonenkontextEntity } from './personenkontext.entity.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
@@ -33,7 +34,7 @@ function mapEntityToAggregate(entity: PersonenkontextEntity): Personenkontext<bo
 export class DBiamPersonenkontextRepo {
     public constructor(private readonly em: EntityManager) {}
 
-    public async findByPerson(personId: string): Promise<Personenkontext<true>[]> {
+    public async findByPerson(personId: PersonID): Promise<Personenkontext<true>[]> {
         const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
             personId,
         });
@@ -49,13 +50,23 @@ export class DBiamPersonenkontextRepo {
         return personenKontexte.map(mapEntityToAggregate);
     }
 
-    public async exists(personId: string, organisationId: string, rolleId: string): Promise<boolean> {
+    /*    public async exists(personId: string, organisationId: string, rolleId: string): Promise<boolean> {
         const personenKontext: Option<PersonenkontextEntity> = await this.em.findOne(PersonenkontextEntity, {
             personId,
             rolleId,
             organisationId,
-        });
+        });*/
 
+    public async exists(personId: PersonID, organisationId: OrganisationID, rolleId: RolleID): Promise<boolean> {
+        const personenKontext: Option<Loaded<PersonenkontextEntity, never, 'id', never>> = await this.em.findOne(
+            PersonenkontextEntity,
+            {
+                personId,
+                rolleId,
+                organisationId,
+            },
+            { fields: ['id'] as const },
+        );
         return !!personenKontext;
     }
 

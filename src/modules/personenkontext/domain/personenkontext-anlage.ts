@@ -1,5 +1,4 @@
 import { Personenkontext } from './personenkontext.js';
-import { DBiamPersonenkontextRepo } from '../dbiam/dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
@@ -7,6 +6,7 @@ import { OrganisationRepo } from '../../organisation/persistence/organisation.re
 import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
 import { OrganisationScope } from '../../organisation/persistence/organisation.scope.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 
 export class PersonenkontextAnlage {
     public organisationId?: string;

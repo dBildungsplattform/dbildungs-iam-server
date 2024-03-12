@@ -5,6 +5,7 @@ import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
+import { RolleID } from '../../../shared/types/index.js';
 import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
 
 /**
@@ -85,6 +86,16 @@ export class RolleRepo {
         });
 
         return rollen.map(mapEntityToAggregate);
+    }
+
+    public async exists(id: RolleID): Promise<boolean> {
+        const rolle: Option<Loaded<RolleEntity, never, 'id', never>> = await this.em.findOne(
+            RolleEntity,
+            { id },
+            { fields: ['id'] as const },
+        );
+
+        return !!rolle;
     }
 
     public async save(rolle: Rolle<boolean>): Promise<Rolle<true>> {

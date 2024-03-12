@@ -11,7 +11,7 @@ import { UsernameGeneratorService } from './domain/username-generator.service.js
 import { PersonRepository } from './persistence/person.repository.js';
 import { RolleModule } from '../rolle/rolle.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
-import { DBiamPersonenkontextRepo } from '../personenkontext/dbiam/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 @Module({
     imports: [

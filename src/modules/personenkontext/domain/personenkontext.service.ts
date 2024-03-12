@@ -10,7 +10,7 @@ import { PersonDo } from '../../person/domain/person.do.js';
 import { PersonenkontextDo } from './personenkontext.do.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
-import { DBiamPersonenkontextRepo } from '../dbiam/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
 
 @Injectable()

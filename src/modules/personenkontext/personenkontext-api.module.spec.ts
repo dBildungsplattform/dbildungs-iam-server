@@ -14,7 +14,7 @@ import { PersonRepo } from '../person/persistence/person.repo.js';
 import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { createMock } from '@golevelup/ts-jest';
 import { OrganisationRepo } from '../organisation/persistence/organisation.repo.js';
-import { DBiamPersonenkontextRepo } from './dbiam/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
 
 describe('PersonKontextApiModule', () => {
     let module: TestingModule;

@@ -22,7 +22,6 @@ import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { DBiamPersonenkontextRepo } from '../dbiam/dbiam-personenkontext.repo.js';
 import { FindPersonenkontextRollenBodyParams } from './find-personenkontext-rollen.body.params.js';
 import { PersonenkontextAnlage } from '../domain/personenkontext-anlage.js';
 import { FindRollenResponse } from './find-rollen.response.js';
@@ -35,18 +34,10 @@ import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
 import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationApiMapperProfile } from '../../organisation/api/organisation-api.mapper.profile.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 
 function createPersonenkontext(): Personenkontext<true>[] {
-    return [
-        {
-            id: '1',
-            personId: '1',
-            rolleId: '1',
-            organisationId: '1',
-            createdAt: faker.date.past(),
-            updatedAt: faker.date.recent(),
-        },
-    ];
+    return [Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1')];
 }
 
 function createRolle(): RolleAggregate<true> {
@@ -442,14 +433,14 @@ describe('PersonenkontextUc', () => {
                 const ssks: Option<OrganisationDo<true>[]> = [organisation];
 
                 const personenkontexte: Personenkontext<true>[] = [
-                    {
-                        rolleId: rolleId,
-                        organisationId: organisation.id,
-                        personId: faker.string.uuid(),
-                        createdAt: faker.date.past(),
-                        updatedAt: faker.date.recent(),
-                        id: '1',
-                    },
+                    Personenkontext.construct(
+                        faker.string.uuid(),
+                        faker.date.past(),
+                        faker.date.recent(),
+                        faker.string.uuid(),
+                        organisation.id,
+                        rolleId,
+                    ),
                 ];
                 organisationRepoMock.findByNameOrKennung.mockResolvedValue(ssks);
                 dbiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);
@@ -476,14 +467,14 @@ describe('PersonenkontextUc', () => {
                     limit: 1,
                 };
                 const personenkontexte: Personenkontext<true>[] = [
-                    {
-                        rolleId: rolleId,
-                        organisationId: organisation.id,
-                        personId: faker.string.uuid(),
-                        createdAt: faker.date.past(),
-                        updatedAt: faker.date.recent(),
-                        id: '1',
-                    },
+                    Personenkontext.construct(
+                        '1',
+                        faker.date.past(),
+                        faker.date.recent(),
+                        faker.string.uuid(),
+                        organisation.id,
+                        rolleId,
+                    ),
                 ];
                 organisationRepoMock.findByNameOrKennung.mockResolvedValue([]);
                 dbiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);

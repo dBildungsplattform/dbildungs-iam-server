@@ -3,15 +3,15 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { PersonenkontextAnlage } from './personenkontext-anlage.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { DBiamPersonenkontextRepo } from '../dbiam/dbiam-personenkontext.repo.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { DoFactory } from '../../../../test/utils/index.js';
 import { Personenkontext } from './personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { createPersonenkontext } from '../dbiam/dbiam-personenkontext.repo.spec.js';
 import { faker } from '@faker-js/faker';
 import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { createPersonenkontext } from '../persistence/dbiam-personenkontext.repo.spec.js';
 
 function createRolleOrganisationsPersonKontext(
     anlage: PersonenkontextAnlage,
