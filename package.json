@@ -54,7 +54,7 @@
         "generate-password-ts": "^1.6.5",
         "lodash-es": "^4.17.21",
         "nest-commander": "~3.10",
-        "nest-keycloak-connect": "^1.9.5",
+        "nest-keycloak-connect": "^1.10.0",
         "openid-client": "^5.6.4",
         "passport": "^0.7.0",
         "redis": "^4.6.13",
