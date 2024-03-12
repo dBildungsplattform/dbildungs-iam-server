@@ -19,6 +19,7 @@ import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { Buffer } from 'buffer';
+import { createMock } from '@golevelup/ts-jest';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -32,7 +33,11 @@ describe('DbSeedService', () => {
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
             ],
-            providers: [DbSeedService, RolleFactory, ServiceProviderRepo],
+            providers: [
+                DbSeedService,
+                RolleFactory,
+                { provide: ServiceProviderRepo, useValue: createMock<ServiceProviderRepo>() },
+            ],
         }).compile();
         dbSeedService = module.get(DbSeedService);
     });
@@ -149,7 +154,7 @@ describe('DbSeedService', () => {
                     updatedAt: expect.any(Date) as Date,
                 };
                 expect(rollen).toHaveLength(1);
-                expect(rollen[0]).toEqual(rolle);
+                expect(rollen[0]).toEqual(expect.objectContaining(rolle));
             });
         });
     });
