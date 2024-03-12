@@ -67,6 +67,7 @@ export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFac
         serviceProviderIds,
     );
 }
+
 @Injectable()
 export class RolleRepo {
     public constructor(

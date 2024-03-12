@@ -14,7 +14,6 @@ describe('Rolle Aggregate', () => {
     let module: TestingModule;
     let rolleFactory: RolleFactory;
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
-    //    let rolleRepo: DeepMocked<RolleRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -32,7 +31,6 @@ describe('Rolle Aggregate', () => {
         }).compile();
         rolleFactory = module.get(RolleFactory);
         serviceProviderRepo = module.get(ServiceProviderRepo);
-        //        rolleRepo = module.get(RolleRepo);
     });
 
     afterAll(async () => {
@@ -109,6 +107,7 @@ describe('Rolle Aggregate', () => {
                 ).toEqual(1);
             });
         });
+
         describe('when serviceProvider does not exist', () => {
             it('should return error', async () => {
                 const serviceProviderIdToAttach: string = faker.string.uuid();
@@ -131,6 +130,7 @@ describe('Rolle Aggregate', () => {
                 expect(rolle.serviceProviderIds.includes(serviceProviderIdToAttach)).toBeFalsy();
             });
         });
+
         describe('when serviceProvider is already attached', () => {
             it('should return error', async () => {
                 const serviceProviderIdToAttach: string = faker.string.uuid();

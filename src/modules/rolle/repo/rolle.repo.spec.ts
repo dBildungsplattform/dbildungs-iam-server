@@ -76,6 +76,7 @@ describe('RolleRepo', () => {
             const savedRolle: Rolle<true> = await sut.save(rolle);
 
             expect(savedRolle.id).toBeDefined();
+            expect(savedRolle.serviceProviderIds).toContain(serviceProvider.id);
         });
     });
 
