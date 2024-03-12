@@ -195,21 +195,37 @@ export class DbSeedService {
         const files: PersonenkontextFile[] = plainToInstance(PersonenkontextFile, personenkontextFile.entities);
         const persistedPersonenkontexte: Personenkontext<true>[] = [];
         for (const file of files) {
-            const persistedPerson: Person<true> | undefined = this.personMap.get(file.personId);
-            if (!persistedPerson) throw new EntityNotFoundError('Person', file.personId.toString());
             const personenKontext: Personenkontext<false> = Personenkontext.construct(
                 undefined,
                 new Date(),
                 new Date(),
-                persistedPerson.id,
-                file.organisationId,
-                file.rolleId,
+                this.getReferencedPerson(file.personId).id,
+                this.getReferencedOrganisation(file.organisationId).id,
+                this.getReferencedRolle(file.rolleId).id,
             );
             persistedPersonenkontexte.push(await this.dBiamPersonenkontextRepo.save(personenKontext));
             //at the moment no saving of Personenkontext in a map for referencing
         }
         this.logger.info(`Insert ${files.length} entities of type Personenkontext`);
         return persistedPersonenkontexte;
+    }
+
+    private getReferencedPerson(seedingId: number): Person<true> {
+        const person: Person<true> | undefined = this.personMap.get(seedingId);
+        if (!person) throw new EntityNotFoundError('Person', seedingId.toString());
+        return person;
+    }
+
+    private getReferencedOrganisation(seedingId: number): OrganisationDo<true> {
+        const organisation: OrganisationDo<true> | undefined = this.organisationMap.get(seedingId);
+        if (!organisation) throw new EntityNotFoundError('Organisation', seedingId.toString());
+        return organisation;
+    }
+
+    private getReferencedRolle(seedingId: number): Rolle<true> {
+        const rolle: Rolle<true> | undefined = this.rolleMap.get(seedingId);
+        if (!rolle) throw new EntityNotFoundError('Rolle', seedingId.toString());
+        return rolle;
     }
 
     private readEntityFromJSONFile<T>(fileContentAsStr: string, constructor: ConstructorCall): T[] {

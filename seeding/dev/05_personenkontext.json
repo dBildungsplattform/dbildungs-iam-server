@@ -3,8 +3,8 @@
     "entities": [
         {
             "personId": 2,
-            "organisationId": "d39cb7cf-2f9b-45f1-849f-973661f2f057",
-            "rolleId": "8b622128-c952-4b08-8957-762af7e659bd"
+            "organisationId": 0,
+            "rolleId": 0
         }
     ]
 }

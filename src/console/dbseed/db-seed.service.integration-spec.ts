@@ -11,22 +11,18 @@ import { DbSeedService } from './db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
 import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
 import { DbSeedMapper } from './db-seed-mapper.js';
-import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
-import { OrganisationEntity } from '../../modules/organisation/persistence/organisation.entity.js';
-import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
-import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
 import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 import { EntityNotFoundError } from '../../shared/error/index.js';
 import { OrganisationModule } from '../../modules/organisation/organisation.module.js';
+import fs from 'fs';
 
-describe('DbSeedConsole', () => {
+describe('DbSeedServiceIntegration', () => {
     let module: TestingModule;
-    let sut: DbSeedConsole;
     let orm: MikroORM;
     let dbSeedService: DbSeedService;
 
@@ -54,7 +50,6 @@ describe('DbSeedConsole', () => {
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
             .compile();
-        sut = module.get(DbSeedConsole);
         orm = module.get(MikroORM);
         dbSeedService = module.get(DbSeedService);
 
@@ -70,56 +65,50 @@ describe('DbSeedConsole', () => {
     });
 
     it('should be defined', () => {
-        expect(sut).toBeDefined();
-    });
-
-    it('should be defined', () => {
         expect(dbSeedService).toBeDefined();
         expect(orm).toBeDefined();
     });
 
-    describe('run', () => {
-        describe('when no parameter for directory is provided', () => {
-            it('should fail with error', async () => {
-                await expect(sut.run([])).rejects.toThrow();
-            });
-        });
-
-        describe('when directory and excluded files is set via parameter', () => {
-            it('should use seeding-integration-test directory and not fail due to non-existing entityType', async () => {
-                const params: string[] = ['seeding-integration-test/all', '07_non-existing-entity.json'];
-                await expect(sut.run(params)).resolves.not.toThrow();
-                const dataProvider: Option<DataProviderEntity> = await orm.em.findOne(DataProviderEntity, {
-                    id: '431d8433-759c-4dbe-aaab-00b9a781f467',
-                });
-                const rolle: Option<RolleEntity> = await orm.em.findOne(RolleEntity, {
-                    name: 'Rolle2222',
-                });
-                const organisation: Option<OrganisationEntity> = await orm.em.findOne(OrganisationEntity, {
-                    name: 'Schule1',
-                });
-                const serviceProvider: Option<ServiceProviderEntity> = await orm.em.findOne(ServiceProviderEntity, {
-                    id: 'ca0e17c5-8e48-403b-af92-28eff21c64bb',
-                });
-                if (!dataProvider || !rolle || !organisation || !serviceProvider) {
-                    throw Error('At least one entity was not persisted correctly!');
-                }
-            });
-        });
-
-        describe('when directory set via parameter', () => {
-            it('should use seeding-integration-test directory and fail due to non-existing entity-type', async () => {
-                const params: string[] = ['seeding-integration-test/nonExistingEntity'];
-                await expect(sut.run(params)).rejects.toThrow(
-                    new Error(`Unsupported EntityName / EntityType: NonExistingEntityType`),
-                );
-            });
-        });
-
-        describe('when person referenced by personenkontext does not exist in seeding data', () => {
+    describe('seedPersonenkontext', () => {
+        describe('with non-existing person for personenkontext', () => {
             it('should throw EntityNotFoundError', async () => {
-                const params: string[] = ['seeding-integration-test/missingPersonForPersonenkontext'];
-                await expect(sut.run(params)).rejects.toThrow(EntityNotFoundError);
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontext/05_personenkontext.json`,
+                    'utf-8',
+                );
+
+                await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+
+        describe('with non-existing organisation for personenkontext', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontext/05_personenkontext.json`,
+                    'utf-8',
+                );
+                const fileContentPersonAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontext/02_person.json`,
+                    'utf-8',
+                );
+                await dbSeedService.seedPerson(fileContentPersonAsStr);
+                await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+
+        describe('with non-existing rolle for personenkontext', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontext/05_personenkontext.json`,
+                    'utf-8',
+                );
+                const fileContentOrganisationAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontext/01_organisation.json`,
+                    'utf-8',
+                );
+                await dbSeedService.seedOrganisation(fileContentOrganisationAsStr);
+
+                await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
     });

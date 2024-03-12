@@ -1,7 +1,7 @@
 export class PersonenkontextFile {
     public personId!: number;
 
-    public organisationId!: string;
+    public organisationId!: number;
 
-    public rolleId!: string;
+    public rolleId!: number;
 }
