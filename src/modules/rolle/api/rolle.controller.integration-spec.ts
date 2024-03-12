@@ -7,14 +7,14 @@ import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
-import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { RolleApiModule } from '../rolle-api.module.js';
@@ -22,6 +22,8 @@ import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { RolleResponse } from './rolle.response.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
+import { Rolle } from '../domain/rolle.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -76,6 +78,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -95,6 +98,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -111,6 +115,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: faker.string.uuid(),
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -129,6 +134,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: 'INVALID' as RollenArt,
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -147,6 +153,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: ['INVALID' as RollenMerkmal],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -165,6 +172,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT, RollenMerkmal.BEFRISTUNG_PFLICHT],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -190,6 +198,37 @@ describe('Rolle API', () => {
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Array);
             expect(response.body).toHaveLength(3);
+        });
+    });
+
+    describe('/PATCH rolle, add systemrecht', () => {
+        describe('when rolle exists and systemrecht is matching enum', () => {
+            it('should return 200', async () => {
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const params: AddSystemrechtBodyParams = {
+                    systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .patch(`/rolle/${rolle.id}`)
+                    .send(params);
+
+                expect(response.status).toBe(200);
+            });
+        });
+
+        describe('when rolle does not exist', () => {
+            it('should return 200', async () => {
+                await rolleRepo.save(DoFactory.createRolle(false));
+                const validButNonExistingUUID: string = faker.string.uuid();
+                const params: AddSystemrechtBodyParams = {
+                    systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .patch(`/rolle/${validButNonExistingUUID}`)
+                    .send(params);
+
+                expect(response.status).toBe(500);
+            });
         });
     });
 });

@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { DoFactory } from '../../../../test/utils/index.js';
-import { RollenArt, RollenMerkmal } from './rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
@@ -42,10 +42,10 @@ describe('Rolle Aggregate', () => {
     afterEach(() => {
         jest.resetAllMocks();
     });
+
     describe('addMerkmal', () => {
         it('should add merkmal if it does not exist', () => {
             const savedRolle: Rolle<true> = DoFactory.createRolle(true, { merkmale: [] });
-
             savedRolle.addMerkmal(RollenMerkmal.BEFRISTUNG_PFLICHT);
 
             expect(savedRolle.merkmale).toEqual([RollenMerkmal.BEFRISTUNG_PFLICHT]);
@@ -55,7 +55,6 @@ describe('Rolle Aggregate', () => {
             const savedRolle: Rolle<true> = DoFactory.createRolle(true, {
                 merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
             });
-
             savedRolle.addMerkmal(RollenMerkmal.BEFRISTUNG_PFLICHT);
 
             expect(savedRolle.merkmale).toEqual([RollenMerkmal.BEFRISTUNG_PFLICHT]);
@@ -67,7 +66,6 @@ describe('Rolle Aggregate', () => {
             const savedRolle: Rolle<true> = DoFactory.createRolle(true, {
                 merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT, RollenMerkmal.KOPERS_PFLICHT],
             });
-
             savedRolle.removeMerkmal(RollenMerkmal.BEFRISTUNG_PFLICHT);
 
             expect(savedRolle.merkmale).toEqual([RollenMerkmal.KOPERS_PFLICHT]);
@@ -77,7 +75,6 @@ describe('Rolle Aggregate', () => {
             const savedRolle: Rolle<true> = DoFactory.createRolle(true, {
                 merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
             });
-
             savedRolle.removeMerkmal(RollenMerkmal.KOPERS_PFLICHT);
 
             expect(savedRolle.merkmale).toEqual([RollenMerkmal.BEFRISTUNG_PFLICHT]);
@@ -86,7 +83,7 @@ describe('Rolle Aggregate', () => {
 
     describe('attachServiceProvider', () => {
         describe('when successfull', () => {
-            it('should ádd serviceProviderId to rolle field', async () => {
+            it('should add serviceProviderId to rolle field', async () => {
                 const serviceProviderIdToAttach: string = faker.string.uuid();
                 const rolle: Rolle<true> = rolleFactory.construct(
                     faker.string.uuid(),
@@ -95,6 +92,7 @@ describe('Rolle Aggregate', () => {
                     '',
                     '',
                     RollenArt.LEHR,
+                    [],
                     [],
                     [],
                 );
@@ -123,6 +121,7 @@ describe('Rolle Aggregate', () => {
                     RollenArt.LEHR,
                     [],
                     [],
+                    [],
                 );
                 serviceProviderRepo.findById.mockResolvedValue(undefined);
 
@@ -142,6 +141,7 @@ describe('Rolle Aggregate', () => {
                     '',
                     '',
                     RollenArt.LEHR,
+                    [],
                     [],
                     [serviceProviderIdToAttach],
                 );
@@ -173,6 +173,7 @@ describe('Rolle Aggregate', () => {
                     '',
                     RollenArt.LEHR,
                     [],
+                    [],
                     [serviceProviderIdToDetach],
                 );
 
@@ -182,6 +183,7 @@ describe('Rolle Aggregate', () => {
                 expect(rolle.serviceProviderIds.includes(serviceProviderIdToDetach)).toBeFalsy();
             });
         });
+
         describe('when serviceProvider is not attached', () => {
             it('should return error', () => {
                 const serviceProviderIdToDetach: string = faker.string.uuid();
@@ -194,12 +196,46 @@ describe('Rolle Aggregate', () => {
                     RollenArt.LEHR,
                     [],
                     [],
+                    [],
                 );
 
                 const result: void | DomainError = rolle.detatchServiceProvider(serviceProviderIdToDetach);
 
                 expect(result).toBeInstanceOf(DomainError);
             });
+        });
+    });
+
+    describe('addSystemRecht', () => {
+        it('should add systemRecht if it does not exist', () => {
+            const savedRolle: Rolle<true> = DoFactory.createRolle(true, { systemrechte: [] });
+            savedRolle.addSystemRecht(RollenSystemRecht.ROLLEN_VERWALTEN);
+
+            expect(savedRolle.systemrechte).toEqual([RollenSystemRecht.ROLLEN_VERWALTEN]);
+        });
+
+        it('should not add systemRecht if it already exists', () => {
+            const savedRolle: Rolle<true> = DoFactory.createRolle(true, {
+                systemrechte: [RollenSystemRecht.ROLLEN_VERWALTEN],
+            });
+            savedRolle.addSystemRecht(RollenSystemRecht.ROLLEN_VERWALTEN);
+
+            expect(savedRolle.systemrechte).toEqual([RollenSystemRecht.ROLLEN_VERWALTEN]);
+        });
+    });
+
+    describe('hasSystemRecht', () => {
+        it('should have systemRecht', () => {
+            const savedRolle: Rolle<true> = DoFactory.createRolle(true, { systemrechte: [] });
+            savedRolle.addSystemRecht(RollenSystemRecht.ROLLEN_VERWALTEN);
+
+            expect(savedRolle.hasSystemRecht(RollenSystemRecht.ROLLEN_VERWALTEN)).toBeTruthy();
+        });
+
+        it('should not have systemRecht', () => {
+            const savedRolle: Rolle<true> = DoFactory.createRolle(true, { systemrechte: [] });
+
+            expect(savedRolle.hasSystemRecht(RollenSystemRecht.ROLLEN_VERWALTEN)).toBeFalsy();
         });
     });
 });

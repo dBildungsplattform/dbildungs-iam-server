@@ -10,7 +10,7 @@ import {
     Rolle,
     SichtfreigabeType,
 } from '../../src/modules/personenkontext/domain/personenkontext.enums.js';
-import { RollenArt, RollenMerkmal } from '../../src/modules/rolle/domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../src/modules/rolle/domain/rolle.enums.js';
 import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
 import { DoBase } from '../../src/shared/types/do-base.js';
 import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
@@ -110,9 +110,10 @@ export class DoFactory {
     ): RolleAggregate<WasPersisted> {
         const rolle: Partial<RolleAggregate<WasPersisted>> = {
             name: faker.person.jobTitle(),
-            administeredBySchulstrukturknoten: faker.string.numeric(),
+            administeredBySchulstrukturknoten: faker.string.uuid(),
             rollenart: faker.helpers.enumValue(RollenArt),
             merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+            systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
             serviceProviderIds: [],
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,

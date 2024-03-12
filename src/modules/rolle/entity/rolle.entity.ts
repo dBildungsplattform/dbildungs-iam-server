@@ -3,6 +3,7 @@ import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { RollenArt } from '../domain/rolle.enums.js';
 import { RolleMerkmalEntity } from './rolle-merkmal.entity.js';
 import { RolleServiceProviderEntity } from './rolle-service-provider.entity.js';
+import { RolleSystemrechtEntity } from './rolle-systemrecht.entity.js';
 
 @Entity({ tableName: 'rolle' })
 export class RolleEntity extends TimestampedEntity {
@@ -12,7 +13,7 @@ export class RolleEntity extends TimestampedEntity {
     /**
      * Points to Schulstrukturknoten
      */
-    @Property()
+    @Property({ columnType: 'uuid' })
     public administeredBySchulstrukturknoten!: string;
 
     @Enum(() => RollenArt)
@@ -25,6 +26,14 @@ export class RolleEntity extends TimestampedEntity {
         cascade: [Cascade.ALL],
     })
     public merkmale: Collection<RolleMerkmalEntity> = new Collection<RolleMerkmalEntity>(this);
+
+    @OneToMany({
+        entity: () => RolleSystemrechtEntity,
+        mappedBy: 'rolle',
+        orphanRemoval: true,
+        cascade: [Cascade.ALL],
+    })
+    public systemrechte: Collection<RolleSystemrechtEntity> = new Collection<RolleSystemrechtEntity>(this);
 
     @OneToMany({
         entity: () => RolleServiceProviderEntity,

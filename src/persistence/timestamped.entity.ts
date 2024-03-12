@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 
 export abstract class TimestampedEntity extends BaseEntity {
     @AutoMap()
-    @PrimaryKey({ onCreate: () => randomUUID() })
+    @PrimaryKey({ columnType: 'uuid', onCreate: () => randomUUID() })
     public readonly id!: string;
 
     @AutoMap(() => Date)

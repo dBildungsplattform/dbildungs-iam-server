@@ -26,7 +26,7 @@ import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { DomainError, KeycloakClientError } from '../../../shared/error/index.js';
+import { DomainError, InvalidNameError, KeycloakClientError } from '../../../shared/error/index.js';
 
 describe('PersonRepository', () => {
     let module: TestingModule;
@@ -158,7 +158,7 @@ describe('PersonRepository', () => {
                     faker.person.firstName(),
                 );
                 personWithKeycloak.keycloakUserId = faker.string.uuid();
-                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
                 kcUserServiceMock.create.mockResolvedValueOnce({
                     ok: true,
                     value: '',
@@ -184,7 +184,7 @@ describe('PersonRepository', () => {
         describe('when creation of keyCloakUser fails', () => {
             it('should return Domain Error', async () => {
                 const person: Person<false> = Person.createNew(faker.person.lastName(), faker.person.firstName());
-                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
                 kcUserServiceMock.create.mockResolvedValueOnce({
                     ok: false,
                     error: new KeycloakClientError(''),
@@ -253,7 +253,10 @@ describe('PersonRepository', () => {
             describe('when succeeds', () => {
                 it('should return person with keycloakUser', async () => {
                     const person: Person<false> = Person.createNew(faker.person.lastName(), faker.person.firstName());
-                    usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                        ok: true,
+                        value: 'testusername',
+                    });
                     kcUserServiceMock.create.mockResolvedValue({
                         ok: true,
                         value: '',
@@ -289,7 +292,10 @@ describe('PersonRepository', () => {
                     person.keycloakUserId = faker.string.uuid();
                     person.resetPassword(); //necessary to have dirty state & but with keycloakUSerId
 
-                    usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                        ok: true,
+                        value: 'testusername',
+                    });
                     kcUserServiceMock.create.mockResolvedValueOnce({
                         ok: true,
                         value: '',
@@ -316,7 +322,7 @@ describe('PersonRepository', () => {
             it('should return person without calling any services', async () => {
                 const person: Person<false> = Person.createNew(faker.person.lastName(), faker.person.firstName());
                 person.keycloakUserId = faker.string.uuid();
-                usernameGeneratorService.generateUsername.mockResolvedValueOnce('testusername');
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
                 kcUserServiceMock.create.mockResolvedValueOnce({
                     ok: true,
                     value: '',
@@ -342,6 +348,24 @@ describe('PersonRepository', () => {
                 }
                 expect(kcUserServiceMock.create).toHaveBeenCalledTimes(0);
                 expect(usernameGeneratorService.generateUsername).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when username generation fails', () => {
+            it('should return error', async () => {
+                const person: Person<false> = Person.createNew(faker.person.lastName(), faker.person.firstName());
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                    ok: false,
+                    error: new InvalidNameError('invalid name'),
+                });
+
+                const result: Person<true> | DomainError = await sut.saveUser(
+                    person,
+                    kcUserServiceMock,
+                    usernameGeneratorService,
+                );
+
+                expect(result).toBeInstanceOf(DomainError);
             });
         });
     });

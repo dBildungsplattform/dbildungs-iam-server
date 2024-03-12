@@ -18,6 +18,7 @@ import { DbSeedService } from './dbseed/db-seed.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 import { RolleFactory } from '../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../modules/service-provider/repo/service-provider.repo.js';
+import { RolleSeedingRepo } from './dbseed/repo/rolle-seeding.repo.js';
 
 @Module({
     imports: [
@@ -41,6 +42,7 @@ import { ServiceProviderRepo } from '../modules/service-provider/repo/service-pr
                     password: config.getOrThrow<DbConfig>('DB').SECRET,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
+                    allowGlobalContext: true,
                     driverOptions: {
                         connection: {
                             ssl: config.getOrThrow<DbConfig>('DB').USE_SSL,
@@ -61,6 +63,7 @@ import { ServiceProviderRepo } from '../modules/service-provider/repo/service-pr
         DbSeedService,
         RolleFactory,
         ServiceProviderRepo,
+        RolleSeedingRepo,
     ],
 })
 export class ConsoleModule {}

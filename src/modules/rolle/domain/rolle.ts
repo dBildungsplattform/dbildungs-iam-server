@@ -4,10 +4,9 @@ import { EntityCouldNotBeDeleted } from '../../../shared/error/entity-could-not-
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { RollenArt, RollenMerkmal } from './rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 
 export class Rolle<WasPersisted extends boolean> {
-
     private constructor(
         public serviceProviderRepo: ServiceProviderRepo,
         public id: Persisted<string, WasPersisted>,
@@ -17,6 +16,7 @@ export class Rolle<WasPersisted extends boolean> {
         public administeredBySchulstrukturknoten: string,
         public rollenart: RollenArt,
         public merkmale: RollenMerkmal[],
+        public systemrechte: RollenSystemRecht[],
         public serviceProviderIds: string[],
     ) {}
 
@@ -26,9 +26,10 @@ export class Rolle<WasPersisted extends boolean> {
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
+        systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
     ): Rolle<false> {
-        const rolle: Rolle<false> = new Rolle(
+        return new Rolle(
             serviceProviderRepo,
             undefined,
             undefined,
@@ -37,10 +38,9 @@ export class Rolle<WasPersisted extends boolean> {
             administeredBySchulstrukturknoten,
             rollenart,
             merkmale,
+            systemrechte,
             serviceProviderIds,
         );
-
-        return rolle;
     }
 
     public static construct<WasPersisted extends boolean = false>(
@@ -52,6 +52,7 @@ export class Rolle<WasPersisted extends boolean> {
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
+        systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
     ): Rolle<WasPersisted> {
         return new Rolle(
@@ -63,6 +64,7 @@ export class Rolle<WasPersisted extends boolean> {
             administeredBySchulstrukturknoten,
             rollenart,
             merkmale,
+            systemrechte,
             serviceProviderIds,
         );
     }
@@ -78,6 +80,16 @@ export class Rolle<WasPersisted extends boolean> {
         if (idx !== -1) {
             this.merkmale.splice(idx, 1);
         }
+    }
+
+    public addSystemRecht(systemRecht: RollenSystemRecht): void {
+        if (!this.systemrechte.includes(systemRecht)) {
+            this.systemrechte.push(systemRecht);
+        }
+    }
+
+    public hasSystemRecht(systemRecht: RollenSystemRecht): boolean {
+        return this.systemrechte.includes(systemRecht);
     }
 
     public async attachServiceProvider(serviceProviderId: string): Promise<void | DomainError> {

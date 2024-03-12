@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { Rolle } from './rolle.js';
-import { RollenArt, RollenMerkmal } from './rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 
 @Injectable()
 export class RolleFactory {
@@ -15,6 +15,7 @@ export class RolleFactory {
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
+        systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
     ): Rolle<true> {
         return Rolle.construct(
@@ -26,6 +27,7 @@ export class RolleFactory {
             administeredBySchulstrukturknoten,
             rollenart,
             merkmale,
+            systemrechte,
             serviceProviderIds,
         );
     }
@@ -35,6 +37,7 @@ export class RolleFactory {
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
+        systemrechte: RollenSystemRecht[],
         serviceProviderIds?: string[],
     ): Rolle<false> {
         return Rolle.createNew(
@@ -43,6 +46,7 @@ export class RolleFactory {
             administeredBySchulstrukturknoten,
             rollenart,
             merkmale,
+            systemrechte,
             serviceProviderIds ?? [],
         );
     }

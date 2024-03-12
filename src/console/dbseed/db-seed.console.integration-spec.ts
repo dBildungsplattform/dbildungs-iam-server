@@ -22,6 +22,7 @@ import { ServiceProviderEntity } from '../../modules/service-provider/repo/servi
 import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
 import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
+import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -43,6 +44,7 @@ describe('DbSeedConsole', () => {
                 UsernameGeneratorService,
                 DbSeedService,
                 DbSeedMapper,
+                RolleSeedingRepo,
                 RolleFactory,
                 ServiceProviderRepo,
             ],
