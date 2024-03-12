@@ -9,7 +9,8 @@
             "merkmale": [],
             "systemrechte": [
                 "ROLLEN_VERWALTEN"
-            ]
+            ],
+            "serviceProviderIds": []
         },
         {
             "id": "cef7240e-fd08-4961-927e-c9ea0c5a37c5",

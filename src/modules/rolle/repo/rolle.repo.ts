@@ -70,7 +70,7 @@ export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFac
 @Injectable()
 export class RolleRepo {
     public constructor(
-        private readonly rolleFactory: RolleFactory,
+        protected readonly rolleFactory: RolleFactory,
         protected readonly em: EntityManager,
     ) {}
 
