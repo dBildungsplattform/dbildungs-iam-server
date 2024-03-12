@@ -10,7 +10,10 @@
             "systemrechte": [
                 "ROLLEN_VERWALTEN"
             ],
-            "serviceProviderIds": []
+            "serviceProviderIds": [
+                "91cfca10-67e7-4b43-8a0b-2e2abe4ac3e2",
+                "5c8f232a-8258-43fb-8a1b-16c1cc084284"
+            ]
         },
         {
             "id": "cef7240e-fd08-4961-927e-c9ea0c5a37c5",
@@ -21,7 +24,13 @@
                 "BEFRISTUNG_PFLICHT"
             ],
             "systemrechte": [],
-            "serviceProviderIds": []
+            "serviceProviderIds": [
+                "1555b1f7-18ec-4858-a317-83bc68820e6d",
+                "91cfca10-67e7-4b43-8a0b-2e2abe4ac3e2",
+                "5c8f232a-8258-43fb-8a1b-16c1cc084284",
+                "efa5411d-407d-42f8-a5bc-daf5cb3b0a85",
+                "a201d1e5-971d-4600-a33a-f37ed6680a6b"
+            ]
         },
         {
             "id": "6a69fadb-af89-42ed-ae12-28d164c0f9b7",
