@@ -122,14 +122,18 @@ export function toDIN91379SearchForm(input: string): string {
     return searchForm;
 }
 
-export const IsDIN91379A: PropertyDecorator = applyDecorators(
-    Transform(({ value }: TransformFnParams) => (typeof value === 'string' ? value.normalize('NFC') : undefined)),
-    IsString(),
-    Matches(DIN_91379A),
-);
+export function IsDIN91379A(): PropertyDecorator {
+    return applyDecorators(
+        Transform(({ value }: TransformFnParams) => (typeof value === 'string' ? value.normalize('NFC') : undefined)),
+        IsString(),
+        Matches(DIN_91379A),
+    );
+}
 
-export const IsDIN91379AEXT: PropertyDecorator = applyDecorators(
-    Transform(({ value }: TransformFnParams) => (typeof value === 'string' ? value.normalize('NFC') : undefined)),
-    IsString(),
-    Matches(DIN_91379A_EXT),
-);
+export function IsDIN91379AEXT(): PropertyDecorator {
+    return applyDecorators(
+        Transform(({ value }: TransformFnParams) => (typeof value === 'string' ? value.normalize('NFC') : undefined)),
+        IsString(),
+        Matches(DIN_91379A_EXT),
+    );
+}
