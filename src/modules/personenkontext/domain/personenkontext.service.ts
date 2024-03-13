@@ -10,11 +10,14 @@ import { PersonDo } from '../../person/domain/person.do.js';
 import { PersonenkontextDo } from './personenkontext.do.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { Personenkontext } from './personenkontext.js';
 
 @Injectable()
 export class PersonenkontextService {
     public constructor(
         private readonly personenkontextRepo: PersonenkontextRepo,
+        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personRepo: PersonRepo,
     ) {}
 
@@ -67,6 +70,11 @@ export class PersonenkontextService {
             : { ok: false, error: new EntityNotFoundError('Personenkontext', id) };
 
         return result;
+    }
+
+    public async findPersonenkontexteByPersonId(personId: string): Promise<Personenkontext<true>[]> {
+        const personenkontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(personId);
+        return personenkontexte;
     }
 
     public async updatePersonenkontext(

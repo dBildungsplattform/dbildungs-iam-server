@@ -16,6 +16,7 @@ import { UsernameGeneratorService } from '../modules/person/domain/username-gene
 import { DbSeedMapper } from './dbseed/db-seed-mapper.js';
 import { DbSeedService } from './dbseed/db-seed.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
+import { RolleSeedingRepo } from './dbseed/repo/rolle-seeding.repo.js';
 
 @Module({
     imports: [
@@ -39,6 +40,7 @@ import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloa
                     password: config.getOrThrow<DbConfig>('DB').SECRET,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
+                    allowGlobalContext: true,
                     driverOptions: {
                         connection: {
                             ssl: config.getOrThrow<DbConfig>('DB').USE_SSL,
@@ -50,6 +52,14 @@ import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloa
             inject: [ConfigService],
         }),
     ],
-    providers: [DbConsole, DbInitConsole, DbSeedConsole, UsernameGeneratorService, DbSeedMapper, DbSeedService],
+    providers: [
+        DbConsole,
+        DbInitConsole,
+        DbSeedConsole,
+        UsernameGeneratorService,
+        DbSeedMapper,
+        DbSeedService,
+        RolleSeedingRepo,
+    ],
 })
 export class ConsoleModule {}
