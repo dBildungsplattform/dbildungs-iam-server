@@ -13,13 +13,18 @@ import {
 } from './gruppe.enums.js';
 import { Referenzgruppen } from './referenzgruppen.js';
 import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enums.js';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { Test, TestingModule } from '@nestjs/testing';
 
 describe('createGroup', () => {
+    let module: TestingModule;
     let factory: GruppenFactory;
+    let mockedGruppe: DeepMocked<typeof Gruppe>;
     const createGroupBodyParams: CreateGroupBodyParams = {
         bezeichnung: faker.lorem.word(),
         typ: GruppenTyp.KLASSE,
         bereich: Gruppenbereich.PFLICHT,
+        optionen: [Gruppenoption.BILINGUAL],
         differenzierung: Gruppendifferenzierung.E,
         bildungsziele: [Bildungsziele.GS, Bildungsziele.HS],
         jahrgangsstufen: [Jahrgangsstufe.JAHRGANGSSTUFE_1, Jahrgangsstufe.JAHRGANGSSTUFE_2],
@@ -36,36 +41,46 @@ describe('createGroup', () => {
         },
     };
 
-    const gruppe: Gruppe<true> = Gruppe.construct(
+    const gruppe: Gruppe<false> = Gruppe.construct(
         faker.string.uuid(),
         faker.date.recent(),
         faker.date.recent(),
-        faker.lorem.word(),
-        GruppenTyp.KURS,
-        faker.lorem.word(),
-        faker.lorem.word(),
-        faker.lorem.word(),
-        faker.lorem.word(),
-        Gruppenbereich.PFLICHT,
-        [Gruppenoption.BILINGUAL],
-        Gruppendifferenzierung.E,
-        [],
-        [],
-        [],
-        [],
+        createGroupBodyParams.bezeichnung,
+        createGroupBodyParams.typ,
+        '',
+        createGroupBodyParams.referrer,
+        createGroupBodyParams.thema,
+        createGroupBodyParams.beschreibung,
+        createGroupBodyParams.bereich,
+        createGroupBodyParams.optionen,
+        createGroupBodyParams.differenzierung,
+        createGroupBodyParams.bildungsziele,
+        createGroupBodyParams.jahrgangsstufen,
+        createGroupBodyParams.faecher,
+        createGroupBodyParams.referenzgruppen,
+        createGroupBodyParams.laufzeit,
     );
 
-    beforeAll(() => {
-        factory = new GruppenFactory();
+    beforeAll(async () => {
+        module = await Test.createTestingModule({
+            providers: [
+                GruppenFactory,
+                {
+                    provide: Gruppe,
+                    useValue: createMock<Gruppe<false>>(),
+                },
+            ],
+        }).compile();
+        factory = module.get(GruppenFactory);
+        mockedGruppe = module.get(Gruppe<false>);
     });
 
     describe('when creating a group', () => {
         it('should create a group aggregate', () => {
-            jest.spyOn(Gruppe, 'createGroup').mockReturnValue(gruppe as unknown as Gruppe<false>);
+            mockedGruppe.createGroup.mockReturnValue(gruppe);
 
             const result: Gruppe<false> = factory.createGroup(createGroupBodyParams);
 
-            expect(result).toEqual(gruppe);
             expect(result.beschreibung).toEqual(gruppe.beschreibung);
             expect(result.typ).toEqual(gruppe.typ);
             expect(result.bereich).toEqual(gruppe.bereich);

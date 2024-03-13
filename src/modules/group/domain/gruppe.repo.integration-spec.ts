@@ -83,9 +83,8 @@ describe('GruppenRepository', () => {
             it('should create gruppe', async () => {
                 const result: Result<Gruppe<true>, DomainError> = await repo.save(gruppe);
 
-                expect(result).toBeDefined();
-                await expect(em.find(GruppeEntity, {})).resolves.toHaveLength(1);
                 expect(result.ok).toBe(true);
+                await expect(em.find(GruppeEntity, {})).resolves.toHaveLength(1);
             });
         });
     });
