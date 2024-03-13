@@ -14,6 +14,7 @@ import {
 } from './gruppe.enums.js';
 import { GruppeMapper } from './gruppe.mapper.js';
 import { Referenzgruppen } from './referenzgruppen.js';
+
 // AI next 107 lines
 describe('GruppeMapper', () => {
     let gruppeMapper: GruppeMapper;

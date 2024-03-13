@@ -44,6 +44,7 @@ describe('GruppeRepo', () => {
     beforeEach(() => {
         jest.resetAllMocks();
     });
+
     describe('when creating a group with invalid data', () => {
         it('should return Domain error', async () => {
             const gruppe: Gruppe<false> = Gruppe.construct(

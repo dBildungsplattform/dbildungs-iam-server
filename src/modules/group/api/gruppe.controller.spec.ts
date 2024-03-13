@@ -11,6 +11,7 @@ import { HttpException } from '@nestjs/common';
 import { GruppeMapper } from '../domain/gruppe.mapper.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { faker } from '@faker-js/faker';
+
 describe('GruppeController', () => {
     let module: TestingModule;
     let gruppenController: GruppenController;
@@ -42,7 +43,7 @@ describe('GruppeController', () => {
         await module.close();
     });
 
-    beforeAll(() => {
+    beforeEach(() => {
         jest.resetAllMocks();
     });
 
@@ -77,7 +78,7 @@ describe('GruppeController', () => {
             laufzeit: new Laufzeit({ von: new Date(), bis: new Date() }),
         };
         describe('when creating a group is successful', () => {
-            it('should return the created group aggeragte', async () => {
+            it('should return the created group aggregate', async () => {
                 gruppenFactoryMock.createGroup.mockReturnValue(gruppe as unknown as Gruppe<false>);
                 repo.save.mockResolvedValue({ ok: true, value: gruppe });
 

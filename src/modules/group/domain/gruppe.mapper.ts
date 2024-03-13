@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GruppeEntity } from '../persistence/gruppe.entity.js';
 import { Gruppe } from './gruppe.js';
+
 @Injectable()
 export class GruppeMapper {
     public mapGruppeToGruppeEntity(gruppe: Gruppe<false>): GruppeEntity {
@@ -20,6 +21,7 @@ export class GruppeMapper {
         gruppeEntity.faecher = gruppe.faecher;
         gruppeEntity.referenzgruppen = gruppe.referenzgruppen;
         gruppeEntity.laufzeit = gruppe.laufzeit;
+
         return gruppeEntity;
     }
 

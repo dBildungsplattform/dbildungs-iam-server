@@ -23,6 +23,7 @@ import { Referenzgruppen } from './referenzgruppen.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { GruppeEntity } from '../persistence/gruppe.entity.js';
 import { GruppeMapper } from './gruppe.mapper.js';
+
 describe('GruppenRepository', () => {
     let module: TestingModule;
     let repo: GruppenRepository;

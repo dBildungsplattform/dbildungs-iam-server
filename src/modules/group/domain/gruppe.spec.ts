@@ -12,6 +12,7 @@ import {
 import { CreateGroupBodyParams } from '../api/create-group.body.params.js';
 import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enums.js';
 import { Laufzeit } from '../persistence/laufzeit.js';
+
 describe('Gruppe', () => {
     describe('construct', () => {
         describe('when constructing a group', () => {

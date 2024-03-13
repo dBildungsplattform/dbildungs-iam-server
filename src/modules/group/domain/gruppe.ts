@@ -10,6 +10,7 @@ import {
     Gruppenoption,
 } from './gruppe.enums.js';
 import { Laufzeit } from '../persistence/laufzeit.js';
+
 export class Gruppe<WasPersisted extends boolean> {
     public readonly mandant: string = '';
 

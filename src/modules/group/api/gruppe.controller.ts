@@ -15,6 +15,7 @@ import { GruppenRepository } from '../domain/gruppe.repo.js';
 import { Gruppe } from '../domain/gruppe.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('gruppen')
 @ApiBearerAuth()
@@ -40,6 +41,7 @@ export class GruppenController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
             );
         }
+
         return result.value;
     }
 }

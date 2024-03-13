@@ -12,7 +12,9 @@ import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enu
 import { Type } from 'class-transformer';
 import { Referenzgruppen } from '../domain/referenzgruppen.js';
 import { Laufzeit } from '../persistence/laufzeit.js';
+
 export class CreateGroupBodyParams {
+    @IsOptional()
     @IsString()
     @ApiProperty({ required: false })
     public readonly referrer?: string;
@@ -36,40 +38,48 @@ export class CreateGroupBodyParams {
     public readonly typ!: GruppenTyp;
 
     @IsEnum(Gruppenbereich)
+    @IsOptional()
     @ApiProperty({ enum: Gruppenbereich, required: false })
     public readonly bereich?: Gruppenbereich;
 
     @IsArray()
+    @IsOptional()
     @IsEnum(Gruppenoption, { each: true })
     @ApiProperty({ enum: Gruppenoption, required: false, isArray: true })
     public readonly optionen?: Gruppenoption[];
 
     @IsEnum(Gruppendifferenzierung)
+    @IsOptional()
     @ApiProperty({ enum: Gruppendifferenzierung, required: false })
     public readonly differenzierung?: Gruppendifferenzierung;
 
     @IsArray()
+    @IsOptional()
     @IsEnum(Bildungsziele, { each: true })
     @ApiProperty({ enum: Bildungsziele, required: false, isArray: true })
     public readonly bildungsziele?: Bildungsziele[];
 
     @IsArray()
+    @IsOptional()
     @IsEnum(Jahrgangsstufe, { each: true })
     @ApiProperty({ enum: Jahrgangsstufe, required: false, isArray: true })
     public readonly jahrgangsstufen?: Jahrgangsstufe[];
 
     @IsArray()
+    @IsOptional()
     @IsEnum(Faecherkanon, { each: true })
     @ApiProperty({ enum: Faecherkanon, required: false, isArray: true })
     public readonly faecher?: Faecherkanon[];
 
     @IsArray()
+    @IsOptional()
     @ValidateNested()
     @Type(() => Referenzgruppen)
     @ApiProperty({ type: Referenzgruppen, required: false, isArray: true })
     public readonly referenzgruppen?: Referenzgruppen[];
 
     @ValidateNested()
+    @IsOptional()
     @Type(() => Laufzeit)
     @ApiProperty({ type: Laufzeit, required: false })
     public readonly laufzeit!: Laufzeit;

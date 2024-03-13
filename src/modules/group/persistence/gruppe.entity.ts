@@ -14,10 +14,6 @@ import { Laufzeit } from './laufzeit.js';
 
 @Entity({ tableName: 'gruppe' })
 export class GruppeEntity extends TimestampedEntity {
-    public constructor() {
-        super();
-    }
-
     @Property({ nullable: false })
     public mandant!: string;
 
