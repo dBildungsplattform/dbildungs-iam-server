@@ -34,6 +34,7 @@ export class DbSeedService {
         for (const entity of entities) {
             this.lernperiodeMap.set(entity.id, entity);
         }
+
         return entities;
     }
 

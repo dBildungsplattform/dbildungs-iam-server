@@ -78,6 +78,7 @@ describe('Gruppe', () => {
                     laufzeit: new Laufzeit({ von: faker.date.recent(), bis: faker.date.recent() }),
                 };
                 const gruppe: Gruppe<false> = Gruppe.createGroup(createGroupBodyParams);
+
                 expect(gruppe).toBeInstanceOf(Gruppe);
                 expect(gruppe.id).toBeUndefined();
                 expect(gruppe.createdAt).toBeUndefined();
