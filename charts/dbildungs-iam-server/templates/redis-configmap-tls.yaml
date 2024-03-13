@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ (index .Values.redisvolumes 0).configMap.name }}
+  namespace: {{ .Values.namespace }}
+  labels: 
+    app.kubernetes.io/name: {{ .Values.dbildungsIamServer.commonLabels.name }}
+    app.kubernetes.io/version: {{.Chart.Version}}
+data:
+{{(.Files.Glob "gencert.sh").AsConfig | indent 2}}
+{{(.Files.Glob "copy-tls.sh").AsConfig | indent 2}}
+{{(.Files.Glob "redis.conf").AsConfig | indent 2}}
