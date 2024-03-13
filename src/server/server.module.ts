@@ -21,6 +21,7 @@ import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloa
 import { AuthenticationApiModule } from '../modules/authentication/authentication-api.module.js';
 import { GruppenModule } from '../modules/group/gruppe.module.js';
 import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
+import { PersonenKontextApiModule } from '../modules/personenkontext/personenkontext-api.module.js';
 
 @Module({
     imports: [
@@ -67,11 +68,13 @@ import { ServiceProviderApiModule } from '../modules/service-provider/service-pr
         LoggerModule.register(ServerModule.name),
         AuthenticationApiModule,
         PersonApiModule,
+        PersonenKontextApiModule,
         OrganisationApiModule,
         KeycloakAdministrationModule,
         HealthModule,
         RolleApiModule,
         ServiceProviderApiModule,
+        PersonenKontextApiModule,
         ErrorModule,
         KeycloakConfigModule,
         GruppenModule,

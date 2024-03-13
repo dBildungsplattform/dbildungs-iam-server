@@ -6,6 +6,7 @@ import { PersonDo } from '../domain/person.do.js';
 import { PersonEntity } from './person.entity.js';
 import { EntityName, Loaded } from '@mikro-orm/core';
 import { PersonScope } from './person.scope.js';
+import { PersonID } from '../../../shared/types/index.js';
 
 @Injectable()
 export class PersonRepo {
@@ -49,6 +50,16 @@ export class PersonRepo {
             return this.mapper.map(person, PersonEntity, PersonDo);
         }
         return null;
+    }
+
+    public async exists(id: PersonID): Promise<boolean> {
+        const person: Option<Loaded<PersonEntity, never, 'id', never>> = await this.em.findOne(
+            PersonEntity,
+            { id },
+            { fields: ['id'] as const },
+        );
+
+        return !!person;
     }
 
     public async save(personDo: PersonDo<boolean>): Promise<PersonDo<true>> {

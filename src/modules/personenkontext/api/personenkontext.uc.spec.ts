@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
@@ -20,12 +20,32 @@ import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonendatensatzDto } from '../../person/api/personendatensatz.dto.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
+import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { Personenkontext } from '../domain/personenkontext.js';
+import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
+import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
+import { OrganisationService } from '../../organisation/domain/organisation.service.js';
+import { OrganisationApiMapperProfile } from '../../organisation/api/organisation-api.mapper.profile.js';
+
+function createPersonenkontext(): Personenkontext<true>[] {
+    return [Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1')];
+}
+
+function createRolle(): RolleAggregate<true> {
+    return RolleAggregate.construct('1', faker.date.past(), faker.date.recent(), 'Rolle1', '1', RollenArt.LEHR, [], []);
+}
 
 describe('PersonenkontextUc', () => {
     let module: TestingModule;
     let sut: PersonenkontextUc;
     let personServiceMock: DeepMocked<PersonService>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
+    let rolleRepoMock: DeepMocked<RolleRepo>;
+    let organisationRepoMock: DeepMocked<OrganisationRepo>;
+    let organisationServiceMock: DeepMocked<OrganisationService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -33,6 +53,19 @@ describe('PersonenkontextUc', () => {
             providers: [
                 PersonenkontextUc,
                 PersonApiMapperProfile,
+                OrganisationApiMapperProfile,
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
+                {
+                    provide: OrganisationRepo,
+                    useValue: createMock<OrganisationRepo>(),
+                },
+                {
+                    provide: OrganisationService,
+                    useValue: createMock<OrganisationService>(),
+                },
                 {
                     provide: PersonService,
                     useValue: createMock<PersonService>(),
@@ -46,6 +79,9 @@ describe('PersonenkontextUc', () => {
         sut = module.get(PersonenkontextUc);
         personServiceMock = module.get(PersonService);
         personenkontextServiceMock = module.get(PersonenkontextService);
+        rolleRepoMock = module.get(RolleRepo);
+        organisationRepoMock = module.get(OrganisationRepo);
+        organisationServiceMock = module.get(OrganisationService);
     });
 
     afterAll(async () => {
@@ -203,6 +239,75 @@ describe('PersonenkontextUc', () => {
                     fail('Expected SchulConnexError');
                 }
                 expect(result.code).toBe(404);
+            });
+        });
+    });
+
+    describe('hatSystemRecht', () => {
+        describe('when personenkontext is referencing rolle with a systemrecht in systemrechte array', () => {
+            it('should return an array with the matching organisation as SSK, parent and children', async () => {
+                const personenkontexte: Personenkontext<true>[] = createPersonenkontext();
+                const rolle: RolleAggregate<true> = createRolle();
+                rolle.systemrechte = [RollenSystemRecht.ROLLEN_VERWALTEN];
+                const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+                rolleRepoMock.findById.mockResolvedValue(rolle);
+                organisationRepoMock.findById.mockResolvedValue(organisation);
+
+                const children: OrganisationDo<true>[] = [
+                    DoFactory.createOrganisation(true),
+                    DoFactory.createOrganisation(true),
+                    DoFactory.createOrganisation(true),
+                ];
+
+                const findAllAdministriertVon: Paged<OrganisationDo<true>> = {
+                    items: children,
+                    offset: 0,
+                    limit: children.length,
+                    total: children.length,
+                };
+                organisationServiceMock.findAllAdministriertVon.mockResolvedValue(findAllAdministriertVon);
+                personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
+                const result: SystemrechtResponse = await sut.hatSystemRecht('1', RollenSystemRecht.ROLLEN_VERWALTEN);
+                expect(result.ROLLEN_VERWALTEN).toBeTruthy();
+                expect(result.ROLLEN_VERWALTEN).toHaveLength(4);
+            });
+        });
+
+        describe('when no rollen with a non-empty systemrechte-array exist', () => {
+            it('should return an empty array', async () => {
+                const personenkontexte: Personenkontext<true>[] = createPersonenkontext();
+                const rolle: RolleAggregate<true> = createRolle();
+                const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+                rolleRepoMock.findById.mockResolvedValue(rolle);
+                organisationRepoMock.findById.mockResolvedValue(organisation);
+                personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
+                const result: SystemrechtResponse = await sut.hatSystemRecht('1', RollenSystemRecht.ROLLEN_VERWALTEN);
+                expect(result.ROLLEN_VERWALTEN).toBeTruthy();
+                expect(result.ROLLEN_VERWALTEN).toHaveLength(0);
+            });
+        });
+
+        describe('when no organisations are found via organisationId of personenkontext', () => {
+            it('should return an empty array', async () => {
+                const personenkontexte: Personenkontext<true>[] = createPersonenkontext();
+                const rolle: RolleAggregate<true> = createRolle();
+                rolleRepoMock.findById.mockResolvedValue(rolle);
+                organisationRepoMock.findById.mockResolvedValue(undefined);
+                personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
+                const result: SystemrechtResponse = await sut.hatSystemRecht('1', RollenSystemRecht.ROLLEN_VERWALTEN);
+                expect(result.ROLLEN_VERWALTEN).toBeTruthy();
+                expect(result.ROLLEN_VERWALTEN).toHaveLength(0);
+            });
+        });
+
+        describe('when no rollen are found via rolleId of personenkontext', () => {
+            it('should return an empty array', async () => {
+                const personenkontexte: Personenkontext<true>[] = createPersonenkontext();
+                rolleRepoMock.findById.mockResolvedValue(undefined);
+                personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
+                const result: SystemrechtResponse = await sut.hatSystemRecht('1', RollenSystemRecht.ROLLEN_VERWALTEN);
+                expect(result.ROLLEN_VERWALTEN).toBeTruthy();
+                expect(result.ROLLEN_VERWALTEN).toHaveLength(0);
             });
         });
     });

@@ -6,10 +6,11 @@ import { PersonFile } from './file/person-file.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { ConstructorCall, EntityFile } from './db-seed.console.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
-import { ServiceProviderFile } from './file/service-provider-file.js';
+import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { plainToInstance } from 'class-transformer';
 import { LernperiodeFile } from './file/lernperiode-file.js';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
+import { ServiceProviderFile } from './file/service-provider-file.js';
 
 @Injectable()
 export class DbSeedService {
@@ -35,6 +36,8 @@ export class DbSeedService {
         }
         return entities;
     }
+
+    private personenkontextMap: Map<string, Personenkontext<true>> = new Map();
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
@@ -103,6 +106,7 @@ export class DbSeedService {
                 rolleData.administeredBySchulstrukturknoten,
                 rolleData.rollenart,
                 rolleData.merkmale,
+                rolleData.systemrechte,
             ),
         );
 
@@ -133,12 +137,31 @@ export class DbSeedService {
                 data.logoMimeType,
             ),
         );
-
         for (const serviceProvider of serviceProviders) {
             this.serviceProviderMap.set(serviceProvider.id, serviceProvider);
         }
-
         return serviceProviders;
+    }
+
+    public readPersonenkontext(fileContentAsStr: string): Personenkontext<true>[] {
+        const { entities }: EntityFile<Personenkontext<true>> = JSON.parse(fileContentAsStr) as EntityFile<
+            Personenkontext<true>
+        >;
+
+        const personenkontexte: Personenkontext<true>[] = entities.map((pkData: Personenkontext<true>) =>
+            Personenkontext.construct(
+                pkData.id,
+                new Date(),
+                new Date(),
+                pkData.personId,
+                pkData.organisationId,
+                pkData.rolleId,
+            ),
+        );
+        for (const personenkontext of personenkontexte) {
+            this.personenkontextMap.set(personenkontext.id, personenkontext);
+        }
+        return personenkontexte;
     }
 
     /* Setting as RolleEntity is required, eg. RolleFile would not work, persisting would fail due to saving one RolleEntity and one RolleFile
