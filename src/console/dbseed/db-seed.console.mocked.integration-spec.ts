@@ -13,7 +13,7 @@ import { UsernameGeneratorService } from '../../modules/person/domain/username-g
 import { DbSeedMapper } from './db-seed-mapper.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';
-import { DomainError, KeycloakClientError } from '../../shared/error/index.js';
+import { DomainError, InvalidNameError, KeycloakClientError } from '../../shared/error/index.js';
 import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
 
 describe('DbSeedConsoleMockedKeycloak', () => {
@@ -80,8 +80,21 @@ describe('DbSeedConsoleMockedKeycloak', () => {
                     error: error,
                 };
                 keycloakUserServiceMock.create.mockResolvedValueOnce(result);
-                userNameGeneratorServiceMock.generateUsername.mockResolvedValueOnce('timtester1');
+                userNameGeneratorServiceMock.generateUsername.mockResolvedValueOnce({ ok: true, value: 'timtester1' });
                 await expect(sut.run(params)).rejects.toThrow();
+            });
+        });
+
+        describe('when no username could be generated', () => {
+            it('should fail with error', async () => {
+                const params: string[] = ['seeding-integration-test/invalidPerson'];
+
+                userNameGeneratorServiceMock.generateUsername.mockResolvedValueOnce({
+                    ok: false,
+                    error: new InvalidNameError('invalid'),
+                });
+
+                await expect(sut.run(params)).rejects.toThrow(InvalidNameError);
             });
         });
     });

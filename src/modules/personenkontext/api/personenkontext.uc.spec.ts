@@ -31,16 +31,7 @@ import { OrganisationService } from '../../organisation/domain/organisation.serv
 import { OrganisationApiMapperProfile } from '../../organisation/api/organisation-api.mapper.profile.js';
 
 function createPersonenkontext(): Personenkontext<true>[] {
-    return [
-        {
-            id: '1',
-            personId: '1',
-            rolleId: '1',
-            organisationId: '1',
-            createdAt: faker.date.past(),
-            updatedAt: faker.date.recent(),
-        },
-    ];
+    return [Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1')];
 }
 
 function createRolle(): RolleAggregate<true> {
