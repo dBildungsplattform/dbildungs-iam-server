@@ -17,6 +17,7 @@ spec:
         app.kubernetes.io/name: {{ .Values.backend.commonLabels.name }}
         app.kubernetes.io/layer: {{ .Values.backend.selector.layer }}
     spec:
+      automountServiceAccountToken: false
       {{- if .Values.seeding.enabled }}
       initContainers:
         - name: db-init
