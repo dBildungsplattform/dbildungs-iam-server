@@ -18,6 +18,8 @@ import { SchuleUnterTraegerError } from '../specification/error/schule-unter-tra
 import { TraegerInTraeger } from '../specification/traeger-in-traeger.js';
 import { TraegerInTraegerError } from '../specification/error/traeger-in-traeger.error.js';
 import { ZyklusInOrganisationen } from '../specification/zyklus-in-organisationen.js';
+import { KennungRequiredForSchule } from '../specification/kennung-required-for-schule.js';
+import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
 
 @Injectable()
 export class OrganisationService {
@@ -40,6 +42,11 @@ export class OrganisationService {
             };
         }
 
+        const validationResult: Result<void, DomainError> = await this.validateKennung(organisationDo);
+        if (!validationResult.ok) {
+            return { ok: false, error: validationResult.error };
+        }
+
         const organisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
         if (organisation) {
             return { ok: true, value: organisation };
@@ -56,6 +63,12 @@ export class OrganisationService {
         if (!storedOrganisation) {
             return { ok: false, error: new EntityNotFoundError('Organisation', organisationDo.id) };
         }
+
+        const validationResult: Result<void, DomainError> = await this.validateKennung(organisationDo);
+        if (!validationResult.ok) {
+            return { ok: false, error: validationResult.error };
+        }
+
         const organisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
         if (organisation) {
             return { ok: true, value: organisation };
@@ -65,6 +78,15 @@ export class OrganisationService {
             ok: false,
             error: new EntityCouldNotBeUpdated(`Organization could not be updated`, organisationDo.id),
         };
+    }
+
+    private async validateKennung(organisation: OrganisationDo<boolean>): Promise<Result<void, DomainError>> {
+        const kennungRequiredForSchule: KennungRequiredForSchule = new KennungRequiredForSchule();
+        if (!(await kennungRequiredForSchule.isSatisfiedBy(organisation))) {
+            return { ok: false, error: new KennungRequiredForSchuleError() };
+        }
+
+        return { ok: true, value: undefined };
     }
 
     public async findOrganisationById(id: string): Promise<Result<OrganisationDo<true>, DomainError>> {

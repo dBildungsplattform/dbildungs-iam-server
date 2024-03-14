@@ -14,6 +14,7 @@ import { OrganisationRepo } from '../persistence/organisation.repo.js';
 import { OrganisationDo } from './organisation.do.js';
 import { OrganisationService } from './organisation.service.js';
 import { OrganisationsTyp } from './organisation.enums.js';
+import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -91,6 +92,22 @@ describe('OrganisationService', () => {
             });
         });
 
+        it('should return a domain error if kennung is not set and type is schule', async () => {
+            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+                typ: OrganisationsTyp.SCHULE,
+                kennung: undefined,
+            });
+            organisationRepoMock.save.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
+            mapperMock.map.mockReturnValue(organisationDo as unknown as Dictionary<unknown>);
+
+            const result: Result<OrganisationDo<true>> = await organisationService.createOrganisation(organisationDo);
+
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new KennungRequiredForSchuleError(),
+            });
+        });
+
         it('should return a domain error', async () => {
             const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
             organisationDo.id = faker.string.uuid();
@@ -121,6 +138,21 @@ describe('OrganisationService', () => {
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: false,
                 error: new EntityCouldNotBeUpdated(`Organization could not be updated`, organisationDo.id),
+            });
+        });
+
+        it('should return a domain error if kennung is not set and type is schule', async () => {
+            const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.SCHULE,
+                kennung: undefined,
+            });
+            organisationRepoMock.findById.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
+
+            const result: Result<OrganisationDo<true>> = await organisationService.updateOrganisation(organisationDo);
+
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new KennungRequiredForSchuleError(),
             });
         });
 
@@ -279,6 +311,36 @@ describe('OrganisationService', () => {
             expect(result).toEqual<Result<void>>({
                 ok: false,
                 error: new EntityNotFoundError('Organisation', childId),
+            });
+        });
+
+        it('should return a domain error if the organisation could not be updated', async () => {
+            const rootDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                id: '1',
+                name: 'Root',
+                administriertVon: undefined,
+                zugehoerigZu: undefined,
+                typ: OrganisationsTyp.TRAEGER,
+            });
+            const traegerDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                id: '2',
+                name: 'Träger1',
+                administriertVon: '1',
+                zugehoerigZu: '1',
+                typ: OrganisationsTyp.TRAEGER,
+            });
+
+            organisationRepoMock.exists.mockResolvedValueOnce(true);
+            organisationRepoMock.findById.mockResolvedValueOnce(traegerDo);
+            organisationRepoMock.findById.mockResolvedValueOnce(rootDo); //called in TraegerAdministriertVonTraeger
+            organisationRepoMock.findById.mockResolvedValueOnce(rootDo); //called in ZyklusInZugehoerigZu
+
+            organisationRepoMock.save.mockRejectedValueOnce(new Error());
+            const result: Result<void> = await organisationService.setZugehoerigZu(rootDo.id, traegerDo.id);
+
+            expect(result).toEqual<Result<void>>({
+                ok: false,
+                error: new EntityCouldNotBeUpdated('Organisation', traegerDo.id),
             });
         });
 

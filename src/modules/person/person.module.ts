@@ -22,6 +22,6 @@ import { PersonRepository } from './persistence/person.repository.js';
         KeycloakAdministrationService,
         KeycloakAdminClient,
     ],
-    exports: [PersonService],
+    exports: [PersonService, PersonRepo],
 })
 export class PersonModule {}

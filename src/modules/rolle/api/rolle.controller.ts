@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -20,6 +20,9 @@ import { Rolle } from '../domain/rolle.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { RolleResponse } from './rolle.response.js';
+import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
+import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
+import { AddSystemrechtError } from '../../../shared/error/add-systemrecht.error.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
@@ -50,7 +53,7 @@ export class RolleController {
     @ApiBadRequestResponse({ description: 'The input was not valid.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the rolle.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rolle.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the rolle.' })
     public async createRolle(@Body() params: CreateRolleBodyParams): Promise<RolleResponse> {
         const orgResult: Result<OrganisationDo<true>, DomainError> = await this.orgService.findOrganisationById(
             params.administeredBySchulstrukturknoten,
@@ -67,10 +70,34 @@ export class RolleController {
             params.administeredBySchulstrukturknoten,
             params.rollenart,
             params.merkmale,
+            params.systemrechte,
         );
 
         const result: Rolle<true> = await this.rolleRepo.save(rolle);
 
         return result;
+    }
+
+    @Patch(':rolleId')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ description: 'Add systemrecht to a rolle.' })
+    @ApiOkResponse({ description: 'The systemrecht was successfully added to rolle.' })
+    @ApiBadRequestResponse({ description: 'The input was not valid.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to create the rolle.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rolle.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while adding systemrecht to rolle.' })
+    public async addSystemRecht(
+        @Param() findRolleByIdParams: FindRolleByIdParams,
+        @Body() addSystemrechtBodyParams: AddSystemrechtBodyParams,
+    ): Promise<void> {
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
+        if (rolle) {
+            rolle.addSystemRecht(addSystemrechtBodyParams.systemRecht);
+            await this.rolleRepo.save(rolle);
+        } else {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new AddSystemrechtError()),
+            );
+        }
     }
 }

@@ -94,4 +94,20 @@ describe('RolleRepo', () => {
             expect(rolle).toBeNull();
         });
     });
+
+    describe('exists', () => {
+        it('should return true, if the rolle exists', async () => {
+            const rolle: Rolle<true> = await sut.save(DoFactory.createRolle(false));
+
+            const exists: boolean = await sut.exists(rolle.id);
+
+            expect(exists).toBe(true);
+        });
+
+        it('should return false, if the rolle does not exists', async () => {
+            const exists: boolean = await sut.exists(faker.string.uuid());
+
+            expect(exists).toBe(false);
+        });
+    });
 });

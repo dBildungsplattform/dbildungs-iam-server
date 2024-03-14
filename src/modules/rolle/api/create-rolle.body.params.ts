@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayUnique, IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
-import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 
 export class CreateRolleBodyParams {
     @IsString()
@@ -21,4 +21,9 @@ export class CreateRolleBodyParams {
     @ArrayUnique()
     @ApiProperty({ enum: RollenMerkmal, isArray: true, uniqueItems: true })
     public merkmale!: RollenMerkmal[];
+
+    @IsEnum(RollenSystemRecht, { each: true })
+    @ArrayUnique()
+    @ApiProperty({ enum: RollenSystemRecht, isArray: true, uniqueItems: true })
+    public systemrechte!: RollenSystemRecht[];
 }

@@ -100,7 +100,7 @@ describe('ServiceProvider API', () => {
 
         describe('when the service provider does not exist', () => {
             it('should return 404', async () => {
-                const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+                const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .get(`/provider/${serviceProvider.id}/logo`)
