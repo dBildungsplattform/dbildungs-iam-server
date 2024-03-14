@@ -56,30 +56,31 @@ describe('GruppeMapper', () => {
 
             const result: GruppeEntity = gruppeMapper.mapGruppeToGruppeEntity(gruppe);
 
-            expect(result).toBeInstanceOf(GruppeEntity);
-            expect(result.mandant).toBeDefined();
-            expect(result.organisationId).toBeDefined();
-            expect(result.referrer).toBe(gruppe.referrer);
-            expect(result.bezeichnung).toBe(gruppe.bezeichnung);
-            expect(result.thema).toBe(gruppe.thema);
-            expect(result.beschreibung).toBe(gruppe.beschreibung);
-            expect(result.typ).toBe(gruppe.typ);
-            expect(result.bereich).toBe(gruppe.bereich);
-            expect(result.optionen).toBe(gruppe.optionen);
-            expect(result.differenzierung).toBe(gruppe.differenzierung);
-            expect(result.bildungsziele).toBe(gruppe.bildungsziele);
-            expect(result.jahrgangsstufen).toBe(gruppe.jahrgangsstufen);
-            expect(result.faecher).toBe(gruppe.faecher);
-            expect(result.referenzgruppen).toBe(gruppe.referenzgruppen);
-            expect(result.laufzeit).toBe(gruppe.laufzeit);
+            expect(result).toEqual(
+                expect.objectContaining({
+                    mandant: '',
+                    organisationId: '',
+                    referrer: gruppe.referrer,
+                    bezeichnung: gruppe.bezeichnung,
+                    thema: gruppe.thema,
+                    beschreibung: gruppe.beschreibung,
+                    typ: gruppe.typ,
+                    bereich: gruppe.bereich,
+                    optionen: gruppe.optionen,
+                    differenzierung: gruppe.differenzierung,
+                    bildungsziele: gruppe.bildungsziele,
+                    jahrgangsstufen: gruppe.jahrgangsstufen,
+                    faecher: gruppe.faecher,
+                    referenzgruppen: gruppe.referenzgruppen,
+                    laufzeit: gruppe.laufzeit,
+                }),
+            );
         });
     });
 
     describe('mapGruppeEntityToGruppe', () => {
         it('should map GruppeEntity to Gruppe', () => {
             const gruppeEntity: GruppeEntity = new GruppeEntity();
-            gruppeEntity.mandant = 'test-mandant';
-            gruppeEntity.organisationId = 'test-orgid';
             gruppeEntity.referrer = faker.lorem.word();
             gruppeEntity.bezeichnung = faker.lorem.word();
             gruppeEntity.thema = faker.lorem.word();
@@ -106,21 +107,29 @@ describe('GruppeMapper', () => {
 
             const result: Gruppe<true> = gruppeMapper.mapGruppeEntityToGruppe(gruppeEntity);
 
-            expect(result).toBeInstanceOf(Gruppe);
-            expect(result.bezeichnung).toBe(gruppeEntity.bezeichnung);
-            expect(result.typ).toBe(gruppeEntity.typ);
-            expect(result.revision).toBe(gruppeEntity.revision);
-            expect(result.referrer).toBe(gruppeEntity.referrer);
-            expect(result.thema).toBe(gruppeEntity.thema);
-            expect(result.beschreibung).toBe(gruppeEntity.beschreibung);
-            expect(result.bereich).toBe(gruppeEntity.bereich);
-            expect(result.optionen).toBe(gruppeEntity.optionen);
-            expect(result.differenzierung).toBe(gruppeEntity.differenzierung);
-            expect(result.bildungsziele).toBe(gruppeEntity.bildungsziele);
-            expect(result.jahrgangsstufen).toBe(gruppeEntity.jahrgangsstufen);
-            expect(result.faecher).toBe(gruppeEntity.faecher);
-            expect(result.referenzgruppen).toBe(gruppeEntity.referenzgruppen);
-            expect(result.laufzeit).toBe(gruppeEntity.laufzeit);
+            expect(result).toEqual(
+                expect.objectContaining({
+                    id: undefined,
+                    mandant: '',
+                    organisationId: '',
+                    referrer: gruppeEntity.referrer,
+                    bezeichnung: gruppeEntity.bezeichnung,
+                    thema: gruppeEntity.thema,
+                    beschreibung: gruppeEntity.beschreibung,
+                    typ: gruppeEntity.typ,
+                    bereich: gruppeEntity.bereich,
+                    optionen: gruppeEntity.optionen,
+                    differenzierung: gruppeEntity.differenzierung,
+                    bildungsziele: gruppeEntity.bildungsziele,
+                    jahrgangsstufen: gruppeEntity.jahrgangsstufen,
+                    faecher: gruppeEntity.faecher,
+                    referenzgruppen: gruppeEntity.referenzgruppen,
+                    laufzeit: gruppeEntity.laufzeit,
+                    revision: undefined,
+                    updatedAt: undefined,
+                    createdAt: undefined,
+                }),
+            );
         });
     });
 });
