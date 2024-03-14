@@ -84,7 +84,7 @@ describe('Gruppe', () => {
                 const gruppe: Gruppe<false> = Gruppe.createGroup(createGroupBodyParams);
 
                 expect(gruppe).toEqual(
-                    expect.objectContaining({
+                    expect.objectContaining<Gruppe<false>>({
                         id: undefined,
                         createdAt: undefined,
                         updatedAt: undefined,
