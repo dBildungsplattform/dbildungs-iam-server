@@ -2,9 +2,9 @@
     "entityName": "Personenkontext",
     "entities": [
         {
-            "personId": "578f5c3b-46af-46ff-ab1f-d398b4e9d6ed",
-            "organisationId": "d39cb7cf-2f9b-45f1-849f-973661f2f057",
-            "rolleId": "8b622128-c952-4b08-8957-762af7e659bd"
+            "personId": 2,
+            "organisationId": 0,
+            "rolleId": 0
         }
     ]
 }
