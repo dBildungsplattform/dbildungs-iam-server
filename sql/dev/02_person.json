@@ -3,7 +3,7 @@
     "entities": [
         {
             "id": "1d0390a7-f400-4133-ac1d-2ae79410fbc1",
-            "referrer": null,
+            "referrer": "mmustermann",
             "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
             "stammorganisation": null,
             "vorname": "Manuell",
@@ -28,7 +28,7 @@
         },
         {
             "id": "578f5c3b-46af-46ff-ab1f-d398b4e9d6ed",
-            "referrer": null,
+            "referrer": "ssuperadmin",
             "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
             "stammorganisation": null,
             "vorname": "Susi",
@@ -53,6 +53,3 @@
         }
     ]
 }
-
-
-
