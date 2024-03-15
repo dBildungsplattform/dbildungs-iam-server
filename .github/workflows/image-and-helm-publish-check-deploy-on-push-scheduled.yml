@@ -137,8 +137,7 @@ jobs:
       schulportal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
       dbildungs_iam_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
-    secrets:
-      SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
+    secrets: inherit
 
   create_branch_identifier_for_deletion:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
