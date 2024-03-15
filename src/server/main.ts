@@ -27,8 +27,10 @@ async function bootstrap(): Promise<void> {
         .addOAuth2({
             type: 'oauth2',
             flows: {
-                password: {
+                authorizationCode: {
+                    authorizationUrl: `${keycloakConfig.BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/auth`,
                     tokenUrl: `${keycloakConfig.BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/token`,
+                    refreshUrl: `${keycloakConfig.BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/token`,
                     scopes: {},
                 },
             },
@@ -53,8 +55,9 @@ async function bootstrap(): Promise<void> {
             initOAuth: {
                 clientId: keycloakConfig.CLIENT_ID,
                 realm: keycloakConfig.REALM_NAME,
-                scopes: ['openid, profile'],
+                scopes: [],
             },
+            oauth2RedirectUrl: `http://localhost:${port}/docs/oauth2-redirect.html`,
         },
     });
 
