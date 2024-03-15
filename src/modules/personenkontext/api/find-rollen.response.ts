@@ -8,8 +8,8 @@ export class FindRollenResponse {
     }
 
     @ApiProperty({ type: [Rolle<true>] })
-    public moeglicheRollen: Rolle<true>[];
+    public readonly moeglicheRollen: Rolle<true>[];
 
     @ApiProperty({ type: Number })
-    public total: number;
+    public readonly total: number;
 }

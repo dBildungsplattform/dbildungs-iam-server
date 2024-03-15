@@ -11,6 +11,7 @@ import { faker } from '@faker-js/faker';
 import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { PersonenkontextAnlageFactory } from './personenkontext-anlage.factory.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -48,15 +49,18 @@ function createRolleOrganisationsPersonKontext(
 }
 
 describe('PersonenkontextAnlage', () => {
+    const LIMIT: number = 25;
     let module: TestingModule;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let organisationRepoMock: DeepMocked<OrganisationRepo>;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let anlage: PersonenkontextAnlage;
+    let personenkontextAnlageFactory: PersonenkontextAnlageFactory;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             providers: [
+                PersonenkontextAnlageFactory,
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
@@ -74,7 +78,8 @@ describe('PersonenkontextAnlage', () => {
         rolleRepoMock = module.get(RolleRepo);
         organisationRepoMock = module.get(OrganisationRepo);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
-        anlage = PersonenkontextAnlage.construct(rolleRepoMock, organisationRepoMock, dBiamPersonenkontextRepoMock);
+        personenkontextAnlageFactory = module.get(PersonenkontextAnlageFactory);
+        anlage = personenkontextAnlageFactory.createNew();
     });
 
     afterAll(async () => {
@@ -108,6 +113,7 @@ describe('PersonenkontextAnlage', () => {
             const result: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(
                 rolle.id,
                 parentOrganisation.name!,
+                LIMIT,
             );
             expect(result).toHaveLength(1);
         });
@@ -136,7 +142,11 @@ describe('PersonenkontextAnlage', () => {
                 const counted: Counted<OrganisationDo<true>> = [foundByName, 1];
                 organisationRepoMock.findBy.mockResolvedValue(counted); //mock call in findChildOrganisations
 
-                const result: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(rolle.id, child.name!);
+                const result: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(
+                    rolle.id,
+                    child.name!,
+                    LIMIT,
+                );
                 expect(result).toHaveLength(1);
             });
 
@@ -163,7 +173,7 @@ describe('PersonenkontextAnlage', () => {
                 const counted: Counted<OrganisationDo<true>> = [foundByName, 1];
                 organisationRepoMock.findBy.mockResolvedValue(counted); //mock call in findChildOrganisations
 
-                await expect(anlage.findSchulstrukturknoten(rolle.id, child.name!)).resolves.not.toThrow(Error);
+                await expect(anlage.findSchulstrukturknoten(rolle.id, child.name!, LIMIT)).resolves.not.toThrow(Error);
             });
         });
 
@@ -174,7 +184,7 @@ describe('PersonenkontextAnlage', () => {
             organisationRepoMock.findByNameOrKennung.mockResolvedValue(organisationen);
             dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValue([]);
 
-            const result: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(rolle.id, 'nonexistent');
+            const result: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(rolle.id, 'nonexistent', LIMIT);
             expect(result).toHaveLength(0);
         });
 
@@ -185,7 +195,7 @@ describe('PersonenkontextAnlage', () => {
             organisationRepoMock.findByNameOrKennung.mockResolvedValue([]);
             dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);
 
-            const result: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(rolle.id, 'nonexistent');
+            const result: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(rolle.id, 'nonexistent', LIMIT);
             expect(result).toHaveLength(0);
         });
     });
@@ -195,14 +205,14 @@ describe('PersonenkontextAnlage', () => {
             const rolle: Rolle<true> = DoFactory.createRolle(true);
             rolleRepoMock.findByName.mockResolvedValue([rolle]);
 
-            const result: Rolle<true>[] = await anlage.findRollen(rolle.name);
+            const result: Rolle<true>[] = await anlage.findRollen(rolle.name, LIMIT);
             expect(result).toEqual([rolle]);
         });
 
         it('should return empty list when no rollen exist', async () => {
             rolleRepoMock.findByName.mockResolvedValue(undefined);
 
-            const result: Rolle<true>[] = await anlage.findRollen('nonexistent');
+            const result: Rolle<true>[] = await anlage.findRollen('nonexistent', LIMIT);
             expect(result).toEqual([]);
         });
     });

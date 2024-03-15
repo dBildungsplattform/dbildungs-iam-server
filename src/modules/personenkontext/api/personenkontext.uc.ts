@@ -18,11 +18,6 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
-import { PersonenkontextAnlage } from '../domain/personenkontext-anlage.js';
-import { FindRollenResponse } from './find-rollen.response.js';
-import { FindPersonenkontextRollenBodyParams } from './find-personenkontext-rollen.body.params.js';
-import { FindPersonenkontextSchulstrukturknotenBodyParams } from './find-personenkontext-schulstrukturknoten.body.params.js';
-import { FindSchulstrukturknotenResponse } from './find-schulstrukturknoten.response.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
@@ -32,7 +27,6 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
-import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -41,7 +35,6 @@ export class PersonenkontextUc {
         private readonly personenkontextService: PersonenkontextService,
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepo,
-        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly organisationService: OrganisationService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
@@ -189,36 +182,5 @@ export class PersonenkontextUc {
         if (!result.ok) {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
         }
-    }
-
-    public async findRollen(params: FindPersonenkontextRollenBodyParams): Promise<FindRollenResponse> {
-        const anlage: PersonenkontextAnlage = PersonenkontextAnlage.construct(
-            this.rolleRepo,
-            this.organisationRepo,
-            this.dBiamPersonenkontextRepo,
-        );
-        const rollen: Rolle<true>[] = await anlage.findRollen(params.rolleName);
-        const response: FindRollenResponse = {
-            moeglicheRollen: rollen,
-            total: rollen.length,
-        };
-        return response;
-    }
-
-    public async findSchulstrukturknoten(
-        params: FindPersonenkontextSchulstrukturknotenBodyParams,
-    ): Promise<FindSchulstrukturknotenResponse> {
-        const anlage: PersonenkontextAnlage = PersonenkontextAnlage.construct(
-            this.rolleRepo,
-            this.organisationRepo,
-            this.dBiamPersonenkontextRepo,
-        );
-        const ssks: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(params.rolleId, params.sskName);
-        const sskResponses: OrganisationResponse[] = this.mapper.mapArray(ssks, OrganisationDo, OrganisationResponse);
-        const response: FindSchulstrukturknotenResponse = {
-            moeglicheSkks: sskResponses,
-            total: ssks.length,
-        };
-        return response;
     }
 }

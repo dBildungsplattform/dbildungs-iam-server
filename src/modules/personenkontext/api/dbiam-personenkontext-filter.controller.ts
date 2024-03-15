@@ -1,4 +1,4 @@
-import { Body, Controller, Get, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, Inject, UseFilters } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
@@ -8,34 +8,47 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { PersonenkontextUc } from './personenkontext.uc.js';
 import { FindPersonenkontextRollenBodyParams } from './find-personenkontext-rollen.body.params.js';
 import { FindPersonenkontextSchulstrukturknotenBodyParams } from './find-personenkontext-schulstrukturknoten.body.params.js';
 import { FindRollenResponse } from './find-rollen.response.js';
 import { FindSchulstrukturknotenResponse } from './find-schulstrukturknoten.response.js';
+import { PersonenkontextAnlage } from '../domain/personenkontext-anlage.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { PersonenkontextAnlageFactory } from '../domain/personenkontext-anlage.factory.js';
+import { getMapperToken } from '@automapper/nestjs';
+import { Mapper } from '@automapper/core';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontext')
 @ApiBearerAuth()
 @Controller({ path: 'personenkontext' })
 export class DbiamPersonenkontextFilterController {
-    public constructor(private readonly personenkontextUc: PersonenkontextUc) {}
+    public constructor(
+        private readonly personenkontextAnlageFactory: PersonenkontextAnlageFactory,
+        @Inject(getMapperToken()) private readonly mapper: Mapper,
+    ) {}
 
     @Get('rollen')
     @ApiOkResponse({
-        description: 'The rollen for a personenkontexte were successfully returned.',
+        description: 'The rollen for a personenkontext were successfully returned.',
         type: FindRollenResponse,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available rolen for personenkontexte.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to get rollen for personenkontext.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rollen for personenkontexte.' })
     public async findRollen(@Body() params: FindPersonenkontextRollenBodyParams): Promise<FindRollenResponse> {
-        return this.personenkontextUc.findRollen(params);
+        const anlage: PersonenkontextAnlage = this.personenkontextAnlageFactory.createNew();
+        const rollen: Rolle<true>[] = await anlage.findRollen(params.rolleName, params.limit);
+        const response: FindRollenResponse = new FindRollenResponse(rollen, rollen.length);
+
+        return response;
     }
 
     @Get('schulstrukturknoten')
     @ApiOkResponse({
-        description: 'The schulstrukturknoten for a personenkontexte were successfully returned.',
+        description: 'The schulstrukturknoten for a personenkontext were successfully returned.',
         type: FindSchulstrukturknotenResponse,
     })
     @ApiUnauthorizedResponse({
@@ -48,6 +61,18 @@ export class DbiamPersonenkontextFilterController {
     public async findSchulstrukturknoten(
         @Body() params: FindPersonenkontextSchulstrukturknotenBodyParams,
     ): Promise<FindSchulstrukturknotenResponse> {
-        return this.personenkontextUc.findSchulstrukturknoten(params);
+        const anlage: PersonenkontextAnlage = this.personenkontextAnlageFactory.createNew();
+        const ssks: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(
+            params.rolleId,
+            params.sskName,
+            params.limit,
+        );
+        const sskResponses: OrganisationResponse[] = this.mapper.mapArray(ssks, OrganisationDo, OrganisationResponse);
+        const response: FindSchulstrukturknotenResponse = new FindSchulstrukturknotenResponse(
+            sskResponses,
+            ssks.length,
+        );
+
+        return response;
     }
 }

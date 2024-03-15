@@ -22,11 +22,7 @@ import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { FindPersonenkontextRollenBodyParams } from './find-personenkontext-rollen.body.params.js';
 import { PersonenkontextAnlage } from '../domain/personenkontext-anlage.js';
-import { FindRollenResponse } from './find-rollen.response.js';
-import { FindSchulstrukturknotenResponse } from './find-schulstrukturknoten.response.js';
-import { FindPersonenkontextSchulstrukturknotenBodyParams } from './find-personenkontext-schulstrukturknoten.body.params.js';
 import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { Personenkontext } from '../domain/personenkontext.js';
@@ -34,7 +30,6 @@ import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
 import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationApiMapperProfile } from '../../organisation/api/organisation-api.mapper.profile.js';
-import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 
 function createPersonenkontext(): Personenkontext<true>[] {
     return [Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1')];
@@ -51,7 +46,6 @@ describe('PersonenkontextUc', () => {
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let organisationRepoMock: DeepMocked<OrganisationRepo>;
-    let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let organisationServiceMock: DeepMocked<OrganisationService>;
 
     beforeAll(async () => {
@@ -68,10 +62,6 @@ describe('PersonenkontextUc', () => {
                 {
                     provide: OrganisationRepo,
                     useValue: createMock<OrganisationRepo>(),
-                },
-                {
-                    provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
                     provide: OrganisationService,
@@ -96,7 +86,6 @@ describe('PersonenkontextUc', () => {
         personenkontextServiceMock = module.get(PersonenkontextService);
         rolleRepoMock = module.get(RolleRepo);
         organisationRepoMock = module.get(OrganisationRepo);
-        dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         organisationServiceMock = module.get(OrganisationService);
     });
 
@@ -382,107 +371,6 @@ describe('PersonenkontextUc', () => {
                 );
 
                 await expect(updatePersonPromise).resolves.toBeInstanceOf(SchulConnexError);
-            });
-        });
-    });
-
-    describe('findRollen', () => {
-        describe('when rollen can be found', () => {
-            it('should return a response with items', async () => {
-                const params: FindPersonenkontextRollenBodyParams = {
-                    rolleName: faker.string.alpha(),
-                    limit: 1,
-                };
-                const rollen: RolleAggregate<true>[] = [DoFactory.createRolle(true)];
-                rolleRepoMock.findByName.mockResolvedValue(rollen); //called via PersonenkontextAnlage aggregate
-                const result: FindRollenResponse = await sut.findRollen(params);
-                expect(result).toBeTruthy();
-                expect(result.moeglicheRollen).toHaveLength(1);
-                expect(rolleRepoMock.findByName).toHaveBeenCalledTimes(1);
-            });
-        });
-
-        describe('when rollen cannot be found', () => {
-            it('should return a response with an empty list', async () => {
-                const params: FindPersonenkontextRollenBodyParams = {
-                    rolleName: faker.string.alpha(),
-                    limit: 1,
-                };
-                rolleRepoMock.findByName.mockResolvedValue([]); //called via PersonenkontextAnlage aggregate
-                const result: FindRollenResponse = await sut.findRollen(params);
-                expect(result).toBeTruthy();
-                expect(result.moeglicheRollen).toHaveLength(0);
-                expect(rolleRepoMock.findByName).toHaveBeenCalledTimes(1);
-            });
-        });
-    });
-
-    describe('findSchulstrukturknoten', () => {
-        describe('when ssks can be found', () => {
-            it('should return a response with items', async () => {
-                const rolleId: string = faker.string.uuid();
-                const organisationName: string = faker.string.alpha();
-                const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true, {
-                    name: organisationName,
-                });
-                const params: FindPersonenkontextSchulstrukturknotenBodyParams = {
-                    rolleId: rolleId,
-                    sskName: organisationName,
-                    limit: 1,
-                };
-                const ssks: Option<OrganisationDo<true>[]> = [organisation];
-
-                const personenkontexte: Personenkontext<true>[] = [
-                    Personenkontext.construct(
-                        faker.string.uuid(),
-                        faker.date.past(),
-                        faker.date.recent(),
-                        faker.string.uuid(),
-                        organisation.id,
-                        rolleId,
-                    ),
-                ];
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue(ssks);
-                dbiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);
-                organisationRepoMock.findById.mockResolvedValue(organisation);
-
-                const result: FindSchulstrukturknotenResponse = await sut.findSchulstrukturknoten(params);
-                expect(result).toBeTruthy();
-                expect(result.moeglicheSkks).toHaveLength(1);
-                expect(organisationRepoMock.findByNameOrKennung).toHaveBeenCalledTimes(1);
-                expect(dbiamPersonenkontextRepoMock.findByRolle).toHaveBeenCalledTimes(1);
-            });
-        });
-
-        describe('when ssks cannot be found', () => {
-            it('should return a response with an empty list', async () => {
-                const rolleId: string = faker.string.uuid();
-                const organisationName: string = faker.string.alpha();
-                const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true, {
-                    name: organisationName,
-                });
-                const params: FindPersonenkontextSchulstrukturknotenBodyParams = {
-                    rolleId: rolleId,
-                    sskName: organisationName,
-                    limit: 1,
-                };
-                const personenkontexte: Personenkontext<true>[] = [
-                    Personenkontext.construct(
-                        '1',
-                        faker.date.past(),
-                        faker.date.recent(),
-                        faker.string.uuid(),
-                        organisation.id,
-                        rolleId,
-                    ),
-                ];
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue([]);
-                dbiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);
-                const result: FindSchulstrukturknotenResponse = await sut.findSchulstrukturknoten(params);
-                expect(result).toBeTruthy();
-                expect(result.moeglicheSkks).toHaveLength(0);
-                expect(organisationRepoMock.findByNameOrKennung).toHaveBeenCalledTimes(1);
-                expect(dbiamPersonenkontextRepoMock.findByRolle).toHaveBeenCalledTimes(0);
             });
         });
     });

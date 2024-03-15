@@ -19,7 +19,7 @@ export class PersonenkontextAnlage {
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
     ) {}
 
-    public static construct(
+    public static createNew(
         rolleRepo: RolleRepo,
         organisationRepo: OrganisationRepo,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
@@ -27,7 +27,11 @@ export class PersonenkontextAnlage {
         return new PersonenkontextAnlage(rolleRepo, organisationRepo, dBiamPersonenkontextRepo);
     }
 
-    public async findSchulstrukturknoten(rolleId: string, sskName: string): Promise<OrganisationDo<true>[]> {
+    public async findSchulstrukturknoten(
+        rolleId: string,
+        sskName: string,
+        limit: number,
+    ): Promise<OrganisationDo<true>[]> {
         this.rolleId = rolleId;
         const ssks: Option<OrganisationDo<true>[]> = await this.organisationRepo.findByNameOrKennung(sskName);
         if (!ssks || ssks.length === 0) return [];
@@ -48,13 +52,15 @@ export class PersonenkontextAnlage {
             }
         }
 
-        return ssks.filter((ssk: OrganisationDo<true>) =>
+        const orgas: OrganisationDo<true>[] = ssks.filter((ssk: OrganisationDo<true>) =>
             allOrganisations.some((organisation: OrganisationDo<true>) => ssk.id === organisation.id),
         );
+
+        return orgas.slice(0, limit);
     }
 
-    public async findRollen(rolleName: string): Promise<Rolle<true>[]> {
-        const rollen: Option<Rolle<true>[]> = await this.rolleRepo.findByName(rolleName);
+    public async findRollen(rolleName: string, limit: number): Promise<Rolle<true>[]> {
+        const rollen: Option<Rolle<true>[]> = await this.rolleRepo.findByName(rolleName, limit);
         if (rollen) return rollen;
         return [];
     }

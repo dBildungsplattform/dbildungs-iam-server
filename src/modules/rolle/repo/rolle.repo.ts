@@ -73,11 +73,11 @@ export class RolleRepo {
         return rolle && mapEntityToAggregate(rolle);
     }
 
-    public async findByName(searchStr: string): Promise<Option<Rolle<true>[]>> {
+    public async findByName(searchStr: string, limit: number): Promise<Option<Rolle<true>[]>> {
         const rollen: Option<RolleEntity[]> = await this.em.find(
             this.entityName,
             { name: { $ilike: '%' + searchStr + '%' } },
-            { populate: ['merkmale', 'systemrechte'] as const, limit: RolleRepo.DEFAULT_LIMIT },
+            { populate: ['merkmale', 'systemrechte'] as const, limit: limit },
         );
         return rollen.map(mapEntityToAggregate);
     }
