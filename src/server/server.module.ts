@@ -22,6 +22,7 @@ import { AuthenticationApiModule } from '../modules/authentication/authenticatio
 import { GruppenModule } from '../modules/group/gruppe.module.js';
 import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { PersonenKontextApiModule } from '../modules/personenkontext/personenkontext-api.module.js';
+import { GruppenApiModule } from '../modules/group/gruppe-api.module.js';
 
 @Module({
     imports: [
@@ -78,6 +79,7 @@ import { PersonenKontextApiModule } from '../modules/personenkontext/personenkon
         ErrorModule,
         KeycloakConfigModule,
         GruppenModule,
+        GruppenApiModule,
     ],
     providers: [
         {
