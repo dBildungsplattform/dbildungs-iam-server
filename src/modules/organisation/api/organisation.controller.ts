@@ -7,7 +7,7 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
-    ApiNotFoundResponse,
+    ApiNotFoundResponse, ApiOAuth2,
     ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -33,6 +33,7 @@ import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js'
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
 @ApiBearerAuth()
+@ApiOAuth2(["openid"])
 @Controller({ path: 'organisationen' })
 export class OrganisationController {
     public constructor(

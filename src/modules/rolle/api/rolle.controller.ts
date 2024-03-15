@@ -5,6 +5,7 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiOAuth2,
     ApiOkResponse,
     ApiOperation,
     ApiTags,
@@ -27,6 +28,7 @@ import { AddSystemrechtError } from '../../../shared/error/add-systemrecht.error
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
 @ApiBearerAuth()
+@ApiOAuth2(['openid'])
 @Controller({ path: 'rolle' })
 export class RolleController {
     public constructor(

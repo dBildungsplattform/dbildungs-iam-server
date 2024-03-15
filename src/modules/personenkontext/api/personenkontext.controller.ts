@@ -19,7 +19,7 @@ import {
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNoContentResponse,
-    ApiNotFoundResponse,
+    ApiNotFoundResponse, ApiOAuth2,
     ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -54,6 +54,7 @@ import { isEnum } from 'class-validator';
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontexte')
 @ApiBearerAuth()
+@ApiOAuth2(["openid"])
 @Controller({ path: 'personenkontexte' })
 export class PersonenkontextController {
     public constructor(

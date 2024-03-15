@@ -22,7 +22,7 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
-    ApiNotFoundResponse,
+    ApiNotFoundResponse, ApiOAuth2,
     ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -56,6 +56,7 @@ import { UsernameGeneratorService } from '../domain/username-generator.service.j
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
 @ApiBearerAuth()
+@ApiOAuth2(["openid"])
 @Controller({ path: 'personen' })
 export class PersonController {
     public constructor(
