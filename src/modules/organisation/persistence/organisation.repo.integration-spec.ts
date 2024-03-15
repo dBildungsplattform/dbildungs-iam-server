@@ -137,7 +137,7 @@ describe('OrganisationRepo', () => {
         });
     });
 
-    describe('findByName', () => {
+    describe('findByNameOrKennung', () => {
         describe('when matching organisations were found', () => {
             it('should return found organizations', async () => {
                 const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);

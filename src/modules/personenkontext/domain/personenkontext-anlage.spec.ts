@@ -11,7 +11,25 @@ import { faker } from '@faker-js/faker';
 import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { createPersonenkontext } from '../persistence/dbiam-personenkontext.repo.spec.js';
+
+function createPersonenkontext<WasPersisted extends boolean>(
+    this: void,
+    withId: WasPersisted,
+    params: Partial<Personenkontext<boolean>> = {},
+): Personenkontext<WasPersisted> {
+    const personenkontext: Personenkontext<WasPersisted> = Personenkontext.construct<boolean>(
+        withId ? faker.string.uuid() : undefined,
+        withId ? faker.date.past() : undefined,
+        withId ? faker.date.recent() : undefined,
+        faker.string.uuid(),
+        faker.string.uuid(),
+        faker.string.uuid(),
+    );
+
+    Object.assign(personenkontext, params);
+
+    return personenkontext;
+}
 
 function createRolleOrganisationsPersonKontext(
     anlage: PersonenkontextAnlage,

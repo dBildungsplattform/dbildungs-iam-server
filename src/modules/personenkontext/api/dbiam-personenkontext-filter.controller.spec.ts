@@ -5,11 +5,11 @@ import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { PersonApiMapperProfile } from '../../person/api/person-api.mapper.profile.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
-import { DBiamPersonenkontextController } from './dbiam-personenkontext.controller.js';
-import { PersonenkontextUc } from '../api/personenkontext.uc.js';
-import { FindPersonenkontextRollenBodyParams } from '../api/find-personenkontext-rollen.body.params.js';
-import { FindRollenResponse } from '../api/find-rollen.response.js';
-import { FindSchulstrukturknotenResponse } from '../api/find-schulstrukturknoten.response.js';
+import { DbiamPersonenkontextFilterController } from './dbiam-personenkontext-filter.controller.js';
+import { PersonenkontextUc } from './personenkontext.uc.js';
+import { FindPersonenkontextRollenBodyParams } from './find-personenkontext-rollen.body.params.js';
+import { FindRollenResponse } from './find-rollen.response.js';
+import { FindSchulstrukturknotenResponse } from './find-schulstrukturknoten.response.js';
 import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
@@ -17,7 +17,7 @@ import { OrganisationApiMapperProfile } from '../../organisation/api/organisatio
 
 describe('DbiamPersonenkontextController', () => {
     let module: TestingModule;
-    let sut: DBiamPersonenkontextController;
+    let sut: DbiamPersonenkontextFilterController;
     let personenkontextUcMock: DeepMocked<PersonenkontextUc>;
     let mapper: Mapper;
 
@@ -25,7 +25,7 @@ describe('DbiamPersonenkontextController', () => {
         module = await Test.createTestingModule({
             imports: [MapperTestModule],
             providers: [
-                DBiamPersonenkontextController,
+                DbiamPersonenkontextFilterController,
                 PersonApiMapperProfile,
                 OrganisationApiMapperProfile,
                 {
@@ -35,7 +35,7 @@ describe('DbiamPersonenkontextController', () => {
             ],
         }).compile();
         mapper = module.get(getMapperToken());
-        sut = module.get(DBiamPersonenkontextController);
+        sut = module.get(DbiamPersonenkontextFilterController);
         personenkontextUcMock = module.get(PersonenkontextUc);
     });
 
@@ -58,9 +58,7 @@ describe('DbiamPersonenkontextController', () => {
                 limit: 1,
             };
             const rollen: RolleAggregate<true>[] = [DoFactory.createRolle(true)];
-            const expected: FindRollenResponse = new FindRollenResponse();
-            expected.moeglicheRollen = rollen;
-            expected.total = 1;
+            const expected: FindRollenResponse = new FindRollenResponse(rollen, 1);
 
             personenkontextUcMock.findRollen.mockResolvedValue(expected);
 
@@ -95,9 +93,7 @@ describe('DbiamPersonenkontextController', () => {
                 moeglicheSkks: sskResponses,
                 total: 1,
             });
-            const expected: FindSchulstrukturknotenResponse = new FindSchulstrukturknotenResponse();
-            expected.moeglicheSkks = sskResponses;
-            expected.total = 1;
+            const expected: FindSchulstrukturknotenResponse = new FindSchulstrukturknotenResponse(sskResponses, 1);
             const result: FindSchulstrukturknotenResponse = await sut.findSchulstrukturknoten({
                 sskName: faker.string.alpha(),
                 rolleId: faker.string.numeric(),

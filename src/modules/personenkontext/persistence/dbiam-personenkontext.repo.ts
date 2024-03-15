@@ -50,13 +50,6 @@ export class DBiamPersonenkontextRepo {
         return personenKontexte.map(mapEntityToAggregate);
     }
 
-    /*    public async exists(personId: string, organisationId: string, rolleId: string): Promise<boolean> {
-        const personenKontext: Option<PersonenkontextEntity> = await this.em.findOne(PersonenkontextEntity, {
-            personId,
-            rolleId,
-            organisationId,
-        });*/
-
     public async exists(personId: PersonID, organisationId: OrganisationID, rolleId: RolleID): Promise<boolean> {
         const personenKontext: Option<Loaded<PersonenkontextEntity, never, 'id', never>> = await this.em.findOne(
             PersonenkontextEntity,
@@ -67,6 +60,7 @@ export class DBiamPersonenkontextRepo {
             },
             { fields: ['id'] as const },
         );
+
         return !!personenKontext;
     }
 

@@ -55,6 +55,8 @@ export function mapEntityToAggregate(entity: RolleEntity): Rolle<boolean> {
 }
 @Injectable()
 export class RolleRepo {
+    public static readonly DEFAULT_LIMIT: number = 25;
+
     public constructor(protected readonly em: EntityManager) {}
 
     public get entityName(): EntityName<RolleEntity> {
@@ -75,7 +77,7 @@ export class RolleRepo {
         const rollen: Option<RolleEntity[]> = await this.em.find(
             this.entityName,
             { name: { $ilike: '%' + searchStr + '%' } },
-            { populate: ['merkmale', 'systemrechte'] as const },
+            { populate: ['merkmale', 'systemrechte'] as const, limit: RolleRepo.DEFAULT_LIMIT },
         );
         return rollen.map(mapEntityToAggregate);
     }
