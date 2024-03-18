@@ -214,7 +214,7 @@ describe('PersonRepository', () => {
 
         describe('when successfull', () => {
             it('should return Person', async () => {
-                usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
                 const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),

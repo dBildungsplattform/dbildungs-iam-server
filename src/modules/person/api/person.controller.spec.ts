@@ -135,6 +135,15 @@ describe('PersonController', () => {
                 await expect(personController.createPerson(params)).rejects.toThrow(HttpException);
                 expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
             });
+
+            it('should throw HttpException', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValue({
+                    ok: false,
+                    error: new KeycloakClientError(''),
+                });
+                await expect(personController.createPerson(params)).rejects.toThrow(HttpException);
+                expect(personRepositoryMock.create).not.toHaveBeenCalled();
+            });
         });
     });
 
