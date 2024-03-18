@@ -26,7 +26,7 @@ import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { DomainError, KeycloakClientError } from '../../../shared/error/index.js';
+import { DomainError, InvalidNameError, KeycloakClientError } from '../../../shared/error/index.js';
 
 describe('PersonRepository', () => {
     let module: TestingModule;
@@ -402,6 +402,24 @@ describe('PersonRepository', () => {
                     faker.string.uuid(),
                 );
                 await expect(sut.update(person)).rejects.toBeDefined();
+            });
+        });
+
+        describe('when username generation fails', () => {
+            it('should return error', async () => {
+                const person: Person<false> = Person.createNew(faker.person.lastName(), faker.person.firstName());
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                    ok: false,
+                    error: new InvalidNameError('invalid name'),
+                });
+
+                const result: Person<true> | DomainError = await sut.saveUser(
+                    person,
+                    kcUserServiceMock,
+                    usernameGeneratorService,
+                );
+
+                expect(result).toBeInstanceOf(DomainError);
             });
         });
     });

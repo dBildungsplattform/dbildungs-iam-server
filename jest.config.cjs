@@ -40,6 +40,7 @@ module.exports = {
         '!**/*.integration-spec.ts',
         '!**/index.ts',
         '!**/main.ts',
+        '!**/*.types.ts',
     ],
     coverageThreshold: {
         global: {
