@@ -1,10 +1,11 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, UseFilters } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiNotFoundResponse,
     ApiOkResponse,
     ApiOperation,
     ApiTags,
@@ -24,6 +25,8 @@ import { RolleFactory } from '../domain/rolle.factory.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { AddSystemrechtError } from '../../../shared/error/add-systemrecht.error.js';
+import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
@@ -101,5 +104,75 @@ export class RolleController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new AddSystemrechtError()),
             );
         }
+    }
+
+    @Get(':rolleId/serviceProviders')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ description: 'Get service-providers for a rolle by its id.' })
+    @ApiOkResponse({ description: 'Returns a list of service-provider ids.', type: [String] })
+    @ApiNotFoundResponse({ description: 'The rolle does not exist.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve service-providers for rolle.' })
+    public async getRolleServiceProviderIds(@Param() findRolleByIdParams: FindRolleByIdParams): Promise<string[]> {
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
+        if (!rolle) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError()),
+            );
+        }
+        return rolle.serviceProviderIds;
+    }
+
+    @Post(':rolleId/serviceProviders')
+    @HttpCode(HttpStatus.CREATED)
+    @ApiOperation({ description: 'Add a service-provider to a rolle by id.' })
+    @ApiOkResponse({ description: 'Adding service-provider finished successfully.' })
+    @ApiNotFoundResponse({ description: 'The rolle or the service-provider to add does not exist.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve service-providers for rolle.' })
+    public async addServiceProviderById(
+        @Param() findRolleByIdParams: FindRolleByIdParams,
+        @Body() spBodyParams: RolleServiceProviderBodyParams,
+    ): Promise<void> {
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
+        if (!rolle) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId),
+                ),
+            );
+        }
+        const result: void | DomainError = await rolle.attachServiceProvider(spBodyParams.serviceProviderId);
+        if (result instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
+        await this.rolleRepo.save(rolle);
+    }
+
+    @Delete(':rolleId/serviceProviders')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ description: 'Remove a service-provider from a rolle by id.' })
+    @ApiOkResponse({ description: 'Removing service-provider finished successfully.' })
+    @ApiNotFoundResponse({ description: 'The rolle or the service-provider that should be removed does not exist.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve service-providers for rolle.' })
+    public async removeServiceProviderById(
+        @Param() findRolleByIdParams: FindRolleByIdParams,
+        @Body() spBodyParams: RolleServiceProviderBodyParams,
+    ): Promise<void> {
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
+        if (!rolle) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId),
+                ),
+            );
+        }
+        const result: void | DomainError = rolle.detatchServiceProvider(spBodyParams.serviceProviderId);
+        if (result instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
+        await this.rolleRepo.save(rolle);
     }
 }

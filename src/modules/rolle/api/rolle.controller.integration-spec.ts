@@ -24,12 +24,15 @@ import { RolleFactory } from '../domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { Rolle } from '../domain/rolle.js';
+import { ServiceProvider } from "../../service-provider/domain/service-provider.js";
+import { RolleServiceProviderBodyParams } from "./rolle-service-provider.body.params.js";
 
 describe('Rolle API', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let em: EntityManager;
     let rolleRepo: RolleRepo;
+    let serviceProviderRepo: ServiceProviderRepo;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -52,7 +55,7 @@ describe('Rolle API', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         rolleRepo = module.get(RolleRepo);
-
+        serviceProviderRepo = module.get(ServiceProviderRepo);
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
@@ -225,6 +228,137 @@ describe('Rolle API', () => {
                 };
                 const response: Response = await request(app.getHttpServer() as App)
                     .patch(`/rolle/${validButNonExistingUUID}`)
+                    .send(params);
+
+                expect(response.status).toBe(500);
+            });
+        });
+    });
+
+    describe('/GET rolleId/serviceProviders', () => {
+        describe('when rolle exists', () => {
+            it('should return 200 and a list of serviceProviders', async () => {
+                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                    DoFactory.createServiceProvider(false),
+                );
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+                );
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(`/rolle/${rolle.id}/serviceProviders`)
+                    .send();
+
+                expect(response.status).toBe(200);
+            });
+        });
+
+        describe('when rolle does not exist', () => {
+            it('should return 404', async () => {
+                const validButNonExistingUUID: string = faker.string.uuid();
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(`/rolle/${validButNonExistingUUID}/serviceProviders`)
+                    .send();
+
+                expect(response.status).toBe(404);
+            });
+        });
+    });
+
+    describe('/POST rolleId/serviceProviders', () => {
+        describe('when rolle and serviceProvider exist', () => {
+            it('should return 201 and add serviceProvider', async () => {
+                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                    DoFactory.createServiceProvider(false),
+                );
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false),
+                );
+                const params: RolleServiceProviderBodyParams = {
+                    serviceProviderId: serviceProvider.id,
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .post(`/rolle/${rolle.id}/serviceProviders`)
+                    .send(params);
+
+                expect(response.status).toBe(201);
+            });
+        });
+
+        describe('when rolle does not exist', () => {
+            it('should return 404', async () => {
+                const validButNonExistingUUID: string = faker.string.uuid();
+                const params: RolleServiceProviderBodyParams = {
+                    serviceProviderId: faker.string.uuid(),
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .post(`/rolle/${validButNonExistingUUID}/serviceProviders`)
+                    .send(params);
+
+                expect(response.status).toBe(404);
+            });
+        });
+
+        describe('when serviceProvider does not exist', () => {
+            it('should return 404', async () => {
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false),
+                );
+                const params: RolleServiceProviderBodyParams = {
+                    serviceProviderId: faker.string.uuid(),
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .post(`/rolle/${rolle.id}/serviceProviders`)
+                    .send(params);
+
+                expect(response.status).toBe(404);
+            });
+        });
+    });
+
+    describe('/DELETE rolleId/serviceProviders', () => {
+        describe('when rolle and serviceProvider exist', () => {
+            it('should return 200 and delete serviceProvider', async () => {
+                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                    DoFactory.createServiceProvider(false),
+                );
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+                );
+                const params: RolleServiceProviderBodyParams = {
+                    serviceProviderId: serviceProvider.id,
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/rolle/${rolle.id}/serviceProviders`)
+                    .send(params);
+
+                expect(response.status).toBe(200);
+            });
+        });
+
+        describe('when rolle does not exist', () => {
+            it('should return 404', async () => {
+                const validButNonExistingUUID: string = faker.string.uuid();
+                const params: RolleServiceProviderBodyParams = {
+                    serviceProviderId: faker.string.uuid(),
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/rolle/${validButNonExistingUUID}/serviceProviders`)
+                    .send(params);
+
+                expect(response.status).toBe(404);
+            });
+        });
+
+        describe('when serviceProvider does not exist', () => {
+            it('should return 500', async () => {
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false),
+                );
+                const params: RolleServiceProviderBodyParams = {
+                    serviceProviderId: faker.string.uuid(),
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/rolle/${rolle.id}/serviceProviders`)
                     .send(params);
 
                 expect(response.status).toBe(500);
