@@ -14,6 +14,8 @@ import { DbSeedMapper } from './db-seed-mapper.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';
 import { DomainError, InvalidNameError, KeycloakClientError } from '../../shared/error/index.js';
+import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
 
 describe('DbSeedConsoleMockedKeycloak', () => {
@@ -46,6 +48,8 @@ describe('DbSeedConsoleMockedKeycloak', () => {
                     provide: UsernameGeneratorService,
                     useValue: createMock<UsernameGeneratorService>(),
                 },
+                RolleFactory,
+                ServiceProviderRepo,
             ],
         }).compile();
         sut = module.get(DbSeedConsole);
