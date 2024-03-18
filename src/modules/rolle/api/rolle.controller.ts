@@ -27,6 +27,7 @@ import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { AddSystemrechtError } from '../../../shared/error/add-systemrecht.error.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
+import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
@@ -109,17 +110,21 @@ export class RolleController {
     @Get(':rolleId/serviceProviders')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ description: 'Get service-providers for a rolle by its id.' })
-    @ApiOkResponse({ description: 'Returns a list of service-provider ids.', type: [String] })
+    @ApiOkResponse({ description: 'Returns a list of service-provider ids.', type: RolleServiceProviderResponse })
     @ApiNotFoundResponse({ description: 'The rolle does not exist.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve service-providers for rolle.' })
-    public async getRolleServiceProviderIds(@Param() findRolleByIdParams: FindRolleByIdParams): Promise<string[]> {
+    public async getRolleServiceProviderIds(
+        @Param() findRolleByIdParams: FindRolleByIdParams,
+    ): Promise<RolleServiceProviderResponse> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (!rolle) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError()),
             );
         }
-        return rolle.serviceProviderIds;
+        return {
+            serviceProviderIds: rolle.serviceProviderIds,
+        };
     }
 
     @Post(':rolleId/serviceProviders')
