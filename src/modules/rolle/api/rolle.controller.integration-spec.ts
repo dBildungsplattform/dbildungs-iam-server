@@ -24,8 +24,8 @@ import { RolleFactory } from '../domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { Rolle } from '../domain/rolle.js';
-import { ServiceProvider } from "../../service-provider/domain/service-provider.js";
-import { RolleServiceProviderBodyParams } from "./rolle-service-provider.body.params.js";
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -270,9 +270,7 @@ describe('Rolle API', () => {
                 const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
                     DoFactory.createServiceProvider(false),
                 );
-                const rolle: Rolle<true> = await rolleRepo.save(
-                    DoFactory.createRolle(false),
-                );
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                 const params: RolleServiceProviderBodyParams = {
                     serviceProviderId: serviceProvider.id,
                 };
@@ -281,6 +279,25 @@ describe('Rolle API', () => {
                     .send(params);
 
                 expect(response.status).toBe(201);
+            });
+        });
+
+        describe('when rolle and serviceProvider exist, but serviceProvider is already attached', () => {
+            it('should return 400', async () => {
+                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                    DoFactory.createServiceProvider(false),
+                );
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+                );
+                const params: RolleServiceProviderBodyParams = {
+                    serviceProviderId: serviceProvider.id,
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .post(`/rolle/${rolle.id}/serviceProviders`)
+                    .send(params);
+
+                expect(response.status).toBe(400);
             });
         });
 
@@ -300,9 +317,7 @@ describe('Rolle API', () => {
 
         describe('when serviceProvider does not exist', () => {
             it('should return 404', async () => {
-                const rolle: Rolle<true> = await rolleRepo.save(
-                    DoFactory.createRolle(false),
-                );
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                 const params: RolleServiceProviderBodyParams = {
                     serviceProviderId: faker.string.uuid(),
                 };
@@ -351,9 +366,7 @@ describe('Rolle API', () => {
 
         describe('when serviceProvider does not exist', () => {
             it('should return 500', async () => {
-                const rolle: Rolle<true> = await rolleRepo.save(
-                    DoFactory.createRolle(false),
-                );
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                 const params: RolleServiceProviderBodyParams = {
                     serviceProviderId: faker.string.uuid(),
                 };
@@ -361,7 +374,7 @@ describe('Rolle API', () => {
                     .delete(`/rolle/${rolle.id}/serviceProviders`)
                     .send(params);
 
-                expect(response.status).toBe(500);
+                expect(response.status).toBe(404);
             });
         });
     });

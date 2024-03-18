@@ -127,6 +127,7 @@ export class RolleController {
     @ApiOperation({ description: 'Add a service-provider to a rolle by id.' })
     @ApiOkResponse({ description: 'Adding service-provider finished successfully.' })
     @ApiNotFoundResponse({ description: 'The rolle or the service-provider to add does not exist.' })
+    @ApiBadRequestResponse({ description: 'The service-provider is already attached to rolle.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve service-providers for rolle.' })
     public async addServiceProviderById(
         @Param() findRolleByIdParams: FindRolleByIdParams,
