@@ -15,8 +15,11 @@ import { OrganisationsTyp, Traegerschaft } from '../../modules/organisation/doma
 import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
+import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { Buffer } from 'buffer';
+import { createMock } from '@golevelup/ts-jest';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -30,7 +33,11 @@ describe('DbSeedService', () => {
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
             ],
-            providers: [DbSeedService],
+            providers: [
+                DbSeedService,
+                RolleFactory,
+                { provide: ServiceProviderRepo, useValue: createMock<ServiceProviderRepo>() },
+            ],
         }).compile();
         dbSeedService = module.get(DbSeedService);
     });
@@ -141,12 +148,13 @@ describe('DbSeedService', () => {
                     administeredBySchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
                     rollenart: RollenArt.LERN,
                     merkmale: [],
+                    serviceProviderIds: [],
                     systemrechte: [],
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,
                 };
                 expect(rollen).toHaveLength(1);
-                expect(rollen[0]).toEqual(rolle);
+                expect(rollen[0]).toEqual(expect.objectContaining(rolle));
             });
         });
     });

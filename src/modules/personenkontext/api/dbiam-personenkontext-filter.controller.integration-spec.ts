@@ -17,17 +17,22 @@ import { OrganisationRepo } from '../../organisation/persistence/organisation.re
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
-import { FindPersonenkontextRollenBodyParams } from './find-personenkontext-rollen.body.params.js';
-import { FindPersonenkontextSchulstrukturknotenBodyParams } from './find-personenkontext-schulstrukturknoten.body.params.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
-function createRolle(this: void, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
+function createRolle(
+    this: void,
+    serviceProviderRepo: ServiceProviderRepo,
+    params: Partial<Rolle<boolean>> = {},
+): Rolle<false> {
     const rolle: Rolle<false> = Rolle.createNew(
+        serviceProviderRepo,
         faker.string.alpha(),
         faker.string.uuid(),
         faker.helpers.enumValue(RollenArt),
         [faker.helpers.enumValue(RollenMerkmal)],
         [faker.helpers.enumValue(RollenSystemRecht)],
+        [],
     );
     Object.assign(rolle, params);
 
@@ -39,6 +44,7 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
     let orm: MikroORM;
     let organisationRepo: OrganisationRepo;
     let rolleRepo: RolleRepo;
+    let serviceProviderRepo: ServiceProviderRepo;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -59,6 +65,7 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
         orm = module.get(MikroORM);
         organisationRepo = module.get(OrganisationRepo);
         rolleRepo = module.get(RolleRepo);
+        serviceProviderRepo = module.get(ServiceProviderRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
@@ -76,27 +83,19 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
     describe('/GET rollen for personenkontext', () => {
         it('should return all rollen for a personenkontext based on PersonenkontextAnlage', async () => {
             const rolleName: string = faker.string.alpha({ length: 10 });
-            await rolleRepo.save(createRolle({ name: rolleName }));
-            const sendParams: FindPersonenkontextRollenBodyParams = {
-                rolleName: rolleName,
-                limit: 25,
-            };
+            await rolleRepo.save(createRolle(serviceProviderRepo, { name: rolleName }));
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext/rollen/`)
-                .send(sendParams);
+                .get(`/personenkontext/rollen?rolleName=${rolleName}&limit=25`)
+                .send();
 
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Object);
         });
 
         it('should return empty list', async () => {
-            const sendParams: FindPersonenkontextRollenBodyParams = {
-                rolleName: faker.string.alpha(),
-                limit: 25,
-            };
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext/rollen/`)
-                .send(sendParams);
+                .get(`/personenkontext/rollen?rolleName=${faker.string.alpha()}&limit=25`)
+                .send();
 
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Object);
@@ -107,32 +106,24 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
         it('should return all schulstrukturknoten for a personenkontext based on PersonenkontextAnlage', async () => {
             const rolleName: string = faker.string.alpha({ length: 10 });
             const sskName: string = faker.company.name();
-            const rolle: Rolle<true> = await rolleRepo.save(createRolle({ name: rolleName }));
+            const rolle: Rolle<true> = await rolleRepo.save(createRolle(serviceProviderRepo, { name: rolleName }));
             const rolleId: string = rolle.id;
             await organisationRepo.save(DoFactory.createOrganisation(false, { name: sskName }));
 
-            const sendParams: FindPersonenkontextSchulstrukturknotenBodyParams = {
-                sskName: sskName,
-                rolleId: rolleId,
-                limit: 25,
-            };
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext/schulstrukturknoten/`)
-                .send(sendParams);
+                .get(`/personenkontext/schulstrukturknoten?rolleId=${rolleId}&sskName=${sskName}&limit=25`)
+                .send();
 
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Object);
         });
 
         it('should return empty list', async () => {
-            const sendParams: FindPersonenkontextSchulstrukturknotenBodyParams = {
-                sskName: faker.string.alpha(),
-                rolleId: faker.string.uuid(),
-                limit: 25,
-            };
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext/schulstrukturknoten/`)
-                .send(sendParams);
+                .get(
+                    `/personenkontext/schulstrukturknoten?rolleId=${faker.string.uuid()}&sskName=${faker.string.alpha()}&limit=25`,
+                )
+                .send();
 
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Object);

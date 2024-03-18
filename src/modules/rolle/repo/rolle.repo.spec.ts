@@ -10,22 +10,27 @@ import {
 } from '../../../../test/utils/index.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleRepo } from './rolle.repo.js';
+import { RolleFactory } from '../domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
     let sut: RolleRepo;
     let orm: MikroORM;
     let em: EntityManager;
+    let serviceProviderRepo: ServiceProviderRepo;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
-            providers: [RolleRepo],
+            providers: [RolleRepo, RolleFactory, ServiceProviderRepo],
         }).compile();
 
         sut = module.get(RolleRepo);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
+        serviceProviderRepo = module.get(ServiceProviderRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -61,14 +66,29 @@ describe('RolleRepo', () => {
 
             expect(savedRolle).toEqual(existingRolle);
         });
+
+        it('should save with service provider', async () => {
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const rolle: Rolle<false> = DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] });
+
+            const savedRolle: Rolle<true> = await sut.save(rolle);
+
+            expect(savedRolle.id).toBeDefined();
+            expect(savedRolle.serviceProviderIds).toContain(serviceProvider.id);
+        });
     });
 
     describe('find', () => {
         it('should return all rollen', async () => {
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
             const rollen: Rolle<true>[] = await Promise.all([
-                sut.save(DoFactory.createRolle(false)),
-                sut.save(DoFactory.createRolle(false)),
-                sut.save(DoFactory.createRolle(false)),
+                sut.save(DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] })),
+                sut.save(DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] })),
+                sut.save(DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] })),
             ]);
 
             const rollenResult: Rolle<true>[] = await sut.find();
