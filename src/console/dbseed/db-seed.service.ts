@@ -9,6 +9,7 @@ import { ServiceProvider } from '../../modules/service-provider/domain/service-p
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { plainToInstance } from 'class-transformer';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
+import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderFile } from './file/service-provider-file.js';
 
 @Injectable()
@@ -24,6 +25,8 @@ export class DbSeedService {
     private serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
 
     private personenkontextMap: Map<string, Personenkontext<true>> = new Map();
+
+    public constructor(private readonly rolleFactory: RolleFactory) {}
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
@@ -84,7 +87,7 @@ export class DbSeedService {
         const { entities }: EntityFile<Rolle<true>> = JSON.parse(fileContentAsStr) as EntityFile<Rolle<true>>;
 
         const rollen: Rolle<true>[] = entities.map((rolleData: Rolle<true>) =>
-            Rolle.construct(
+            this.rolleFactory.construct(
                 rolleData.id,
                 new Date(),
                 new Date(),
@@ -93,6 +96,7 @@ export class DbSeedService {
                 rolleData.rollenart,
                 rolleData.merkmale,
                 rolleData.systemrechte,
+                rolleData.serviceProviderIds,
             ),
         );
 
