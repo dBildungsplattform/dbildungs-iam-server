@@ -77,14 +77,21 @@ describe('Person', () => {
     describe('createNew', () => {
         describe('without password & username', () => {
             it('should return not persisted person with generated username & password', async () => {
-                usernameGeneratorService.generateUsername.mockResolvedValue('');
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: '' });
                 // Extracted so that the coverage analysis picks up on the file imported and doesn't complain about it not being covered
                 const creationParams: PersonCreationParams = {
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
                 };
-                const person: Person<false> = await Person.createNew(usernameGeneratorService, creationParams);
+                const person: Person<false> | DomainError = await Person.createNew(
+                    usernameGeneratorService,
+                    creationParams,
+                );
 
+                expect(person).not.toBeInstanceOf(DomainError);
+                if (person instanceof DomainError) {
+                    return;
+                }
                 expect(person).toBeDefined();
                 expect(person).toBeInstanceOf(Person<false>);
                 expect(person.username).toBeDefined();
@@ -95,14 +102,18 @@ describe('Person', () => {
         });
         describe('with fixed password & username', () => {
             it('should return not persisted person with fixed username & password', async () => {
-                usernameGeneratorService.generateUsername.mockResolvedValue('');
-                const person: Person<false> = await Person.createNew(usernameGeneratorService, {
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: '' });
+                const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
                     username: 'testusername',
                     password: 'testpassword',
                 });
 
+                expect(person).not.toBeInstanceOf(DomainError);
+                if (person instanceof DomainError) {
+                    return;
+                }
                 expect(person).toBeDefined();
                 expect(person).toBeInstanceOf(Person<false>);
                 expect(person.username).toEqual('testusername');

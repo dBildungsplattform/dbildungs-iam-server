@@ -132,7 +132,7 @@ export class Person<WasPersisted extends boolean> {
     public static async createNew(
         usernameGenerator: UsernameGeneratorService,
         creationParams: PersonCreationParams,
-    ): Promise<Person<false>> {
+    ): Promise<Person<false> | DomainError> {
         const person: Person<false> = new Person(
             undefined,
             undefined,
@@ -170,7 +170,14 @@ export class Person<WasPersisted extends boolean> {
         if (creationParams.username) {
             person.username = creationParams.username;
         } else {
-            person.username = await usernameGenerator.generateUsername(person.vorname, person.familienname);
+            const result: Result<string, DomainError> = await usernameGenerator.generateUsername(
+                person.vorname,
+                person.familienname,
+            );
+            if (!result.ok) {
+                return result.error;
+            }
+            person.username = result.value;
         }
 
         return person;

@@ -72,14 +72,18 @@ export class PersonController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
     public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
-        const person: Person<false> = await this.personFactory.createNew({
+        const person: Person<false> | DomainError = await this.personFactory.createNew({
             vorname: params.name.vorname,
             familienname: params.name.familienname,
             ...params,
         });
+        if (person instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(person),
+            );
+        }
 
         const result: Person<true> | DomainError = await this.personRepository.create(person);
-
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),

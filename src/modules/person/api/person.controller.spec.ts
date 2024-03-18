@@ -36,6 +36,7 @@ describe('PersonController', () => {
     let personController: PersonController;
     let personenkontextUcMock: DeepMocked<PersonenkontextUc>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
+    let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -60,11 +61,16 @@ describe('PersonController', () => {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
                 },
+                {
+                    provide: UsernameGeneratorService,
+                    useValue: createMock<UsernameGeneratorService>(),
+                },
             ],
         }).compile();
         personController = module.get(PersonController);
         personenkontextUcMock = module.get(PersonenkontextUc);
         personRepositoryMock = module.get(PersonRepository);
+        usernameGeneratorService = module.get(UsernameGeneratorService);
     });
 
     afterAll(async () => {
@@ -124,6 +130,7 @@ describe('PersonController', () => {
             };
 
             it('should throw HttpException', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: '' });
                 personRepositoryMock.create.mockResolvedValue(new KeycloakClientError(''));
                 await expect(personController.createPerson(params)).rejects.toThrow(HttpException);
                 expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
