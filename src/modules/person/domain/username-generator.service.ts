@@ -1,44 +1,69 @@
 import { Injectable } from '@nestjs/common';
 import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
-import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import {
+    DomainError,
+    EntityNotFoundError,
+    InvalidNameError,
+    InvalidCharacterSetError,
+    InvalidAttributeLengthError,
+} from '../../../shared/error/index.js';
+import { isDIN91379A, toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
 
 @Injectable()
 export class UsernameGeneratorService {
     public constructor(private kcUserService: KeycloakUserService) {}
 
-    public async generateUsername(firstname: string, lastname: string): Promise<string> {
-        if (firstname.length == 0) {
-            throw new Error('First name not given');
+    public async generateUsername(firstname: string, lastname: string): Promise<Result<string, DomainError>> {
+        // Check for minimum length
+        if (firstname.length < 2) {
+            return { ok: false, error: new InvalidAttributeLengthError('name.vorname') };
         }
-        if (lastname.length == 0) {
-            throw new Error('Last name not given');
-        }
-        const calculatedUsername: string = this.cleanString(firstname)[0] + this.cleanString(lastname);
 
-        return this.getNextAvailableUsername(calculatedUsername);
+        if (lastname.length < 2) {
+            return { ok: false, error: new InvalidAttributeLengthError('name.familienname') };
+        }
+
+        // Check character set
+        if (!isDIN91379A(firstname)) {
+            return {
+                ok: false,
+                error: new InvalidCharacterSetError('name.vorname', 'DIN-91379A'),
+            };
+        }
+
+        if (!isDIN91379A(lastname)) {
+            return {
+                ok: false,
+                error: new InvalidCharacterSetError('name.familienname', 'DIN-91379A'),
+            };
+        }
+
+        // Clean names
+        const cleanedFirstname: string = this.cleanString(firstname);
+        const cleanedLastname: string = this.cleanString(lastname);
+
+        // Check resulting cleaned names
+        if (cleanedFirstname.length === 0 || cleanedLastname.length === 0) {
+            return { ok: false, error: new InvalidNameError('Could not generate valid username') };
+        }
+
+        const calculatedUsername: string = cleanedFirstname[0] + cleanedLastname;
+
+        const nextAvailableUsername: string = await this.getNextAvailableUsername(calculatedUsername);
+
+        return {
+            ok: true,
+            value: nextAvailableUsername,
+        };
     }
 
     private cleanString(name: string): string {
-        const lowerCaseInput: string = name.toLowerCase();
+        const lowerCaseSearchForm: string = toDIN91379SearchForm(name).toLowerCase();
 
-        const normalizedString: string = [...lowerCaseInput]
-            .map((s: string) => {
-                switch (s) {
-                    case 'ä':
-                        return 'ae';
-                    case 'ö':
-                        return 'oe';
-                    case 'ü':
-                        return 'ue';
-                    case 'ß':
-                        return 'ss';
-                    default:
-                        return s;
-                }
-            })
-            .join('')
-            .normalize('NFKD');
-        return normalizedString.replace(new RegExp('[^\u0061-\u007a]', 'g'), '');
+        // Remove all other characters that are not a-z
+        const removedDiacritics: string = lowerCaseSearchForm.replace(/[^a-z]/g, '');
+
+        return removedDiacritics;
     }
 
     private async getNextAvailableUsername(calculatedUsername: string): Promise<string> {

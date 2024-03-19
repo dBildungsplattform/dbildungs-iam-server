@@ -52,57 +52,57 @@ describe('ClassLogger', () => {
         it('should log appropriately for level debug', () => {
             sut.debug('Blah');
 
-            expect(loggerMock.debug).toHaveBeenCalledTimes(1);
-            expect(loggerMock.debug).toHaveBeenCalledWith(createTestMessage('Blah'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('debug', createTestMessage('Blah'));
         });
 
         it('should log appropriately for level notice', () => {
             sut.notice('Blah');
 
-            expect(loggerMock.notice).toHaveBeenCalledTimes(1);
-            expect(loggerMock.notice).toHaveBeenCalledWith(createTestMessage('Blah'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('notice', createTestMessage('Blah'));
         });
 
         it('should log appropriately for level info', () => {
             sut.info('Blah');
 
-            expect(loggerMock.info).toHaveBeenCalledTimes(1);
-            expect(loggerMock.info).toHaveBeenCalledWith(createTestMessage('Blah'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('info', createTestMessage('Blah'));
         });
 
         it('should log appropriately for level warning', () => {
             sut.warning('Blah');
 
-            expect(loggerMock.warning).toHaveBeenCalledTimes(1);
-            expect(loggerMock.warning).toHaveBeenCalledWith(createTestMessage('Blah'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('warning', createTestMessage('Blah'));
         });
 
         it('should log appropriately for level alert', () => {
             sut.alert('Blah');
 
-            expect(loggerMock.alert).toHaveBeenCalledTimes(1);
-            expect(loggerMock.alert).toHaveBeenCalledWith(createTestMessage('Blah'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('alert', createTestMessage('Blah'));
         });
 
         it('should log appropriately for level error', () => {
             sut.error('Blah');
 
-            expect(loggerMock.error).toHaveBeenCalledTimes(1);
-            expect(loggerMock.error).toHaveBeenCalledWith(createTestMessage('Blah'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('error', createTestMessage('Blah'));
         });
 
         it('should log appropriately for level crit', () => {
             sut.crit('Blah');
 
-            expect(loggerMock.crit).toHaveBeenCalledTimes(1);
-            expect(loggerMock.crit).toHaveBeenCalledWith(createTestMessage('Blah'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('crit', createTestMessage('Blah'));
         });
 
         it('should log appropriately for level emerg', () => {
             sut.emerg('Blah');
 
-            expect(loggerMock.emerg).toHaveBeenCalledTimes(1);
-            expect(loggerMock.emerg).toHaveBeenCalledWith(createTestMessage('Blah'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('emerg', createTestMessage('Blah'));
         });
     });
 
@@ -110,58 +110,58 @@ describe('ClassLogger', () => {
         it('should take the trace into account for level debug', () => {
             sut.debug('Blah2', 'TraceInfo');
 
-            expect(loggerMock.debug).toHaveBeenCalledTimes(1);
-            expect(loggerMock.debug).toHaveBeenCalledWith(createTestMessage('Blah2', 'TraceInfo'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('debug', createTestMessage('Blah2', 'TraceInfo'));
         });
 
         // AI next 40 lines
         it('should take the trace into account for level notice', () => {
             sut.notice('Blah2', 'TraceInfo');
 
-            expect(loggerMock.notice).toHaveBeenCalledTimes(1);
-            expect(loggerMock.notice).toHaveBeenCalledWith(createTestMessage('Blah2', 'TraceInfo'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('notice', createTestMessage('Blah2', 'TraceInfo'));
         });
 
         it('should take the trace into account for level info', () => {
             sut.info('Blah2', 'TraceInfo');
 
-            expect(loggerMock.info).toHaveBeenCalledTimes(1);
-            expect(loggerMock.info).toHaveBeenCalledWith(createTestMessage('Blah2', 'TraceInfo'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('info', createTestMessage('Blah2', 'TraceInfo'));
         });
 
         it('should take the trace into account for level warning', () => {
             sut.warning('Blah2', 'TraceInfo');
 
-            expect(loggerMock.warning).toHaveBeenCalledTimes(1);
-            expect(loggerMock.warning).toHaveBeenCalledWith(createTestMessage('Blah2', 'TraceInfo'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('warning', createTestMessage('Blah2', 'TraceInfo'));
         });
 
         it('should take the trace into account for level alert', () => {
             sut.alert('Blah2', 'TraceInfo');
 
-            expect(loggerMock.alert).toHaveBeenCalledTimes(1);
-            expect(loggerMock.alert).toHaveBeenCalledWith(createTestMessage('Blah2', 'TraceInfo'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('alert', createTestMessage('Blah2', 'TraceInfo'));
         });
 
         it('should take the trace into account for level error', () => {
             sut.error('Blah2', 'TraceInfo');
 
-            expect(loggerMock.error).toHaveBeenCalledTimes(1);
-            expect(loggerMock.error).toHaveBeenCalledWith(createTestMessage('Blah2', 'TraceInfo'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('error', createTestMessage('Blah2', 'TraceInfo'));
         });
 
         it('should take the trace into account for level crit', () => {
             sut.crit('Blah2', 'TraceInfo');
 
-            expect(loggerMock.crit).toHaveBeenCalledTimes(1);
-            expect(loggerMock.crit).toHaveBeenCalledWith(createTestMessage('Blah2', 'TraceInfo'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('crit', createTestMessage('Blah2', 'TraceInfo'));
         });
 
         it('should take the trace into account for level emerg', () => {
             sut.emerg('Blah2', 'TraceInfo');
 
-            expect(loggerMock.emerg).toHaveBeenCalledTimes(1);
-            expect(loggerMock.emerg).toHaveBeenCalledWith(createTestMessage('Blah2', 'TraceInfo'));
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith('emerg', createTestMessage('Blah2', 'TraceInfo'));
         });
     });
 });

@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "common.names.releasename" . }}-backend
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.backend.commonLabels.name }}
+    app.kubernetes.io/version: {{ .Chart.Version }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/layer: {{ .Values.backend.selector.layer }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .Values.backend.commonLabels.name }}
+        app.kubernetes.io/layer: {{ .Values.backend.selector.layer }}
+    spec:
+      {{- if .Values.seeding.enabled }}
+      initContainers:
+        - name: db-init
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
+          {{- if .Values.enabledcontainerSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          {{- end }}
+          command: [ "node", "dist/src/console/main.js", "db", "init" ]
+          env:
+            {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
+          volumeMounts:
+            - mountPath: /app/config/config.json
+              subPath: config-json
+              name: config-volume
+              readOnly: true
+            - mountPath: /app/config/secrets.json
+              subPath: secrets-json
+              name: secret-volume
+              readOnly: true
+            - mountPath: /app/sql/{{.Values.seeding.database}}
+              name: seeding-volume
+              readOnly: true
+          resources:
+            {{- toYaml .Values.containerResources | nindent 12 }}
+        - name: db-seeding
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
+          {{- if .Values.enabledcontainerSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          {{- end }}
+          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
+          env:
+            {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
+          volumeMounts:
+            - mountPath: /app/config/config.json
+              subPath: config-json
+              name: config-volume
+              readOnly: true
+            - mountPath: /app/config/secrets.json
+              subPath: secrets-json
+              name: secret-volume
+              readOnly: true
+            - mountPath: /app/sql/{{.Values.seeding.database}}
+              name: seeding-volume
+              readOnly: true
+          resources:
+            {{- toYaml .Values.containerResources | nindent 12 }}
+      {{end}}
+      containers:
+        - name: {{ .Values.backend.commonLabels.name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
+          {{- if .Values.enabledcontainerSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: {{ (index .Values.backendcontainer.ports 0).name }}
+              containerPort: {{ (index .Values.backendcontainer.ports 0).containerPort }}
+          env:
+            {{- include "dbildungs-iam-server-backend-envs" . | nindent 12 }}
+          volumeMounts:
+            {{- toYaml .Values.backendcontainer.volumeMounts | nindent 12 }}
+          resources:
+            {{- toYaml .Values.containerResources | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.backendcontainer.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.backendcontainer.readinessProbe | nindent 12 }}
+      restartPolicy: {{ .Values.restartPolicy }}
+      volumes:
+        - name: {{ (index .Values.backendcontainer.volumeMounts 0).name }}
+          configMap:
+            name: {{ .Values.configmap.name }}
+        - name: {{ (index .Values.backendcontainer.volumeMounts 1).name }}
+          secret:
+            {{- if .Values.auth.existingSecret }}
+            secretName: {{ .Values.auth.existingSecret }}
+            {{- end }}
+            {{- if not .Values.auth.existingSecret }}
+            secretName: {{.Values.auth.name}}
+            {{- end }}
+        {{if .Values.seeding}}
+        - name: seeding-volume
+          configMap:
+            name: {{ .Values.seeding.configmap }}
+        {{- end }}
