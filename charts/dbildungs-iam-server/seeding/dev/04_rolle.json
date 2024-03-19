@@ -2,13 +2,13 @@
     "entityName": "Rolle",
     "entities": [
         {
-<<<<<<< HEAD
             "id": 0,
             "administeredBySchulstrukturknoten": 0,
             "name": "Sysadmin",
             "rollenart": "SYSADMIN",
             "merkmale": [],
-            "systemrechte": ["ROLLEN_VERWALTEN"]
+            "systemrechte": ["ROLLEN_VERWALTEN"],
+            "serviceProviderIds": []
         },
         {
             "id": 1,
@@ -16,27 +16,8 @@
             "name": "Rolle 1",
             "rollenart": "LERN",
             "merkmale": ["BEFRISTUNG_PFLICHT"],
-            "systemrechte": []
-=======
-            "id": "8b622128-c952-4b08-8957-762af7e659bd",
-            "administeredBySchulstrukturknoten": "d39cb7cf-2f9b-45f1-849f-973661f2f057",
-            "name": "Sysadmin",
-            "rollenart": "SYSADMIN",
-            "merkmale": [],
-            "systemrechte": [
-                "ROLLEN_VERWALTEN"
-            ],
-            "serviceProviderIds": []
-        },
-        {
-            "id": "cef7240e-fd08-4961-927e-c9ea0c5a37c5",
-            "administeredBySchulstrukturknoten": "d39cb7cf-2f9b-45f1-849f-973661f2f057",
-            "name": "Rolle 1",
-            "rollenart": "LERN",
-            "merkmale": ["BEFRISTUNG_PFLICHT"],
             "systemrechte": [],
             "serviceProviderIds": []
->>>>>>> SPSH-385-allow-adminuser-creation
         },
         {
             "id": 2,
@@ -44,12 +25,8 @@
             "name": "Rolle 2",
             "rollenart": "LERN",
             "merkmale": [],
-<<<<<<< HEAD
-            "systemrechte": []
-=======
             "systemrechte": [],
             "serviceProviderIds": []
->>>>>>> SPSH-385-allow-adminuser-creation
         },
         {
             "id": 3,
@@ -57,12 +34,8 @@
             "name": "Rolle 3",
             "rollenart": "LEHR",
             "merkmale": [],
-<<<<<<< HEAD
-            "systemrechte": []
-=======
             "systemrechte": [],
             "serviceProviderIds": []
->>>>>>> SPSH-385-allow-adminuser-creation
         }
     ]
 }
