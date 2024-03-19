@@ -10,8 +10,8 @@ import {
 } from '../domain/gruppe.enums.js';
 import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enums.js';
 import { Type } from 'class-transformer';
-import { Referenzgruppen } from '../domain/referenzgruppen.js';
-import { Laufzeit } from '../persistence/laufzeit.js';
+import { Laufzeit } from '../persistence/laufzeit.entity.js';
+import { ReferenzgruppeParam } from './referenzgruppe.params.js';
 
 export class CreateGroupBodyParams {
     @IsOptional()
@@ -71,12 +71,12 @@ export class CreateGroupBodyParams {
     @ApiProperty({ enum: Faecherkanon, required: false, isArray: true })
     public readonly faecher?: Faecherkanon[];
 
+    @ValidateNested()
     @IsArray()
     @IsOptional()
-    @ValidateNested()
-    @Type(() => Referenzgruppen)
-    @ApiProperty({ type: Referenzgruppen, required: false, isArray: true })
-    public readonly referenzgruppen?: Referenzgruppen[];
+    @Type(() => ReferenzgruppeParam)
+    @ApiProperty({ type: ReferenzgruppeParam, required: false, isArray: true })
+    public readonly referenzgruppen?: ReferenzgruppeParam[];
 
     @ValidateNested()
     @IsOptional()

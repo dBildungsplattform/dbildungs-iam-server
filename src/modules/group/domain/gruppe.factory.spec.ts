@@ -89,7 +89,7 @@ describe('createGroup', () => {
             expect(result.bildungsziele).toEqual(gruppe.bildungsziele);
             expect(result.jahrgangsstufen).toEqual(gruppe.jahrgangsstufen);
             expect(result.faecher).toEqual(gruppe.faecher);
-            expect(result.referenzgruppen).toEqual(gruppe.referenzgruppen);
+            expect(result.referenzgruppenIds).toEqual(gruppe.referenzgruppenIds);
             expect(result.laufzeit).toEqual(gruppe.laufzeit);
         });
     });

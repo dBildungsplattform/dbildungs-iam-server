@@ -1,6 +1,5 @@
 import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enums.js';
 import { CreateGroupBodyParams } from '../api/create-group.body.params.js';
-import { Referenzgruppen } from './referenzgruppen.js';
 import {
     Bildungsziele,
     Faecherkanon,
@@ -8,8 +7,10 @@ import {
     GruppenTyp,
     Gruppendifferenzierung,
     Gruppenoption,
+    Gruppenrollen,
 } from './gruppe.enums.js';
-import { Laufzeit } from '../persistence/laufzeit.js';
+import { Laufzeit } from '../persistence/laufzeit.entity.js';
+import { ReferenzgruppeParam } from '../api/referenzgruppe.params.js';
 
 export class Gruppe<WasPersisted extends boolean> {
     public readonly mandant: string = '';
@@ -32,7 +33,8 @@ export class Gruppe<WasPersisted extends boolean> {
         public bildungsziele?: Bildungsziele[],
         public jahrgangsstufen?: Jahrgangsstufe[],
         public faecher?: Faecherkanon[],
-        public referenzgruppen?: Referenzgruppen[],
+        public referenzgruppenIds?: string[],
+        public referenzgruppenRollen?: Gruppenrollen[][],
         public laufzeit?: Laufzeit,
     ) {
         this.id = id;
@@ -50,7 +52,8 @@ export class Gruppe<WasPersisted extends boolean> {
         this.bildungsziele = bildungsziele;
         this.jahrgangsstufen = jahrgangsstufen;
         this.faecher = faecher;
-        this.referenzgruppen = referenzgruppen;
+        this.referenzgruppenIds = referenzgruppenIds;
+        this.referenzgruppenRollen = referenzgruppenRollen;
         this.laufzeit = laufzeit ?? new Laufzeit({});
     }
 
@@ -70,7 +73,8 @@ export class Gruppe<WasPersisted extends boolean> {
         bildungsziele?: Bildungsziele[],
         jahrgangsstufen?: Jahrgangsstufe[],
         faecher?: Faecherkanon[],
-        referenzgruppen?: Referenzgruppen[],
+        referenzgruppen?: string[],
+        referenzgruppenRollen?: Gruppenrollen[][],
         laufzeit?: Laufzeit,
     ): Gruppe<WasPersisted> {
         return new Gruppe(
@@ -90,6 +94,7 @@ export class Gruppe<WasPersisted extends boolean> {
             jahrgangsstufen,
             faecher,
             referenzgruppen,
+            referenzgruppenRollen,
             laufzeit,
         );
     }
@@ -111,7 +116,10 @@ export class Gruppe<WasPersisted extends boolean> {
             createGroupBodyParams.bildungsziele,
             createGroupBodyParams.jahrgangsstufen,
             createGroupBodyParams.faecher,
-            createGroupBodyParams.referenzgruppen,
+            createGroupBodyParams.referenzgruppen?.map(
+                (referenzgruppe: ReferenzgruppeParam) => referenzgruppe.referenzgruppenId,
+            ),
+            createGroupBodyParams.referenzgruppen?.map((referenzgruppe: ReferenzgruppeParam) => referenzgruppe.rollen),
             createGroupBodyParams.laufzeit,
         );
     }

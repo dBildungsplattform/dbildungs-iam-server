@@ -2,6 +2,7 @@ import { Embeddable, Property } from '@mikro-orm/core';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
+// TODO: should be converted to an entity an not used in tests.
 @Embeddable()
 export class Laufzeit {
     @Type(() => Date)
@@ -11,7 +12,7 @@ export class Laufzeit {
 
     @ApiProperty({ required: false, nullable: true })
     @Property({ nullable: true })
-    // it is a code that should refer to code property of a lernperiode entity
+    // TODO: should refer to code property of a lernperiode entity.
     public readonly vonLernperiode?: string;
 
     @Type(() => Date)
@@ -21,7 +22,7 @@ export class Laufzeit {
 
     @ApiProperty({ required: false, nullable: true })
     @Property({ nullable: true })
-    // it is a code that should refer to code property of a lernperiode entity
+    // TODO: should refer to code property of a lernperiode entity.
     public readonly bisLernperiode?: string;
 
     public constructor(props: Readonly<Laufzeit>) {

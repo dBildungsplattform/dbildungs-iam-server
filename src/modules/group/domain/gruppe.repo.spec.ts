@@ -76,7 +76,7 @@ describe('GruppeRepo', () => {
             gruppeEntity.bildungsziele = gruppe.bildungsziele;
             gruppeEntity.jahrgangsstufen = gruppe.jahrgangsstufen;
             gruppeEntity.faecher = gruppe.faecher;
-            gruppeEntity.referenzgruppen = gruppe.referenzgruppen;
+            gruppeEntity.referenzgruppen = gruppe.referenzgruppenIds;
             gruppeEntity.laufzeit = gruppe.laufzeit;
 
             mapper.mapGruppeToGruppeEntity.mockReturnValue(gruppeEntity);

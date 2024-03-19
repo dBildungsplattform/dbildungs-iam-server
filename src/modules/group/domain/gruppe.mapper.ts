@@ -1,27 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { GruppeEntity } from '../persistence/gruppe.entity.js';
 import { Gruppe } from './gruppe.js';
-
+import { ReferenzgruppeEntity } from '../persistence/referenzgruppe.entity.js';
 @Injectable()
 export class GruppeMapper {
     public mapGruppeToGruppeEntity(gruppe: Gruppe<false>): GruppeEntity {
-        const gruppeEntity: GruppeEntity = new GruppeEntity();
-        gruppeEntity.mandant = gruppe.mandant;
-        gruppeEntity.organisationId = gruppe.organisationId;
-        gruppeEntity.referrer = gruppe.referrer;
-        gruppeEntity.bezeichnung = gruppe.bezeichnung;
-        gruppeEntity.thema = gruppe.thema;
-        gruppeEntity.beschreibung = gruppe.beschreibung;
-        gruppeEntity.typ = gruppe.typ;
-        gruppeEntity.bereich = gruppe.bereich;
-        gruppeEntity.optionen = gruppe.optionen;
-        gruppeEntity.differenzierung = gruppe.differenzierung;
-        gruppeEntity.bildungsziele = gruppe.bildungsziele;
-        gruppeEntity.jahrgangsstufen = gruppe.jahrgangsstufen;
-        gruppeEntity.faecher = gruppe.faecher;
-        gruppeEntity.referenzgruppen = gruppe.referenzgruppen;
-        gruppeEntity.laufzeit = gruppe.laufzeit;
-
+        const gruppeEntity: GruppeEntity = new GruppeEntity({
+            mandant: gruppe.mandant,
+            organisationId: gruppe.organisationId,
+            referrer: gruppe.referrer,
+            bezeichnung: gruppe.bezeichnung,
+            thema: gruppe.thema,
+            beschreibung: gruppe.beschreibung,
+            typ: gruppe.typ,
+            bereich: gruppe.bereich,
+            optionen: gruppe.optionen,
+            differenzierung: gruppe.differenzierung,
+            bildungsziele: gruppe.bildungsziele,
+            jahrgangsstufen: gruppe.jahrgangsstufen,
+            faecher: gruppe.faecher,
+            referenzgruppen: [], // TODO: find a way to map referenzgruppen.
+            laufzeit: gruppe.laufzeit,
+        });
         return gruppeEntity;
     }
 
@@ -42,8 +42,20 @@ export class GruppeMapper {
             entity.bildungsziele,
             entity.jahrgangsstufen,
             entity.faecher,
-            entity.referenzgruppen,
+            entity.referenzgruppen?.map((referenzgruppe: ReferenzgruppeEntity) => referenzgruppe.referengruppeId) ?? [],
+            [], // TODO: add prop Gruppenrollen to Gruppe
             entity.laufzeit,
+        );
+    }
+
+    public getReferenzgruppenFromGruppeAggregate(gruppe: Gruppe<false>): ReferenzgruppeEntity[] {
+        return (
+            gruppe.referenzgruppenIds?.map((id: string, index: number) => {
+                return new ReferenzgruppeEntity({
+                    referengruppeId: id,
+                    rollen: gruppe.referenzgruppenRollen?.[index],
+                });
+            }) ?? []
         );
     }
 }

@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enums.js';
 import { GruppeEntity } from '../persistence/gruppe.entity.js';
-import { Laufzeit } from '../persistence/laufzeit.js';
+import { Laufzeit } from '../persistence/laufzeit.entity.js';
 import { Gruppe } from './gruppe.js';
 import {
     GruppenTyp,
@@ -13,7 +13,7 @@ import {
     Gruppenrollen,
 } from './gruppe.enums.js';
 import { GruppeMapper } from './gruppe.mapper.js';
-import { Referenzgruppen } from './referenzgruppen.js';
+import { ReferenzgruppenEntity } from '../persistence/referenzgruppen.entity.js';
 
 // AI next 107 lines
 describe('GruppeMapper', () => {
@@ -46,8 +46,8 @@ describe('GruppeMapper', () => {
                 [Jahrgangsstufe.JAHRGANGSSTUFE_1, Jahrgangsstufe.JAHRGANGSSTUFE_2],
                 [Faecherkanon.DE],
                 [
-                    new Referenzgruppen({
-                        id: faker.string.uuid(),
+                    new ReferenzgruppenEntity({
+                        referenzgruppenId: faker.string.uuid(),
                         rollen: [Gruppenrollen.LEHR],
                     }),
                 ],
@@ -71,7 +71,7 @@ describe('GruppeMapper', () => {
                     bildungsziele: gruppe.bildungsziele,
                     jahrgangsstufen: gruppe.jahrgangsstufen,
                     faecher: gruppe.faecher,
-                    referenzgruppen: gruppe.referenzgruppen,
+                    referenzgruppen: gruppe.referenzgruppenIds,
                     laufzeit: gruppe.laufzeit,
                 }),
             );
@@ -94,7 +94,7 @@ describe('GruppeMapper', () => {
             gruppeEntity.faecher = [Faecherkanon.DE];
             gruppeEntity.referenzgruppen = [
                 {
-                    id: faker.string.uuid(),
+                    referenzgruppenId: faker.string.uuid(),
                     rollen: [Gruppenrollen.LEHR],
                 },
             ];

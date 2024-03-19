@@ -1,4 +1,4 @@
-import { Embedded, Entity, Enum, Property } from '@mikro-orm/core';
+import { Collection, Embedded, Entity, Enum, OneToMany, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import {
     Bildungsziele,
@@ -9,11 +9,17 @@ import {
     Gruppenoption,
 } from '../domain/gruppe.enums.js';
 import { Jahrgangsstufe, SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
-import { Referenzgruppen } from '../domain/referenzgruppen.js';
-import { Laufzeit } from './laufzeit.js';
+import { Laufzeit } from './laufzeit.entity.js';
+import { ReferenzgruppeEntity } from './referenzgruppe.entity.js';
 
+export type GruppeProps = Omit<GruppeEntity, keyof TimestampedEntity>;
 @Entity({ tableName: 'gruppe' })
 export class GruppeEntity extends TimestampedEntity {
+    public constructor(props: GruppeProps) {
+        super();
+        Object.assign(this, props);
+    }
+
     @Property({ nullable: false })
     public mandant!: string;
 
@@ -53,8 +59,8 @@ export class GruppeEntity extends TimestampedEntity {
     @Enum({ items: () => Faecherkanon, nullable: true, array: true })
     public faecher?: Faecherkanon[];
 
-    @Embedded(() => Referenzgruppen, { nullable: true, array: true })
-    public referenzgruppen?: Referenzgruppen[];
+    @OneToMany(() => ReferenzgruppeEntity, (referenzgruppe: ReferenzgruppeEntity) => referenzgruppe.gruppe)
+    public referenzgruppen: Collection<ReferenzgruppeEntity> = new Collection<ReferenzgruppeEntity>(this);
 
     @Embedded(() => Laufzeit, { nullable: false })
     public laufzeit?: Laufzeit;

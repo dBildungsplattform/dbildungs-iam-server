@@ -18,8 +18,8 @@ import {
 } from './gruppe.enums.js';
 import { faker } from '@faker-js/faker';
 import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enums.js';
-import { Laufzeit } from '../persistence/laufzeit.js';
-import { Referenzgruppen } from './referenzgruppen.js';
+import { Laufzeit } from '../persistence/laufzeit.entity.js';
+import { ReferenzgruppenEntity } from '../persistence/referenzgruppen.entity.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { GruppeEntity } from '../persistence/gruppe.entity.js';
 import { GruppeMapper } from './gruppe.mapper.js';
@@ -70,8 +70,8 @@ describe('GruppenRepository', () => {
         [Jahrgangsstufe.JAHRGANGSSTUFE_1, Jahrgangsstufe.JAHRGANGSSTUFE_2],
         [Faecherkanon.DE],
         [
-            new Referenzgruppen({
-                id: faker.string.uuid(),
+            new ReferenzgruppenEntity({
+                referenzgruppenId: faker.string.uuid(),
                 rollen: [Gruppenrollen.LEHR],
             }),
         ],

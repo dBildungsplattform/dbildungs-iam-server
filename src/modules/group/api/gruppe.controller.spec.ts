@@ -5,7 +5,7 @@ import { GruppenFactory } from '../domain/gruppe.factory.js';
 import { CreateGroupBodyParams } from './create-group.body.params.js';
 import { GruppenTyp, Gruppenbereich, Gruppendifferenzierung, Gruppenoption } from '../domain/gruppe.enums.js';
 import { Gruppe } from '../domain/gruppe.js';
-import { Laufzeit } from '../persistence/laufzeit.js';
+import { Laufzeit } from '../persistence/laufzeit.entity.js';
 import { GruppenRepository } from '../domain/gruppe.repo.js';
 import { HttpException } from '@nestjs/common';
 import { GruppeMapper } from '../domain/gruppe.mapper.js';

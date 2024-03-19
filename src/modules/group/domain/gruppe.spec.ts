@@ -11,7 +11,7 @@ import {
 } from './gruppe.enums.js';
 import { CreateGroupBodyParams } from '../api/create-group.body.params.js';
 import { Jahrgangsstufe } from '../../personenkontext/domain/personenkontext.enums.js';
-import { Laufzeit } from '../persistence/laufzeit.js';
+import { Laufzeit } from '../persistence/laufzeit.entity.js';
 
 describe('Gruppe', () => {
     describe('construct', () => {
@@ -75,7 +75,7 @@ describe('Gruppe', () => {
                     faecher: [Faecherkanon.DE, Faecherkanon.MA],
                     referenzgruppen: [
                         {
-                            id: faker.lorem.word(),
+                            referenzgruppenId: faker.lorem.word(),
                             rollen: [Gruppenrollen.LEHR],
                         },
                     ],
@@ -102,7 +102,7 @@ describe('Gruppe', () => {
                         bildungsziele: createGroupBodyParams.bildungsziele,
                         jahrgangsstufen: createGroupBodyParams.jahrgangsstufen,
                         faecher: createGroupBodyParams.faecher,
-                        referenzgruppen: createGroupBodyParams.referenzgruppen,
+                        referenzgruppenIds: createGroupBodyParams.referenzgruppen,
                         laufzeit: createGroupBodyParams.laufzeit,
                     }),
                 );

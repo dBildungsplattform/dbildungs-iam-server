@@ -4,12 +4,14 @@ import { LernperiodenType } from '../domain/gruppe.enums.js';
 
 @Entity({ tableName: 'lernperiode' })
 export class LernperiodeEntity extends TimestampedEntity {
+    // TODO: should be unique and used as reference in laufzeit entity.
     @Property({ nullable: false })
     public code!: string;
 
     @Property({ nullable: false })
     public bezeichnung!: string;
 
+    // TODO: should be unique and used as reference in laufzeit entity.
     @Enum({ items: () => LernperiodenType, nullable: false })
     public typ!: LernperiodenType;
 
