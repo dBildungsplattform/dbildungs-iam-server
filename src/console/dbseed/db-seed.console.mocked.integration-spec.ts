@@ -16,7 +16,6 @@ import { PersonRepository } from '../../modules/person/persistence/person.reposi
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { OrganisationModule } from '../../modules/organisation/organisation.module.js';
 import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
-//import { DomainError, InvalidNameError, KeycloakClientError } from '../../shared/error/index.js';
 import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -27,8 +26,6 @@ describe('DbSeedConsoleMockedKeycloak', () => {
     let sut: DbSeedConsole;
     let orm: MikroORM;
     let dbSeedService: DbSeedService;
-    /*let keycloakUserServiceMock: DeepMocked<KeycloakUserService>;
-    let userNameGeneratorServiceMock: DeepMocked<UsernameGeneratorService>;*/
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -72,8 +69,6 @@ describe('DbSeedConsoleMockedKeycloak', () => {
         sut = module.get(DbSeedConsole);
         orm = module.get(MikroORM);
         dbSeedService = module.get(DbSeedService);
-        /*keycloakUserServiceMock = module.get(KeycloakUserService);
-        userNameGeneratorServiceMock = module.get(UsernameGeneratorService);*/
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
     }, 100000);

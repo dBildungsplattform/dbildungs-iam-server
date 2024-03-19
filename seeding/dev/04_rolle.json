@@ -7,7 +7,8 @@
             "name": "Sysadmin",
             "rollenart": "SYSADMIN",
             "merkmale": [],
-            "systemrechte": ["ROLLEN_VERWALTEN"]
+            "systemrechte": ["ROLLEN_VERWALTEN"],
+            "serviceProviderIds": []
         },
         {
             "id": 1,
@@ -15,7 +16,8 @@
             "name": "Rolle 1",
             "rollenart": "LERN",
             "merkmale": ["BEFRISTUNG_PFLICHT"],
-            "systemrechte": []
+            "systemrechte": [],
+            "serviceProviderIds": []
         },
         {
             "id": 2,
@@ -23,7 +25,8 @@
             "name": "Rolle 2",
             "rollenart": "LERN",
             "merkmale": [],
-            "systemrechte": []
+            "systemrechte": [],
+            "serviceProviderIds": []
         },
         {
             "id": 3,
@@ -31,7 +34,8 @@
             "name": "Rolle 3",
             "rollenart": "LEHR",
             "merkmale": [],
-            "systemrechte": []
+            "systemrechte": [],
+            "serviceProviderIds": []
         }
     ]
 }

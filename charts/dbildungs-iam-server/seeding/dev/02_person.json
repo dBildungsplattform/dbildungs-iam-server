@@ -5,7 +5,7 @@
             "id": 1,
             "username": "autotester",
             "password": "autotester",
-            "referrer": "mmustermann",
+            "referrer": "autotester",
             "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
             "stammorganisation": null,
             "vorname": "Anton",
@@ -26,23 +26,14 @@
             "stammorganisation": null,
             "vorname": "Susi",
             "familienname": "Superadmin",
-            "initialenfamilienname": null,
-            "initialenvorname": null,
-            "rufname": null,
-            "titel": null,
-            "anrede": null,
-            "namenssuffix": null,
-            "namenspraefix": null,
-            "sortierindex": null,
             "geburt": {
                 "datum": null,
                 "geburtsort": "Dimension C-137"
             },
-            "geschlecht": "m",
+            "geschlecht": "w",
             "loaklisierung": null,
             "vertrauensstufe": null,
-            "auskunftssperre": null,
-            "dataProvider": "d8f679f4-ea5c-4143-9233-01b96fe73196"
+            "auskunftssperre": null
         }
     ]
 }

@@ -5,7 +5,7 @@
             "id": 1,
             "username": "autotester",
             "password": "autotester",
-            "referrer": null,
+            "referrer": "autotester",
             "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
             "stammorganisation": null,
             "vorname": "Anton",
@@ -30,13 +30,10 @@
                 "datum": null,
                 "geburtsort": "Dimension C-137"
             },
-            "geschlecht": "m",
+            "geschlecht": "w",
             "loaklisierung": null,
             "vertrauensstufe": null,
             "auskunftssperre": null
         }
     ]
 }
-
-
-
