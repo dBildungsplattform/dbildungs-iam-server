@@ -353,19 +353,60 @@ describe('KeycloakUserService', () => {
         });
     });
 
-    describe('resetPassword', () => {
+    describe('setPassword', () => {
         describe('will be executed successfully', () => {
-            it('should return result with ok:true and new password', async () => {
-                const userId: string = faker.string.numeric();
-                const generatedPassword: string = faker.string.alphanumeric({
-                    length: { min: 10, max: 10 },
-                    casing: 'mixed',
+            describe('if password is temporary', () => {
+                it('should return result with ok:true and new temporary password', async () => {
+                    const userId: string = faker.string.numeric();
+                    const generatedPassword: string = faker.string.alphanumeric({
+                        length: { min: 10, max: 10 },
+                        casing: 'mixed',
+                    });
+                    kcUsersMock.resetPassword.mockResolvedValueOnce();
+
+                    const result: Result<string, DomainError> = await service.setPassword(userId, generatedPassword);
+
+                    expect(result).toStrictEqual({
+                        ok: true,
+                        value: generatedPassword,
+                    });
+                    expect(kcUsersMock.resetPassword).toHaveBeenCalledWith({
+                        id: userId,
+                        credential: {
+                            temporary: true,
+                            type: 'password',
+                            value: generatedPassword,
+                        },
+                    });
                 });
-                kcUsersMock.resetPassword.mockResolvedValueOnce();
-                const result: Result<string, DomainError> = await service.resetPassword(userId, generatedPassword);
-                expect(result).toStrictEqual({
-                    ok: true,
-                    value: generatedPassword,
+            });
+            describe('if password is permanent', () => {
+                it('should return result with ok:true and new permanent password', async () => {
+                    const userId: string = faker.string.numeric();
+                    const generatedPassword: string = faker.string.alphanumeric({
+                        length: { min: 10, max: 10 },
+                        casing: 'mixed',
+                    });
+                    kcUsersMock.resetPassword.mockResolvedValueOnce();
+
+                    const result: Result<string, DomainError> = await service.setPassword(
+                        userId,
+                        generatedPassword,
+                        false,
+                    );
+
+                    expect(result).toStrictEqual({
+                        ok: true,
+                        value: generatedPassword,
+                    });
+                    expect(kcUsersMock.resetPassword).toHaveBeenCalledWith({
+                        id: userId,
+                        credential: {
+                            temporary: false,
+                            type: 'password',
+                            value: generatedPassword,
+                        },
+                    });
                 });
             });
         });
@@ -377,7 +418,7 @@ describe('KeycloakUserService', () => {
                     casing: 'mixed',
                 });
                 kcUsersMock.resetPassword.mockRejectedValueOnce(new Error());
-                const result: Result<string, DomainError> = await service.resetPassword(userId, generatedPassword);
+                const result: Result<string, DomainError> = await service.setPassword(userId, generatedPassword);
                 expect(result).toStrictEqual({
                     ok: false,
                     error: new KeycloakClientError('Could not authorize with Keycloak'),
@@ -393,7 +434,7 @@ describe('KeycloakUserService', () => {
                     error: new KeycloakClientError('Could not authenticate'),
                 };
                 adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
-                const result: Result<string, DomainError> = await service.resetPassword(userId, generatedPassword);
+                const result: Result<string, DomainError> = await service.setPassword(userId, generatedPassword);
                 expect(result).toStrictEqual({
                     ok: false,
                     error: new KeycloakClientError('Could not authenticate'),
