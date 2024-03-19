@@ -73,8 +73,8 @@ export function mapEntityToAggregateInplace(entity: PersonEntity, person: Person
 @Injectable()
 export class PersonRepository {
     public constructor(
-        protected readonly kcUserService: KeycloakUserService,
-        protected readonly em: EntityManager,
+        private readonly kcUserService: KeycloakUserService,
+        private readonly em: EntityManager,
     ) {}
 
     public async findBy(scope: PersonScope): Promise<Counted<Person<true>>> {
@@ -136,7 +136,7 @@ export class PersonRepository {
         return mapEntityToAggregate(personEntity);
     }
 
-    protected async createKeycloakUser(
+    private async createKeycloakUser(
         person: Person<boolean>,
         kcUserService: KeycloakUserService,
     ): Promise<Person<boolean> | DomainError> {

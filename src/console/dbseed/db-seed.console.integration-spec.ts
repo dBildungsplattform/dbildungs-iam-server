@@ -24,7 +24,6 @@ import { EntityNotFoundError } from '../../shared/error/index.js';
 import { OrganisationModule } from '../../modules/organisation/organisation.module.js';
 import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
-import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 describe('DbSeedConsole', () => {
@@ -52,7 +51,6 @@ describe('DbSeedConsole', () => {
                 PersonFactory,
                 DBiamPersonenkontextRepo,
                 RolleRepo,
-                RolleSeedingRepo,
                 RolleFactory,
                 ServiceProviderRepo,
             ],

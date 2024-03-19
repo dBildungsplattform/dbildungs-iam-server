@@ -184,7 +184,9 @@ export class DbSeedService {
                 password: file.password,
             };
             const person: Person<false> | DomainError = await this.personFactory.createNew(creationParams);
-            if (person instanceof DomainError) throw person;
+            if (person instanceof DomainError) {
+                throw person;
+            }
             const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
             if (persistedPerson instanceof Person && file.id != null) {
                 this.personMap.set(file.id, persistedPerson);

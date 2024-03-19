@@ -22,7 +22,6 @@ import { OrganisationModule } from '../modules/organisation/organisation.module.
 import { RolleRepo } from '../modules/rolle/repo/rolle.repo.js';
 import { RolleFactory } from '../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../modules/service-provider/repo/service-provider.repo.js';
-import { RolleSeedingRepo } from './dbseed/repo/rolle-seeding.repo.js';
 import { DBiamPersonenkontextRepo } from '../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 @Module({
@@ -74,7 +73,6 @@ import { DBiamPersonenkontextRepo } from '../modules/personenkontext/persistence
         RolleRepo,
         RolleFactory,
         ServiceProviderRepo,
-        RolleSeedingRepo,
     ],
 })
 export class ConsoleModule {}

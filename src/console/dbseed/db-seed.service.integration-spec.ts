@@ -16,15 +16,18 @@ import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
 import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
-import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
-import { EntityNotFoundError } from '../../shared/error/index.js';
+import { EntityNotFoundError, InvalidAttributeLengthError } from '../../shared/error/index.js';
 import { OrganisationModule } from '../../modules/organisation/organisation.module.js';
 import fs from 'fs';
+import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 
 describe('DbSeedServiceIntegration', () => {
     let module: TestingModule;
     let orm: MikroORM;
     let dbSeedService: DbSeedService;
+    //let personFactoryMock: DeepMocked<PersonFactory>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -45,6 +48,8 @@ describe('DbSeedServiceIntegration', () => {
                 PersonFactory,
                 DBiamPersonenkontextRepo,
                 RolleRepo,
+                RolleFactory,
+                ServiceProviderRepo,
             ],
         })
             .overrideModule(KeycloakConfigModule)
@@ -109,6 +114,18 @@ describe('DbSeedServiceIntegration', () => {
                 await dbSeedService.seedOrganisation(fileContentOrganisationAsStr);
 
                 await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+    });
+
+    describe('seedPerson', () => {
+        describe('when personFactory is failing', () => {
+            it('should throw error', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/invalidPerson/02_person.json`,
+                    'utf-8',
+                );
+                await expect(dbSeedService.seedPerson(fileContentAsStr)).rejects.toThrow(InvalidAttributeLengthError);
             });
         });
     });
