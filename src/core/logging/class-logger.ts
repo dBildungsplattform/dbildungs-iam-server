@@ -20,35 +20,35 @@ export class ClassLogger extends Logger {
     }
 
     public emerg(message: string, trace?: unknown): void {
-        this.logger.emerg(this.createMessage(message, trace));
+        this.logger.log('emerg', this.createMessage(message, trace));
     }
 
     public alert(message: string, trace?: unknown): void {
-        this.logger.alert(this.createMessage(message, trace));
+        this.logger.log('alert', this.createMessage(message, trace));
     }
 
     public crit(message: string, trace?: unknown): void {
-        this.logger.crit(this.createMessage(message, trace));
+        this.logger.log('crit', this.createMessage(message, trace));
     }
 
     public error(message: string, trace?: unknown): void {
-        this.logger.error(this.createMessage(message, trace));
+        this.logger.log('error', this.createMessage(message, trace));
     }
 
     public warning(message: string, trace?: unknown): void {
-        this.logger.warning(this.createMessage(message, trace));
+        this.logger.log('warning', this.createMessage(message, trace));
     }
 
     public notice(message: string, trace?: unknown): void {
-        this.logger.notice(this.createMessage(message, trace));
+        this.logger.log('notice', this.createMessage(message, trace));
     }
 
     public info(message: string, trace?: unknown): void {
-        this.logger.info(this.createMessage(message, trace));
+        this.logger.log('info', this.createMessage(message, trace));
     }
 
     public debug(message: string, trace?: unknown): void {
-        this.logger.debug(this.createMessage(message, trace));
+        this.logger.log('debug', this.createMessage(message, trace));
     }
 
     private createMessage(

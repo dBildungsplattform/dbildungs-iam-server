@@ -18,7 +18,7 @@ export class NestLogger implements LoggerService {
     }
 
     public warn(message: unknown): void {
-        this.moduleLogger.getLogger().warning(this.stringifiedMessage(message));
+        this.moduleLogger.getLogger().warn(this.stringifiedMessage(message));
     }
 
     public verbose?(message: unknown): void {
