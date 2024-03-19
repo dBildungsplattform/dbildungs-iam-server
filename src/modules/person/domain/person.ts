@@ -1,17 +1,40 @@
 import { faker } from '@faker-js/faker';
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
+import { UsernameGeneratorService } from './username-generator.service.js';
 
-type State = {
-    passwordReset: boolean;
+type PasswordInternalState = { passwordInternal: string | undefined; isTemporary: boolean };
+
+export type PersonCreationParams = {
+    familienname: string;
+    vorname: string;
+    referrer?: string;
+    stammorganisation?: string;
+    initialenFamilienname?: string;
+    initialenVorname?: string;
+    rufname?: string;
+    nameTitel?: string;
+    nameAnrede?: string[];
+    namePraefix?: string[];
+    nameSuffix?: string[];
+    nameSortierindex?: string;
+    geburtsdatum?: Date;
+    geburtsort?: string;
+    geschlecht?: Geschlecht;
+    lokalisierung?: string;
+    vertrauensstufe?: Vertrauensstufe;
+    auskunftssperre?: boolean;
+    username?: string;
+    password?: string;
 };
 
 export class Person<WasPersisted extends boolean> {
     public static readonly CREATE_PERSON_DTO_MANDANT_UUID: string = '8c6a9447-c23e-4e70-8595-3bcc88a5577a';
 
-    private state: State;
-
-    private newPasswordInternal?: string;
+    private passwordInternalState: PasswordInternalState = {
+        passwordInternal: undefined,
+        isTemporary: true,
+    };
 
     public readonly mandant: string;
 
@@ -23,7 +46,6 @@ export class Person<WasPersisted extends boolean> {
         public vorname: string,
         public revision: string,
         public username?: string,
-        public password?: string,
         public keycloakUserId?: string,
         public referrer?: string,
         public stammorganisation?: string,
@@ -42,17 +64,15 @@ export class Person<WasPersisted extends boolean> {
         public vertrauensstufe?: Vertrauensstufe,
         public auskunftssperre?: boolean,
     ) {
-        this.state = { passwordReset: false };
-        this.newPasswordInternal = this.password;
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
     }
 
-    public get needsSaving(): boolean {
-        return this.state.passwordReset || this.keycloakUserId === undefined;
+    public get newPassword(): string | undefined {
+        return this.passwordInternalState?.passwordInternal ?? undefined;
     }
 
-    public get newPassword(): string | undefined {
-        return this.newPasswordInternal ?? undefined;
+    public get isNewPasswordTemporary(): boolean {
+        return this.passwordInternalState.isTemporary;
     }
 
     public static construct<WasPersisted extends boolean = false>(
@@ -63,7 +83,6 @@ export class Person<WasPersisted extends boolean> {
         vorname: string,
         revision: string,
         username?: string,
-        password?: string,
         keycloakUserId?: string,
         referrer?: string,
         stammorganisation?: string,
@@ -90,7 +109,6 @@ export class Person<WasPersisted extends boolean> {
             vorname,
             revision,
             username,
-            password,
             keycloakUserId,
             referrer,
             stammorganisation,
@@ -111,53 +129,58 @@ export class Person<WasPersisted extends boolean> {
         );
     }
 
-    public static createNew(
-        familienname: string,
-        vorname: string,
-        referrer?: string,
-        stammorganisation?: string,
-        initialenFamilienname?: string,
-        initialenVorname?: string,
-        rufname?: string,
-        nameTitel?: string,
-        nameAnrede?: string[],
-        namePraefix?: string[],
-        nameSuffix?: string[],
-        nameSortierindex?: string,
-        geburtsdatum?: Date,
-        geburtsort?: string,
-        geschlecht?: Geschlecht,
-        lokalisierung?: string,
-        vertrauensstufe?: Vertrauensstufe,
-        auskunftssperre?: boolean,
-    ): Person<false> {
-        return new Person(
+    public static async createNew(
+        usernameGenerator: UsernameGeneratorService,
+        creationParams: PersonCreationParams,
+    ): Promise<Person<false> | DomainError> {
+        const person: Person<false> = new Person(
             undefined,
             undefined,
             undefined,
-            familienname,
-            vorname,
+            creationParams.familienname,
+            creationParams.vorname,
             '1',
-            undefined,
-            undefined,
-            undefined,
-            referrer,
-            stammorganisation,
-            initialenFamilienname,
-            initialenVorname,
-            rufname,
-            nameTitel,
-            nameAnrede,
-            namePraefix,
-            nameSuffix,
-            nameSortierindex,
-            geburtsdatum,
-            geburtsort,
-            geschlecht,
-            lokalisierung,
-            vertrauensstufe,
-            auskunftssperre,
+            undefined, //username
+            undefined, //keycloakUserId
+            creationParams.referrer,
+            creationParams.stammorganisation,
+            creationParams.initialenFamilienname,
+            creationParams.initialenVorname,
+            creationParams.rufname,
+            creationParams.nameTitel,
+            creationParams.nameAnrede,
+            creationParams.namePraefix,
+            creationParams.nameSuffix,
+            creationParams.nameSortierindex,
+            creationParams.geburtsdatum,
+            creationParams.geburtsort,
+            creationParams.geschlecht,
+            creationParams.lokalisierung,
+            creationParams.vertrauensstufe,
+            creationParams.auskunftssperre,
         );
+
+        if (creationParams.password) {
+            person.passwordInternalState.passwordInternal = creationParams.password;
+            person.passwordInternalState.isTemporary = false;
+        } else {
+            person.resetPassword();
+        }
+
+        if (creationParams.username) {
+            person.username = creationParams.username;
+        } else {
+            const result: Result<string, DomainError> = await usernameGenerator.generateUsername(
+                person.vorname,
+                person.familienname,
+            );
+            if (!result.ok) {
+                return result.error;
+            }
+            person.username = result.value;
+        }
+
+        return person;
     }
 
     public update(
@@ -211,10 +234,9 @@ export class Person<WasPersisted extends boolean> {
     }
 
     public resetPassword(): void {
-        this.newPasswordInternal = faker.string.alphanumeric({
+        this.passwordInternalState.passwordInternal = faker.string.alphanumeric({
             length: { min: 10, max: 10 },
             casing: 'mixed',
         });
-        this.state.passwordReset = true;
     }
 }

@@ -135,7 +135,11 @@ export class KeycloakUserService {
         };
     }
 
-    public async resetPassword(userId: string, password: string): Promise<Result<string, DomainError>> {
+    public async setPassword(
+        userId: string,
+        password: string,
+        temporary: boolean = true,
+    ): Promise<Result<string, DomainError>> {
         try {
             // Get authed client
             const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
@@ -146,7 +150,7 @@ export class KeycloakUserService {
             await kcAdminClientResult.value.users.resetPassword({
                 id: userId,
                 credential: {
-                    temporary: true,
+                    temporary: temporary,
                     type: 'password',
                     value: password,
                 },
