@@ -5,6 +5,29 @@ import { UsernameGeneratorService } from './username-generator.service.js';
 
 type PasswordInternalState = { passwordInternal: string | undefined; isTemporary: boolean };
 
+export type PersonCreationParams = {
+    familienname: string;
+    vorname: string;
+    referrer?: string;
+    stammorganisation?: string;
+    initialenFamilienname?: string;
+    initialenVorname?: string;
+    rufname?: string;
+    nameTitel?: string;
+    nameAnrede?: string[];
+    namePraefix?: string[];
+    nameSuffix?: string[];
+    nameSortierindex?: string;
+    geburtsdatum?: Date;
+    geburtsort?: string;
+    geschlecht?: Geschlecht;
+    lokalisierung?: string;
+    vertrauensstufe?: Vertrauensstufe;
+    auskunftssperre?: boolean;
+    username?: string;
+    password?: string;
+};
+
 export class Person<WasPersisted extends boolean> {
     public static readonly CREATE_PERSON_DTO_MANDANT_UUID: string = '8c6a9447-c23e-4e70-8595-3bcc88a5577a';
 
@@ -108,65 +131,53 @@ export class Person<WasPersisted extends boolean> {
 
     public static async createNew(
         usernameGenerator: UsernameGeneratorService,
-        familienname: string,
-        vorname: string,
-        referrer?: string,
-        stammorganisation?: string,
-        initialenFamilienname?: string,
-        initialenVorname?: string,
-        rufname?: string,
-        nameTitel?: string,
-        nameAnrede?: string[],
-        namePraefix?: string[],
-        nameSuffix?: string[],
-        nameSortierindex?: string,
-        geburtsdatum?: Date,
-        geburtsort?: string,
-        geschlecht?: Geschlecht,
-        lokalisierung?: string,
-        vertrauensstufe?: Vertrauensstufe,
-        auskunftssperre?: boolean,
-        username?: string,
-        password?: string,
-    ): Promise<Person<false>> {
+        creationParams: PersonCreationParams,
+    ): Promise<Person<false> | DomainError> {
         const person: Person<false> = new Person(
             undefined,
             undefined,
             undefined,
-            familienname,
-            vorname,
+            creationParams.familienname,
+            creationParams.vorname,
             '1',
             undefined, //username
             undefined, //keycloakUserId
-            referrer,
-            stammorganisation,
-            initialenFamilienname,
-            initialenVorname,
-            rufname,
-            nameTitel,
-            nameAnrede,
-            namePraefix,
-            nameSuffix,
-            nameSortierindex,
-            geburtsdatum,
-            geburtsort,
-            geschlecht,
-            lokalisierung,
-            vertrauensstufe,
-            auskunftssperre,
+            creationParams.referrer,
+            creationParams.stammorganisation,
+            creationParams.initialenFamilienname,
+            creationParams.initialenVorname,
+            creationParams.rufname,
+            creationParams.nameTitel,
+            creationParams.nameAnrede,
+            creationParams.namePraefix,
+            creationParams.nameSuffix,
+            creationParams.nameSortierindex,
+            creationParams.geburtsdatum,
+            creationParams.geburtsort,
+            creationParams.geschlecht,
+            creationParams.lokalisierung,
+            creationParams.vertrauensstufe,
+            creationParams.auskunftssperre,
         );
 
-        if (password) {
-            person.passwordInternalState.passwordInternal = password;
+        if (creationParams.password) {
+            person.passwordInternalState.passwordInternal = creationParams.password;
             person.passwordInternalState.isTemporary = false;
         } else {
             person.resetPassword();
         }
 
-        if (username) {
-            person.username = username;
+        if (creationParams.username) {
+            person.username = creationParams.username;
         } else {
-            person.username = await usernameGenerator.generateUsername(person.vorname, person.familienname);
+            const result: Result<string, DomainError> = await usernameGenerator.generateUsername(
+                person.vorname,
+                person.familienname,
+            );
+            if (!result.ok) {
+                return result.error;
+            }
+            person.username = result.value;
         }
 
         return person;

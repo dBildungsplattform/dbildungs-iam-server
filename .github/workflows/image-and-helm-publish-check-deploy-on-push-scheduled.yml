@@ -104,7 +104,8 @@ jobs:
   release_helm:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs: 
-      -  select_helm_version_generation_and_image_tag_generation
+      - select_helm_version_generation_and_image_tag_generation
+      - build_image_on_push
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@5
     secrets: inherit
     with:
@@ -137,8 +138,7 @@ jobs:
       schulportal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
       dbildungs_iam_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
-    secrets:
-      SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
+    secrets: inherit
 
   create_branch_identifier_for_deletion:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}

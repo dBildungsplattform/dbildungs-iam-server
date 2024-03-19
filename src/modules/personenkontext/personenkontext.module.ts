@@ -4,7 +4,7 @@ import { PersonenkontextRepo } from '../personenkontext/persistence/personenkont
 import { PersonenkontextService } from '../personenkontext/domain/personenkontext.service.js';
 import { PersonModule } from '../person/person.module.js';
 import { PersonRepo } from '../person/persistence/person.repo.js';
-import { DBiamPersonenkontextRepo } from './dbiam/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
 import { RolleModule } from '../rolle/rolle.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 

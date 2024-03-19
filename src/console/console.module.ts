@@ -18,9 +18,12 @@ import { DbSeedService } from './dbseed/db-seed.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 import { PersonRepository } from '../modules/person/persistence/person.repository.js';
 import { PersonFactory } from '../modules/person/domain/person.factory.js';
-import { DBiamPersonenkontextRepo } from '../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 import { OrganisationModule } from '../modules/organisation/organisation.module.js';
 import { RolleRepo } from '../modules/rolle/repo/rolle.repo.js';
+import { RolleFactory } from '../modules/rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../modules/service-provider/repo/service-provider.repo.js';
+import { RolleSeedingRepo } from './dbseed/repo/rolle-seeding.repo.js';
+import { DBiamPersonenkontextRepo } from '../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 @Module({
     imports: [
@@ -69,6 +72,9 @@ import { RolleRepo } from '../modules/rolle/repo/rolle.repo.js';
         PersonRepository,
         DBiamPersonenkontextRepo,
         RolleRepo,
+        RolleFactory,
+        ServiceProviderRepo,
+        RolleSeedingRepo,
     ],
 })
 export class ConsoleModule {}

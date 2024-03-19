@@ -8,18 +8,19 @@ import { ServiceProvider } from '../../modules/service-provider/domain/service-p
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { plainToInstance } from 'class-transformer';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
-import { Person } from '../../modules/person/domain/person.js';
+import { Person, PersonCreationParams } from '../../modules/person/domain/person.js';
 import { PersonFile } from './file/person-file.js';
-import { ServiceProviderFile } from './file/service-provider-file.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { DomainError, EntityNotFoundError } from '../../shared/error/index.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
 import { PersonenkontextFile } from './file/personenkontext-file.js';
-import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 import { OrganisationRepo } from '../../modules/organisation/persistence/organisation.repo.js';
 import { RolleFile } from './file/rolle-file.js';
 import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
+import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
+import { ServiceProviderFile } from './file/service-provider-file.js';
+import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 @Injectable()
 export class DbSeedService {
@@ -30,6 +31,7 @@ export class DbSeedService {
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly organisationRepo: OrganisationRepo,
         private readonly rolleRepo: RolleRepo,
+        private readonly rolleFactory: RolleFactory,
     ) {}
 
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
@@ -111,12 +113,14 @@ export class DbSeedService {
             );
             if (!persistedSSK)
                 throw new EntityNotFoundError('Organisation', file.administeredBySchulstrukturknoten.toString());
-            const rolle: Rolle<false> = Rolle.createNew(
+
+            const rolle: Rolle<false> = this.rolleFactory.createNew(
                 file.name,
-                persistedSSK.id,
+                this.getReferencedOrganisation(file.administeredBySchulstrukturknoten).id,
                 file.rollenart,
                 file.merkmale,
                 file.systemrechte,
+                file.serviceProviderIds,
             );
 
             const persistedRolle: Rolle<true> | DomainError = await this.rolleRepo.save(rolle);
@@ -157,28 +161,30 @@ export class DbSeedService {
         const personFile: EntityFile<PersonFile> = JSON.parse(fileContentAsStr) as EntityFile<PersonFile>;
         const files: PersonFile[] = plainToInstance(PersonFile, personFile.entities);
         for (const file of files) {
-            const person: Person<false> = await this.personFactory.createNew(
-                file.familienname,
-                file.vorname,
-                file.referrer,
-                file.stammorganisation,
-                file.initialenFamilienname,
-                file.initialenVorname,
-                file.rufname,
-                file.nameTitel,
-                file.nameAnrede,
-                file.namePraefix,
-                file.nameSuffix,
-                file.nameSortierindex,
-                file.geburtsdatum,
-                file.geburtsort,
-                file.geschlecht,
-                file.lokalisierung,
-                file.vertrauensstufe,
-                file.auskunftssperre,
-                file.username,
-                file.password,
-            );
+            const creationParams: PersonCreationParams = {
+                familienname: file.familienname,
+                vorname: file.vorname,
+                referrer: file.referrer,
+                stammorganisation: file.stammorganisation,
+                initialenFamilienname: file.initialenFamilienname,
+                initialenVorname: file.initialenVorname,
+                rufname: file.rufname,
+                nameTitel: file.nameTitel,
+                nameAnrede: file.nameAnrede,
+                namePraefix: file.namePraefix,
+                nameSuffix: file.nameSuffix,
+                nameSortierindex: file.nameSortierindex,
+                geburtsdatum: file.geburtsdatum,
+                geburtsort: file.geburtsort,
+                geschlecht: file.geschlecht,
+                lokalisierung: file.lokalisierung,
+                vertrauensstufe: file.vertrauensstufe,
+                auskunftssperre: file.auskunftssperre,
+                username: file.username,
+                password: file.password,
+            };
+            const person: Person<false> | DomainError = await this.personFactory.createNew(creationParams);
+            if (person instanceof DomainError) throw person;
             const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
             if (persistedPerson instanceof Person && file.id != null) {
                 this.personMap.set(file.id, persistedPerson);

@@ -12,4 +12,6 @@ export class RolleFile {
     public merkmale!: RollenMerkmal[];
 
     public systemrechte!: RollenSystemRecht[];
+
+    public serviceProviderIds!: string[];
 }

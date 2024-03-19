@@ -11,11 +11,9 @@ import fs from 'fs';
 import { DataProviderFile } from './file/data-provider-file.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
-import { Buffer } from 'buffer';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 import { OrganisationRepo } from '../../modules/organisation/persistence/organisation.repo.js';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
 import { EntityNotFoundError } from '../../shared/error/index.js';
@@ -23,6 +21,10 @@ import { OrganisationsTyp, Traegerschaft } from '../../modules/organisation/doma
 import { faker } from '@faker-js/faker';
 import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
+import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
+import { Buffer } from 'buffer';
+import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -40,6 +42,7 @@ describe('DbSeedService', () => {
             ],
             providers: [
                 DbSeedService,
+                RolleFactory,
                 {
                     provide: PersonFactory,
                     useValue: createMock<PersonFactory>(),
@@ -59,6 +62,11 @@ describe('DbSeedService', () => {
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
+                },
+
+                {
+                    provide: ServiceProviderRepo,
+                    useValue: createMock<ServiceProviderRepo>(),
                 },
             ],
         }).compile();

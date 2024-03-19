@@ -20,9 +20,12 @@ import { ServiceProviderEntity } from '../../modules/service-provider/repo/servi
 import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
-import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/dbiam/dbiam-personenkontext.repo.js';
 import { EntityNotFoundError } from '../../shared/error/index.js';
 import { OrganisationModule } from '../../modules/organisation/organisation.module.js';
+import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
+import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
+import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -49,6 +52,9 @@ describe('DbSeedConsole', () => {
                 PersonFactory,
                 DBiamPersonenkontextRepo,
                 RolleRepo,
+                RolleSeedingRepo,
+                RolleFactory,
+                ServiceProviderRepo,
             ],
         })
             .overrideModule(KeycloakConfigModule)
