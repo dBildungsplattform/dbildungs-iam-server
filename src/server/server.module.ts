@@ -49,6 +49,7 @@ import { PersonenKontextApiModule } from '../modules/personenkontext/personenkon
                         },
                     },
                     connect: false,
+                    debug: true,
                 });
             },
             inject: [ConfigService],
