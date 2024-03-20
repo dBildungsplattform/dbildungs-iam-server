@@ -86,7 +86,7 @@ serviceMonitor:
   namespaceSelector:
     any: true
   endpoints:
-    - port: "web" 
+    - port: "web"
 
 containerSecurityContext:
   runAsUser: 1000
@@ -111,9 +111,9 @@ containerResources:
     memory: 4G
 
 ingress:
-  ingressClassName: nginx  
-  pathType: Prefix  
-  portnumber: 80 
+  ingressClassName: nginx
+  pathType: Prefix
+  portnumber: 80
   automountServiceAccountToken: false
 
 redisinitContainer:
@@ -125,7 +125,7 @@ redisinitContainer:
       - mountPath: "/data"
         name: data
 
-rediscontainer: 
+rediscontainer:
   image:
     name: redis
     repository: redis
@@ -181,7 +181,7 @@ initContainers:
         subPath: secrets-json
         name: secret-volume
         readOnly: true
-      - mountPath: /app/sql/{{ .Values.seeding.database }}
+      - mountPath: /app/seeding/{{ .Values.seeding.database }}
         name: seeding-volume
         readOnly: true
   - name: db-seeding
@@ -195,7 +195,7 @@ initContainers:
         subPath: secrets-json
         name: secret-volume
         readOnly: true
-      - mountPath: /app/sql/{{ .Values.seeding.database }}
+      - mountPath: /app/seeding/{{ .Values.seeding.database }}
         name: seeding-volume
         readOnly: true
 
