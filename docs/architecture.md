@@ -6,10 +6,10 @@ We follow the principles of domain driven design.<br>
 **Business logic is handled in the domain layer.**
 
 ### Aggregates, Factories, Repositories ###
-Business logic is mainly handled within an *aggregate*. If that is not possible, e.g. because an operation affects multiple *aggregates* a domain *service* is used.<br>
+Business logic is mainly handled within an *aggregate*. If that is not possible, e.g. because a domain operation affects multiple *aggregates* a domain *service* is used.<br>
 
-A new *aggregate* is created by a *factory*.<br>
-To load an *aggregate* from the persistence layer a *repository* is used. Internally the *repository* loads the data and uses the *factory* to construct the *aggregate*.<br>
+A new instance of an *aggregate* is created by a *factory*.<br>
+To load an instance of an*aggregate* from the persistence layer a *repository* is used. Internally the *repository* loads the data and uses the *factory* to construct the *aggregate*.<br>
 A changed or newly created *aggregate* is persisted via a *repository*.<br>
 
 For cross cutting concerns we use shared *services*. *Aggregates* are constructed by *factories*, thus Nest.js can not inject *services* directly into the *aggregates*. We need to inject dependencies of an *aggregate* into the *factory* and hand them over during construction.
