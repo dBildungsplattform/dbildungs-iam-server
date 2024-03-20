@@ -89,6 +89,24 @@ export class RolleRepo {
         return rolle && mapEntityToAggregate(rolle, this.rolleFactory);
     }
 
+    public async findByIds(ids: string[]): Promise<Map<string, Rolle<true>>> {
+        const rollenEntities: RolleEntity[] = await this.em.find(
+            RolleEntity,
+            { id: { $in: ids } },
+            {
+                populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+            },
+        );
+
+        const rollenMap: Map<string, Rolle<true>> = new Map();
+        rollenEntities.forEach((rolleEntity: RolleEntity) => {
+            const rolle: Rolle<true> = mapEntityToAggregate(rolleEntity, this.rolleFactory);
+            rollenMap.set(rolleEntity.id, rolle);
+        });
+
+        return rollenMap;
+    }
+
     public async find(): Promise<Rolle<true>[]> {
         const rollen: RolleEntity[] = await this.em.findAll(RolleEntity, {
             populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
