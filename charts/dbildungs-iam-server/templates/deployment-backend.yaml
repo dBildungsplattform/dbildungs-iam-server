@@ -38,7 +38,7 @@ spec:
               subPath: secrets-json
               name: secret-volume
               readOnly: true
-            - mountPath: /app/sql/{{.Values.seeding.database}}
+            - mountPath: /app/seeding/{{.Values.seeding.database}}
               name: seeding-volume
               readOnly: true
           resources:
@@ -62,7 +62,7 @@ spec:
               subPath: secrets-json
               name: secret-volume
               readOnly: true
-            - mountPath: /app/sql/{{.Values.seeding.database}}
+            - mountPath: /app/seeding/{{.Values.seeding.database}}
               name: seeding-volume
               readOnly: true
           resources:
