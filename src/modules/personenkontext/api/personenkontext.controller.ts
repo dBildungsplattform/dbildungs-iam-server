@@ -133,9 +133,9 @@ export class PersonenkontextController {
     @Get(':personId/hatSystemrecht')
     @ApiOkResponse({
         type: SystemrechtResponse,
-        description: 'The SchulStrukturKnoten associated with this personId and systemrecht.',
+        description: 'The SchulStrukturKnoten associated with this personId and systemrecht. Can return empty list',
     })
-    @ApiNotFoundResponse({ description: 'The systemrecht could not be found.' })
+    @ApiNotFoundResponse({ description: 'The systemrecht could not be found (does not exist as type of systemrecht).' })
     public async hatSystemRecht(
         @Param() personByIdParams: PersonByIdParams,
         @Query() hatSystemrechtQueryParams: HatSystemrechtQueryParams,
