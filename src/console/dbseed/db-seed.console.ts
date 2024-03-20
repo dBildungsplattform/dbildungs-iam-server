@@ -127,5 +127,4 @@ export class DbSeedConsole extends CommandRunner {
         }
         this.logger.info(`Insert ${aggregates.length} entities of type ${aggregateName}`);
     }
-
 }
