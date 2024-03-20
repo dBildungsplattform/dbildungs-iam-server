@@ -8,6 +8,7 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
+import { DBiamPersonenuebersichtResponse } from './dbiam-personenuebersicht.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenuebersicht')
@@ -16,6 +17,7 @@ import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulcon
 export class DBiamPersonenuebersichtController {
     public constructor() {}
 
+    /*
     @Get('')
     @ApiOkResponse({
         description: 'The personenuebersichten were successfully returned.',
@@ -25,14 +27,15 @@ export class DBiamPersonenuebersichtController {
     @ApiForbiddenResponse({ description: 'Insufficient permission to get personenuebersichten.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting personenuebersichten.' })
     public async findPersonenuebersichten(@Param() params: any): Promise<any[]> {}
+    */
 
     @Get(':personId')
     @ApiOkResponse({
         description: 'The personenuebersicht was successfully returned.',
-        type: [DBiamPersonenkontextResponse],
+        type: [DBiamPersonenuebersichtResponse],
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get personenuebersicht.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to get personenuebersicht.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting personenuebersicht.' })
-    public async findPersonenuebersichtenByPerson(@Param() params: any): Promise<any> {}
+    public async findPersonenuebersichtenByPerson(@Param() params: any): Promise<DBiamPersonenuebersichtResponse> {}
 }
