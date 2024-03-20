@@ -57,16 +57,12 @@ export class DbSeedConsole extends CommandRunner {
         const directory: string = this.getDirectory(_passedParams);
         const excludedFiles: string = this.getExcludedFiles(_passedParams);
         this.logger.info('Create seed data in the database...');
-        this.logger.info('Debug point #0');
         let entityFileNames: string[] = this.dbSeedService.getEntityFileNames(directory);
-        this.logger.info('Debug point #1');
         if (entityFileNames.length == 0) {
             this.logger.error(`No seeding data in the directory ${directory}!`);
             throw new Error('No seeding data in the directory');
         }
-        this.logger.info('Debug point #2');
         entityFileNames = entityFileNames.filter((efm: string) => !excludedFiles.includes(efm));
-        this.logger.info('Debug point #3');
         this.logger.info('Following files will be processed:');
         entityFileNames.forEach((n: string) => this.logger.info(n));
         try {
