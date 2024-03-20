@@ -46,7 +46,7 @@ export class DbSeedConsole extends CommandRunner {
     }
 
     private getExcludedFiles(_passedParams: string[]): string {
-        if (_passedParams[1] !== undefined) {
+        if (_passedParams[1] !== undefined && _passedParams[1].length > 0) {
             this.logger.info(`Following files skipped via parameter: ${_passedParams[1]}`);
             return _passedParams[1];
         }
@@ -58,6 +58,10 @@ export class DbSeedConsole extends CommandRunner {
         const excludedFiles: string = this.getExcludedFiles(_passedParams);
         this.logger.info('Create seed data in the database...');
         let entityFileNames: string[] = this.dbSeedService.getEntityFileNames(directory);
+        if (entityFileNames.length == 0) {
+            this.logger.error(`No seeding data in the directory ${directory}!`);
+            throw new Error('No seeding data in the directory');
+        }
         entityFileNames = entityFileNames.filter((efm: string) => !excludedFiles.includes(efm));
         this.logger.info('Following files will be processed:');
         entityFileNames.forEach((n: string) => this.logger.info(n));

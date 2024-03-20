@@ -89,6 +89,13 @@ describe('DbSeedConsole', () => {
             });
         });
 
+        describe('when directory for seeding files is empty or no matching files are found within', () => {
+            it('should fail with error', async () => {
+                const params: string[] = ['seeding-integration-test/emptyDir'];
+                await expect(sut.run(params)).rejects.toThrow();
+            });
+        });
+
         describe('when directory and excluded files is set via parameter', () => {
             it('should use seeding-integration-test directory and not fail due to non-existing entityType', async () => {
                 const params: string[] = ['seeding-integration-test/all', '07_non-existing-entity.json'];
