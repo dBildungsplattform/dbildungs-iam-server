@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { PersonID } from '../../../shared/types/index.js';
-import { Person } from '../domain/person.js';
+import { PersonID } from '../../../../shared/types/index.js';
+import { Person } from '../../domain/person.js';
 import { DBiamPersonenzuordnungResponse } from './dbiam-personenzuordnung.response.js';
 
 export class DBiamPersonenuebersichtResponse {

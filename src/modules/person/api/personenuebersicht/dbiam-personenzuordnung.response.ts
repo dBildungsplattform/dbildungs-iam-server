@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RolleID } from '../../../shared/types/index.js';
-import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleID } from '../../../../shared/types/index.js';
+import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
+import { Rolle } from '../../../rolle/domain/rolle.js';
+import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
 
 export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: String })
@@ -20,10 +20,10 @@ export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: String })
     public readonly rolle: string;
 
-    public constructor(personenkontext: Personenkontext<true>, organisation: OrganisationResponse, rolle: Rolle<true>) {
+    public constructor(personenkontext: Personenkontext<true>, organisation: OrganisationDo<true>, rolle: Rolle<true>) { //use Organisation Aggregate as sson as there is one
         this.sskId = personenkontext.organisationId;
         this.rolleId = personenkontext.rolleId;
-        this.sskName = organisation.name;
+        this.sskName = organisation.name!;
         this.sskDstNr = organisation.kennung!;
         this.rolle = rolle.name;
     }
