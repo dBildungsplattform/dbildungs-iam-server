@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: {{ .Values.configmap.name }}
   namespace: {{ .Values.namespace }}
-  labels: 
+  labels:
     app.kubernetes.io/name: {{ .Values.dbildungsIamServer.commonLabels.name }}
     app.kubernetes.io/version: {{.Chart.Version}}
 data:
@@ -14,3 +14,4 @@ data:
   frontend-default-login-redirect: "https://{{ .Values.backendHostname }}/"
   frontend-logout-redirect: "https://{{ .Values.backendHostname }}/"
   db-name: "{{ .Values.database.name }}"
+  backend-hostname: "{{.Values.backendHostname}}"

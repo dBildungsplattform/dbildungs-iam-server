@@ -50,6 +50,11 @@
     configMapKeyRef:
         name: {{.Values.configmap.name}}
         key: frontend-logout-redirect
+- name: BACKEND_HOSTNAME
+  valueFrom:
+    configMapKeyRef:
+      name: {{.Values.configmap.name}}
+      key: backend-hostname
 - name: KC_ADMIN_SECRET
   valueFrom:
     secretKeyRef:

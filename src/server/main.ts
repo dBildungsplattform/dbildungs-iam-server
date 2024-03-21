@@ -57,7 +57,7 @@ async function bootstrap(): Promise<void> {
                 realm: keycloakConfig.REALM_NAME,
                 scopes: [],
             },
-            oauth2RedirectUrl: `http://localhost:${port}/docs/oauth2-redirect.html`,
+            oauth2RedirectUrl: `http://${process.env['BACKEND_HOSTNAME'] || 'localhost'}:${port}/docs/oauth2-redirect.html`,
         },
     });
 
