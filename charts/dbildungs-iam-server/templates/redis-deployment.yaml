@@ -40,13 +40,17 @@ spec:
             - name: redis
               containerPort: {{ .Values.redis.containerPorts.redis }}
               protocol: TCP
+          env: 
+            {{- if .Values.redis.extraEnvVars }}
+            {{ toYaml .Values.redis.extraEnvVars | nindent 12 }}
+            {{- end }}
           volumeMounts: 
             - mountPath: "/data"
               name: data
             {{- with .Values.redis.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
-          resources:resources: {{- toYaml .Values.redis.resources | nindent 12 }}
+          resources: {{- toYaml .Values.redis.resources | nindent 12 }}
           livenessProbe: {{- omit .Values.redis.livenessProbe "enabled" | toYaml | nindent 12 }}
           readinessProbe: {{- omit .Values.redis.readinessProbe "enabled" | toYaml | nindent 12 }}
           startupProbe: {{- omit .Values.redis.startupProbe "enabled"| toYaml | nindent 12 }}
@@ -57,6 +61,6 @@ spec:
         - name: data
           emptyDir: {}
             {{- with .Values.redis.extraVolumes }}
-            {{- toYaml . | nindent 12 }}
+            {{- toYaml . | nindent 8 }}
             {{- end }}
       restartPolicy: {{ .Values.restartPolicy }}

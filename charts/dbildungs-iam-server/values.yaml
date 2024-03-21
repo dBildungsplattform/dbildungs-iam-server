@@ -87,7 +87,7 @@ backend:
     enabled: true
     endpoints:
       - port: "web" 
-  extraEnv: []
+  extraEnvVars: []
   extraVolumes: []
   volumeMounts: 
   - mountPath: /app/config/config.json
@@ -139,6 +139,7 @@ redis:
     type: ClusterIP
     ports: 
       redis: 6379
+  extraEnvVars: []
   extraVolumes: []
   extraVolumeMounts: []
 
