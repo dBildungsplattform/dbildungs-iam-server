@@ -2,11 +2,6 @@
     "entityName": "Personenkontext",
     "entities": [
         {
-            "personId": 2,
-            "organisationId": 0,
-            "rolleId": 0
-        },
-        {
             "personId": 1,
             "organisationId": 0,
             "rolleId": 3

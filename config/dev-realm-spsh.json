@@ -503,22 +503,6 @@
       "groups": []
     },
     {
-      "id": "22207262-196f-4995-8011-6830091ebdca",
-      "createdTimestamp": 1697087666332,
-      "username": "test",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "Testus",
-      "lastName": "Experimentus",
-      "email": "testuser@example.com",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "test"
-        }
-      ]
-    },
-    {
       "id": "e9806d01-0d4e-4523-b21d-2bfc8a802051",
       "createdTimestamp": 1697087666332,
       "username": "pwtest",
