@@ -20,7 +20,7 @@ enabledredisserviceport:  true
 enableServiceMonitor: false
 enabledserviceport: true
 enabledredisvolume: true
-
+ 
 replicaCount: 1
 image:
   repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
