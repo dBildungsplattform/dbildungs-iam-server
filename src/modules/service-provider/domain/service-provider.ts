@@ -36,4 +36,25 @@ export class ServiceProvider<WasPersisted extends boolean> {
             logoMimeType,
         );
     }
+
+    public static createNew(
+        name: string,
+        url: string,
+        kategorie: ServiceProviderKategorie,
+        providedOnSchulstrukturknoten: string,
+        logo: Buffer | undefined,
+        logoMimeType: string | undefined,
+    ): ServiceProvider<false> {
+        return new ServiceProvider(
+            undefined,
+            undefined,
+            undefined,
+            name,
+            url,
+            kategorie,
+            providedOnSchulstrukturknoten,
+            logo,
+            logoMimeType,
+        );
+    }
 }

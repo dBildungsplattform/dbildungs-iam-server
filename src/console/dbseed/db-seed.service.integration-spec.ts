@@ -22,6 +22,7 @@ import fs from 'fs';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
+import { ServiceProviderFactory } from '../../modules/service-provider/domain/service-provider.factory.js';
 
 describe('DbSeedServiceIntegration', () => {
     let module: TestingModule;
@@ -50,6 +51,7 @@ describe('DbSeedServiceIntegration', () => {
                 RolleRepo,
                 RolleFactory,
                 ServiceProviderRepo,
+                ServiceProviderFactory,
             ],
         })
             .overrideModule(KeycloakConfigModule)

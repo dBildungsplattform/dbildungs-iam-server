@@ -23,6 +23,7 @@ import { RolleRepo } from '../modules/rolle/repo/rolle.repo.js';
 import { RolleFactory } from '../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../modules/service-provider/repo/service-provider.repo.js';
 import { DBiamPersonenkontextRepo } from '../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ServiceProviderFactory } from '../modules/service-provider/domain/service-provider.factory.js';
 
 @Module({
     imports: [
@@ -73,6 +74,7 @@ import { DBiamPersonenkontextRepo } from '../modules/personenkontext/persistence
         RolleRepo,
         RolleFactory,
         ServiceProviderRepo,
+        ServiceProviderFactory,
     ],
 })
 export class ConsoleModule {}

@@ -25,6 +25,7 @@ import { OrganisationModule } from '../../modules/organisation/organisation.modu
 import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ServiceProviderFactory } from '../../modules/service-provider/domain/service-provider.factory.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -53,6 +54,7 @@ describe('DbSeedConsole', () => {
                 RolleRepo,
                 RolleFactory,
                 ServiceProviderRepo,
+                ServiceProviderFactory,
             ],
         })
             .overrideModule(KeycloakConfigModule)
@@ -110,7 +112,7 @@ describe('DbSeedConsole', () => {
                     name: 'Schule1',
                 });
                 const serviceProvider: Option<ServiceProviderEntity> = await orm.em.findOne(ServiceProviderEntity, {
-                    id: 'ca0e17c5-8e48-403b-af92-28eff21c64bb',
+                    name: 'Provider With Logo',
                 });
                 if (!dataProvider || !rolle || !organisation || !serviceProvider) {
                     throw Error('At least one entity was not persisted correctly!');

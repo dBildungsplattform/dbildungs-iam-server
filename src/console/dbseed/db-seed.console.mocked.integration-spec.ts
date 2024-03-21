@@ -20,6 +20,7 @@ import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
+import { ServiceProviderFactory } from '../../modules/service-provider/domain/service-provider.factory.js';
 
 describe('DbSeedConsoleMockedKeycloak', () => {
     let module: TestingModule;
@@ -43,6 +44,7 @@ describe('DbSeedConsoleMockedKeycloak', () => {
                 DbSeedMapper,
                 RolleRepo,
                 RolleFactory,
+                ServiceProviderFactory,
                 ServiceProviderRepo,
                 {
                     provide: KeycloakUserService,

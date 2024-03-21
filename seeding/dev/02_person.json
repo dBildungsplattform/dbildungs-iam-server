@@ -2,7 +2,7 @@
     "entityName": "Person",
     "entities": [
         {
-            "id": 1,
+            "id": 9,
             "username": "autotester",
             "password": "autotester",
             "referrer": "autotester",
@@ -20,7 +20,7 @@
             "auskunftssperre": null
         },
         {
-            "id": 2,
+            "id": 0,
             "referrer": "ssuperadmin",
             "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
             "stammorganisation": null,
@@ -34,6 +34,54 @@
             "loaklisierung": null,
             "vertrauensstufe": null,
             "auskunftssperre": null
+        },
+        {
+            "id": 1,
+            "password": "test",
+            "vorname": "test",
+            "familienname": "test"
+        },
+        {
+            "id": 2,
+            "password": "test",
+            "vorname": "Susi",
+            "familienname": "Superadmin"
+        },
+        {
+            "id": 3,
+            "password": "test",
+            "vorname": "Manuell",
+            "familienname": "Mustermann"
+        },
+        {
+            "id": 4,
+            "password": "test",
+            "vorname": "Sven",
+            "familienname": "Müller"
+        },
+        {
+            "id": 5,
+            "password": "test",
+            "vorname": "Luise",
+            "familienname": "Müller-Meier"
+        },
+        {
+            "id": 6,
+            "password": "test",
+            "vorname": "Yvonne",
+            "familienname": "von Breitenfels-Hohenröhr"
+        },
+        {
+            "id": 7,
+            "password": "test",
+            "vorname": "Lennart",
+            "familienname": "Laubenbichler"
+        },
+        {
+            "id": 8,
+            "password": "test",
+            "vorname": "Willi",
+            "familienname": "Webtor"
         }
     ]
 }

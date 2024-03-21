@@ -2,7 +2,7 @@
     "entityName": "Organisation",
     "entities": [
         {
-            "id": 7,
+            "id": 0,
             "kennung": "Land",
             "name": "Land Schleswig Holstein",
             "kuerzel": "Root",
@@ -17,8 +17,8 @@
             "namensergaenzung": "Keine",
             "kuerzel": "O1",
             "typ": "SCHULE",
-            "administriertVon": 7,
-            "zugehoerigZu": 7
+            "administriertVon": 0,
+            "zugehoerigZu": 0
         },
         {
             "id": 2,
@@ -27,8 +27,8 @@
             "namensergaenzung": "Keine",
             "kuerzel": "O2",
             "typ": "SCHULE",
-            "administriertVon": 7,
-            "zugehoerigZu": 7
+            "administriertVon": 0,
+            "zugehoerigZu": 0
         },
         {
             "id": 3,
@@ -37,8 +37,8 @@
             "namensergaenzung": "Keine",
             "kuerzel": "O3",
             "typ": "SCHULE",
-            "administriertVon": 7,
-            "zugehoerigZu": 7
+            "administriertVon": 0,
+            "zugehoerigZu": 0
         },
         {
             "id": 4,
@@ -47,8 +47,8 @@
             "namensergaenzung": "Keine",
             "kuerzel": "O4",
             "typ": "SCHULE",
-            "administriertVon": 7,
-            "zugehoerigZu": 7
+            "administriertVon": 0,
+            "zugehoerigZu": 0
         },
         {
             "id": 5,
@@ -57,8 +57,8 @@
             "namensergaenzung": "Keine",
             "kuerzel": "O5",
             "typ": "ANBIETER",
-            "administriertVon": 7,
-            "zugehoerigZu": 7
+            "administriertVon": 0,
+            "zugehoerigZu": 0
         },
         {
             "id": 6,
@@ -67,8 +67,8 @@
             "namensergaenzung": "Keine",
             "kuerzel": "O6",
             "typ": "SONSTIGE ORGANISATION / EINRICHTUNG",
-            "administriertVon": 7,
-            "zugehoerigZu": 7
+            "administriertVon": 0,
+            "zugehoerigZu": 0
         }
     ]
 }
