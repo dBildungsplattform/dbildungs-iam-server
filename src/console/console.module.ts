@@ -16,6 +16,8 @@ import { UsernameGeneratorService } from '../modules/person/domain/username-gene
 import { DbSeedMapper } from './dbseed/db-seed-mapper.js';
 import { DbSeedService } from './dbseed/db-seed.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
+import { RolleFactory } from '../modules/rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../modules/service-provider/repo/service-provider.repo.js';
 import { RolleSeedingRepo } from './dbseed/repo/rolle-seeding.repo.js';
 
 @Module({
@@ -59,6 +61,8 @@ import { RolleSeedingRepo } from './dbseed/repo/rolle-seeding.repo.js';
         UsernameGeneratorService,
         DbSeedMapper,
         DbSeedService,
+        RolleFactory,
+        ServiceProviderRepo,
         RolleSeedingRepo,
     ],
 })

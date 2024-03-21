@@ -8,6 +8,6 @@ export class RolleSeedingRepo extends RolleRepo {
     public override async save(rolle: Rolle<boolean>): Promise<Rolle<true>> {
         const rolleEntity: RolleEntity = this.em.create(RolleEntity, mapAggregateToData(rolle));
         this.em.persist(rolleEntity);
-        return Promise.resolve(mapEntityToAggregate(rolleEntity));
+        return Promise.resolve(mapEntityToAggregate(rolleEntity, this.rolleFactory));
     }
 }

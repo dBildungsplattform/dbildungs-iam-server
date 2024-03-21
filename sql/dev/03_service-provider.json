@@ -2,6 +2,7 @@
     "entityName": "ServiceProvider",
     "entities": [
         {
+            "id": "1555b1f7-18ec-4858-a317-83bc68820e6d",
             "name": "ItsLearning",
             "url": "https://itslearning.com/de",
             "kategorie": "UNTERRICHT",
@@ -10,6 +11,7 @@
             "providedOnSchulstrukturknoten": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
         },
         {
+            "id": "91cfca10-67e7-4b43-8a0b-2e2abe4ac3e2",
             "name": "E-Mail",
             "url": "https://de.wikipedia.org/wiki/E-Mail",
             "kategorie": "EMAIL",
@@ -18,18 +20,21 @@
             "providedOnSchulstrukturknoten": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
         },
         {
+            "id": "5c8f232a-8258-43fb-8a1b-16c1cc084284",
             "name": "School-SH",
             "url": "https://de.wikipedia.org/wiki/E-Mail",
             "kategorie": "VERWALTUNG",
             "providedOnSchulstrukturknoten": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
         },
         {
+            "id": "efa5411d-407d-42f8-a5bc-daf5cb3b0a85",
             "name": "Schulrecht A-Z",
             "url": "https://de.wikipedia.org/wiki/E-Mail",
             "kategorie": "HINWEISE",
             "providedOnSchulstrukturknoten": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
         },
         {
+            "id": "a201d1e5-971d-4600-a33a-f37ed6680a6b",
             "name": "Schulisches Angebot",
             "url": "https://de.wikipedia.org/wiki/E-Mail",
             "kategorie": "ANGEBOTE",

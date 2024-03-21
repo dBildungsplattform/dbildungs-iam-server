@@ -42,12 +42,7 @@ spec:
               name: seeding-volume
               readOnly: true
           resources:
-            requests:
-              cpu: {{.Values.dbildungsIamCpuRequest}}
-              memory: {{.Values.dbildungsIamMemRequest}}
-            limits:
-              cpu: {{.Values.dbildungsIamServerCpuMax}}
-              memory: {{.Values.dbildungsIamServerMemMax}}
+            {{- toYaml .Values.containerResources | nindent 12 }}
         - name: db-seeding
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
@@ -71,12 +66,7 @@ spec:
               name: seeding-volume
               readOnly: true
           resources:
-            requests:
-              cpu: {{.Values.dbildungsIamCpuRequest}}
-              memory: {{.Values.dbildungsIamMemRequest}}
-            limits:
-              cpu: {{.Values.dbildungsIamServerCpuMax}}
-              memory: {{.Values.dbildungsIamServerMemMax}}
+            {{- toYaml .Values.containerResources | nindent 12 }}
       {{end}}
       containers:
         - name: {{ .Values.backend.commonLabels.name }}

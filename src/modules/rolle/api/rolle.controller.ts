@@ -21,6 +21,7 @@ import { Rolle } from '../domain/rolle.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { RolleResponse } from './rolle.response.js';
+import { RolleFactory } from '../domain/rolle.factory.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { AddSystemrechtError } from '../../../shared/error/add-systemrecht.error.js';
@@ -33,6 +34,7 @@ import { AddSystemrechtError } from '../../../shared/error/add-systemrecht.error
 export class RolleController {
     public constructor(
         private readonly rolleRepo: RolleRepo,
+        private readonly rolleFactory: RolleFactory,
         private readonly orgService: OrganisationService,
     ) {}
 
@@ -45,7 +47,7 @@ export class RolleController {
     public async findRollen(): Promise<RolleResponse[]> {
         const rollen: Rolle<true>[] = await this.rolleRepo.find();
 
-        return rollen;
+        return rollen.map((r: Rolle<true>) => new RolleResponse(r));
     }
 
     @Post()
@@ -67,7 +69,7 @@ export class RolleController {
             );
         }
 
-        const rolle: Rolle<false> = Rolle.createNew(
+        const rolle: Rolle<false> = this.rolleFactory.createNew(
             params.name,
             params.administeredBySchulstrukturknoten,
             params.rollenart,
@@ -77,7 +79,7 @@ export class RolleController {
 
         const result: Rolle<true> = await this.rolleRepo.save(rolle);
 
-        return result;
+        return new RolleResponse(result);
     }
 
     @Patch(':rolleId')
