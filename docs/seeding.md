@@ -23,7 +23,7 @@ The other files are using the new approach, e.g. Rollen, Personen and Organisati
 
 Every seeding-file has two attributes:
 - entityName: type of the entity used for the entities (this must match the current list of defined types in _db-seed.console.ts_)
-- entities: list of all entities to be seeded
+- entities: list of all entities to be seeded 
 
 Example for a seeding-file for service-providers (old way of referencing)
 
