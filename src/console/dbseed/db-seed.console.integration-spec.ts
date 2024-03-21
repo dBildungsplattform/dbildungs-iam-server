@@ -10,7 +10,6 @@ import {
 import { DbSeedService } from './db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
 import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
-import { DbSeedMapper } from './db-seed-mapper.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationEntity } from '../../modules/organisation/persistence/organisation.entity.js';
@@ -23,6 +22,7 @@ import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persiste
 import { PersonModule } from '../../modules/person/person.module.js';
 import { RolleModule } from '../../modules/rolle/rolle.module.js';
 import { ServiceProviderModule } from '../../modules/service-provider/service-provider.module.js';
+import { DbSeedModule } from './db-seed.module.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -33,6 +33,7 @@ describe('DbSeedConsole', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
+                DbSeedModule,
                 ConfigTestModule,
                 OrganisationModule,
                 KeycloakAdministrationModule,
@@ -43,7 +44,7 @@ describe('DbSeedConsole', () => {
                 RolleModule,
                 ServiceProviderModule,
             ],
-            providers: [DbSeedConsole, UsernameGeneratorService, DbSeedService, DbSeedMapper, DBiamPersonenkontextRepo],
+            providers: [UsernameGeneratorService, DBiamPersonenkontextRepo],
         })
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))

@@ -9,7 +9,6 @@ import {
 } from '../../../test/utils/index.js';
 import { DbSeedService } from './db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
-import { DbSeedMapper } from './db-seed-mapper.js';
 import { createMock } from '@golevelup/ts-jest';
 import { KeycloakUserService } from '../../modules/keycloak-administration/domain/keycloak-user.service.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
@@ -19,6 +18,7 @@ import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persiste
 import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
 import { RolleModule } from '../../modules/rolle/rolle.module.js';
 import { ServiceProviderModule } from '../../modules/service-provider/service-provider.module.js';
+import { DbSeedModule } from './db-seed.module.js';
 
 describe('DbSeedConsoleMockedKeycloak', () => {
     let module: TestingModule;
@@ -29,6 +29,7 @@ describe('DbSeedConsoleMockedKeycloak', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
+                DbSeedModule,
                 KeycloakConfigTestModule.forRoot({ isKeycloakRequired: false }),
                 OrganisationModule,
                 ConfigTestModule,
@@ -39,9 +40,6 @@ describe('DbSeedConsoleMockedKeycloak', () => {
                 ServiceProviderModule,
             ],
             providers: [
-                DbSeedConsole,
-                DbSeedService,
-                DbSeedMapper,
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),
