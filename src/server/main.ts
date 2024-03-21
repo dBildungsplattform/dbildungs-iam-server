@@ -17,6 +17,7 @@ import { sessionAccessTokenMiddleware } from '../modules/authentication/services
 async function bootstrap(): Promise<void> {
     const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(ServerModule);
     const configService: ConfigService<ServerConfig, true> = app.get(ConfigService<ServerConfig, true>);
+    const backendHostname: string | undefined = configService.getOrThrow<HostConfig>('HOST').HOSTNAME;
     const port: number = configService.getOrThrow<HostConfig>('HOST').PORT;
     const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
 
@@ -49,6 +50,13 @@ async function bootstrap(): Promise<void> {
         exclude: ['health'],
     });
 
+    let redirectUrl: string;
+    if (backendHostname) {
+        redirectUrl = `https://${backendHostname}:${port}/docs/oauth2-redirect.html`;
+    } else {
+        redirectUrl = `http://localhost:${port}/docs/oauth2-redirect.html`;
+    }
+
     SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger), {
         swaggerOptions: {
             persistAuthorization: true,
@@ -57,7 +65,7 @@ async function bootstrap(): Promise<void> {
                 realm: keycloakConfig.REALM_NAME,
                 scopes: [],
             },
-            oauth2RedirectUrl: `http://${process.env['BACKEND_HOSTNAME'] || 'localhost'}:${port}/docs/oauth2-redirect.html`,
+            oauth2RedirectUrl: redirectUrl,
         },
     });
 
