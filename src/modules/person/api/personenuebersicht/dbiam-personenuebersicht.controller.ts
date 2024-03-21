@@ -18,12 +18,13 @@ import { DBiamPersonenzuordnungResponse } from './dbiam-personenzuordnung.respon
 import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../../../rolle/repo/rolle.repo.js';
-import { OrganisationID, RolleID } from '../../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID, RolleID } from '../../../../shared/types/aggregate-ids.types.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
 import { OrganisationRepo } from '../../../organisation/persistence/organisation.repo.js';
 import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
 import { PagedResponse } from '../../../../shared/paging/index.js';
 import { PersonenuebersichtQueryParams } from './personenuebersicht-query.params.js';
+import { DbiamPersonenuebersichtScope } from '../../persistence/dbiam-personenuebersicht-scope.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenuebersicht')
@@ -45,11 +46,46 @@ export class DBiamPersonenuebersichtController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get personenuebersichten.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to get personenuebersichten.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting personenuebersichten.' })
-    public findPersonenuebersichten(
+    public async findPersonenuebersichten(
         @Query() queryParams: PersonenuebersichtQueryParams,
-    ): PagedResponse<DBiamPersonenuebersichtResponse> {
+    ): Promise<PagedResponse<DBiamPersonenuebersichtResponse>> {
         const items: DBiamPersonenuebersichtResponse[] = [];
-        const total: number = 0;
+
+        const scope: DbiamPersonenuebersichtScope = new DbiamPersonenuebersichtScope()
+            .findBy({}) //no filtering in ticket spsh-488
+            .paged(queryParams.offset, queryParams.limit);
+
+        const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
+        if (total > 0) {
+            const allPersonIds: PersonID[] = persons.map((person: Person<true>) => person.id);
+            const allPersonenKontexte: Map<PersonID, Personenkontext<true>[]> =
+                await this.dbiamPersonenkontextRepo.findByPersonIds(allPersonIds);
+
+            const allRollenIds: Set<RolleID> = new Set(
+                Array.from(allPersonenKontexte.values()).flatMap((kontexte: Personenkontext<true>[]) =>
+                    kontexte.map((kontext: Personenkontext<true>) => kontext.rolleId),
+                ),
+            );
+            const allOrganisationIds: Set<OrganisationID> = new Set(
+                Array.from(allPersonenKontexte.values()).flatMap((kontexte: Personenkontext<true>[]) =>
+                    kontexte.map((kontext: Personenkontext<true>) => kontext.organisationId),
+                ),
+            );
+            const allRollen: Map<string, Rolle<true>> = await this.rolleRepository.findByIds(Array.from(allRollenIds));
+            const allOrganisations: Map<string, OrganisationDo<true>> = await this.organisationRepository.findByIds(
+                Array.from(allOrganisationIds),
+            );
+
+            persons.forEach((person: Person<true>) => {
+                const personenKontexte: Personenkontext<true>[] = allPersonenKontexte.get(person.id) ?? [];
+                const personenUebersichten: DBiamPersonenzuordnungResponse[] = this.createZuordnungenForKontexte(
+                    personenKontexte,
+                    allRollen,
+                    allOrganisations,
+                );
+                items.push(new DBiamPersonenuebersichtResponse(person, personenUebersichten));
+            });
+        }
 
         return {
             items,
@@ -78,8 +114,6 @@ export class DBiamPersonenuebersichtController {
                 ),
             );
         }
-
-        const personenUebersichten: DBiamPersonenzuordnungResponse[] = [];
         const personenKontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(
             params.personId,
         );
@@ -94,9 +128,24 @@ export class DBiamPersonenuebersichtController {
             organisationIdsForKontexte,
         ); //use Organisation Aggregate as soon as there is one
 
-        personenKontexte.forEach((pk: Personenkontext<true>) => {
-            const rolle: Rolle<true> | undefined = rollenForKontexte.get(pk.rolleId);
-            const organisation: OrganisationDo<true> | undefined = organisationsForKontexte.get(pk.organisationId);
+        const personenUebersichten: DBiamPersonenzuordnungResponse[] = this.createZuordnungenForKontexte(
+            personenKontexte,
+            rollenForKontexte,
+            organisationsForKontexte,
+        );
+
+        return new DBiamPersonenuebersichtResponse(person, personenUebersichten);
+    }
+
+    private createZuordnungenForKontexte(
+        kontexte: Personenkontext<true>[],
+        rollen: Map<string, Rolle<true>>,
+        organisations: Map<string, OrganisationDo<true>>,
+    ): DBiamPersonenzuordnungResponse[] {
+        const personenUebersichten: DBiamPersonenzuordnungResponse[] = [];
+        kontexte.forEach((pk: Personenkontext<true>) => {
+            const rolle: Rolle<true> | undefined = rollen.get(pk.rolleId);
+            const organisation: OrganisationDo<true> | undefined = organisations.get(pk.organisationId);
             if (!rolle) {
                 throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                     SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
@@ -113,7 +162,6 @@ export class DBiamPersonenuebersichtController {
             }
             personenUebersichten.push(new DBiamPersonenzuordnungResponse(pk, organisation, rolle));
         });
-
-        return new DBiamPersonenuebersichtResponse(person, personenUebersichten);
+        return personenUebersichten;
     }
 }
