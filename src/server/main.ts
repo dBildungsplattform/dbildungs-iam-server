@@ -52,7 +52,7 @@ async function bootstrap(): Promise<void> {
 
     let redirectUrl: string;
     if (backendHostname) {
-        redirectUrl = `https://${backendHostname}:${port}/docs/oauth2-redirect.html`;
+        redirectUrl = `https://${backendHostname}:80/docs/oauth2-redirect.html`;
     } else {
         redirectUrl = `http://localhost:${port}/docs/oauth2-redirect.html`;
     }
