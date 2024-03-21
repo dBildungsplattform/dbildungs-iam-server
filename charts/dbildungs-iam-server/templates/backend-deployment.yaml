@@ -28,13 +28,16 @@ spec:
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           command: ["node", "dist/src/console/main.js", "db", "init"]
           env: 
-          {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+            {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+            {{- if .Values.backend.extraEnvVars }}
+            {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
           # i deleted the dbseeding mount not sure if it needed
           volumeMounts: {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
-          resources: {{- toYaml .Values.resources | nindent 12 }}
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         - name: "{{ template "common.names.name" . }}-db-seeding"
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always" }}
@@ -46,10 +49,11 @@ spec:
             {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
             {{- end }}
           volumeMounts: 
-            - mountPath: /app/sql/{{ .Values.environment }}
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+            # hardcoeded this to dev
+            - mountPath: /app/sql/dev
               name: seeding-volume
               readOnly: true
-            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
       {{end}}
       containers:
@@ -61,7 +65,11 @@ spec:
             - name: http
               containerPort: {{ .Values.backend.containerPorts.http }}
               protocol: TCP
-          env: {{- include "dbildungs-iam-server-backend-envs" . | nindent 12 }}
+          env: 
+            {{- include "dbildungs-iam-server-backend-envs" . | nindent 12 }}
+            {{- if .Values.backend.extraEnvVars }}
+            {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+            {{- end }}
           volumeMounts: 
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
             {{- with .Values.backend.extraVolumeMounts }}

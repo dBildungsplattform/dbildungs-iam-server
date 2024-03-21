@@ -18,7 +18,7 @@ containerSecurityContext:
     type: "RuntimeDefault"
 
 restartPolicy: Always
-environment: dev
+environment: prod
 
 database:
   name: ""
