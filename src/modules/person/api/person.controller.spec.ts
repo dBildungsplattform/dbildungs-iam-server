@@ -29,18 +29,21 @@ import { PersonRepository } from '../persistence/person.repository.js';
 import { Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
+import { PersonFactory } from '../domain/person.factory.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
     let personController: PersonController;
     let personenkontextUcMock: DeepMocked<PersonenkontextUc>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
+    let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [MapperTestModule],
             providers: [
                 PersonController,
+                PersonFactory,
                 PersonApiMapperProfile,
                 {
                     provide: PersonenkontextUc,
@@ -58,11 +61,16 @@ describe('PersonController', () => {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
                 },
+                {
+                    provide: UsernameGeneratorService,
+                    useValue: createMock<UsernameGeneratorService>(),
+                },
             ],
         }).compile();
         personController = module.get(PersonController);
         personenkontextUcMock = module.get(PersonenkontextUc);
         personRepositoryMock = module.get(PersonRepository);
+        usernameGeneratorService = module.get(UsernameGeneratorService);
     });
 
     afterAll(async () => {
@@ -122,9 +130,19 @@ describe('PersonController', () => {
             };
 
             it('should throw HttpException', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: '' });
                 personRepositoryMock.create.mockResolvedValue(new KeycloakClientError(''));
                 await expect(personController.createPerson(params)).rejects.toThrow(HttpException);
                 expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
+            });
+
+            it('should throw HttpException', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValue({
+                    ok: false,
+                    error: new KeycloakClientError(''),
+                });
+                await expect(personController.createPerson(params)).rejects.toThrow(HttpException);
+                expect(personRepositoryMock.create).not.toHaveBeenCalled();
             });
         });
     });
@@ -332,9 +350,9 @@ describe('PersonController', () => {
 
             it('should reset password for person', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
-                personRepositoryMock.saveUser.mockResolvedValue(person);
+                personRepositoryMock.update.mockResolvedValue(person);
                 await expect(personController.resetPasswordByPersonId(params)).resolves.not.toThrow();
-                expect(personRepositoryMock.saveUser).toHaveBeenCalledTimes(1);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -357,9 +375,9 @@ describe('PersonController', () => {
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
-                personRepositoryMock.saveUser.mockResolvedValue(new KeycloakClientError(''));
+                personRepositoryMock.update.mockResolvedValue(new KeycloakClientError(''));
                 await expect(personController.resetPasswordByPersonId(params)).rejects.toThrow(HttpException);
-                expect(personRepositoryMock.saveUser).toHaveBeenCalledTimes(1);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -382,9 +400,9 @@ describe('PersonController', () => {
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(undefined);
-                personRepositoryMock.saveUser.mockResolvedValue(person);
+                personRepositoryMock.update.mockResolvedValue(person);
                 await expect(personController.resetPasswordByPersonId(params)).rejects.toThrow(HttpException);
-                expect(personRepositoryMock.saveUser).toHaveBeenCalledTimes(0);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
     });

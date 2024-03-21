@@ -5,6 +5,8 @@ name: "Dev Pipeline"
 # See DBP-340
 on:
   push:
+    branches:
+      - "*"
   schedule:
     - cron:  '0 2 * * *'
   delete:
@@ -104,7 +106,7 @@ jobs:
   release_helm:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs: 
-      -  select_helm_version_generation_and_image_tag_generation
+      - select_helm_version_generation_and_image_tag_generation
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@5
     secrets: inherit
     with:

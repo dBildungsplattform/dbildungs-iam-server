@@ -29,13 +29,25 @@ import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
 import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationApiMapperProfile } from '../../organisation/api/organisation-api.mapper.profile.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
 function createPersonenkontext(): Personenkontext<true>[] {
     return [Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1')];
 }
 
-function createRolle(): RolleAggregate<true> {
-    return RolleAggregate.construct('1', faker.date.past(), faker.date.recent(), 'Rolle1', '1', RollenArt.LEHR, [], []);
+function createRolle(rolleFactory: RolleFactory): RolleAggregate<true> {
+    return rolleFactory.construct(
+        '1',
+        faker.date.past(),
+        faker.date.recent(),
+        'Rolle1',
+        '1',
+        RollenArt.LEHR,
+        [],
+        [],
+        [],
+    );
 }
 
 describe('PersonenkontextUc', () => {
@@ -46,6 +58,7 @@ describe('PersonenkontextUc', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let organisationRepoMock: DeepMocked<OrganisationRepo>;
     let organisationServiceMock: DeepMocked<OrganisationService>;
+    let rolleFactory: RolleFactory;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -54,6 +67,7 @@ describe('PersonenkontextUc', () => {
                 PersonenkontextUc,
                 PersonApiMapperProfile,
                 OrganisationApiMapperProfile,
+                RolleFactory,
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
@@ -74,6 +88,10 @@ describe('PersonenkontextUc', () => {
                     provide: PersonenkontextService,
                     useValue: createMock<PersonenkontextService>(),
                 },
+                {
+                    provide: ServiceProviderRepo,
+                    useValue: createMock<ServiceProviderRepo>(),
+                },
             ],
         }).compile();
         sut = module.get(PersonenkontextUc);
@@ -82,6 +100,7 @@ describe('PersonenkontextUc', () => {
         rolleRepoMock = module.get(RolleRepo);
         organisationRepoMock = module.get(OrganisationRepo);
         organisationServiceMock = module.get(OrganisationService);
+        rolleFactory = module.get(RolleFactory);
     });
 
     afterAll(async () => {
@@ -247,7 +266,7 @@ describe('PersonenkontextUc', () => {
         describe('when personenkontext is referencing rolle with a systemrecht in systemrechte array', () => {
             it('should return an array with the matching organisation as SSK, parent and children', async () => {
                 const personenkontexte: Personenkontext<true>[] = createPersonenkontext();
-                const rolle: RolleAggregate<true> = createRolle();
+                const rolle: RolleAggregate<true> = createRolle(rolleFactory);
                 rolle.systemrechte = [RollenSystemRecht.ROLLEN_VERWALTEN];
                 const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
                 rolleRepoMock.findById.mockResolvedValue(rolle);
@@ -276,7 +295,7 @@ describe('PersonenkontextUc', () => {
         describe('when no rollen with a non-empty systemrechte-array exist', () => {
             it('should return an empty array', async () => {
                 const personenkontexte: Personenkontext<true>[] = createPersonenkontext();
-                const rolle: RolleAggregate<true> = createRolle();
+                const rolle: RolleAggregate<true> = createRolle(rolleFactory);
                 const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
                 rolleRepoMock.findById.mockResolvedValue(rolle);
                 organisationRepoMock.findById.mockResolvedValue(organisation);
@@ -290,7 +309,7 @@ describe('PersonenkontextUc', () => {
         describe('when no organisations are found via organisationId of personenkontext', () => {
             it('should return an empty array', async () => {
                 const personenkontexte: Personenkontext<true>[] = createPersonenkontext();
-                const rolle: RolleAggregate<true> = createRolle();
+                const rolle: RolleAggregate<true> = createRolle(rolleFactory);
                 rolleRepoMock.findById.mockResolvedValue(rolle);
                 organisationRepoMock.findById.mockResolvedValue(undefined);
                 personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValue(personenkontexte);
