@@ -501,22 +501,6 @@
       ],
       "notBefore": 0,
       "groups": []
-    },
-    {
-      "id": "e9806d01-0d4e-4523-b21d-2bfc8a802051",
-      "createdTimestamp": 1697087666332,
-      "username": "pwtest",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "Max",
-      "lastName": "Mustermann",
-      "email": "pwtest@example.com",
-      "credentials": [
-          {
-              "type": "password",
-              "value": "pwtest"
-          }
-      ]
     }
   ],
   "scopeMappings": [
