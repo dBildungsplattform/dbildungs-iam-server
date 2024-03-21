@@ -43,20 +43,20 @@ spec:
           volumeMounts: 
             - mountPath: "/data"
               name: data
-            {{- if .Values.redis.extraVolumeMounts }}
-            {{- include "common.tplvalues.render" (dict "value" .Values.redis.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- with .Values.redis.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           resources:resources: {{- toYaml .Values.redis.resources | nindent 12 }}
           livenessProbe: {{- omit .Values.redis.livenessProbe "enabled" | toYaml | nindent 12 }}
           readinessProbe: {{- omit .Values.redis.readinessProbe "enabled" | toYaml | nindent 12 }}
-          startupProbe: {{- omit .Values.redis.startupProbe "enabled"| nindent 12 }}
+          startupProbe: {{- omit .Values.redis.startupProbe "enabled"| toYaml | nindent 12 }}
       volumes: 
         - name: tls-data
           configMap:
             name: {{ template "common.names.name" . }}-redis-tls-data
         - name: data
           emptyDir: {}
-        {{- if .Values.redis.extraVolumes }}
-        {{- include "common.tplvalues.render" (dict "value" .Values.redis.extraVolumes "context" $) | nindent 8 }}
-        {{- end }}
+            {{- with .Values.redis.extraVolumes }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
       restartPolicy: {{ .Values.restartPolicy }}
