@@ -15,12 +15,10 @@ import { KeycloakUserService } from '../../modules/keycloak-administration/domai
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { OrganisationModule } from '../../modules/organisation/organisation.module.js';
-import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
-import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
-import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
-import { ServiceProviderFactory } from '../../modules/service-provider/domain/service-provider.factory.js';
+import { RolleModule } from '../../modules/rolle/rolle.module.js';
+import { ServiceProviderModule } from '../../modules/service-provider/service-provider.module.js';
 
 describe('DbSeedConsoleMockedKeycloak', () => {
     let module: TestingModule;
@@ -37,15 +35,13 @@ describe('DbSeedConsoleMockedKeycloak', () => {
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
+                RolleModule,
+                ServiceProviderModule,
             ],
             providers: [
                 DbSeedConsole,
                 DbSeedService,
                 DbSeedMapper,
-                RolleRepo,
-                RolleFactory,
-                ServiceProviderFactory,
-                ServiceProviderRepo,
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),

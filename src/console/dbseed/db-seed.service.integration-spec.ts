@@ -12,27 +12,26 @@ import { DbSeedConsole } from './db-seed.console.js';
 import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
 import { DbSeedMapper } from './db-seed-mapper.js';
 import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
-import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
 import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
-import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
-import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { EntityNotFoundError, InvalidAttributeLengthError } from '../../shared/error/index.js';
 import { OrganisationModule } from '../../modules/organisation/organisation.module.js';
 import fs from 'fs';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
-import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
-import { ServiceProviderFactory } from '../../modules/service-provider/domain/service-provider.factory.js';
+import { ServiceProviderModule } from '../../modules/service-provider/service-provider.module.js';
+import { RolleModule } from '../../modules/rolle/rolle.module.js';
+import { PersonModule } from '../../modules/person/person.module.js';
 
 describe('DbSeedServiceIntegration', () => {
     let module: TestingModule;
     let orm: MikroORM;
     let dbSeedService: DbSeedService;
-    //let personFactoryMock: DeepMocked<PersonFactory>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
+                PersonModule,
+                RolleModule,
+                ServiceProviderModule,
                 ConfigTestModule,
                 OrganisationModule,
                 KeycloakAdministrationModule,
@@ -40,19 +39,7 @@ describe('DbSeedServiceIntegration', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
             ],
-            providers: [
-                DbSeedConsole,
-                UsernameGeneratorService,
-                DbSeedService,
-                DbSeedMapper,
-                PersonRepository,
-                PersonFactory,
-                DBiamPersonenkontextRepo,
-                RolleRepo,
-                RolleFactory,
-                ServiceProviderRepo,
-                ServiceProviderFactory,
-            ],
+            providers: [DbSeedConsole, UsernameGeneratorService, DbSeedService, DbSeedMapper, DBiamPersonenkontextRepo],
         })
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))

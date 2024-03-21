@@ -62,7 +62,6 @@ describe('DbSeedService', () => {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
                 },
-
                 {
                     provide: ServiceProviderRepo,
                     useValue: createMock<ServiceProviderRepo>(),
