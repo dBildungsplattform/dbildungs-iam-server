@@ -1,94 +1,12 @@
-dbildungsIamServerCpuMax: 2
-dbildungsIamServerMemMax: 4G
-dbildungsIamServerRedisCpuMax: 2
-dbildungsIamServerRedisMemMax: 4G
-dbildungsIamServerCpuRequest: 200m
-dbildungsIamServerMemRequest: 200Mi
-dbildungsIamServerRedisCpuRequest: 200m
-dbildungsIamServerRedisMemRequest: 200Mi
+nameOverride: ""
+fullnameOverride: ""
+namespaceOverride: ""
+
 backendHostname: ""
 keycloakHostname: ""
-imagePullPolicy: "Always"
-# Configuration of necessary secrets
-# Name of the secrets to inject
-configmap:
-  name: dbildungs-iam-server
-# If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
-enabledcontainerSecurityContext: true
-enabledbackendserviceport:  true
-enabledredisserviceport:  true
-enableServiceMonitor: false
-enabledserviceport: true
-enabledredisvolume: true
-
-replicaCount: 1
-image:
-  repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
-  tag: ""
-  pullPolicy: Always
-
-restartPolicy: Always
-
-database:
-  name: ""
-  db_host: ""
-  db_password: ""
-  db_username: ""
-
-auth:
-  existingSecret: ""
-  # Name of the secrets to inject
-  name: dbildungs-iam-server
-  keycloak_adminSecret: ""
-  keycloak_clientSecret: ""
-  secrets_json: ""
-  frontend_sessionSecret: ""
-
-namespace: ""
-
-environment: prod
-
-secrets:
-  name: dbildungs-iam-server
-
-service:
-  name: dbildungs-iam-server-backend
-redisservice:
-  name: redis-service
-
-dbildungsIamServer:
-  selector:
-    layer: dbildungs-iam-server
-  commonLabels:
-    name: dbildungs-iam-server
-
-backend:
-  selector:
-    layer: dbildungs-iam-server-backend
-  commonLabels:
-    name: dbildungs-iam-server-backend
-
-redis:
-  selector:
-    layer: dbildungs-iam-server-redis
-  commonLabels:
-    name: dbildungs-iam-server-redis
-
-redisservicetype: ClusterIP
-backendservicetype: ClusterIP
-
-seeding:
-  enabled: true
-  configmap: spsh-seeding-data-configmap
-  database: dev
-
-serviceMonitor:
-  namespaceSelector:
-    any: true
-  endpoints:
-    - port: "web" 
 
 containerSecurityContext:
+  enabled: true
   runAsUser: 1000
   runAsNonRoot: true
   privileged: false
@@ -97,136 +15,131 @@ containerSecurityContext:
   capabilities:
     drop: ["ALL"]
   seccompProfile:
-      type: RuntimeDefault
+    type: "RuntimeDefault"
 
-initcontainerSecurityContext:
-  allowPrivilegeEscalation: false
+restartPolicy: Always
+environment: dev
 
-containerResources:
-  requests:
-    cpu: 200m
-    memory: 200Mi
-  limits:
-    cpu: 2
-    memory: 4G
+database:
+  name: ""
+  host: ""
+  password: ""
+  username: ""
 
-ingress:
-  ingressClassName: nginx  
-  pathType: Prefix  
-  portnumber: 80 
-  automountServiceAccountToken: false
+auth:
+   # existingSecret: Refers to a secret already present in the cluster, which is required.
+  existingSecret: ""
+  secretName: dbildungs-iam-server
+  keycloak_adminSecret: ""
+  keycloak_clientSecret: ""
+  secrets_json: ""
+  frontend_sessionSecret: ""
 
-redisinitContainer:
-  - name: copy-tls-data
-    image: alpine
-    volumeMounts:
-      - mountPath: "/tls"
-        name: tls-data
-      - mountPath: "/data"
-        name: data
 
-rediscontainer: 
+backend:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    tag: ""
+    pullPolicy: Always
+  ingress:
+    enabled: true
+    ingressClassName: nginx  
+    pathType: Prefix  
+    portnumber: 80 
+    automountServiceAccountToken: false
+    paths: 
+     - /api
+     - /docs
+     - /docs-json
+     - /docs-yaml
+  containerPorts:
+    http: 8080
+  service:
+    type: ClusterIP
+    ports: 
+      http: 80
+  volumeMounts: 
+  - mountPath: /app/config/config.json
+    subPath: config-json
+    name: config-volume
+    readOnly: true
+  - mountPath: /app/config/secrets.json
+    subPath: secrets-json
+    name: secret-volume
+  extraVolumes: []
+  extraVolumeMounts: []
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    httpGet:
+      scheme: 'HTTP'
+      port: 8080
+      path: '/health'
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    httpGet:
+      scheme: 'HTTP'
+      port: 8080
+      path: '/health'
+  dbseeding:
+    enabled: true
+    command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
+  resources:
+    limits:
+      cpu: 2
+      memory: 4G
+    requests:
+      cpu: 200m
+      memory: 200Mi 
+  serviceMonitor:
+    enabled: true
+    endpoints:
+      - port: "web" 
+
+
+redis:
   image:
     name: redis
     repository: redis
     tag: "7.2.4"
     pullPolicy: IfNotPresent
-  volumeMounts:
-    - mountPath: "/data"
-      name: data
-  ports:
-    - name: redis-port
-      containerPort: 6379
-      protocol: TCP
+  resources:
+    limits:
+      cpu: 2
+      memory: 4G
+    requests:
+      cpu: 200m
+      memory: 200Mi
+  extraVolumes: []
+  extraVolumeMounts: []
+  service: 
+    type: ClusterIP
+  containerPorts:
+    redis: 6379
+  service:
+    type: ClusterIP
+    ports: 
+      redis: 6379
   args:
     - "/data/tls/redis.conf"
   livenessProbe:
+    enabled: true
     tcpSocket:
       port: 6379
     initialDelaySeconds: 15
     timeoutSeconds: 2
   readinessProbe:
+    enabled: true
     tcpSocket:
       port: 6379
     initialDelaySeconds: 5
     timeoutSeconds: 1
   startupProbe:
+    enabled: true
     tcpSocket:
       port: 6379
     failureThreshold: 30
     periodSeconds: 10
 
-redisvolumes:
-  - name: tls-data
-    configMap:
-      name: dbildungs-iam-server-redis-tls-config
-  - name: data
-    emptyDir: {}
-
-redisports:
-  - port:  6379
-    targetPort: redis-port
-    protocol: TCP
-    name: redis-port
-
-initContainers:
-  - name: db-init
-    command: ["node", "dist/src/console/main.js", "db", "init"]
-    volumeMounts:
-      - mountPath: /app/config/config.json
-        subPath: config-json
-        name: config-volume
-        readOnly: true
-      - mountPath: /app/config/secrets.json
-        subPath: secrets-json
-        name: secret-volume
-        readOnly: true
-      - mountPath: /app/sql/{{ .Values.seeding.database }}
-        name: seeding-volume
-        readOnly: true
-  - name: db-seeding
-    command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
-    volumeMounts:
-      - mountPath: /app/config/config.json
-        subPath: config-json
-        name: config-volume
-        readOnly: true
-      - mountPath: /app/config/secrets.json
-        subPath: secrets-json
-        name: secret-volume
-        readOnly: true
-      - mountPath: /app/sql/{{ .Values.seeding.database }}
-        name: seeding-volume
-        readOnly: true
-
-backendcontainer:
-  ports:
-    - name: web
-      containerPort: 8080
-  livenessProbe:
-    initialDelaySeconds: 10
-    httpGet:
-      scheme: 'HTTP'
-      port: 8080
-      path: '/health'
-  readinessProbe:
-    initialDelaySeconds: 10
-    httpGet:
-      scheme: 'HTTP'
-      port: 8080
-      path: '/health'
-  volumeMounts:
-    - mountPath: /app/config/config.json
-      subPath: config-json
-      name: config-volume
-      readOnly: true
-    - mountPath: /app/config/secrets.json
-      subPath: secrets-json
-      name: secret-volume
-      readOnly: true
-
-backendports:
-  - port: 80
-    targetPort: web
-    protocol: TCP
-    name: web

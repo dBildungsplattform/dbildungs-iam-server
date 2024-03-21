@@ -1,12 +1,11 @@
-{{if and (.Values.seeding) (eq .Values.seeding.database "dev")}}
+{{if and (.Values.backend.dbseeding.enabled) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.seeding.configmap }}
-  namespace: {{ .Values.namespace }}
+  name: {{ template "common.names.name" . }}-backend-seeding
+  namespace: {{ template "common.names.namespace" . }}
   labels: 
-    app.kubernetes.io/name: {{ .Values.dbildungsIamServer.commonLabels.name }}
-    app.kubernetes.io/version: {{.Chart.Version}}
+    {{- include "common.labels" . | nindent 4 }}
 data:
 {{ (.Files.Glob "seeding/dev/*").AsConfig | indent 2 }}
 {{end}}

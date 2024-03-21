@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+# find out how to differentiate redis and backend 
+  name: {{ template "common.names.name" . }}-backend
+  namespace: {{ template "common.names.namespace" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server-backend
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "common.names.name" . }}
+      app.kubernetes.io/component: server-backend
+  template:
+    metadata:
+      labels:
+        {{- include "common.labels" . | nindent 8 }}
+        app.kubernetes.io/component: server-backend
+    spec:
+      automountServiceAccountToken: false
+      {{- if .Values.backend.dbseeding.enabled }}
+      initContainers:
+        - name: "{{ template "common.names.name" . }}-db-init"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always"}}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          command: ["node", "dist/src/console/main.js", "db", "init"]
+          env: {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}
+          # i deleted the dbseeding mount not sure if it needed
+          volumeMounts: {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+        - name: "{{ template "common.names.name" . }}-db-seeding"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always" }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          command: {{ .Values.backend.dbseeding.command }}
+          env: {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+          volumeMounts: 
+            - mountPath: /app/sql/{{ .Values.environment }}
+              name: seeding-volume
+              readOnly: true
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+      {{end}}
+      containers:
+        - name: "{{ template "common.names.name" . }}-backend"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always"}}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.backend.containerPorts.http }}
+              protocol: TCP
+          env: {{- include "dbildungs-iam-server-backend-envs" . | nindent 12 }}
+          volumeMounts: 
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+            {{- if .Values.backend.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.backend.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+          livenessProbe: {{- toYaml .Values.backend.livenessProbe | nindent 12 }}
+          readinessProbe: {{- toYaml .Values.backend.readinessProbe | nindent 12 }}
+      restartPolicy: {{ .Values.restartPolicy }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ template "common.names.name" . }}
+          # not sure whether this is actually needed
+        - name: secret-volume
+          secret:
+            secretName: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        {{if .Values.backend.seeding}}
+        - name: seeding-volume
+          configMap:
+            name: {{ template "common.names.name" . }}-backend-seeding
+        {{- end }}
+        {{- if .Values.backend.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.backend.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}

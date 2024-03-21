@@ -1,59 +1,61 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "common.names.releasename" . }}-redis
-  namespace: {{ .Values.namespace }}
+  name: {{ template "common.names.name" . }}-redis
+  namespace: {{ template "common.names.namespace" . }}
   labels:
-    app.kubernetes.io/name: {{ .Values.dbildungsIamServer.commonLabels.name }}
-    app.kubernetes.io/version: {{ .Chart.Version }}
+    {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server-redis
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/layer: {{ .Values.redis.selector.layer }}
+      app.kubernetes.io/name: {{ template "common.names.name" . }}
+      app.kubernetes.io/component: server-redis
   replicas: {{ .Values.replicaCount }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ .Values.redis.commonLabels.name }}
-        app.kubernetes.io/layer: {{ .Values.redis.selector.layer }}
+        {{- include "common.labels" . | nindent 8 }}
+        app.kubernetes.io/component: server-redis
     spec:
       automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       initContainers:
         - name: copy-tls-data
           image: alpine
-          securityContext:
-            allowPrivilegeEscalation: false
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           command: ["/bin/sh","-c", "apk add --no-cache openssl bash;/bin/bash /tls/copy-tls.sh"]
           volumeMounts:
             - mountPath: "/tls"
               name: tls-data
             - mountPath: "/data"
               name: data
-          resources:
-            requests:
-              cpu: {{.Values.dbildungsIamServerRedisCpuRequest}}
-              memory: {{.Values.dbildungsIamServerRedisMemRequest}}
-            limits:
-              cpu: {{.Values.dbildungsIamServerRedisCpuMax}}
-              memory: {{.Values.dbildungsIamServerRedisMemMax}}
+          resources: {{- toYaml .Values.redis.resources | nindent 12 }}
       containers:
-        - name: {{ .Values.rediscontainer.image.name }}
-          image: {{ .Values.rediscontainer.image.repository }}:{{ .Values.rediscontainer.image.tag }}
-          imagePullPolicy: {{ .Values.rediscontainer.image.pullPolicy }}
-          securityContext:
-            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+        - name: {{ template "common.names.name" . }}-redis
+          image: "{{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}"
+          imagePullPolicy: {{ .Values.redis.image.pullPolicy }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           ports:
-            {{- toYaml .Values.rediscontainer.ports | nindent 12 }}
-          volumeMounts:
-            {{- toYaml .Values.rediscontainer.volumeMounts | nindent 12 }}
-          resources:
-            {{- toYaml .Values.containerResources | nindent 12 }}
-          livenessProbe:
-            {{- toYaml .Values.rediscontainer.livenessProbe | nindent 12 }}
-          readinessProbe:
-            {{- toYaml .Values.rediscontainer.readinessProbe | nindent 12 }}
-          startupProbe:
-            {{- toYaml .Values.rediscontainer.startupProbe | nindent 12 }}
-      volumes:
-        {{- toYaml .Values.redisvolumes | nindent 8 }}
+            - name: redis
+              containerPort: {{ .Values.redis.containerPorts.redis }}
+              protocol: TCP
+          volumeMounts: 
+            - mountPath: "/data"
+              name: data
+            {{- if .Values.redis.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.redis.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
+          resources:resources: {{- toYaml .Values.redis.resources | nindent 12 }}
+          livenessProbe: {{- toYaml .Values.redis.livenessProbe | nindent 12 }}
+          readinessProbe: {{- toYaml .Values.redis.readinessProbe | nindent 12 }}
+          startupProbe: {{- toYaml .Values.redis.startupProbe | nindent 12 }}
+      volumes: 
+        - name: tls-data
+          configMap:
+            name: dbildungs-iam-server-redis-tls-config
+        - name: data
+          emptyDir: {}
+        {{- if .Values.redis.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.redis.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}
       restartPolicy: {{ .Values.restartPolicy }}
