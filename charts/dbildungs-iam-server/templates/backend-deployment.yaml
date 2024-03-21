@@ -63,8 +63,8 @@ spec:
             {{- include "common.tplvalues.render" (dict "value" .Values.backend.extraVolumeMounts "context" $) | nindent 12 }}
             {{- end }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
-          livenessProbe: {{- toYaml .Values.backend.livenessProbe | nindent 12 }}
-          readinessProbe: {{- toYaml .Values.backend.readinessProbe | nindent 12 }}
+          livenessProbe: {{- omit .Values.backend.livenessProbe "enabled" | toYaml | nindent 12 }}
+          readinessProbe: {{- omit .Values.backend.readinessProbe "enabled" | toYaml | nindent 12 }}
       restartPolicy: {{ .Values.restartPolicy }}
       volumes:
         - name: config-volume
@@ -74,7 +74,7 @@ spec:
         - name: secret-volume
           secret:
             secretName: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-        {{if .Values.backend.seeding}}
+        {{if .Values.backend.dbseeding.enabled }}
         - name: seeding-volume
           configMap:
             name: {{ template "common.names.name" . }}-backend-seeding

@@ -47,9 +47,9 @@ spec:
             {{- include "common.tplvalues.render" (dict "value" .Values.redis.extraVolumeMounts "context" $) | nindent 12 }}
             {{- end }}
           resources:resources: {{- toYaml .Values.redis.resources | nindent 12 }}
-          livenessProbe: {{- toYaml .Values.redis.livenessProbe | nindent 12 }}
-          readinessProbe: {{- toYaml .Values.redis.readinessProbe | nindent 12 }}
-          startupProbe: {{- toYaml .Values.redis.startupProbe | nindent 12 }}
+          livenessProbe: {{- omit .Values.redis.livenessProbe "enabled" | toYaml | nindent 12 }}
+          readinessProbe: {{- omit .Values.redis.readinessProbe "enabled" | toYaml | nindent 12 }}
+          startupProbe: {{- omit .Values.redis.startupProbe "enabled"| nindent 12 }}
       volumes: 
         - name: tls-data
           configMap:
