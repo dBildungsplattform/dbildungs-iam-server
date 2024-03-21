@@ -42,33 +42,15 @@ backend:
     repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
     tag: ""
     pullPolicy: Always
-  ingress:
-    enabled: true
-    ingressClassName: nginx  
-    pathType: Prefix  
-    portnumber: 80 
-    automountServiceAccountToken: false
-    paths: 
-     - /api
-     - /docs
-     - /docs-json
-     - /docs-yaml
   containerPorts:
     http: 8080
-  service:
-    type: ClusterIP
-    ports: 
-      http: 80
-  volumeMounts: 
-  - mountPath: /app/config/config.json
-    subPath: config-json
-    name: config-volume
-    readOnly: true
-  - mountPath: /app/config/secrets.json
-    subPath: secrets-json
-    name: secret-volume
-  extraVolumes: []
-  extraVolumeMounts: []
+  resources:
+    limits:
+      cpu: 2
+      memory: 4G
+    requests:
+      cpu: 200m
+      memory: 200Mi 
   livenessProbe:
     enabled: true
     initialDelaySeconds: 10
@@ -86,17 +68,36 @@ backend:
   dbseeding:
     enabled: true
     command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
-  resources:
-    limits:
-      cpu: 2
-      memory: 4G
-    requests:
-      cpu: 200m
-      memory: 200Mi 
+  ingress:
+    enabled: true
+    ingressClassName: nginx  
+    pathType: Prefix  
+    portnumber: 80 
+    automountServiceAccountToken: false
+    paths: 
+     - /api
+     - /docs
+     - /docs-json
+     - /docs-yaml
+  service:
+    type: ClusterIP
+    ports: 
+      http: 80
   serviceMonitor:
     enabled: true
     endpoints:
       - port: "web" 
+  extraEnv: []
+  extraVolumes: []
+  volumeMounts: 
+  - mountPath: /app/config/config.json
+    subPath: config-json
+    name: config-volume
+    readOnly: true
+  - mountPath: /app/config/secrets.json
+    subPath: secrets-json
+    name: secret-volume
+  extraVolumeMounts: []
 
 
 redis:
@@ -105,6 +106,10 @@ redis:
     repository: redis
     tag: "7.2.4"
     pullPolicy: IfNotPresent
+  args:
+    - "/data/tls/redis.conf"
+  containerPorts:
+    redis: 6379
   resources:
     limits:
       cpu: 2
@@ -112,18 +117,6 @@ redis:
     requests:
       cpu: 200m
       memory: 200Mi
-  extraVolumes: []
-  extraVolumeMounts: []
-  service: 
-    type: ClusterIP
-  containerPorts:
-    redis: 6379
-  service:
-    type: ClusterIP
-    ports: 
-      redis: 6379
-  args:
-    - "/data/tls/redis.conf"
   livenessProbe:
     enabled: true
     tcpSocket:
@@ -142,4 +135,10 @@ redis:
       port: 6379
     failureThreshold: 30
     periodSeconds: 10
+  service:
+    type: ClusterIP
+    ports: 
+      redis: 6379
+  extraVolumes: []
+  extraVolumeMounts: []
 

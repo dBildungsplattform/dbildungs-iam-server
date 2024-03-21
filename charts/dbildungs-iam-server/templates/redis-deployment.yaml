@@ -22,7 +22,8 @@ spec:
       initContainers:
         - name: copy-tls-data
           image: alpine
-          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          securityContext: 
+            allowPrivilegeEscalation: false
           command: ["/bin/sh","-c", "apk add --no-cache openssl bash;/bin/bash /tls/copy-tls.sh"]
           volumeMounts:
             - mountPath: "/tls"
@@ -52,7 +53,7 @@ spec:
       volumes: 
         - name: tls-data
           configMap:
-            name: dbildungs-iam-server-redis-tls-config
+            name: {{ template "common.names.name" . }}-redis-tls-data
         - name: data
           emptyDir: {}
         {{- if .Values.redis.extraVolumes }}
