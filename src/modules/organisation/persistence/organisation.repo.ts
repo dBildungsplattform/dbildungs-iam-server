@@ -62,7 +62,7 @@ export class OrganisationRepo {
         const organisations: OrganisationEntity[] = await this.em.find(OrganisationEntity, { id: { $in: ids } });
         const organisationMap: Map<string, OrganisationDo<true>> = new Map();
 
-        organisations.forEach((organisation) => {
+        organisations.forEach((organisation: OrganisationEntity) => {
             const organisationDo: OrganisationDo<true> = this.mapper.map(
                 organisation,
                 OrganisationEntity,
