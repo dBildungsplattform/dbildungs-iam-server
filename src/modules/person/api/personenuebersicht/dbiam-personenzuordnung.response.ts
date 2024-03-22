@@ -20,7 +20,8 @@ export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: String })
     public readonly rolle: string;
 
-    public constructor(personenkontext: Personenkontext<true>, organisation: OrganisationDo<true>, rolle: Rolle<true>) { //use Organisation Aggregate as sson as there is one
+    public constructor(personenkontext: Personenkontext<true>, organisation: OrganisationDo<true>, rolle: Rolle<true>) {
+        //use Organisation Aggregate as soon as there is one
         this.sskId = personenkontext.organisationId;
         this.rolleId = personenkontext.rolleId;
         this.sskName = organisation.name!;

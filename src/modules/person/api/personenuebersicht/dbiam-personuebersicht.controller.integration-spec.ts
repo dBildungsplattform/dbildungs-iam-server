@@ -16,7 +16,7 @@ import { ServiceProviderRepo } from '../../../service-provider/repo/service-prov
 import { PersonApiModule } from '../../person-api.module.js';
 import { PersonRepository } from '../../persistence/person.repository.js';
 import { UsernameGeneratorService } from '../../domain/username-generator.service.js';
-import { createMock } from '@golevelup/ts-jest';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Person, PersonCreationParams } from '../../domain/person.js';
 import { faker } from '@faker-js/faker';
 import { DomainError } from '../../../../shared/error/index.js';
@@ -37,13 +37,19 @@ describe('Personenuebersicht API', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let personRepository: PersonRepository;
-    let usernameGeneratorService: UsernameGeneratorService;
+    let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let rolleFactory: RolleFactory;
     let rolleRepo: RolleRepo;
     let organisationRepo: OrganisationRepo;
     let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
 
     beforeAll(async () => {
+        const keycloakUserServiceMock: KeycloakUserService = createMock<KeycloakUserService>({
+            create: jest.fn().mockResolvedValue({ ok: true, value: '' }),
+            setPassword: jest.fn().mockResolvedValue({ ok: true, value: '' }),
+            delete: jest.fn().mockResolvedValue({ ok: true }),
+        });
+
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 PersonApiModule,
@@ -58,17 +64,11 @@ describe('Personenuebersicht API', () => {
                 },
                 {
                     provide: UsernameGeneratorService,
-                    useValue: createMock<UsernameGeneratorService>({
-                        generateUsername: jest.fn().mockResolvedValue({ ok: true, value: 'username' }),
-                    }),
+                    useValue: createMock<UsernameGeneratorService>(),
                 },
                 {
                     provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>({
-                        create: jest.fn().mockResolvedValue({ ok: true, value: '' }),
-                        setPassword: jest.fn().mockResolvedValue({ ok: true, value: '' }),
-                        delete: jest.fn().mockResolvedValue({ ok: true }),
-                    }),
+                    useValue: createMock<KeycloakUserService>(),
                 },
                 ServiceProviderRepo,
                 PersonRepository,
@@ -77,11 +77,15 @@ describe('Personenuebersicht API', () => {
                 OrganisationRepo,
                 DBiamPersonenkontextRepo,
             ],
-        }).compile();
+        })
+            .overrideProvider(KeycloakUserService)
+            .useValue(keycloakUserServiceMock)
+            .compile();
 
         orm = module.get<MikroORM>(MikroORM);
         personRepository = module.get<PersonRepository>(PersonRepository);
-        usernameGeneratorService = module.get<UsernameGeneratorService>(UsernameGeneratorService);
+        usernameGeneratorService = module.get(UsernameGeneratorService);
+        usernameGeneratorService.generateUsername = jest.fn().mockResolvedValue({ ok: true, value: 'mockUsername' });
         rolleFactory = module.get(RolleFactory);
         rolleRepo = module.get(RolleRepo);
         organisationRepo = module.get(OrganisationRepo);
@@ -98,7 +102,6 @@ describe('Personenuebersicht API', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
-        jest.resetAllMocks();
     });
 
     describe('/GET personenuebersicht', () => {
