@@ -48,10 +48,10 @@ jobs:
   build_image_on_push:
     name: "Publish image and scan with trivy"
     if: ${{ github.event_name == 'push' }}
-    # needs:
-    #   - codeql_analyze
-    #   - nest_lint
-    #   - tests_and_sonarcloud
+    needs:
+      - codeql_analyze
+      - nest_lint
+      - tests_and_sonarcloud
     permissions:
       packages: write
       security-events: write

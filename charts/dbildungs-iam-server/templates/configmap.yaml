@@ -6,6 +6,8 @@ metadata:
   labels: 
     {{- include "common.labels" . | nindent 4 }}
 data:
+  config-json: |-
+    {{ .Files.Get "config/config.json" | nindent 4 }}
   NODE_ENV: {{ .Values.environment | quote }}
   DEPLOY_STAGE: {{ .Values.environment | quote }}
   DB_NAME: {{ .Values.database.name | quote }}
