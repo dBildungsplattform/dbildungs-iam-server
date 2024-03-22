@@ -6,10 +6,12 @@ metadata:
   namespace: {{ template "common.names.namespace" . }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
-  {{- with .Values.backend.ingress.annotations }}
   annotations:
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://{{ .Values.keycloakHostname }}"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    {{- with .Values.backend.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
 spec:
   ingressClassName: {{ .Values.backend.ingress.ingressClassName }}
   rules:

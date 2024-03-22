@@ -66,8 +66,7 @@ backend:
       port: 8080
       path: '/health'
   dbseeding:
-    # enabled: true
-    enabled: false
+    enabled: true
     command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
   ingress:
     enabled: true
@@ -80,10 +79,7 @@ backend:
      - /docs
      - /docs-json
      - /docs-yaml
-    annotations:
-      # test whether this is set
-      nginx.ingress.kubernetes.io/cors-allow-origin: "https://{{ .Values.keycloakHostname }}"
-      nginx.ingress.kubernetes.io/enable-cors: "true"
+    annotations: []
   service:
     type: ClusterIP
     ports: 

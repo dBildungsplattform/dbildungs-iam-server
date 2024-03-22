@@ -1,7 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-# find out how to differentiate redis and backend 
   name: {{ template "common.names.name" . }}-backend
   namespace: {{ template "common.names.namespace" . }}
   labels:
@@ -35,23 +34,23 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
-          volumeMounts: {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+          volumeMounts: 
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+            - mountPath: /app/sql/dev
+              name: seeding-volume
+              readOnly: true
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         - name: db-seeding
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
-          SecurityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}
           env: {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
           volumeMounts:
-            - mountPath: /app/config/config.json
-              subPath: config-json
-              name: config-volume
-              readOnly: true
-            - mountPath: /app/config/secrets.json
-              subPath: secrets-json
-              name: secret-volume
-              readOnly: true
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
             - mountPath: /app/sql/dev
               name: seeding-volume
               readOnly: true
@@ -71,6 +70,9 @@ spec:
             {{- if .Values.backend.extraEnvVars }}
             {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
             {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}
           volumeMounts: 
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
             {{- with .Values.backend.extraVolumeMounts }}
