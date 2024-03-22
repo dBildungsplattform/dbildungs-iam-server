@@ -19,12 +19,9 @@ import { LoginGuard } from './login.guard.js';
 import { RedirectQueryParams } from './redirect.query.params.js';
 import { UserinfoResponse } from './userinfo.response.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { AuthenticatedUser, Public } from 'nest-keycloak-connect';
-import { User } from '../types/user.js';
-import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
 import { PersonPermissions } from '../domain/person-permissions.js';
-// import { CurrentPerson } from '../decorators/current-person.decorator.js';
-// import { PersonPermissions } from '../domain/person-permissions.js';
+import { CurrentPerson } from '../decorators/current-person.decorator.js';
+import { Public } from 'nest-keycloak-connect';
 
 @ApiTags('auth')
 @Controller({ path: 'auth' })
@@ -37,7 +34,6 @@ export class AuthenticationController {
         configService: ConfigService<ServerConfig>,
         @Inject(OIDC_CLIENT) private client: Client,
         private readonly logger: ClassLogger,
-        private personPermissionsRepo: PersonPermissionsRepo,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
         this.defaultLoginRedirect = frontendConfig.DEFAULT_LOGIN_REDIRECT;
@@ -94,13 +90,8 @@ export class AuthenticationController {
     @ApiOperation({ summary: 'Info about logged in user.' })
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
     @ApiOkResponse({ description: 'Returns info about the logged in user.', type: UserinfoResponse })
-    public async info(
-        @AuthenticatedUser() user: User,
-        // @CurrentPerson() personPermissions: PersonPermissions,
-    ): Promise<UserinfoResponse> {
-        const personPermissions: PersonPermissions = await this.personPermissionsRepo.loadPersonPermissions(user.sub);
+    public info(@CurrentPerson() personPermissions: PersonPermissions): UserinfoResponse {
         this.logger.warning(personPermissions.person.familienname);
-        // this.logger.warning(personPermissions.person.familienname);
-        return new UserinfoResponse(user);
+        return new UserinfoResponse(personPermissions);
     }
 }

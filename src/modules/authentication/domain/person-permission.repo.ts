@@ -9,9 +9,7 @@ export class PersonPermissionsRepo {
     public constructor(
         private personRepo: PersonRepository,
         private personenkontextRepo: DBiamPersonenkontextRepo,
-    ) {
-        console.log('PersonPermissionsRepo constructor');
-    }
+    ) {}
 
     public async loadPersonPermissions(keycloakUserId: string): Promise<PersonPermissions> {
         const person: Option<Person<true>> = await this.personRepo.findByKeycloakUserId(keycloakUserId);
