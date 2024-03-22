@@ -383,17 +383,31 @@ describe('Personenuebersicht API', () => {
                 vorname: faker.person.firstName(),
             };
 
-            const person: Person<false> | DomainError = await Person.createNew(
+            const person1: Person<false> | DomainError = await Person.createNew(
                 usernameGeneratorService,
                 creationParams,
             );
-            expect(person).not.toBeInstanceOf(DomainError);
-            if (person instanceof DomainError) {
+            expect(person1).not.toBeInstanceOf(DomainError);
+            if (person1 instanceof DomainError) {
                 return;
             }
-            const savedPerson: Person<true> | DomainError = await personRepository.create(person);
-            expect(savedPerson).not.toBeInstanceOf(DomainError);
-            if (savedPerson instanceof DomainError) {
+            const savedPerson1: Person<true> | DomainError = await personRepository.create(person1);
+            expect(savedPerson1).not.toBeInstanceOf(DomainError);
+            if (savedPerson1 instanceof DomainError) {
+                return;
+            }
+
+            const person2: Person<false> | DomainError = await Person.createNew(
+                usernameGeneratorService,
+                creationParams,
+            );
+            expect(person2).not.toBeInstanceOf(DomainError);
+            if (person2 instanceof DomainError) {
+                return;
+            }
+            const savedPerson2: Person<true> | DomainError = await personRepository.create(person2);
+            expect(savedPerson2).not.toBeInstanceOf(DomainError);
+            if (savedPerson2 instanceof DomainError) {
                 return;
             }
 
@@ -412,13 +426,13 @@ describe('Personenuebersicht API', () => {
             );
 
             await dBiamPersonenkontextRepo.save(
-                Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle1.id),
+                Personenkontext.createNew(savedPerson1.id, savedOrganisation1.id, savedRolle1.id),
             );
             await dBiamPersonenkontextRepo.save(
-                Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
+                Personenkontext.createNew(savedPerson1.id, savedOrganisation1.id, savedRolle2.id),
             );
             await dBiamPersonenkontextRepo.save(
-                Personenkontext.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
+                Personenkontext.createNew(savedPerson1.id, savedOrganisation2.id, savedRolle2.id),
             );
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -429,8 +443,8 @@ describe('Personenuebersicht API', () => {
             expect(response.body).toBeInstanceOf(Object);
             const responseBody: PagedResponse<DBiamPersonenuebersichtResponse> =
                 response.body as PagedResponse<DBiamPersonenuebersichtResponse>;
-            expect(responseBody.total).toEqual(1);
-            expect(responseBody.items?.length).toEqual(1);
+            expect(responseBody.total).toEqual(2);
+            expect(responseBody.items?.length).toEqual(2);
             const item1: DBiamPersonenuebersichtResponse | undefined = responseBody.items.at(0);
 
             expect(item1).toBeDefined();
@@ -438,10 +452,10 @@ describe('Personenuebersicht API', () => {
                 return;
             }
 
-            expect(item1?.personId).toEqual(savedPerson.id);
-            expect(item1?.vorname).toEqual(savedPerson.vorname);
-            expect(item1?.nachname).toEqual(savedPerson.familienname);
-            expect(item1?.benutzername).toEqual(savedPerson.referrer);
+            expect(item1?.personId).toEqual(savedPerson1.id);
+            expect(item1?.vorname).toEqual(savedPerson1.vorname);
+            expect(item1?.nachname).toEqual(savedPerson1.familienname);
+            expect(item1?.benutzername).toEqual(savedPerson1.referrer);
             expect(item1?.zuordnungen.length).toEqual(3);
         });
     });
