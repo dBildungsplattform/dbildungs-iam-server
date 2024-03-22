@@ -134,10 +134,17 @@ export class PersonenkontextAnlage {
         return { ok: true, value: createdPersonenkontext };
     }
 
-    private async findChildOrganisations(parentOrganisationId: string): Promise<OrganisationDo<true>[]> {
-        const scope: OrganisationScope = new OrganisationScope().findAdministrierteVon(parentOrganisationId);
+    private async findChildOrganisations(organisationId: string): Promise<OrganisationDo<true>[]> {
+        const scope: OrganisationScope = new OrganisationScope().findAdministrierteVon(organisationId);
         const counted: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);
+        if (!counted) return [];
         const children: OrganisationDo<true>[] = counted[0];
+        for (const child of children) {
+            const childsChildren: OrganisationDo<true>[] = await this.findChildOrganisations(child.id);
+            if (childsChildren.length > 0) {
+                children.push(...childsChildren);
+            }
+        }
         return children;
     }
 }
