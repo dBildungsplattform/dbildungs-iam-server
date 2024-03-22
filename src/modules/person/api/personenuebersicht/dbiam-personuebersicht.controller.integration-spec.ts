@@ -8,10 +8,10 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DoFactory,
     MapperTestModule,
 } from '../../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../../shared/validation/global-validation.pipe.js';
-import { RolleFactory } from '../../../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
 import { PersonApiModule } from '../../person-api.module.js';
 import { PersonRepository } from '../../persistence/person.repository.js';
@@ -22,12 +22,26 @@ import { faker } from '@faker-js/faker';
 import { DomainError } from '../../../../shared/error/index.js';
 import { KeycloakUserService } from '../../../keycloak-administration/index.js';
 import { DBiamPersonenuebersichtResponse } from './dbiam-personenuebersicht.response.js';
+import { RolleFactory } from '../../../rolle/domain/rolle.factory.js';
+import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
+import { RolleRepo } from '../../../rolle/repo/rolle.repo.js';
+import { Rolle } from '../../../rolle/domain/rolle.js';
+import { OrganisationRepo } from '../../../organisation/persistence/organisation.repo.js';
+import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
+import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
+import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenzuordnungResponse } from './dbiam-personenzuordnung.response.js';
+import { PagedResponse } from '../../../../shared/paging/index.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let personRepository: PersonRepository;
     let usernameGeneratorService: UsernameGeneratorService;
+    let rolleFactory: RolleFactory;
+    let rolleRepo: RolleRepo;
+    let organisationRepo: OrganisationRepo;
+    let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -56,15 +70,22 @@ describe('Personenuebersicht API', () => {
                         delete: jest.fn().mockResolvedValue({ ok: true }),
                     }),
                 },
-                RolleFactory,
                 ServiceProviderRepo,
                 PersonRepository,
+                RolleFactory,
+                RolleRepo,
+                OrganisationRepo,
+                DBiamPersonenkontextRepo,
             ],
         }).compile();
 
         orm = module.get<MikroORM>(MikroORM);
         personRepository = module.get<PersonRepository>(PersonRepository);
         usernameGeneratorService = module.get<UsernameGeneratorService>(UsernameGeneratorService);
+        rolleFactory = module.get(RolleFactory);
+        rolleRepo = module.get(RolleRepo);
+        organisationRepo = module.get(OrganisationRepo);
+        dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
@@ -119,6 +140,306 @@ describe('Personenuebersicht API', () => {
                     expect(responseBody?.zuordnungen).toEqual([]);
                 });
             });
+
+            describe('when kontexts exists', () => {
+                it('should return personuebersicht with zuordnungen', async () => {
+                    const creationParams: PersonCreationParams = {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    };
+
+                    const person: Person<false> | DomainError = await Person.createNew(
+                        usernameGeneratorService,
+                        creationParams,
+                    );
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError) {
+                        return;
+                    }
+                    const savedPerson: Person<true> | DomainError = await personRepository.create(person);
+                    expect(savedPerson).not.toBeInstanceOf(DomainError);
+                    if (savedPerson instanceof DomainError) {
+                        return;
+                    }
+
+                    const savedRolle1: Rolle<true> = await rolleRepo.save(
+                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LEHR, [], [], []),
+                    );
+                    const savedRolle2: Rolle<true> = await rolleRepo.save(
+                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LERN, [], [], []),
+                    );
+
+                    const savedOrganisation1: OrganisationDo<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(true),
+                    );
+                    const savedOrganisation2: OrganisationDo<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(true),
+                    );
+
+                    const personenkontext1: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
+                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle1.id),
+                    );
+                    const personenkontext2: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
+                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
+                    );
+                    const personenkontext3: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
+                        Personenkontext.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
+                    );
+
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .get(`/dbiam/personenuebersicht/${savedPerson.id}`)
+                        .send();
+
+                    expect(response.status).toBe(200);
+                    expect(response.body).toBeInstanceOf(Object);
+                    const responseBody: DBiamPersonenuebersichtResponse =
+                        response.body as DBiamPersonenuebersichtResponse;
+                    expect(responseBody?.personId).toEqual(savedPerson.id);
+                    expect(responseBody?.vorname).toEqual(savedPerson.vorname);
+                    expect(responseBody?.nachname).toEqual(savedPerson.familienname);
+                    expect(responseBody?.benutzername).toEqual(savedPerson.referrer);
+                    expect(responseBody?.zuordnungen.length).toEqual(3);
+                    expect(
+                        responseBody.zuordnungen.findIndex(
+                            (zuordnung: DBiamPersonenzuordnungResponse) =>
+                                zuordnung.rolleId === personenkontext1.rolleId,
+                        ),
+                    ).not.toEqual(-1);
+                    expect(
+                        responseBody.zuordnungen.findIndex(
+                            (zuordnung: DBiamPersonenzuordnungResponse) =>
+                                zuordnung.rolleId === personenkontext2.rolleId,
+                        ),
+                    ).not.toEqual(-1);
+                    expect(
+                        responseBody.zuordnungen.findIndex(
+                            (zuordnung: DBiamPersonenzuordnungResponse) =>
+                                zuordnung.rolleId === personenkontext3.rolleId,
+                        ),
+                    ).not.toEqual(-1);
+                    expect(
+                        responseBody.zuordnungen.findIndex(
+                            (zuordnung: DBiamPersonenzuordnungResponse) =>
+                                zuordnung.sskId === personenkontext1.organisationId,
+                        ),
+                    ).not.toEqual(-1);
+                    expect(
+                        responseBody.zuordnungen.findIndex(
+                            (zuordnung: DBiamPersonenzuordnungResponse) =>
+                                zuordnung.sskId === personenkontext2.organisationId,
+                        ),
+                    ).not.toEqual(-1);
+                    expect(
+                        responseBody.zuordnungen.findIndex(
+                            (zuordnung: DBiamPersonenzuordnungResponse) =>
+                                zuordnung.sskId === personenkontext3.organisationId,
+                        ),
+                    ).not.toEqual(-1);
+                });
+            });
+        });
+        describe('when not successfull', () => {
+            describe('when person does not exist', () => {
+                it('should return Error', async () => {
+                    const unsavedPerson: Person<true> = Person.construct(
+                        faker.string.uuid(),
+                        faker.date.past(),
+                        faker.date.recent(),
+                        faker.person.lastName(),
+                        faker.person.firstName(),
+                        '1',
+                        faker.lorem.word(),
+                        faker.lorem.word(),
+                        faker.string.uuid(),
+                    );
+
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .get(`/dbiam/personenuebersicht/${unsavedPerson.id}`)
+                        .send();
+
+                    expect(response.status).toBe(404);
+                });
+            });
+            describe('when one or more rollen does not exist', () => {
+                it('should return Error', async () => {
+                    const creationParams: PersonCreationParams = {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    };
+
+                    const person: Person<false> | DomainError = await Person.createNew(
+                        usernameGeneratorService,
+                        creationParams,
+                    );
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError) {
+                        return;
+                    }
+                    const savedPerson: Person<true> | DomainError = await personRepository.create(person);
+                    expect(savedPerson).not.toBeInstanceOf(DomainError);
+                    if (savedPerson instanceof DomainError) {
+                        return;
+                    }
+
+                    const unsavedRolle1: Rolle<true> = rolleFactory.construct(
+                        faker.string.uuid(),
+                        faker.date.recent(),
+                        faker.date.recent(),
+                        faker.string.alpha(5),
+                        faker.string.uuid(),
+                        RollenArt.LEHR,
+                        [],
+                        [],
+                        [],
+                    );
+
+                    const savedRolle2: Rolle<true> = await rolleRepo.save(
+                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LERN, [], [], []),
+                    );
+
+                    const savedOrganisation1: OrganisationDo<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(true),
+                    );
+                    const savedOrganisation2: OrganisationDo<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(true),
+                    );
+
+                    await dBiamPersonenkontextRepo.save(
+                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, unsavedRolle1.id),
+                    );
+                    await dBiamPersonenkontextRepo.save(
+                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
+                    );
+                    await dBiamPersonenkontextRepo.save(
+                        Personenkontext.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
+                    );
+
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .get(`/dbiam/personenuebersicht/${savedPerson.id}`)
+                        .send();
+
+                    expect(response.status).toBe(404);
+                });
+            });
+            describe('when one or more organisations does not exist', () => {
+                it('should return Error', async () => {
+                    const creationParams: PersonCreationParams = {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    };
+
+                    const person: Person<false> | DomainError = await Person.createNew(
+                        usernameGeneratorService,
+                        creationParams,
+                    );
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError) {
+                        return;
+                    }
+                    const savedPerson: Person<true> | DomainError = await personRepository.create(person);
+                    expect(savedPerson).not.toBeInstanceOf(DomainError);
+                    if (savedPerson instanceof DomainError) {
+                        return;
+                    }
+
+                    const savedRolle1: Rolle<true> = await rolleRepo.save(
+                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LEHR, [], [], []),
+                    );
+                    const savedRolle2: Rolle<true> = await rolleRepo.save(
+                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LERN, [], [], []),
+                    );
+
+                    const unsavedOrganisation1: OrganisationDo<true> = DoFactory.createOrganisation(true);
+                    const savedOrganisation2: OrganisationDo<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(true),
+                    );
+
+                    await dBiamPersonenkontextRepo.save(
+                        Personenkontext.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle1.id),
+                    );
+                    await dBiamPersonenkontextRepo.save(
+                        Personenkontext.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle2.id),
+                    );
+                    await dBiamPersonenkontextRepo.save(
+                        Personenkontext.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
+                    );
+
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .get(`/dbiam/personenuebersicht/${savedPerson.id}`)
+                        .send();
+
+                    expect(response.status).toBe(404);
+                });
+            });
+        });
+    });
+    describe('/GET personenuebersichten', () => {
+        it('should return personuebersichten with zuordnungen', async () => {
+            const creationParams: PersonCreationParams = {
+                familienname: faker.person.lastName(),
+                vorname: faker.person.firstName(),
+            };
+
+            const person: Person<false> | DomainError = await Person.createNew(
+                usernameGeneratorService,
+                creationParams,
+            );
+            expect(person).not.toBeInstanceOf(DomainError);
+            if (person instanceof DomainError) {
+                return;
+            }
+            const savedPerson: Person<true> | DomainError = await personRepository.create(person);
+            expect(savedPerson).not.toBeInstanceOf(DomainError);
+            if (savedPerson instanceof DomainError) {
+                return;
+            }
+
+            const savedRolle1: Rolle<true> = await rolleRepo.save(
+                rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LEHR, [], [], []),
+            );
+            const savedRolle2: Rolle<true> = await rolleRepo.save(
+                rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LERN, [], [], []),
+            );
+
+            const savedOrganisation1: OrganisationDo<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(true),
+            );
+            const savedOrganisation2: OrganisationDo<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(true),
+            );
+
+            await dBiamPersonenkontextRepo.save(
+                Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle1.id),
+            );
+            await dBiamPersonenkontextRepo.save(
+                Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
+            );
+            await dBiamPersonenkontextRepo.save(
+                Personenkontext.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/dbiam/personenuebersicht`)
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const responseBody: PagedResponse<DBiamPersonenuebersichtResponse> =
+                response.body as PagedResponse<DBiamPersonenuebersichtResponse>;
+            expect(responseBody.total).toEqual(1);
+            expect(responseBody.items?.length).toEqual(1);
+            const item1: DBiamPersonenuebersichtResponse | undefined = responseBody.items.at(0);
+
+            expect(item1).toBeDefined();
+            if (!(item1 instanceof DBiamPersonenuebersichtResponse)) {
+                return;
+            }
+
+            expect(item1?.personId).toEqual(savedPerson.id);
+            expect(item1?.vorname).toEqual(savedPerson.vorname);
+            expect(item1?.nachname).toEqual(savedPerson.familienname);
+            expect(item1?.benutzername).toEqual(savedPerson.referrer);
+            expect(item1?.zuordnungen.length).toEqual(3);
         });
     });
 });
