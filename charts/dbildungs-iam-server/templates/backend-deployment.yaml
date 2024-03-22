@@ -62,7 +62,7 @@ spec:
           imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always"}}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           ports:
-            - name: http
+            - name: web
               containerPort: {{ .Values.backend.containerPorts.http }}
               protocol: TCP
           env: 
