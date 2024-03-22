@@ -2,13 +2,13 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "common.names.releasename" . }}-backend
+  annotations:
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://{{.Values.keycloakHostname}}"
   namespace: {{ .Values.namespace }}
   labels:
     app.kubernetes.io/name: {{ .Values.dbildungsIamServer.commonLabels.name }}
     app.kubernetes.io/version: {{ .Chart.Version }}
-  annotations:
-    nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "https://{{.Values.keycloakHostname}}"
 spec:
   ingressClassName: {{ .Values.ingress.ingressClassName }}
   rules:

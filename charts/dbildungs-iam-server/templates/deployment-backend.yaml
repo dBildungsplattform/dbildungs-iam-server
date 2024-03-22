@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: {{ include "common.names.releasename" . }}-backend
   namespace: {{ .Values.namespace }}
+  annotations:
+    blah: "blubb"
   labels:
     app.kubernetes.io/name: {{ .Values.backend.commonLabels.name }}
     app.kubernetes.io/version: {{ .Chart.Version }}
