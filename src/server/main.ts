@@ -59,11 +59,12 @@ async function bootstrap(): Promise<void> {
 
     SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger), {
         swaggerOptions: {
-            persistAuthorization: true,
+            persistAuthorization: false,
             initOAuth: {
                 clientId: keycloakConfig.CLIENT_ID,
                 clientSecret: keycloakConfig.CLIENT_SECRET,
                 realm: keycloakConfig.REALM_NAME,
+                usePkceWithAuthorizationCodeGrant: true,
                 scopes: [],
             },
             oauth2RedirectUrl: redirectUrl,
