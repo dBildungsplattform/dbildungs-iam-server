@@ -49,13 +49,6 @@
         },
 
         {
-            "id": 5,
-            "name": "Schulportal-Administration",
-            "url": "/admin/personen",
-            "kategorie": "VERWALTUNG",
-            "providedOnSchulstrukturknoten": 0
-        },
-        {
             "id": 6,
             "name": "School-SH",
             "url": "https://schulverwaltung.iqsh.de/anleitungen.html",
