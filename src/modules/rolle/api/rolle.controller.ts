@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, UseFilters } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Param,
+    Patch,
+    Post,
+    Query,
+    UseFilters,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -25,8 +37,8 @@ import { RolleFactory } from '../domain/rolle.factory.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { AddSystemrechtError } from '../../../shared/error/add-systemrecht.error.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
-import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { RolleServiceProviderQueryParams } from './rolle-service-provider.query.params.js';
 import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
@@ -136,7 +148,7 @@ export class RolleController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve service-providers for rolle.' })
     public async addServiceProviderById(
         @Param() findRolleByIdParams: FindRolleByIdParams,
-        @Body() spBodyParams: RolleServiceProviderBodyParams,
+        @Body() spBodyParams: RolleServiceProviderQueryParams,
     ): Promise<void> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (!rolle) {
@@ -163,7 +175,7 @@ export class RolleController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve service-providers for rolle.' })
     public async removeServiceProviderById(
         @Param() findRolleByIdParams: FindRolleByIdParams,
-        @Body() spBodyParams: RolleServiceProviderBodyParams,
+        @Query() spBodyParams: RolleServiceProviderQueryParams,
     ): Promise<void> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (!rolle) {
