@@ -6,7 +6,7 @@ metadata:
   namespace: {{ template "common.names.namespace" . }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
+  {{- with .Values.backend.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
