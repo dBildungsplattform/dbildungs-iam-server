@@ -51,7 +51,7 @@
         {
             "id": 5,
             "name": "Schulportal-Administration",
-            "url": "https://de.wikipedia.org/wiki/E-Mail",
+            "url": "/admin/personen",
             "kategorie": "VERWALTUNG",
             "providedOnSchulstrukturknoten": 0
         },
