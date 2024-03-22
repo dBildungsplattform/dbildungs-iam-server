@@ -35,26 +35,45 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
-          # i deleted the dbseeding mount not sure if it needed
           volumeMounts: {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
-        - name: "{{ template "common.names.name" . }}-db-seeding"
-          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always" }}
-          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          command: {{ .Values.backend.dbseeding.command }}
-          env: 
-            {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
-            {{- if .Values.backend.extraEnvVars }}
-            {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
-            {{- end }}
-          volumeMounts: 
-            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
-            # hardcoeded this to dev
+        # - name: "{{ template "common.names.name" . }}-db-seeding"
+        #   image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+        #   imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always" }}
+        #   securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+        #   command: {{ .Values.backend.dbseeding.command }}
+        #   env: 
+        #     {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+        #     {{- if .Values.backend.extraEnvVars }}
+        #     {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+        #     {{- end }}
+        #   volumeMounts: 
+        #     {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+        #     # hardcoeded this to dev
+        #     - mountPath: /app/sql/dev
+        #       name: seeding-volume
+        #       readOnly: true
+        #   resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+        - name: db-seeding
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
+          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
+          env:
+            {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
+          volumeMounts:
+            - mountPath: /app/config/config.json
+              subPath: config-json
+              name: config-volume
+              readOnly: true
+            - mountPath: /app/config/secrets.json
+              subPath: secrets-json
+              name: secret-volume
+              readOnly: true
             - mountPath: /app/sql/dev
               name: seeding-volume
               readOnly: true
-          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
       {{end}}
       containers:
         - name: "{{ template "common.names.name" . }}-backend"

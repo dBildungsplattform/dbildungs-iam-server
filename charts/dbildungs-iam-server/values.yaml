@@ -79,6 +79,10 @@ backend:
      - /docs
      - /docs-json
      - /docs-yaml
+    annotations:
+      # test whether this is set
+      nginx.ingress.kubernetes.io/cors-allow-origin: https://{{ .Values.keycloakHostname }}"
+      nginx.ingress.kubernetes.io/enable-cors: true
   service:
     type: ClusterIP
     ports: 
