@@ -1,0 +1,21 @@
+{{if .Values.backend.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ template "common.names.name" . }}-backend
+  namespace: {{ template "common.names.namespace" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server-backend
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ include "common.names.namespace" . | quote }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "common.names.name" . }}-backend
+      app.kubernetes.io/component: server-backend
+  endpoints:
+    - port: {{ (index .Values.backend.serviceMonitor.endpoints 0).port }}
+{{ end }}
+
