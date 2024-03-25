@@ -59,7 +59,7 @@ export class ModuleLogger {
         this.logger = winston.createLogger({
             level,
             format: loggerFormat,
-            levels: winston.config.npm.levels, // This must be NPM otherwise methods vanish
+            levels: winston.config.syslog.levels,
             exitOnError: false,
             handleExceptions: true,
             handleRejections: true,
