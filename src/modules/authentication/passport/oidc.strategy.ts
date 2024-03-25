@@ -5,14 +5,11 @@ import { AuthorizationParameters, Client, Strategy, StrategyOptions, TokenSet, U
 
 import { FrontendConfig, ServerConfig } from '../../../shared/config/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
-import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
-import { PersonPermissions } from '../domain/person-permissions.js';
 
 @Injectable()
 export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
     public constructor(
         @Inject(OIDC_CLIENT) private client: Client,
-        private personPermissionsRepo: PersonPermissionsRepo,
         configService: ConfigService<ServerConfig>,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
@@ -33,16 +30,11 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
             const accessToken: string | undefined = tokenset.access_token;
             const refreshToken: string | undefined = tokenset.refresh_token;
 
-            const personPermissions: PersonPermissions = await this.personPermissionsRepo.loadPersonPermissions(
-                userinfo.sub,
-            );
-
             const user: AuthorizationParameters = {
                 id_token: idToken,
                 access_token: accessToken,
                 refresh_token: refreshToken,
                 userinfo,
-                personPermissions,
             };
             return user;
         } catch (err: unknown) {
