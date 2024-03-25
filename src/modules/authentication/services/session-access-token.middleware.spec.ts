@@ -2,13 +2,13 @@ import { faker } from '@faker-js/faker';
 import { createMock } from '@golevelup/ts-jest';
 import { Request } from 'express';
 import { PassportUser } from '../types/user.js';
-import { sessionAccessTokenMiddleware } from './session-access-token.middleware.js';
+import {SessionAccessTokenMiddleware} from "./session-access-token.middleware.js";
 
 describe('sessionAccessTokenMiddleware', () => {
     it('should call next middleware', () => {
         const nextMock: jest.Mock = jest.fn();
 
-        sessionAccessTokenMiddleware(createMock(), createMock(), nextMock);
+        new SessionAccessTokenMiddleware().use(createMock(), createMock(), nextMock);
 
         expect(nextMock).toHaveBeenCalledTimes(1);
     });
@@ -20,7 +20,7 @@ describe('sessionAccessTokenMiddleware', () => {
             });
             const request: Request = { passportUser, headers: {} } as Request;
 
-            sessionAccessTokenMiddleware(request, createMock(), jest.fn());
+            new SessionAccessTokenMiddleware().use(request, createMock(), jest.fn());
 
             expect(request.headers.authorization).toBe(`Bearer ${passportUser.access_token}`);
         });
@@ -31,7 +31,7 @@ describe('sessionAccessTokenMiddleware', () => {
             const passportUser: PassportUser = createMock<PassportUser>({ access_token: undefined });
             const request: Request = { passportUser, headers: {} } as Request;
 
-            sessionAccessTokenMiddleware(request, createMock(), jest.fn());
+            new SessionAccessTokenMiddleware().use(request, createMock(), jest.fn());
 
             expect(request.headers.authorization).toBeUndefined();
         });
@@ -41,7 +41,7 @@ describe('sessionAccessTokenMiddleware', () => {
         it('should not set authorization header', () => {
             const request: Request = { headers: {} } as Request;
 
-            sessionAccessTokenMiddleware(request, createMock(), jest.fn());
+            new SessionAccessTokenMiddleware().use(request, createMock(), jest.fn());
 
             expect(request.headers.authorization).toBeUndefined();
         });
