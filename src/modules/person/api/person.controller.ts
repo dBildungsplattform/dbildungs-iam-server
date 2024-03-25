@@ -50,8 +50,7 @@ import { Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { ScopeOrder } from '../../../shared/persistence/index.js';
-import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { UsernameGeneratorService } from '../domain/username-generator.service.js';
+import { PersonFactory } from '../domain/person.factory.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -61,8 +60,7 @@ export class PersonController {
     public constructor(
         private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
-        private readonly usernameGenerator: UsernameGeneratorService,
-        private readonly kcUserService: KeycloakUserService,
+        private readonly personFactory: PersonFactory,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -74,33 +72,18 @@ export class PersonController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
     public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
-        const person: Person<false> = Person.createNew(
-            params.name.familienname,
-            params.name.vorname,
-            params.referrer,
-            params.stammorganisation,
-            params.name.initialenfamilienname,
-            params.name.initialenvorname,
-            params.name.rufname,
-            params.name.titel,
-            params.name.anrede,
-            params.name.namenspraefix,
-            params.name.namenssuffix,
-            params.name.sortierindex,
-            params.geburt?.datum,
-            params.geburt?.geburtsort,
-            params.geschlecht,
-            params.lokalisierung,
-            params.vertrauensstufe,
-            params.auskunftssperre,
-        );
+        const person: Person<false> | DomainError = await this.personFactory.createNew({
+            vorname: params.name.vorname,
+            familienname: params.name.familienname,
+            ...params,
+        });
+        if (person instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(person),
+            );
+        }
 
-        const result: Person<true> | DomainError = await this.personRepository.create(
-            person,
-            this.kcUserService,
-            this.usernameGenerator,
-        );
-
+        const result: Person<true> | DomainError = await this.personRepository.create(person);
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
@@ -299,11 +282,7 @@ export class PersonController {
             );
         }
         person.resetPassword();
-        const saveResult: Person<true> | DomainError = await this.personRepository.saveUser(
-            person,
-            this.kcUserService,
-            this.usernameGenerator,
-        );
+        const saveResult: Person<true> | DomainError = await this.personRepository.update(person);
 
         if (saveResult instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(

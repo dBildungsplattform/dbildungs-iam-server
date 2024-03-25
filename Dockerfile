@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_BUILDER=node:21.6.0-alpine3.18
+ARG BASE_IMAGE_BUILDER=node:20.11.1-alpine3.19
 
 # Build Stage
 FROM $BASE_IMAGE_BUILDER as build
