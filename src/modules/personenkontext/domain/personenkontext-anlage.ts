@@ -30,7 +30,7 @@ export class PersonenkontextAnlage {
     public async findSchulstrukturknoten(
         rolleId: string,
         sskName: string,
-        limit: number,
+        limit?: number,
     ): Promise<OrganisationDo<true>[]> {
         this.rolleId = rolleId;
         const ssks: Option<OrganisationDo<true>[]> = await this.organisationRepo.findByNameOrKennung(sskName);
@@ -59,7 +59,7 @@ export class PersonenkontextAnlage {
         return orgas.slice(0, limit);
     }
 
-    public async findRollen(rolleName: string, limit: number): Promise<Rolle<true>[]> {
+    public async findRollen(rolleName: string, limit?: number): Promise<Rolle<true>[]> {
         const rollen: Option<Rolle<true>[]> = await this.rolleRepo.findByName(rolleName, limit);
         if (rollen) return rollen;
         return [];

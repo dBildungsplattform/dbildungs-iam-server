@@ -91,7 +91,7 @@ export class RolleRepo {
         return rolle && mapEntityToAggregate(rolle, this.rolleFactory);
     }
 
-    public async findByName(searchStr: string, limit: number): Promise<Option<Rolle<true>[]>> {
+    public async findByName(searchStr: string, limit?: number): Promise<Option<Rolle<true>[]>> {
         const rollen: Option<RolleEntity[]> = await this.em.find(
             this.entityName,
             { name: { $ilike: '%' + searchStr + '%' } },
