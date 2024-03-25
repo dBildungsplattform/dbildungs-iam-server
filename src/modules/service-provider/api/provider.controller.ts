@@ -35,9 +35,8 @@ export class ProviderController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
-    public async getServiceProvidersByPersonId(): Promise<ServiceProviderResponse[]> {
+    public async getAllServiceProviders(): Promise<ServiceProviderResponse[]> {
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find({ withLogo: false });
-
         const response: ServiceProviderResponse[] = serviceProviders.map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );
