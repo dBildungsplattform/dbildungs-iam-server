@@ -26,15 +26,15 @@ spec:
           imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always"}}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           command: ["node", "dist/src/console/main.js", "db", "init"]
-          env: 
+          env:
             {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
-            {{- if .Values.backend.extraEnvVars }}
-            {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
-            {{- end }}
+              {{- if .Values.backend.extraEnvVars }}
+              {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+              {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
-          volumeMounts: 
+          volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
             - mountPath: /app/sql/dev
               name: seeding-volume
@@ -65,19 +65,19 @@ spec:
             - name: web
               containerPort: {{ .Values.backend.containerPorts.http }}
               protocol: TCP
-          env: 
+          env:
             {{- include "dbildungs-iam-server-backend-envs" . | nindent 12 }}
-            {{- if .Values.backend.extraEnvVars }}
-            {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
-            {{- end }}
+              {{- if .Values.backend.extraEnvVars }}
+              {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+              {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
-          volumeMounts: 
+          volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
-            {{- with .Values.backend.extraVolumeMounts }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
+              {{- with .Values.backend.extraVolumeMounts }}
+              {{- toYaml . | nindent 12 }}
+              {{- end }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
           livenessProbe: {{- omit .Values.backend.livenessProbe "enabled" | toYaml | nindent 12 }}
           readinessProbe: {{- omit .Values.backend.readinessProbe "enabled" | toYaml | nindent 12 }}
