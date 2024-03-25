@@ -22,7 +22,7 @@ import { OrganisationID, PersonID, RolleID } from '../../../../shared/types/aggr
 import { Rolle } from '../../../rolle/domain/rolle.js';
 import { OrganisationRepo } from '../../../organisation/persistence/organisation.repo.js';
 import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
-import { PagedResponse } from '../../../../shared/paging/index.js';
+import { ApiOkResponsePaginated, PagedResponse, PagingHeadersObject } from '../../../../shared/paging/index.js';
 import { PersonenuebersichtQueryParams } from './personenuebersicht-query.params.js';
 import { DbiamPersonenuebersichtScope } from '../../persistence/dbiam-personenuebersicht-scope.js';
 
@@ -39,9 +39,9 @@ export class DBiamPersonenuebersichtController {
     ) {}
 
     @Get('')
-    @ApiOkResponse({
+    @ApiOkResponsePaginated(DBiamPersonenuebersichtResponse, {
         description: 'The personenuebersichten were successfully returned.',
-        type: [PagedResponse<DBiamPersonenuebersichtResponse>],
+        headers: PagingHeadersObject,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get personenuebersichten.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to get personenuebersichten.' })
@@ -97,8 +97,8 @@ export class DBiamPersonenuebersichtController {
 
     @Get(':personId')
     @ApiOkResponse({
-        description: 'The personenuebersicht was successfully returned.',
-        type: [DBiamPersonenuebersichtResponse],
+        description: 'The personenuebersichten were successfully returned.',
+        type: DBiamPersonenuebersichtResponse,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get personenuebersicht.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to get personenuebersicht.' })
