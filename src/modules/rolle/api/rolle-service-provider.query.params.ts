@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
-export class FindRolleByIdParams {
+export class RolleServiceProviderQueryParams {
     @IsString()
-    @IsUUID()
     @IsNotEmpty()
+    @IsUUID()
     @ApiProperty({
         description: 'The id for the rolle.',
         required: true,
         nullable: false,
     })
-    public readonly rolleId!: string;
+    public readonly serviceProviderId!: string;
 }
