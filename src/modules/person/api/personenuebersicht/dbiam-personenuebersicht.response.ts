@@ -17,7 +17,7 @@ export class DBiamPersonenuebersichtResponse {
     @ApiProperty({ type: String })
     public readonly benutzername: string;
 
-    @ApiProperty({ type: String })
+    @ApiProperty({ type: [DBiamPersonenzuordnungResponse] })
     public readonly zuordnungen: DBiamPersonenzuordnungResponse[];
 
     public constructor(person: Person<true>, personenzuordnungen: DBiamPersonenzuordnungResponse[]) {
