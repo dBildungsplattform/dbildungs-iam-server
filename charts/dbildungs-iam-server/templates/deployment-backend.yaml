@@ -1,109 +1,99 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "common.names.releasename" . }}-backend
-  namespace: {{ .Values.namespace }}
+  name: {{ template "common.names.name" . }}-backend
+  namespace: {{ template "common.names.namespace" . }}
   labels:
-    app.kubernetes.io/name: {{ .Values.backend.commonLabels.name }}
-    app.kubernetes.io/version: {{ .Chart.Version }}
+    {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server-backend
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.backend.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/layer: {{ .Values.backend.selector.layer }}
+      app.kubernetes.io/name: {{ template "common.names.name" . }}
+      app.kubernetes.io/component: server-backend
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ .Values.backend.commonLabels.name }}
-        app.kubernetes.io/layer: {{ .Values.backend.selector.layer }}
+        {{- include "common.labels" . | nindent 8 }}
+        app.kubernetes.io/component: server-backend
     spec:
-      {{- if .Values.seeding.enabled }}
+      automountServiceAccountToken: false
+      {{- if .Values.backend.dbseeding.enabled }}
       initContainers:
-        - name: db-init
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
-          {{- if .Values.enabledcontainerSecurityContext }}
-          securityContext:
-            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
-          {{- end }}
-          command: [ "node", "dist/src/console/main.js", "db", "init" ]
+        - name: "{{ template "common.names.name" . }}-db-init"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always"}}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          command: ["node", "dist/src/console/main.js", "db", "init"]
           env:
-            {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
+            {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+              {{- if .Values.backend.extraEnvVars }}
+              {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+              {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}
           volumeMounts:
-            - mountPath: /app/config/config.json
-              subPath: config-json
-              name: config-volume
-              readOnly: true
-            - mountPath: /app/config/secrets.json
-              subPath: secrets-json
-              name: secret-volume
-              readOnly: true
-            - mountPath: /app/seeding/{{.Values.seeding.database}}
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+            - mountPath: /app/sql/dev
               name: seeding-volume
               readOnly: true
-          resources:
-            {{- toYaml .Values.containerResources | nindent 12 }}
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         - name: db-seeding
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
-          {{- if .Values.enabledcontainerSecurityContext }}
-          securityContext:
-            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
-          {{- end }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
-          env:
-            {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}
+          env: {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
           volumeMounts:
-            - mountPath: /app/config/config.json
-              subPath: config-json
-              name: config-volume
-              readOnly: true
-            - mountPath: /app/config/secrets.json
-              subPath: secrets-json
-              name: secret-volume
-              readOnly: true
-            - mountPath: /app/seeding/{{.Values.seeding.database}}
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+            - mountPath: /app/sql/dev
               name: seeding-volume
               readOnly: true
-          resources:
-            {{- toYaml .Values.containerResources | nindent 12 }}
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
       {{end}}
       containers:
-        - name: {{ .Values.backend.commonLabels.name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
-          {{- if .Values.enabledcontainerSecurityContext }}
-          securityContext:
-            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
-          {{- end }}
+        - name: "{{ template "common.names.name" . }}-backend"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always"}}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           ports:
-            - name: {{ (index .Values.backendcontainer.ports 0).name }}
-              containerPort: {{ (index .Values.backendcontainer.ports 0).containerPort }}
+            - name: web
+              containerPort: {{ .Values.backend.containerPorts.http }}
+              protocol: TCP
           env:
             {{- include "dbildungs-iam-server-backend-envs" . | nindent 12 }}
+              {{- if .Values.backend.extraEnvVars }}
+              {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+              {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}
           volumeMounts:
-            {{- toYaml .Values.backendcontainer.volumeMounts | nindent 12 }}
-          resources:
-            {{- toYaml .Values.containerResources | nindent 12 }}
-          livenessProbe:
-            {{- toYaml .Values.backendcontainer.livenessProbe | nindent 12 }}
-          readinessProbe:
-            {{- toYaml .Values.backendcontainer.readinessProbe | nindent 12 }}
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+              {{- with .Values.backend.extraVolumeMounts }}
+              {{- toYaml . | nindent 12 }}
+              {{- end }}
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+          livenessProbe: {{- omit .Values.backend.livenessProbe "enabled" | toYaml | nindent 12 }}
+          readinessProbe: {{- omit .Values.backend.readinessProbe "enabled" | toYaml | nindent 12 }}
       restartPolicy: {{ .Values.restartPolicy }}
       volumes:
-        - name: {{ (index .Values.backendcontainer.volumeMounts 0).name }}
+        - name: config-volume
           configMap:
-            name: {{ .Values.configmap.name }}
-        - name: {{ (index .Values.backendcontainer.volumeMounts 1).name }}
+            name: {{ template "common.names.name" . }}
+        - name: secret-volume
           secret:
-            {{- if .Values.auth.existingSecret }}
-            secretName: {{ .Values.auth.existingSecret }}
-            {{- end }}
-            {{- if not .Values.auth.existingSecret }}
-            secretName: {{.Values.auth.name}}
-            {{- end }}
-        {{if .Values.seeding}}
+            secretName: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        {{if .Values.backend.dbseeding.enabled }}
         - name: seeding-volume
           configMap:
-            name: {{ .Values.seeding.configmap }}
+            name: {{ template "common.names.name" . }}-backend-seeding
+        {{- end }}
+        {{- with .Values.backend.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
