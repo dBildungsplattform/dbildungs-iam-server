@@ -4,6 +4,11 @@ import { ServerModule } from './server.module.js';
 import { OIDC_CLIENT } from '../modules/authentication/services/oidc-client.service.js';
 import { MiddlewareConsumer } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
+import { RedisClientType } from 'redis';
+
+jest.mock('redis', () => ({
+    createClient: (): RedisClientType => createMock<RedisClientType>(),
+}));
 
 describe('ServerModule', () => {
     let module: TestingModule;
