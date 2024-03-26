@@ -10,10 +10,19 @@ import { RolleModule } from '../rolle/rolle.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextController } from './api/dbiam-personenkontext.controller.js';
+import { DbiamPersonenkontextFilterController } from './api/dbiam-personenkontext-filter.controller.js';
+import { PersonenkontextAnlageFactory } from './domain/personenkontext-anlage.factory.js';
 
 @Module({
     imports: [PersonModule, RolleModule, OrganisationModule, LoggerModule.register(PersonenKontextApiModule.name)],
-    providers: [PersonenkontextUc, PersonenkontextService, PersonenkontextRepo, PersonRepo, DBiamPersonenkontextRepo],
-    controllers: [PersonenkontextController, DBiamPersonenkontextController],
+    providers: [
+        PersonenkontextUc,
+        PersonenkontextService,
+        PersonenkontextRepo,
+        PersonRepo,
+        DBiamPersonenkontextRepo,
+        PersonenkontextAnlageFactory,
+    ],
+    controllers: [PersonenkontextController, DBiamPersonenkontextController, DbiamPersonenkontextFilterController],
 })
 export class PersonenKontextApiModule {}

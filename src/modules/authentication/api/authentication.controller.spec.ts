@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker/';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
@@ -195,7 +195,6 @@ describe('AuthenticationController', () => {
     describe('info', () => {
         it('should return user info', async () => {
             const user: User = createMock<User>({ preferred_username: faker.internet.userName() });
-
             const person: Person<true> = Person.construct(
                 faker.string.uuid(),
                 faker.date.past(),
