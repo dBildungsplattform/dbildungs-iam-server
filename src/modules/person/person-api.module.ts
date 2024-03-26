@@ -18,6 +18,7 @@ import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-p
     imports: [
         PersonModule,
         RolleModule,
+        OrganisationModule,
         PersonenKontextModule,
         OrganisationModule,
         KeycloakAdministrationModule,

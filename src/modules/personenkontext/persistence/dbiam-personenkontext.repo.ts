@@ -60,6 +60,14 @@ export class DBiamPersonenkontextRepo {
         return personenKontextMap;
     }
 
+    public async findByRolle(rolleId: string): Promise<Personenkontext<true>[]> {
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
+            rolleId,
+        });
+
+        return personenKontexte.map(mapEntityToAggregate);
+    }
+
     public async exists(personId: PersonID, organisationId: OrganisationID, rolleId: RolleID): Promise<boolean> {
         const personenKontext: Option<Loaded<PersonenkontextEntity, never, 'id', never>> = await this.em.findOne(
             PersonenkontextEntity,

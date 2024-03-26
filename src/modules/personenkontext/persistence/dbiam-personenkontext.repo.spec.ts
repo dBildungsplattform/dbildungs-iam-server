@@ -76,6 +76,15 @@ describe('dbiam Personenkontext Repo', () => {
         });
     });
 
+    describe('findByRolle', () => {
+        it('should return all personenkontexte for a rolle', async () => {
+            const rolleUUID: string = faker.string.uuid();
+            await sut.save(createPersonenkontext(false, { rolleId: rolleUUID }));
+            const personenkontexte: Personenkontext<true>[] = await sut.findByRolle(rolleUUID);
+            expect(personenkontexte).toHaveLength(1);
+        });
+    });
+
     describe('exists', () => {
         it('should return true, if the triplet exists', async () => {
             const { personId, organisationId, rolleId }: Personenkontext<true> = await sut.save(
