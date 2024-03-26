@@ -16,11 +16,11 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
     ) {}
 
     public async use(req: Request, _res: Response, next: (error?: unknown) => void): Promise<void> {
-        const accessToken: string | undefined = req.passportUser?.access_token;
+        let accessToken: string | undefined = req.passportUser?.access_token;
 
         const refreshToken = req.passportUser?.refresh_token;
         if (accessToken) {
-            if (! (await this.client.introspect(accessToken)).active)
+            if (!(await this.client.introspect(accessToken)).active)
                 if (refreshToken && (await this.client.introspect(refreshToken)).active && req.passportUser) {
                     // Do we have a refresh token and somewhere to store the result of the refresh?
                     try {
@@ -30,6 +30,8 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                             req.passportUser.access_token = tokens.access_token;
                             req.passportUser.id_token = tokens.id_token;
                             req.passportUser.userinfo = await this.client.userinfo(tokens);
+
+                            accessToken = req.passportUser.access_token;
                         }
                     } catch (e: unknown) {
                         if (e instanceof Error) {
