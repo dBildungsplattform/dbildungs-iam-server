@@ -19,8 +19,8 @@ import { ErrorModule } from '../shared/error/error.module.js';
 import { KeycloakInstanceConfig } from '../modules/keycloak-administration/keycloak-instance-config.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 import { AuthenticationApiModule } from '../modules/authentication/authentication-api.module.js';
-import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { PersonenKontextApiModule } from '../modules/personenkontext/personenkontext-api.module.js';
+import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 
 @Module({
     imports: [
@@ -73,7 +73,6 @@ import { PersonenKontextApiModule } from '../modules/personenkontext/personenkon
         HealthModule,
         RolleApiModule,
         ServiceProviderApiModule,
-        PersonenKontextApiModule,
         ErrorModule,
         KeycloakConfigModule,
     ],

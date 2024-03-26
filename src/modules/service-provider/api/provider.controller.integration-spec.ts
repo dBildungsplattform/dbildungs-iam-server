@@ -13,6 +13,10 @@ import { GlobalValidationPipe } from '../../../shared/validation/global-validati
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
+import {MapperTestModule} from "../../../../test/utils/mapper-test.module.js";
+import {createMock} from "@golevelup/ts-jest";
+import {OIDC_CLIENT} from "../../authentication/services/oidc-client.service";
+import {Client} from "openid-client";
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
@@ -22,6 +26,7 @@ describe('ServiceProvider API', () => {
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [
+                MapperTestModule,
                 ServiceProviderApiModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
@@ -30,6 +35,10 @@ describe('ServiceProvider API', () => {
                 {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
+                },
+                {
+                    provide: OIDC_CLIENT,
+                    useValue: createMock<Client>(),
                 },
             ],
         }).compile();
@@ -50,7 +59,7 @@ describe('ServiceProvider API', () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
 
-    describe('/GET service provider', () => {
+    describe('/GET all service provider', () => {
         it('should return all service provider', async () => {
             await Promise.all([
                 serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
@@ -59,7 +68,7 @@ describe('ServiceProvider API', () => {
             ]);
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/provider')
+                .get('/provider/all')
                 .send();
 
             expect(response.status).toBe(200);
