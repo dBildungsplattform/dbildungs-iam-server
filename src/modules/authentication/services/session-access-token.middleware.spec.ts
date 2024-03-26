@@ -4,6 +4,7 @@ import { Request } from 'express';
 import { PassportUser } from '../types/user.js';
 import { SessionAccessTokenMiddleware } from './session-access-token.middleware.js';
 import { Client, IntrospectionResponse, TokenSet, UserinfoResponse } from 'openid-client';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 describe('sessionAccessTokenMiddleware', () => {
     let passportUser: PassportUser;
@@ -144,6 +145,30 @@ describe('sessionAccessTokenMiddleware', () => {
                 expect(request.passportUser?.refresh_token).toStrictEqual(originalRefreshToken);
 
                 expect(request.headers.authorization).toStrictEqual(`Bearer ${originalAccessToken}`);
+            });
+        });
+
+        describe('when an exception is thrown on refresh', () => {
+            it('will log the message of an error', async () => {
+                client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: false }));
+                client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: true }));
+
+                client.refresh.mockRejectedValue(new Error('Something went wrong'));
+                const loggerMock: ClassLogger = createMock<ClassLogger>();
+                await new SessionAccessTokenMiddleware(client, loggerMock).use(request, createMock(), jest.fn());
+
+                expect(loggerMock.warning).toHaveBeenCalledWith('Something went wrong');
+            });
+
+            it('will log everything else as is', async () => {
+                client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: false }));
+                client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: true }));
+
+                client.refresh.mockRejectedValue('Something went seriously wrong');
+                const loggerMock: ClassLogger = createMock<ClassLogger>();
+                await new SessionAccessTokenMiddleware(client, loggerMock).use(request, createMock(), jest.fn());
+
+                expect(loggerMock.warning).toHaveBeenCalledWith('\"Something went seriously wrong\"');
             });
         });
     });
