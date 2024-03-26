@@ -21,7 +21,7 @@
     "CLIENT_ID": "spsh"
   },
   "REDIS": {
-    "HOST": "redis-service",
+    "HOST": "dbildungs-iam-server-redis",
     "PORT": 6379,
     "USERNAME": "default",
     "USE_TLS": false

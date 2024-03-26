@@ -1,16 +1,17 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.configmap.name }}
-  namespace: {{ .Values.namespace }}
+  name: {{ template "common.names.name" . }}
+  namespace: {{ template "common.names.namespace" . }}
   labels: 
-    app.kubernetes.io/name: {{ .Values.dbildungsIamServer.commonLabels.name }}
-    app.kubernetes.io/version: {{.Chart.Version}}
+    {{- include "common.labels" . | nindent 4 }}
 data:
   config-json: |-
     {{ .Files.Get "config/config.json" | nindent 4 }}
-  keycloak-base-url: "https://{{ .Values.keycloakHostname }}"
-  frontend-oidc-callback-url: "https://{{ .Values.backendHostname }}/api/auth/login"
-  frontend-default-login-redirect: "https://{{ .Values.backendHostname }}/"
-  frontend-logout-redirect: "https://{{ .Values.backendHostname }}/"
-  db-name: "{{ .Values.database.name }}"
+  NODE_ENV: {{ .Values.environment | quote }}
+  DEPLOY_STAGE: {{ .Values.environment | quote }}
+  DB_NAME: {{ .Values.database.name | quote }}
+  KC_BASE_URL: "https://{{ .Values.keycloakHostname }}"
+  FRONTEND_OIDC_CALLBACK_URL: "https://{{ .Values.backendHostname }}/api/auth/login"
+  FRONTEND_DEFAULT_LOGIN_REDIRECT: "https://{{ .Values.backendHostname }}/"
+  FRONTEND_LOGOUT_REDIRECT: "https://{{ .Values.backendHostname }}/"

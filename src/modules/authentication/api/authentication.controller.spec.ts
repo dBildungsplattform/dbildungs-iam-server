@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker/';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
@@ -13,22 +13,30 @@ import { OIDC_CLIENT } from '../services/oidc-client.service.js';
 import { PassportUser, User } from '../types/user.js';
 import { AuthenticationController } from './authentication.controller.js';
 import { UserinfoResponse } from './userinfo.response.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Person } from '../../person/domain/person.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
     let authController: AuthenticationController;
     let oidcClient: DeepMocked<Client>;
     let frontendConfig: FrontendConfig;
+    let personRepository: DeepMocked<PersonRepository>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, LoggingTestModule],
-            providers: [AuthenticationController, { provide: OIDC_CLIENT, useValue: createMock<Client>() }],
+            providers: [
+                AuthenticationController,
+                { provide: OIDC_CLIENT, useValue: createMock<Client>() },
+                { provide: PersonRepository, useValue: createMock<PersonRepository>() },
+            ],
         }).compile();
 
         authController = module.get(AuthenticationController);
         oidcClient = module.get(OIDC_CLIENT);
         frontendConfig = module.get(ConfigService).getOrThrow<FrontendConfig>('FRONTEND');
+        personRepository = module.get(PersonRepository);
     });
 
     afterEach(() => {
@@ -158,12 +166,18 @@ describe('AuthenticationController', () => {
     });
 
     describe('info', () => {
-        it('should return user info', () => {
-            const user: User = createMock<User>({ preferred_username: faker.internet.userName() });
+        it('should return user info', async () => {
+            const fakeKeycloakId: string = faker.string.uuid();
+            const user: User = createMock<User>({ preferred_username: faker.internet.userName(), sub: fakeKeycloakId });
 
-            const result: UserinfoResponse = authController.info(user);
+            const fakePersonId: string = faker.string.uuid();
+            const fakePerson: DeepMocked<Person<true>> = createMock<Person<true>>({ id: fakePersonId });
+            personRepository.findByKeycloakUserId.mockResolvedValue(fakePerson);
+            const result: UserinfoResponse = await authController.info(user);
+            expect(personRepository.findByKeycloakUserId).toHaveBeenCalledWith(fakeKeycloakId);
 
             expect(result).toBeInstanceOf(UserinfoResponse);
+            expect(result.personId).toStrictEqual(fakePersonId);
         });
     });
 });

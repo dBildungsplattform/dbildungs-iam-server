@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class FindPersonenkontextRollenBodyParams {
@@ -12,10 +12,11 @@ export class FindPersonenkontextRollenBodyParams {
 
     @IsNotEmpty()
     @IsNumber()
+    @IsOptional()
     @ApiProperty({
         description: 'The limit of items for the request.',
-        required: true,
+        required: false,
         nullable: false,
     })
-    public readonly limit!: number;
+    public readonly limit?: number;
 }

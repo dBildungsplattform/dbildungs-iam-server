@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UserinfoResponse as OpenIdUserinfoResponse } from 'openid-client';
+import { Person } from '../../person/domain/person.js';
 
 export class UserinfoResponse {
     @ApiProperty()
@@ -56,7 +57,10 @@ export class UserinfoResponse {
     @ApiProperty({ nullable: true })
     public updated_at?: number;
 
-    public constructor(info: OpenIdUserinfoResponse) {
+    @ApiProperty({ nullable: true })
+    public personId?: string;
+
+    public constructor(info: OpenIdUserinfoResponse, person?: Person<true> | null) {
         this.sub = info.sub;
         this.name = info.name;
         this.given_name = info.given_name;
@@ -75,5 +79,6 @@ export class UserinfoResponse {
         this.locale = info.locale;
         this.phone_number = info.phone_number;
         this.updated_at = info.updated_at;
+        this.personId = person?.id;
     }
 }

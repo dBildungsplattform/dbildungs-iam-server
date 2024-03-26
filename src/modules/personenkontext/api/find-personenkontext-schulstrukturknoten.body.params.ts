@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class FindPersonenkontextSchulstrukturknotenBodyParams {
@@ -21,10 +21,11 @@ export class FindPersonenkontextSchulstrukturknotenBodyParams {
 
     @IsNotEmpty()
     @IsNumber()
+    @IsOptional()
     @ApiProperty({
         description: 'The limit of items for the request.',
-        required: true,
+        required: false,
         nullable: false,
     })
-    public readonly limit!: number;
+    public readonly limit?: number;
 }
