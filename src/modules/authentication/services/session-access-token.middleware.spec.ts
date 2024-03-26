@@ -168,7 +168,7 @@ describe('sessionAccessTokenMiddleware', () => {
                 const loggerMock: ClassLogger = createMock<ClassLogger>();
                 await new SessionAccessTokenMiddleware(client, loggerMock).use(request, createMock(), jest.fn());
 
-                expect(loggerMock.warning).toHaveBeenCalledWith('\"Something went seriously wrong\"');
+                expect(loggerMock.warning).toHaveBeenCalledWith('"Something went seriously wrong"');
             });
         });
     });
