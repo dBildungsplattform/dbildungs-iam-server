@@ -100,7 +100,7 @@ export class ServerModule implements NestModule {
         private logger: ClassLogger,
     ) {}
 
-    async configure(consumer: MiddlewareConsumer): Promise<any> {
+    public async configure(consumer: MiddlewareConsumer): Promise<void> {
         const redisConfig: RedisConfig = this.configService.getOrThrow<RedisConfig>('REDIS');
         const redisClient: RedisClientType = createClient({
             username: redisConfig.USERNAME,
@@ -144,6 +144,7 @@ export class ServerModule implements NestModule {
                     secret: this.configService.getOrThrow<FrontendConfig>('FRONTEND').SESSION_SECRET,
                 }),
                 passport.initialize({ userProperty: 'passportUser' }),
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 passport.session(),
                 SessionAccessTokenMiddleware,
             )

@@ -24,12 +24,12 @@ describe('sessionAccessTokenMiddleware', () => {
 
     describe('when the request contains a valid access token', () => {
         it('should set the authorization header on the request', async () => {
-            const passportUser: PassportUser = createMock<PassportUser>({
+            passportUser = createMock<PassportUser>({
                 access_token: faker.string.alphanumeric(64),
             });
-            const request: Request = { passportUser, headers: {} } as Request;
+            request = { passportUser, headers: {} } as Request;
 
-            const clientMock = createMock<Client>();
+            const clientMock: DeepMocked<Client> = createMock<Client>();
             clientMock.introspect.mockResolvedValue(createMock<IntrospectionResponse>({ active: true }));
 
             await new SessionAccessTokenMiddleware(clientMock, createMock()).use(request, createMock(), jest.fn());
@@ -40,8 +40,8 @@ describe('sessionAccessTokenMiddleware', () => {
 
     describe('when the request does not contain a session with access token', () => {
         it('should not set authorization header', async () => {
-            const passportUser: PassportUser = createMock<PassportUser>({ access_token: undefined });
-            const request: Request = { passportUser, headers: {} } as Request;
+            passportUser = createMock<PassportUser>({ access_token: undefined });
+            request = { passportUser, headers: {} } as Request;
 
             await new SessionAccessTokenMiddleware(createMock(), createMock()).use(request, createMock(), jest.fn());
 
@@ -51,7 +51,7 @@ describe('sessionAccessTokenMiddleware', () => {
 
     describe('when the request does not contain a session', () => {
         it('should not set authorization header', async () => {
-            const request: Request = { headers: {} } as Request;
+            request = { headers: {} } as Request;
 
             await new SessionAccessTokenMiddleware(createMock(), createMock()).use(request, createMock(), jest.fn());
 

@@ -18,7 +18,7 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
     public async use(req: Request, _res: Response, next: (error?: unknown) => void): Promise<void> {
         let accessToken: string | undefined = req.passportUser?.access_token;
 
-        const refreshToken = req.passportUser?.refresh_token;
+        const refreshToken: string | undefined = req.passportUser?.refresh_token;
         if (accessToken) {
             if (!(await this.client.introspect(accessToken)).active)
                 if (refreshToken && (await this.client.introspect(refreshToken)).active && req.passportUser) {
