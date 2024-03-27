@@ -1,0 +1,13 @@
+{
+    "entityName": "Lernperiode",
+    "entities": [
+        {
+            "id": "bdc9c687-fb1e-45dc-9f22-814704c074a7",
+            "code": "2022",
+            "bezeichnung": "Schuljahr 2022/23",
+            "beginn": "2022-08-01",
+            "ende": "2023-07-31",
+            "typ": "Schuljahr"
+        }
+    ]
+}

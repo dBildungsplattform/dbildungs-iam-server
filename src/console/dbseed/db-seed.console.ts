@@ -20,6 +20,8 @@ import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { mapAggregateToData as mapServiceProviderAggregateToData } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
+import { LernperiodeFile } from './file/lernperiode-file.js';
+import { LernperiodeEntity } from '../../modules/group/persistence/lernperiode.entity.js';
 import { RolleSeedingRepo } from './repo/rolle-seeding.repo.js';
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { PersonenkontextEntity } from '../../modules/personenkontext/persistence/personenkontext.entity.js';
@@ -35,7 +37,7 @@ export interface EntityFile<T> extends SeedFile {
     entities: T[];
 }
 
-export type Entity = DataProviderFile | PersonFile | OrganisationFile | RolleEntity;
+export type Entity = DataProviderFile | PersonFile | OrganisationFile | RolleEntity | LernperiodeFile;
 
 export type ConstructorCall = () => Entity;
 
@@ -120,6 +122,9 @@ export class DbSeedConsole extends CommandRunner {
                     seedFile.entityName,
                 );
                 break;
+            case 'Lernperiode':
+                this.handleLernperiode(this.dbSeedService.readLernperiode(fileContentAsStr), seedFile.entityName);
+                break;
             case 'Personenkontext':
                 this.handlePersonenkontext(
                     this.dbSeedService.readPersonenkontext(fileContentAsStr),
@@ -129,6 +134,20 @@ export class DbSeedConsole extends CommandRunner {
             default:
                 throw new Error(`Unsupported EntityName / EntityType: ${seedFile.entityName}`);
         }
+    }
+
+    private handleLernperiode(entities: LernperiodeFile[], entityName: string): void {
+        for (const entity of entities) {
+            const mappedEntity: LernperiodeEntity = new LernperiodeEntity();
+            // mappedEntity.id = entity.id;- id is not set because its readonly in the entity
+            mappedEntity.code = entity.code;
+            mappedEntity.typ = entity.typ;
+            mappedEntity.bezeichnung = entity.bezeichnung;
+            mappedEntity.beginn = entity.beginn;
+            mappedEntity.ende = entity.ende;
+            this.orm.em.persist(mappedEntity);
+        }
+        this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
     }
 
     private handleDataProvider(entities: Entity[], entityName: string): void {

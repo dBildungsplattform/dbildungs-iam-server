@@ -1,10 +1,10 @@
-import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonNameParams } from './person-name.params.js';
 import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
+import { AutoMap } from '@automapper/classes';
 
 export class CreatePersonBodyParams {
     @AutoMap()

@@ -8,6 +8,7 @@ import { ConstructorCall, EntityFile } from './db-seed.console.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { plainToInstance } from 'class-transformer';
+import { LernperiodeFile } from './file/lernperiode-file.js';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
 import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderFile } from './file/service-provider-file.js';
@@ -23,6 +24,20 @@ export class DbSeedService {
     private rolleMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
 
     private serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
+
+    private lernperiodeMap: Map<string, LernperiodeFile> = new Map();
+
+    public readLernperiode(fileContentAsStr: string): LernperiodeFile[] {
+        const entities: LernperiodeFile[] = this.readEntityFromJSONFile<LernperiodeFile>(
+            fileContentAsStr,
+            () => new LernperiodeFile(),
+        );
+        for (const entity of entities) {
+            this.lernperiodeMap.set(entity.id, entity);
+        }
+
+        return entities;
+    }
 
     private personenkontextMap: Map<string, Personenkontext<true>> = new Map();
 
