@@ -4,6 +4,7 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiOAuth2,
     ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -23,6 +24,7 @@ import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.j
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenkontexte')
 @ApiBearerAuth()
+@ApiOAuth2(['openid'])
 @Controller({ path: 'dbiam/personenkontext' })
 export class DBiamPersonenkontextController {
     public constructor(
@@ -45,11 +47,7 @@ export class DBiamPersonenkontextController {
     ): Promise<DBiamPersonenkontextResponse[]> {
         const personenkontexte: Personenkontext<true>[] = await this.personenkontextRepo.findByPerson(params.personId);
 
-        const response: DBiamPersonenkontextResponse[] = personenkontexte.map(
-            (k: Personenkontext<true>) => new DBiamPersonenkontextResponse(k),
-        );
-
-        return response;
+        return personenkontexte.map((k: Personenkontext<true>) => new DBiamPersonenkontextResponse(k));
     }
 
     @Post()

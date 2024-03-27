@@ -7,6 +7,7 @@ import { OpenIdConnectStrategy } from './passport/oidc.strategy.js';
 import { SessionSerializer } from './passport/session.serializer.js';
 import { OIDCClientProvider } from './services/oidc-client.service.js';
 import { PersonModule } from '../person/person.module.js';
+import { SessionAccessTokenMiddleware } from './services/session-access-token.middleware.js';
 
 @Module({
     imports: [
@@ -15,7 +16,8 @@ import { PersonModule } from '../person/person.module.js';
         PassportModule.register({ session: true, defaultStrategy: 'oidc', keepSessionInfo: true }),
         PersonModule,
     ],
-    providers: [OpenIdConnectStrategy, SessionSerializer, OIDCClientProvider],
+    providers: [OpenIdConnectStrategy, SessionSerializer, OIDCClientProvider, SessionAccessTokenMiddleware],
     controllers: [AuthenticationController],
+    exports: [OIDCClientProvider],
 })
 export class AuthenticationApiModule {}
