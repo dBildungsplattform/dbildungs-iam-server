@@ -5,6 +5,7 @@ import {
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
+    ApiOAuth2,
     ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -20,6 +21,7 @@ import { ServiceProviderResponse } from './service-provider.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('provider')
+@ApiOAuth2(['openid'])
 @ApiBearerAuth()
 @Controller({ path: 'provider' })
 export class ProviderController {

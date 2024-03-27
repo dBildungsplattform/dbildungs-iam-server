@@ -23,6 +23,7 @@ import {
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
+    ApiOAuth2,
     ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -55,6 +56,7 @@ import { PersonFactory } from '../domain/person.factory.js';
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
 @ApiBearerAuth()
+@ApiOAuth2(['openid'])
 @Controller({ path: 'personen' })
 export class PersonController {
     public constructor(

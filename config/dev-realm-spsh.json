@@ -837,21 +837,22 @@
       "clientId": "spsh",
       "name": "Schulportal SH",
       "description": "",
-      "rootUrl": "https://helm.dev.spsh.dbildungsplattform.de",
+      "rootUrl": "https://localhost:8099",
       "adminUrl": "",
-      "baseUrl": "",
+      "baseUrl": "https://localhost:8099/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "secret": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M",
       "redirectUris": [
-        "http://localhost:9091/*",
-        "https://localhost:8099/*",
+        "https://127.0,0.1:8099/*",
+        "http://127.0,0.1:9090/*",
+        "http://localhost:9090/*",
         "/*"
       ],
       "webOrigins": [
-        "/*", "*"
+        "+"
       ],
       "notBefore": 0,
       "bearerOnly": false,

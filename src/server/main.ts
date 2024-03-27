@@ -17,6 +17,7 @@ import { sessionAccessTokenMiddleware } from '../modules/authentication/services
 async function bootstrap(): Promise<void> {
     const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(ServerModule);
     const configService: ConfigService<ServerConfig, true> = app.get(ConfigService<ServerConfig, true>);
+    const backendHostname: string | undefined = configService.getOrThrow<HostConfig>('HOST').HOSTNAME;
     const port: number = configService.getOrThrow<HostConfig>('HOST').PORT;
     const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
 
@@ -27,8 +28,10 @@ async function bootstrap(): Promise<void> {
         .addOAuth2({
             type: 'oauth2',
             flows: {
-                password: {
+                authorizationCode: {
+                    authorizationUrl: `${keycloakConfig.BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/auth`,
                     tokenUrl: `${keycloakConfig.BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/token`,
+                    refreshUrl: `${keycloakConfig.BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/token`,
                     scopes: {},
                 },
             },
@@ -47,14 +50,24 @@ async function bootstrap(): Promise<void> {
         exclude: ['health'],
     });
 
+    let redirectUrl: string;
+    if (backendHostname) {
+        redirectUrl = `https://${backendHostname}/docs/oauth2-redirect.html`;
+    } else {
+        redirectUrl = `http://localhost:${port}/docs/oauth2-redirect.html`;
+    }
+
     SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger), {
         swaggerOptions: {
-            persistAuthorization: true,
+            persistAuthorization: false,
             initOAuth: {
                 clientId: keycloakConfig.CLIENT_ID,
+                clientSecret: keycloakConfig.CLIENT_SECRET,
                 realm: keycloakConfig.REALM_NAME,
-                scopes: ['openid, profile'],
+                usePkceWithAuthorizationCodeGrant: true,
+                scopes: [],
             },
+            oauth2RedirectUrl: redirectUrl,
         },
     });
 
