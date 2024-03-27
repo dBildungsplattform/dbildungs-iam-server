@@ -13,10 +13,10 @@ import { GlobalValidationPipe } from '../../../shared/validation/global-validati
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
-import {MapperTestModule} from "../../../../test/utils/mapper-test.module.js";
-import {createMock} from "@golevelup/ts-jest";
-import {OIDC_CLIENT} from "../../authentication/services/oidc-client.service";
-import {Client} from "openid-client";
+import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
+import { createMock } from '@golevelup/ts-jest';
+import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
+import { Client } from 'openid-client';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
