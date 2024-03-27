@@ -3,28 +3,57 @@ import { Person } from '../../person/domain/person.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
-export class PersonPermissions {
-    private personenkontexts?: Personenkontext<true>[];
+type PersonFields = Pick<
+    Person<true>,
+    | 'id'
+    | 'keycloakUserId'
+    | 'vorname'
+    | 'familienname'
+    | 'rufname'
+    | 'username'
+    | 'geschlecht'
+    | 'geburtsdatum'
+    | 'updatedAt'
+>;
+type PersonKontextFields = Pick<Personenkontext<true>, 'rolleId'>;
 
-    private personInternal: Person<true>;
+export class PersonPermissions {
+    private cachedPersonenkontextsFields?: PersonKontextFields[];
+
+    private cachedPersonFields: PersonFields;
 
     public constructor(
         private personenkontextRepo: DBiamPersonenkontextRepo,
         person: Person<true>,
     ) {
-        this.personInternal = person;
+        this.cachedPersonFields = {
+            id: person.id,
+            keycloakUserId: person.keycloakUserId,
+            vorname: person.vorname,
+            familienname: person.familienname,
+            rufname: person.rufname,
+            username: person.username,
+            geschlecht: person.geschlecht,
+            geburtsdatum: person.geburtsdatum,
+            updatedAt: person.updatedAt,
+        };
     }
 
     public async getRoleIds(): Promise<RolleID[]> {
-        if (!this.personenkontexts) {
-            this.personenkontexts = await this.personenkontextRepo.findByPerson(this.person.id);
+        if (!this.cachedPersonenkontextsFields) {
+            const personenkontexte: Personenkontext<true>[] = await this.personenkontextRepo.findByPerson(
+                this.cachedPersonFields.id,
+            );
+            this.cachedPersonenkontextsFields = personenkontexte.map((personenkontext: Personenkontext<true>) => ({
+                rolleId: personenkontext.rolleId,
+            }));
         }
-        return this.personenkontexts.map((personenkontext: Personenkontext<true>) => {
-            return personenkontext.rolleId;
+        return this.cachedPersonenkontextsFields.map((personenkontextFields: PersonKontextFields) => {
+            return personenkontextFields.rolleId;
         });
     }
 
-    public get person(): Person<true> {
-        return this.personInternal;
+    public get personFields(): PersonFields {
+        return this.cachedPersonFields;
     }
 }
