@@ -3,27 +3,34 @@ import { DbSeedService } from './db-seed.service.js';
 import {
     ConfigTestModule,
     DatabaseTestModule,
+    DoFactory,
     LoggingTestModule,
     MapperTestModule,
 } from '../../../test/utils/index.js';
 import fs from 'fs';
-import { PersonEntity } from '../../modules/person/persistence/person.entity.js';
-import { Rolle } from '../../modules/rolle/domain/rolle.js';
-import { OrganisationFile } from './file/organisation-file.js';
 import { DataProviderFile } from './file/data-provider-file.js';
-import { OrganisationsTyp, Traegerschaft } from '../../modules/organisation/domain/organisation.enums.js';
-import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
+import { PersonFactory } from '../../modules/person/domain/person.factory.js';
+import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { OrganisationRepo } from '../../modules/organisation/persistence/organisation.repo.js';
+import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
+import { EntityNotFoundError } from '../../shared/error/index.js';
+import { OrganisationsTyp, Traegerschaft } from '../../modules/organisation/domain/organisation.enums.js';
+import { faker } from '@faker-js/faker';
+import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
+import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
-import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { Buffer } from 'buffer';
-import { createMock } from '@golevelup/ts-jest';
+import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
     let dbSeedService: DbSeedService;
+    let organisationRepoMock: DeepMocked<OrganisationRepo>;
+    let rolleRepoMock: DeepMocked<RolleRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -36,10 +43,36 @@ describe('DbSeedService', () => {
             providers: [
                 DbSeedService,
                 RolleFactory,
-                { provide: ServiceProviderRepo, useValue: createMock<ServiceProviderRepo>() },
+                {
+                    provide: PersonFactory,
+                    useValue: createMock<PersonFactory>(),
+                },
+                {
+                    provide: PersonRepository,
+                    useValue: createMock<PersonRepository>(),
+                },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                },
+                {
+                    provide: OrganisationRepo,
+                    useValue: createMock<OrganisationRepo>(),
+                },
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
+
+                {
+                    provide: ServiceProviderRepo,
+                    useValue: createMock<ServiceProviderRepo>(),
+                },
             ],
         }).compile();
         dbSeedService = module.get(DbSeedService);
+        organisationRepoMock = module.get(OrganisationRepo);
+        rolleRepoMock = module.get(RolleRepo);
     });
 
     afterAll(async () => {
@@ -58,7 +91,7 @@ describe('DbSeedService', () => {
         describe('readDataProvider with one entity', () => {
             it('should have length 1', () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/00_data-provider.json`,
+                    `./seeding/seeding-integration-test/all/00_data-provider.json`,
                     'utf-8',
                 );
                 const entities: DataProviderFile[] = dbSeedService.readDataProvider(fileContentAsStr);
@@ -72,89 +105,158 @@ describe('DbSeedService', () => {
         });
     });
 
-    describe('readOrganisation', () => {
-        describe('readOrganisation with one entity and properties defined', () => {
-            it('should have length 1 and be mappable', () => {
+    describe('seedOrganisation', () => {
+        describe('without administriertVon and zugehoerigZu', () => {
+            it('should insert one entity in database', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/01_organisation.json`,
+                    `./seeding/seeding-integration-test/all/01_organisation.json`,
                     'utf-8',
                 );
-                const entities: OrganisationFile[] = dbSeedService.readOrganisation(fileContentAsStr);
-                const entity: OrganisationFile | undefined = entities[0];
-                const organisation: Partial<OrganisationFile> = {
-                    id: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
-                    administriertVon: undefined,
-                    zugehoerigZu: undefined,
-                    typ: OrganisationsTyp.SCHULE,
-                    kuerzel: '01',
+                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+
+                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
+        });
+
+        describe('with only nulls', () => {
+            it('should insert one entity in database', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/organisation/00_organisation_with_only_nulls.json`,
+                    'utf-8',
+                );
+                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+
+                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
+        });
+
+        describe('with existing administriertVon', () => {
+            it('should not throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/organisation/01_organisation.json`,
+                    'utf-8',
+                );
+                const fileContentParentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/organisation/03_parent_organisation.json`,
+                    'utf-8',
+                );
+                const parent: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                    id: faker.string.uuid(),
+                    kennung: 'ParentOrganisation',
+                    name: 'Parent',
                     namensergaenzung: 'Keine',
-                    name: 'Schule1',
-                    kennung: 'Organisation1',
+                    kuerzel: '00',
+                    typ: OrganisationsTyp.TRAEGER,
                     traegerschaft: Traegerschaft.KIRCHLICH,
-                };
-                expect(entities).toHaveLength(1);
-                expect(entity).toEqual(organisation);
+                });
+                organisationRepoMock.save.mockResolvedValueOnce(parent);
+                await dbSeedService.seedOrganisation(fileContentParentAsStr);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
             });
         });
-        describe('readOrganisation with one entity and optional properties are undefined', () => {
-            it('should have length 1 and be mappable', () => {
+
+        describe('with existing zugehoerigZu', () => {
+            it('should not throw EntityNotFoundError', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/organisationUndefinedProperties/01_organisation.json`,
+                    `./seeding/seeding-integration-test/organisation/02_organisation.json`,
                     'utf-8',
                 );
-                const entities: OrganisationFile[] = dbSeedService.readOrganisation(fileContentAsStr);
-                const entity: OrganisationFile | undefined = entities[0];
-                const organisation: Partial<OrganisationFile> = {
-                    id: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
-                    administriertVon: undefined,
-                    zugehoerigZu: undefined,
-                    typ: undefined,
-                    kuerzel: undefined,
-                    namensergaenzung: undefined,
-                    name: undefined,
-                    kennung: undefined,
-                    traegerschaft: undefined,
-                };
-                expect(entities).toHaveLength(1);
-                expect(entity).toEqual(organisation);
+                const fileContentParentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/organisation/03_parent_organisation.json`,
+                    'utf-8',
+                );
+                const parent: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                    id: faker.string.uuid(),
+                    kennung: 'ParentOrganisation',
+                    name: 'Parent',
+                    namensergaenzung: 'Keine',
+                    kuerzel: '00',
+                    typ: OrganisationsTyp.TRAEGER,
+                    traegerschaft: Traegerschaft.KIRCHLICH,
+                });
+                organisationRepoMock.save.mockResolvedValueOnce(parent);
+                await dbSeedService.seedOrganisation(fileContentParentAsStr);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
+        });
+
+        describe('with non existing administriertVon', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/organisation/04_missing_administriert-von.json`,
+                    'utf-8',
+                );
+                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+
+                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+
+        describe('with non existing zugehoerigZu', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/organisation/05_missing_zugehoerig-zu.json`,
+                    'utf-8',
+                );
+                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+
+                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
     });
 
-    describe('readPerson', () => {
-        describe('readPerson with one entity', () => {
-            it('should have length 1', () => {
+    describe('seedRolle', () => {
+        describe('with existing organisation for administeredBySchulstrukturknoten', () => {
+            it('should insert one entity in database', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/02_person.json`,
+                    `./seeding/seeding-integration-test/rolle/04_rolle-with-existing-ssk.json`,
                     'utf-8',
                 );
-                const entities: PersonEntity[] = dbSeedService.readPerson(fileContentAsStr);
-                expect(entities).toHaveLength(1);
+                const persistedRolle: Rolle<true> = DoFactory.createRolle(true);
+
+                const fileContentParentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/rolle/00_parent_organisation.json`,
+                    'utf-8',
+                );
+                const parent: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                    id: faker.string.uuid(),
+                    kennung: 'ParentOrganisation',
+                    name: 'Parent',
+                    namensergaenzung: 'Keine',
+                    kuerzel: '00',
+                    typ: OrganisationsTyp.TRAEGER,
+                    traegerschaft: Traegerschaft.KIRCHLICH,
+                });
+                organisationRepoMock.save.mockResolvedValueOnce(parent);
+                await dbSeedService.seedOrganisation(fileContentParentAsStr);
+
+                rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
+                await expect(dbSeedService.seedRolle(fileContentAsStr)).resolves.not.toThrow(EntityNotFoundError);
             });
         });
-    });
 
-    describe('readRolle', () => {
-        describe('readRolle with one entity', () => {
-            it('should have length 1', () => {
+        describe('with non-existing organisation for administeredBySchulstrukturknoten', () => {
+            it('should throw EntityNotFoundError', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/04_rolle.json`,
+                    `./seeding/seeding-integration-test/rolle/05_rolle-with-non-existing-ssk.json`,
                     'utf-8',
                 );
-                const rollen: Rolle<true>[] = dbSeedService.readRolle(fileContentAsStr);
-                const rolle: Partial<Rolle<true>> = {
-                    id: '301457e9-4fe5-42a6-8084-fec927dc00df',
-                    name: 'Rolle2222',
-                    administeredBySchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
-                    rollenart: RollenArt.LERN,
-                    merkmale: [],
-                    serviceProviderIds: [],
-                    systemrechte: [],
-                    createdAt: expect.any(Date) as Date,
-                    updatedAt: expect.any(Date) as Date,
-                };
-                expect(rollen).toHaveLength(1);
-                expect(rollen[0]).toEqual(expect.objectContaining(rolle));
+                const persistedRolle: Rolle<true> = DoFactory.createRolle(true);
+
+                rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
+                await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
     });
@@ -163,7 +265,7 @@ describe('DbSeedService', () => {
         describe('readServiceProvider with two entities', () => {
             it('should have length 2', () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/03_service-provider.json`,
+                    `./seeding/seeding-integration-test/all/03_service-provider.json`,
                     'utf-8',
                 );
 
@@ -192,65 +294,6 @@ describe('DbSeedService', () => {
                     createdAt: expect.any(Date) as Date,
                     updatedAt: expect.any(Date) as Date,
                 });
-            });
-        });
-    });
-
-    describe('readPersonenkontext', () => {
-        describe('readPersonenkontext with one entity', () => {
-            it('should have length 1', () => {
-                const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/05_personenkontext.json`,
-                    'utf-8',
-                );
-                const personenkontexte: Personenkontext<true>[] = dbSeedService.readPersonenkontext(fileContentAsStr);
-
-                expect(personenkontexte).toHaveLength(1);
-                expect(personenkontexte[0]).toEqual({
-                    id: 'a6cf487d-3b69-4105-bb4d-a022c2e1c67a',
-                    personId: 'ee510860-261a-4896-9d02-95d94d73c9f7',
-                    organisationId: 'bcc7ec17-37d5-4ec9-9129-c14bcfa53cd6',
-                    rolleId: 'abdcc2b9-5086-4bf2-bbee-03d6a013b7f8',
-                    createdAt: expect.any(Date) as Date,
-                    updatedAt: expect.any(Date) as Date,
-                });
-            });
-        });
-    });
-
-    describe('readPersonenkontext', () => {
-        describe('readPersonenkontext with one entity', () => {
-            it('should have length 1', () => {
-                const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/05_personenkontext.json`,
-                    'utf-8',
-                );
-                const personenkontexte: Personenkontext<true>[] = dbSeedService.readPersonenkontext(fileContentAsStr);
-
-                expect(personenkontexte).toHaveLength(1);
-                expect(personenkontexte[0]).toEqual({
-                    id: 'a6cf487d-3b69-4105-bb4d-a022c2e1c67a',
-                    personId: 'ee510860-261a-4896-9d02-95d94d73c9f7',
-                    organisationId: 'bcc7ec17-37d5-4ec9-9129-c14bcfa53cd6',
-                    rolleId: 'abdcc2b9-5086-4bf2-bbee-03d6a013b7f8',
-                    createdAt: expect.any(Date) as Date,
-                    updatedAt: expect.any(Date) as Date,
-                });
-            });
-        });
-    });
-
-    describe('getRolle', () => {
-        describe('getRolle by id after loading test rolle', () => {
-            it('should return the loaded rolle', () => {
-                const fileContentAsStr: string = fs.readFileSync(
-                    `./sql/seeding-integration-test/all/04_rolle.json`,
-                    'utf-8',
-                );
-                const entities: Rolle<true>[] = dbSeedService.readRolle(fileContentAsStr);
-                const entity: Rolle<true> | undefined = entities[0];
-                const rolle: Rolle<true> | undefined = dbSeedService.getRolle(entity!.id);
-                expect(rolle).toBeTruthy();
             });
         });
     });
