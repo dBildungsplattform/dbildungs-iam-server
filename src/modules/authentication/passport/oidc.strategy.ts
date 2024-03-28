@@ -36,7 +36,6 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
                 refresh_token: refreshToken,
                 userinfo,
             };
-
             return user;
         } catch (err: unknown) {
             throw new UnauthorizedException();
