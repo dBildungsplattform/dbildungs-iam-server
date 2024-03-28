@@ -57,14 +57,14 @@ export class UserinfoResponse {
     public updated_at?: number;
 
     public constructor(info: PersonPermissions) {
-        this.sub = info.person.keycloakUserId!;
-        this.name = `${info.person.vorname} ${info.person.familienname}`;
-        this.given_name = info.person.vorname;
-        this.family_name = info.person.familienname;
-        this.nickname = info.person.rufname;
-        this.preferred_username = info.person.username;
-        this.gender = info.person.geschlecht;
-        this.birthdate = info.person.geburtsdatum?.toISOString();
-        this.updated_at = info.person.updatedAt.getTime() / 1000;
+        this.sub = info.personFields.keycloakUserId!;
+        this.name = `${info.personFields.vorname} ${info.personFields.familienname}`;
+        this.given_name = info.personFields.vorname;
+        this.family_name = info.personFields.familienname;
+        this.nickname = info.personFields.rufname;
+        this.preferred_username = info.personFields.username;
+        this.gender = info.personFields.geschlecht;
+        this.birthdate = info.personFields.geburtsdatum?.toISOString();
+        this.updated_at = info.personFields.updatedAt.getTime() / 1000;
     }
 }
