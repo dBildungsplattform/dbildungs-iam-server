@@ -13,4 +13,5 @@ export type PassportUser = {
     access_token?: string;
     refresh_token?: string;
     userinfo: UserinfoResponse;
+    personPermissions: PersonPermissions;
 };

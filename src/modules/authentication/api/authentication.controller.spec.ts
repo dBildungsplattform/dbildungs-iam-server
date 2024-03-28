@@ -13,7 +13,13 @@ import { OIDC_CLIENT } from '../services/oidc-client.service.js';
 import { PassportUser, User } from '../types/user.js';
 import { AuthenticationController } from './authentication.controller.js';
 import { UserinfoResponse } from './userinfo.response.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import { PersonModule } from '../../person/person.module.js';
+import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
+import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
+import { MikroORM } from '@mikro-orm/core';
+import { PersonPermissions } from '../domain/person-permissions.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Person } from '../../person/domain/person.js';
 
 describe('AuthenticationController', () => {
@@ -21,22 +27,43 @@ describe('AuthenticationController', () => {
     let authController: AuthenticationController;
     let oidcClient: DeepMocked<Client>;
     let frontendConfig: FrontendConfig;
-    let personRepository: DeepMocked<PersonRepository>;
+    let personPermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
+    let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, LoggingTestModule],
+            imports: [
+                ConfigTestModule,
+                LoggingTestModule,
+                MapperTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                PersonModule,
+                PersonenKontextModule,
+            ],
             providers: [
                 AuthenticationController,
-                { provide: OIDC_CLIENT, useValue: createMock<Client>() },
-                { provide: PersonRepository, useValue: createMock<PersonRepository>() },
+                {
+                    provide: PersonPermissionsRepo,
+                    useValue: createMock<PersonPermissionsRepo>(),
+                },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                },
+                {
+                    provide: OIDC_CLIENT,
+                    useValue: createMock<Client>(),
+                },
             ],
         }).compile();
+
+        await DatabaseTestModule.setupDatabase(module.get(MikroORM));
 
         authController = module.get(AuthenticationController);
         oidcClient = module.get(OIDC_CLIENT);
         frontendConfig = module.get(ConfigService).getOrThrow<FrontendConfig>('FRONTEND');
-        personRepository = module.get(PersonRepository);
+        personPermissionsRepoMock = module.get(PersonPermissionsRepo);
+        dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
     });
 
     afterEach(() => {
@@ -167,17 +194,26 @@ describe('AuthenticationController', () => {
 
     describe('info', () => {
         it('should return user info', async () => {
-            const fakeKeycloakId: string = faker.string.uuid();
-            const user: User = createMock<User>({ preferred_username: faker.internet.userName(), sub: fakeKeycloakId });
+            const user: User = createMock<User>({ preferred_username: faker.internet.userName() });
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                undefined,
+                faker.string.uuid(),
+            );
+            person.geburtsdatum = faker.date.past();
 
-            const fakePersonId: string = faker.string.uuid();
-            const fakePerson: DeepMocked<Person<true>> = createMock<Person<true>>({ id: fakePersonId });
-            personRepository.findByKeycloakUserId.mockResolvedValue(fakePerson);
+            const personPermissions: PersonPermissions = new PersonPermissions(dbiamPersonenkontextRepoMock, person);
+            personPermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(personPermissions);
+
             const result: UserinfoResponse = await authController.info(user);
-            expect(personRepository.findByKeycloakUserId).toHaveBeenCalledWith(fakeKeycloakId);
 
             expect(result).toBeInstanceOf(UserinfoResponse);
-            expect(result.personId).toStrictEqual(fakePersonId);
         });
     });
 });

@@ -19,10 +19,10 @@ import { LoginGuard } from './login.guard.js';
 import { RedirectQueryParams } from './redirect.query.params.js';
 import { UserinfoResponse } from './userinfo.response.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { PersonPermissions } from '../domain/person-permissions.js';
 import { AuthenticatedUser, Public } from 'nest-keycloak-connect';
+import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
 import { User } from '../types/user.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { Person } from '../../person/domain/person.js';
 
 @ApiTags('auth')
 @Controller({ path: 'auth' })
@@ -34,8 +34,8 @@ export class AuthenticationController {
     public constructor(
         configService: ConfigService<ServerConfig>,
         @Inject(OIDC_CLIENT) private client: Client,
+        private personPermissionsRepo: PersonPermissionsRepo,
         private readonly logger: ClassLogger,
-        private readonly personRepository: PersonRepository,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
         this.defaultLoginRedirect = frontendConfig.DEFAULT_LOGIN_REDIRECT;
@@ -93,7 +93,9 @@ export class AuthenticationController {
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
     @ApiOkResponse({ description: 'Returns info about the logged in user.', type: UserinfoResponse })
     public async info(@AuthenticatedUser() user: User): Promise<UserinfoResponse> {
-        const person: Person<true> | null | undefined = await this.personRepository.findByKeycloakUserId(user.sub);
-        return new UserinfoResponse(user, person);
+        const personPermissions: PersonPermissions = await this.personPermissionsRepo.loadPersonPermissions(user.sub);
+        const roleIds: string[] = await personPermissions.getRoleIds();
+        this.logger.info(roleIds.toString());
+        return new UserinfoResponse(personPermissions);
     }
 }

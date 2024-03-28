@@ -11,6 +11,6 @@ import { OrganisationModule } from '../organisation/organisation.module.js';
 @Module({
     imports: [PersonModule, RolleModule, OrganisationModule, LoggerModule.register(PersonenKontextModule.name)],
     providers: [PersonenkontextRepo, PersonenkontextService, PersonRepo, DBiamPersonenkontextRepo],
-    exports: [PersonenkontextService, PersonenkontextRepo],
+    exports: [PersonenkontextService, PersonenkontextRepo, DBiamPersonenkontextRepo],
 })
 export class PersonenKontextModule {}
