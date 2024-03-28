@@ -20,7 +20,7 @@ import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.p
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
 import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
-import { HatSystemrechtBodyParams } from './hat-systemrecht.body.params.js';
+import { HatSystemrechtQueryParams } from './hat-systemrecht.query.params.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
@@ -162,7 +162,7 @@ describe('PersonenkontextController', () => {
                 const idParams: PersonByIdParams = {
                     personId: '1',
                 };
-                const bodyParams: HatSystemrechtBodyParams = {
+                const bodyParams: HatSystemrechtQueryParams = {
                     systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
                 };
                 const organisations: OrganisationDo<true>[] = [DoFactory.createOrganisation(true)];
@@ -184,7 +184,7 @@ describe('PersonenkontextController', () => {
                 const idParams: PersonByIdParams = {
                     personId: '1',
                 };
-                const bodyParams: HatSystemrechtBodyParams = {
+                const bodyParams: HatSystemrechtQueryParams = {
                     systemRecht: 'FALSCHER_RECHTE_NAME',
                 };
                 personenkontextUcMock.hatSystemRecht.mockRejectedValue(new EntityNotFoundError());

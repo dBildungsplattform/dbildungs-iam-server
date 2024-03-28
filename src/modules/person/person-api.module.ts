@@ -11,17 +11,26 @@ import { PersonRepository } from './persistence/person.repository.js';
 import { RolleModule } from '../rolle/rolle.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
+import { DBiamPersonenuebersichtController } from './api/personenuebersicht/dbiam-personenuebersicht.controller.js';
+import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 @Module({
     imports: [
         PersonModule,
         RolleModule,
+        OrganisationModule,
         PersonenKontextModule,
         OrganisationModule,
         KeycloakAdministrationModule,
         LoggerModule.register(PersonApiModule.name),
     ],
-    providers: [PersonApiMapperProfile, PersonenkontextUc, UsernameGeneratorService, PersonRepository],
-    controllers: [PersonController, PersonFrontendController],
+    providers: [
+        PersonApiMapperProfile,
+        PersonenkontextUc,
+        UsernameGeneratorService,
+        PersonRepository,
+        DBiamPersonenkontextRepo,
+    ],
+    controllers: [PersonController, PersonFrontendController, DBiamPersonenuebersichtController],
 })
 export class PersonApiModule {}
