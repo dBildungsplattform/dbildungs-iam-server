@@ -6,6 +6,9 @@ export class UserinfoResponse {
     public sub: string;
 
     @ApiProperty({ nullable: true })
+    public person_id?: string;
+
+    @ApiProperty({ nullable: true })
     public name?: string;
 
     @ApiProperty({ nullable: true })
@@ -58,6 +61,7 @@ export class UserinfoResponse {
 
     public constructor(info: PersonPermissions) {
         this.sub = info.personFields.keycloakUserId!;
+        this.person_id = info.personFields.id;
         this.name = `${info.personFields.vorname} ${info.personFields.familienname}`;
         this.given_name = info.personFields.vorname;
         this.family_name = info.personFields.familienname;
