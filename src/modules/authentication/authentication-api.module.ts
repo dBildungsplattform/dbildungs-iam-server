@@ -21,6 +21,6 @@ import { PersonenKontextModule } from '../personenkontext/personenkontext.module
     ],
     providers: [OpenIdConnectStrategy, SessionSerializer, OIDCClientProvider, PersonPermissionsRepo, SessionAccessTokenMiddleware],
     controllers: [AuthenticationController],
-    exports: [OIDCClientProvider],
+    exports: [OIDCClientProvider, PersonPermissionsRepo],
 })
 export class AuthenticationApiModule {}

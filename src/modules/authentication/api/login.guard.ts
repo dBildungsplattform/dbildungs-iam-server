@@ -3,7 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 
 @Injectable()
-export class LoginGuard extends AuthGuard('oidc') {
+export class LoginGuard extends AuthGuard(['oidc', 'jwt']) {
     public override async canActivate(context: ExecutionContext): Promise<boolean> {
         const request: Request = context.switchToHttp().getRequest<Request>();
         if (request.query['redirectUrl']) {
