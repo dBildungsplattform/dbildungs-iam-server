@@ -29,6 +29,9 @@ services:
       - 8443:8443
     volumes:
       - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
+      - source: "${THEMES_DIR:-keycloak/themes}"
+        target: "/opt/keycloak/themes"
+        type: bind
   redis:
     image: redis:7.2.2
     healthcheck:
