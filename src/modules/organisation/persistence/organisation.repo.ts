@@ -58,6 +58,22 @@ export class OrganisationRepo {
         return null;
     }
 
+    public async findByIds(ids: string[]): Promise<Map<string, OrganisationDo<true>>> {
+        const organisations: OrganisationEntity[] = await this.em.find(OrganisationEntity, { id: { $in: ids } });
+        const organisationMap: Map<string, OrganisationDo<true>> = new Map();
+
+        organisations.forEach((organisation: OrganisationEntity) => {
+            const organisationDo: OrganisationDo<true> = this.mapper.map(
+                organisation,
+                OrganisationEntity,
+                OrganisationDo,
+            );
+            organisationMap.set(organisation.id, organisationDo);
+        });
+
+        return organisationMap;
+    }
+
     public async findBy(scope: OrganisationScope): Promise<Counted<OrganisationDo<true>>> {
         const [entities, total]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
         const dos: OrganisationDo<true>[] = this.mapper.mapArray(entities, OrganisationEntity, OrganisationDo);
