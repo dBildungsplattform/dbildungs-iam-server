@@ -70,6 +70,8 @@ export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFac
 
 @Injectable()
 export class RolleRepo {
+    public static readonly DEFAULT_LIMIT: number = 25;
+
     public constructor(
         protected readonly rolleFactory: RolleFactory,
         protected readonly em: EntityManager,
@@ -87,6 +89,33 @@ export class RolleRepo {
         );
 
         return rolle && mapEntityToAggregate(rolle, this.rolleFactory);
+    }
+
+    public async findByIds(ids: string[]): Promise<Map<string, Rolle<true>>> {
+        const rollenEntities: RolleEntity[] = await this.em.find(
+            RolleEntity,
+            { id: { $in: ids } },
+            {
+                populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+            },
+        );
+
+        const rollenMap: Map<string, Rolle<true>> = new Map();
+        rollenEntities.forEach((rolleEntity: RolleEntity) => {
+            const rolle: Rolle<true> = mapEntityToAggregate(rolleEntity, this.rolleFactory);
+            rollenMap.set(rolleEntity.id, rolle);
+        });
+
+        return rollenMap;
+    }
+
+    public async findByName(searchStr: string, limit?: number): Promise<Option<Rolle<true>[]>> {
+        const rollen: Option<RolleEntity[]> = await this.em.find(
+            this.entityName,
+            { name: { $ilike: '%' + searchStr + '%' } },
+            { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit },
+        );
+        return rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
     }
 
     public async find(): Promise<Rolle<true>[]> {
