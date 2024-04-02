@@ -1,0 +1,30 @@
+{{if .Values.backend.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "common.names.name" . }}-backend
+  namespace: {{ template "common.names.namespace" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://{{ .Values.keycloakHostname }}"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    {{- with .Values.backend.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.backend.ingress.ingressClassName }}
+  rules:
+    - host: {{ .Values.backendHostname }}
+      http:
+        paths:
+          {{- range $path := .Values.backend.ingress.paths }}
+          - path: {{ $path }}
+            pathType: {{ $.Values.backend.ingress.pathType }}
+            backend:
+              service:
+                name: {{ template "common.names.name" $ }}-backend
+                port:
+                  number: {{ $.Values.backend.service.ports.http }}
+          {{- end }}
+{{ end }}
