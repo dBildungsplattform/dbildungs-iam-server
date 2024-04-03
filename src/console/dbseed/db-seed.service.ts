@@ -2,31 +2,47 @@ import { Injectable } from '@nestjs/common';
 import fs from 'fs';
 import { DataProviderFile } from './file/data-provider-file.js';
 import { OrganisationFile } from './file/organisation-file.js';
-import { PersonFile } from './file/person-file.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { ConstructorCall, EntityFile } from './db-seed.console.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
 import { Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { plainToInstance } from 'class-transformer';
 import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
+import { Person, PersonCreationParams } from '../../modules/person/domain/person.js';
+import { PersonFile } from './file/person-file.js';
+import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
+import { PersonFactory } from '../../modules/person/domain/person.factory.js';
+import { DomainError, EntityNotFoundError } from '../../shared/error/index.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
+import { PersonenkontextFile } from './file/personenkontext-file.js';
+import { OrganisationRepo } from '../../modules/organisation/persistence/organisation.repo.js';
+import { RolleFile } from './file/rolle-file.js';
+import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
 import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderFile } from './file/service-provider-file.js';
+import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 @Injectable()
 export class DbSeedService {
+    public constructor(
+        private readonly logger: ClassLogger,
+        private readonly personFactory: PersonFactory,
+        private readonly personRepository: PersonRepository,
+        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly organisationRepo: OrganisationRepo,
+        private readonly rolleRepo: RolleRepo,
+        private readonly rolleFactory: RolleFactory,
+    ) {}
+
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
 
-    private organisationMap: Map<string, OrganisationDo<true>> = new Map<string, OrganisationDo<true>>();
+    private organisationMap: Map<number, OrganisationDo<true>> = new Map();
 
-    private personMap: Map<string, PersonFile> = new Map<string, PersonFile>();
+    private personMap: Map<number, Person<true>> = new Map();
 
-    private rolleMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
+    private rolleMap: Map<number, Rolle<true>> = new Map();
 
     private serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
-
-    private personenkontextMap: Map<string, Personenkontext<true>> = new Map();
-
-    public constructor(private readonly rolleFactory: RolleFactory) {}
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
@@ -40,71 +56,74 @@ export class DbSeedService {
     }
 
     //to be refactored when organisation becomes DomainDriven
-    private static constructOrganisation(data: OrganisationFile): OrganisationDo<true> {
+    private async constructAndPersistOrganisation(data: OrganisationFile): Promise<OrganisationDo<true>> {
         const organisationDo: OrganisationDo<true> = new OrganisationDo<true>();
-        organisationDo.id = data.id;
-        organisationDo.administriertVon = data.administriertVon ?? undefined;
-        organisationDo.zugehoerigZu = data.zugehoerigZu ?? undefined;
+        let administriertVon: string | undefined = undefined;
+        let zugehoerigZu: string | undefined = undefined;
+
+        if (data.administriertVon != null) {
+            const adminstriertVonOrganisation: OrganisationDo<true> = this.getReferencedOrganisation(
+                data.administriertVon,
+            );
+            administriertVon = adminstriertVonOrganisation.id;
+        }
+        if (data.zugehoerigZu != null) {
+            const zugehoerigZuOrganisation: OrganisationDo<true> = this.getReferencedOrganisation(data.zugehoerigZu);
+            zugehoerigZu = zugehoerigZuOrganisation.id;
+        }
+        organisationDo.administriertVon = administriertVon ?? undefined;
+        organisationDo.zugehoerigZu = zugehoerigZu ?? undefined;
         organisationDo.kennung = data.kennung ?? undefined;
         organisationDo.name = data.name ?? undefined;
         organisationDo.namensergaenzung = data.namensergaenzung ?? undefined;
         organisationDo.kuerzel = data.kuerzel ?? undefined;
         organisationDo.typ = data.typ ?? undefined;
         organisationDo.traegerschaft = data.traegerschaft ?? undefined;
+
+        const persistedOrganisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
+        this.organisationMap.set(data.id, persistedOrganisation);
+
         return organisationDo;
     }
 
-    public readOrganisation(fileContentAsStr: string): OrganisationDo<true>[] {
+    public async seedOrganisation(fileContentAsStr: string): Promise<void> {
         const organisationFile: EntityFile<OrganisationFile> = JSON.parse(
             fileContentAsStr,
         ) as EntityFile<OrganisationFile>;
 
         const entities: OrganisationFile[] = plainToInstance(OrganisationFile, organisationFile.entities);
 
-        const organisations: OrganisationDo<true>[] = entities.map((organisationData: OrganisationFile) =>
-            DbSeedService.constructOrganisation(organisationData),
-        );
-
-        for (const organisation of organisations) {
-            this.organisationMap.set(organisation.id, organisation);
+        for (const organisation of entities) {
+            await this.constructAndPersistOrganisation(organisation);
         }
-
-        return organisations;
+        this.logger.info(`Insert ${entities.length} entities of type Organisation`);
     }
 
-    public readPerson(fileContentAsStr: string): PersonFile[] {
-        const entities: PersonFile[] = this.readEntityFromJSONFile<PersonFile>(
-            fileContentAsStr,
-            () => new PersonFile(),
-        );
-        for (const entity of entities) {
-            this.personMap.set(entity.id, entity);
+    public async seedRolle(fileContentAsStr: string): Promise<void> {
+        const rolleFile: EntityFile<RolleFile> = JSON.parse(fileContentAsStr) as EntityFile<RolleFile>;
+        const files: RolleFile[] = plainToInstance(RolleFile, rolleFile.entities);
+        for (const file of files) {
+            const persistedSSK: OrganisationDo<true> | undefined = this.organisationMap.get(
+                file.administeredBySchulstrukturknoten,
+            );
+            if (!persistedSSK)
+                throw new EntityNotFoundError('Organisation', file.administeredBySchulstrukturknoten.toString());
+
+            const rolle: Rolle<false> = this.rolleFactory.createNew(
+                file.name,
+                this.getReferencedOrganisation(file.administeredBySchulstrukturknoten).id,
+                file.rollenart,
+                file.merkmale,
+                file.systemrechte,
+                file.serviceProviderIds,
+            );
+
+            const persistedRolle: Rolle<true> | DomainError = await this.rolleRepo.save(rolle);
+            if (file.id != null) {
+                this.rolleMap.set(file.id, persistedRolle);
+            }
         }
-        return entities;
-    }
-
-    public readRolle(fileContentAsStr: string): Rolle<true>[] {
-        const { entities }: EntityFile<Rolle<true>> = JSON.parse(fileContentAsStr) as EntityFile<Rolle<true>>;
-
-        const rollen: Rolle<true>[] = entities.map((rolleData: Rolle<true>) =>
-            this.rolleFactory.construct(
-                rolleData.id,
-                new Date(),
-                new Date(),
-                rolleData.name,
-                rolleData.administeredBySchulstrukturknoten,
-                rolleData.rollenart,
-                rolleData.merkmale,
-                rolleData.systemrechte,
-                rolleData.serviceProviderIds,
-            ),
-        );
-
-        for (const rolle of rollen) {
-            this.rolleMap.set(rolle.id, rolle);
-        }
-
-        return rollen;
+        this.logger.info(`Insert ${files.length} entities of type Rolle`);
     }
 
     public readServiceProvider(fileContentAsStr: string): ServiceProvider<true>[] {
@@ -133,31 +152,83 @@ export class DbSeedService {
         return serviceProviders;
     }
 
-    public readPersonenkontext(fileContentAsStr: string): Personenkontext<true>[] {
-        const { entities }: EntityFile<Personenkontext<true>> = JSON.parse(fileContentAsStr) as EntityFile<
-            Personenkontext<true>
-        >;
-
-        const personenkontexte: Personenkontext<true>[] = entities.map((pkData: Personenkontext<true>) =>
-            Personenkontext.construct(
-                pkData.id,
-                new Date(),
-                new Date(),
-                pkData.personId,
-                pkData.organisationId,
-                pkData.rolleId,
-            ),
-        );
-        for (const personenkontext of personenkontexte) {
-            this.personenkontextMap.set(personenkontext.id, personenkontext);
+    public async seedPerson(fileContentAsStr: string): Promise<void> {
+        const personFile: EntityFile<PersonFile> = JSON.parse(fileContentAsStr) as EntityFile<PersonFile>;
+        const files: PersonFile[] = plainToInstance(PersonFile, personFile.entities);
+        for (const file of files) {
+            const creationParams: PersonCreationParams = {
+                familienname: file.familienname,
+                vorname: file.vorname,
+                referrer: file.referrer,
+                stammorganisation: file.stammorganisation,
+                initialenFamilienname: file.initialenFamilienname,
+                initialenVorname: file.initialenVorname,
+                rufname: file.rufname,
+                nameTitel: file.nameTitel,
+                nameAnrede: file.nameAnrede,
+                namePraefix: file.namePraefix,
+                nameSuffix: file.nameSuffix,
+                nameSortierindex: file.nameSortierindex,
+                geburtsdatum: file.geburtsdatum,
+                geburtsort: file.geburtsort,
+                geschlecht: file.geschlecht,
+                lokalisierung: file.lokalisierung,
+                vertrauensstufe: file.vertrauensstufe,
+                auskunftssperre: file.auskunftssperre,
+                username: file.username,
+                password: file.password,
+            };
+            const person: Person<false> | DomainError = await this.personFactory.createNew(creationParams);
+            if (person instanceof DomainError) {
+                throw person;
+            }
+            const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
+            if (persistedPerson instanceof Person && file.id != null) {
+                this.personMap.set(file.id, persistedPerson);
+            }
         }
-        return personenkontexte;
+        this.logger.info(`Insert ${files.length} entities of type Person`);
     }
 
-    /* Setting as RolleEntity is required, eg. RolleFile would not work, persisting would fail due to saving one RolleEntity and one RolleFile
-    for entitymanager it would not be the same entity */
-    public getRolle(id: string): Rolle<true> | undefined {
-        return this.rolleMap.get(id);
+    public async seedPersonenkontext(fileContentAsStr: string): Promise<Personenkontext<true>[]> {
+        const personenkontextFile: EntityFile<PersonenkontextFile> = JSON.parse(
+            fileContentAsStr,
+        ) as EntityFile<PersonenkontextFile>;
+
+        const files: PersonenkontextFile[] = plainToInstance(PersonenkontextFile, personenkontextFile.entities);
+        const persistedPersonenkontexte: Personenkontext<true>[] = [];
+        for (const file of files) {
+            const personenKontext: Personenkontext<false> = Personenkontext.construct(
+                undefined,
+                new Date(),
+                new Date(),
+                this.getReferencedPerson(file.personId).id,
+                this.getReferencedOrganisation(file.organisationId).id,
+                this.getReferencedRolle(file.rolleId).id,
+            );
+            persistedPersonenkontexte.push(await this.dBiamPersonenkontextRepo.save(personenKontext));
+            //at the moment no saving of Personenkontext in a map for referencing
+        }
+        this.logger.info(`Insert ${files.length} entities of type Personenkontext`);
+        return persistedPersonenkontexte;
+    }
+
+    private getReferencedPerson(seedingId: number): Person<true> {
+        const person: Person<true> | undefined = this.personMap.get(seedingId);
+        if (!person) throw new EntityNotFoundError('Person', seedingId.toString());
+        return person;
+    }
+
+    private getReferencedOrganisation(seedingId: number): OrganisationDo<true> {
+        const organisation: OrganisationDo<true> | undefined = this.organisationMap.get(seedingId);
+        if (!organisation) throw new EntityNotFoundError('Organisation', seedingId.toString());
+        return organisation;
+    }
+
+    private getReferencedRolle(seedingId: number): Rolle<true> {
+        const rolle: Rolle<true> | undefined = this.rolleMap.get(seedingId);
+        if (!rolle) throw new EntityNotFoundError('Rolle', seedingId.toString());
+        return rolle;
     }
 
     private readEntityFromJSONFile<T>(fileContentAsStr: string, constructor: ConstructorCall): T[] {
@@ -173,6 +244,6 @@ export class DbSeedService {
     }
 
     public getEntityFileNames(directory: string): string[] {
-        return fs.readdirSync(`./sql/${directory}`).filter((fileName: string) => fileName.endsWith('.json'));
+        return fs.readdirSync(`./seeding/${directory}`).filter((fileName: string) => fileName.endsWith('.json'));
     }
 }

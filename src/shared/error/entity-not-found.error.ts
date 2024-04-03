@@ -6,6 +6,6 @@ export class EntityNotFoundError extends DomainError {
         id: string = 'ID',
         details?: unknown[] | Record<string, unknown>,
     ) {
-        super(`requested ${entityName} with the following ${id} was not found`, 'ENTITY_NOT_FOUND', details);
+        super(`requested ${entityName} with the following ID ${id} was not found`, 'ENTITY_NOT_FOUND', details);
     }
 }
