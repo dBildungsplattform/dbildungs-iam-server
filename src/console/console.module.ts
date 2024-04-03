@@ -16,12 +16,17 @@ import { UsernameGeneratorService } from '../modules/person/domain/username-gene
 import { DbSeedMapper } from './dbseed/db-seed-mapper.js';
 import { DbSeedService } from './dbseed/db-seed.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
+import { PersonRepository } from '../modules/person/persistence/person.repository.js';
+import { PersonFactory } from '../modules/person/domain/person.factory.js';
+import { OrganisationModule } from '../modules/organisation/organisation.module.js';
+import { RolleRepo } from '../modules/rolle/repo/rolle.repo.js';
 import { RolleFactory } from '../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../modules/service-provider/repo/service-provider.repo.js';
-import { RolleSeedingRepo } from './dbseed/repo/rolle-seeding.repo.js';
+import { DBiamPersonenkontextRepo } from '../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 @Module({
     imports: [
+        OrganisationModule,
         KeycloakConfigModule,
         KeycloakAdministrationModule,
         LoggerModule.register(ConsoleModule.name),
@@ -42,12 +47,12 @@ import { RolleSeedingRepo } from './dbseed/repo/rolle-seeding.repo.js';
                     password: config.getOrThrow<DbConfig>('DB').SECRET,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
-                    allowGlobalContext: true,
                     driverOptions: {
                         connection: {
                             ssl: config.getOrThrow<DbConfig>('DB').USE_SSL,
                         },
                     },
+                    allowGlobalContext: true,
                     connect: false,
                 });
             },
@@ -61,9 +66,13 @@ import { RolleSeedingRepo } from './dbseed/repo/rolle-seeding.repo.js';
         UsernameGeneratorService,
         DbSeedMapper,
         DbSeedService,
+        PersonRepository,
+        PersonFactory,
+        PersonRepository,
+        DBiamPersonenkontextRepo,
+        RolleRepo,
         RolleFactory,
         ServiceProviderRepo,
-        RolleSeedingRepo,
     ],
 })
 export class ConsoleModule {}
