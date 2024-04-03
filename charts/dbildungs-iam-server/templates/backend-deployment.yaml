@@ -26,7 +26,7 @@ spec:
           imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always"}}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           command: ["node", "dist/src/console/main.js", "db", "init"]
-          env: 
+          env:
             {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
             {{- if .Values.backend.extraEnvVars }}
             {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
@@ -34,9 +34,9 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
-          volumeMounts: 
+          volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
-            - mountPath: /app/sql/dev
+            - mountPath: /app/seeding/dev
               name: seeding-volume
               readOnly: true
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
@@ -51,7 +51,7 @@ spec:
           env: {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
-            - mountPath: /app/sql/dev
+            - mountPath: /app/seeding/dev
               name: seeding-volume
               readOnly: true
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
@@ -65,7 +65,7 @@ spec:
             - name: web
               containerPort: {{ .Values.backend.containerPorts.http }}
               protocol: TCP
-          env: 
+          env:
             {{- include "dbildungs-iam-server-backend-envs" . | nindent 12 }}
             {{- if .Values.backend.extraEnvVars }}
             {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
@@ -73,7 +73,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
-          volumeMounts: 
+          volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
             {{- with .Values.backend.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
