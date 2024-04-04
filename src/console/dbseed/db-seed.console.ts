@@ -11,7 +11,6 @@ import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { DataProviderFile } from './file/data-provider-file.js';
-
 export interface SeedFile {
     entityName: string;
 }

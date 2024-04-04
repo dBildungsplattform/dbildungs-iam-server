@@ -2,24 +2,6 @@
     "entityName": "Person",
     "entities": [
         {
-            "id": 9,
-            "username": "autotester",
-            "password": "autotester",
-            "referrer": "autotester",
-            "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
-            "stammorganisation": null,
-            "vorname": "Anton",
-            "familienname": "AutoTester",
-            "geburt": {
-                "datum": null,
-                "geburtsort": "Hamburg"
-            },
-            "geschlecht": "m",
-            "loaklisierung": null,
-            "vertrauensstufe": null,
-            "auskunftssperre": null
-        },
-        {
             "id": 1,
             "username": "test",
             "password": "test",
@@ -28,9 +10,20 @@
         },
         {
             "id": 2,
+            "username": "ssuperadmin",
             "password": "test",
+            "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
+            "stammorganisation": null,
             "vorname": "Susi",
-            "familienname": "Superadmin"
+            "familienname": "Superadmin",
+            "geburt": {
+                "datum": null,
+                "geburtsort": "Dimension C-137"
+            },
+            "geschlecht": "w",
+            "loaklisierung": null,
+            "vertrauensstufe": null,
+            "auskunftssperre": null
         },
         {
             "id": 3,
@@ -67,6 +60,24 @@
             "password": "test",
             "vorname": "Willi",
             "familienname": "Webtor"
+        },
+        {
+            "id": 9,
+            "username": "autotester",
+            "password": "autotester",
+            "referrer": "autotester",
+            "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
+            "stammorganisation": null,
+            "vorname": "Anton",
+            "familienname": "AutoTester",
+            "geburt": {
+                "datum": null,
+                "geburtsort": "Hamburg"
+            },
+            "geschlecht": "m",
+            "loaklisierung": null,
+            "vertrauensstufe": null,
+            "auskunftssperre": null
         }
     ]
 }

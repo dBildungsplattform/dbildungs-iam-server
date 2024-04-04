@@ -3,72 +3,87 @@
     "entities": [
         {
             "id": 0,
-            "kennung": "Land",
-            "name": "Land Schleswig Holstein",
+            "name": "Wurzel Land Schleswig Holstein",
             "kuerzel": "Root",
-            "typ": "TRAEGER",
+            "typ": "ROOT",
             "administriertVon": null,
             "zugehoerigZu": null
         },
         {
             "id": 1,
-            "kennung": "0703754",
-            "name": "Amalie-Sieveking-Schule",
-            "namensergaenzung": "Keine",
-            "kuerzel": "O1",
-            "typ": "SCHULE",
+            "name": "Öffentliche Schulen Land Schleswig Holstein",
+            "kuerzel": "Öffentl. Schulen",
+            "typ": "LAND",
             "administriertVon": 0,
             "zugehoerigZu": 0
         },
         {
             "id": 2,
-            "kennung": "0702948",
-            "name": "Carl-Orff-Schule",
-            "namensergaenzung": "Keine",
-            "kuerzel": "O2",
-            "typ": "SCHULE",
+            "name": "Ersatzschulen Land Schleswig Holstein",
+            "kuerzel": "Ersatzschulen",
+            "typ": "LAND",
             "administriertVon": 0,
             "zugehoerigZu": 0
         },
         {
             "id": 3,
-            "kennung": "0705755",
-            "name": "Eric-Kandel-Gymnasium",
+            "kennung": "0703754",
+            "name": "Amalie-Sieveking-Schule",
             "namensergaenzung": "Keine",
-            "kuerzel": "O3",
+            "kuerzel": "A-Sieveking-",
             "typ": "SCHULE",
-            "administriertVon": 0,
-            "zugehoerigZu": 0
+            "administriertVon": 1,
+            "zugehoerigZu": 1
         },
         {
             "id": 4,
+            "kennung": "0702948",
+            "name": "Carl-Orff-Schule",
+            "namensergaenzung": "Keine",
+            "kuerzel": "C-Orff-Schule",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1
+        },
+        {
+            "id": 5,
+            "kennung": "0705755",
+            "name": "Eric-Kandel-Gymnasium",
+            "namensergaenzung": "Keine",
+            "kuerzel": "E-Kandel-Gymn",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1
+        },
+        {
+            "id": 6,
             "kennung": "0705751",
             "name": "Emil-von-Behring-Gymnasium\t",
             "namensergaenzung": "Keine",
             "kuerzel": "O4",
             "typ": "SCHULE",
-            "administriertVon": 0,
-            "zugehoerigZu": 0
+            "administriertVon": 1,
+            "zugehoerigZu": 1
         },
         {
-            "id": 5,
+            "id": 7,
             "kennung": "0707712",
             "name": "Friedrich-Junge-Schule, Gemeinschaftsschule des Schulverbandes Großhansdorf in Großhansdorf",
             "namensergaenzung": "Keine",
             "kuerzel": "O5",
             "typ": "SCHULE",
-            "administriertVon": 0,
-            "zugehoerigZu": 0
+            "administriertVon": 1,
+            "zugehoerigZu": 1
         },
         {
-            "id": 6,
+            "id": 8,
             "kennung": "0702960",
             "name": "Grundschule Hoisdorf",
             "namensergaenzung": "Keine",
             "kuerzel": "O6",
             "typ": "SCHULE",
-            "administriertVon": 0,
-            "zugehoerigZu": 0
+            "administriertVon": 1,
+            "zugehoerigZu": 1
         }
     ]
 }

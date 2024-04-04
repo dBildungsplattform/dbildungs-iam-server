@@ -16,10 +16,15 @@ import { UsernameGeneratorService } from '../modules/person/domain/username-gene
 import { DbSeedMapper } from './dbseed/db-seed-mapper.js';
 import { DbSeedService } from './dbseed/db-seed.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
+import { PersonRepository } from '../modules/person/persistence/person.repository.js';
+import { PersonFactory } from '../modules/person/domain/person.factory.js';
 import { OrganisationModule } from '../modules/organisation/organisation.module.js';
+import { RolleRepo } from '../modules/rolle/repo/rolle.repo.js';
+import { RolleFactory } from '../modules/rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../modules/service-provider/repo/service-provider.repo.js';
 import { DBiamPersonenkontextRepo } from '../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { ServiceProviderModule } from '../modules/service-provider/service-provider.module.js';
 import { RolleModule } from '../modules/rolle/rolle.module.js';
+import { ServiceProviderModule } from '../modules/service-provider/service-provider.module.js';
 import { PersonModule } from '../modules/person/person.module.js';
 
 @Module({
@@ -67,7 +72,13 @@ import { PersonModule } from '../modules/person/person.module.js';
         UsernameGeneratorService,
         DbSeedMapper,
         DbSeedService,
+        PersonRepository,
+        PersonFactory,
+        PersonRepository,
         DBiamPersonenkontextRepo,
+        RolleRepo,
+        RolleFactory,
+        ServiceProviderRepo,
     ],
 })
 export class ConsoleModule {}

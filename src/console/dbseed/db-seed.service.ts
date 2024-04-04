@@ -60,24 +60,19 @@ export class DbSeedService {
     }
 
     //to be refactored when organisation becomes DomainDriven
-    private async constructOrganisation(data: OrganisationFile): Promise<OrganisationDo<true>> {
+    private async constructAndPersistOrganisation(data: OrganisationFile): Promise<OrganisationDo<true>> {
         const organisationDo: OrganisationDo<true> = new OrganisationDo<true>();
         let administriertVon: string | undefined = undefined;
         let zugehoerigZu: string | undefined = undefined;
 
         if (data.administriertVon != null) {
-            const adminstriertVonOrganisation: OrganisationDo<true> | undefined = this.organisationMap.get(
+            const adminstriertVonOrganisation: OrganisationDo<true> = this.getReferencedOrganisation(
                 data.administriertVon,
             );
-            if (!adminstriertVonOrganisation)
-                throw new EntityNotFoundError('Organisation', data.administriertVon.toString());
             administriertVon = adminstriertVonOrganisation.id;
         }
         if (data.zugehoerigZu != null) {
-            const zugehoerigZuOrganisation: OrganisationDo<true> | undefined = this.organisationMap.get(
-                data.zugehoerigZu,
-            );
-            if (!zugehoerigZuOrganisation) throw new EntityNotFoundError('Organisation', data.zugehoerigZu.toString());
+            const zugehoerigZuOrganisation: OrganisationDo<true> = this.getReferencedOrganisation(data.zugehoerigZu);
             zugehoerigZu = zugehoerigZuOrganisation.id;
         }
         organisationDo.administriertVon = administriertVon ?? undefined;
@@ -103,7 +98,7 @@ export class DbSeedService {
         const entities: OrganisationFile[] = plainToInstance(OrganisationFile, organisationFile.entities);
 
         for (const organisation of entities) {
-            await this.constructOrganisation(organisation);
+            await this.constructAndPersistOrganisation(organisation);
         }
         this.logger.info(`Insert ${entities.length} entities of type Organisation`);
     }
