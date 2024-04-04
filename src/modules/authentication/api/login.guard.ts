@@ -5,7 +5,7 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 @Injectable()
 export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
-    constructor(private logger: ClassLogger) {
+    public constructor(private logger: ClassLogger) {
         super();
     }
 

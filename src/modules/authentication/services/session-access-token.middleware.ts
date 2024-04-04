@@ -13,7 +13,7 @@ import { PassportUser } from '../types/user.js';
  */
 
 export function isPassportUser(obj: PassportUser | undefined): obj is PassportUser {
-    return obj !== undefined && (obj as PassportUser).userinfo !== undefined;
+    return obj !== undefined && obj.userinfo !== undefined;
 }
 
 @Injectable()
@@ -25,7 +25,7 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
     ) {}
 
     public async use(req: Request, _res: Response, next: (error?: unknown) => void): Promise<void> {
-        let accessToken: string | undefined = req.passportUser?.access_token;
+        const accessToken: string | undefined = req.passportUser?.access_token;
 
         const refreshToken: string | undefined = req.passportUser?.refresh_token;
         if (accessToken) {

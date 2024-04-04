@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { ExecutionContext } from '@nestjs/common';
 import { AuthGuard, IAuthGuard } from '@nestjs/passport';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -7,8 +7,8 @@ import { Request } from 'express';
 
 import { LoginGuard } from './login.guard.js';
 
-const canActivateSpy: jest.SpyInstance = jest.spyOn(AuthGuard('oidc').prototype as IAuthGuard, 'canActivate');
-const logInSpy: jest.SpyInstance = jest.spyOn(AuthGuard('oidc').prototype as IAuthGuard, 'logIn');
+const canActivateSpy: jest.SpyInstance = jest.spyOn(AuthGuard(['jwt', 'oidc']).prototype as IAuthGuard, 'canActivate');
+const logInSpy: jest.SpyInstance = jest.spyOn(AuthGuard(['jwt', 'oidc']).prototype as IAuthGuard, 'logIn');
 
 describe('LoginGuard', () => {
     let module: TestingModule;
@@ -35,6 +35,7 @@ describe('LoginGuard', () => {
             canActivateSpy.mockResolvedValueOnce(true);
             logInSpy.mockResolvedValueOnce(undefined);
             const contextMock: DeepMocked<ExecutionContext> = createMock();
+            contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
 
             await sut.canActivate(contextMock);
 
@@ -45,6 +46,7 @@ describe('LoginGuard', () => {
             canActivateSpy.mockResolvedValueOnce(true);
             logInSpy.mockResolvedValueOnce(undefined);
             const contextMock: DeepMocked<ExecutionContext> = createMock();
+            contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
 
             await sut.canActivate(contextMock);
 

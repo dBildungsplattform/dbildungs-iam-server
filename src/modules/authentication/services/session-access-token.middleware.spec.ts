@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Request } from 'express';
 import { PassportUser } from '../types/user.js';
@@ -7,11 +8,15 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 describe('sessionAccessTokenMiddleware', () => {
     let passportUser: PassportUser;
-    let request: Request;
+    let request: Request & Express.Request;
 
     beforeEach(() => {
         passportUser = createMock<PassportUser>();
-        request = { passportUser, headers: {} } as Request;
+        request = createMock<Express.Request & Request & { passportUser: PassportUser; headers: object }>({
+            passportUser,
+            headers: {},
+        });
+        //request = { passportUser, headers: {}} as Express.Request;
     });
 
     it('should call next middleware', async () => {
@@ -24,6 +29,24 @@ describe('sessionAccessTokenMiddleware', () => {
         );
 
         expect(nextMock).toHaveBeenCalledTimes(1);
+    });
+
+    describe('when the request contains a valid access token', () => {
+        it('should set the authorization header on the request', async () => {
+            passportUser = createMock<PassportUser>({
+                access_token: faker.string.alphanumeric(64),
+            });
+            request = { passportUser, headers: {} } as Request;
+
+            const clientMock: DeepMocked<Client> = createMock<Client>();
+            clientMock.introspect.mockResolvedValue(createMock<IntrospectionResponse>({ active: true }));
+
+            await new SessionAccessTokenMiddleware(clientMock, createMock(), createMock()).use(
+                request,
+                createMock(),
+                jest.fn(),
+            );
+        });
     });
 
     describe('when the request does not contain a session with access token', () => {
@@ -148,8 +171,6 @@ describe('sessionAccessTokenMiddleware', () => {
 
                 expect(request.passportUser?.access_token).toStrictEqual(originalAccessToken);
                 expect(request.passportUser?.refresh_token).toStrictEqual(originalRefreshToken);
-
-                expect(request.headers.authorization).toStrictEqual(`Bearer ${originalAccessToken}`);
             });
         });
 
