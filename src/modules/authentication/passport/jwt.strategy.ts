@@ -16,7 +16,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         } satisfies StrategyOptionsWithRequest);
     }
 
-    public validate(_request: Request, _jwtPayload: string): Promise<{ access_token: string }> {
+    public validate(_request: Request, _jwtPayload: string): { access_token: string } {
         const accessToken: string | null = ExtractJwt.fromAuthHeaderAsBearerToken()(_request);
         return { access_token: accessToken || '' };
     }
