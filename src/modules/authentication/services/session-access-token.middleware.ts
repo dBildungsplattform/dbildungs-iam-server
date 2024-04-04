@@ -3,16 +3,25 @@ import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
 import { OIDC_CLIENT } from './oidc-client.service.js';
 import { Client, TokenSet } from 'openid-client';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { PersonPermissions } from '../domain/person-permissions.js';
+import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
+import { PassportUser } from '../types/user.js';
 
 /**
- * Copies the access token from a session, if it exists
+ * Checks the Access Token and refreshes it if need be.
+ * If everything is expired user is logged out
  */
+
+export function isPassportUser(obj: PassportUser | undefined): obj is PassportUser {
+    return obj !== undefined && (obj as PassportUser).userinfo !== undefined;
+}
 
 @Injectable()
 export class SessionAccessTokenMiddleware implements NestMiddleware {
     public constructor(
         @Inject(OIDC_CLIENT) private client: Client,
         private logger: ClassLogger,
+        private personPermissionsRepo: PersonPermissionsRepo,
     ) {}
 
     public async use(req: Request, _res: Response, next: (error?: unknown) => void): Promise<void> {
@@ -30,8 +39,6 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                             req.passportUser.access_token = tokens.access_token;
                             req.passportUser.id_token = tokens.id_token;
                             req.passportUser.userinfo = await this.client.userinfo(tokens);
-
-                            accessToken = req.passportUser.access_token;
                         }
                     } catch (e: unknown) {
                         if (e instanceof Error) {
@@ -40,11 +47,20 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                             this.logger.warning(JSON.stringify(e));
                         }
                     }
+                } else {
+                    req.logout((err: unknown) => {
+                        if (err) {
+                            this.logger.error(JSON.stringify(err));
+                        }
+                    });
                 }
-
-            req.headers.authorization = `Bearer ${accessToken}`;
         }
-
+        if (isPassportUser(req.passportUser)) {
+            const subjectId: string = req.passportUser.userinfo.sub;
+            req.passportUser.personPermissions = async (): Promise<PersonPermissions> => {
+                return this.personPermissionsRepo.loadPersonPermissions(subjectId);
+            };
+        }
         next();
     }
 }
