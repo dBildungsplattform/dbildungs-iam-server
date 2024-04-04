@@ -10,16 +10,17 @@ import { PersonPermissionsRepo } from './domain/person-permission.repo.js';
 import { PersonModule } from '../person/person.module.js';
 import { SessionAccessTokenMiddleware } from './services/session-access-token.middleware.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
+import {JwtStrategy} from "./passport/jwt.strategy.js";
 
 @Module({
     imports: [
         HttpModule,
         LoggerModule.register(AuthenticationApiModule.name),
-        PassportModule.register({ session: true, defaultStrategy: 'oidc', keepSessionInfo: true }),
+        PassportModule.register({ session: true, defaultStrategy: ['jwt', 'oidc'], keepSessionInfo: true }),
         PersonModule,
         PersonenKontextModule,
     ],
-    providers: [OpenIdConnectStrategy, SessionSerializer, OIDCClientProvider, PersonPermissionsRepo, SessionAccessTokenMiddleware],
+    providers: [OpenIdConnectStrategy, JwtStrategy, SessionSerializer, OIDCClientProvider, PersonPermissionsRepo, SessionAccessTokenMiddleware],
     controllers: [AuthenticationController],
     exports: [OIDCClientProvider, PersonPermissionsRepo],
 })
