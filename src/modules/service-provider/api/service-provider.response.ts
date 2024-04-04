@@ -1,4 +1,3 @@
-/* eslint-disable max-classes-per-file */
 import { ApiProperty } from '@nestjs/swagger';
 
 import { ServiceProviderKategorie, ServiceProviderTarget } from '../domain/service-provider.enum.js';
