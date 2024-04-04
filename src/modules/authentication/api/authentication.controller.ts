@@ -22,9 +22,10 @@ import { RedirectQueryParams } from './redirect.query.params.js';
 import { UserinfoResponse } from './userinfo.response.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonPermissions } from '../domain/person-permissions.js';
-import { AuthenticatedUser, Public } from 'nest-keycloak-connect';
+import { AuthenticatedUser } from 'nest-keycloak-connect';
 import { User } from '../types/user.js';
 import { Permissions } from './permissions.decorator.js';
+import {Public} from "./public.decorator.js";
 
 @ApiTags('auth')
 @Controller({ path: 'auth' })
@@ -112,8 +113,8 @@ export class AuthenticationController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<UserinfoResponse> {
         const roleIds: string[] = await permissions.getRoleIds();
-        this.logger.info("Roles: " + roleIds.toString());
-        this.logger.info("User: " + JSON.stringify(permissions.person));
+        this.logger.info('Roles: ' + roleIds.toString());
+        this.logger.info('User: ' + JSON.stringify(permissions.person));
         return new UserinfoResponse(permissions);
     }
 }

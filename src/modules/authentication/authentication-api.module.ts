@@ -10,7 +10,7 @@ import { PersonPermissionsRepo } from './domain/person-permission.repo.js';
 import { PersonModule } from '../person/person.module.js';
 import { SessionAccessTokenMiddleware } from './services/session-access-token.middleware.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
-import {JwtStrategy} from "./passport/jwt.strategy.js";
+import { JwtStrategy } from './passport/jwt.strategy.js';
 
 @Module({
     imports: [
@@ -20,7 +20,14 @@ import {JwtStrategy} from "./passport/jwt.strategy.js";
         PersonModule,
         PersonenKontextModule,
     ],
-    providers: [OpenIdConnectStrategy, JwtStrategy, SessionSerializer, OIDCClientProvider, PersonPermissionsRepo, SessionAccessTokenMiddleware],
+    providers: [
+        OpenIdConnectStrategy,
+        JwtStrategy,
+        SessionSerializer,
+        OIDCClientProvider,
+        PersonPermissionsRepo,
+        SessionAccessTokenMiddleware,
+    ],
     controllers: [AuthenticationController],
     exports: [OIDCClientProvider, PersonPermissionsRepo],
 })

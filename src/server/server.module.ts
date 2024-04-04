@@ -10,7 +10,7 @@ import { mappingErrorHandler } from '../shared/error/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
-import { AuthGuard, KeycloakConnectModule, RoleGuard } from 'nest-keycloak-connect';
+import { KeycloakConnectModule, RoleGuard } from 'nest-keycloak-connect';
 import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from '../modules/health/health.module.js';
 import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
@@ -27,6 +27,7 @@ import RedisStore from 'connect-redis';
 import session from 'express-session';
 import passport from 'passport';
 import { ClassLogger } from '../core/logging/class-logger.js';
+import { AccessGuard } from '../modules/authentication/api/access.guard.js';
 
 @Module({
     imports: [
@@ -86,7 +87,7 @@ import { ClassLogger } from '../core/logging/class-logger.js';
     providers: [
         {
             provide: APP_GUARD,
-            useClass: AuthGuard,
+            useClass: AccessGuard,
         },
         {
             provide: APP_GUARD,
