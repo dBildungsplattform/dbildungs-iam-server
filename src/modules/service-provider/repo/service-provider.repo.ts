@@ -19,6 +19,7 @@ export function mapAggregateToData(
         providedOnSchulstrukturknoten: serviceProvider.providedOnSchulstrukturknoten,
         logo: serviceProvider.logo,
         logoMimeType: serviceProvider.logoMimeType,
+        target: serviceProvider.target,
     };
 }
 
@@ -28,6 +29,7 @@ function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<bo
         entity.createdAt,
         entity.updatedAt,
         entity.name,
+        entity.target,
         entity.url,
         entity.kategorie,
         entity.providedOnSchulstrukturknoten,

@@ -3,6 +3,7 @@
     "entities": [
         {
             "name": "ItsLearning",
+            "target": "URL",
             "url": "https://itslearning.com/de",
             "kategorie": "UNTERRICHT",
             "logoMimeType": "image/png",
@@ -11,6 +12,7 @@
         },
         {
             "name": "E-Mail",
+            "target": "URL",
             "url": "https://de.wikipedia.org/wiki/E-Mail",
             "kategorie": "EMAIL",
             "logoMimeType": "image/png",
@@ -33,6 +35,14 @@
             "name": "Schulisches Angebot",
             "url": "https://de.wikipedia.org/wiki/E-Mail",
             "kategorie": "ANGEBOTE",
+            "providedOnSchulstrukturknoten": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
+        },
+        {
+            "name": "Schulportal-Administration",
+            "target": "SCHULPORTAL_ADMINISTRATION",
+            "kategorie": "VERWALTUNG",
+            "logoMimeType": "image/svg+xml",
+            "logoBase64": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI3LjkuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IldvcnQtX3gyRl9CaWxkbWFya2VfU2NodWxwb3J0YWxfU0hfUkdCIgoJIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMTE5LjA2IDExOS4wNiIKCSBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxMTkuMDYgMTE5LjA2OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6I0ZGRkZGRjt9Cgkuc3Qxe2ZpbGw6dXJsKCNTVkdJRF8xXyk7fQo8L3N0eWxlPgo8Zz4KCTxjaXJjbGUgY2xhc3M9InN0MCIgY3g9IjU5LjcxIiBjeT0iNTkuNTMiIHI9IjUzLjc4Ii8+Cgk8bGluZWFyR3JhZGllbnQgaWQ9IlNWR0lEXzFfIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9Ii00NC41NTc2IiB5MT0iNjUuNDk3NCIgeDI9IjkzLjQ5MzIiIHkyPSI2NS40OTc0Ij4KCQk8c3RvcCAgb2Zmc2V0PSIwLjUxMTYiIHN0eWxlPSJzdG9wLWNvbG9yOiMxRUFFOUMiLz4KCQk8c3RvcCAgb2Zmc2V0PSIwLjY1NzciIHN0eWxlPSJzdG9wLWNvbG9yOiMxRUFFOUMiLz4KCQk8c3RvcCAgb2Zmc2V0PSIwLjY2MzkiIHN0eWxlPSJzdG9wLWNvbG9yOiMxRUFFOUMiLz4KCQk8c3RvcCAgb2Zmc2V0PSIxIiBzdHlsZT0ic3RvcC1jb2xvcjojMDAxRTQ5Ii8+CgkJPHN0b3AgIG9mZnNldD0iMSIgc3R5bGU9InN0b3AtY29sb3I6IzAwMUU0OSIvPgoJCTxzdG9wICBvZmZzZXQ9IjEiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMDMwNjQiLz4KCQk8c3RvcCAgb2Zmc2V0PSIxIiBzdHlsZT0ic3RvcC1jb2xvcjojMDAzMDY0Ii8+Cgk8L2xpbmVhckdyYWRpZW50PgoJPHBhdGggY2xhc3M9InN0MSIgZD0iTTU4LjksMTA3LjUxVjYxLjY1bC0xNS4zNC0xMi4zaDMwLjY5Vjg5LjVjMTEuNTItNS42NywxOS40Ny0xNy41NCwxOS40Ny0zMS4yMgoJCWMwLTE5LjE4LTE1LjYtMzQuNzgtMzQuNzgtMzQuNzhzLTM0Ljc4LDE1LjYtMzQuNzgsMzQuNzhjMCwxMy42OSw3Ljg4LDI1LjM3LDE5LjQsMzEuMDUiLz4KPC9nPgo8L3N2Zz4=",
             "providedOnSchulstrukturknoten": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
         }
     ]

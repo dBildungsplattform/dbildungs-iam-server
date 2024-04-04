@@ -1,4 +1,4 @@
-import { ServiceProviderKategorie } from './service-provider.enum.js';
+import { ServiceProviderKategorie, ServiceProviderTarget } from './service-provider.enum.js';
 
 export class ServiceProvider<WasPersisted extends boolean> {
     private constructor(
@@ -6,7 +6,8 @@ export class ServiceProvider<WasPersisted extends boolean> {
         public createdAt: Persisted<Date, WasPersisted>,
         public updatedAt: Persisted<Date, WasPersisted>,
         public name: string,
-        public url: string,
+        public target: ServiceProviderTarget,
+        public url: string | undefined,
         public kategorie: ServiceProviderKategorie,
         public providedOnSchulstrukturknoten: string,
         public logo: Buffer | undefined,
@@ -18,7 +19,8 @@ export class ServiceProvider<WasPersisted extends boolean> {
         createdAt: Date,
         updatedAt: Date,
         name: string,
-        url: string,
+        target: ServiceProviderTarget,
+        url: string | undefined,
         kategorie: ServiceProviderKategorie,
         providedOnSchulstrukturknoten: string,
         logo: Buffer | undefined,
@@ -29,6 +31,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
             createdAt,
             updatedAt,
             name,
+            target,
             url,
             kategorie,
             providedOnSchulstrukturknoten,

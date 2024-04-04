@@ -10,7 +10,10 @@ import {
 import fs from 'fs';
 import { DataProviderFile } from './file/data-provider-file.js';
 import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
-import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
+import {
+    ServiceProviderKategorie,
+    ServiceProviderTarget,
+} from '../../modules/service-provider/domain/service-provider.enum.js';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
@@ -275,6 +278,7 @@ describe('DbSeedService', () => {
                 expect(serviceprovider[0]).toEqual({
                     id: 'ca0e17c5-8e48-403b-af92-28eff21c64bb',
                     name: 'Provider With Logo',
+                    target: ServiceProviderTarget.URL,
                     url: 'https://example.com/',
                     kategorie: ServiceProviderKategorie.UNTERRICHT,
                     logoMimeType: 'image/png',
@@ -286,6 +290,7 @@ describe('DbSeedService', () => {
                 expect(serviceprovider[1]).toEqual({
                     id: 'd96ddc00-a8ed-4d4c-b498-24958fb64604',
                     name: 'Provider Without Logo',
+                    target: ServiceProviderTarget.URL,
                     url: 'https://example.com/',
                     kategorie: ServiceProviderKategorie.UNTERRICHT,
                     logo: undefined,

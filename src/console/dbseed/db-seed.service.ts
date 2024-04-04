@@ -134,11 +134,12 @@ export class DbSeedService {
         const entities: ServiceProviderFile[] = plainToInstance(ServiceProviderFile, serviceProviderFile.entities);
 
         const serviceProviders: ServiceProvider<true>[] = entities.map((data: ServiceProviderFile) =>
-            ServiceProvider.construct(
+            ServiceProvider.construct<true>(
                 data.id,
                 new Date(),
                 new Date(),
                 data.name,
+                data.target,
                 data.url,
                 data.kategorie,
                 data.providedOnSchulstrukturknoten,
