@@ -21,18 +21,21 @@
         },
         {
             "name": "School-SH",
+            "target": "URL",
             "url": "https://de.wikipedia.org/wiki/E-Mail",
             "kategorie": "VERWALTUNG",
             "providedOnSchulstrukturknoten": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
         },
         {
             "name": "Schulrecht A-Z",
+            "target": "URL",
             "url": "https://de.wikipedia.org/wiki/E-Mail",
             "kategorie": "HINWEISE",
             "providedOnSchulstrukturknoten": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
         },
         {
             "name": "Schulisches Angebot",
+            "target": "URL",
             "url": "https://de.wikipedia.org/wiki/E-Mail",
             "kategorie": "ANGEBOTE",
             "providedOnSchulstrukturknoten": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
