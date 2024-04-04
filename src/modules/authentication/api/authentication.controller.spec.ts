@@ -211,7 +211,17 @@ describe('AuthenticationController', () => {
             const personPermissions: PersonPermissions = new PersonPermissions(dbiamPersonenkontextRepoMock, person);
             personPermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(personPermissions);
 
-            const result: UserinfoResponse = await authController.info(user);
+            const result: UserinfoResponse = await authController.info(
+                user,
+                createMock<PersonPermissions>({
+                    get person(): Person<true> {
+                        return createMock<Person<true>>({
+                            geburtsdatum: createMock(),
+                            updatedAt: new Date(Date.now()),
+                        });
+                    },
+                }),
+            );
 
             expect(result).toBeInstanceOf(UserinfoResponse);
         });
