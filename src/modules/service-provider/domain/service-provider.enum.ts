@@ -10,4 +10,3 @@ export enum ServiceProviderTarget {
     URL = 'URL',
     SCHULPORTAL_ADMINISTRATION = 'SCHULPORTAL_ADMINISTRATION',
 }
-
