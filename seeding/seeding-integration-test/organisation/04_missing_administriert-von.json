@@ -2,13 +2,14 @@
     "entityName": "Organisation",
     "entities": [
         {
-            "id": "cb3e7c7f-c8fb-4083-acbf-2484efb19b54",
+            "id": 1,
             "kennung": "Organisation1",
             "name": "Schule1",
             "namensergaenzung": "Keine",
             "kuerzel": "01",
             "typ": "SCHULE",
-            "traegerschaft": "05"
+            "traegerschaft": "05",
+            "administriertVon": 4
         }
     ]
 }
