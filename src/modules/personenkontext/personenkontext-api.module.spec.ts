@@ -11,12 +11,30 @@ import { PersonenkontextController } from './api/personenkontext.controller.js';
 import { PersonenkontextService } from './domain/personenkontext.service.js';
 import { PersonenkontextRepo } from './persistence/personenkontext.repo.js';
 import { PersonRepo } from '../person/persistence/person.repo.js';
+import { RolleRepo } from '../rolle/repo/rolle.repo.js';
+import { createMock } from '@golevelup/ts-jest';
+import { OrganisationRepo } from '../organisation/persistence/organisation.repo.js';
+import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
 
 describe('PersonKontextApiModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            providers: [
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
+                {
+                    provide: OrganisationRepo,
+                    useValue: createMock<OrganisationRepo>(),
+                },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                },
+            ],
             imports: [
                 ConfigTestModule,
                 DatabaseTestModule.forRoot(),

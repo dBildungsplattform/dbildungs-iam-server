@@ -1,10 +1,8 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
-import { EntityCouldNotBeDeleted } from '../../../shared/error/entity-could-not-be-deleted.error.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
+import { EntityAlreadyExistsError, EntityNotFoundError } from '../../../shared/error/index.js';
 
 export class Rolle<WasPersisted extends boolean> {
     private constructor(
@@ -100,14 +98,14 @@ export class Rolle<WasPersisted extends boolean> {
         }
 
         if (this.serviceProviderIds.includes(serviceProviderId)) {
-            return new EntityCouldNotBeCreated('Rolle ServiceProvider Verknüpfung');
+            return new EntityAlreadyExistsError('Rolle ServiceProvider Verknüpfung');
         }
         this.serviceProviderIds.push(serviceProviderId);
     }
 
     public detatchServiceProvider(serviceProviderId: string): void | DomainError {
         if (!this.serviceProviderIds.includes(serviceProviderId)) {
-            return new EntityCouldNotBeDeleted('Rolle ServiceProvider Verknüpfung', serviceProviderId);
+            return new EntityNotFoundError('Rolle ServiceProvider Verknüpfung', serviceProviderId);
         }
         this.serviceProviderIds = this.serviceProviderIds.filter((id: string) => id !== serviceProviderId);
     }
