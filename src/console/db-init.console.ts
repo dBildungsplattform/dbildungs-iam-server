@@ -14,12 +14,8 @@ export class DbInitConsole extends CommandRunner {
     public override async run(_passedParams: string[], _options?: Record<string, unknown>): Promise<void> {
         this.logger.info('Initializing database...');
         this.logger.info(this.orm.config.getClientUrl());
-        try {
-            await this.orm.getSchemaGenerator().ensureDatabase();
-        } catch (error: unknown) {
-            this.logger.info('Can not connect to database', error);
-            return;
-        }
+
+        await this.orm.getSchemaGenerator().ensureDatabase();
 
         this.logger.info('Dropping Schema');
         await this.orm.getSchemaGenerator().dropSchema({ wrap: false });
