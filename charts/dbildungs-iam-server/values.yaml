@@ -21,10 +21,10 @@ restartPolicy: Always
 environment: prod
 
 database:
-  name: ""
+  name: "dbildungs_iam_server"
   host: ""
   password: ""
-  username: ""
+  username: "dbildungs_iam_server"
 
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
