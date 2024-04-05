@@ -3,7 +3,7 @@
     "entities": [
         {
             "id": 0,
-            "name": "Email",
+            "name": "E-Mail",
             "url": "https://de.wikipedia.org/wiki/E-Mail",
             "kategorie": "EMAIL",
             "logoMimeType": "image/svg+xml",

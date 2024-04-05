@@ -48,8 +48,7 @@ import { PersonenKontextApiModule } from '../modules/personenkontext/personenkon
                             ssl: dbConfig.USE_SSL,
                         },
                     },
-                    connect: false,
-                    debug: true,
+                    connect: false
                 });
             },
             inject: [ConfigService],
