@@ -51,6 +51,7 @@ export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFac
     const systemrechte: RollenSystemRecht[] = entity.systemrechte.map(
         (systemRechtEntity: RolleSystemrechtEntity) => systemRechtEntity.systemrecht,
     );
+
     const serviceProviderIds: string[] = entity.serviceProvider.map(
         (serviceProvider: RolleServiceProviderEntity) => serviceProvider.serviceProvider.id,
     );
