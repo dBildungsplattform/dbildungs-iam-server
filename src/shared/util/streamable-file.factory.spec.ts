@@ -52,7 +52,7 @@ describe('StreamableFileFactory', () => {
 
             file.errorLogger(err);
 
-            expect(loggerMock.info).toHaveBeenCalledWith('Filestream was closed prematurely');
+            expect(loggerMock.info).toHaveBeenCalledWith(err.message, err.stack);
         });
 
         it('should error-log', () => {
@@ -79,7 +79,7 @@ describe('StreamableFileFactory', () => {
 
             file.errorLogger(err);
 
-            expect(loggerMock.info).toHaveBeenCalledWith('Filestream was closed prematurely');
+            expect(loggerMock.info).toHaveBeenCalledWith(err.message, err.stack);
         });
 
         it('should error-log', () => {

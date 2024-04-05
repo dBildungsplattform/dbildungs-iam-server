@@ -26,7 +26,7 @@ export class StreamableFileFactory {
 
     private streamableFileErrorLogger = (err: NodeJS.ErrnoException): void => {
         if (err.code === 'ERR_STREAM_PREMATURE_CLOSE') {
-            this.logger.info('Filestream was closed prematurely');
+            this.logger.info(err.message, err.stack);
         } else {
             this.logger.error(err.message, err.stack);
         }
