@@ -5,6 +5,7 @@ import { PassportUser } from '../types/user.js';
 import { SessionAccessTokenMiddleware } from './session-access-token.middleware.js';
 import { Client, IntrospectionResponse, TokenSet, UserinfoResponse } from 'openid-client';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { LogOutOptions } from 'passport';
 
 describe('sessionAccessTokenMiddleware', () => {
     let passportUser: PassportUser;
@@ -155,10 +156,16 @@ describe('sessionAccessTokenMiddleware', () => {
         });
 
         describe('when the refresh token is no longer active', () => {
-            it('Should keep headers as they are', async () => {
+            beforeEach(() => {
                 client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: false }));
                 client.introspect.mockResolvedValueOnce(createMock<IntrospectionResponse>({ active: false }));
+            });
 
+            afterEach(() => {
+                client.introspect.mockReset();
+            });
+
+            it('Should keep headers as they are', async () => {
                 await new SessionAccessTokenMiddleware(client, createMock(), createMock()).use(
                     request,
                     createMock(),
@@ -171,6 +178,33 @@ describe('sessionAccessTokenMiddleware', () => {
 
                 expect(request.passportUser?.access_token).toStrictEqual(originalAccessToken);
                 expect(request.passportUser?.refresh_token).toStrictEqual(originalRefreshToken);
+            });
+
+            it('should logout', async () => {
+                await new SessionAccessTokenMiddleware(client, createMock(), createMock()).use(
+                    request,
+                    createMock(),
+                    jest.fn(),
+                );
+
+                expect(request.logout).toHaveBeenCalled();
+            });
+
+            it('should log exceptions which have been thrown', async () => {
+                let logger: ClassLogger = createMock<ClassLogger>();
+
+                request.logout = (done: ((err: any) => void) | LogOutOptions) => {
+                    if (typeof done === 'function') {
+                        done('Something broke');
+                    }
+                };
+
+                await new SessionAccessTokenMiddleware(client, logger, createMock()).use(
+                    request,
+                    createMock(),
+                    jest.fn(),
+                );
+                expect(logger.error).toHaveBeenCalled();
             });
         });
 
