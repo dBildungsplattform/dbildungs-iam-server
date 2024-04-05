@@ -2,7 +2,7 @@
     "entityName": "ServiceProvider",
     "entities": [
         {
-            "name": "ItsLearning",
+            "name": "itslearning",
             "url": "https://itslearning.com/de",
             "kategorie": "UNTERRICHT",
             "logoMimeType": "image/png",

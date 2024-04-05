@@ -32,7 +32,7 @@ Example for a seeding-file for service-providers (old way of referencing)
     "entityName": "ServiceProvider",
     "entities": [
         {
-            "name": "ItsLearning",
+            "name": "itslearning",
             "url": "https://itslearning.com/de",
             "kategorie": "UNTERRICHT",
             "providedOnSchulstrukturknoten": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
