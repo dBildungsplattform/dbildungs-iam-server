@@ -10,10 +10,10 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
+import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
@@ -25,7 +25,7 @@ import { ServiceProviderResponse } from './service-provider.response.js';
 @Controller({ path: 'provider' })
 export class ProviderController {
     public constructor(
-        private readonly logger: ClassLogger,
+        private readonly streamableFileFactory: StreamableFileFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
     ) {}
 
@@ -78,18 +78,10 @@ export class ProviderController {
             );
         }
 
-        const logoFile: StreamableFile = new StreamableFile(serviceProvider.logo, {
+        const logoFile: StreamableFile = this.streamableFileFactory.fromBuffer(serviceProvider.logo, {
             type: serviceProvider.logoMimeType,
-        }).setErrorLogger(this.streamableFileErrorLogger);
+        });
 
         return logoFile;
     }
-
-    private streamableFileErrorLogger = (err: NodeJS.ErrnoException): void => {
-        if (err.code === 'ERR_STREAM_PREMATURE_CLOSE') {
-            this.logger.info('Filestream was closed prematurely');
-        } else {
-            this.logger.error(err.message, err.stack);
-        }
-    };
 }
