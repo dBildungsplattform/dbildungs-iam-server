@@ -25,7 +25,7 @@ import { PersonPermissions } from '../domain/person-permissions.js';
 import { AuthenticatedUser } from 'nest-keycloak-connect';
 import { User } from '../types/user.js';
 import { Permissions } from './permissions.decorator.js';
-import {Public} from "./public.decorator.js";
+import { Public } from './public.decorator.js';
 
 @ApiTags('auth')
 @Controller({ path: 'auth' })
@@ -64,16 +64,6 @@ export class AuthenticationController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to log out.' })
     public logout(@Req() req: Request, @Res() res: Response): void {
         const idToken: string | undefined = req.passportUser?.id_token;
-
-        if (!idToken && req.headers.authorization) {
-            // At least revoke
-
-            const theToken = req.headers.authorization.replace('Bearer:', '').trim();
-
-            this.client.revoke(theToken).catch((err: unknown) => {
-                this.logger.warning(JSON.stringify(err));
-            });
-        }
 
         req.logout((logoutErr?: Error) => {
             if (logoutErr) {

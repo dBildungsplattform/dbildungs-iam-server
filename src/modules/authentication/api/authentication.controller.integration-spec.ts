@@ -21,6 +21,7 @@ import { MikroORM } from '@mikro-orm/core';
 import { PersonPermissions } from '../domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Person } from '../../person/domain/person.js';
+import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -36,6 +37,7 @@ describe('AuthenticationController', () => {
                 ConfigTestModule,
                 LoggingTestModule,
                 MapperTestModule,
+                ServiceProviderModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonModule,
                 PersonenKontextModule,
