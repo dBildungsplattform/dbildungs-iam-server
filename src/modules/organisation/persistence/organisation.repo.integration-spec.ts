@@ -97,6 +97,17 @@ describe('OrganisationRepo', () => {
         });
     });
 
+    describe('findByIds', () => {
+        it('should find organizations by IDs', async () => {
+            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
+            const organisation: OrganisationDo<boolean> = await sut.save(organisationDo);
+            const foundOrganisations: Map<string, OrganisationDo<true>> = await sut.findByIds([
+                organisation.id as string,
+            ]);
+            expect(foundOrganisations).toBeInstanceOf(Map<string, OrganisationDo<true>>);
+        });
+    });
+
     describe('findBy', () => {
         describe('when matching organisations were found by scope', () => {
             it('should return found organizations', async () => {
@@ -184,7 +195,6 @@ describe('OrganisationRepo', () => {
                 organisationChild1Level2Do.administriertVon = organisationChild1Level1.id;
                 await sut.save(organisationChild1Level2Do);
 
-
                 const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForId(
                     organisationChild1Level1.id,
                 );
@@ -218,7 +228,6 @@ describe('OrganisationRepo', () => {
                 organisationChild1Level2Do.administriertVon = organisationChild1Level1.id;
                 await sut.save(organisationChild1Level2Do);
 
-
                 const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForId(
                     organisationRoot.id,
                 );
@@ -229,7 +238,6 @@ describe('OrganisationRepo', () => {
 
         describe('does not exist', () => {
             it('should return null', async () => {
-
                 const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForId(
                     faker.string.uuid(),
                 );
