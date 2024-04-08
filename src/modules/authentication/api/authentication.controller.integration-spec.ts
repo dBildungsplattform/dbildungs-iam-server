@@ -73,6 +73,7 @@ describe('AuthenticationController', () => {
     });
 
     afterAll(async () => {
+        await module.get(MikroORM).close();
         await module.close();
     });
 
