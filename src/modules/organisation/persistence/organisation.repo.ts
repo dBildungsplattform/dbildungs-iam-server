@@ -9,6 +9,8 @@ import { OrganisationScope } from './organisation.scope.js';
 
 @Injectable()
 export class OrganisationRepo {
+    public readonly rootOrganisationId: string = 'd4261bd1-74e3-4d0a-b6cc-1053f863f045';
+
     public constructor(
         private readonly em: EntityManager,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
@@ -86,5 +88,35 @@ export class OrganisationRepo {
             $or: [{ name: { $ilike: '%' + searchStr + '%' } }, { kennung: { $ilike: '%' + searchStr + '%' } }],
         });
         return this.mapper.mapArray(organisations, OrganisationEntity, OrganisationDo);
+    }
+
+    public async findChildOrgasForId(id: string): Promise<Option<OrganisationDo<true>[]>> {
+        let rawResult: OrganisationEntity[];
+
+        if (id === this.rootOrganisationId) {
+            // If id is the root, perform a simple SELECT * except root for performance enhancement.
+            rawResult = await this.em.find(OrganisationEntity, { id: { $ne: this.rootOrganisationId } });
+        } else {
+            // Otherwise, perform the recursive CTE query.
+            const query: string = `
+            WITH RECURSIVE sub_organisations AS (
+                SELECT *
+                FROM public.organisation
+                WHERE administriert_von = '${id}'
+                UNION ALL
+                SELECT o.*
+                FROM public.organisation o
+                INNER JOIN sub_organisations so ON o.administriert_von = so.id
+            )
+            SELECT DISTINCT ON (id) * FROM sub_organisations;
+            `;
+
+            rawResult = await this.em.execute(query);
+        }
+
+        if (rawResult.length > 0) {
+            return this.mapper.mapArray(rawResult, OrganisationEntity, OrganisationDo);
+        }
+        return null;
     }
 }

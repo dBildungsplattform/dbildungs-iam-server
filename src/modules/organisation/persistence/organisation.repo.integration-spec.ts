@@ -158,4 +158,83 @@ describe('OrganisationRepo', () => {
             });
         });
     });
+
+    describe('findChildOrgasById', () => {
+        describe('when not root', () => {
+            it('should return found childs for root', async () => {
+                const organisationRootDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                const organisationRoot: OrganisationDo<boolean> = await sut.save(organisationRootDo);
+
+                if (!organisationRoot.id) {
+                    return;
+                }
+
+                const organisationChild1Level1Do: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                const organisationChild2Level1Do: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                organisationChild1Level1Do.administriertVon = organisationRoot.id;
+                organisationChild2Level1Do.administriertVon = organisationRoot.id;
+                const organisationChild1Level1: OrganisationDo<boolean> = await sut.save(organisationChild1Level1Do);
+                const organisationChild2Level1: OrganisationDo<boolean> = await sut.save(organisationChild2Level1Do);
+
+                if (!organisationChild1Level1.id || !organisationChild2Level1.id) {
+                    return;
+                }
+
+                const organisationChild1Level2Do: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                organisationChild1Level2Do.administriertVon = organisationChild1Level1.id;
+                await sut.save(organisationChild1Level2Do);
+
+
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForId(
+                    organisationChild1Level1.id,
+                );
+                expect(foundOrganisations).toBeInstanceOf(Array);
+                expect(foundOrganisations).toHaveLength(1);
+            });
+        });
+
+        describe('when root', () => {
+            it('should return found childs for root', async () => {
+                const organisationRootDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                organisationRootDo.id = sut.rootOrganisationId;
+                const organisationRoot: OrganisationDo<boolean> = await sut.save(organisationRootDo);
+
+                if (!organisationRoot.id) {
+                    return;
+                }
+
+                const organisationChild1Level1Do: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                const organisationChild2Level1Do: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                organisationChild1Level1Do.administriertVon = organisationRoot.id;
+                organisationChild2Level1Do.administriertVon = organisationRoot.id;
+                const organisationChild1Level1: OrganisationDo<boolean> = await sut.save(organisationChild1Level1Do);
+                const organisationChild2Level1: OrganisationDo<boolean> = await sut.save(organisationChild2Level1Do);
+
+                if (!organisationChild1Level1.id || !organisationChild2Level1.id) {
+                    return;
+                }
+
+                const organisationChild1Level2Do: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                organisationChild1Level2Do.administriertVon = organisationChild1Level1.id;
+                await sut.save(organisationChild1Level2Do);
+
+
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForId(
+                    organisationRoot.id,
+                );
+                expect(foundOrganisations).toBeInstanceOf(Array);
+                expect(foundOrganisations).toHaveLength(3);
+            });
+        });
+
+        describe('does not exist', () => {
+            it('should return null', async () => {
+
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForId(
+                    faker.string.uuid(),
+                );
+                expect(foundOrganisations).toBeNull();
+            });
+        });
+    });
 });
