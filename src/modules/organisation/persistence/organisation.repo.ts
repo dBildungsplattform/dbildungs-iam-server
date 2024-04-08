@@ -102,7 +102,7 @@ export class OrganisationRepo {
             WITH RECURSIVE sub_organisations AS (
                 SELECT *
                 FROM public.organisation
-                WHERE administriert_von = '${id}'
+                WHERE administriert_von = ?
                 UNION ALL
                 SELECT o.*
                 FROM public.organisation o
@@ -111,12 +111,12 @@ export class OrganisationRepo {
             SELECT DISTINCT ON (id) * FROM sub_organisations;
             `;
 
-            rawResult = await this.em.execute(query);
+            rawResult = await this.em.execute(query, [id]);
         }
 
         if (rawResult.length > 0) {
             return this.mapper.mapArray(rawResult, OrganisationEntity, OrganisationDo);
         }
-        return null;
+        return undefined;
     }
 }

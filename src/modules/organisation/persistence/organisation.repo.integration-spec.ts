@@ -241,7 +241,7 @@ describe('OrganisationRepo', () => {
                 const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForId(
                     faker.string.uuid(),
                 );
-                expect(foundOrganisations).toBeNull();
+                expect(foundOrganisations).toBeUndefined();
             });
         });
     });
