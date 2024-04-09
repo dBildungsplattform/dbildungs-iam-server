@@ -8,7 +8,7 @@ export class OrganisationResponse {
     public readonly id!: string;
 
     @AutoMap()
-    @ApiProperty()
+    @ApiProperty({ nullable: true })
     public readonly kennung?: string;
 
     @AutoMap()
@@ -16,7 +16,7 @@ export class OrganisationResponse {
     public readonly name!: string;
 
     @AutoMap()
-    @ApiProperty()
+    @ApiProperty({ nullable: true })
     public readonly namensergaenzung?: string;
 
     @AutoMap()
