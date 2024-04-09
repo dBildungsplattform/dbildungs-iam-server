@@ -64,7 +64,7 @@ describe('DbSeedConsole', () => {
     });
 
     afterAll(async () => {
-        await module.get(MikroORM).close();
+        await orm.close();
         await module.close();
     });
 
