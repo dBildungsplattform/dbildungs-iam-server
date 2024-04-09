@@ -4,38 +4,47 @@
         {
             "id": 0,
             "administeredBySchulstrukturknoten": 0,
-            "name": "Sysadmin",
+            "name": "Landesadmin",
             "rollenart": "SYSADMIN",
             "merkmale": [],
             "systemrechte": ["ROLLEN_VERWALTEN"],
-            "serviceProviderIds": []
+            "serviceProviderIds": [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]
         },
         {
             "id": 1,
             "administeredBySchulstrukturknoten": 0,
-            "name": "Rolle 1",
+            "name": "SuS",
             "rollenart": "LERN",
-            "merkmale": ["BEFRISTUNG_PFLICHT"],
+            "merkmale": [],
             "systemrechte": [],
-            "serviceProviderIds": []
+            "serviceProviderIds": [3]
         },
         {
             "id": 2,
             "administeredBySchulstrukturknoten": 0,
-            "name": "Rolle 2",
-            "rollenart": "LERN",
-            "merkmale": [],
+            "name": "Lehrkraft",
+            "rollenart": "LEHR",
+            "merkmale": ["KOPERS_PFLICHT"],
             "systemrechte": [],
-            "serviceProviderIds": []
+            "serviceProviderIds": [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]
         },
         {
             "id": 3,
             "administeredBySchulstrukturknoten": 0,
-            "name": "Rolle 3",
+            "name": "LiV",
             "rollenart": "LEHR",
+            "merkmale": ["KOPERS_PFLICHT", "BEFRISTUNG_PFLICHT"],
+            "systemrechte": [],
+            "serviceProviderIds": [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]
+        },
+        {
+            "id": 4,
+            "administeredBySchulstrukturknoten": 0,
+            "name": "Schuladmin",
+            "rollenart": "LEIT",
             "merkmale": [],
             "systemrechte": [],
-            "serviceProviderIds": []
+            "serviceProviderIds": [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]
         }
     ]
 }
