@@ -10,21 +10,19 @@ import {
 import { DbSeedService } from './db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
 import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
-import { DbSeedMapper } from './db-seed-mapper.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationEntity } from '../../modules/organisation/persistence/organisation.entity.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
-import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
 import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
 import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
-import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
-import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { EntityNotFoundError } from '../../shared/error/index.js';
 import { OrganisationModule } from '../../modules/organisation/organisation.module.js';
-import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
-import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonModule } from '../../modules/person/person.module.js';
+import { RolleModule } from '../../modules/rolle/rolle.module.js';
+import { ServiceProviderModule } from '../../modules/service-provider/service-provider.module.js';
+import { DbSeedModule } from './db-seed.module.js';
 
 describe('DbSeedConsole', () => {
     let module: TestingModule;
@@ -35,25 +33,18 @@ describe('DbSeedConsole', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
+                DbSeedModule,
                 ConfigTestModule,
                 OrganisationModule,
                 KeycloakAdministrationModule,
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
+                PersonModule,
+                RolleModule,
+                ServiceProviderModule,
             ],
-            providers: [
-                DbSeedConsole,
-                UsernameGeneratorService,
-                DbSeedService,
-                DbSeedMapper,
-                PersonRepository,
-                PersonFactory,
-                DBiamPersonenkontextRepo,
-                RolleRepo,
-                RolleFactory,
-                ServiceProviderRepo,
-            ],
+            providers: [UsernameGeneratorService, DBiamPersonenkontextRepo],
         })
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
@@ -111,7 +102,7 @@ describe('DbSeedConsole', () => {
                     name: 'Schule1',
                 });
                 const serviceProvider: Option<ServiceProviderEntity> = await orm.em.findOne(ServiceProviderEntity, {
-                    id: 'ca0e17c5-8e48-403b-af92-28eff21c64bb',
+                    name: 'Provider With Logo',
                 });
                 if (!dataProvider || !rolle || !organisation || !serviceProvider) {
                     throw Error('At least one entity was not persisted correctly!');

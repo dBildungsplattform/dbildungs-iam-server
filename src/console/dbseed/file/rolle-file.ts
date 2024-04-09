@@ -13,5 +13,5 @@ export class RolleFile {
 
     public systemrechte!: RollenSystemRecht[];
 
-    public serviceProviderIds!: string[];
+    public serviceProviderIds!: number[];
 }
