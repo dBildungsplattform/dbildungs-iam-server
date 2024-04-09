@@ -1,4 +1,5 @@
 import { Mapper } from '@automapper/core';
+import { ConfigService } from '@nestjs/config';
 import { getMapperToken } from '@automapper/nestjs';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
@@ -6,13 +7,19 @@ import { OrganisationDo } from '../domain/organisation.do.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { Loaded } from '@mikro-orm/core';
 import { OrganisationScope } from './organisation.scope.js';
+import { ServerConfig, DataConfig } from '../../../shared/config/index.js';
 
 @Injectable()
 export class OrganisationRepo {
+    public readonly ROOT_ORGANISATION_ID: string;
+
     public constructor(
         private readonly em: EntityManager,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
-    ) {}
+        config: ConfigService<ServerConfig>,
+    ) {
+        this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+    }
 
     private async create(organisationDo: OrganisationDo<false>): Promise<OrganisationDo<true>> {
         const organisation: OrganisationEntity = this.mapper.map(organisationDo, OrganisationDo, OrganisationEntity);
@@ -86,5 +93,35 @@ export class OrganisationRepo {
             $or: [{ name: { $ilike: '%' + searchStr + '%' } }, { kennung: { $ilike: '%' + searchStr + '%' } }],
         });
         return this.mapper.mapArray(organisations, OrganisationEntity, OrganisationDo);
+    }
+
+    public async findChildOrgasForId(id: string): Promise<Option<OrganisationDo<true>[]>> {
+        let rawResult: OrganisationEntity[];
+
+        if (id === this.ROOT_ORGANISATION_ID) {
+            // If id is the root, perform a simple SELECT * except root for performance enhancement.
+            rawResult = await this.em.find(OrganisationEntity, { id: { $ne: this.ROOT_ORGANISATION_ID } });
+        } else {
+            // Otherwise, perform the recursive CTE query.
+            const query: string = `
+            WITH RECURSIVE sub_organisations AS (
+                SELECT *
+                FROM public.organisation
+                WHERE administriert_von = ?
+                UNION ALL
+                SELECT o.*
+                FROM public.organisation o
+                INNER JOIN sub_organisations so ON o.administriert_von = so.id
+            )
+            SELECT DISTINCT ON (id) * FROM sub_organisations;
+            `;
+
+            rawResult = await this.em.execute(query, [id]);
+        }
+
+        if (rawResult.length > 0) {
+            return this.mapper.mapArray(rawResult, OrganisationEntity, OrganisationDo);
+        }
+        return [];
     }
 }
