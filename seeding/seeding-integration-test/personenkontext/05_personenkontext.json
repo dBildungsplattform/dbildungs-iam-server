@@ -1,0 +1,10 @@
+{
+    "entityName": "Personenkontext",
+    "entities": [
+        {
+            "personId": 1234,
+            "organisationId": 1234,
+            "rolleId": 1234
+        }
+    ]
+}
