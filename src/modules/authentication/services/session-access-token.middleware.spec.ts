@@ -6,6 +6,7 @@ import { SessionAccessTokenMiddleware } from './session-access-token.middleware.
 import { Client, IntrospectionResponse, TokenSet, UserinfoResponse } from 'openid-client';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { LogOutOptions } from 'passport';
+import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
 
 describe('sessionAccessTokenMiddleware', () => {
     let passportUser: PassportUser;
@@ -17,7 +18,6 @@ describe('sessionAccessTokenMiddleware', () => {
             passportUser,
             headers: {},
         });
-        //request = { passportUser, headers: {}} as Express.Request;
     });
 
     it('should call next middleware', async () => {
@@ -32,21 +32,26 @@ describe('sessionAccessTokenMiddleware', () => {
         expect(nextMock).toHaveBeenCalledTimes(1);
     });
 
-    describe('when the request contains a valid access token', () => {
-        it('should set the authorization header on the request', async () => {
+    describe('when the request contains a valid access token and UserInfo', () => {
+        it('should prepare a callback to get permissions', async () => {
             passportUser = createMock<PassportUser>({
                 access_token: faker.string.alphanumeric(64),
+                userinfo: createMock<UserinfoResponse>({ sub: 'testId' }),
             });
             request = { passportUser, headers: {} } as Request;
 
             const clientMock: DeepMocked<Client> = createMock<Client>();
             clientMock.introspect.mockResolvedValue(createMock<IntrospectionResponse>({ active: true }));
 
-            await new SessionAccessTokenMiddleware(clientMock, createMock(), createMock()).use(
+            const personPermissionsRepo: DeepMocked<PersonPermissionsRepo> = createMock<PersonPermissionsRepo>();
+            await new SessionAccessTokenMiddleware(clientMock, createMock(), personPermissionsRepo).use(
                 request,
                 createMock(),
                 jest.fn(),
             );
+            expect(request.passportUser).toBeDefined();
+            request.passportUser!.personPermissions();
+            expect(personPermissionsRepo.loadPersonPermissions).toHaveBeenCalledWith('testId');
         });
     });
 
