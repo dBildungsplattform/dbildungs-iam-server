@@ -68,15 +68,13 @@ export class RolleController {
             this.serviceProviderRepo.find(),
         ]);
 
-        return rollen.map(
-            (r: Rolle<true>) =>
-                new RolleWithServiceProvidersResponse(
-                    r,
-                    r.serviceProviderIds.map(
-                        (id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id)!,
-                    ),
-                ),
-        );
+        return rollen.map((r: Rolle<true>) => {
+            const sps: ServiceProvider<true>[] = r.serviceProviderIds
+                .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
+                .filter(Boolean) as ServiceProvider<true>[];
+
+            return new RolleWithServiceProvidersResponse(r, sps);
+        });
     }
 
     @Post()
