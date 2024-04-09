@@ -4,11 +4,11 @@ import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
 
-export const DISABLE_ACCESS_GUARD_FLAG = 'disableAccessGuard';
+export const DISABLE_ACCESS_GUARD_FLAG: string = 'disableAccessGuard';
 
 @Injectable()
 export class AccessGuard extends AuthGuard('jwt') {
-    constructor(private reflector: Reflector) {
+    public constructor(private reflector: Reflector) {
         super();
     }
 

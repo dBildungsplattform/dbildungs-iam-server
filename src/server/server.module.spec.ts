@@ -18,7 +18,12 @@ describe('ServerModule', () => {
             imports: [ServerModule],
         })
             .overrideProvider(OIDC_CLIENT)
-            .useValue(new new Issuer({ issuer: 'oidc', jwks_uri: 'https://keycloak.example.com/nothing' }).Client({ client_id: 'DummyId' }))
+            .useValue(
+                new new Issuer({
+                    issuer: 'oidc',
+                    jwks_uri: 'https://keycloak.example.com/nothing',
+                }).Client({ client_id: 'DummyId' }),
+            )
             .compile();
     });
 

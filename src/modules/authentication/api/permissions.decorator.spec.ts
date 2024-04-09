@@ -10,13 +10,17 @@ describe('The Permissions-Decorator', () => {
 
     beforeEach(() => {
         class Demo {
-            blah(_unused: PersonPermissions) {}
+            public blah(_unused: PersonPermissions): void {}
         }
 
         const target: Demo = new Demo();
 
         Permissions()(target, 'blah', 0);
-        const decoratorFunction: Object = Reflect.getMetadata(ROUTE_ARGS_METADATA, target.constructor, 'blah');
+        const decoratorFunction: object = Reflect.getMetadata(
+            ROUTE_ARGS_METADATA,
+            target.constructor,
+            'blah',
+        ) as object;
         expect(decoratorFunction).toBeDefined();
 
         factory = (

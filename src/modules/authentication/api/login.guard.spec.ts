@@ -17,7 +17,7 @@ describe('LoginGuard', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            providers: [LoginGuard, { provide: ClassLogger, useValue: createMock() }],
+            providers: [LoginGuard, { provide: ClassLogger, useValue: createMock<ClassLogger>() }],
         }).compile();
 
         sut = module.get(LoginGuard);

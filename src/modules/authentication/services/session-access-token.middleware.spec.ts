@@ -7,6 +7,7 @@ import { Client, IntrospectionResponse, TokenSet, UserinfoResponse } from 'openi
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { LogOutOptions } from 'passport';
 import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
+import { PersonPermissions } from '../domain/person-permissions.js';
 
 describe('sessionAccessTokenMiddleware', () => {
     let passportUser: PassportUser;
@@ -98,7 +99,7 @@ describe('sessionAccessTokenMiddleware', () => {
                 access_token: originalAccessToken,
                 refresh_token: originalRefreshToken,
                 userinfo: createMock(),
-                personPermissions: createMock(),
+                personPermissions: createMock<PersonPermissions>(),
             };
         });
 
