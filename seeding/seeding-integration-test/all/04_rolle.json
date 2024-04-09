@@ -7,7 +7,17 @@
             "administeredBySchulstrukturknoten": 1,
             "rollenart": "LERN",
             "merkmale": [],
-            "systemrechte": []
+            "systemrechte": [],
+            "serviceProviderIds": []
+        },
+        {
+            "id": 1,
+            "name": "Rolle1212",
+            "administeredBySchulstrukturknoten": 1,
+            "rollenart": "LERN",
+            "merkmale": [],
+            "systemrechte": [],
+            "serviceProviderIds": [0, 1]
         }
     ]
 }
