@@ -206,7 +206,7 @@ describe('OrganisationRepo', () => {
         describe('when root', () => {
             it('should return found childs for root', async () => {
                 const organisationRootDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
-                organisationRootDo.id = sut.rootOrganisationId;
+                organisationRootDo.id = sut.ROOT_ORGANISATION_ID;
                 const organisationRoot: OrganisationDo<boolean> = await sut.save(organisationRootDo);
 
                 if (!organisationRoot.id) {
@@ -241,7 +241,7 @@ describe('OrganisationRepo', () => {
                 const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForId(
                     faker.string.uuid(),
                 );
-                expect(foundOrganisations).toBeUndefined();
+                expect(foundOrganisations).toEqual([]);
             });
         });
     });

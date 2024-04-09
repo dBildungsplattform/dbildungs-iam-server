@@ -1,4 +1,5 @@
 import { Mapper } from '@automapper/core';
+import { ConfigService } from '@nestjs/config';
 import { getMapperToken } from '@automapper/nestjs';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
@@ -6,15 +7,19 @@ import { OrganisationDo } from '../domain/organisation.do.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { Loaded } from '@mikro-orm/core';
 import { OrganisationScope } from './organisation.scope.js';
+import { ServerConfig, DataConfig } from '../../../shared/config/index.js';
 
 @Injectable()
 export class OrganisationRepo {
-    public readonly rootOrganisationId: string = 'd4261bd1-74e3-4d0a-b6cc-1053f863f045';
+    public readonly ROOT_ORGANISATION_ID: string;
 
     public constructor(
         private readonly em: EntityManager,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
-    ) {}
+        config: ConfigService<ServerConfig>,
+    ) {
+        this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+    }
 
     private async create(organisationDo: OrganisationDo<false>): Promise<OrganisationDo<true>> {
         const organisation: OrganisationEntity = this.mapper.map(organisationDo, OrganisationDo, OrganisationEntity);
@@ -93,9 +98,9 @@ export class OrganisationRepo {
     public async findChildOrgasForId(id: string): Promise<Option<OrganisationDo<true>[]>> {
         let rawResult: OrganisationEntity[];
 
-        if (id === this.rootOrganisationId) {
+        if (id === this.ROOT_ORGANISATION_ID) {
             // If id is the root, perform a simple SELECT * except root for performance enhancement.
-            rawResult = await this.em.find(OrganisationEntity, { id: { $ne: this.rootOrganisationId } });
+            rawResult = await this.em.find(OrganisationEntity, { id: { $ne: this.ROOT_ORGANISATION_ID } });
         } else {
             // Otherwise, perform the recursive CTE query.
             const query: string = `
@@ -117,6 +122,6 @@ export class OrganisationRepo {
         if (rawResult.length > 0) {
             return this.mapper.mapArray(rawResult, OrganisationEntity, OrganisationDo);
         }
-        return undefined;
+        return [];
     }
 }
