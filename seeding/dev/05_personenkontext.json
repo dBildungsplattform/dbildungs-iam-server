@@ -27,8 +27,13 @@
             "rolleId": 4
         },
         {
-            "personId": 8,
+            "personId": 7,
             "organisationId": 6,
+            "rolleId": 3
+        },
+        {
+            "personId": 8,
+            "organisationId": 4,
             "rolleId": 2
         },
         {
