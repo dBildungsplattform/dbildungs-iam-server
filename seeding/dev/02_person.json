@@ -3,25 +3,15 @@
     "entities": [
         {
             "id": 1,
-            "username": "autotester",
-            "password": "autotester",
-            "referrer": "autotester",
-            "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
-            "stammorganisation": null,
-            "vorname": "Anton",
-            "familienname": "AutoTester",
-            "geburt": {
-                "datum": null,
-                "geburtsort": "Hamburg"
-            },
-            "geschlecht": "m",
-            "loaklisierung": null,
-            "vertrauensstufe": null,
-            "auskunftssperre": null
+            "username": "test",
+            "password": "test",
+            "vorname": "test",
+            "familienname": "test"
         },
         {
             "id": 2,
-            "referrer": "ssuperadmin",
+            "username": "ssuperadmin",
+            "password": "test",
             "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
             "stammorganisation": null,
             "vorname": "Susi",
@@ -31,6 +21,59 @@
                 "geburtsort": "Dimension C-137"
             },
             "geschlecht": "w",
+            "loaklisierung": null,
+            "vertrauensstufe": null,
+            "auskunftssperre": null
+        },
+        {
+            "id": 3,
+            "password": "test",
+            "vorname": "Manuell",
+            "familienname": "Mustermann"
+        },
+        {
+            "id": 4,
+            "password": "test",
+            "vorname": "Sven",
+            "familienname": "Müller"
+        },
+        {
+            "id": 5,
+            "password": "test",
+            "vorname": "Luise",
+            "familienname": "Müller-Meier"
+        },
+        {
+            "id": 6,
+            "password": "test",
+            "vorname": "Yvonne",
+            "familienname": "von Breitenfels-Hohenröhr"
+        },
+        {
+            "id": 7,
+            "password": "test",
+            "vorname": "Lennart",
+            "familienname": "Laubenbichler"
+        },
+        {
+            "id": 8,
+            "password": "test",
+            "vorname": "Willi",
+            "familienname": "Webtor"
+        },
+        {
+            "id": 9,
+            "username": "autotester",
+            "password": "autotester",
+            "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",
+            "stammorganisation": null,
+            "vorname": "Anton",
+            "familienname": "AutoTester",
+            "geburt": {
+                "datum": null,
+                "geburtsort": "Hamburg"
+            },
+            "geschlecht": "m",
             "loaklisierung": null,
             "vertrauensstufe": null,
             "auskunftssperre": null

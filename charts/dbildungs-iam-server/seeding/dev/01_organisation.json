@@ -3,77 +3,98 @@
     "entities": [
         {
             "id": 0,
-            "kennung": "Root",
-            "name": "Root Organisation",
+            "name": "Wurzel Land Schleswig Holstein",
             "kuerzel": "Root",
-            "typ": "TRAEGER",
+            "typ": "ROOT",
             "administriertVon": null,
             "zugehoerigZu": null
         },
         {
             "id": 1,
-            "kennung": "Organisation1",
-            "name": "Träger1",
-            "namensergaenzung": "Keine",
-            "kuerzel": "O1",
-            "typ": "TRAEGER",
+            "name": "Öffentliche Schulen Land Schleswig Holstein",
+            "kuerzel": "Öffentl. Schulen",
+            "typ": "LAND",
             "administriertVon": 0,
             "zugehoerigZu": 0
         },
         {
             "id": 2,
-            "kennung": "Organisation2",
-            "name": "Träger2",
-            "namensergaenzung": "Keine",
-            "kuerzel": "O2",
-            "typ": "TRAEGER",
+            "name": "Ersatzschulen Land Schleswig Holstein",
+            "kuerzel": "Ersatzschulen",
+            "typ": "LAND",
             "administriertVon": 0,
             "zugehoerigZu": 0
         },
         {
-            "kennung": "Organisation3",
-            "name": "Schule1",
+            "id": 3,
+            "kennung": "0703754",
+            "name": "Amalie-Sieveking-Schule",
             "namensergaenzung": "Keine",
-            "kuerzel": "O3",
+            "kuerzel": "A-Sieveking-",
             "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1
         },
         {
-            "kennung": "Organisation4",
-            "name": "Schule2",
+            "id": 4,
+            "kennung": "0702948",
+            "name": "Carl-Orff-Schule",
+            "namensergaenzung": "Keine",
+            "kuerzel": "C-Orff-Schule",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1
+        },
+        {
+            "id": 5,
+            "kennung": "0705755",
+            "name": "Eric-Kandel-Gymnasium",
+            "namensergaenzung": "Keine",
+            "kuerzel": "E-Kandel-Gymn",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1
+        },
+        {
+            "id": 6,
+            "kennung": "0705751",
+            "name": "Emil-von-Behring-Gymnasium\t",
             "namensergaenzung": "Keine",
             "kuerzel": "O4",
             "typ": "SCHULE",
-            "administriertVon": 2,
-            "zugehoerigZu": 2
-        },
-        {
-            "kennung": "Organisation5",
-            "name": "Anbieter1",
-            "namensergaenzung": "Keine",
-            "kuerzel": "O5",
-            "typ": "ANBIETER",
             "administriertVon": 1,
             "zugehoerigZu": 1
         },
         {
-            "kennung": "Organisation6",
-            "name": "Sonstige1",
+            "id": 7,
+            "kennung": "0707712",
+            "name": "Friedrich-Junge-Schule, Gemeinschaftsschule des Schulverbandes Großhansdorf in Großhansdorf",
             "namensergaenzung": "Keine",
-            "kuerzel": "O6",
-            "typ": "SONSTIGE ORGANISATION / EINRICHTUNG",
-            "administriertVon": 2,
-            "zugehoerigZu": 2
+            "kuerzel": "O5",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1
         },
         {
-            "kennung": "Organisation7",
-            "name": "Unbestätigt",
+            "id": 8,
+            "kennung": "0702960",
+            "name": "Grundschule Hoisdorf",
             "namensergaenzung": "Keine",
-            "kuerzel": "O7",
-            "typ": "UNBESTAETIGT",
+            "kuerzel": "O6",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1
+        },
+        {
+            "id": 9,
+            "kennung": "1111111",
+            "name": "Testschule Schulportal",
+            "namensergaenzung": "Keine",
+            "kuerzel": "Testschule",
+            "typ": "SCHULE",
             "administriertVon": 1,
             "zugehoerigZu": 1
         }
+
     ]
 }
