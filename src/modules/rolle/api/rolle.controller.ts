@@ -17,6 +17,7 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiOAuth2,
     ApiNotFoundResponse,
     ApiOkResponse,
     ApiOperation,
@@ -47,6 +48,7 @@ import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
 @ApiBearerAuth()
+@ApiOAuth2(['openid'])
 @Controller({ path: 'rolle' })
 export class RolleController {
     public constructor(

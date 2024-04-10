@@ -3,6 +3,7 @@ import {
     ApiBearerAuth,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiOAuth2,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -18,6 +19,7 @@ import { PersonRepository } from '../persistence/person.repository.js';
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen-frontend')
 @ApiBearerAuth()
+@ApiOAuth2(['openid'])
 @Controller({ path: 'personen-frontend' })
 export class PersonFrontendController {
     public constructor(private readonly personRepository: PersonRepository) {}

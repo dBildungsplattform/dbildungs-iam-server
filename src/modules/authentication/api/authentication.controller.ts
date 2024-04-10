@@ -1,7 +1,9 @@
 import { Controller, Get, Inject, Req, Res, Session, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+    ApiBearerAuth,
     ApiInternalServerErrorResponse,
+    ApiOAuth2,
     ApiOkResponse,
     ApiOperation,
     ApiQuery,
@@ -55,6 +57,8 @@ export class AuthenticationController {
 
     @Get('logout')
     @Public()
+    @ApiBearerAuth()
+    @ApiOAuth2(['openid'])
     @ApiOperation({ summary: 'Used to log out the current user.' })
     @ApiResponse({ status: 302, description: 'Redirect to logout.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to log out.' })
@@ -89,6 +93,8 @@ export class AuthenticationController {
     }
 
     @Get('logininfo')
+    @ApiBearerAuth()
+    @ApiOAuth2(['openid'])
     @ApiOperation({ summary: 'Info about logged in user.' })
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
     @ApiOkResponse({ description: 'Returns info about the logged in user.', type: UserinfoResponse })
