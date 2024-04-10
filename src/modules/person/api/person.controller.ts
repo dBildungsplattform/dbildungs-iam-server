@@ -88,11 +88,7 @@ export class PersonController {
             auskunftssperre: params.auskunftssperre,
             geburtsdatum: params.geburt?.datum,
             geburtsort: params.geburt?.geburtsort,
-            geschlecht: params.geschlecht,
-            lokalisierung: params.lokalisierung,
-            referrer: params.referrer,
-            vertrauensstufe: params.vertrauensstufe,
-            stammorganisation: params.stammorganisation,
+            ...params,
         });
         if (person instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
