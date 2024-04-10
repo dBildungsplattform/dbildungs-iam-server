@@ -104,7 +104,7 @@ export class AuthenticationController {
     ): Promise<UserinfoResponse> {
         const roleIds: string[] = await permissions.getRoleIds();
         this.logger.info('Roles: ' + roleIds.toString());
-        this.logger.info('User: ' + JSON.stringify(permissions.person));
+        this.logger.info('User: ' + JSON.stringify(permissions.personFields));
         return new UserinfoResponse(permissions);
     }
 }

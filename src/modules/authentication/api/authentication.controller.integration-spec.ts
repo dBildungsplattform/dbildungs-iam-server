@@ -217,7 +217,7 @@ describe('AuthenticationController', () => {
             const result: UserinfoResponse = await authController.info(
                 user,
                 createMock<PersonPermissions>({
-                    get person(): Person<true> {
+                    get personFields(): Person<true> {
                         return createMock<Person<true>>({
                             geburtsdatum: createMock(),
                             updatedAt: new Date(Date.now()),
