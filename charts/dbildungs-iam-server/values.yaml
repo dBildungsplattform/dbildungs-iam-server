@@ -17,7 +17,7 @@ containerSecurityContext:
   seccompProfile:
     type: "RuntimeDefault"
 
-restartPolicy: Never
+restartPolicy: Always
 environment: prod
 
 database:
@@ -53,7 +53,7 @@ backend:
       memory: 200Mi
   startupProbe:
     enabled: true
-    initialDelaySeconds: 120
+    initialDelaySeconds: 300
     periodSeconds: 60
     failureThreshold: 5
     httpGet:
