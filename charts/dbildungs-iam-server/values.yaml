@@ -17,7 +17,7 @@ containerSecurityContext:
   seccompProfile:
     type: "RuntimeDefault"
 
-restartPolicy: Always
+restartPolicy: Never
 environment: prod
 
 database:
