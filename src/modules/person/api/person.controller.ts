@@ -77,7 +77,22 @@ export class PersonController {
         const person: Person<false> | DomainError = await this.personFactory.createNew({
             vorname: params.name.vorname,
             familienname: params.name.familienname,
-            ...params,
+            initialenFamilienname: params.name.initialenfamilienname,
+            initialenVorname: params.name.initialenvorname,
+            rufname: params.name.rufname,
+            nameTitel: params.name.titel,
+            nameAnrede: params.name.anrede,
+            namePraefix: params.name.namenspraefix,
+            nameSuffix: params.name.namenssuffix,
+            nameSortierindex: params.name.sortierindex,
+            auskunftssperre: params.auskunftssperre,
+            geburtsdatum: params.geburt?.datum,
+            geburtsort: params.geburt?.geburtsort,
+            geschlecht: params.geschlecht,
+            lokalisierung: params.lokalisierung,
+            referrer: params.referrer,
+            vertrauensstufe: params.vertrauensstufe,
+            stammorganisation: params.stammorganisation,
         });
         if (person instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
