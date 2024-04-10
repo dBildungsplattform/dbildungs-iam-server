@@ -9,6 +9,7 @@ import { OIDCClientProvider } from './services/oidc-client.service.js';
 import { PersonPermissionsRepo } from './domain/person-permission.repo.js';
 import { PersonModule } from '../person/person.module.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
+import { SessionAccessTokenMiddleware } from './services/session-access-token.middleware.js';
 
 @Module({
     imports: [
@@ -18,7 +19,14 @@ import { PersonenKontextModule } from '../personenkontext/personenkontext.module
         PersonModule,
         PersonenKontextModule,
     ],
-    providers: [OpenIdConnectStrategy, SessionSerializer, OIDCClientProvider, PersonPermissionsRepo],
+    providers: [
+        OpenIdConnectStrategy,
+        SessionSerializer,
+        OIDCClientProvider,
+        SessionAccessTokenMiddleware,
+        PersonPermissionsRepo,
+    ],
     controllers: [AuthenticationController],
+    exports: [OIDCClientProvider],
 })
 export class AuthenticationApiModule {}
