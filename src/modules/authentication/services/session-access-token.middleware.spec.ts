@@ -51,7 +51,7 @@ describe('sessionAccessTokenMiddleware', () => {
                 jest.fn(),
             );
             expect(request.passportUser).toBeDefined();
-            request.passportUser!.personPermissions();
+            await request.passportUser!.personPermissions();
             expect(personPermissionsRepo.loadPersonPermissions).toHaveBeenCalledWith('testId');
         });
     });
@@ -99,7 +99,9 @@ describe('sessionAccessTokenMiddleware', () => {
                 access_token: originalAccessToken,
                 refresh_token: originalRefreshToken,
                 userinfo: createMock(),
-                personPermissions: createMock<PersonPermissions>(),
+                personPermissions(): Promise<PersonPermissions> {
+                    return Promise.resolve(createMock<PersonPermissions>());
+                },
             };
         });
 
@@ -197,9 +199,9 @@ describe('sessionAccessTokenMiddleware', () => {
             });
 
             it('should log exceptions which have been thrown', async () => {
-                let logger: ClassLogger = createMock<ClassLogger>();
+                const logger: ClassLogger = createMock<ClassLogger>();
 
-                request.logout = (done: ((err: any) => void) | LogOutOptions) => {
+                request.logout = (done: ((err: unknown) => void) | LogOutOptions): void => {
                     if (typeof done === 'function') {
                         done('Something broke');
                     }

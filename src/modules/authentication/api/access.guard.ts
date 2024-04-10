@@ -17,7 +17,7 @@ export class AccessGuard extends AuthGuard('jwt') {
             return true;
         }
 
-        const request = context.switchToHttp().getRequest<Request>();
+        const request: Request = context.switchToHttp().getRequest<Request>();
 
         if (request.isAuthenticated()) {
             return true;

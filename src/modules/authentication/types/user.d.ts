@@ -1,4 +1,5 @@
 import { type UserinfoResponse } from 'openid-client';
+import { PersonPermissions } from '../domain/person-permissions.js';
 
 /**
  * User-type for keycloak-connect (parsed JWT)
@@ -13,5 +14,5 @@ export type PassportUser = {
     access_token?: string;
     refresh_token?: string;
     userinfo: UserinfoResponse;
-    personPermissions: PersonPermissions;
+    personPermissions: () => Promise<PersonPermissions>;
 };
