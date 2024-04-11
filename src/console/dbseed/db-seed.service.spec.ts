@@ -23,6 +23,10 @@ import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ServiceProviderFactory } from '../../modules/service-provider/domain/service-provider.factory.js';
+import { KeycloakUserService } from '../../modules/keycloak-administration/index.js';
+import { KeycloakAdministrationService } from '../../modules/keycloak-administration/domain/keycloak-admin-client.service.js';
+import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
+import { KeycloakInstanceConfig } from '../../modules/keycloak-administration/keycloak-instance-config.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -42,6 +46,10 @@ describe('DbSeedService', () => {
                 DbSeedService,
                 RolleFactory,
                 ServiceProviderFactory,
+                KeycloakUserService,
+                KeycloakAdministrationService,
+                KeycloakAdminClient,
+                KeycloakInstanceConfig.fromConfigService(),
                 {
                     provide: PersonFactory,
                     useValue: createMock<PersonFactory>(),
