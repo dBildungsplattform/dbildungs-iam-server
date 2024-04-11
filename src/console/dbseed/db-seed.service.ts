@@ -21,6 +21,8 @@ import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
 import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderFile } from './file/service-provider-file.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ServiceProviderFactory } from '../../modules/service-provider/domain/service-provider.factory.js';
+import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 
 @Injectable()
 export class DbSeedService {
@@ -32,6 +34,8 @@ export class DbSeedService {
         private readonly organisationRepo: OrganisationRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,
+        private readonly serviceProviderRepo: ServiceProviderRepo,
+        private readonly serviceProviderFactory: ServiceProviderFactory,
     ) {}
 
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
@@ -42,7 +46,7 @@ export class DbSeedService {
 
     private rolleMap: Map<number, Rolle<true>> = new Map();
 
-    private serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
+    private serviceProviderMap: Map<number, ServiceProvider<true>> = new Map();
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
@@ -103,19 +107,17 @@ export class DbSeedService {
         const rolleFile: EntityFile<RolleFile> = JSON.parse(fileContentAsStr) as EntityFile<RolleFile>;
         const files: RolleFile[] = plainToInstance(RolleFile, rolleFile.entities);
         for (const file of files) {
-            const persistedSSK: OrganisationDo<true> | undefined = this.organisationMap.get(
-                file.administeredBySchulstrukturknoten,
-            );
-            if (!persistedSSK)
-                throw new EntityNotFoundError('Organisation', file.administeredBySchulstrukturknoten.toString());
-
             const rolle: Rolle<false> = this.rolleFactory.createNew(
                 file.name,
                 this.getReferencedOrganisation(file.administeredBySchulstrukturknoten).id,
                 file.rollenart,
                 file.merkmale,
                 file.systemrechte,
-                file.serviceProviderIds,
+                file.serviceProviderIds
+                    ? this.getReferencedServiceProviders(file.serviceProviderIds).map(
+                          (sp: ServiceProvider<true>) => sp.id,
+                      )
+                    : undefined,
             );
 
             const persistedRolle: Rolle<true> | DomainError = await this.rolleRepo.save(rolle);
@@ -126,31 +128,29 @@ export class DbSeedService {
         this.logger.info(`Insert ${files.length} entities of type Rolle`);
     }
 
-    public readServiceProvider(fileContentAsStr: string): ServiceProvider<true>[] {
+    public async seedServiceProvider(fileContentAsStr: string): Promise<void> {
         const serviceProviderFile: EntityFile<ServiceProviderFile> = JSON.parse(
             fileContentAsStr,
         ) as EntityFile<ServiceProviderFile>;
+        const files: ServiceProviderFile[] = plainToInstance(ServiceProviderFile, serviceProviderFile.entities);
+        for (const file of files) {
+            const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
+                file.name,
+                file.target,
+                file.url,
+                file.kategorie,
+                this.getReferencedOrganisation(file.providedOnSchulstrukturknoten).id,
+                file.logoBase64 ? Buffer.from(file.logoBase64, 'base64') : undefined,
+                file.logoMimeType,
+            );
 
-        const entities: ServiceProviderFile[] = plainToInstance(ServiceProviderFile, serviceProviderFile.entities);
-
-        const serviceProviders: ServiceProvider<true>[] = entities.map((data: ServiceProviderFile) =>
-            ServiceProvider.construct<true>(
-                data.id,
-                new Date(),
-                new Date(),
-                data.name,
-                data.target,
-                data.url,
-                data.kategorie,
-                data.providedOnSchulstrukturknoten,
-                data.logoBase64 ? Buffer.from(data.logoBase64, 'base64') : undefined,
-                data.logoMimeType,
-            ),
-        );
-        for (const serviceProvider of serviceProviders) {
-            this.serviceProviderMap.set(serviceProvider.id, serviceProvider);
+            const persistedServiceProvider: ServiceProvider<true> =
+                await this.serviceProviderRepo.save(serviceProvider);
+            if (file.id != null) {
+                this.serviceProviderMap.set(file.id, persistedServiceProvider);
+            }
         }
-        return serviceProviders;
+        this.logger.info(`Insert ${files.length} entities of type ServiceProvider`);
     }
 
     public async seedPerson(fileContentAsStr: string): Promise<void> {
@@ -230,6 +230,16 @@ export class DbSeedService {
         const rolle: Rolle<true> | undefined = this.rolleMap.get(seedingId);
         if (!rolle) throw new EntityNotFoundError('Rolle', seedingId.toString());
         return rolle;
+    }
+
+    private getReferencedServiceProviders(seedingIds: number[]): ServiceProvider<true>[] {
+        return seedingIds.map((n: number) => this.getReferencedServiceProvider(n));
+    }
+
+    private getReferencedServiceProvider(seedingId: number): ServiceProvider<true> {
+        const serviceProvider: ServiceProvider<true> | undefined = this.serviceProviderMap.get(seedingId);
+        if (!serviceProvider) throw new EntityNotFoundError('ServiceProvider', seedingId.toString());
+        return serviceProvider;
     }
 
     private readEntityFromJSONFile<T>(fileContentAsStr: string, constructor: ConstructorCall): T[] {

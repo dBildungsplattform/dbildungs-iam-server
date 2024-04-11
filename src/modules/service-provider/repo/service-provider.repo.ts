@@ -14,12 +14,12 @@ export function mapAggregateToData(
         // Don't assign createdAt and updatedAt, they are auto-generated!
         id: serviceProvider.id,
         name: serviceProvider.name,
+        target: serviceProvider.target,
         url: serviceProvider.url,
         kategorie: serviceProvider.kategorie,
         providedOnSchulstrukturknoten: serviceProvider.providedOnSchulstrukturknoten,
         logo: serviceProvider.logo,
         logoMimeType: serviceProvider.logoMimeType,
-        target: serviceProvider.target,
     };
 }
 

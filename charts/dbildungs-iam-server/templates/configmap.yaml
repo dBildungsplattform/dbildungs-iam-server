@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: {{ template "common.names.name" . }}
   namespace: {{ template "common.names.namespace" . }}
-  labels: 
+  labels:
     {{- include "common.labels" . | nindent 4 }}
 data:
   config-json: |-
@@ -15,3 +15,4 @@ data:
   FRONTEND_OIDC_CALLBACK_URL: "https://{{ .Values.backendHostname }}/api/auth/login"
   FRONTEND_DEFAULT_LOGIN_REDIRECT: "https://{{ .Values.backendHostname }}/"
   FRONTEND_LOGOUT_REDIRECT: "https://{{ .Values.backendHostname }}/"
+  BACKEND_HOSTNAME: "{{.Values.backendHostname}}"

@@ -1,7 +1,7 @@
 import { CommandRunner, SubCommand } from 'nest-commander';
 import fs from 'fs';
 import { ClassLogger } from '../../core/logging/class-logger.js';
-import { MikroORM, RequiredEntityData } from '@mikro-orm/core';
+import { MikroORM } from '@mikro-orm/core';
 import { Inject } from '@nestjs/common';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
@@ -11,10 +11,6 @@ import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { DataProviderFile } from './file/data-provider-file.js';
-import { mapAggregateToData as mapServiceProviderAggregateToData } from '../../modules/service-provider/repo/service-provider.repo.js';
-import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
-import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
-
 export interface SeedFile {
     entityName: string;
 }
@@ -96,10 +92,7 @@ export class DbSeedConsole extends CommandRunner {
                 await this.dbSeedService.seedRolle(fileContentAsStr);
                 break;
             case 'ServiceProvider':
-                this.handleServiceProvider(
-                    this.dbSeedService.readServiceProvider(fileContentAsStr),
-                    seedFile.entityName,
-                );
+                await this.dbSeedService.seedServiceProvider(fileContentAsStr);
                 break;
             case 'Personenkontext':
                 await this.dbSeedService.seedPersonenkontext(fileContentAsStr);
@@ -115,16 +108,5 @@ export class DbSeedConsole extends CommandRunner {
             this.orm.em.persist(mappedEntity);
         }
         this.logger.info(`Insert ${entities.length} entities of type ${entityName}`);
-    }
-
-    private handleServiceProvider(aggregates: ServiceProvider<true>[], aggregateName: string): void {
-        for (const aggregate of aggregates) {
-            const serviceProvider: RequiredEntityData<ServiceProviderEntity> = this.orm.em.create(
-                ServiceProviderEntity,
-                mapServiceProviderAggregateToData(aggregate),
-            );
-            this.orm.em.persist(serviceProvider);
-        }
-        this.logger.info(`Insert ${aggregates.length} entities of type ${aggregateName}`);
     }
 }
