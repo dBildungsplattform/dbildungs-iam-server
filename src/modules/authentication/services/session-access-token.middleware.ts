@@ -3,25 +3,17 @@ import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
 import { OIDC_CLIENT } from './oidc-client.service.js';
 import { Client, TokenSet } from 'openid-client';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonPermissions } from '../domain/person-permissions.js';
-import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
-import { PassportUser } from '../types/user.js';
 
 /**
  * Checks the Access Token and refreshes it if need be.
  * If everything is expired user is logged out
  */
 
-export function isPassportUser(obj: PassportUser | undefined): obj is PassportUser {
-    return obj !== undefined && obj.userinfo !== undefined;
-}
-
 @Injectable()
 export class SessionAccessTokenMiddleware implements NestMiddleware {
     public constructor(
         @Inject(OIDC_CLIENT) private client: Client,
         private logger: ClassLogger,
-        private personPermissionsRepo: PersonPermissionsRepo,
     ) {}
 
     public async use(req: Request, _res: Response, next: (error?: unknown) => void): Promise<void> {
@@ -55,12 +47,7 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                     });
                 }
         }
-        if (isPassportUser(req.passportUser)) {
-            const subjectId: string = req.passportUser.userinfo.sub;
-            req.passportUser.personPermissions = async (): Promise<PersonPermissions> => {
-                return this.personPermissionsRepo.loadPersonPermissions(subjectId);
-            };
-        }
+
         next();
     }
 }

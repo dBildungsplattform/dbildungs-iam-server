@@ -1,6 +1,5 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
 import { LoggerModule } from '../../core/logging/logger.module.js';
 import { AuthenticationController } from './api/authentication.controller.js';
 import { OpenIdConnectStrategy } from './passport/oidc.strategy.js';
@@ -13,13 +12,7 @@ import { PersonenKontextModule } from '../personenkontext/personenkontext.module
 import { JwtStrategy } from './passport/jwt.strategy.js';
 
 @Module({
-    imports: [
-        HttpModule,
-        LoggerModule.register(AuthenticationApiModule.name),
-        PassportModule.register({ session: true, defaultStrategy: ['jwt', 'oidc'], keepSessionInfo: true }),
-        PersonModule,
-        PersonenKontextModule,
-    ],
+    imports: [HttpModule, LoggerModule.register(AuthenticationApiModule.name), PersonModule, PersonenKontextModule],
     providers: [
         OpenIdConnectStrategy,
         JwtStrategy,

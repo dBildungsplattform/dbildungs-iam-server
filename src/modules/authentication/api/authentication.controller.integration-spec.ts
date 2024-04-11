@@ -10,7 +10,7 @@ import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { FrontendConfig } from '../../../shared/config/frontend.config.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
-import { PassportUser, User } from '../types/user.js';
+import { PassportUser } from '../types/user.js';
 import { AuthenticationController } from './authentication.controller.js';
 import { UserinfoResponse } from './userinfo.response.js';
 import { DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
@@ -197,7 +197,6 @@ describe('AuthenticationController', () => {
 
     describe('info', () => {
         it('should return user info', async () => {
-            const user: User = createMock<User>({ preferred_username: faker.internet.userName() });
             const person: Person<true> = Person.construct(
                 faker.string.uuid(),
                 faker.date.past(),
@@ -215,7 +214,6 @@ describe('AuthenticationController', () => {
             personPermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(personPermissions);
 
             const result: UserinfoResponse = await authController.info(
-                user,
                 createMock<PersonPermissions>({
                     get personFields(): Person<true> {
                         return createMock<Person<true>>({
