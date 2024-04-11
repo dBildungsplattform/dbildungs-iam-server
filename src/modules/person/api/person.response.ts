@@ -7,7 +7,7 @@ export class PersonResponse {
     @ApiProperty()
     public id!: string;
 
-    @ApiProperty()
+    @ApiProperty({ nullable: true })
     public referrer?: string;
 
     @ApiProperty()
@@ -16,19 +16,19 @@ export class PersonResponse {
     @ApiProperty({ type: PersonNameParams })
     public name!: PersonNameParams;
 
-    @ApiProperty({ type: PersonBirthParams })
+    @ApiProperty({ type: PersonBirthParams, nullable: true })
     public geburt?: PersonBirthParams;
 
-    @ApiProperty()
+    @ApiProperty({ nullable: true })
     public readonly stammorganisation?: string;
 
-    @ApiProperty()
+    @ApiProperty({ nullable: true })
     public geschlecht?: string;
 
-    @ApiProperty()
+    @ApiProperty({ nullable: true })
     public lokalisierung?: string;
 
-    @ApiProperty({ enum: Vertrauensstufe })
+    @ApiProperty({ enum: Vertrauensstufe, nullable: true })
     public vertrauensstufe?: Vertrauensstufe;
 
     @ApiProperty()
