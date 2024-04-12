@@ -2,7 +2,7 @@
 const commonConfig = {
     testEnvironment: 'node',
     rootDir: './src',
-    // preset: 'ts-jest/presets/default-esm',
+    preset: 'ts-jest/presets/default-esm',
     moduleNameMapper: {
         '^(\\.{1,2}/.*)\\.js$': '$1',
         "^lodash-es$": "lodash",
@@ -13,8 +13,7 @@ const commonConfig = {
             {
                 useESM: true,
             },
-        ],
-        "^.+\\.js$": "<rootDir>/../node_modules/babel-jest"
+        ],        
     },
 };
 
