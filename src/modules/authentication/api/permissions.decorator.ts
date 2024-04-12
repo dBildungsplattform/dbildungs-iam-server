@@ -11,7 +11,7 @@ export const Permissions: (
         const passportUser: PassportUser | undefined = request.passportUser;
 
         if (!passportUser) {
-            return Promise.resolve(undefined);
+            return Promise.reject();
         } else {
             return passportUser.personPermissions();
         }

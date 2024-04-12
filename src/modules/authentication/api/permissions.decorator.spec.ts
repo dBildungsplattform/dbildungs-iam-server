@@ -46,10 +46,10 @@ describe('The Permissions-Decorator', () => {
         await expect(factory(null, executionContext)).resolves.toBe(personPermissions);
     });
 
-    it('should inject undefined if there is no passport user', async () => {
+    it('should reject if there is no passport user', async () => {
         const context: ExecutionContext = createMock();
         context.switchToHttp().getRequest<DeepMocked<express.Request>>().passportUser = undefined;
 
-        await expect(factory(null, context)).resolves.not.toBeDefined();
+        await expect(factory(null, context)).rejects.toBeUndefined();
     });
 });
