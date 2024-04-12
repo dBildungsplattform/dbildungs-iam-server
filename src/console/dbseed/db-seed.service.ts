@@ -136,6 +136,7 @@ export class DbSeedService {
         for (const file of files) {
             const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
                 file.name,
+                file.target,
                 file.url,
                 file.kategorie,
                 this.getReferencedOrganisation(file.providedOnSchulstrukturknoten).id,
