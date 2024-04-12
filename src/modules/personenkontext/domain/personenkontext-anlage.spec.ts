@@ -126,7 +126,7 @@ describe('PersonenkontextAnlage', () => {
 
         describe('matching of parent or child SSK', () => {
             it('should return list of schulstrukturknoten when child-organisation is matching', async () => {
-                const [rolle, parent, child]: [
+                const [rolle, parent, child, subchild]: [
                     Rolle<true>,
                     OrganisationDo<true>,
                     OrganisationDo<true>,
@@ -135,19 +135,11 @@ describe('PersonenkontextAnlage', () => {
                 ] = createRolleOrganisationsPersonKontext(anlage);
 
                 const foundByName: OrganisationDo<true>[] = [child];
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true, {
-                    rolleId: rolle.id,
-                    organisationId: parent.id,
-                });
-                const personenkontexte: Personenkontext<true>[] = [personenkontext];
 
                 organisationRepoMock.findByNameOrKennung.mockResolvedValue(foundByName);
-                dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);
-
+                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 organisationRepoMock.findById.mockResolvedValue(parent); //mock call to find parent in findSchulstrukturknoten
-
-                const counted: Counted<OrganisationDo<true>> = [foundByName, 1];
-                organisationRepoMock.findBy.mockResolvedValueOnce(counted); //mock call in findChildOrganisations
+                organisationRepoMock.findChildOrgasForId.mockResolvedValueOnce([parent, child, subchild]);
 
                 const result: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(
                     rolle.id,
@@ -166,24 +158,10 @@ describe('PersonenkontextAnlage', () => {
                     Personenkontext<true>,
                 ] = createRolleOrganisationsPersonKontext(anlage);
 
-                const firstChildren: OrganisationDo<true>[] = [child];
-                const secondChildren: OrganisationDo<true>[] = [childOfChild];
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true, {
-                    rolleId: rolle.id,
-                    organisationId: parent.id,
-                });
-                const personenkontexte: Personenkontext<true>[] = [personenkontext];
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue(firstChildren);
-                dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);
-
-                organisationRepoMock.findById.mockResolvedValueOnce(parent); //mock call to find parent in findSchulstrukturknoten
-
-                const counted: Counted<OrganisationDo<true>> = [firstChildren, 1];
-                organisationRepoMock.findBy.mockResolvedValueOnce(counted); //mock call in findChildOrganisations
-
-                const counted2: Counted<OrganisationDo<true>> = [secondChildren, 1];
-                organisationRepoMock.findBy.mockResolvedValueOnce(counted2); //mock call in findChildOrganisations, 2nd time (recursive)
+                organisationRepoMock.findByNameOrKennung.mockResolvedValue([child, childOfChild]);
+                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
+                organisationRepoMock.findById.mockResolvedValue(parent); //mock call to find parent in findSchulstrukturknoten
+                organisationRepoMock.findChildOrgasForId.mockResolvedValueOnce([parent, child, childOfChild]);
 
                 const result: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(
                     rolle.id,
