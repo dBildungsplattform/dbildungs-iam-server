@@ -11,7 +11,8 @@ The main goal of Team Erwin, that **dBildung-IAM can be used as IDP for Service 
 
 ![Erwin-Architecture-Iteration-2 Diagramm](img/Erwin-Architecture-Iteration-2.svg)
 
-Optional Goals (to be discussed):
+### Optional Goals (to be discussed):
+
 1. Support LTI Tools:
     - Connect e.g. Bettermarks, Big Blue Button and others directly (could enable removal of Hydra in dBildungscloud).
     - Update Q1/2024: LTI 1.3 will be supported as it is an extension of OIDC.
