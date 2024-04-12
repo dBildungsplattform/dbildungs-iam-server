@@ -33,24 +33,25 @@ export class PersonenkontextAnlage {
         limit?: number,
     ): Promise<OrganisationDo<true>[]> {
         this.rolleId = rolleId;
+
         const ssks: Option<OrganisationDo<true>[]> = await this.organisationRepo.findByNameOrKennung(sskName);
-        if (!ssks || ssks.length === 0) return [];
-        const personenkontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByRolle(this.rolleId);
+        if (ssks.length === 0) return [];
+
+        const rolleResult: Option<Rolle<true>> = await this.rolleRepo.findById(rolleId);
+        if (!rolleResult) return [];
 
         const allOrganisations: OrganisationDo<true>[] = [];
-        for (const personenkontext of personenkontexte) {
-            const parentOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(
-                personenkontext.organisationId,
-            );
-            if (!parentOrganisation) continue;
-            allOrganisations.push(parentOrganisation);
-            const childOrganisations: OrganisationDo<true>[] = await this.findChildOrganisations(
-                personenkontext.organisationId,
-            );
-            if (childOrganisations.length > 0) {
-                allOrganisations.push(...childOrganisations);
-            }
-        }
+
+        const parentOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(
+            rolleResult.administeredBySchulstrukturknoten,
+        );
+        if (!parentOrganisation) return [];
+        allOrganisations.push(parentOrganisation);
+
+        const childOrganisations: OrganisationDo<true>[] = await this.organisationRepo.findChildOrgasForId(
+            rolleResult.administeredBySchulstrukturknoten,
+        );
+        allOrganisations.push(...childOrganisations);
 
         const orgas: OrganisationDo<true>[] = ssks.filter((ssk: OrganisationDo<true>) =>
             allOrganisations.some((organisation: OrganisationDo<true>) => ssk.id === organisation.id),
