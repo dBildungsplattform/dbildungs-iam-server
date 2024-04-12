@@ -4,7 +4,6 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
-import { OrganisationScope } from '../../organisation/persistence/organisation.scope.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 
@@ -103,7 +102,7 @@ export class PersonenkontextAnlage {
             };
         if (organisation.id == rolleSSK.id) return { ok: true, value: true };
 
-        const children: OrganisationDo<true>[] = await this.findChildOrganisations(rolleSSK.id);
+        const children: OrganisationDo<true>[] = await this.organisationRepo.findChildOrgasForId(rolleSSK.id);
         if (children.some((c: OrganisationDo<true>) => c.id == organisation.id)) {
             return { ok: true, value: true };
         } else {
@@ -133,19 +132,5 @@ export class PersonenkontextAnlage {
         );
         const createdPersonenkontext: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(personenkontext);
         return { ok: true, value: createdPersonenkontext };
-    }
-
-    private async findChildOrganisations(organisationId: string): Promise<OrganisationDo<true>[]> {
-        const scope: OrganisationScope = new OrganisationScope().findAdministrierteVon(organisationId);
-        const counted: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);
-        if (!counted) return [];
-        const children: OrganisationDo<true>[] = counted[0];
-        for (const child of children) {
-            const childsChildren: OrganisationDo<true>[] = await this.findChildOrganisations(child.id);
-            if (childsChildren.length > 0) {
-                children.push(...childsChildren);
-            }
-        }
-        return children;
     }
 }

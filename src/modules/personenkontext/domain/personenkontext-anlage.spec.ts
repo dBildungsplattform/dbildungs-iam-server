@@ -199,17 +199,28 @@ describe('PersonenkontextAnlage', () => {
             });
         });
 
-        it('should return empty list when no personenkontexte could be found', async () => {
+        it('should return empty list when no rolle could be found', async () => {
             const rolle: Rolle<true> = DoFactory.createRolle(true);
-            const organisationen: OrganisationDo<true>[] = [];
+            const organisationen: OrganisationDo<true>[] = [DoFactory.createOrganisation(true)];
 
             organisationRepoMock.findByNameOrKennung.mockResolvedValue(organisationen);
-            dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValue([]);
-
-            const counted: Counted<OrganisationDo<true>> = [[], 0];
-            organisationRepoMock.findBy.mockResolvedValueOnce(counted); //mock call in findChildOrganisations, 2nd time (recursive)
+            rolleRepoMock.findById.mockResolvedValue(undefined);
 
             const result: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(rolle.id, 'nonexistent', LIMIT);
+
+            expect(result).toHaveLength(0);
+        });
+
+        it('should return empty list when no parent organisation could be found', async () => {
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const organisationen: OrganisationDo<true>[] = [DoFactory.createOrganisation(true)];
+
+            organisationRepoMock.findByNameOrKennung.mockResolvedValue(organisationen);
+            rolleRepoMock.findById.mockResolvedValue(rolle);
+            organisationRepoMock.findById.mockResolvedValue(undefined);
+
+            const result: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(rolle.id, 'nonexistent', LIMIT);
+
             expect(result).toHaveLength(0);
         });
 
@@ -276,12 +287,7 @@ describe('PersonenkontextAnlage', () => {
                 rolleRepoMock.findById.mockResolvedValue(rolle);
                 organisationRepoMock.findById.mockResolvedValueOnce(childOrganisation); //find organisation from aggregate
                 organisationRepoMock.findById.mockResolvedValueOnce(parentOrganisation); //find organisation from rolle.administeredBySchulstrukturknoten
-
-                const foundSSKChildren: Counted<OrganisationDo<true>> = [[childOrganisation], 1];
-                organisationRepoMock.findBy.mockResolvedValueOnce(foundSSKChildren);
-
-                const counted: Counted<OrganisationDo<true>> = [[], 0];
-                organisationRepoMock.findBy.mockResolvedValueOnce(counted); //mock call in findChildOrganisations, 2nd time (recursive)
+                organisationRepoMock.findChildOrgasForId.mockResolvedValueOnce([childOrganisation]); // find child organisations
 
                 expect(await anlage.validieren()).toEqual({ ok: true, value: true });
             });
@@ -299,12 +305,7 @@ describe('PersonenkontextAnlage', () => {
                 rolleRepoMock.findById.mockResolvedValue(rolle);
                 organisationRepoMock.findById.mockResolvedValueOnce(childOrganisation); //find organisation from aggregate
                 organisationRepoMock.findById.mockResolvedValueOnce(parentOrganisation); //find organisation from rolle.administeredBySchulstrukturknoten
-
-                const foundSSKChildren: Counted<OrganisationDo<true>> = [[], 0];
-                organisationRepoMock.findBy.mockResolvedValue(foundSSKChildren);
-
-                const counted: Counted<OrganisationDo<true>> = [[], 0];
-                organisationRepoMock.findBy.mockResolvedValueOnce(counted); //mock call in findChildOrganisations, 2nd time (recursive)
+                organisationRepoMock.findChildOrgasForId.mockResolvedValueOnce([]); // find child organisations
 
                 expect(await anlage.validieren()).toEqual({ ok: false, error: new EntityNotFoundError() });
             });
