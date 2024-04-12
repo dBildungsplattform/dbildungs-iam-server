@@ -1,6 +1,6 @@
-A dBildung-IAM as a production ready, stand-alone system
+### A dBildung-IAM as a production ready, stand-alone system
 
-The main goal of Team Erwin, that <br />dBildung-IAM can be used as IDP for Service Providers like LMS and school portals i.e. dBildungscloud and "Schulportal SH":<br />, will be realized by the following sub-goals:
+The main goal of Team Erwin, that <br />**dBildung-IAM can be used as IDP for Service Providers like LMS and school portals i.e. dBildungscloud and "Schulportal SH":**<br />, will be realized by the following sub-goals:
 1. separating IDM from dBildungscloud supporting the strategic goal to realize a stand-alone system which is production ready.
 2. extend the IDM user's data model with structural information supporting the strategic goal to base the IDM on a German educational data model.
 3. dBildung-IAM can import/sync from other IDPs.
