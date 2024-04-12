@@ -189,7 +189,7 @@ export class DbSeedService {
             if (persistedPerson instanceof Person && file.id != null) {
                 this.personMap.set(file.id, persistedPerson);
             } else {
-                this.logger.error('Could not save person:');
+                this.logger.error('Person without ID thus not referenceable:');
                 this.logger.error(JSON.stringify(person));
             }
         }
