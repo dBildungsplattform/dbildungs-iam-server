@@ -14,7 +14,10 @@ import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../src/modules/r
 import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
 import { DoBase } from '../../src/shared/types/do-base.js';
 import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
-import { ServiceProviderKategorie } from '../../src/modules/service-provider/domain/service-provider.enum.js';
+import {
+    ServiceProviderKategorie,
+    ServiceProviderTarget,
+} from '../../src/modules/service-provider/domain/service-provider.enum.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -132,6 +135,7 @@ export class DoFactory {
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
             name: faker.word.noun(),
+            target: ServiceProviderTarget.URL,
             url: faker.internet.url(),
             kategorie: faker.helpers.enumValue(ServiceProviderKategorie),
             logoMimeType: 'image/png',

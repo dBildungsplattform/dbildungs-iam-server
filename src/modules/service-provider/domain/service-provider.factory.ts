@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ServiceProvider } from './service-provider.js';
-import { ServiceProviderKategorie } from './service-provider.enum.js';
+import { ServiceProviderKategorie, ServiceProviderTarget } from './service-provider.enum.js';
 
 @Injectable()
 export class ServiceProviderFactory {
@@ -9,7 +9,8 @@ export class ServiceProviderFactory {
         createdAt: Date,
         updatedAt: Date,
         name: string,
-        url: string,
+        target: ServiceProviderTarget,
+        url: string | undefined,
         kategorie: ServiceProviderKategorie,
         providedOnSchulstrukturknoten: string,
         logo: Buffer | undefined,
@@ -20,6 +21,7 @@ export class ServiceProviderFactory {
             createdAt,
             updatedAt,
             name,
+            target,
             url,
             kategorie,
             providedOnSchulstrukturknoten,
@@ -30,12 +32,21 @@ export class ServiceProviderFactory {
 
     public createNew(
         name: string,
-        url: string,
+        target: ServiceProviderTarget,
+        url: string | undefined,
         kategorie: ServiceProviderKategorie,
         providedOnSchulstrukturknoten: string,
         logo: Buffer | undefined,
         logoMimeType: string | undefined,
     ): ServiceProvider<false> {
-        return ServiceProvider.createNew(name, url, kategorie, providedOnSchulstrukturknoten, logo, logoMimeType);
+        return ServiceProvider.createNew(
+            name,
+            target,
+            url,
+            kategorie,
+            providedOnSchulstrukturknoten,
+            logo,
+            logoMimeType,
+        );
     }
 }

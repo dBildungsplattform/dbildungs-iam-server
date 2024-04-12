@@ -4,6 +4,7 @@
         {
             "id": 0,
             "name": "Provider With Logo",
+            "target": "URL",
             "url": "https://example.com/",
             "kategorie": "UNTERRICHT",
             "logoMimeType": "image/png",
@@ -13,6 +14,7 @@
         {
             "id": 1,
             "name": "Provider Without Logo",
+            "target": "URL",
             "url": "https://example.com/",
             "kategorie": "UNTERRICHT",
             "providedOnSchulstrukturknoten": 1
