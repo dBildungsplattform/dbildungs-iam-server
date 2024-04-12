@@ -31,7 +31,7 @@ describe('The access guard', () => {
         expect(sut.canActivate(context)).toEqual(true);
     });
 
-    it('should delgeta its activation if it cannot decide for itself', async () => {
+    it('should delegate its activation if it cannot decide for itself', async () => {
         reflector.get.mockReturnValueOnce(false);
 
         const context: ExecutionContext = createMock();
