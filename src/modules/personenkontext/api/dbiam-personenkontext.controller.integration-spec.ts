@@ -74,7 +74,7 @@ describe('dbiam Personenkontext API', () => {
         rolleRepo = module.get(RolleRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
-        app = module.createNestApplication().enableShutdownHooks();
+        app = module.createNestApplication();
         await app.init();
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
