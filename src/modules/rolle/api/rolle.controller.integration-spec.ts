@@ -202,6 +202,42 @@ describe('Rolle API', () => {
             expect(response.body).toBeInstanceOf(Array);
             expect(response.body).toHaveLength(3);
         });
+
+        it('should return rollen with serviceproviders', async () => {
+            const [sp1, sp2, sp3]: [ServiceProvider<true>, ServiceProvider<true>, ServiceProvider<true>] =
+                await Promise.all([
+                    serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
+                    serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
+                    serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
+                ]);
+
+            await Promise.all([
+                rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp1.id] })),
+                rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp2.id, sp3.id] })),
+                rolleRepo.save(DoFactory.createRolle(false)),
+            ]);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Array);
+            expect(response.body).toHaveLength(3);
+
+            expect(response.body).toContainEqual(
+                expect.objectContaining({ serviceProviders: [{ id: sp1.id, name: sp1.name }] }),
+            );
+            expect(response.body).toContainEqual(
+                expect.objectContaining({
+                    serviceProviders: [
+                        { id: sp2.id, name: sp2.name },
+                        { id: sp3.id, name: sp3.name },
+                    ],
+                }),
+            );
+            expect(response.body).toContainEqual(expect.objectContaining({ serviceProviders: [] }));
+        });
     });
 
     describe('/PATCH rolle, add systemrecht', () => {
