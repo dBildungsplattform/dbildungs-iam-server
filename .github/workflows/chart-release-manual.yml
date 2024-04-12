@@ -18,12 +18,12 @@ concurrency:
 
 jobs:
   scan:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@7
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@DBP-453-Create-Redis-DBCluster-available-for-session-storage-of-SPSH
     permissions:
       contents: read
   release:
     needs: scan
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@7
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@DBP-453-Create-Redis-DBCluster-available-for-session-storage-of-SPSH
     secrets: inherit
     with:
       chart_name: dbildungs-iam-server
