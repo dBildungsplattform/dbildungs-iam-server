@@ -9,11 +9,13 @@ concurrency:
   group: dbildungs-iam-server-image-helm-chart
   cancel-in-progress: true
 
+
+
 jobs:
   # GHRC Image
   codeql_analyze:
     name: "CodeQL"
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@5
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@DBP-453-Create-Redis-DBCluster-available-for-session-storage-of-SPSH
     permissions:
       actions: read
       contents: read
@@ -22,7 +24,7 @@ jobs:
   nest_lint:
     name: "Linting"
     if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@5
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@DBP-453-Create-Redis-DBCluster-available-for-session-storage-of-SPSH
     with:
       node_version: '18'
     permissions:
@@ -31,7 +33,7 @@ jobs:
   tests_and_sonarcloud:
     name: "Tests and Sonarcloud"
     if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@5
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@DBP-453-Create-Redis-DBCluster-available-for-session-storage-of-SPSH
     with:
       node_version: '18'
     permissions:
@@ -48,7 +50,7 @@ jobs:
       packages: write
       security-events: write
       contents: read
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@5
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@DBP-453-Create-Redis-DBCluster-available-for-session-storage-of-SPSH
     with:
       image_name: "dbildungs-iam-server"
       run_trivy_scan: true
@@ -56,10 +58,11 @@ jobs:
       container_registry: "ghcr.io"
       fail_on_vulnerabilites: false
       report_location: "Dockerfile"
+
   
   # Helm Chart
   scan_helm:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@5
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@DBP-453-Create-Redis-DBCluster-available-for-session-storage-of-SPSH
     permissions:
       contents: read
 
