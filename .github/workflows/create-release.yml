@@ -9,13 +9,11 @@ concurrency:
   group: dbildungs-iam-server-image-helm-chart
   cancel-in-progress: true
 
-
-
 jobs:
   # GHRC Image
   codeql_analyze:
     name: "CodeQL"
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@7
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@6
     permissions:
       actions: read
       contents: read
@@ -24,7 +22,7 @@ jobs:
   nest_lint:
     name: "Linting"
     if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@7
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@6
     with:
       node_version: '18'
     permissions:
@@ -33,7 +31,7 @@ jobs:
   tests_and_sonarcloud:
     name: "Tests and Sonarcloud"
     if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@7
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@6
     with:
       node_version: '18'
     permissions:
@@ -50,7 +48,7 @@ jobs:
       packages: write
       security-events: write
       contents: read
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@7
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@6
     with:
       image_name: "dbildungs-iam-server"
       run_trivy_scan: true
@@ -58,17 +56,16 @@ jobs:
       container_registry: "ghcr.io"
       fail_on_vulnerabilites: false
       report_location: "Dockerfile"
-
   
   # Helm Chart
   scan_helm:
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@7
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@6
     permissions:
       contents: read
 
   release_helm:
     needs: scan_helm
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@7
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@6
     secrets: inherit
     with:
       chart_name: "dbildungs-iam-server"
