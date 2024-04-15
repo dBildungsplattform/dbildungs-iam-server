@@ -5,3 +5,8 @@ export enum ServiceProviderKategorie {
     HINWEISE = 'HINWEISE',
     ANGEBOTE = 'ANGEBOTE',
 }
+
+export enum ServiceProviderTarget {
+    URL = 'URL',
+    SCHULPORTAL_ADMINISTRATION = 'SCHULPORTAL_ADMINISTRATION',
+}
