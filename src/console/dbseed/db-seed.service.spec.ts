@@ -23,12 +23,16 @@ import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ServiceProviderFactory } from '../../modules/service-provider/domain/service-provider.factory.js';
+import { KeycloakUserService, UserDo } from '../../modules/keycloak-administration/index.js';
+import { Person } from '../../modules/person/domain/person.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
     let dbSeedService: DbSeedService;
     let organisationRepoMock: DeepMocked<OrganisationRepo>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
+    let personRepoMock: DeepMocked<PersonRepository>;
+    let kcUserService: DeepMocked<KeycloakUserService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -66,11 +70,17 @@ describe('DbSeedService', () => {
                     provide: ServiceProviderRepo,
                     useValue: createMock<ServiceProviderRepo>(),
                 },
+                {
+                    provide: KeycloakUserService,
+                    useValue: createMock<KeycloakUserService>(),
+                },
             ],
         }).compile();
         dbSeedService = module.get(DbSeedService);
         organisationRepoMock = module.get(OrganisationRepo);
         rolleRepoMock = module.get(RolleRepo);
+        personRepoMock = module.get(PersonRepository);
+        kcUserService = module.get(KeycloakUserService);
     });
 
     afterAll(async () => {
@@ -313,6 +323,42 @@ describe('DbSeedService', () => {
                 await expect(dbSeedService.seedServiceProvider(fileContentAsStr)).resolves.not.toThrow(
                     EntityNotFoundError,
                 );
+            });
+        });
+    });
+
+    describe('seedPerson', () => {
+        describe('person already exists in keycloak', () => {
+            it('should delete the person and then create it again', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/existingPerson/02_person.json`,
+                    'utf-8',
+                );
+
+                const person: Person<true> = Person.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.person.lastName(),
+                    faker.person.firstName(),
+                    '1',
+                    'testusername',
+                    faker.string.uuid(),
+                );
+
+                const existingUser: UserDo<true> = new UserDo<true>();
+                existingUser.id = faker.string.uuid();
+                existingUser.createdDate = faker.date.recent();
+                existingUser.username = 'testusername';
+
+                kcUserService.findOne.mockResolvedValueOnce({ ok: true, value: existingUser });
+                kcUserService.delete.mockResolvedValueOnce({ ok: true, value: undefined });
+                personRepoMock.create.mockResolvedValue(person);
+
+                await dbSeedService.seedPerson(fileContentAsStr);
+
+                await expect(dbSeedService.seedPerson(fileContentAsStr)).resolves.not.toThrow(EntityNotFoundError);
+                expect(kcUserService.delete).toHaveBeenCalled();
             });
         });
     });

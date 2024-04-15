@@ -25,6 +25,7 @@ import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persiste
 import { ServiceProviderFactory } from '../../modules/service-provider/domain/service-provider.factory.js';
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { ServerConfig, DataConfig } from '../../shared/config/index.js';
+import { FindUserFilter, KeycloakUserService, UserDo } from '../../modules/keycloak-administration/index.js';
 
 @Injectable()
 export class DbSeedService {
@@ -40,6 +41,7 @@ export class DbSeedService {
         private readonly rolleFactory: RolleFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly serviceProviderFactory: ServiceProviderFactory,
+        private readonly kcUserService: KeycloakUserService,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -195,6 +197,18 @@ export class DbSeedService {
             if (person instanceof DomainError) {
                 throw person;
             }
+            const filter: FindUserFilter = {
+                username: person.username,
+            };
+
+            const existingKcUser: Result<UserDo<true>, DomainError> = await this.kcUserService.findOne(filter);
+            if (existingKcUser.ok) {
+                await this.kcUserService.delete(existingKcUser.value.id); //When kcUser exists delete it
+                this.logger.warning(
+                    `Keycloak User with keycloakid: ${existingKcUser.value.id} has been deleted, and will be replaced by newly seeded user with same username: ${person.username}`,
+                );
+            }
+
             const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
             if (persistedPerson instanceof Person && file.id != null) {
                 this.personMap.set(file.id, persistedPerson);
