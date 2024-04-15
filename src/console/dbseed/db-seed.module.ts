@@ -10,10 +10,7 @@ import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persiste
 import { OrganisationModule } from '../../modules/organisation/organisation.module.js';
 import { RolleModule } from '../../modules/rolle/rolle.module.js';
 import { ServiceProviderModule } from '../../modules/service-provider/service-provider.module.js';
-import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
-import { KeycloakAdministrationService } from '../../modules/keycloak-administration/domain/keycloak-admin-client.service.js';
-import { KeycloakUserService } from '../../modules/keycloak-administration/index.js';
-import { KeycloakInstanceConfig } from '../../modules/keycloak-administration/keycloak-instance-config.js';
+import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
 
 @Module({
     imports: [
@@ -22,18 +19,10 @@ import { KeycloakInstanceConfig } from '../../modules/keycloak-administration/ke
         OrganisationModule,
         RolleModule,
         ServiceProviderModule,
+        KeycloakAdministrationModule,
         LoggerModule.register(DbSeedModule.name),
     ],
-    providers: [
-        DbSeedService,
-        DbSeedMapper,
-        DbSeedConsole,
-        DBiamPersonenkontextRepo,
-        KeycloakUserService,
-        KeycloakAdministrationService,
-        KeycloakAdminClient,
-        KeycloakInstanceConfig.fromConfigService(),
-    ],
+    providers: [DbSeedService, DbSeedMapper, DbSeedConsole, DBiamPersonenkontextRepo],
     exports: [DbSeedService, DbSeedMapper, DbSeedConsole],
 })
 export class DbSeedModule {}

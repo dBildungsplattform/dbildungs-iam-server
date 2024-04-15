@@ -26,10 +26,6 @@ import { DBiamPersonenkontextRepo } from '../modules/personenkontext/persistence
 import { RolleModule } from '../modules/rolle/rolle.module.js';
 import { ServiceProviderModule } from '../modules/service-provider/service-provider.module.js';
 import { PersonModule } from '../modules/person/person.module.js';
-import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
-import { KeycloakAdministrationService } from '../modules/keycloak-administration/domain/keycloak-admin-client.service.js';
-import { KeycloakUserService } from '../modules/keycloak-administration/index.js';
-import { KeycloakInstanceConfig } from '../modules/keycloak-administration/keycloak-instance-config.js';
 
 @Module({
     imports: [
@@ -83,10 +79,6 @@ import { KeycloakInstanceConfig } from '../modules/keycloak-administration/keycl
         RolleRepo,
         RolleFactory,
         ServiceProviderRepo,
-        KeycloakUserService,
-        KeycloakAdministrationService,
-        KeycloakAdminClient,
-        KeycloakInstanceConfig.fromConfigService(),
     ],
 })
 export class ConsoleModule {}
