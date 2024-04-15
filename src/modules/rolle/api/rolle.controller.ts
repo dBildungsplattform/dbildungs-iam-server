@@ -17,6 +17,7 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiOAuth2,
     ApiNotFoundResponse,
     ApiOkResponse,
     ApiOperation,
@@ -40,28 +41,42 @@ import { AddSystemrechtError } from '../../../shared/error/add-systemrecht.error
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { RolleServiceProviderQueryParams } from './rolle-service-provider.query.params.js';
 import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
 @ApiBearerAuth()
+@ApiOAuth2(['openid'])
 @Controller({ path: 'rolle' })
 export class RolleController {
     public constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,
         private readonly orgService: OrganisationService,
+        private readonly serviceProviderRepo: ServiceProviderRepo,
     ) {}
 
     @Get()
     @ApiOperation({ description: 'List all rollen.' })
-    @ApiOkResponse({ description: 'The rollen were successfully returned', type: [RolleResponse] })
+    @ApiOkResponse({ description: 'The rollen were successfully returned', type: [RolleWithServiceProvidersResponse] })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get rollen.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollen.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all rollen.' })
-    public async findRollen(): Promise<RolleResponse[]> {
-        const rollen: Rolle<true>[] = await this.rolleRepo.find();
+    public async findRollen(): Promise<RolleWithServiceProvidersResponse[]> {
+        const [rollen, serviceProviders]: [Rolle<true>[], ServiceProvider<true>[]] = await Promise.all([
+            this.rolleRepo.find(),
+            this.serviceProviderRepo.find(),
+        ]);
 
-        return rollen.map((r: Rolle<true>) => new RolleResponse(r));
+        return rollen.map((r: Rolle<true>) => {
+            const sps: ServiceProvider<true>[] = r.serviceProviderIds
+                .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
+                .filter(Boolean) as ServiceProvider<true>[];
+
+            return new RolleWithServiceProvidersResponse(r, sps);
+        });
     }
 
     @Post()

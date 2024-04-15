@@ -1,20 +1,10 @@
+import { Injectable } from '@nestjs/common';
+import { ServiceProvider } from './service-provider.js';
 import { ServiceProviderKategorie, ServiceProviderTarget } from './service-provider.enum.js';
 
-export class ServiceProvider<WasPersisted extends boolean> {
-    private constructor(
-        public id: Persisted<string, WasPersisted>,
-        public createdAt: Persisted<Date, WasPersisted>,
-        public updatedAt: Persisted<Date, WasPersisted>,
-        public name: string,
-        public target: ServiceProviderTarget,
-        public url: string | undefined,
-        public kategorie: ServiceProviderKategorie,
-        public providedOnSchulstrukturknoten: string,
-        public logo: Buffer | undefined,
-        public logoMimeType: string | undefined,
-    ) {}
-
-    public static construct<WasPersisted extends boolean = false>(
+@Injectable()
+export class ServiceProviderFactory {
+    public construct(
         id: string,
         createdAt: Date,
         updatedAt: Date,
@@ -25,8 +15,8 @@ export class ServiceProvider<WasPersisted extends boolean> {
         providedOnSchulstrukturknoten: string,
         logo: Buffer | undefined,
         logoMimeType: string | undefined,
-    ): ServiceProvider<WasPersisted> {
-        return new ServiceProvider(
+    ): ServiceProvider<true> {
+        return ServiceProvider.construct(
             id,
             createdAt,
             updatedAt,
@@ -40,7 +30,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         );
     }
 
-    public static createNew(
+    public createNew(
         name: string,
         target: ServiceProviderTarget,
         url: string | undefined,
@@ -49,10 +39,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         logo: Buffer | undefined,
         logoMimeType: string | undefined,
     ): ServiceProvider<false> {
-        return new ServiceProvider(
-            undefined,
-            undefined,
-            undefined,
+        return ServiceProvider.createNew(
             name,
             target,
             url,

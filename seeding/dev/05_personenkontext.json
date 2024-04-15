@@ -2,9 +2,44 @@
     "entityName": "Personenkontext",
     "entities": [
         {
+            "personId": 1,
+            "organisationId": 0,
+            "rolleId": 0
+        },
+        {
             "personId": 2,
             "organisationId": 0,
             "rolleId": 0
+        },
+        {
+            "personId": 4,
+            "organisationId": 6,
+            "rolleId": 1
+        },
+        {
+            "personId": 5,
+            "organisationId": 8,
+            "rolleId": 2
+        },
+        {
+            "personId": 6,
+            "organisationId": 6,
+            "rolleId": 4
+        },
+        {
+            "personId": 7,
+            "organisationId": 6,
+            "rolleId": 3
+        },
+        {
+            "personId": 8,
+            "organisationId": 4,
+            "rolleId": 2
+        },
+        {
+            "personId": 9,
+            "organisationId": 9,
+            "rolleId": 2
         }
     ]
 }
