@@ -59,6 +59,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.lokalisierung,
         entity.vertrauensstufe,
         entity.auskunftssperre,
+        entity.personalnummer,
     );
 }
 
