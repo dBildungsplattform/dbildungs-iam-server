@@ -22,7 +22,6 @@ import { CreateOrganisationBodyParams } from './create-organisation.body.params.
 import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
-import { FindOrganisationDto } from './find-organisation.dto.js';
 import { OrganisationByIdParams } from './organisation-by-id.params.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationUc } from './organisation.uc.js';
@@ -30,6 +29,9 @@ import { UpdateOrganisationBodyParams } from './update-organisation.body.params.
 import { UpdateOrganisationDto } from './update-organisation.dto.js';
 import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js';
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
+import { OrganisationScope } from '../persistence/organisation.scope.js';
+import { Organisation } from '../domain/organisation.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
@@ -39,6 +41,7 @@ import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js'
 export class OrganisationController {
     public constructor(
         private readonly uc: OrganisationUc,
+        private readonly organisationRepository: OrganisationRepository,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -133,16 +136,27 @@ export class OrganisationController {
     public async findOrganizations(
         @Query() queryParams: FindOrganisationQueryParams,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const organisationDto: FindOrganisationDto = this.mapper.map(
-            queryParams,
-            FindOrganisationQueryParams,
-            FindOrganisationDto,
-        );
+        const scope: OrganisationScope = new OrganisationScope()
+            .findBy({
+                kennung: queryParams.kennung,
+                name: queryParams.name,
+                typ: queryParams.typ,
+                searchString: queryParams.searchString,
+            })
+            .paged(queryParams.offset, queryParams.limit);
+        const [organisationss, total]: Counted<Organisation<true>> = await this.organisationRepository.findBy(scope);
 
-        const organisations: Paged<OrganisationResponse> = await this.uc.findAll(organisationDto);
-        const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
+        const organisationResponses: OrganisationResponse[] = organisationss.map((organisation: Organisation<true>) => {
+            return new OrganisationResponse(organisation);
+        });
+        const pagedOrganisationResponse: Paged<OrganisationResponse> = {
+            total: total,
+            offset: queryParams.offset ?? 0,
+            limit: queryParams.limit ?? total,
+            items: organisationResponses,
+        };
 
-        return response;
+        return new PagedResponse(pagedOrganisationResponse);
     }
 
     @Get(':organisationId/administriert')

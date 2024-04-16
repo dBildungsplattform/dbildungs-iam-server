@@ -56,4 +56,19 @@ export abstract class ScopeBase<T extends AnyEntity> {
 
         return this;
     }
+
+    public findBySubstring(
+        fields: Array<keyof T>,
+        substring: string,
+        operator: ScopeOperator = ScopeOperator.OR,
+    ): this {
+        const likeConditions: QBFilterQuery<T>[] = fields.map((field: keyof T): QBFilterQuery<T> => {
+            return { [field]: { $like: `%${substring}%` } };
+        });
+        const query: QBFilterQuery<T> = { [operator]: likeConditions };
+
+        this.queryFilters.push(query);
+
+        return this;
+    }
 }

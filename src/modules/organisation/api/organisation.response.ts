@@ -1,6 +1,7 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
+import { Organisation } from '../domain/organisation.js';
 
 export class OrganisationResponse {
     @AutoMap()
@@ -29,4 +30,14 @@ export class OrganisationResponse {
 
     @AutoMap(() => String)
     public traegerschaft?: Traegerschaft;
+
+    public constructor(organisation: Organisation<true>) {
+        this.id = organisation.id;
+        this.kennung = organisation.kennung;
+        this.name = organisation.name!;
+        this.namensergaenzung = organisation.namensergaenzung;
+        this.kuerzel = organisation.kuerzel;
+        this.typ = organisation.typ!;
+        this.traegerschaft = organisation.traegerschaft;
+    }
 }
