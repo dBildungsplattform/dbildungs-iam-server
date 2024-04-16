@@ -183,6 +183,8 @@ export class DbSeedService {
             };
             const person: Person<false> | DomainError = await this.personFactory.createNew(creationParams);
             if (person instanceof DomainError) {
+                this.logger.error('Could not create person:');
+                this.logger.error(JSON.stringify(person));
                 throw person;
             }
             const filter: FindUserFilter = {
@@ -200,6 +202,9 @@ export class DbSeedService {
             const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
             if (persistedPerson instanceof Person && file.id != null) {
                 this.personMap.set(file.id, persistedPerson);
+            } else {
+                this.logger.error('Person without ID thus not referenceable:');
+                this.logger.error(JSON.stringify(person));
             }
         }
         this.logger.info(`Insert ${files.length} entities of type Person`);

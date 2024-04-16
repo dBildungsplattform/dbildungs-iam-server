@@ -56,7 +56,12 @@ export class DatabaseTestModule implements OnModuleDestroy {
         await orm.getSchemaGenerator().clearDatabase();
     }
 
+    public constructor(private orm?: MikroORM) {}
+
     public async onModuleDestroy(): Promise<void> {
+        if (this.orm) {
+            await this.orm.close();
+        }
         await DatabaseTestModule.postgres?.stop();
     }
 }
