@@ -55,6 +55,7 @@ describe('DbSeedServiceIntegration', () => {
     });
 
     afterAll(async () => {
+        await orm.close();
         await module.close();
     });
 
