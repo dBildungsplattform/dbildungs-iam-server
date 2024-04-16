@@ -23,7 +23,8 @@
             "geschlecht": "w",
             "loaklisierung": null,
             "vertrauensstufe": null,
-            "auskunftssperre": null
+            "auskunftssperre": null,
+            "personalnummer": "00001A-1A"
         },
         {
             "id": 3,
@@ -76,7 +77,8 @@
             "geschlecht": "m",
             "loaklisierung": null,
             "vertrauensstufe": null,
-            "auskunftssperre": null
+            "auskunftssperre": null,
+            "personalnummer": "00004B-4C"
         }
     ]
 }

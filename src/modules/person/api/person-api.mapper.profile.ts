@@ -301,6 +301,10 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     (dest: PersonDto) => dest.vertrauensstufe,
                     mapFrom((src: PersonDo<boolean>) => src.vertrauensstufe),
                 ),
+                forMember(
+                    (dest: PersonDto) => dest.personalnummer,
+                    mapFrom((src: PersonDo<boolean>) => src.personalnummer),
+                ),
             );
 
             createMap(mapper, LoeschungDto, LoeschungResponse);

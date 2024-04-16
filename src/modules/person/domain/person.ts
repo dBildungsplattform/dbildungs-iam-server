@@ -63,6 +63,7 @@ export class Person<WasPersisted extends boolean> {
         public lokalisierung?: string,
         public vertrauensstufe?: Vertrauensstufe,
         public auskunftssperre?: boolean,
+        public personalnummer?: string,
     ) {
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
     }
@@ -100,6 +101,7 @@ export class Person<WasPersisted extends boolean> {
         lokalisierung?: string,
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
+        personalnummer?: string,
     ): Person<WasPersisted> {
         return new Person(
             id,
@@ -126,6 +128,7 @@ export class Person<WasPersisted extends boolean> {
             lokalisierung,
             vertrauensstufe,
             auskunftssperre,
+            personalnummer,
         );
     }
 
