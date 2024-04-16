@@ -180,7 +180,7 @@ export class DbSeedService {
                 auskunftssperre: file.auskunftssperre,
                 username: file.username,
                 password: file.password,
-                personalnummer: file.personalnummer
+                personalnummer: file.personalnummer,
             };
             const person: Person<false> | DomainError = await this.personFactory.createNew(creationParams);
             if (person instanceof DomainError) {
