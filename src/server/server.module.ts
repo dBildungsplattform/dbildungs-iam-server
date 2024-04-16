@@ -10,13 +10,11 @@ import { mappingErrorHandler } from '../shared/error/index.js';
 import { PersonApiModule } from '../modules/person/person-api.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
-import { AuthGuard, KeycloakConnectModule, RoleGuard } from 'nest-keycloak-connect';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { HealthModule } from '../modules/health/health.module.js';
 import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
 import { LoggerModule } from '../core/logging/logger.module.js';
 import { ErrorModule } from '../shared/error/error.module.js';
-import { KeycloakInstanceConfig } from '../modules/keycloak-administration/keycloak-instance-config.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 import { AuthenticationApiModule } from '../modules/authentication/authentication-api.module.js';
 import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
@@ -27,6 +25,9 @@ import RedisStore from 'connect-redis';
 import session from 'express-session';
 import passport from 'passport';
 import { ClassLogger } from '../core/logging/class-logger.js';
+import { AccessGuard } from '../modules/authentication/api/access.guard.js';
+import { PermissionsInterceptor } from '../modules/authentication/services/permissions.interceptor.js';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
     imports: [
@@ -59,16 +60,11 @@ import { ClassLogger } from '../core/logging/class-logger.js';
             },
             inject: [ConfigService],
         }),
-        KeycloakConnectModule.registerAsync({
-            useFactory: (config: KeycloakInstanceConfig) => {
-                return {
-                    authServerUrl: config.BASE_URL,
-                    realm: config.REALM_NAME,
-                    clientId: config.CLIENT_ID,
-                    secret: config.CLIENT_SECRET,
-                };
-            },
-            inject: [KeycloakInstanceConfig],
+        PassportModule.register({
+            session: true,
+            defaultStrategy: ['jwt', 'oidc'],
+            keepSessionInfo: true,
+            property: 'passportUser',
         }),
         LoggerModule.register(ServerModule.name),
         AuthenticationApiModule,
@@ -86,11 +82,11 @@ import { ClassLogger } from '../core/logging/class-logger.js';
     providers: [
         {
             provide: APP_GUARD,
-            useClass: AuthGuard,
+            useClass: AccessGuard,
         },
         {
-            provide: APP_GUARD,
-            useClass: RoleGuard,
+            provide: APP_INTERCEPTOR,
+            useClass: PermissionsInterceptor,
         },
     ],
 })

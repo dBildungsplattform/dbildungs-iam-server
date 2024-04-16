@@ -1,14 +1,15 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { ExecutionContext } from '@nestjs/common';
 import { AuthGuard, IAuthGuard } from '@nestjs/passport';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request } from 'express';
 
 import { LoginGuard } from './login.guard.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
-const canActivateSpy: jest.SpyInstance = jest.spyOn(AuthGuard('oidc').prototype as IAuthGuard, 'canActivate');
-const logInSpy: jest.SpyInstance = jest.spyOn(AuthGuard('oidc').prototype as IAuthGuard, 'logIn');
+const canActivateSpy: jest.SpyInstance = jest.spyOn(AuthGuard(['jwt', 'oidc']).prototype as IAuthGuard, 'canActivate');
+const logInSpy: jest.SpyInstance = jest.spyOn(AuthGuard(['jwt', 'oidc']).prototype as IAuthGuard, 'logIn');
 
 describe('LoginGuard', () => {
     let module: TestingModule;
@@ -16,7 +17,7 @@ describe('LoginGuard', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            providers: [LoginGuard],
+            providers: [LoginGuard, { provide: ClassLogger, useValue: createMock<ClassLogger>() }],
         }).compile();
 
         sut = module.get(LoginGuard);
@@ -35,16 +36,37 @@ describe('LoginGuard', () => {
             canActivateSpy.mockResolvedValueOnce(true);
             logInSpy.mockResolvedValueOnce(undefined);
             const contextMock: DeepMocked<ExecutionContext> = createMock();
+            contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
 
             await sut.canActivate(contextMock);
 
             expect(canActivateSpy).toHaveBeenCalledWith(contextMock);
         });
 
+        it('should short-circuit out when superclass canActivate fails', async () => {
+            canActivateSpy.mockResolvedValueOnce(false);
+            logInSpy.mockResolvedValueOnce(undefined);
+            const contextMock: DeepMocked<ExecutionContext> = createMock();
+            contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
+
+            await expect(sut.canActivate(contextMock)).resolves.toBe(false);
+        });
+
+        it('should refuse on exception', async () => {
+            canActivateSpy.mockResolvedValueOnce(true);
+            logInSpy.mockRejectedValueOnce('Something broke');
+
+            const contextMock: DeepMocked<ExecutionContext> = createMock();
+            contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
+
+            await expect(sut.canActivate(contextMock)).resolves.toBe(false);
+        });
+
         it('should call logIn of superclass', async () => {
             canActivateSpy.mockResolvedValueOnce(true);
             logInSpy.mockResolvedValueOnce(undefined);
             const contextMock: DeepMocked<ExecutionContext> = createMock();
+            contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
 
             await sut.canActivate(contextMock);
 
