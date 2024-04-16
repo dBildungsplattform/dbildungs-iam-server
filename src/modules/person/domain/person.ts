@@ -26,6 +26,7 @@ export type PersonCreationParams = {
     auskunftssperre?: boolean;
     username?: string;
     password?: string;
+    personalnummer?: string;
 };
 
 export class Person<WasPersisted extends boolean> {
@@ -161,6 +162,7 @@ export class Person<WasPersisted extends boolean> {
             creationParams.lokalisierung,
             creationParams.vertrauensstufe,
             creationParams.auskunftssperre,
+            creationParams.personalnummer,
         );
 
         if (creationParams.password) {
@@ -206,6 +208,7 @@ export class Person<WasPersisted extends boolean> {
         lokalisierung?: string,
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
+        personalnummer?: string,
     ): void | DomainError {
         if (this.revision !== revision) {
             return new MismatchedRevisionError(
@@ -234,6 +237,7 @@ export class Person<WasPersisted extends boolean> {
         this.vertrauensstufe = vertrauensstufe;
         this.auskunftssperre = auskunftssperre;
         this.revision = newRevision;
+        this.personalnummer = personalnummer;
     }
 
     public resetPassword(): void {

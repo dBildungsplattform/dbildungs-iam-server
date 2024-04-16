@@ -6,7 +6,8 @@
             "username": "test",
             "password": "test",
             "vorname": "test",
-            "familienname": "test"
+            "familienname": "test",
+            "personalnummer": "00002Z-7X"
         },
         {
             "id": 2,
