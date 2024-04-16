@@ -9,8 +9,6 @@ import {
 } from '../../../test/utils/index.js';
 import fs from 'fs';
 import { DataProviderFile } from './file/data-provider-file.js';
-import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
-import { ServiceProviderKategorie } from '../../modules/service-provider/domain/service-provider.enum.js';
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
@@ -23,14 +21,18 @@ import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
 import { Rolle } from '../../modules/rolle/domain/rolle.js';
 import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
-import { Buffer } from 'buffer';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ServiceProviderFactory } from '../../modules/service-provider/domain/service-provider.factory.js';
+import { KeycloakUserService, UserDo } from '../../modules/keycloak-administration/index.js';
+import { Person } from '../../modules/person/domain/person.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
     let dbSeedService: DbSeedService;
     let organisationRepoMock: DeepMocked<OrganisationRepo>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
+    let personRepoMock: DeepMocked<PersonRepository>;
+    let kcUserService: DeepMocked<KeycloakUserService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -43,6 +45,7 @@ describe('DbSeedService', () => {
             providers: [
                 DbSeedService,
                 RolleFactory,
+                ServiceProviderFactory,
                 {
                     provide: PersonFactory,
                     useValue: createMock<PersonFactory>(),
@@ -63,16 +66,21 @@ describe('DbSeedService', () => {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
                 },
-
                 {
                     provide: ServiceProviderRepo,
                     useValue: createMock<ServiceProviderRepo>(),
+                },
+                {
+                    provide: KeycloakUserService,
+                    useValue: createMock<KeycloakUserService>(),
                 },
             ],
         }).compile();
         dbSeedService = module.get(DbSeedService);
         organisationRepoMock = module.get(OrganisationRepo);
         rolleRepoMock = module.get(RolleRepo);
+        personRepoMock = module.get(PersonRepository);
+        kcUserService = module.get(KeycloakUserService);
     });
 
     afterAll(async () => {
@@ -215,6 +223,20 @@ describe('DbSeedService', () => {
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
+        describe('kuerzel = root', () => {
+            it('should create root orga', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/organisation/06_kuerzel-is-root.json`,
+                    'utf-8',
+                );
+                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+
+                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
+        });
     });
 
     describe('seedRolle', () => {
@@ -259,41 +281,84 @@ describe('DbSeedService', () => {
                 await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
+
+        describe('with non-existing serviceProvider for in serviceProviderIds', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/rolle/06_rolle-with-non-existing-sp.json`,
+                    'utf-8',
+                );
+                const persistedRolle: Rolle<true> = DoFactory.createRolle(true);
+
+                rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
+                await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
     });
 
-    describe('readServiceProvider', () => {
-        describe('readServiceProvider with two entities', () => {
-            it('should have length 2', () => {
+    describe('seedServiceProvider', () => {
+        describe('seedServiceProvider with two entities', () => {
+            it('should not throw an error', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./seeding/seeding-integration-test/all/03_service-provider.json`,
+                    `./seeding/seeding-integration-test/serviceProvider/03_service-provider.json`,
                     'utf-8',
                 );
 
-                const serviceprovider: ServiceProvider<true>[] = dbSeedService.readServiceProvider(fileContentAsStr);
+                const fileContentParentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/serviceProvider/00_parent_organisation.json`,
+                    'utf-8',
+                );
+                const parent: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                    id: faker.string.uuid(),
+                    kennung: 'ParentOrganisation',
+                    name: 'Parent',
+                    namensergaenzung: 'Keine',
+                    kuerzel: '00',
+                    typ: OrganisationsTyp.TRAEGER,
+                    traegerschaft: Traegerschaft.KIRCHLICH,
+                });
+                organisationRepoMock.save.mockResolvedValueOnce(parent);
+                await dbSeedService.seedOrganisation(fileContentParentAsStr);
 
-                expect(serviceprovider).toHaveLength(2);
-                expect(serviceprovider[0]).toEqual({
-                    id: 'ca0e17c5-8e48-403b-af92-28eff21c64bb',
-                    name: 'Provider With Logo',
-                    url: 'https://example.com/',
-                    kategorie: ServiceProviderKategorie.UNTERRICHT,
-                    logoMimeType: 'image/png',
-                    logo: expect.any(Buffer) as Buffer,
-                    providedOnSchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
-                    createdAt: expect.any(Date) as Date,
-                    updatedAt: expect.any(Date) as Date,
-                });
-                expect(serviceprovider[1]).toEqual({
-                    id: 'd96ddc00-a8ed-4d4c-b498-24958fb64604',
-                    name: 'Provider Without Logo',
-                    url: 'https://example.com/',
-                    kategorie: ServiceProviderKategorie.UNTERRICHT,
-                    logo: undefined,
-                    logoMimeType: undefined,
-                    providedOnSchulstrukturknoten: 'cb3e7c7f-c8fb-4083-acbf-2484efb19b54',
-                    createdAt: expect.any(Date) as Date,
-                    updatedAt: expect.any(Date) as Date,
-                });
+                await expect(dbSeedService.seedServiceProvider(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
+        });
+    });
+
+    describe('seedPerson', () => {
+        describe('person already exists in keycloak', () => {
+            it('should delete the person and then create it again', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/existingPerson/02_person.json`,
+                    'utf-8',
+                );
+
+                const person: Person<true> = Person.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.person.lastName(),
+                    faker.person.firstName(),
+                    '1',
+                    'testusername',
+                    faker.string.uuid(),
+                );
+
+                const existingUser: UserDo<true> = new UserDo<true>();
+                existingUser.id = faker.string.uuid();
+                existingUser.createdDate = faker.date.recent();
+                existingUser.username = 'testusername';
+
+                kcUserService.findOne.mockResolvedValueOnce({ ok: true, value: existingUser });
+                kcUserService.delete.mockResolvedValueOnce({ ok: true, value: undefined });
+                personRepoMock.create.mockResolvedValue(person);
+
+                await dbSeedService.seedPerson(fileContentAsStr);
+
+                await expect(dbSeedService.seedPerson(fileContentAsStr)).resolves.not.toThrow(EntityNotFoundError);
+                expect(kcUserService.delete).toHaveBeenCalled();
             });
         });
     });

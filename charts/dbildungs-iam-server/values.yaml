@@ -21,10 +21,10 @@ restartPolicy: Always
 environment: prod
 
 database:
-  name: ""
+  name: "dbildungs_iam_server"
   host: ""
   password: ""
-  username: ""
+  username: "dbildungs_iam_server"
 
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
@@ -51,6 +51,15 @@ backend:
     requests:
       cpu: 200m
       memory: 200Mi
+  startupProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 60
+    failureThreshold: 5
+    httpGet:
+      scheme: 'HTTP'
+      port: 8080
+      path: '/health'
   livenessProbe:
     enabled: true
     initialDelaySeconds: 10

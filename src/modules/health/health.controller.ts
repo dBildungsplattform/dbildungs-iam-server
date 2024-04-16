@@ -8,12 +8,11 @@ import {
 } from '@nestjs/terminus';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { Unprotected } from 'nest-keycloak-connect';
 import { KeycloakHealthIndicator } from './keycloak.health-indicator.js';
 import { RedisHealthIndicator } from './redis.health-indicator.js';
+import { Public } from '../authentication/api/public.decorator.js';
 
 @Controller('health')
-@Unprotected()
 @ApiExcludeController()
 export class HealthController {
     public constructor(
@@ -25,6 +24,7 @@ export class HealthController {
     ) {}
 
     @Get()
+    @Public()
     @HealthCheck()
     public check(): Promise<HealthCheckResult> {
         return this.health.check([

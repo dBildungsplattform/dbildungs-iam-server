@@ -36,6 +36,7 @@ describe('OrganisationServiceSpecificationTest', () => {
     }, 100000);
 
     afterAll(async () => {
+        await orm.close();
         await module.close();
     });
 

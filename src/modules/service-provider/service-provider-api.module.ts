@@ -8,6 +8,7 @@ import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-p
 import { PersonenKontextApiModule } from '../personenkontext/personenkontext-api.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { RolleModule } from '../rolle/rolle.module.js';
+import { StreamableFileFactory } from '../../shared/util/streamable-file.factory.js';
 
 @Module({
     imports: [
@@ -17,7 +18,7 @@ import { RolleModule } from '../rolle/rolle.module.js';
         KeycloakAdministrationModule,
         RolleModule,
     ],
-    providers: [PersonPermissionsRepo, PersonRepository, DBiamPersonenkontextRepo],
+    providers: [StreamableFileFactory, PersonPermissionsRepo, PersonRepository, DBiamPersonenkontextRepo],
     controllers: [ProviderController],
 })
 export class ServiceProviderApiModule {}

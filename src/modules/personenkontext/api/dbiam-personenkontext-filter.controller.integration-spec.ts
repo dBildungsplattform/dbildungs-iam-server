@@ -73,6 +73,7 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
+        await orm.close();
         await app.close();
     });
 

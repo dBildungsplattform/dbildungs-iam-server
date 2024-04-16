@@ -10,7 +10,7 @@ import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { FrontendConfig } from '../../../shared/config/frontend.config.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
-import { PassportUser, User } from '../types/user.js';
+import { PassportUser } from '../types/user.js';
 import { AuthenticationController } from './authentication.controller.js';
 import { UserinfoResponse } from './userinfo.response.js';
 import { DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
@@ -21,6 +21,7 @@ import { MikroORM } from '@mikro-orm/core';
 import { PersonPermissions } from '../domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Person } from '../../person/domain/person.js';
+import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -36,6 +37,7 @@ describe('AuthenticationController', () => {
                 ConfigTestModule,
                 LoggingTestModule,
                 MapperTestModule,
+                ServiceProviderModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonModule,
                 PersonenKontextModule,
@@ -71,6 +73,7 @@ describe('AuthenticationController', () => {
     });
 
     afterAll(async () => {
+        await module.get(MikroORM).close();
         await module.close();
     });
 
@@ -194,7 +197,6 @@ describe('AuthenticationController', () => {
 
     describe('info', () => {
         it('should return user info', async () => {
-            const user: User = createMock<User>({ preferred_username: faker.internet.userName() });
             const person: Person<true> = Person.construct(
                 faker.string.uuid(),
                 faker.date.past(),
@@ -207,13 +209,21 @@ describe('AuthenticationController', () => {
                 faker.string.uuid(),
             );
             person.geburtsdatum = faker.date.past();
-
             const personPermissions: PersonPermissions = new PersonPermissions(dbiamPersonenkontextRepoMock, person);
             personPermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(personPermissions);
 
-            const result: UserinfoResponse = await authController.info(user);
+            const permissions: PersonPermissions = createMock<PersonPermissions>({
+                get personFields(): Person<true> {
+                    return createMock<Person<true>>({
+                        geburtsdatum: createMock(),
+                        updatedAt: new Date(Date.now()),
+                    });
+                },
+            });
+            const result: UserinfoResponse = await authController.info(permissions);
 
             expect(result).toBeInstanceOf(UserinfoResponse);
+            expect(result.birthdate!).toBe(permissions.personFields.geburtsdatum?.toISOString());
         });
     });
 });

@@ -52,6 +52,7 @@ describe('ServiceProvider API', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
+        await orm.close();
         await app.close();
     });
 

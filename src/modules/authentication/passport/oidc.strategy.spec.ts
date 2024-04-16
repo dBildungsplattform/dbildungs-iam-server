@@ -61,7 +61,7 @@ describe('OpenIdConnectStrategy', () => {
 
             const result: AuthorizationParameters = await sut.validate(tokenSet);
 
-            expect(result).toEqual({ ...tokenSet, userinfo });
+            expect(result).toMatchObject({ ...tokenSet, userinfo });
         });
 
         it('should throw UnauthorizedException if userinfo fails', async () => {

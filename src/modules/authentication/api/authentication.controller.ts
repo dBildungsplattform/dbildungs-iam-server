@@ -1,7 +1,9 @@
 import { Controller, Get, Inject, Req, Res, Session, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+    ApiBearerAuth,
     ApiInternalServerErrorResponse,
+    ApiOAuth2,
     ApiOkResponse,
     ApiOperation,
     ApiQuery,
@@ -20,9 +22,8 @@ import { RedirectQueryParams } from './redirect.query.params.js';
 import { UserinfoResponse } from './userinfo.response.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonPermissions } from '../domain/person-permissions.js';
-import { AuthenticatedUser, Public } from 'nest-keycloak-connect';
-import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
-import { User } from '../types/user.js';
+import { Permissions } from './permissions.decorator.js';
+import { Public } from './public.decorator.js';
 
 @ApiTags('auth')
 @Controller({ path: 'auth' })
@@ -34,7 +35,6 @@ export class AuthenticationController {
     public constructor(
         configService: ConfigService<ServerConfig>,
         @Inject(OIDC_CLIENT) private client: Client,
-        private personPermissionsRepo: PersonPermissionsRepo,
         private readonly logger: ClassLogger,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
@@ -55,6 +55,8 @@ export class AuthenticationController {
 
     @Get('logout')
     @Public()
+    @ApiBearerAuth()
+    @ApiOAuth2(['openid'])
     @ApiOperation({ summary: 'Used to log out the current user.' })
     @ApiResponse({ status: 302, description: 'Redirect to logout.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to log out.' })
@@ -89,13 +91,15 @@ export class AuthenticationController {
     }
 
     @Get('logininfo')
+    @ApiBearerAuth()
+    @ApiOAuth2(['openid'])
     @ApiOperation({ summary: 'Info about logged in user.' })
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
     @ApiOkResponse({ description: 'Returns info about the logged in user.', type: UserinfoResponse })
-    public async info(@AuthenticatedUser() user: User): Promise<UserinfoResponse> {
-        const personPermissions: PersonPermissions = await this.personPermissionsRepo.loadPersonPermissions(user.sub);
-        const roleIds: string[] = await personPermissions.getRoleIds();
-        this.logger.info(roleIds.toString());
-        return new UserinfoResponse(personPermissions);
+    public async info(@Permissions() permissions: PersonPermissions): Promise<UserinfoResponse> {
+        const roleIds: string[] = await permissions.getRoleIds();
+        this.logger.info('Roles: ' + roleIds.toString());
+        this.logger.info('User: ' + JSON.stringify(permissions.personFields));
+        return new UserinfoResponse(permissions);
     }
 }

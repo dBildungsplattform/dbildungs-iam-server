@@ -5,6 +5,7 @@ import {
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
+    ApiOAuth2,
     ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -13,26 +14,26 @@ import {
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
+import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
-import { User } from '../../authentication/types/user.d.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('provider')
+@ApiOAuth2(['openid'])
 @ApiBearerAuth()
 @Controller({ path: 'provider' })
 export class ProviderController {
     public constructor(
-        private readonly serviceProviderRepo: ServiceProviderRepo,
-        private readonly personPermissionsRepo: PersonPermissionsRepo,
         private readonly rolleRepo: RolleRepo,
+        private readonly streamableFileFactory: StreamableFileFactory,
+        private readonly serviceProviderRepo: ServiceProviderRepo,
     ) {}
 
     @Get('all')
@@ -60,9 +61,10 @@ export class ProviderController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
-    public async getAvailableServiceProviders(@AuthenticatedUser() user: User): Promise<ServiceProviderResponse[]> {
-        const personPermissions: PersonPermissions = await this.personPermissionsRepo.loadPersonPermissions(user.sub);
-        const roleIds: string[] = await personPermissions.getRoleIds();
+    public async getAvailableServiceProviders(
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<ServiceProviderResponse[]> {
+        const roleIds: string[] = await permissions.getRoleIds();
         const serviceProviders: ServiceProvider<true>[] = [];
         for (const roleId of roleIds) {
             const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(roleId);
@@ -113,7 +115,7 @@ export class ProviderController {
             );
         }
 
-        const logoFile: StreamableFile = new StreamableFile(serviceProvider.logo, {
+        const logoFile: StreamableFile = this.streamableFileFactory.fromBuffer(serviceProvider.logo, {
             type: serviceProvider.logoMimeType,
         });
 

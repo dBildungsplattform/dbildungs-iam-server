@@ -28,6 +28,3 @@ updates:
         patterns:
           - '@typescript-eslint/parser'
           - '@typescript-eslint/eslint-plugin'
-    ignore:
-      # Causes warnings during dependency resolution (at least in 3.12.x)
-      - dependency-name: 'nest-commander'

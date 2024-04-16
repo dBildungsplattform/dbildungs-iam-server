@@ -14,6 +14,7 @@ import { PersonRepository } from '../../modules/person/persistence/person.reposi
 import { PersonFactory } from '../../modules/person/domain/person.factory.js';
 import { DomainError, EntityNotFoundError } from '../../shared/error/index.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
+import { ConfigService } from '@nestjs/config';
 import { PersonenkontextFile } from './file/personenkontext-file.js';
 import { OrganisationRepo } from '../../modules/organisation/persistence/organisation.repo.js';
 import { RolleFile } from './file/rolle-file.js';
@@ -21,9 +22,15 @@ import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
 import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderFile } from './file/service-provider-file.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ServiceProviderFactory } from '../../modules/service-provider/domain/service-provider.factory.js';
+import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
+import { ServerConfig, DataConfig } from '../../shared/config/index.js';
+import { FindUserFilter, KeycloakUserService, UserDo } from '../../modules/keycloak-administration/index.js';
 
 @Injectable()
 export class DbSeedService {
+    private readonly ROOT_ORGANISATION_ID: string;
+
     public constructor(
         private readonly logger: ClassLogger,
         private readonly personFactory: PersonFactory,
@@ -32,7 +39,13 @@ export class DbSeedService {
         private readonly organisationRepo: OrganisationRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,
-    ) {}
+        private readonly serviceProviderRepo: ServiceProviderRepo,
+        private readonly serviceProviderFactory: ServiceProviderFactory,
+        private readonly kcUserService: KeycloakUserService,
+        config: ConfigService<ServerConfig>,
+    ) {
+        this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+    }
 
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
 
@@ -42,7 +55,7 @@ export class DbSeedService {
 
     private rolleMap: Map<number, Rolle<true>> = new Map();
 
-    private serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
+    private serviceProviderMap: Map<number, ServiceProvider<true>> = new Map();
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
@@ -71,6 +84,11 @@ export class DbSeedService {
             const zugehoerigZuOrganisation: OrganisationDo<true> = this.getReferencedOrganisation(data.zugehoerigZu);
             zugehoerigZu = zugehoerigZuOrganisation.id;
         }
+
+        if (!administriertVon && !zugehoerigZu && data.kuerzel === 'Root') {
+            organisationDo.id = this.ROOT_ORGANISATION_ID;
+        }
+
         organisationDo.administriertVon = administriertVon ?? undefined;
         organisationDo.zugehoerigZu = zugehoerigZu ?? undefined;
         organisationDo.kennung = data.kennung ?? undefined;
@@ -103,19 +121,17 @@ export class DbSeedService {
         const rolleFile: EntityFile<RolleFile> = JSON.parse(fileContentAsStr) as EntityFile<RolleFile>;
         const files: RolleFile[] = plainToInstance(RolleFile, rolleFile.entities);
         for (const file of files) {
-            const persistedSSK: OrganisationDo<true> | undefined = this.organisationMap.get(
-                file.administeredBySchulstrukturknoten,
-            );
-            if (!persistedSSK)
-                throw new EntityNotFoundError('Organisation', file.administeredBySchulstrukturknoten.toString());
-
             const rolle: Rolle<false> = this.rolleFactory.createNew(
                 file.name,
                 this.getReferencedOrganisation(file.administeredBySchulstrukturknoten).id,
                 file.rollenart,
                 file.merkmale,
                 file.systemrechte,
-                file.serviceProviderIds,
+                file.serviceProviderIds
+                    ? this.getReferencedServiceProviders(file.serviceProviderIds).map(
+                          (sp: ServiceProvider<true>) => sp.id,
+                      )
+                    : undefined,
             );
 
             const persistedRolle: Rolle<true> | DomainError = await this.rolleRepo.save(rolle);
@@ -126,30 +142,29 @@ export class DbSeedService {
         this.logger.info(`Insert ${files.length} entities of type Rolle`);
     }
 
-    public readServiceProvider(fileContentAsStr: string): ServiceProvider<true>[] {
+    public async seedServiceProvider(fileContentAsStr: string): Promise<void> {
         const serviceProviderFile: EntityFile<ServiceProviderFile> = JSON.parse(
             fileContentAsStr,
         ) as EntityFile<ServiceProviderFile>;
+        const files: ServiceProviderFile[] = plainToInstance(ServiceProviderFile, serviceProviderFile.entities);
+        for (const file of files) {
+            const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
+                file.name,
+                file.target,
+                file.url,
+                file.kategorie,
+                this.getReferencedOrganisation(file.providedOnSchulstrukturknoten).id,
+                file.logoBase64 ? Buffer.from(file.logoBase64, 'base64') : undefined,
+                file.logoMimeType,
+            );
 
-        const entities: ServiceProviderFile[] = plainToInstance(ServiceProviderFile, serviceProviderFile.entities);
-
-        const serviceProviders: ServiceProvider<true>[] = entities.map((data: ServiceProviderFile) =>
-            ServiceProvider.construct(
-                data.id,
-                new Date(),
-                new Date(),
-                data.name,
-                data.url,
-                data.kategorie,
-                data.providedOnSchulstrukturknoten,
-                data.logoBase64 ? Buffer.from(data.logoBase64, 'base64') : undefined,
-                data.logoMimeType,
-            ),
-        );
-        for (const serviceProvider of serviceProviders) {
-            this.serviceProviderMap.set(serviceProvider.id, serviceProvider);
+            const persistedServiceProvider: ServiceProvider<true> =
+                await this.serviceProviderRepo.save(serviceProvider);
+            if (file.id != null) {
+                this.serviceProviderMap.set(file.id, persistedServiceProvider);
+            }
         }
-        return serviceProviders;
+        this.logger.info(`Insert ${files.length} entities of type ServiceProvider`);
     }
 
     public async seedPerson(fileContentAsStr: string): Promise<void> {
@@ -180,11 +195,28 @@ export class DbSeedService {
             };
             const person: Person<false> | DomainError = await this.personFactory.createNew(creationParams);
             if (person instanceof DomainError) {
+                this.logger.error('Could not create person:');
+                this.logger.error(JSON.stringify(person));
                 throw person;
             }
+            const filter: FindUserFilter = {
+                username: person.username,
+            };
+
+            const existingKcUser: Result<UserDo<true>, DomainError> = await this.kcUserService.findOne(filter);
+            if (existingKcUser.ok) {
+                await this.kcUserService.delete(existingKcUser.value.id); //When kcUser exists delete it
+                this.logger.warning(
+                    `Keycloak User with keycloakid: ${existingKcUser.value.id} has been deleted, and will be replaced by newly seeded user with same username: ${person.username}`,
+                );
+            }
+
             const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
             if (persistedPerson instanceof Person && file.id != null) {
                 this.personMap.set(file.id, persistedPerson);
+            } else {
+                this.logger.error('Person without ID thus not referenceable:');
+                this.logger.error(JSON.stringify(person));
             }
         }
         this.logger.info(`Insert ${files.length} entities of type Person`);
@@ -229,6 +261,16 @@ export class DbSeedService {
         const rolle: Rolle<true> | undefined = this.rolleMap.get(seedingId);
         if (!rolle) throw new EntityNotFoundError('Rolle', seedingId.toString());
         return rolle;
+    }
+
+    private getReferencedServiceProviders(seedingIds: number[]): ServiceProvider<true>[] {
+        return seedingIds.map((n: number) => this.getReferencedServiceProvider(n));
+    }
+
+    private getReferencedServiceProvider(seedingId: number): ServiceProvider<true> {
+        const serviceProvider: ServiceProvider<true> | undefined = this.serviceProviderMap.get(seedingId);
+        if (!serviceProvider) throw new EntityNotFoundError('ServiceProvider', seedingId.toString());
+        return serviceProvider;
     }
 
     private readEntityFromJSONFile<T>(fileContentAsStr: string, constructor: ConstructorCall): T[] {

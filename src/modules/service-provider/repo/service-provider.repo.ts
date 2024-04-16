@@ -14,6 +14,7 @@ export function mapAggregateToData(
         // Don't assign createdAt and updatedAt, they are auto-generated!
         id: serviceProvider.id,
         name: serviceProvider.name,
+        target: serviceProvider.target,
         url: serviceProvider.url,
         kategorie: serviceProvider.kategorie,
         providedOnSchulstrukturknoten: serviceProvider.providedOnSchulstrukturknoten,
@@ -28,6 +29,7 @@ function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<bo
         entity.createdAt,
         entity.updatedAt,
         entity.name,
+        entity.target,
         entity.url,
         entity.kategorie,
         entity.providedOnSchulstrukturknoten,
