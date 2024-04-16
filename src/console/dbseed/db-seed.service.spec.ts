@@ -223,6 +223,20 @@ describe('DbSeedService', () => {
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
+        describe('kuerzel = root', () => {
+            it('should create root orga', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/organisation/06_kuerzel-is-root.json`,
+                    'utf-8',
+                );
+                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+
+                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
+        });
     });
 
     describe('seedRolle', () => {
