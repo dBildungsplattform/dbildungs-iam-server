@@ -7,7 +7,6 @@ export type OrganisationFindByProps = {
     kennung?: string;
     name?: string;
     typ?: OrganisationsTyp;
-    searchString?: string;
 };
 
 export class OrganisationScope extends ScopeBase<OrganisationEntity> {
@@ -16,25 +15,24 @@ export class OrganisationScope extends ScopeBase<OrganisationEntity> {
     }
 
     public findBy(findProps: Findable<OrganisationFindByProps>, operator: ScopeOperator = ScopeOperator.AND): this {
-        const searchString: string | undefined =
-            typeof findProps?.searchString === 'string' ? findProps.searchString : undefined;
+        this.findByInternal(
+            {
+                kennung: findProps.kennung,
+                name: findProps.name,
+                typ: findProps.typ,
+            },
+            operator,
+        );
 
-        if (searchString && !findProps.kennung && !findProps.name && !findProps.typ) {
-            return this.findBySubstring(['name', 'kennung'], searchString, ScopeOperator.OR);
-        } else {
-            const filterProps: Partial<OrganisationFindByProps> = {};
-            if (typeof findProps.kennung === 'string') filterProps.kennung = findProps.kennung;
-            if (typeof findProps.name === 'string') filterProps.name = findProps.name;
-            if (findProps.typ !== undefined && typeof findProps.typ === 'string')
-                filterProps.typ = findProps.typ as OrganisationsTyp;
+        return this;
+    }
 
-            this.findByInternal(filterProps, operator);
+    public searchString(searchString: string | undefined): this {
+        const search: string | undefined = typeof searchString === 'string' ? searchString : undefined;
 
-            if (searchString) {
-                this.findBySubstring(['name', 'kennung'], searchString, ScopeOperator.OR);
-            }
+        if (search) {
+            this.findBySubstring(['name', 'kennung'], search, ScopeOperator.OR);
         }
-
         return this;
     }
 

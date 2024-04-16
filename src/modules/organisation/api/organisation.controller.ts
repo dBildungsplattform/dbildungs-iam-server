@@ -141,12 +141,12 @@ export class OrganisationController {
                 kennung: queryParams.kennung,
                 name: queryParams.name,
                 typ: queryParams.typ,
-                searchString: queryParams.searchString,
             })
+            .searchString(queryParams.searchString)
             .paged(queryParams.offset, queryParams.limit);
-        const [organisationss, total]: Counted<Organisation<true>> = await this.organisationRepository.findBy(scope);
+        const [organisations, total]: Counted<Organisation<true>> = await this.organisationRepository.findBy(scope);
 
-        const organisationResponses: OrganisationResponse[] = organisationss.map((organisation: Organisation<true>) => {
+        const organisationResponses: OrganisationResponse[] = organisations.map((organisation: Organisation<true>) => {
             return new OrganisationResponse(organisation);
         });
         const pagedOrganisationResponse: Paged<OrganisationResponse> = {
