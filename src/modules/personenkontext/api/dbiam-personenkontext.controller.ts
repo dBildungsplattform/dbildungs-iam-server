@@ -20,6 +20,10 @@ import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkon
 import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personenkontext-by-personid.params.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
+import { NurLehrUndLernAnKlasse } from '../specification/nur-lehr-und-lern-an-klasse.js';
+import { NurLehrUndLernAnKlasseError } from '../specification/error/nur-lehr-und-lern-an-klasse.error.js';
+import { GleicheRolleAnKlasseWieSchule } from '../specification/gleiche-rolle-an-klasse-wie-schule.js';
+import { GleicheRolleAnKlasseWieSchuleError } from '../specification/error/gleiche-rolle-an-klasse-wie-schule.error.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenkontexte')
@@ -94,6 +98,32 @@ export class DBiamPersonenkontextController {
         if (referenceError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(referenceError),
+            );
+        }
+
+        //Check that only teachers and students are added to classes.
+        const nurLehrUndLernAnKlasse: NurLehrUndLernAnKlasse = new NurLehrUndLernAnKlasse(
+            this.organisationRepo,
+            this.rolleRepo,
+        );
+        const nurLehrUndLernAnKlasseValid: boolean = await nurLehrUndLernAnKlasse.isSatisfiedBy(newPersonenkontext);
+        if (!nurLehrUndLernAnKlasseValid) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new NurLehrUndLernAnKlasseError()),
+            );
+        }
+
+        //Check that person has same role on parent-organisation, if organisation is a class.
+        const gleicheRolleAnKlasseWieSchule: GleicheRolleAnKlasseWieSchule = new GleicheRolleAnKlasseWieSchule(
+            this.organisationRepo,
+            this.personenkontextRepo,
+            this.rolleRepo,
+        );
+        const gleicheRolleAnKlasseWieSchuleValid: boolean =
+            await gleicheRolleAnKlasseWieSchule.isSatisfiedBy(newPersonenkontext);
+        if (!gleicheRolleAnKlasseWieSchuleValid) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new GleicheRolleAnKlasseWieSchuleError()),
             );
         }
 
