@@ -61,6 +61,7 @@ describe('DbSeedConsole', () => {
     });
 
     afterAll(async () => {
+        await orm.close();
         await module.close();
     });
 

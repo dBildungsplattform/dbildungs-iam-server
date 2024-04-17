@@ -5,6 +5,7 @@ import { AuthorizationParameters, Client, Strategy, StrategyOptions, TokenSet, U
 
 import { FrontendConfig, ServerConfig } from '../../../shared/config/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
+import { PassportUser } from '../types/user.js';
 
 @Injectable()
 export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
@@ -22,7 +23,7 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
         } satisfies StrategyOptions);
     }
 
-    public async validate(tokenset: TokenSet): Promise<AuthorizationParameters> {
+    public async validate(tokenset: TokenSet): Promise<AuthorizationParameters & PassportUser> {
         try {
             const userinfo: UserinfoResponse = await this.client.userinfo(tokenset);
 
@@ -30,13 +31,13 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
             const accessToken: string | undefined = tokenset.access_token;
             const refreshToken: string | undefined = tokenset.refresh_token;
 
-            const user: AuthorizationParameters = {
+            const user: AuthorizationParameters & PassportUser = {
                 id_token: idToken,
                 access_token: accessToken,
                 refresh_token: refreshToken,
-                userinfo,
+                userinfo: userinfo,
+                personPermissions: () => Promise.reject(),
             };
-
             return user;
         } catch (err: unknown) {
             throw new UnauthorizedException();

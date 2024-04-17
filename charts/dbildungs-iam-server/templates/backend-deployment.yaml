@@ -79,6 +79,7 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+          startupProbe: {{- omit .Values.backend.startupProbe "enabled" | toYaml | nindent 12 }}
           livenessProbe: {{- omit .Values.backend.livenessProbe "enabled" | toYaml | nindent 12 }}
           readinessProbe: {{- omit .Values.backend.readinessProbe "enabled" | toYaml | nindent 12 }}
       restartPolicy: {{ .Values.restartPolicy }}

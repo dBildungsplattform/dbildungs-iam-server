@@ -10,6 +10,7 @@ import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persiste
 import { OrganisationModule } from '../../modules/organisation/organisation.module.js';
 import { RolleModule } from '../../modules/rolle/rolle.module.js';
 import { ServiceProviderModule } from '../../modules/service-provider/service-provider.module.js';
+import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
 
 @Module({
     imports: [
@@ -18,6 +19,7 @@ import { ServiceProviderModule } from '../../modules/service-provider/service-pr
         OrganisationModule,
         RolleModule,
         ServiceProviderModule,
+        KeycloakAdministrationModule,
         LoggerModule.register(DbSeedModule.name),
     ],
     providers: [DbSeedService, DbSeedMapper, DbSeedConsole, DBiamPersonenkontextRepo],

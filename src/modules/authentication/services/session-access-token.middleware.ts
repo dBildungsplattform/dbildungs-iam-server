@@ -5,7 +5,8 @@ import { Client, TokenSet } from 'openid-client';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 /**
- * Copies the access token from a session, if it exists
+ * Checks the Access Token and refreshes it if need be.
+ * If everything is expired user is logged out
  */
 
 @Injectable()
@@ -16,7 +17,7 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
     ) {}
 
     public async use(req: Request, _res: Response, next: (error?: unknown) => void): Promise<void> {
-        let accessToken: string | undefined = req.passportUser?.access_token;
+        const accessToken: string | undefined = req.passportUser?.access_token;
 
         const refreshToken: string | undefined = req.passportUser?.refresh_token;
         if (accessToken) {
@@ -30,8 +31,6 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                             req.passportUser.access_token = tokens.access_token;
                             req.passportUser.id_token = tokens.id_token;
                             req.passportUser.userinfo = await this.client.userinfo(tokens);
-
-                            accessToken = req.passportUser.access_token;
                         }
                     } catch (e: unknown) {
                         if (e instanceof Error) {
@@ -40,9 +39,13 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                             this.logger.warning(JSON.stringify(e));
                         }
                     }
+                } else {
+                    req.logout((err: unknown) => {
+                        if (err) {
+                            this.logger.error(JSON.stringify(err));
+                        }
+                    });
                 }
-
-            req.headers.authorization = `Bearer ${accessToken}`;
         }
 
         next();
