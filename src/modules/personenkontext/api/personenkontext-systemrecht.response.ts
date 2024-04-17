@@ -7,4 +7,16 @@ import { OrganisationResponse } from '../../organisation/api/organisation.respon
 export class SystemrechtResponse {
     @ApiProperty({ type: [OrganisationResponse] })
     public [RollenSystemRecht.ROLLEN_VERWALTEN]?: OrganisationResponse[];
+
+    @ApiProperty({ type: [OrganisationResponse] })
+    public [RollenSystemRecht.KLASSEN_VERWALTEN]?: OrganisationResponse[];
+
+    @ApiProperty({ type: [OrganisationResponse] })
+    public [RollenSystemRecht.SCHULEN_VERWALTEN]?: OrganisationResponse[];
+
+    @ApiProperty({ type: [OrganisationResponse] })
+    public [RollenSystemRecht.PERSONEN_VERWALTEN]?: OrganisationResponse[];
+
+    @ApiProperty({ type: [OrganisationResponse] })
+    public [RollenSystemRecht.SCHULTRAEGER_VERWALTEN]?: OrganisationResponse[];
 }
