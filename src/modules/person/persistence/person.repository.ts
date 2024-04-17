@@ -30,6 +30,7 @@ export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<
         auskunftssperre: person.auskunftssperre,
         dataProvider: undefined,
         revision: person.revision,
+        personalnummer: person.personalnummer,
     };
 }
 
