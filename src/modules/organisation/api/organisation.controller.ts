@@ -32,6 +32,7 @@ import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js'
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { Organisation } from '../domain/organisation.js';
+import { ScopeOperator } from '../../../shared/persistence/index.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
@@ -142,6 +143,7 @@ export class OrganisationController {
                 name: queryParams.name,
                 typ: queryParams.typ,
             })
+            .setScopeWhereOperator(ScopeOperator.AND)
             .searchString(queryParams.searchString)
             .paged(queryParams.offset, queryParams.limit);
         const [organisations, total]: Counted<Organisation<true>> = await this.organisationRepository.findBy(scope);

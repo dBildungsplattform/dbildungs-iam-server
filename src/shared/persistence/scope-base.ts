@@ -7,17 +7,27 @@ export abstract class ScopeBase<T extends AnyEntity> {
 
     private readonly queryOrderMaps: QBQueryOrderMap<T>[] = [];
 
+    private scopeWhereOperator: ScopeOperator = ScopeOperator.OR;
+
     private offset: Option<number>;
 
     private limit: Option<number>;
 
     protected abstract get entityName(): EntityName<T>;
 
+    public setScopeWhereOperator(operator: ScopeOperator): this {
+        this.scopeWhereOperator = operator;
+        return this;
+    }
+
     public async executeQuery(em: EntityManager): Promise<Counted<T>> {
         const qb: QueryBuilder<T> = em.createQueryBuilder(this.entityName);
+        const combinedFilters: {
+            [x: string]: QBFilterQuery<T>[];
+        } = { [this.scopeWhereOperator]: this.queryFilters };
         const result: Counted<T> = await qb
             .select('*')
-            .where(this.queryFilters)
+            .where(combinedFilters)
             .orderBy(this.queryOrderMaps)
             .offset(this.offset ?? undefined)
             .limit(this.limit ?? undefined)
