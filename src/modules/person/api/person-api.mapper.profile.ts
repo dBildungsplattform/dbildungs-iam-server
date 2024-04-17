@@ -101,6 +101,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonDo<boolean>) => dest.updatedAt, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.revision, ignore()),
                 forMember((dest: PersonDo<boolean>) => dest.mandant, ignore()),
+                forMember((dest: PersonDo<boolean>) => dest.personalnummer, ignore()),
             );
             createMap(
                 mapper,
