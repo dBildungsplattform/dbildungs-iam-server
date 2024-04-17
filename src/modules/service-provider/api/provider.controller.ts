@@ -74,7 +74,7 @@ export class ProviderController {
                         await this.serviceProviderRepo.findById(serviceProviderId);
                     if (
                         serviceProvider &&
-                        !serviceProviders.some((sp: ServiceProvider<true>) => sp == serviceProvider)
+                        !serviceProviders.some((sp: ServiceProvider<true>) => sp.id === serviceProvider.id)
                     ) {
                         serviceProviders.push(serviceProvider);
                     }
