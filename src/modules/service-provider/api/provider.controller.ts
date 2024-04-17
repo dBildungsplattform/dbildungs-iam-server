@@ -72,12 +72,16 @@ export class ProviderController {
                 for (const serviceProviderId of rolle.serviceProviderIds) {
                     const serviceProvider: Option<ServiceProvider<true>> =
                         await this.serviceProviderRepo.findById(serviceProviderId);
-                    if (serviceProvider) {
+                    if (
+                        serviceProvider &&
+                        !serviceProviders.some((sp: ServiceProvider<true>) => sp == serviceProvider)
+                    ) {
                         serviceProviders.push(serviceProvider);
                     }
                 }
             }
         }
+
         return serviceProviders.map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );

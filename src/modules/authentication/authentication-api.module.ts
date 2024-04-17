@@ -10,16 +10,9 @@ import { PersonModule } from '../person/person.module.js';
 import { SessionAccessTokenMiddleware } from './services/session-access-token.middleware.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { JwtStrategy } from './passport/jwt.strategy.js';
-import { PassportModule } from '@nestjs/passport';
 
 @Module({
-    imports: [
-        HttpModule,
-        LoggerModule.register(AuthenticationApiModule.name),
-        PassportModule.register({ session: true, defaultStrategy: 'oidc', keepSessionInfo: true }),
-        PersonModule,
-        PersonenKontextModule,
-    ],
+    imports: [HttpModule, LoggerModule.register(AuthenticationApiModule.name), PersonModule, PersonenKontextModule],
     providers: [
         OpenIdConnectStrategy,
         JwtStrategy,
