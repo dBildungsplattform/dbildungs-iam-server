@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ServiceProviderFactory } from './service-provider.factory.js';
 import { faker } from '@faker-js/faker';
-import { ServiceProviderKategorie } from './service-provider.enum.js';
+import { ServiceProviderKategorie, ServiceProviderTarget } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 
 describe('ServiceProviderFactory', () => {
@@ -28,6 +28,7 @@ describe('ServiceProviderFactory', () => {
         describe('when construct is called on factory', () => {
             it('should return new instance', () => {
                 const name: string = faker.string.alpha();
+                const target: ServiceProviderTarget = faker.helpers.enumValue(ServiceProviderTarget);
                 const url: string = faker.internet.url();
                 const kategorie: ServiceProviderKategorie = faker.helpers.enumValue(ServiceProviderKategorie);
                 const ssk: string = faker.string.uuid();
@@ -39,6 +40,7 @@ describe('ServiceProviderFactory', () => {
                     createdAt: created,
                     updatedAt: updated,
                     name: name,
+                    target: target,
                     url: url,
                     kategorie: kategorie,
                     providedOnSchulstrukturknoten: ssk,
@@ -50,6 +52,7 @@ describe('ServiceProviderFactory', () => {
                     created,
                     updated,
                     name,
+                    target,
                     url,
                     kategorie,
                     ssk,
