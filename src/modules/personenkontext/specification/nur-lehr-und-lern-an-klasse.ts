@@ -8,7 +8,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 /**
- * 'Only needs to be checked when referenced organisation is of type KLASSE'
+ * Only needs to be checked when referenced organisation is of type KLASSE.
  */
 export class NurLehrUndLernAnKlasse extends CompositeSpecification<Personenkontext<boolean>> {
     public constructor(

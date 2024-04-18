@@ -132,6 +132,33 @@ describe('dbiam Personenkontext API', () => {
             expect(response.status).toBe(201);
         });
 
+        it('should return created personenkontext when Klasse specifications are met', async () => {
+            //create lehrer on Schule
+            const lehrer: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+            const schuleDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const lehrerRolleDummy: Rolle<false> = DoFactory.createRolle(false, { rollenart: RollenArt.LEHR });
+            const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
+            const lehrerRolle: Rolle<true> = await rolleRepo.save(lehrerRolleDummy);
+            await personenkontextRepo.save(Personenkontext.createNew(lehrer.id, schule.id, lehrerRolle.id));
+
+            const klasseDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+                typ: OrganisationsTyp.KLASSE,
+                administriertVon: schule.id,
+            });
+            const klasse: OrganisationDo<true> = await organisationRepo.save(klasseDo);
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/dbiam/personenkontext')
+                .send({
+                    personId: lehrer.id,
+                    organisationId: klasse.id,
+                    rolleId: lehrerRolle.id,
+                });
+
+            expect(response.status).toBe(201);
+        });
+
         it('should return error if personenkontext already exists', async () => {
             const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
             const organisation: OrganisationDo<true> = await organisationRepo.save(DoFactory.createOrganisation(false));

@@ -7,6 +7,11 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 
+/**
+ * Only needs to be checked when referenced organisation is of type KLASSE.
+ * Used to check, that a person already owns identical rolle at schule, when creating Personenkontext
+ * for that person with a rolle on a klasse.
+ */
 export class GleicheRolleAnKlasseWieSchule extends CompositeSpecification<Personenkontext<boolean>> {
     public constructor(
         private readonly organisationRepo: OrganisationRepo,
@@ -23,9 +28,6 @@ export class GleicheRolleAnKlasseWieSchule extends CompositeSpecification<Person
         if (organisation.typ !== OrganisationsTyp.KLASSE) return true;
         if (!organisation.administriertVon) return false; // Klasse always has to be administered by Schule
 
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(p.rolleId);
-        if (!rolle) return false;
-
         const schule: Option<OrganisationDo<true>> = await this.organisationRepo.findById(
             organisation.administriertVon,
         );
@@ -37,11 +39,12 @@ export class GleicheRolleAnKlasseWieSchule extends CompositeSpecification<Person
             if (pk.organisationId === schule.id) {
                 const rolleAnSchule: Option<Rolle<true>> = await this.rolleRepo.findById(pk.rolleId);
                 if (!rolleAnSchule) return false;
-                if (rolleAnSchule.rollenart === rolle.rollenart) {
-                    return true;
+                if (rolleAnSchule.id === p.rolleId) {
+                    return true; //satisfied when person already has same rolle on schule
                 }
             }
         }
+
         return false;
     }
 }
