@@ -12,7 +12,7 @@ import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.re
 import { DBiamPersonenkontextController } from './api/dbiam-personenkontext.controller.js';
 import { DbiamPersonenkontextFilterController } from './api/dbiam-personenkontext-filter.controller.js';
 import { PersonenkontextAnlageFactory } from './domain/personenkontext-anlage.factory.js';
-import {DBiamPersonenkontextService} from "./domain/dbiam-personenkontext.service.js";
+import { DBiamPersonenkontextService } from './domain/dbiam-personenkontext.service.js';
 
 @Module({
     imports: [PersonModule, RolleModule, OrganisationModule, LoggerModule.register(PersonenKontextApiModule.name)],

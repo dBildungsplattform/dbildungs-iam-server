@@ -25,7 +25,7 @@ import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persiste
 import { ServiceProviderFactory } from '../../modules/service-provider/domain/service-provider.factory.js';
 import { KeycloakUserService, UserDo } from '../../modules/keycloak-administration/index.js';
 import { Person } from '../../modules/person/domain/person.js';
-import {DBiamPersonenkontextService} from "../../modules/personenkontext/domain/dbiam-personenkontext.service.js";
+import { DBiamPersonenkontextService } from '../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;

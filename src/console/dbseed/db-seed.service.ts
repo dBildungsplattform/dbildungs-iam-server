@@ -26,7 +26,7 @@ import { ServiceProviderFactory } from '../../modules/service-provider/domain/se
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { ServerConfig, DataConfig } from '../../shared/config/index.js';
 import { FindUserFilter, KeycloakUserService, UserDo } from '../../modules/keycloak-administration/index.js';
-import {DBiamPersonenkontextService} from "../../modules/personenkontext/domain/dbiam-personenkontext.service.js";
+import { DBiamPersonenkontextService } from '../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
 
 @Injectable()
 export class DbSeedService {
@@ -242,7 +242,8 @@ export class DbSeedService {
             );
 
             //Check specifications
-            const specificationCheckError: Option<DomainError> = await this.dbiamPersonenkontextService.checkSpecifications(personenKontext);
+            const specificationCheckError: Option<DomainError> =
+                await this.dbiamPersonenkontextService.checkSpecifications(personenKontext);
             if (specificationCheckError) {
                 throw specificationCheckError;
             }

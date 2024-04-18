@@ -25,7 +25,7 @@ import { ServiceProviderRepo } from '../modules/service-provider/repo/service-pr
 import { RolleModule } from '../modules/rolle/rolle.module.js';
 import { ServiceProviderModule } from '../modules/service-provider/service-provider.module.js';
 import { PersonModule } from '../modules/person/person.module.js';
-import {PersonenKontextModule} from "../modules/personenkontext/personenkontext.module.js";
+import { PersonenKontextModule } from '../modules/personenkontext/personenkontext.module.js';
 
 @Module({
     imports: [

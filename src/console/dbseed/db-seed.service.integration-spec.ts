@@ -19,9 +19,7 @@ import { ServiceProviderModule } from '../../modules/service-provider/service-pr
 import { RolleModule } from '../../modules/rolle/rolle.module.js';
 import { PersonModule } from '../../modules/person/person.module.js';
 import { DbSeedModule } from './db-seed.module.js';
-import {
-    GleicheRolleAnKlasseWieSchuleError
-} from "../../modules/personenkontext/specification/error/gleiche-rolle-an-klasse-wie-schule.error.js";
+import { GleicheRolleAnKlasseWieSchuleError } from '../../modules/personenkontext/specification/error/gleiche-rolle-an-klasse-wie-schule.error.js';
 
 describe('DbSeedServiceIntegration', () => {
     let module: TestingModule;
@@ -133,7 +131,9 @@ describe('DbSeedServiceIntegration', () => {
                 );
                 await dbSeedService.seedPerson(fileContentPersonAsStr);
 
-                await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(GleicheRolleAnKlasseWieSchuleError);
+                await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(
+                    GleicheRolleAnKlasseWieSchuleError,
+                );
             });
         });
     });

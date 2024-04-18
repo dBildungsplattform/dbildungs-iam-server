@@ -21,7 +21,7 @@ import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkon
 import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personenkontext-by-personid.params.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
-import {DBiamPersonenkontextService} from "../domain/dbiam-personenkontext.service.js";
+import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenkontexte')
@@ -104,7 +104,8 @@ export class DBiamPersonenkontextController {
         }
 
         //Check specifications
-        const specificationCheckError: Option<DomainError> = await this.dbiamPersonenkontextService.checkSpecifications(newPersonenkontext);
+        const specificationCheckError: Option<DomainError> =
+            await this.dbiamPersonenkontextService.checkSpecifications(newPersonenkontext);
         if (specificationCheckError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(specificationCheckError),

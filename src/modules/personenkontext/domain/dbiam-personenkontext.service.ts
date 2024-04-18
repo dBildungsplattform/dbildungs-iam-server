@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/index.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
-import {NurLehrUndLernAnKlasse} from "../specification/nur-lehr-und-lern-an-klasse.js";
-import {GleicheRolleAnKlasseWieSchule} from "../specification/gleiche-rolle-an-klasse-wie-schule.js";
-import {PersonenkontextKlasseSpecification} from "../specification/personenkontext-klasse-specification.js";
-import {OrganisationRepo} from "../../organisation/persistence/organisation.repo.js";
-import {RolleRepo} from "../../rolle/repo/rolle.repo.js";
+import { NurLehrUndLernAnKlasse } from '../specification/nur-lehr-und-lern-an-klasse.js';
+import { GleicheRolleAnKlasseWieSchule } from '../specification/gleiche-rolle-an-klasse-wie-schule.js';
+import { PersonenkontextKlasseSpecification } from '../specification/personenkontext-klasse-specification.js';
+import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 
 @Injectable()
 export class DBiamPersonenkontextService {
@@ -33,6 +33,6 @@ export class DBiamPersonenkontextService {
             gleicheRolleAnKlasseWieSchule,
         );
 
-        return await pkKlasseSpecification.returnsError(personenkontext);
+        return pkKlasseSpecification.returnsError(personenkontext);
     }
 }
