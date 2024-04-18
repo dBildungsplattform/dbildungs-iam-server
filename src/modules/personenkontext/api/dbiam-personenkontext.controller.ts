@@ -60,7 +60,9 @@ export class DBiamPersonenkontextController {
         description: 'Test',
         type: DBiamPersonenkontextResponse,
     })
-    @ApiBadRequestResponse({ description: 'The personenkontext could not be created, may due to unsatisfied specifications.' })
+    @ApiBadRequestResponse({
+        description: 'The personenkontext could not be created, may due to unsatisfied specifications.',
+    })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create personenkontext.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to create personenkontext.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating personenkontext.' })

@@ -5,7 +5,7 @@ import { PersonPermissionsRepo } from './person-permission.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Person } from '../../person/domain/person.js';
-import {PersonFields, PersonPermissions} from './person-permissions.js';
+import { PersonFields, PersonPermissions } from './person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { RolleID } from '../../../shared/types/index.js';
@@ -73,7 +73,7 @@ describe('PersonPermissions', () => {
 
     describe('personFields', () => {
         describe('when person can be found', () => {
-            it('should return cached person fields', async () => {
+            it('should return cached person fields', () => {
                 const person: Person<true> = createPerson();
                 const personenkontexte: Personenkontext<true>[] = [
                     Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
