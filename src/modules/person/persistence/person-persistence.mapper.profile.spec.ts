@@ -8,7 +8,6 @@ import { PersonEntity } from '../persistence/person.entity.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
-import { ref } from '@mikro-orm/core';
 
 describe('PersonPersistenceMapperProfile', () => {
     let module: TestingModule;
@@ -50,7 +49,6 @@ describe('PersonPersistenceMapperProfile', () => {
 
         it('should map PersonenkontextEntity to PersonenkontextDo', () => {
             const personenkontext: PersonenkontextEntity = new PersonenkontextEntity();
-            personenkontext.personId = ref(PersonEntity, '');
             expect(() => sut.map(personenkontext, PersonenkontextEntity, PersonenkontextDo<true>)).not.toThrowError(
                 MappingError,
             );

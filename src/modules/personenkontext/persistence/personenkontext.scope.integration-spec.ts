@@ -52,7 +52,12 @@ describe('PersonenkontextScope', () => {
                     DoFactory.createPersonenkontext,
                 );
 
-                await em.persistAndFlush(mapper.mapArray(dos, PersonenkontextDo, PersonenkontextEntity));
+                await em.persistAndFlush(
+                    // Don't use mapArray, because beforeMap does not get called
+                    dos.map((pkDo: PersonenkontextDo<false>) =>
+                        mapper.map(pkDo, PersonenkontextDo, PersonenkontextEntity),
+                    ),
+                );
             });
 
             it('should return found personenkontexte', async () => {
