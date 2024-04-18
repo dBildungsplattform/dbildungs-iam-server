@@ -21,11 +21,11 @@ export class NurLehrUndLernAnKlasse extends CompositeSpecification<Personenkonte
     // eslint-disable-next-line @typescript-eslint/require-await
     public async isSatisfiedBy(p: Personenkontext<boolean>): Promise<boolean> {
         const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(p.organisationId);
-        if (!organisation) return false; //this may also be handled via Error, but Error is not valid return-type yet
+        if (!organisation) return false;
         if (organisation.typ !== OrganisationsTyp.KLASSE) return true;
 
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(p.rolleId);
-        if (!rolle) return false; //this may also be handled via Error, but Error is not valid return-type yet
+        if (!rolle) return false;
         return rolle.rollenart === RollenArt.LEHR || rolle.rollenart === RollenArt.LERN;
     }
 }

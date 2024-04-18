@@ -204,7 +204,7 @@ export class SchulConnexErrorMapper {
                 subcode: '00',
                 titel: 'Spezifikation von Personenkontext nicht erfüllt',
                 beschreibung:
-                    'Die Rollenart der Person muss für die Klasse dieselbe sein wie an der zugehörigen Schule',
+                    'Die Rollenart der Person muss für die Klasse dieselbe sein wie an der zugehörigen Schule.',
             }),
         ],
     ]);

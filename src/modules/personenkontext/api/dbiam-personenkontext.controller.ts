@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseFilters } from '@nestjs/common';
 import {
+    ApiBadRequestResponse,
     ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
@@ -21,9 +22,8 @@ import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personen
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
 import { NurLehrUndLernAnKlasse } from '../specification/nur-lehr-und-lern-an-klasse.js';
-import { NurLehrUndLernAnKlasseError } from '../specification/error/nur-lehr-und-lern-an-klasse.error.js';
 import { GleicheRolleAnKlasseWieSchule } from '../specification/gleiche-rolle-an-klasse-wie-schule.js';
-import { GleicheRolleAnKlasseWieSchuleError } from '../specification/error/gleiche-rolle-an-klasse-wie-schule.error.js';
+import { PersonenkontextKlasseSpecification } from '../specification/personenkontext-klasse-specification.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenkontexte')
@@ -60,6 +60,7 @@ export class DBiamPersonenkontextController {
         description: 'Test',
         type: DBiamPersonenkontextResponse,
     })
+    @ApiBadRequestResponse({ description: 'The personenkontext could not be created, may due to unsatisfied specifications.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create personenkontext.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to create personenkontext.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating personenkontext.' })
@@ -106,27 +107,22 @@ export class DBiamPersonenkontextController {
             this.organisationRepo,
             this.rolleRepo,
         );
-        const nurLehrUndLernAnKlasseValid: boolean = await nurLehrUndLernAnKlasse.isSatisfiedBy(newPersonenkontext);
-        if (!nurLehrUndLernAnKlasseValid) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new NurLehrUndLernAnKlasseError()),
-            );
-        }
-
         //Check that person has same role on parent-organisation, if organisation is a class.
         const gleicheRolleAnKlasseWieSchule: GleicheRolleAnKlasseWieSchule = new GleicheRolleAnKlasseWieSchule(
             this.organisationRepo,
             this.personenkontextRepo,
             this.rolleRepo,
         );
-        const gleicheRolleAnKlasseWieSchuleValid: boolean =
-            await gleicheRolleAnKlasseWieSchule.isSatisfiedBy(newPersonenkontext);
-        if (!gleicheRolleAnKlasseWieSchuleValid) {
+        const pkKlasseSpecification: PersonenkontextKlasseSpecification = new PersonenkontextKlasseSpecification(
+            nurLehrUndLernAnKlasse,
+            gleicheRolleAnKlasseWieSchule,
+        );
+        const result: Option<DomainError> = await pkKlasseSpecification.returnsError(newPersonenkontext);
+        if (result) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new GleicheRolleAnKlasseWieSchuleError()),
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
-
         // Save personenkontext
         const savedPersonenkontext: Personenkontext<true> = await this.personenkontextRepo.save(newPersonenkontext);
 

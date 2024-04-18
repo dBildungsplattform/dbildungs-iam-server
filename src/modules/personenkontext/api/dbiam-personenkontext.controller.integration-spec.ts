@@ -1,10 +1,10 @@
-import { faker } from '@faker-js/faker';
-import { MikroORM } from '@mikro-orm/core';
-import { INestApplication } from '@nestjs/common';
-import { APP_PIPE } from '@nestjs/core';
-import { Test, TestingModule } from '@nestjs/testing';
-import request, { Response } from 'supertest';
-import { App } from 'supertest/types.js';
+import {faker} from '@faker-js/faker';
+import {MikroORM} from '@mikro-orm/core';
+import {INestApplication} from '@nestjs/common';
+import {APP_PIPE} from '@nestjs/core';
+import {Test, TestingModule} from '@nestjs/testing';
+import request, {Response} from 'supertest';
+import {App} from 'supertest/types.js';
 import {
     ConfigTestModule,
     DatabaseTestModule,
@@ -12,16 +12,18 @@ import {
     DoFactory,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { GlobalValidationPipe } from '../../../shared/validation/index.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { PersonDo } from '../../person/domain/person.do.js';
-import { PersonRepo } from '../../person/persistence/person.repo.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Personenkontext } from '../domain/personenkontext.js';
-import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
-import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import {GlobalValidationPipe} from '../../../shared/validation/index.js';
+import {OrganisationDo} from '../../organisation/domain/organisation.do.js';
+import {OrganisationRepo} from '../../organisation/persistence/organisation.repo.js';
+import {PersonDo} from '../../person/domain/person.do.js';
+import {PersonRepo} from '../../person/persistence/person.repo.js';
+import {Rolle} from '../../rolle/domain/rolle.js';
+import {RolleRepo} from '../../rolle/repo/rolle.repo.js';
+import {Personenkontext} from '../domain/personenkontext.js';
+import {PersonenKontextApiModule} from '../personenkontext-api.module.js';
+import {DBiamPersonenkontextRepo} from '../persistence/dbiam-personenkontext.repo.js';
+import {OrganisationsTyp} from "../../organisation/domain/organisation.enums.js";
+import {RollenArt} from "../../rolle/domain/rolle.enums.js";
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -162,5 +164,80 @@ describe('dbiam Personenkontext API', () => {
 
             expect(response.status).toBe(404);
         });
+
+        describe('should return error if specifications are not satisfied', () => {
+            it('when organisation is not found', async () => {
+                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const response: Response = await request(app.getHttpServer() as App)
+                    .post('/dbiam/personenkontext')
+                    .send({
+                        personId: person.id,
+                        organisationId: faker.string.uuid(),
+                        rolleId: rolle.id,
+                    });
+
+                expect(response.status).toBe(404);
+            });
+
+            it('when rolle is not found', async () => {
+                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                const organisation: OrganisationDo<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+                const response: Response = await request(app.getHttpServer() as App)
+                    .post('/dbiam/personenkontext')
+                    .send({
+                        personId: person.id,
+                        organisationId: organisation.id,
+                        rolleId: faker.string.uuid(),
+                    });
+
+                expect(response.status).toBe(404);
+            });
+
+            it('when rollenart of rolle is not LEHR or LERN', async () => {
+                const orgaDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {typ: OrganisationsTyp.KLASSE});
+                const rolleDummy : Rolle<false> = DoFactory.createRolle(false, {rollenart: RollenArt.SYSADMIN});
+
+                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                const organisation: OrganisationDo<true> = await organisationRepo.save(orgaDo);
+                const rolle: Rolle<true> = await rolleRepo.save(rolleDummy);
+                const response: Response = await request(app.getHttpServer() as App)
+                    .post('/dbiam/personenkontext')
+                    .send({
+                        personId: person.id,
+                        organisationId: organisation.id,
+                        rolleId: rolle.id,
+                    });
+
+                expect(response.status).toBe(400);
+            });
+
+            it('when rollenart for Schule and Klasse are not equal', async () => {
+                //create admin on Schule
+                const admin: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                const schuleDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {typ: OrganisationsTyp.SCHULE});
+                const adminRolleDummy : Rolle<false> = DoFactory.createRolle(false, {rollenart: RollenArt.ORGADMIN});
+
+                const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
+                const adminRolle: Rolle<true> = await rolleRepo.save(adminRolleDummy);
+                await personenkontextRepo.save(Personenkontext.createNew(admin.id, schule.id, adminRolle.id));
+
+                const klasseDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {typ: OrganisationsTyp.KLASSE, administriertVon: schule.id});
+                const lehrRolleDummy : Rolle<false> = DoFactory.createRolle(false, {rollenart: RollenArt.LEHR});
+                const lehrer: PersonDo<true> = admin;
+                const klasse: OrganisationDo<true> = await organisationRepo.save(klasseDo);
+                const lehrRolle: Rolle<true> = await rolleRepo.save(lehrRolleDummy);
+                const response: Response = await request(app.getHttpServer() as App)
+                    .post('/dbiam/personenkontext')
+                    .send({
+                        personId: lehrer.id,
+                        organisationId: klasse.id,
+                        rolleId: lehrRolle.id,
+                    });
+
+                expect(response.status).toBe(400);
+            });
+        });
+
     });
 });
