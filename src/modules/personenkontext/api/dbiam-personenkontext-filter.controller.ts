@@ -15,7 +15,7 @@ import { FindSchulstrukturknotenResponse } from './find-schulstrukturknoten.resp
 import { PersonenkontextAnlage } from '../domain/personenkontext-anlage.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 import { PersonenkontextAnlageFactory } from '../domain/personenkontext-anlage.factory.js';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
@@ -67,7 +67,7 @@ export class DbiamPersonenkontextFilterController {
             params.sskName,
             params.limit,
         );
-        const sskResponses: OrganisationResponse[] = this.mapper.mapArray(ssks, OrganisationDo, OrganisationResponse);
+        const sskResponses: OrganisationResponseLegacy[] = this.mapper.mapArray(ssks, OrganisationDo, OrganisationResponseLegacy);
         const response: FindSchulstrukturknotenResponse = new FindSchulstrukturknotenResponse(
             sskResponses,
             ssks.length,

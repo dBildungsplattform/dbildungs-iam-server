@@ -28,10 +28,8 @@ export class OrganisationScope extends ScopeBase<OrganisationEntity> {
     }
 
     public searchString(searchString: string | undefined): this {
-        const search: string | undefined = typeof searchString === 'string' ? searchString : undefined;
-
-        if (search) {
-            this.findBySubstring(['name', 'kennung'], search, ScopeOperator.OR);
+        if (searchString) {
+            this.findBySubstring(['name', 'kennung'], searchString, ScopeOperator.OR);
         }
         return this;
     }

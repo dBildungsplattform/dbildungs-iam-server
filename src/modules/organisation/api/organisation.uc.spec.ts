@@ -12,7 +12,7 @@ import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { FindOrganisationDto } from './find-organisation.dto.js';
 import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
-import { OrganisationResponse } from './organisation.response.js';
+import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { OrganisationUc } from './organisation.uc.js';
 import { UpdateOrganisationDto } from './update-organisation.dto.js';
 import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
@@ -149,7 +149,7 @@ describe('OrganisationUc', () => {
                     items: organisationDos,
                 });
 
-                const result: Paged<OrganisationResponse> = await organisationUc.findAll(findOrganisationDto);
+                const result: Paged<OrganisationResponseLegacy> = await organisationUc.findAll(findOrganisationDto);
 
                 expect(result.total).toBe(2);
                 expect(result.items).toHaveLength(2);
@@ -171,7 +171,7 @@ describe('OrganisationUc', () => {
                     items: [],
                 });
 
-                const emptyResult: Paged<OrganisationResponse> = await organisationUc.findAll(findOrganisationDto);
+                const emptyResult: Paged<OrganisationResponseLegacy> = await organisationUc.findAll(findOrganisationDto);
 
                 expect(emptyResult.total).toBe(0);
                 expect(emptyResult.items).toHaveLength(0);
@@ -257,7 +257,7 @@ describe('OrganisationUc', () => {
                     items: organisationDos,
                 });
 
-                const result: Paged<OrganisationResponse> | SchulConnexError =
+                const result: Paged<OrganisationResponseLegacy> | SchulConnexError =
                     await organisationUc.findAdministriertVon('');
 
                 expect(result).not.toBeInstanceOf(SchulConnexError);
@@ -308,7 +308,7 @@ describe('OrganisationUc', () => {
                     items: organisationDos,
                 });
 
-                const result: Paged<OrganisationResponse> | SchulConnexError =
+                const result: Paged<OrganisationResponseLegacy> | SchulConnexError =
                     await organisationUc.findZugehoerigZu('');
 
                 expect(result).not.toBeInstanceOf(SchulConnexError);
