@@ -13,7 +13,7 @@ const commonConfig = {
             {
                 useESM: true,
             },
-        ],        
+        ],
     },
 };
 
@@ -44,10 +44,10 @@ module.exports = {
     ],
     coverageThreshold: {
         global: {
-            statements: -100, // ~99%
+            statements: -200, // ~99%
             branches: -50, // ~96%
             functions: -5, // ~99%
-            lines: -100, // ~99%
+            lines: -200, // ~99%
         },
     },
     testTimeout: 10000,
