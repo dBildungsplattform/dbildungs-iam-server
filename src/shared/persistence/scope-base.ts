@@ -56,4 +56,10 @@ export abstract class ScopeBase<T extends AnyEntity> {
 
         return this;
     }
+
+    protected findByQuery(filter: QBFilterQuery<T>): this {
+        this.queryFilters.push(filter);
+
+        return this;
+    }
 }
