@@ -26,6 +26,7 @@ import { ServiceProviderFactory } from '../../modules/service-provider/domain/se
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
 import { ServerConfig, DataConfig } from '../../shared/config/index.js';
 import { FindUserFilter, KeycloakUserService, UserDo } from '../../modules/keycloak-administration/index.js';
+import {DBiamPersonenkontextService} from "../../modules/personenkontext/domain/dbiam-personenkontext.service.js";
 
 @Injectable()
 export class DbSeedService {
@@ -42,6 +43,7 @@ export class DbSeedService {
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly serviceProviderFactory: ServiceProviderFactory,
         private readonly kcUserService: KeycloakUserService,
+        private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -238,6 +240,13 @@ export class DbSeedService {
                 this.getReferencedOrganisation(file.organisationId).id,
                 this.getReferencedRolle(file.rolleId).id,
             );
+
+            //Check specifications
+            const specificationCheckError: Option<DomainError> = await this.dbiamPersonenkontextService.checkSpecifications(personenKontext);
+            if (specificationCheckError) {
+                throw specificationCheckError;
+            }
+
             persistedPersonenkontexte.push(await this.dBiamPersonenkontextRepo.save(personenKontext));
             //at the moment no saving of Personenkontext in a map for referencing
         }

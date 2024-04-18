@@ -19,6 +19,9 @@ import { ServiceProviderModule } from '../../modules/service-provider/service-pr
 import { RolleModule } from '../../modules/rolle/rolle.module.js';
 import { PersonModule } from '../../modules/person/person.module.js';
 import { DbSeedModule } from './db-seed.module.js';
+import {
+    GleicheRolleAnKlasseWieSchuleError
+} from "../../modules/personenkontext/specification/error/gleiche-rolle-an-klasse-wie-schule.error.js";
 
 describe('DbSeedServiceIntegration', () => {
     let module: TestingModule;
@@ -104,6 +107,33 @@ describe('DbSeedServiceIntegration', () => {
                 await dbSeedService.seedOrganisation(fileContentOrganisationAsStr);
 
                 await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+
+        describe('with violated Personenkontext Klasse specification', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontextSpecificationViolated/05_personenkontext.json`,
+                    'utf-8',
+                );
+                const fileContentOrganisationAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontextSpecificationViolated/01_organisation.json`,
+                    'utf-8',
+                );
+                await dbSeedService.seedOrganisation(fileContentOrganisationAsStr);
+                const fileContentRolleAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontextSpecificationViolated/04_rolle.json`,
+                    'utf-8',
+                );
+                await dbSeedService.seedRolle(fileContentRolleAsStr);
+
+                const fileContentPersonAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontextSpecificationViolated/02_person.json`,
+                    'utf-8',
+                );
+                await dbSeedService.seedPerson(fileContentPersonAsStr);
+
+                await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(GleicheRolleAnKlasseWieSchuleError);
             });
         });
     });

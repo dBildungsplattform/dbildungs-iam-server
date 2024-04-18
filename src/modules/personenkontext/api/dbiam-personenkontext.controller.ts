@@ -21,9 +21,7 @@ import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkon
 import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personenkontext-by-personid.params.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
-import { NurLehrUndLernAnKlasse } from '../specification/nur-lehr-und-lern-an-klasse.js';
-import { GleicheRolleAnKlasseWieSchule } from '../specification/gleiche-rolle-an-klasse-wie-schule.js';
-import { PersonenkontextKlasseSpecification } from '../specification/personenkontext-klasse-specification.js';
+import {DBiamPersonenkontextService} from "../domain/dbiam-personenkontext.service.js";
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenkontexte')
@@ -36,6 +34,7 @@ export class DBiamPersonenkontextController {
         private readonly personRepo: PersonRepo,
         private readonly organisationRepo: OrganisationRepo,
         private readonly rolleRepo: RolleRepo,
+        private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
     ) {}
 
     @Get(':personId')
@@ -104,27 +103,14 @@ export class DBiamPersonenkontextController {
             );
         }
 
-        //Check that only teachers and students are added to classes.
-        const nurLehrUndLernAnKlasse: NurLehrUndLernAnKlasse = new NurLehrUndLernAnKlasse(
-            this.organisationRepo,
-            this.rolleRepo,
-        );
-        //Check that person has same role on parent-organisation, if organisation is a class.
-        const gleicheRolleAnKlasseWieSchule: GleicheRolleAnKlasseWieSchule = new GleicheRolleAnKlasseWieSchule(
-            this.organisationRepo,
-            this.personenkontextRepo,
-            this.rolleRepo,
-        );
-        const pkKlasseSpecification: PersonenkontextKlasseSpecification = new PersonenkontextKlasseSpecification(
-            nurLehrUndLernAnKlasse,
-            gleicheRolleAnKlasseWieSchule,
-        );
-        const result: Option<DomainError> = await pkKlasseSpecification.returnsError(newPersonenkontext);
-        if (result) {
+        //Check specifications
+        const specificationCheckError: Option<DomainError> = await this.dbiamPersonenkontextService.checkSpecifications(newPersonenkontext);
+        if (specificationCheckError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(specificationCheckError),
             );
         }
+
         // Save personenkontext
         const savedPersonenkontext: Personenkontext<true> = await this.personenkontextRepo.save(newPersonenkontext);
 
