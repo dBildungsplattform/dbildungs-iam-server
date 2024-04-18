@@ -19,6 +19,7 @@ describe('PersonenQueryParam', () => {
             familienname: referenceParams.familienname,
             referrer: referenceParams.referrer,
             vorname: referenceParams.vorname,
+            suchFilter: referenceParams.suchFilter,
         };
         const mappedParams: PersonenQueryParams = plainToInstance(PersonenQueryParams, incomingParams, {});
 
