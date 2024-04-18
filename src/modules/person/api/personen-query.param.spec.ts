@@ -10,6 +10,7 @@ describe('PersonenQueryParam', () => {
         familienname: faker.person.lastName(),
         referrer: 'referrer',
         vorname: faker.person.firstName(),
+        suchFilter: ''
     };
 
     it('should convert a plain object to a class of PersonenQueryParam', () => {
