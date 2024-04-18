@@ -92,7 +92,7 @@ export class PersonRepository {
                 { vorname: { $ilike: '%' + searchStr + '%' } },
                 { familienname: { $ilike: '%' + searchStr + '%' } },
                 { referrer: { $ilike: '%' + searchStr + '%' } },
-                { personalnummer: { $ilike: '%' + searchStr + '%' } }
+                { personalnummer: { $ilike: '%' + searchStr + '%' } },
             ],
         });
         const total: number = entities.length;
