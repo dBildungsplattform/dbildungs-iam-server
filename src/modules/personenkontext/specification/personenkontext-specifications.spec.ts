@@ -88,10 +88,10 @@ describe('PersonenkontextSpecificationsTest', () => {
                 rolleRepoMock,
             );
             const personId: string = faker.string.uuid();
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false, {personId: personId});
+            const personenkontext: Personenkontext<false> = createPersonenkontext(false, { personId: personId });
             const foundPersonenkontextDummy: Personenkontext<false> = createPersonenkontext(false, {
                 organisationId: schule.id,
-                personId: personId
+                personId: personId,
             });
             await personenkontextRepo.save(foundPersonenkontextDummy);
 
