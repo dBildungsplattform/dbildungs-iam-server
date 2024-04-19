@@ -6,7 +6,8 @@
             "username": "test",
             "password": "test",
             "vorname": "test",
-            "familienname": "test"
+            "familienname": "test",
+            "personalnummer": "00002Z-7X"
         },
         {
             "id": 2,
@@ -23,7 +24,8 @@
             "geschlecht": "w",
             "loaklisierung": null,
             "vertrauensstufe": null,
-            "auskunftssperre": null
+            "auskunftssperre": null,
+            "personalnummer": "00001A-1A"
         },
         {
             "id": 3,
@@ -76,7 +78,8 @@
             "geschlecht": "m",
             "loaklisierung": null,
             "vertrauensstufe": null,
-            "auskunftssperre": null
+            "auskunftssperre": null,
+            "personalnummer": "00004B-4C"
         }
     ]
 }
