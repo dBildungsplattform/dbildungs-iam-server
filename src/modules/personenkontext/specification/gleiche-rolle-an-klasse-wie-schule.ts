@@ -34,11 +34,13 @@ export class GleicheRolleAnKlasseWieSchule extends CompositeSpecification<Person
         if (!schule) return false;
 
         const personenKontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(p.personId);
-        const matchingKontext = personenKontexte.find(pk => pk.organisationId === schule.id);
+        const matchingKontext: Personenkontext<true> | undefined = personenKontexte.find(
+            (pk: Personenkontext<true>) => pk.organisationId === schule.id,
+        );
         if (!matchingKontext) return false;
         const rolleAnSchule: Option<Rolle<true>> = await this.rolleRepo.findById(matchingKontext.rolleId);
         if (!rolleAnSchule) return false;
-        
+
         return rolleAnSchule.id === p.rolleId;
     }
 }
