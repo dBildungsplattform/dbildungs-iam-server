@@ -20,6 +20,10 @@ import { TraegerInTraegerError } from '../specification/error/traeger-in-traeger
 import { ZyklusInOrganisationen } from '../specification/zyklus-in-organisationen.js';
 import { KennungRequiredForSchule } from '../specification/kennung-required-for-schule.js';
 import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
+import { KlasseNurVonSchuleAdministriert } from '../specification/klasse-nur-von-schule-administriert.js';
+import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
+import { KlassenNameAnSchuleEindeutig } from '../specification/klassen-name-an-schule-eindeutig.js';
+import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
 
 @Injectable()
 export class OrganisationService {
@@ -230,6 +234,18 @@ export class OrganisationService {
         const zyklusInOrganisationen: ZyklusInOrganisationen = new ZyklusInOrganisationen(this.organisationRepo);
         if (await zyklusInOrganisationen.isSatisfiedBy(childOrganisation)) {
             return { ok: false, error: new ZyklusInOrganisationenError(childOrganisation.id) };
+        }
+        const klasseNurVonSchuleAdministriert: KlasseNurVonSchuleAdministriert = new KlasseNurVonSchuleAdministriert(
+            this.organisationRepo,
+        );
+        if (!(await klasseNurVonSchuleAdministriert.isSatisfiedBy(childOrganisation))) {
+            return { ok: false, error: new KlasseNurVonSchuleAdministriertError(childOrganisation.id) };
+        }
+        const klassenNameAnSchuleEindeutig: KlassenNameAnSchuleEindeutig = new KlassenNameAnSchuleEindeutig(
+            this.organisationRepo,
+        );
+        if (!(await klassenNameAnSchuleEindeutig.isSatisfiedBy(childOrganisation))) {
+            return { ok: false, error: new KlassenNameAnSchuleEindeutigError(childOrganisation.id) };
         }
         return { ok: true, value: true };
     }
