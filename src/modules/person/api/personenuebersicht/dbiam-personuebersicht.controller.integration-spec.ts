@@ -466,9 +466,6 @@ describe('Personenuebersicht API', () => {
             await dBiamPersonenkontextRepo.save(
                 Personenkontext.createNew(savedPerson1.id, savedOrganisation2.id, savedRolle2.id),
             );
-            await dBiamPersonenkontextRepo.save(
-                Personenkontext.createNew(savedPerson2.id, savedOrganisation2.id, savedRolle2.id),
-            );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);

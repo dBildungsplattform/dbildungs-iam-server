@@ -86,7 +86,7 @@ export class PersonPermissions {
     private async getPersonenkontextsFields(): Promise<PersonKontextFields[]> {
         if (!this.cachedPersonenkontextsFields) {
             const personenkontexte: Personenkontext<true>[] = await this.personenkontextRepo.findByPerson(
-                this.cachedPersonFields.id,
+                this.personFields.id,
             );
             this.cachedPersonenkontextsFields = personenkontexte.map((personenkontext: Personenkontext<true>) => ({
                 rolleId: personenkontext.rolleId,
