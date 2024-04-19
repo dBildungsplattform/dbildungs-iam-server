@@ -237,6 +237,13 @@ describe('OrganisationRepo', () => {
             });
         });
 
+        describe('empty input', () => {
+            it('should return null', async () => {
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForIds([]);
+                expect(foundOrganisations).toEqual([]);
+            });
+        });
+
         describe('does not exist', () => {
             it('should return null', async () => {
                 const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForIds([

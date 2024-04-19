@@ -99,7 +99,9 @@ export class OrganisationRepo {
     public async findChildOrgasForIds(ids: OrganisationID[]): Promise<OrganisationDo<true>[]> {
         let rawResult: OrganisationEntity[];
 
-        if (ids.some((id: OrganisationID) => id === this.ROOT_ORGANISATION_ID)) {
+        if (ids.length === 0) {
+            return [];
+        } else if (ids.some((id: OrganisationID) => id === this.ROOT_ORGANISATION_ID)) {
             // If id is the root, perform a simple SELECT * except root for performance enhancement.
             rawResult = await this.em.find(OrganisationEntity, { id: { $ne: this.ROOT_ORGANISATION_ID } });
         } else {
