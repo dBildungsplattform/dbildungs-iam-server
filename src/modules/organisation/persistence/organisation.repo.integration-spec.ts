@@ -171,7 +171,7 @@ describe('OrganisationRepo', () => {
         });
     });
 
-    describe('findChildOrgasById', () => {
+    describe('findChildOrgasByIds', () => {
         describe('when not root', () => {
             it('should return found childs for root', async () => {
                 const organisationRootDo: OrganisationDo<false> = DoFactory.createOrganisation(false);

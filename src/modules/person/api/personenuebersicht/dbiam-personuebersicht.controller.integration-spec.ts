@@ -31,7 +31,9 @@ import { OrganisationDo } from '../../../organisation/domain/organisation.do.js'
 import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenzuordnungResponse } from './dbiam-personenzuordnung.response.js';
-// import { PagedResponse } from '../../../../shared/paging/index.js';
+import { PagedResponse } from '../../../../shared/paging/index.js';
+import { PersonPermissionsRepo } from '../../../authentication/domain/person-permission.repo.js';
+import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -42,6 +44,7 @@ describe('Personenuebersicht API', () => {
     let rolleRepo: RolleRepo;
     let organisationRepo: OrganisationRepo;
     let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
+    let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
 
     beforeAll(async () => {
         const keycloakUserServiceMock: KeycloakUserService = createMock<KeycloakUserService>({
@@ -70,6 +73,10 @@ describe('Personenuebersicht API', () => {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),
                 },
+                {
+                    provide: PersonPermissionsRepo,
+                    useValue: createMock<PersonPermissionsRepo>(),
+                },
                 ServiceProviderRepo,
                 PersonRepository,
                 RolleFactory,
@@ -90,6 +97,7 @@ describe('Personenuebersicht API', () => {
         rolleRepo = module.get(RolleRepo);
         organisationRepo = module.get(OrganisationRepo);
         dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
+        personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
@@ -379,7 +387,6 @@ describe('Personenuebersicht API', () => {
     });
     describe('/GET personenuebersichten', () => {
         it('should return personuebersichten with zuordnungen', async () => {
-            /*
             const creationParams: PersonCreationParams = {
                 familienname: faker.person.lastName(),
                 vorname: faker.person.firstName(),
@@ -437,6 +444,14 @@ describe('Personenuebersicht API', () => {
                 Personenkontext.createNew(savedPerson1.id, savedOrganisation2.id, savedRolle2.id),
             );
 
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(personpermissions);
+
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
+                savedOrganisation1.id,
+                savedOrganisation2.id,
+            ]);
+
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/dbiam/personenuebersicht`)
                 .send();
@@ -459,7 +474,6 @@ describe('Personenuebersicht API', () => {
             expect(item1?.nachname).toEqual(savedPerson1.familienname);
             expect(item1?.benutzername).toEqual(savedPerson1.referrer);
             expect(item1?.zuordnungen.length).toEqual(3);
-            */
         });
     });
 });

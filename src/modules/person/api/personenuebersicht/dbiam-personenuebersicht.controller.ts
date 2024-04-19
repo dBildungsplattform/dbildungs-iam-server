@@ -30,6 +30,7 @@ import { PersonScope } from '../../persistence/person.scope.js';
 import { ScopeOrder } from '../../../../shared/persistence/scope.enums.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig, DataConfig } from '../../../../shared/config/index.js';
+import { RollenSystemRecht } from '../../../rolle/domain/rolle.enums.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenuebersicht')
@@ -60,32 +61,16 @@ export class DBiamPersonenuebersichtController {
         @Query() queryParams: PersonenuebersichtQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<DBiamPersonenuebersichtResponse>> {
-        const items: DBiamPersonenuebersichtResponse[] = [];
-
-        // Get Logged in User
-        // Get Personenkontexte of User
-        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(
-            permissions.personFields.id,
+        // Find all organisations where user has permission
+        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            true,
         );
-        // Filter out kontexte with insufficient permissions
 
-        // Check if one of the kontexte is root to short circuit
-        let organisationIDs: OrganisationID[] | undefined;
-        if (!personenkontexte.some((pk: Personenkontext<true>) => pk.organisationId === this.ROOT_ORGANISATION_ID)) {
-            const childOrgas: OrganisationDo<true>[] = await this.organisationRepository.findChildOrgasForIds(
-                personenkontexte.map((pk: Personenkontext<true>) => pk.organisationId),
-            );
-
-            organisationIDs = childOrgas.map((orga: OrganisationDo<true>) => orga.id);
-
-            for (const pk of personenkontexte) {
-                if (!organisationIDs.includes(pk.organisationId)) {
-                    organisationIDs.push(pk.organisationId);
-                }
-            }
+        // Check if user has permission on root organisation
+        if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
+            organisationIDs = undefined;
         }
-
-        // Filter Organisationen?
 
         // Find all Personen on child-orgas (+root orgas)
         const scope: PersonScope = new PersonScope()
@@ -95,6 +80,7 @@ export class DBiamPersonenuebersichtController {
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
 
+        const items: DBiamPersonenuebersichtResponse[] = [];
         if (total > 0) {
             const allPersonIds: PersonID[] = persons.map((person: Person<true>) => person.id);
             const allPersonenKontexte: Map<PersonID, Personenkontext<true>[]> =
