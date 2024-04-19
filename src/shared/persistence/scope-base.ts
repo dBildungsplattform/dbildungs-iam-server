@@ -73,7 +73,7 @@ export abstract class ScopeBase<T extends AnyEntity> {
         operator: ScopeOperator = ScopeOperator.OR,
     ): this {
         const likeConditions: QBFilterQuery<T>[] = fields.map((field: keyof T): QBFilterQuery<T> => {
-            return { [field]: { $like: `%${substring}%` } };
+            return { [field]: { $ilike: `%${substring}%` } };
         });
         const query: QBFilterQuery<T> = { [operator]: likeConditions };
 
