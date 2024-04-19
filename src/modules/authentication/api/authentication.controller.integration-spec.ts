@@ -209,7 +209,6 @@ describe('AuthenticationController', () => {
                 faker.string.uuid(),
             );
             person.geburtsdatum = faker.date.past();
-
             const personPermissions: PersonPermissions = new PersonPermissions(dbiamPersonenkontextRepoMock, person);
             personPermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(personPermissions);
 
