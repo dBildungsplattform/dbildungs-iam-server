@@ -51,6 +51,11 @@ export class OrganisationService {
             return { ok: false, error: validationResult.error };
         }
 
+        const validateKlassen: Result<boolean, DomainError> = await this.validateKlassenSpecifications(organisationDo);
+        if (!validateKlassen.ok) {
+            return { ok: false, error: validateKlassen.error };
+        }
+
         const organisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
         if (organisation) {
             return { ok: true, value: organisation };
@@ -71,6 +76,11 @@ export class OrganisationService {
         const validationResult: Result<void, DomainError> = await this.validateKennung(organisationDo);
         if (!validationResult.ok) {
             return { ok: false, error: validationResult.error };
+        }
+
+        const validateKlassen: Result<boolean, DomainError> = await this.validateKlassenSpecifications(organisationDo);
+        if (!validateKlassen.ok) {
+            return { ok: false, error: validateKlassen.error };
         }
 
         const organisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
@@ -166,7 +176,15 @@ export class OrganisationService {
         if (!childOrganisation.administriertVon) return { ok: false, error: new RootOrganisationImmutableError() };
         childOrganisation.administriertVon = parentId;
 
-        return this.validateSpecifications(childOrganisation);
+        const validateStructureSpecifications: Result<boolean, DomainError> =
+            await this.validateStructureSpecifications(childOrganisation);
+        if (!validateStructureSpecifications.ok) return { ok: false, error: validateStructureSpecifications.error };
+
+        const validateKlassenSpecifications: Result<boolean, DomainError> =
+            await this.validateKlassenSpecifications(childOrganisation);
+        if (!validateKlassenSpecifications.ok) return { ok: false, error: validateKlassenSpecifications.error };
+
+        return { ok: true, value: true };
     }
 
     public async setZugehoerigZu(parentId: string, childId: string): Promise<Result<void, DomainError>> {
@@ -213,10 +231,36 @@ export class OrganisationService {
         if (!childOrganisation.zugehoerigZu) return { ok: false, error: new RootOrganisationImmutableError() };
         childOrganisation.zugehoerigZu = parentId;
 
-        return this.validateSpecifications(childOrganisation);
+        const validateStructureSpecifications: Result<boolean, DomainError> =
+            await this.validateStructureSpecifications(childOrganisation);
+        if (!validateStructureSpecifications.ok) return { ok: false, error: validateStructureSpecifications.error };
+
+        const validateKlassenSpecifications: Result<boolean, DomainError> =
+            await this.validateKlassenSpecifications(childOrganisation);
+        if (!validateKlassenSpecifications.ok) return { ok: false, error: validateKlassenSpecifications.error };
+
+        return { ok: true, value: true };
     }
 
-    private async validateSpecifications(
+    private async validateKlassenSpecifications(
+        childOrganisation: OrganisationDo<boolean>,
+    ): Promise<Result<boolean, DomainError>> {
+        const klasseNurVonSchuleAdministriert: KlasseNurVonSchuleAdministriert = new KlasseNurVonSchuleAdministriert(
+            this.organisationRepo,
+        );
+        if (!(await klasseNurVonSchuleAdministriert.isSatisfiedBy(childOrganisation))) {
+            return { ok: false, error: new KlasseNurVonSchuleAdministriertError(childOrganisation.id ?? undefined) };
+        }
+        const klassenNameAnSchuleEindeutig: KlassenNameAnSchuleEindeutig = new KlassenNameAnSchuleEindeutig(
+            this.organisationRepo,
+        );
+        if (!(await klassenNameAnSchuleEindeutig.isSatisfiedBy(childOrganisation))) {
+            return { ok: false, error: new KlassenNameAnSchuleEindeutigError(childOrganisation.id ?? undefined) };
+        }
+        return { ok: true, value: true };
+    }
+
+    private async validateStructureSpecifications(
         childOrganisation: OrganisationDo<true>,
     ): Promise<Result<boolean, DomainError>> {
         const schuleUnterTraeger: SchuleUnterTraeger = new SchuleUnterTraeger(this.organisationRepo);
@@ -234,18 +278,6 @@ export class OrganisationService {
         const zyklusInOrganisationen: ZyklusInOrganisationen = new ZyklusInOrganisationen(this.organisationRepo);
         if (await zyklusInOrganisationen.isSatisfiedBy(childOrganisation)) {
             return { ok: false, error: new ZyklusInOrganisationenError(childOrganisation.id) };
-        }
-        const klasseNurVonSchuleAdministriert: KlasseNurVonSchuleAdministriert = new KlasseNurVonSchuleAdministriert(
-            this.organisationRepo,
-        );
-        if (!(await klasseNurVonSchuleAdministriert.isSatisfiedBy(childOrganisation))) {
-            return { ok: false, error: new KlasseNurVonSchuleAdministriertError(childOrganisation.id) };
-        }
-        const klassenNameAnSchuleEindeutig: KlassenNameAnSchuleEindeutig = new KlassenNameAnSchuleEindeutig(
-            this.organisationRepo,
-        );
-        if (!(await klassenNameAnSchuleEindeutig.isSatisfiedBy(childOrganisation))) {
-            return { ok: false, error: new KlassenNameAnSchuleEindeutigError(childOrganisation.id) };
         }
         return { ok: true, value: true };
     }
