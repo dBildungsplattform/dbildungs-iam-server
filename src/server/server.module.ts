@@ -17,8 +17,8 @@ import { LoggerModule } from '../core/logging/logger.module.js';
 import { ErrorModule } from '../shared/error/error.module.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 import { AuthenticationApiModule } from '../modules/authentication/authentication-api.module.js';
-import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { PersonenKontextApiModule } from '../modules/personenkontext/personenkontext-api.module.js';
+import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { SessionAccessTokenMiddleware } from '../modules/authentication/services/session-access-token.middleware.js';
 import { createClient, RedisClientType } from 'redis';
 import RedisStore from 'connect-redis';
@@ -76,7 +76,6 @@ import { PassportModule } from '@nestjs/passport';
         LoggerModule.register(ServerModule.name),
         AuthenticationApiModule,
         PersonApiModule,
-        PersonenKontextApiModule,
         OrganisationApiModule,
         KeycloakAdministrationModule,
         HealthModule,
