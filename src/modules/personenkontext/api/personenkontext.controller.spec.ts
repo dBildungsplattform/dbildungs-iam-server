@@ -166,8 +166,8 @@ describe('PersonenkontextController', () => {
                     systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
                 };
                 const organisations: OrganisationDo<true>[] = [DoFactory.createOrganisation(true)];
-                const organisationResponses: OrganisationResponseLegacy[] = organisations.map((o: OrganisationDo<true>) =>
-                    mapper.map(o, OrganisationDo<true>, OrganisationResponseLegacy),
+                const organisationResponses: OrganisationResponseLegacy[] = organisations.map(
+                    (o: OrganisationDo<true>) => mapper.map(o, OrganisationDo<true>, OrganisationResponseLegacy),
                 );
                 const systemrechtResponse: SystemrechtResponse = {
                     ROLLEN_VERWALTEN: organisationResponses,

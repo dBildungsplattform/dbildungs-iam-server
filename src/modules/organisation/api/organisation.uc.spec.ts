@@ -171,7 +171,8 @@ describe('OrganisationUc', () => {
                     items: [],
                 });
 
-                const emptyResult: Paged<OrganisationResponseLegacy> = await organisationUc.findAll(findOrganisationDto);
+                const emptyResult: Paged<OrganisationResponseLegacy> =
+                    await organisationUc.findAll(findOrganisationDto);
 
                 expect(emptyResult.total).toBe(0);
                 expect(emptyResult.items).toHaveLength(0);

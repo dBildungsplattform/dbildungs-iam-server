@@ -2,7 +2,8 @@ import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 
-export class OrganisationResponseLegacy { //Legacy Response With Automapper used for Non DDD Architecture
+export class OrganisationResponseLegacy {
+    //Legacy Response With Automapper used for Non DDD Architecture
     @AutoMap()
     @ApiProperty()
     public readonly id!: string;

@@ -67,7 +67,11 @@ export class DbiamPersonenkontextFilterController {
             params.sskName,
             params.limit,
         );
-        const sskResponses: OrganisationResponseLegacy[] = this.mapper.mapArray(ssks, OrganisationDo, OrganisationResponseLegacy);
+        const sskResponses: OrganisationResponseLegacy[] = this.mapper.mapArray(
+            ssks,
+            OrganisationDo,
+            OrganisationResponseLegacy,
+        );
         const response: FindSchulstrukturknotenResponse = new FindSchulstrukturknotenResponse(
             sskResponses,
             ssks.length,

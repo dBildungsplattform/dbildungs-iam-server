@@ -60,5 +60,4 @@ describe('Organisation', () => {
             expect(organisation).toBeInstanceOf(Organisation<false>);
         });
     });
-
 });
