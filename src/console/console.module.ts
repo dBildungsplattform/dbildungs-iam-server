@@ -60,6 +60,13 @@ import { PersonModule } from '../modules/person/person.module.js';
                     },
                     allowGlobalContext: true,
                     connect: false,
+                    schemaGenerator: {
+                        createForeignKeyConstraints: false,
+                        disableForeignKeys: true,
+                    },
+                    migrations: {
+                        disableForeignKeys: true,
+                    },
                 });
             },
             inject: [ConfigService],

@@ -56,6 +56,13 @@ import { PassportModule } from '@nestjs/passport';
                         },
                     },
                     connect: false,
+                    schemaGenerator: {
+                        createForeignKeyConstraints: false,
+                        disableForeignKeys: true,
+                    },
+                    migrations: {
+                        disableForeignKeys: true,
+                    },
                 });
             },
             inject: [ConfigService],

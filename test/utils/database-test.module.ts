@@ -41,8 +41,11 @@ export class DatabaseTestModule implements OnModuleDestroy {
                             allowGlobalContext: true,
                             connect: options?.isDatabaseRequired ?? false,
                             schemaGenerator: {
-                                disableForeignKeys: true,
                                 createForeignKeyConstraints: false,
+                                disableForeignKeys: true,
+                            },
+                            migrations: {
+                                disableForeignKeys: true,
                             },
                         });
                     },
