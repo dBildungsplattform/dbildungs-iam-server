@@ -14,6 +14,8 @@ import { RootOrganisationImmutableError } from '../specification/error/root-orga
 import { NurKlasseKursUnterSchuleError } from '../specification/error/nur-klasse-kurs-unter-schule.error.js';
 import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
 import { TraegerInTraegerError } from '../specification/error/traeger-in-traeger.error.js';
+import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
+import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
 
 describe('OrganisationServiceSpecificationTest', () => {
     let module: TestingModule;
@@ -185,6 +187,60 @@ describe('OrganisationServiceSpecificationTest', () => {
                 error: new NurKlasseKursUnterSchuleError(sonstige.id),
             });
         });
+
+        it('should return a domain error if the KlasseNurVonSchuleAdministriert specification is not met', async () => {
+            const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Schule',
+                administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
+            const klasseDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Klasse',
+                administriertVon: schule.id,
+                zugehoerigZu: schule.id,
+                typ: OrganisationsTyp.KLASSE,
+            });
+            const klasse: OrganisationDo<true> = await organisationRepo.save(klasseDo);
+
+            const result: Result<void> = await organisationService.setAdministriertVon(traeger1.id, klasse.id);
+
+            expect(result).toEqual<Result<void>>({
+                ok: false,
+                error: new KlasseNurVonSchuleAdministriertError(klasse.id),
+            });
+        });
+
+        it('should return a domain error if the KlassenNameAnSchuleEindeutig specification is not met', async () => {
+            const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Schule',
+                administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
+            const klasseDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Klasse',
+                administriertVon: schule.id,
+                zugehoerigZu: schule.id,
+                typ: OrganisationsTyp.KLASSE,
+            });
+            await organisationRepo.save(klasseDo);
+            const weitereKlasseDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Klasse',
+                administriertVon: schule.id,
+                zugehoerigZu: schule.id,
+                typ: OrganisationsTyp.KLASSE,
+            });
+            const weitereKlasse: OrganisationDo<true> = await organisationRepo.save(weitereKlasseDo);
+            const result: Result<void> = await organisationService.setAdministriertVon(schule.id, weitereKlasse.id);
+
+            expect(result).toEqual<Result<void>>({
+                ok: false,
+                error: new KlassenNameAnSchuleEindeutigError(weitereKlasse.id),
+            });
+        });
     });
 
     describe('setZugehoerigZu', () => {
@@ -310,6 +366,60 @@ describe('OrganisationServiceSpecificationTest', () => {
             expect(result).toEqual<Result<void>>({
                 ok: false,
                 error: new NurKlasseKursUnterSchuleError(sonstige.id),
+            });
+        });
+
+        it('should return a domain error if the KlasseNurVonSchuleAdministriert specification is not met', async () => {
+            const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Schule',
+                administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
+            const klasseDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Klasse',
+                administriertVon: schule.id,
+                zugehoerigZu: schule.id,
+                typ: OrganisationsTyp.KLASSE,
+            });
+            const klasse: OrganisationDo<true> = await organisationRepo.save(klasseDo);
+
+            const result: Result<void> = await organisationService.setZugehoerigZu(traeger1.id, klasse.id);
+
+            expect(result).toEqual<Result<void>>({
+                ok: false,
+                error: new KlasseNurVonSchuleAdministriertError(klasse.id),
+            });
+        });
+
+        it('should return a domain error if the KlassenNameAnSchuleEindeutig specification is not met', async () => {
+            const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Schule',
+                administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
+            const klasseDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Klasse',
+                administriertVon: schule.id,
+                zugehoerigZu: schule.id,
+                typ: OrganisationsTyp.KLASSE,
+            });
+            await organisationRepo.save(klasseDo);
+            const weitereKlasseDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Klasse',
+                administriertVon: schule.id,
+                zugehoerigZu: schule.id,
+                typ: OrganisationsTyp.KLASSE,
+            });
+            const weitereKlasse: OrganisationDo<true> = await organisationRepo.save(weitereKlasseDo);
+            const result: Result<void> = await organisationService.setZugehoerigZu(schule.id, weitereKlasse.id);
+
+            expect(result).toEqual<Result<void>>({
+                ok: false,
+                error: new KlassenNameAnSchuleEindeutigError(weitereKlasse.id),
             });
         });
     });
