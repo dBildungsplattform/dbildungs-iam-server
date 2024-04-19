@@ -25,7 +25,7 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
-import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 import { OrganisationApiMapperProfile } from '../../organisation/api/organisation-api.mapper.profile.js';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
@@ -166,8 +166,8 @@ describe('PersonenkontextController', () => {
                     systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
                 };
                 const organisations: OrganisationDo<true>[] = [DoFactory.createOrganisation(true)];
-                const organisationResponses: OrganisationResponse[] = organisations.map((o: OrganisationDo<true>) =>
-                    mapper.map(o, OrganisationDo<true>, OrganisationResponse),
+                const organisationResponses: OrganisationResponseLegacy[] = organisations.map(
+                    (o: OrganisationDo<true>) => mapper.map(o, OrganisationDo<true>, OrganisationResponseLegacy),
                 );
                 const systemrechtResponse: SystemrechtResponse = {
                     ROLLEN_VERWALTEN: organisationResponses,

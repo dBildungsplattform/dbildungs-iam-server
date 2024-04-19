@@ -2,21 +2,21 @@
 
 import { ApiProperty } from '@nestjs/swagger';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 
 export class SystemrechtResponse {
-    @ApiProperty({ type: [OrganisationResponse] })
-    public [RollenSystemRecht.ROLLEN_VERWALTEN]?: OrganisationResponse[];
+    @ApiProperty({ type: [OrganisationResponseLegacy] })
+    public [RollenSystemRecht.ROLLEN_VERWALTEN]?: OrganisationResponseLegacy[];
 
-    @ApiProperty({ type: [OrganisationResponse] })
-    public [RollenSystemRecht.KLASSEN_VERWALTEN]?: OrganisationResponse[];
+    @ApiProperty({ type: [OrganisationResponseLegacy] })
+    public [RollenSystemRecht.KLASSEN_VERWALTEN]?: OrganisationResponseLegacy[];
 
-    @ApiProperty({ type: [OrganisationResponse] })
-    public [RollenSystemRecht.SCHULEN_VERWALTEN]?: OrganisationResponse[];
+    @ApiProperty({ type: [OrganisationResponseLegacy] })
+    public [RollenSystemRecht.SCHULEN_VERWALTEN]?: OrganisationResponseLegacy[];
 
-    @ApiProperty({ type: [OrganisationResponse] })
-    public [RollenSystemRecht.PERSONEN_VERWALTEN]?: OrganisationResponse[];
+    @ApiProperty({ type: [OrganisationResponseLegacy] })
+    public [RollenSystemRecht.PERSONEN_VERWALTEN]?: OrganisationResponseLegacy[];
 
-    @ApiProperty({ type: [OrganisationResponse] })
-    public [RollenSystemRecht.SCHULTRAEGER_VERWALTEN]?: OrganisationResponse[];
+    @ApiProperty({ type: [OrganisationResponseLegacy] })
+    public [RollenSystemRecht.SCHULTRAEGER_VERWALTEN]?: OrganisationResponseLegacy[];
 }

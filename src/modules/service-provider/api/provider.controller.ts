@@ -19,6 +19,10 @@ import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('provider')
@@ -27,11 +31,12 @@ import { ServiceProviderResponse } from './service-provider.response.js';
 @Controller({ path: 'provider' })
 export class ProviderController {
     public constructor(
+        private readonly rolleRepo: RolleRepo,
         private readonly streamableFileFactory: StreamableFileFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
     ) {}
 
-    @Get()
+    @Get('all')
     @ApiOkResponse({
         description: 'The service-providers were successfully returned.',
         type: [ServiceProviderResponse],
@@ -46,6 +51,40 @@ export class ProviderController {
         );
 
         return response;
+    }
+
+    @Get()
+    @ApiOkResponse({
+        description: 'The service-providers were successfully returned.',
+        type: [ServiceProviderResponse],
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
+    public async getAvailableServiceProviders(
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<ServiceProviderResponse[]> {
+        const roleIds: string[] = await permissions.getRoleIds();
+        const serviceProviders: ServiceProvider<true>[] = [];
+        for (const roleId of roleIds) {
+            const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(roleId);
+            if (rolle) {
+                for (const serviceProviderId of rolle.serviceProviderIds) {
+                    const serviceProvider: Option<ServiceProvider<true>> =
+                        await this.serviceProviderRepo.findById(serviceProviderId);
+                    if (
+                        serviceProvider &&
+                        !serviceProviders.some((sp: ServiceProvider<true>) => sp.id === serviceProvider.id)
+                    ) {
+                        serviceProviders.push(serviceProvider);
+                    }
+                }
+            }
+        }
+
+        return serviceProviders.map(
+            (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
+        );
     }
 
     @Get(':angebotId/logo')
