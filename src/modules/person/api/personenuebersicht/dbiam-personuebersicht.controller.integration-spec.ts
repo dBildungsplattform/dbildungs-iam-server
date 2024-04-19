@@ -1,6 +1,6 @@
 import { MikroORM } from '@mikro-orm/core';
-import { INestApplication } from '@nestjs/common';
-import { APP_PIPE } from '@nestjs/core';
+import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
+import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
@@ -34,6 +34,11 @@ import { DBiamPersonenzuordnungResponse } from './dbiam-personenzuordnung.respon
 import { PagedResponse } from '../../../../shared/paging/index.js';
 import { PersonPermissionsRepo } from '../../../authentication/domain/person-permission.repo.js';
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
+import { Request } from 'express';
+import { PassportUser } from '../../../authentication/types/user.js';
+import { Observable } from 'rxjs';
+import { DBiamPersonenuebersichtController } from './dbiam-personenuebersicht.controller.js';
+import { OrganisationID } from '../../../../shared/types/aggregate-ids.types.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -45,6 +50,8 @@ describe('Personenuebersicht API', () => {
     let organisationRepo: OrganisationRepo;
     let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
+
+    let ROOT_ORGANISATION_ID: OrganisationID;
 
     beforeAll(async () => {
         const keycloakUserServiceMock: KeycloakUserService = createMock<KeycloakUserService>({
@@ -83,6 +90,20 @@ describe('Personenuebersicht API', () => {
                 RolleRepo,
                 OrganisationRepo,
                 DBiamPersonenkontextRepo,
+                {
+                    provide: APP_INTERCEPTOR,
+                    useValue: {
+                        intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+                            const req: Request = context.switchToHttp().getRequest();
+                            req.passportUser = createMock<PassportUser>({
+                                async personPermissions() {
+                                    return personpermissionsRepoMock.loadPersonPermissions('');
+                                },
+                            });
+                            return next.handle();
+                        },
+                    },
+                },
             ],
         })
             .overrideProvider(KeycloakUserService)
@@ -98,6 +119,8 @@ describe('Personenuebersicht API', () => {
         organisationRepo = module.get(OrganisationRepo);
         dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
+
+        ROOT_ORGANISATION_ID = module.get(DBiamPersonenuebersichtController).ROOT_ORGANISATION_ID;
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
@@ -428,7 +451,7 @@ describe('Personenuebersicht API', () => {
             );
 
             const savedOrganisation1: OrganisationDo<true> = await organisationRepo.save(
-                DoFactory.createOrganisation(true),
+                DoFactory.createOrganisation(true, { id: ROOT_ORGANISATION_ID }),
             );
             const savedOrganisation2: OrganisationDo<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(true),
@@ -443,9 +466,12 @@ describe('Personenuebersicht API', () => {
             await dBiamPersonenkontextRepo.save(
                 Personenkontext.createNew(savedPerson1.id, savedOrganisation2.id, savedRolle2.id),
             );
+            await dBiamPersonenkontextRepo.save(
+                Personenkontext.createNew(savedPerson2.id, savedOrganisation2.id, savedRolle2.id),
+            );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(personpermissions);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
                 savedOrganisation1.id,
