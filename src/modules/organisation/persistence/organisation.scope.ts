@@ -3,10 +3,10 @@ import { ScopeBase, ScopeOperator } from '../../../shared/persistence/index.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 
-type FindProps = {
-    kennung: string;
-    name: string;
-    typ: OrganisationsTyp;
+export type OrganisationFindByProps = {
+    kennung?: string;
+    name?: string;
+    typ?: OrganisationsTyp;
 };
 
 export class OrganisationScope extends ScopeBase<OrganisationEntity> {
@@ -14,7 +14,7 @@ export class OrganisationScope extends ScopeBase<OrganisationEntity> {
         return OrganisationEntity;
     }
 
-    public findBy(findProps: Findable<FindProps>, operator: ScopeOperator = ScopeOperator.AND): this {
+    public findBy(findProps: Findable<OrganisationFindByProps>, operator: ScopeOperator = ScopeOperator.AND): this {
         this.findByInternal(
             {
                 kennung: findProps.kennung,
@@ -24,6 +24,13 @@ export class OrganisationScope extends ScopeBase<OrganisationEntity> {
             operator,
         );
 
+        return this;
+    }
+
+    public searchString(searchString: string | undefined): this {
+        if (searchString) {
+            this.findBySubstring(['name', 'kennung'], searchString, ScopeOperator.OR);
+        }
         return this;
     }
 
