@@ -204,6 +204,20 @@ describe('Rolle API', () => {
             expect(response.body).toHaveLength(3);
         });
 
+        it('should return rollen with the given queried name', async () => {
+            const testRolle: { name: string } = await rolleRepo.save(DoFactory.createRolle(false));
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .query({ searchStr: testRolle.name })
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Array);
+            expect(response.body).toHaveLength(1);
+            expect(response.body).toContainEqual(expect.objectContaining({ name: testRolle.name }));
+        });
+
         it('should return rollen with serviceproviders', async () => {
             const [sp1, sp2, sp3]: [ServiceProvider<true>, ServiceProvider<true>, ServiceProvider<true>] =
                 await Promise.all([
