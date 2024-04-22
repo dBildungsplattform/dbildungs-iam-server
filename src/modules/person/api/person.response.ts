@@ -36,4 +36,7 @@ export class PersonResponse {
 
     @ApiProperty({ description: 'Initiales Benutzerpasswort, muss nach der ersten Anmeldung geändert werden' })
     public startpasswort?: string;
+
+    @ApiProperty({ nullable: true })
+    public personalnummer?: string;
 }

@@ -26,7 +26,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
-import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -131,10 +131,10 @@ export class PersonenkontextUc {
             }
         }
         const systemrechtResponse: SystemrechtResponse = new SystemrechtResponse();
-        const organisationResponses: OrganisationResponse[] = this.mapper.mapArray(
+        const organisationResponses: OrganisationResponseLegacy[] = this.mapper.mapArray(
             organisationDos,
             OrganisationDo,
-            OrganisationResponse,
+            OrganisationResponseLegacy,
         );
         systemrechtResponse[RollenSystemRecht.ROLLEN_VERWALTEN] = organisationResponses;
         return systemrechtResponse;

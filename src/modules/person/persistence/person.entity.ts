@@ -101,6 +101,10 @@ export class PersonEntity extends TimestampedEntity {
     @Property({ nullable: false, default: '1' })
     public revision!: string;
 
+    @AutoMap()
+    @Property({ nullable: true })
+    public personalnummer?: string;
+
     @OneToMany({ entity: () => PersonenkontextEntity, mappedBy: 'personId' })
     public personenKontexte: Collection<PersonenkontextEntity> = new Collection<PersonenkontextEntity>(this);
 }

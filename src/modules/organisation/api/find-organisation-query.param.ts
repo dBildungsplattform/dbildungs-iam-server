@@ -23,6 +23,15 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
     })
     public readonly name?: string;
 
+    @AutoMap()
+    @IsString()
+    @IsOptional()
+    @ApiProperty({
+        required: false,
+        nullable: true,
+    })
+    public readonly searchString?: string;
+
     @AutoMap(() => String)
     @IsEnum(OrganisationsTyp)
     @IsOptional()
