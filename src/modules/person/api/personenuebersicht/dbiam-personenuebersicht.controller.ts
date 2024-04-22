@@ -3,6 +3,7 @@ import {
     ApiBearerAuth,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiOAuth2,
     ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -29,6 +30,7 @@ import { DbiamPersonenuebersichtScope } from '../../persistence/dbiam-personenue
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenuebersicht')
 @ApiBearerAuth()
+@ApiOAuth2(['openid'])
 @Controller({ path: 'dbiam/personenuebersicht' })
 export class DBiamPersonenuebersichtController {
     public constructor(
