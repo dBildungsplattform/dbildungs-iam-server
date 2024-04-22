@@ -44,6 +44,7 @@ import { RolleServiceProviderResponse } from './rolle-service-provider.response.
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
+import { RolleNameQueryParams } from './rolle-name-query.param.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
@@ -64,11 +65,20 @@ export class RolleController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get rollen.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollen.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all rollen.' })
-    public async findRollen(): Promise<RolleWithServiceProvidersResponse[]> {
-        const [rollen, serviceProviders]: [Rolle<true>[], ServiceProvider<true>[]] = await Promise.all([
-            this.rolleRepo.find(),
-            this.serviceProviderRepo.find(),
-        ]);
+    public async findRollen(@Query() queryParams: RolleNameQueryParams): Promise<RolleWithServiceProvidersResponse[]> {
+        let rollen: Option<Rolle<true>[]>;
+
+        if (queryParams.searchStr) {
+            rollen = await this.rolleRepo.findByName(queryParams.searchStr);
+        } else {
+            rollen = await this.rolleRepo.find();
+        }
+
+        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
+
+        if (!rollen) {
+            return [];
+        }
 
         return rollen.map((r: Rolle<true>) => {
             const sps: ServiceProvider<true>[] = r.serviceProviderIds
