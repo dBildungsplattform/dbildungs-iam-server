@@ -37,6 +37,7 @@ export class PersonendatensatzResponse {
             vertrauensstufe: person.vertrauensstufe,
             revision: person.revision,
             startpasswort: withStartPasswort === true ? person.newPassword : undefined,
+            personalnummer: person.personalnummer,
         };
 
         this.person = personResponse;

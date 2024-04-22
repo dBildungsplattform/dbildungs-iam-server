@@ -80,4 +80,7 @@ export class PersonDo<WasPersisted extends boolean> implements DoBase<WasPersist
 
     @AutoMap()
     public revision!: string;
+
+    @AutoMap()
+    public personalnummer?: string;
 }
