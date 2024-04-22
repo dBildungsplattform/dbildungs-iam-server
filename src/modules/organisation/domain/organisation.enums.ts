@@ -3,6 +3,7 @@ export enum OrganisationsTyp {
     LAND = 'LAND',
     TRAEGER = 'TRAEGER',
     SCHULE = 'SCHULE',
+    KLASSE = 'KLASSE',
     ANBIETER = 'ANBIETER',
     SONSTIGE = 'SONSTIGE ORGANISATION / EINRICHTUNG',
     UNBEST = 'UNBESTAETIGT',

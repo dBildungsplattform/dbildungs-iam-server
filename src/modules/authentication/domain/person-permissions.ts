@@ -3,7 +3,7 @@ import { Person } from '../../person/domain/person.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
-type PersonFields = Pick<
+export type PersonFields = Pick<
     Person<true>,
     | 'id'
     | 'keycloakUserId'

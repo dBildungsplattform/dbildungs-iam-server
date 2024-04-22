@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseFilters } from '@nestjs/common';
 import {
+    ApiBadRequestResponse,
     ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
@@ -20,6 +21,7 @@ import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkon
 import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personenkontext-by-personid.params.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
+import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenkontexte')
@@ -32,6 +34,7 @@ export class DBiamPersonenkontextController {
         private readonly personRepo: PersonRepo,
         private readonly organisationRepo: OrganisationRepo,
         private readonly rolleRepo: RolleRepo,
+        private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
     ) {}
 
     @Get(':personId')
@@ -55,6 +58,9 @@ export class DBiamPersonenkontextController {
     @ApiCreatedResponse({
         description: 'Test',
         type: DBiamPersonenkontextResponse,
+    })
+    @ApiBadRequestResponse({
+        description: 'The personenkontext could not be created, may due to unsatisfied specifications.',
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create personenkontext.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to create personenkontext.' })
@@ -94,6 +100,15 @@ export class DBiamPersonenkontextController {
         if (referenceError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(referenceError),
+            );
+        }
+
+        //Check specifications
+        const specificationCheckError: Option<DomainError> =
+            await this.dbiamPersonenkontextService.checkSpecifications(newPersonenkontext);
+        if (specificationCheckError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(specificationCheckError),
             );
         }
 
