@@ -10,7 +10,7 @@ import { MappingError } from '../../../shared/error/mapping.error.js';
 import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
 import { OrganisationDo } from '../domain/organisation.do.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
-import { OrganisationResponse } from './organisation.response.js';
+import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { FindOrganisationDto } from './find-organisation.dto.js';
 import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 import { UpdateOrganisationBodyParams } from './update-organisation.body.params.js';
@@ -96,7 +96,7 @@ describe('OrganisationApiMapperProfile', () => {
             };
 
             expect(() =>
-                sut.map(createdOrganisationDto, CreatedOrganisationDto, OrganisationResponse),
+                sut.map(createdOrganisationDto, CreatedOrganisationDto, OrganisationResponseLegacy),
             ).not.toThrowError(MappingError);
         });
 
@@ -111,7 +111,7 @@ describe('OrganisationApiMapperProfile', () => {
             };
 
             expect(() =>
-                sut.map(updatedOrganisationDto, UpdatedOrganisationDto, OrganisationResponse),
+                sut.map(updatedOrganisationDto, UpdatedOrganisationDto, OrganisationResponseLegacy),
             ).not.toThrowError(MappingError);
         });
 

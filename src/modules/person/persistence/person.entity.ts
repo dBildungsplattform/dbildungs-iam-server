@@ -99,4 +99,8 @@ export class PersonEntity extends TimestampedEntity {
     @AutoMap()
     @Property({ nullable: false, default: '1' })
     public revision!: string;
+
+    @AutoMap()
+    @Property({ nullable: true })
+    public personalnummer?: string;
 }

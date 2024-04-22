@@ -4,7 +4,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
 import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { OrganisationDo } from '../domain/organisation.do.js';
-import { OrganisationResponse } from './organisation.response.js';
+import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
 import { FindOrganisationDto } from './find-organisation.dto.js';
@@ -61,14 +61,14 @@ export class OrganisationApiMapperProfile extends AutomapperProfile {
                     mapFrom((src: OrganisationDo<true>) => src.id),
                 ),
             );
-            createMap(mapper, CreatedOrganisationDto, OrganisationResponse);
-            createMap(mapper, UpdatedOrganisationDto, OrganisationResponse);
+            createMap(mapper, CreatedOrganisationDto, OrganisationResponseLegacy);
+            createMap(mapper, UpdatedOrganisationDto, OrganisationResponseLegacy);
             createMap(
                 mapper,
                 OrganisationDo,
-                OrganisationResponse,
+                OrganisationResponseLegacy,
                 forMember(
-                    (dest: OrganisationResponse) => dest.id,
+                    (dest: OrganisationResponseLegacy) => dest.id,
                     mapFrom((src: OrganisationDo<true>) => src.id),
                 ),
             );

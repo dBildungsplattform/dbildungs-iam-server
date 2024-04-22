@@ -46,5 +46,8 @@ export class PersonDto {
     @AutoMap()
     public revision!: string;
 
+    @AutoMap()
+    public personalnummer?: string;
+
     public startpasswort?: string;
 }
