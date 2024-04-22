@@ -11,6 +11,8 @@ import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { DataProviderFile } from './file/data-provider-file.js';
+import { createHash, Hash } from 'crypto';
+
 export interface SeedFile {
     entityName: string;
 }
@@ -32,6 +34,13 @@ export class DbSeedConsole extends CommandRunner {
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {
         super();
+    }
+
+    private generateHashForEntityFile(entityFileContent: string): string {
+        const hash: Hash = createHash('sha256').setEncoding('hex');
+        hash.write(entityFileContent);
+        hash.end();
+        return hash.read() as string;
     }
 
     private getDirectory(_passedParams: string[]): string {
@@ -76,6 +85,8 @@ export class DbSeedConsole extends CommandRunner {
 
     private async processEntityFile(entityFileName: string, directory: string): Promise<void> {
         const fileContentAsStr: string = fs.readFileSync(`./seeding/${directory}/${entityFileName}`, 'utf-8');
+        const contentHash: string = this.generateHashForEntityFile(fileContentAsStr);
+        console.log(contentHash);
         const seedFile: SeedFile = JSON.parse(fileContentAsStr) as SeedFile;
         this.logger.info(`Processing ${seedFile.entityName}`);
         switch (seedFile.entityName) {
