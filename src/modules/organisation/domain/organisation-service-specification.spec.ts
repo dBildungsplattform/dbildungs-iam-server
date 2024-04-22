@@ -16,6 +16,8 @@ import { SchuleUnterTraegerError } from '../specification/error/schule-unter-tra
 import { TraegerInTraegerError } from '../specification/error/traeger-in-traeger.error.js';
 import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
 import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
+import { DomainError } from '../../../shared/error/index.js';
+import { faker } from '@faker-js/faker';
 
 describe('OrganisationServiceSpecificationTest', () => {
     let module: TestingModule;
@@ -63,6 +65,49 @@ describe('OrganisationServiceSpecificationTest', () => {
 
     it('should be defined', () => {
         expect(organisationService).toBeDefined();
+    });
+
+    describe('create', () => {
+        it('should return DomainError, when Klasse specificatons are not satisfied and type is KLASSE', async () => {
+            const klasseDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Klasse',
+                administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
+                typ: OrganisationsTyp.KLASSE,
+            });
+
+            const result: Result<OrganisationDo<true>, DomainError> = await organisationService.createOrganisation(
+                klasseDo,
+            );
+
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new KlasseNurVonSchuleAdministriertError(undefined),
+            });
+        });
+    });
+
+    describe('update', () => {
+        it('should return DomainError, when Klasse specificatons are not satisfied and type is KLASSE', async () => {
+            const id: string = faker.string.uuid();
+            const klasseDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                id: id,
+                name: 'Klasse',
+                administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
+                typ: OrganisationsTyp.KLASSE,
+            });
+            await organisationRepo.save(klasseDo);
+
+            const result: Result<OrganisationDo<true>, DomainError> = await organisationService.updateOrganisation(
+                klasseDo,
+            );
+
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new KlasseNurVonSchuleAdministriertError(id),
+            });
+        });
     });
 
     describe('setAdministriertVon', () => {
