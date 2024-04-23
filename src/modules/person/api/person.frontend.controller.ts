@@ -36,17 +36,30 @@ export class PersonFrontendController {
     public async findPersons(
         @Query() queryParams: PersonenQueryParams,
     ): Promise<RawPagedResponse<PersonendatensatzResponse>> {
-        const scope: PersonScope = new PersonScope()
-            .findBy({
-                vorname: undefined,
-                familienname: undefined,
-                geburtsdatum: undefined,
-            })
-            .sortBy('vorname', ScopeOrder.ASC)
-            .paged(queryParams.offset, queryParams.limit);
+        if (!queryParams.suchFilter || queryParams.suchFilter.length === 0) {
+            const scope: PersonScope = new PersonScope()
+                .findBy({
+                    vorname: undefined,
+                    familienname: undefined,
+                    geburtsdatum: undefined,
+                })
+                .sortBy('vorname', ScopeOrder.ASC)
+                .paged(queryParams.offset, queryParams.limit);
 
-        const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
+            const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
 
+            const response: RawPagedResponse<PersonendatensatzResponse> = new RawPagedResponse({
+                offset: queryParams.offset ?? 0,
+                limit: queryParams.limit ?? total,
+                total: total,
+                items: persons.map((person: Person<true>) => new PersonendatensatzResponse(person, false)),
+            });
+
+            return response;
+        }
+        const { persons, total }: { persons: Person<true>[]; total: number } = await this.personRepository.findByFilter(
+            queryParams.suchFilter,
+        );
         const response: RawPagedResponse<PersonendatensatzResponse> = new RawPagedResponse({
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? total,
