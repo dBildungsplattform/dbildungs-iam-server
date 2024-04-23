@@ -1,6 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DatabaseTestModule,
+    KeycloakConfigTestModule,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
@@ -10,6 +15,12 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { faker } from '@faker-js/faker';
 import { MikroORM } from '@mikro-orm/core';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { PersonFactory } from '../../person/domain/person.factory.js';
+import { Person } from '../../person/domain/person.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
+import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -37,11 +48,23 @@ describe('PersonenkontextSpecificationsTest', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let personenkontextRepo: DBiamPersonenkontextRepo;
 
+    let personFactory: PersonFactory;
+    let personRepo: PersonRepository;
+
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
+            imports: [
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                KeycloakAdministrationModule,
+                KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }),
+                MapperTestModule,
+            ],
             providers: [
                 DBiamPersonenkontextRepo,
+                PersonRepository,
+                PersonFactory,
+                UsernameGeneratorService,
                 {
                     provide: OrganisationRepo,
                     useValue: createMock<OrganisationRepo>(),
@@ -55,6 +78,8 @@ describe('PersonenkontextSpecificationsTest', () => {
         organisationRepoMock = module.get(OrganisationRepo);
         rolleRepoMock = module.get(RolleRepo);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
+        personFactory = module.get(PersonFactory);
+        personRepo = module.get(PersonRepository);
         orm = module.get(MikroORM);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -87,11 +112,21 @@ describe('PersonenkontextSpecificationsTest', () => {
                 personenkontextRepo,
                 rolleRepoMock,
             );
-            const personId: string = faker.string.uuid();
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false, { personId: personId });
+            const personResult: Person<false> | DomainError = await personFactory.createNew({
+                vorname: faker.person.firstName(),
+                familienname: faker.person.lastName(),
+            });
+            if (personResult instanceof DomainError) {
+                throw personResult;
+            }
+            const person: Person<true> | DomainError = await personRepo.create(personResult);
+            if (person instanceof DomainError) {
+                throw person;
+            }
+            const personenkontext: Personenkontext<false> = createPersonenkontext(false, { personId: person.id });
             const foundPersonenkontextDummy: Personenkontext<false> = createPersonenkontext(false, {
                 organisationId: schule.id,
-                personId: personId,
+                personId: person.id,
             });
             await personenkontextRepo.save(foundPersonenkontextDummy);
 
