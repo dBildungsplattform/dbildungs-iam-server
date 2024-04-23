@@ -31,4 +31,10 @@ export class PersonScope extends ScopeBase<PersonEntity> {
 
         return this;
     }
+
+    public findBySearchString(searchStr: string): this {
+        this.findBySubstring(['vorname', 'familienname', 'referrer', 'personalnummer'], searchStr, ScopeOperator.OR);
+
+        return this;
+    }
 }

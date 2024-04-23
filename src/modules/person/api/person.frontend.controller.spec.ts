@@ -60,6 +60,7 @@ describe('PersonFrontendController', () => {
             familienname: options.lastName,
             vorname: options.firstName,
             sichtfreigabe: SichtfreigabeType.NEIN,
+            suchFilter: '',
         };
         const person1: Person<true> = Person.construct(
             faker.string.uuid(),

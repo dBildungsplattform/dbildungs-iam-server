@@ -72,6 +72,10 @@ export class PersonFrontendController {
             .sortBy('vorname', ScopeOrder.ASC)
             .paged(queryParams.offset, queryParams.limit);
 
+        if (queryParams.suchFilter?.length > 0) {
+            scope.findBySearchString(queryParams.suchFilter);
+        }
+
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
 
         const response: RawPagedResponse<PersonendatensatzResponse> = new RawPagedResponse({
