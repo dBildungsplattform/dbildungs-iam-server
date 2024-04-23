@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import {
     ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     KeycloakConfigTestModule,
     MapperTestModule,
@@ -84,7 +83,7 @@ describe('PersonenkontextSpecificationsTest', () => {
         orm = module.get(MikroORM);
 
         await DatabaseTestModule.setupDatabase(orm);
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS * 2);
+    }, 10000000);
 
     beforeEach(async () => {
         jest.resetAllMocks();

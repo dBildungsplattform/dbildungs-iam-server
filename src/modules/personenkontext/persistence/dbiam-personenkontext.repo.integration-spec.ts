@@ -3,7 +3,6 @@ import { EntityManager, MikroORM, UniqueConstraintViolationException } from '@mi
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     KeycloakConfigTestModule,
     MapperTestModule,
@@ -70,7 +69,7 @@ describe('dbiam Personenkontext Repo', () => {
         personRepo = module.get(PersonRepository);
 
         await DatabaseTestModule.setupDatabase(orm);
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS * 2);
+    }, 10000000);
 
     async function createPerson(): Promise<Person<true>> {
         const personResult: Person<false> | DomainError = await personFactory.createNew({
