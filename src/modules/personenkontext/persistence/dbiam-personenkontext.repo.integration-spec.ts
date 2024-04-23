@@ -70,7 +70,7 @@ describe('dbiam Personenkontext Repo', () => {
         personRepo = module.get(PersonRepository);
 
         await DatabaseTestModule.setupDatabase(orm);
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS * 2);
 
     async function createPerson(): Promise<Person<true>> {
         const personResult: Person<false> | DomainError = await personFactory.createNew({
