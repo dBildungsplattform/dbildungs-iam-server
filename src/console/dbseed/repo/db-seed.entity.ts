@@ -16,4 +16,7 @@ export class DbSeedEntity extends BaseEntity {
 
     @Property({ onCreate: () => new Date(), onUpdate: () => new Date(), type: DateTimeType })
     public readonly executedAt!: Date & Opt;
+
+    @Property({ nullable: true })
+    public path?: string;
 }

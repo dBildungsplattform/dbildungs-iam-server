@@ -286,7 +286,16 @@ export class DbSeedService {
         return entityList;
     }
 
-    public getEntityFileNames(directory: string): string[] {
-        return fs.readdirSync(`./seeding/${directory}`).filter((fileName: string) => fileName.endsWith('.json'));
+    public getEntityFileNames(directory: string, subDir: string): string[] {
+        return fs
+            .readdirSync(`./seeding/${directory}/${subDir}`)
+            .filter((fileName: string) => fileName.endsWith('.json'));
+    }
+
+    public getDirectories(directory: string): string[] {
+        const path: string = `./seeding/${directory}`;
+        return fs.readdirSync(path).filter(function (file: string) {
+            return fs.statSync(path + '/' + file).isDirectory();
+        });
     }
 }

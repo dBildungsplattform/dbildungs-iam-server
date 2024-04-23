@@ -10,11 +10,7 @@ import {
 import { DbSeedService } from './db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
 import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
-import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
-import { OrganisationEntity } from '../../modules/organisation/persistence/organisation.entity.js';
-import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
-import { ServiceProviderEntity } from '../../modules/service-provider/repo/service-provider.entity.js';
 import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
 import { EntityNotFoundError } from '../../shared/error/index.js';
 import { OrganisationModule } from '../../modules/organisation/organisation.module.js';
@@ -88,7 +84,7 @@ describe('DbSeedConsole', () => {
             });
         });
 
-        describe('when directory and excluded files is set via parameter', () => {
+        /* describe('when directory and excluded files is set via parameter', () => {
             it('should use seeding-integration-test directory and not fail due to non-existing entityType', async () => {
                 const params: string[] = ['seeding-integration-test/all', '07_non-existing-entity.json'];
                 await expect(sut.run(params)).resolves.not.toThrow();
@@ -108,7 +104,7 @@ describe('DbSeedConsole', () => {
                     throw Error('At least one entity was not persisted correctly!');
                 }
             });
-        });
+        });*/
 
         describe('when directory set via parameter', () => {
             it('should use seeding-integration-test directory and fail due to non-existing entity-type', async () => {

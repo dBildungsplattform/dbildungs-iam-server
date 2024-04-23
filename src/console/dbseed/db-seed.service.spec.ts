@@ -99,7 +99,7 @@ describe('DbSeedService', () => {
         describe('readDataProvider with one entity', () => {
             it('should have length 1', () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./seeding/seeding-integration-test/all/00_data-provider.json`,
+                    `./seeding/seeding-integration-test/all/01/00_data-provider.json`,
                     'utf-8',
                 );
                 const entities: DataProviderFile[] = dbSeedService.readDataProvider(fileContentAsStr);
@@ -117,7 +117,7 @@ describe('DbSeedService', () => {
         describe('without administriertVon and zugehoerigZu', () => {
             it('should insert one entity in database', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./seeding/seeding-integration-test/all/01_organisation.json`,
+                    `./seeding/seeding-integration-test/all/01/01_organisation.json`,
                     'utf-8',
                 );
                 const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
@@ -366,7 +366,10 @@ describe('DbSeedService', () => {
     describe('getEntityFileNames', () => {
         describe('getEntityFileNames in directory sql/seeding-integration-test', () => {
             it('should return all files in directory', () => {
-                const entityFileNames: string[] = dbSeedService.getEntityFileNames('seeding-integration-test/all');
+                const entityFileNames: string[] = dbSeedService.getEntityFileNames(
+                    'seeding-integration-test/all',
+                    '01',
+                );
                 expect(entityFileNames).toHaveLength(7);
             });
         });

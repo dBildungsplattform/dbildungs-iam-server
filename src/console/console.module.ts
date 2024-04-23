@@ -26,6 +26,7 @@ import { DBiamPersonenkontextRepo } from '../modules/personenkontext/persistence
 import { RolleModule } from '../modules/rolle/rolle.module.js';
 import { ServiceProviderModule } from '../modules/service-provider/service-provider.module.js';
 import { PersonModule } from '../modules/person/person.module.js';
+import { DbSeedRepo } from './dbseed/repo/db-seed.repo.js';
 
 @Module({
     imports: [
@@ -79,6 +80,7 @@ import { PersonModule } from '../modules/person/person.module.js';
         RolleRepo,
         RolleFactory,
         ServiceProviderRepo,
+        DbSeedRepo,
     ],
 })
 export class ConsoleModule {}

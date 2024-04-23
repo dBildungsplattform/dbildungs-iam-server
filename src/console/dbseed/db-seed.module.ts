@@ -11,6 +11,7 @@ import { OrganisationModule } from '../../modules/organisation/organisation.modu
 import { RolleModule } from '../../modules/rolle/rolle.module.js';
 import { ServiceProviderModule } from '../../modules/service-provider/service-provider.module.js';
 import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
+import { DbSeedRepo } from './repo/db-seed.repo.js';
 
 @Module({
     imports: [
@@ -22,7 +23,7 @@ import { KeycloakAdministrationModule } from '../../modules/keycloak-administrat
         KeycloakAdministrationModule,
         LoggerModule.register(DbSeedModule.name),
     ],
-    providers: [DbSeedService, DbSeedMapper, DbSeedConsole, DBiamPersonenkontextRepo],
+    providers: [DbSeedService, DbSeedMapper, DbSeedConsole, DBiamPersonenkontextRepo, DbSeedRepo],
     exports: [DbSeedService, DbSeedMapper, DbSeedConsole],
 })
 export class DbSeedModule {}
