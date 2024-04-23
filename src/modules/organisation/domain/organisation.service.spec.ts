@@ -344,7 +344,7 @@ describe('OrganisationService', () => {
             });
         });
 
-        it('should return a domain error if the organisation could not be updated', async () => {
+        it('should return domain error if the organisation could not be updated', async () => {
             const rootDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {
                 id: '1',
                 name: 'Root',
