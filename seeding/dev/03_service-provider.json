@@ -43,7 +43,7 @@
         },
         {
             "id": 4,
-            "name": "OPSH",
+            "name": "OP.SH",
             "target": "URL",
             "url": "https://opsh.lernnetz.de/",
             "kategorie": "UNTERRICHT",
@@ -102,7 +102,7 @@
         },
         {
             "id": 10,
-            "name": "Helpdesk",
+            "name": "Helpdesk kontaktieren",
             "target": "URL",
             "url": "https://www.secure-lernnetz.de/helpdesk/",
             "kategorie": "HINWEISE",
