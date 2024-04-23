@@ -10,7 +10,7 @@ import {
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { ApiOkResponsePaginated, DisablePagingInterceptor, RawPagedResponse } from '../../../shared/paging/index.js';
 import { PersonenQueryParams } from './personen-query.param.js';
-import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { Person } from '../domain/person.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
@@ -73,7 +73,7 @@ export class PersonFrontendController {
             .paged(queryParams.offset, queryParams.limit);
 
         if (queryParams.suchFilter?.length > 0) {
-            scope.findBySearchString(queryParams.suchFilter);
+            scope.findBySearchString(queryParams.suchFilter).setScopeWhereOperator(ScopeOperator.AND);
         }
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
