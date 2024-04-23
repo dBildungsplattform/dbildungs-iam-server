@@ -148,6 +148,19 @@ describe('PersonRepository', () => {
                 expect(persons.at(2)).toBeInstanceOf(Person);
             });
         });
+        describe('findByFilter', () => {
+            it('should return found persons for filter', async () => {
+                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+
+                const suchFilter: string = '';
+                const { persons, total }: { persons: Person<true>[]; total: number } =
+                    await sut.findByFilter(suchFilter);
+
+                expect(total).toEqual(1);
+                expect(persons.at(0)).toBeInstanceOf(Person);
+            });
+        });
     });
 
     describe('create', () => {
@@ -213,7 +226,7 @@ describe('PersonRepository', () => {
             });
         });
 
-        describe('when successfull', () => {
+        describe('when successful', () => {
             it('should return Person', async () => {
                 usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
                 const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
