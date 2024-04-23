@@ -58,6 +58,7 @@ describe('dbiam Personenkontext Repo', () => {
                 DBiamPersonenkontextRepo,
                 PersonPersistenceMapperProfile,
                 PersonFactory,
+                PersonRepository,
                 UsernameGeneratorService,
             ],
         }).compile();
