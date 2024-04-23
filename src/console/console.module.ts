@@ -22,11 +22,11 @@ import { OrganisationModule } from '../modules/organisation/organisation.module.
 import { RolleRepo } from '../modules/rolle/repo/rolle.repo.js';
 import { RolleFactory } from '../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../modules/service-provider/repo/service-provider.repo.js';
-import { DBiamPersonenkontextRepo } from '../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleModule } from '../modules/rolle/rolle.module.js';
 import { ServiceProviderModule } from '../modules/service-provider/service-provider.module.js';
 import { PersonModule } from '../modules/person/person.module.js';
 import { DbSeedRepo } from './dbseed/repo/db-seed.repo.js';
+import { PersonenKontextModule } from '../modules/personenkontext/personenkontext.module.js';
 
 @Module({
     imports: [
@@ -36,6 +36,7 @@ import { DbSeedRepo } from './dbseed/repo/db-seed.repo.js';
         PersonModule,
         RolleModule,
         ServiceProviderModule,
+        PersonenKontextModule,
         LoggerModule.register(ConsoleModule.name),
         ConfigModule.forRoot({
             isGlobal: true,
@@ -76,7 +77,6 @@ import { DbSeedRepo } from './dbseed/repo/db-seed.repo.js';
         PersonRepository,
         PersonFactory,
         PersonRepository,
-        DBiamPersonenkontextRepo,
         RolleRepo,
         RolleFactory,
         ServiceProviderRepo,
