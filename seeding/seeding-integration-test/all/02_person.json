@@ -25,6 +25,11 @@
             "vertrauensstufe": null,
             "auskunftssperre": null,
             "dataProvider": "431d8433-759c-4dbe-aaab-00b9a781f467"
+        },
+        {
+            "password": "test",
+            "vorname": "Unused person without Id",
+            "familienname": "For Test purposes"
         }
     ]
 }

@@ -80,6 +80,30 @@
             "vertrauensstufe": null,
             "auskunftssperre": null,
             "personalnummer": "00004B-4C"
+        },
+        {
+            "id": 10,
+            "password": "test",
+            "vorname": "Sebastian",
+            "familienname": "Chueler"
+        },
+        {
+            "id": 11,
+            "password": "test",
+            "vorname": "Sofie",
+            "familienname": "Treber"
+        },
+        {
+            "id": 12,
+            "password": "test",
+            "vorname": "Walter",
+            "familienname": "Weiss"
+        },
+        {
+            "id": 13,
+            "password": "test",
+            "vorname": "Jesse",
+            "familienname": "Pinkmann"
         }
     ]
 }

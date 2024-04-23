@@ -8,7 +8,7 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 
-type PersonFields = Pick<
+export type PersonFields = Pick<
     Person<true>,
     | 'id'
     | 'keycloakUserId'
