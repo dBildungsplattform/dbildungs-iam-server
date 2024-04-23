@@ -40,13 +40,6 @@ export class DatabaseTestModule implements OnModuleDestroy {
                             entitiesTs: ['./src/**/*.entity.ts'],
                             allowGlobalContext: true,
                             connect: options?.isDatabaseRequired ?? false,
-                            schemaGenerator: {
-                                createForeignKeyConstraints: false,
-                                disableForeignKeys: true,
-                            },
-                            migrations: {
-                                disableForeignKeys: true,
-                            },
                         });
                     },
                     inject: [ConfigService],
