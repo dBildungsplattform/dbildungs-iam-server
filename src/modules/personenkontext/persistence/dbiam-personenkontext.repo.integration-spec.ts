@@ -16,6 +16,7 @@ import { PersonFactory } from '../../person/domain/person.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -52,7 +53,6 @@ describe('dbiam Personenkontext Repo', () => {
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 KeycloakAdministrationModule,
-                KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }),
             ],
             providers: [
                 DBiamPersonenkontextRepo,
@@ -61,7 +61,10 @@ describe('dbiam Personenkontext Repo', () => {
                 PersonRepository,
                 UsernameGeneratorService,
             ],
-        }).compile();
+        })
+            .overrideModule(KeycloakConfigModule)
+            .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .compile();
 
         sut = module.get(DBiamPersonenkontextRepo);
         orm = module.get(MikroORM);

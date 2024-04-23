@@ -21,6 +21,7 @@ import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
+import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -57,7 +58,6 @@ describe('PersonenkontextSpecificationsTest', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 KeycloakAdministrationModule,
-                KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }),
                 MapperTestModule,
             ],
             providers: [
@@ -74,7 +74,10 @@ describe('PersonenkontextSpecificationsTest', () => {
                     useValue: createMock<RolleRepo>(),
                 },
             ],
-        }).compile();
+        })
+            .overrideModule(KeycloakConfigModule)
+            .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .compile();
         organisationRepoMock = module.get(OrganisationRepo);
         rolleRepoMock = module.get(RolleRepo);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
