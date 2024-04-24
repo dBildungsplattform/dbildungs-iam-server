@@ -4,6 +4,7 @@ export enum ReferencedEntityType {
     PERSON = 'PERSON',
     ORGANISATION = 'ORGANISATION',
     ROLLE = 'ROLLE',
+    SERVICE_PROVIDER = 'SERVICE_PROVIDER',
 }
 
 @Entity({ tableName: 'seeding_reference' })

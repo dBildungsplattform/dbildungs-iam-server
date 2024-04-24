@@ -55,8 +55,6 @@ export class DbSeedService {
 
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
 
-    private serviceProviderMap: Map<number, ServiceProvider<true>> = new Map();
-
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
         const entities: DataProviderFile[] = this.readEntityFromJSONFile<DataProviderFile>(
             fileContentAsStr,
@@ -127,17 +125,18 @@ export class DbSeedService {
         const rolleFile: EntityFile<RolleFile> = JSON.parse(fileContentAsStr) as EntityFile<RolleFile>;
         const files: RolleFile[] = plainToInstance(RolleFile, rolleFile.entities);
         for (const file of files) {
+            const serviceProviderUUIDs: string[] = [];
+            for (const spId of file.serviceProviderIds) {
+                const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(spId);
+                serviceProviderUUIDs.push(sp.id);
+            }
             const rolle: Rolle<false> = this.rolleFactory.createNew(
                 file.name,
                 (await this.getReferencedOrganisation(file.administeredBySchulstrukturknoten)).id,
                 file.rollenart,
                 file.merkmale,
                 file.systemrechte,
-                file.serviceProviderIds
-                    ? this.getReferencedServiceProviders(file.serviceProviderIds).map(
-                          (sp: ServiceProvider<true>) => sp.id,
-                      )
-                    : undefined,
+                serviceProviderUUIDs,
             );
 
             const persistedRolle: Rolle<true> = await this.rolleRepo.save(rolle);
@@ -174,8 +173,16 @@ export class DbSeedService {
 
             const persistedServiceProvider: ServiceProvider<true> =
                 await this.serviceProviderRepo.save(serviceProvider);
-            if (file.id != null) {
-                this.serviceProviderMap.set(file.id, persistedServiceProvider);
+            if (persistedServiceProvider && file.id != null) {
+                const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
+                    ReferencedEntityType.SERVICE_PROVIDER,
+                    file.id,
+                    persistedServiceProvider.id,
+                );
+                await this.dbSeedReferenceRepo.create(dbSeedReference);
+            } else {
+                this.logger.error('ServiceProvider without ID thus not referenceable:');
+                this.logger.error(JSON.stringify(serviceProvider));
             }
         }
         this.logger.info(`Insert ${files.length} entities of type ServiceProvider`);
@@ -309,13 +316,16 @@ export class DbSeedService {
         return rolle;
     }
 
-    private getReferencedServiceProviders(seedingIds: number[]): ServiceProvider<true>[] {
-        return seedingIds.map((n: number) => this.getReferencedServiceProvider(n));
-    }
-
-    private getReferencedServiceProvider(seedingId: number): ServiceProvider<true> {
-        const serviceProvider: ServiceProvider<true> | undefined = this.serviceProviderMap.get(seedingId);
+    private async getReferencedServiceProvider(seedingId: number): Promise<ServiceProvider<true>> {
+        const serviceProviderUUID: Option<string> = await this.dbSeedReferenceRepo.findUUID(
+            seedingId,
+            ReferencedEntityType.SERVICE_PROVIDER,
+        );
+        if (!serviceProviderUUID) throw new EntityNotFoundError('ServiceProvider', seedingId.toString());
+        const serviceProvider: Option<ServiceProvider<true>> =
+            await this.serviceProviderRepo.findById(serviceProviderUUID);
         if (!serviceProvider) throw new EntityNotFoundError('ServiceProvider', seedingId.toString());
+
         return serviceProvider;
     }
 
