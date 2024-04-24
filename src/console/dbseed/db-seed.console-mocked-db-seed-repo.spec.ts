@@ -17,18 +17,23 @@ import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persiste
 import { PersonModule } from '../../modules/person/person.module.js';
 import { RolleModule } from '../../modules/rolle/rolle.module.js';
 import { ServiceProviderModule } from '../../modules/service-provider/service-provider.module.js';
-import { DbSeedModule } from './db-seed.module.js';
+import { DbSeedRepo } from './repo/db-seed.repo.js';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { DbSeed } from './db-seed.js';
+import { DbSeedStatus } from './repo/db-seed.entity.js';
+import { DBiamPersonenkontextService } from '../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
+import { DbSeedReferenceRepo } from './repo/db-seed-reference.repo.js';
 
-describe('DbSeedConsoleIntegration', () => {
+describe('DbSeedConsoleMockedDbSeedRepo', () => {
     let module: TestingModule;
     let sut: DbSeedConsole;
     let orm: MikroORM;
     let dbSeedService: DbSeedService;
+    let dbSeedRepoMock: DeepMocked<DbSeedRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
-                DbSeedModule,
                 ConfigTestModule,
                 OrganisationModule,
                 KeycloakAdministrationModule,
@@ -39,13 +44,25 @@ describe('DbSeedConsoleIntegration', () => {
                 RolleModule,
                 ServiceProviderModule,
             ],
-            providers: [UsernameGeneratorService, DBiamPersonenkontextRepo],
+            providers: [
+                UsernameGeneratorService,
+                DBiamPersonenkontextRepo,
+                DbSeedConsole,
+                DbSeedService,
+                DBiamPersonenkontextService,
+                DbSeedReferenceRepo,
+                {
+                    provide: DbSeedRepo,
+                    useValue: createMock<DbSeedRepo>(),
+                },
+            ],
         })
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
             .compile();
         sut = module.get(DbSeedConsole);
         orm = module.get(MikroORM);
+        dbSeedRepoMock = module.get(DbSeedRepo);
         dbSeedService = module.get(DbSeedService);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
@@ -70,42 +87,14 @@ describe('DbSeedConsoleIntegration', () => {
     });
 
     describe('run', () => {
-        describe('when parameter for directory is provided and seeding-files are valid', () => {
-            it('should NOT fail', async () => {
-                const params: string[] = ['seeding-integration-test/all'];
-                await expect(sut.run(params)).resolves.not.toThrow();
-            });
-        });
-
-        describe('skips files if seeding already happened', () => {
+        describe('skips files if previous seeding already happened and failures occurred', () => {
             it('should NOT fail', async () => {
                 const params: string[] = ['seeding-integration-test/all'];
 
-                await sut.run(params);
+                const dbSeedMock: DbSeed<true> = createMock<DbSeed<true>>({ status: DbSeedStatus.FAILED });
+                dbSeedRepoMock.findById.mockResolvedValue(dbSeedMock);
 
                 await expect(sut.run(params)).resolves.not.toThrow();
-            });
-        });
-
-        describe('when no parameter for directory is provided', () => {
-            it('should fail with error', async () => {
-                await expect(sut.run([])).rejects.toThrow();
-            });
-        });
-
-        describe('when directory for seeding files is empty or no matching files are found within', () => {
-            it('should fail with error', async () => {
-                const params: string[] = ['seeding-integration-test/emptyDir'];
-                await expect(sut.run(params)).rejects.toThrow();
-            });
-        });
-
-        describe('when directory set via parameter', () => {
-            it('should use seeding-integration-test directory and fail due to non-existing entity-type', async () => {
-                const params: string[] = ['seeding-integration-test/nonExistingEntity'];
-                await expect(sut.run(params)).rejects.toThrow(
-                    new Error(`Unsupported EntityName / EntityType: NonExistingEntityType`),
-                );
             });
         });
     });

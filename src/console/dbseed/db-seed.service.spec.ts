@@ -250,10 +250,38 @@ describe('DbSeedService', () => {
     });
 
     describe('seedRolle', () => {
-        describe('with existing organisation for administeredBySchulstrukturknoten', () => {
+        describe('with existing organisation for administeredBySchulstrukturknoten and ID', () => {
             it('should insert one entity in database', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
                     `./seeding/seeding-integration-test/rolle/04_rolle-with-existing-ssk.json`,
+                    'utf-8',
+                );
+                const persistedRolle: Rolle<true> = DoFactory.createRolle(true);
+                const parent: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                    id: faker.string.uuid(),
+                    kennung: 'ParentOrganisation',
+                    name: 'Parent',
+                    namensergaenzung: 'Keine',
+                    kuerzel: '00',
+                    typ: OrganisationsTyp.TRAEGER,
+                    traegerschaft: Traegerschaft.KIRCHLICH,
+                });
+                const serviceProviderMocked: ServiceProvider<true> = createMock<ServiceProvider<true>>();
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced serviceProvider
+                serviceProviderRepoMock.findById.mockResolvedValueOnce(serviceProviderMocked);
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced parent
+                organisationRepoMock.findById.mockResolvedValueOnce(parent);
+
+                rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
+                await expect(dbSeedService.seedRolle(fileContentAsStr)).resolves.not.toThrow(EntityNotFoundError);
+            });
+        });
+
+        describe('with existing organisation for administeredBySchulstrukturknoten but without ID', () => {
+            it('should insert one entity in database', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/rolle/07_rolle_without_id.json`,
                     'utf-8',
                 );
                 const persistedRolle: Rolle<true> = DoFactory.createRolle(true);
@@ -376,6 +404,92 @@ describe('DbSeedService', () => {
         });
     });
 
+    describe('getReferencedPerson', () => {
+        describe('when person cannot be found via PersonRepository', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontext/05_personenkontext.json`,
+                    'utf-8',
+                );
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID was found via seeding-ref-table
+                personRepoMock.findById.mockResolvedValue(undefined);
+                await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+    });
+
+    describe('getReferencedOrganisation', () => {
+        describe('when organisation cannot be found via OrganisationRepository', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontext/05_personenkontext.json`,
+                    'utf-8',
+                );
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID for person, found via seeding-ref-table
+                personRepoMock.findById.mockResolvedValue(createMock<Person<true>>());
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID for orga, found via seeding-ref-table
+                organisationRepoMock.findById.mockResolvedValue(undefined);
+
+                await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+    });
+
+    describe('getReferencedRolle', () => {
+        describe('when rolle cannot be found seeding-ref table', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontext/05_personenkontext.json`,
+                    'utf-8',
+                );
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID for person, found via seeding-ref-table
+                personRepoMock.findById.mockResolvedValue(createMock<Person<true>>());
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID for orga, found via seeding-ref-table
+                organisationRepoMock.findById.mockResolvedValueOnce(createMock<OrganisationDo<true>>());
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(undefined); //mock UUID for rolle, found via seeding-ref-table
+
+                await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+
+        describe('when rolle cannot be found via RolleRepository', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontext/05_personenkontext.json`,
+                    'utf-8',
+                );
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID for person, found via seeding-ref-table
+                personRepoMock.findById.mockResolvedValue(createMock<Person<true>>());
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID for orga, found via seeding-ref-table
+                organisationRepoMock.findById.mockResolvedValueOnce(createMock<OrganisationDo<true>>());
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID for rolle, found via seeding-ref-table
+                rolleRepoMock.findById.mockResolvedValue(undefined);
+
+                await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+    });
+
+    describe('getReferencedServiceProvider', () => {
+        describe('when serviceProvider cannot be found via ServiceProviderRepository', () => {
+            it('should throw EntityNotFoundError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/rolle/06_rolle-with-non-existing-sp.json`,
+                    'utf-8',
+                );
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID for SP was found via seeding-ref-table
+                serviceProviderRepoMock.findById.mockResolvedValue(undefined);
+                await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+    });
+
     describe('getEntityFileNames', () => {
         describe('getEntityFileNames in directory sql/seeding-integration-test', () => {
             it('should return all files in directory', () => {
@@ -383,7 +497,7 @@ describe('DbSeedService', () => {
                     'seeding-integration-test/all',
                     '01',
                 );
-                expect(entityFileNames).toHaveLength(7);
+                expect(entityFileNames).toHaveLength(6);
             });
         });
     });

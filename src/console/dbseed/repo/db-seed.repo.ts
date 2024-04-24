@@ -31,14 +31,6 @@ export class DbSeedRepo {
         return dbSeedEntity && mapEntityToAggregate(dbSeedEntity);
     }
 
-    public async save(dbSeed: DbSeed<boolean>): Promise<DbSeed<true>> {
-        if (dbSeed.id) {
-            return this.update(dbSeed);
-        } else {
-            return this.create(dbSeed);
-        }
-    }
-
     public async create(dbSeed: DbSeed<false>): Promise<DbSeed<true>> {
         const dbSeedEntity: DbSeedEntity = this.em.create(DbSeedEntity, mapAggregateToData(dbSeed));
 
