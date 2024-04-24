@@ -18,7 +18,7 @@ export class KlassenNameAnSchuleEindeutig extends CompositeSpecification<Organis
         const parent: Option<OrganisationDo<true>> = await this.organisationRepo.findById(t.administriertVon);
         if (!parent) return false;
         //check that parent is of type SCHULE is done in a different specification
-        const otherChildOrgas: OrganisationDo<true>[] = await this.organisationRepo.findChildOrgasForId(parent.id);
+        const otherChildOrgas: OrganisationDo<true>[] = await this.organisationRepo.findChildOrgasForIds([parent.id]);
         for (const otherChildOrga of otherChildOrgas) {
             if (otherChildOrga.typ === OrganisationsTyp.KLASSE) {
                 if (otherChildOrga.name === t.name) return false; //not satisfied if another Klasse already has same name
