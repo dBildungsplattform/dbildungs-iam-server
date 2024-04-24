@@ -82,17 +82,19 @@ Example for a seeding-file for organisations (new way of referencing)
 Advice: In general running `npm run db:init` before seeding is recommended.
 
 The command for seeding is:
-`npm run db:seed $DIRECTORY $LIST_OF_FILES_TO_EXCLUDE`
+`npm run db:seed $DIRECTORY`
 
-- $DIRECTORY: is mandatory
-- $LIST_OF_FILES_TO_EXCLUDE is optional
+- $DIRECTORY: is mandatory (every file *.json in every sub-directory within is read)
 
 ### Examples of use:
 If you want to use custom seeding-files in a directory seeding/MySeedingFiles, execute:
 `npm run db:seed MySeedingFiles`
 
-If you want to exclude the seeding file 05_personenkontext.json in that directory from the seeding, execute:
-`npm run db:seed MySeedingFiles 05_personenkontext.json`
+## Skipping of files
 
-If you want to exclude another file from seeding, execute:
-`npm run db:seed MySeedingFiles 05_personenkontext.json,06_anothertype.json`
+Files are skipped when either
+- a certain seeding-file is already applied (based on SHA265 checksum)
+- applying certain seeding-file already failed in the past (based on SHA265 checksum)
+- if checksum of an already applied file changes due to new data, it is treated as a new file
+- if you want to add new seeding data, please create new files and do not edit already existing ones
+- referencing yet existing seeding data via their (virtual-)ids in new seeding data is possible
