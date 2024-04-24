@@ -55,12 +55,6 @@ export class DbSeedService {
 
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
 
-    //private organisationMap: Map<number, OrganisationDo<true>> = new Map();
-
-    private personMap: Map<number, Person<true>> = new Map();
-
-    private rolleMap: Map<number, Rolle<true>> = new Map();
-
     private serviceProviderMap: Map<number, ServiceProvider<true>> = new Map();
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
@@ -107,7 +101,6 @@ export class DbSeedService {
         organisationDo.traegerschaft = data.traegerschaft ?? undefined;
 
         const persistedOrganisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
-        //this.organisationMap.set(data.id, persistedOrganisation);
         const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
             ReferencedEntityType.ORGANISATION,
             data.id,
@@ -147,9 +140,17 @@ export class DbSeedService {
                     : undefined,
             );
 
-            const persistedRolle: Rolle<true> | DomainError = await this.rolleRepo.save(rolle);
-            if (file.id != null) {
-                this.rolleMap.set(file.id, persistedRolle);
+            const persistedRolle: Rolle<true> = await this.rolleRepo.save(rolle);
+            if (persistedRolle && file.id != null) {
+                const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
+                    ReferencedEntityType.ROLLE,
+                    file.id,
+                    persistedRolle.id,
+                );
+                await this.dbSeedReferenceRepo.create(dbSeedReference);
+            } else {
+                this.logger.error('Rolle without ID thus not referenceable:');
+                this.logger.error(JSON.stringify(rolle));
             }
         }
         this.logger.info(`Insert ${files.length} entities of type Rolle`);
@@ -224,10 +225,14 @@ export class DbSeedService {
                     `Keycloak User with keycloakid: ${existingKcUser.value.id} has been deleted, and will be replaced by newly seeded user with same username: ${person.username}`,
                 );
             }
-
             const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
             if (persistedPerson instanceof Person && file.id != null) {
-                this.personMap.set(file.id, persistedPerson);
+                const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
+                    ReferencedEntityType.PERSON,
+                    file.id,
+                    persistedPerson.id,
+                );
+                await this.dbSeedReferenceRepo.create(dbSeedReference);
             } else {
                 this.logger.error('Person without ID thus not referenceable:');
                 this.logger.error(JSON.stringify(person));
@@ -248,9 +253,9 @@ export class DbSeedService {
                 undefined,
                 new Date(),
                 new Date(),
-                this.getReferencedPerson(file.personId).id,
+                (await this.getReferencedPerson(file.personId)).id,
                 (await this.getReferencedOrganisation(file.organisationId)).id,
-                this.getReferencedRolle(file.rolleId).id,
+                (await this.getReferencedRolle(file.rolleId)).id,
             );
 
             //Check specifications
@@ -261,23 +266,24 @@ export class DbSeedService {
             }
 
             persistedPersonenkontexte.push(await this.dBiamPersonenkontextRepo.save(personenKontext));
-            //at the moment no saving of Personenkontext in a map for referencing
+            //at the moment no saving of Personenkontext
         }
         this.logger.info(`Insert ${files.length} entities of type Personenkontext`);
+
         return persistedPersonenkontexte;
     }
 
-    private getReferencedPerson(seedingId: number): Person<true> {
-        const person: Person<true> | undefined = this.personMap.get(seedingId);
+    private async getReferencedPerson(seedingId: number): Promise<Person<true>> {
+        const personUUID: Option<string> = await this.dbSeedReferenceRepo.findUUID(
+            seedingId,
+            ReferencedEntityType.PERSON,
+        );
+        if (!personUUID) throw new EntityNotFoundError('Person', seedingId.toString());
+        const person: Option<Person<true>> = await this.personRepository.findById(personUUID);
         if (!person) throw new EntityNotFoundError('Person', seedingId.toString());
+
         return person;
     }
-
-    /*  private getReferencedOrganisation(seedingId: number): OrganisationDo<true> {
-        const organisation: OrganisationDo<true> | undefined = this.organisationMap.get(seedingId);
-        if (!organisation) throw new EntityNotFoundError('Organisation', seedingId.toString());
-        return organisation;
-    }*/
 
     private async getReferencedOrganisation(seedingId: number): Promise<OrganisationDo<true>> {
         const organisationUUID: Option<string> = await this.dbSeedReferenceRepo.findUUID(
@@ -285,15 +291,21 @@ export class DbSeedService {
             ReferencedEntityType.ORGANISATION,
         );
         if (!organisationUUID) throw new EntityNotFoundError('Organisation', seedingId.toString());
-
         const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(organisationUUID);
         if (!organisation) throw new EntityNotFoundError('Organisation', seedingId.toString());
+
         return organisation;
     }
 
-    private getReferencedRolle(seedingId: number): Rolle<true> {
-        const rolle: Rolle<true> | undefined = this.rolleMap.get(seedingId);
+    private async getReferencedRolle(seedingId: number): Promise<Rolle<true>> {
+        const rolleUUID: Option<string> = await this.dbSeedReferenceRepo.findUUID(
+            seedingId,
+            ReferencedEntityType.ROLLE,
+        );
+        if (!rolleUUID) throw new EntityNotFoundError('Rolle', seedingId.toString());
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(rolleUUID);
         if (!rolle) throw new EntityNotFoundError('Rolle', seedingId.toString());
+
         return rolle;
     }
 

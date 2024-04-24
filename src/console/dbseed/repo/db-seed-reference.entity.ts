@@ -1,7 +1,9 @@
 import { BaseEntity, Entity, Enum, PrimaryKeyProp, Property } from '@mikro-orm/core';
 
 export enum ReferencedEntityType {
+    PERSON = 'PERSON',
     ORGANISATION = 'ORGANISATION',
+    ROLLE = 'ROLLE',
 }
 
 @Entity({ tableName: 'seeding_reference' })
