@@ -9,7 +9,6 @@ export class OrganisationResponse {
     @ApiProperty({ nullable: true })
     public readonly administriertVon?: string;
 
-
     @ApiProperty({ nullable: true })
     public readonly kennung?: string;
 
