@@ -68,14 +68,14 @@ export class DbSeedConsole extends CommandRunner {
                 this.logger.error(`No seeding data in the directory ${directory}!`);
                 throw new Error('No seeding data in the directory');
             }
-            this.logger.info('Following files will be processed:');
+            this.logger.info(`Following files from ${subDir} will be processed:`);
             entityFileNames.forEach((n: string) => this.logger.info(n));
             try {
                 for (const entityFileName of entityFileNames) {
                     await this.readAndProcessEntitylFile(directory, subDir, entityFileName);
                 }
                 await this.orm.em.flush();
-                this.logger.info('Created seed data successfully.');
+                this.logger.info(`Created seed data from ${subDir} successfully.`);
             } catch (err) {
                 this.logger.error('Seed data could not be created!');
                 this.logger.error(String(err));
@@ -99,11 +99,21 @@ export class DbSeedConsole extends CommandRunner {
                 );
             }
         } else {
-            const dbSeed: DbSeed<false> = DbSeed.createNew(contentHash, DbSeedStatus.STARTED, entityFileName);
+            const dbSeed: DbSeed<false> = DbSeed.createNew(
+                contentHash,
+                DbSeedStatus.STARTED,
+                subDir + '/' + entityFileName,
+            );
             const persistedDbSeed: DbSeed<true> = await this.dbSeedRepo.create(dbSeed);
-            await this.processEntityFile(entityFileName, directory, subDir);
-            persistedDbSeed.setDone();
-            await this.dbSeedRepo.update(persistedDbSeed);
+            try {
+                await this.processEntityFile(entityFileName, directory, subDir);
+                persistedDbSeed.setDone();
+                await this.dbSeedRepo.update(persistedDbSeed);
+            } catch (err) {
+                persistedDbSeed.setFailed();
+                await this.dbSeedRepo.update(persistedDbSeed);
+                throw err;
+            }
         }
     }
 

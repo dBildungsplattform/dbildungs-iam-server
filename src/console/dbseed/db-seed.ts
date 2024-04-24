@@ -24,4 +24,8 @@ export class DbSeed<WasPersisted extends boolean> {
     public setDone(): void {
         this.status = DbSeedStatus.DONE;
     }
+
+    public setFailed(): void {
+        this.status = DbSeedStatus.FAILED;
+    }
 }

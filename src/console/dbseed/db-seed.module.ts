@@ -12,6 +12,7 @@ import { ServiceProviderModule } from '../../modules/service-provider/service-pr
 import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
 import { DbSeedRepo } from './repo/db-seed.repo.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { DbSeedReferenceRepo } from './repo/db-seed-reference.repo.js';
 
 @Module({
     imports: [
@@ -23,7 +24,7 @@ import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persiste
         KeycloakAdministrationModule,
         LoggerModule.register(DbSeedModule.name),
     ],
-    providers: [DbSeedService, DbSeedMapper, DbSeedConsole, DBiamPersonenkontextRepo, DbSeedRepo],
+    providers: [DbSeedService, DbSeedMapper, DbSeedConsole, DBiamPersonenkontextRepo, DbSeedRepo, DbSeedReferenceRepo],
     exports: [DbSeedService, DbSeedMapper, DbSeedConsole],
 })
 export class DbSeedModule {}

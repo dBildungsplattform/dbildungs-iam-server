@@ -27,6 +27,7 @@ import { ServiceProviderModule } from '../modules/service-provider/service-provi
 import { PersonModule } from '../modules/person/person.module.js';
 import { DbSeedRepo } from './dbseed/repo/db-seed.repo.js';
 import { PersonenKontextModule } from '../modules/personenkontext/personenkontext.module.js';
+import { DbSeedReferenceRepo } from './dbseed/repo/db-seed-reference.repo.js';
 
 @Module({
     imports: [
@@ -81,6 +82,7 @@ import { PersonenKontextModule } from '../modules/personenkontext/personenkontex
         RolleFactory,
         ServiceProviderRepo,
         DbSeedRepo,
+        DbSeedReferenceRepo,
     ],
 })
 export class ConsoleModule {}

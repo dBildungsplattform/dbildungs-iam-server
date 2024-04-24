@@ -24,9 +24,12 @@ import { ServiceProviderFile } from './file/service-provider-file.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ServiceProviderFactory } from '../../modules/service-provider/domain/service-provider.factory.js';
 import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
-import { ServerConfig, DataConfig } from '../../shared/config/index.js';
+import { DataConfig, ServerConfig } from '../../shared/config/index.js';
 import { FindUserFilter, KeycloakUserService, UserDo } from '../../modules/keycloak-administration/index.js';
 import { DBiamPersonenkontextService } from '../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
+import { DbSeedReferenceRepo } from './repo/db-seed-reference.repo.js';
+import { DbSeedReference } from './db-seed-reference.js';
+import { ReferencedEntityType } from './repo/db-seed-reference.entity.js';
 
 @Injectable()
 export class DbSeedService {
@@ -44,6 +47,7 @@ export class DbSeedService {
         private readonly serviceProviderFactory: ServiceProviderFactory,
         private readonly kcUserService: KeycloakUserService,
         private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
+        private readonly dbSeedReferenceRepo: DbSeedReferenceRepo,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -51,7 +55,7 @@ export class DbSeedService {
 
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
 
-    private organisationMap: Map<number, OrganisationDo<true>> = new Map();
+    //private organisationMap: Map<number, OrganisationDo<true>> = new Map();
 
     private personMap: Map<number, Person<true>> = new Map();
 
@@ -77,13 +81,15 @@ export class DbSeedService {
         let zugehoerigZu: string | undefined = undefined;
 
         if (data.administriertVon != null) {
-            const adminstriertVonOrganisation: OrganisationDo<true> = this.getReferencedOrganisation(
+            const adminstriertVonOrganisation: OrganisationDo<true> = await this.getReferencedOrganisation(
                 data.administriertVon,
             );
             administriertVon = adminstriertVonOrganisation.id;
         }
         if (data.zugehoerigZu != null) {
-            const zugehoerigZuOrganisation: OrganisationDo<true> = this.getReferencedOrganisation(data.zugehoerigZu);
+            const zugehoerigZuOrganisation: OrganisationDo<true> = await this.getReferencedOrganisation(
+                data.zugehoerigZu,
+            );
             zugehoerigZu = zugehoerigZuOrganisation.id;
         }
 
@@ -101,8 +107,13 @@ export class DbSeedService {
         organisationDo.traegerschaft = data.traegerschaft ?? undefined;
 
         const persistedOrganisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
-        this.organisationMap.set(data.id, persistedOrganisation);
-
+        //this.organisationMap.set(data.id, persistedOrganisation);
+        const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
+            ReferencedEntityType.ORGANISATION,
+            data.id,
+            persistedOrganisation.id,
+        );
+        await this.dbSeedReferenceRepo.create(dbSeedReference);
         return organisationDo;
     }
 
@@ -125,7 +136,7 @@ export class DbSeedService {
         for (const file of files) {
             const rolle: Rolle<false> = this.rolleFactory.createNew(
                 file.name,
-                this.getReferencedOrganisation(file.administeredBySchulstrukturknoten).id,
+                (await this.getReferencedOrganisation(file.administeredBySchulstrukturknoten)).id,
                 file.rollenart,
                 file.merkmale,
                 file.systemrechte,
@@ -155,7 +166,7 @@ export class DbSeedService {
                 file.target,
                 file.url,
                 file.kategorie,
-                this.getReferencedOrganisation(file.providedOnSchulstrukturknoten).id,
+                (await this.getReferencedOrganisation(file.providedOnSchulstrukturknoten)).id,
                 file.logoBase64 ? Buffer.from(file.logoBase64, 'base64') : undefined,
                 file.logoMimeType,
             );
@@ -238,7 +249,7 @@ export class DbSeedService {
                 new Date(),
                 new Date(),
                 this.getReferencedPerson(file.personId).id,
-                this.getReferencedOrganisation(file.organisationId).id,
+                (await this.getReferencedOrganisation(file.organisationId)).id,
                 this.getReferencedRolle(file.rolleId).id,
             );
 
@@ -262,8 +273,20 @@ export class DbSeedService {
         return person;
     }
 
-    private getReferencedOrganisation(seedingId: number): OrganisationDo<true> {
+    /*  private getReferencedOrganisation(seedingId: number): OrganisationDo<true> {
         const organisation: OrganisationDo<true> | undefined = this.organisationMap.get(seedingId);
+        if (!organisation) throw new EntityNotFoundError('Organisation', seedingId.toString());
+        return organisation;
+    }*/
+
+    private async getReferencedOrganisation(seedingId: number): Promise<OrganisationDo<true>> {
+        const organisationUUID: Option<string> = await this.dbSeedReferenceRepo.findUUID(
+            seedingId,
+            ReferencedEntityType.ORGANISATION,
+        );
+        if (!organisationUUID) throw new EntityNotFoundError('Organisation', seedingId.toString());
+
+        const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(organisationUUID);
         if (!organisation) throw new EntityNotFoundError('Organisation', seedingId.toString());
         return organisation;
     }
