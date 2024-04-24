@@ -3,6 +3,7 @@ import {
     ApiBearerAuth,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiOAuth2,
     ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -35,6 +36,7 @@ import { RollenSystemRecht } from '../../../rolle/domain/rolle.enums.js';
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenuebersicht')
 @ApiBearerAuth()
+@ApiOAuth2(['openid'])
 @Controller({ path: 'dbiam/personenuebersicht' })
 export class DBiamPersonenuebersichtController {
     public readonly ROOT_ORGANISATION_ID: string;
