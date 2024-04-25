@@ -3,7 +3,7 @@ import { RolleID } from '../../../../shared/types/index.js';
 import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
-import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
+import { OrganisationsTyp, OrganisationsTypName } from '../../../organisation/domain/organisation.enums.js';
 
 export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: String })
@@ -21,7 +21,7 @@ export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: String })
     public readonly rolle: string;
 
-    @ApiProperty({ enum: OrganisationsTyp, enumName: 'OrganisationsTyp', nullable: true })
+    @ApiProperty({ enum: OrganisationsTyp, enumName: OrganisationsTypName, nullable: true })
     public readonly typ?: OrganisationsTyp;
 
     public constructor(personenkontext: Personenkontext<true>, organisation: OrganisationDo<true>, rolle: Rolle<true>) {
