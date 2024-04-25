@@ -24,6 +24,7 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonPermissions } from '../domain/person-permissions.js';
 import { Permissions } from './permissions.decorator.js';
 import { Public } from './public.decorator.js';
+import { RolleID, OrganisationID } from '../../../shared/types/index.js';
 
 @ApiTags('auth')
 @Controller({ path: 'auth' })
@@ -97,9 +98,13 @@ export class AuthenticationController {
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
     @ApiOkResponse({ description: 'Returns info about the logged in user.', type: UserinfoResponse })
     public async info(@Permissions() permissions: PersonPermissions): Promise<UserinfoResponse> {
-        const roleIds: string[] = await permissions.getRoleIds();
+        const roleIds: RolleID[] = (await permissions.getRoleIds()).map((item) => item.rolleId);
+        const organisationIds: OrganisationID[] = (await permissions.getRoleIds()).map((item) => item.organisationId);
         this.logger.info('Roles: ' + roleIds.toString());
         this.logger.info('User: ' + JSON.stringify(permissions.personFields));
+        this.logger.info('Organisations: ' + organisationIds.toString());
+        const roles = await permissions.getRollen();
+        this.logger.info('Roles: i got here  ' + JSON.stringify(roles));
         return new UserinfoResponse(permissions);
     }
 }
