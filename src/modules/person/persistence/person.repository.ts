@@ -86,20 +86,6 @@ export class PersonRepository {
         return [persons, total];
     }
 
-    public async findByFilter(searchStr: string): Promise<{ persons: Person<true>[]; total: number }> {
-        const entities: PersonEntity[] = await this.em.find(PersonEntity, {
-            $or: [
-                { vorname: { $ilike: '%' + searchStr + '%' } },
-                { familienname: { $ilike: '%' + searchStr + '%' } },
-                { referrer: { $ilike: '%' + searchStr + '%' } },
-                { personalnummer: { $ilike: '%' + searchStr + '%' } },
-            ],
-        });
-        const total: number = entities.length;
-        const persons: Person<true>[] = entities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
-        return { persons, total: total };
-    }
-
     public async findById(id: string): Promise<Option<Person<true>>> {
         const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { id });
         if (person) {

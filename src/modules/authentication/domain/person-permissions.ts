@@ -1,8 +1,11 @@
-import { RolleID, OrganisationID } from '../../../shared/types/index.js';
+import { OrganisationID, RolleID } from '../../../shared/types/index.js';
+import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { Person } from '../../person/domain/person.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 
 export type PersonFields = Pick<
@@ -19,17 +22,23 @@ export type PersonFields = Pick<
 >;
 type PersonKontextFields = Pick<Personenkontext<true>, 'rolleId' | 'organisationId'>;
 type RolleFields = Pick<Rolle<true>, 'systemrechte' | 'serviceProviderIds'>;
+export type PersonenkontextRolleFields = {
+    organisationsId: OrganisationID;
+    rolle: RolleFields;
+};
 
 export class PersonPermissions {
     private cachedPersonenkontextsFields?: PersonKontextFields[];
 
     private cachedPersonFields: PersonFields;
-    private cachedRollenFields?: RolleFields[];
+
+    private cachedRollenFields?: PersonenkontextRolleFields[];
 
     public constructor(
         private personenkontextRepo: DBiamPersonenkontextRepo,
-        person: Person<true>,
+        private organisationRepo: OrganisationRepo,
         private rolleRepo: RolleRepo,
+        person: Person<true>,
     ) {
         this.cachedPersonFields = {
             id: person.id,
@@ -44,44 +53,84 @@ export class PersonPermissions {
         };
     }
 
-    public async getRoleIds(): Promise<{ rolleId: RolleID; organisationId: OrganisationID }[]> {
+    public async getRoleIds(): Promise<RolleID[]> {
+        const personKontextFields: PersonKontextFields[] = await this.getPersonenkontextsFields();
+
+        return personKontextFields.map((personenkontextFields: PersonKontextFields) => {
+            return personenkontextFields.rolleId;
+        });
+    }
+
+    public async getOrgIdsWithSystemrecht(
+        systemrechte: RollenSystemRecht[],
+        withChildren: boolean = false,
+    ): Promise<OrganisationID[]> {
+        const organisationIDs: Set<OrganisationID> = new Set();
+
+        const personKontextFields: PersonKontextFields[] = await this.getPersonenkontextsFields();
+        const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(
+            personKontextFields.map((pk: PersonKontextFields) => pk.rolleId),
+        );
+
+        for (const pk of personKontextFields) {
+            const rolle: Rolle<true> | undefined = rollen.get(pk.rolleId);
+            if (rolle && systemrechte.every((r: RollenSystemRecht) => rolle.hasSystemRecht(r))) {
+                organisationIDs.add(pk.organisationId);
+            }
+        }
+
+        if (withChildren) {
+            const childOrgas: OrganisationDo<true>[] = await this.organisationRepo.findChildOrgasForIds(
+                Array.from(organisationIDs),
+            );
+
+            childOrgas.forEach((orga: OrganisationDo<true>) => organisationIDs.add(orga.id));
+        }
+
+        return Array.from(organisationIDs);
+    }
+
+    private async getPersonenkontextsFields(): Promise<PersonKontextFields[]> {
         if (!this.cachedPersonenkontextsFields) {
             const personenkontexte: Personenkontext<true>[] = await this.personenkontextRepo.findByPerson(
-                this.cachedPersonFields.id,
+                this.personFields.id,
             );
             this.cachedPersonenkontextsFields = personenkontexte.map((personenkontext: Personenkontext<true>) => ({
                 rolleId: personenkontext.rolleId,
                 organisationId: personenkontext.organisationId,
             }));
         }
-        return this.cachedPersonenkontextsFields.map((personenkontextFields: PersonKontextFields) => {
-            return {
-                rolleId: personenkontextFields.rolleId,
-                organisationId: personenkontextFields.organisationId,
-            };
-        });
+
+        return this.cachedPersonenkontextsFields;
     }
 
-    public async getRollen(): Promise<RolleFields[]> {
-        const roleIds = (await this.getRoleIds()).map((item) => item.rolleId);
+    public async getPersonenkontextewithRoles(): Promise<PersonenkontextRolleFields[]> {
+        if (!this.cachedRollenFields) {
+            const personKontextFields: PersonKontextFields[] = await this.getPersonenkontextsFields();
+            const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(
+                personKontextFields.map((pk: PersonKontextFields) => pk.rolleId),
+            );
 
-        const rolesMap = await this.rolleRepo.findByIds(roleIds);
+            this.cachedRollenFields = [];
 
-        this.cachedRollenFields = Array.from(rolesMap.values()).map((rolle) => ({
-            systemrechte: rolle.systemrechte,
-            serviceProviderIds: rolle.serviceProviderIds,
-        }));
+            for (const pk of personKontextFields) {
+                const rolle: Rolle<true> | undefined = rollen.get(pk.rolleId);
+                if (rolle) {
+                    this.cachedRollenFields.push({
+                        organisationsId: pk.organisationId,
+                        rolle: {
+                            systemrechte: rolle.systemrechte,
+                            serviceProviderIds: rolle.serviceProviderIds,
+                        },
+                    });
+                }
+            }
+        }
 
         return this.cachedRollenFields;
     }
 
     public get personFields(): PersonFields {
         return this.cachedPersonFields;
-    }
-    public get personKontextFields(): PersonKontextFields[] | undefined {
-        return this.cachedPersonenkontextsFields;
-    }
-    public get RollenFields(): RolleFields[] | undefined {
-        return this.cachedRollenFields;
     }
 }

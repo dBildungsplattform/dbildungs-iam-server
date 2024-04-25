@@ -1,9 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PersonPermissions } from '../domain/person-permissions.js';
-import { RolleID, OrganisationID } from '../../../shared/types/index.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-
-type RolleFields = Pick<Rolle<true>, 'systemrechte' | 'serviceProviderIds'>;
+import { PersonenkontextRolleFieldsResponse } from './PersonenkontextRolleFields.response.js';
 
 export class UserinfoResponse {
     @ApiProperty()
@@ -63,13 +60,10 @@ export class UserinfoResponse {
     @ApiProperty({ nullable: true })
     public updated_at?: number;
 
-    @ApiProperty({ nullable: true })
-    public personenkontexts?: { rolleId: RolleID; organisationId: OrganisationID }[];
+    @ApiProperty({ type: PersonenkontextRolleFieldsResponse, isArray: true })
+    public personenkontexte?: PersonenkontextRolleFieldsResponse[];
 
-    @ApiProperty({ nullable: true })
-    public rollen?: RolleFields[];
-
-    public constructor(info: PersonPermissions) {
+    public constructor(info: PersonPermissions, personenkontexte: PersonenkontextRolleFieldsResponse[]) {
         this.sub = info.personFields.keycloakUserId!;
         this.personId = info.personFields.id;
         this.name = `${info.personFields.vorname} ${info.personFields.familienname}`;
@@ -80,7 +74,6 @@ export class UserinfoResponse {
         this.gender = info.personFields.geschlecht;
         this.birthdate = info.personFields.geburtsdatum?.toISOString();
         this.updated_at = info.personFields.updatedAt.getTime() / 1000;
-        this.personenkontexts = info.personKontextFields;
-        this.rollen = info.RollenFields;
+        this.personenkontexte = personenkontexte;
     }
 }

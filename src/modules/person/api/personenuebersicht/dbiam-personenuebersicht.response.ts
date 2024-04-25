@@ -19,7 +19,7 @@ export class DBiamPersonenuebersichtResponse {
 
     @ApiProperty({ type: [DBiamPersonenzuordnungResponse] })
     public readonly zuordnungen: DBiamPersonenzuordnungResponse[];
-    // NOTE check this example
+
     public constructor(person: Person<true>, personenzuordnungen: DBiamPersonenzuordnungResponse[]) {
         this.personId = person.id;
         this.vorname = person.vorname;

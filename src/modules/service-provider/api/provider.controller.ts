@@ -65,7 +65,7 @@ export class ProviderController {
     public async getAvailableServiceProviders(
         @Permissions() permissions: PersonPermissions,
     ): Promise<ServiceProviderResponse[]> {
-        const roleIds: RolleID[] = (await permissions.getRoleIds()).map((item) => item.rolleId);
+        const roleIds: RolleID[] = (await permissions.getRoleIds()).map((item: RolleID) => item);
         const serviceProviders: ServiceProvider<true>[] = [];
         for (const roleId of roleIds) {
             const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(roleId);
