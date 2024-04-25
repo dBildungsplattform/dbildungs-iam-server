@@ -52,6 +52,12 @@ import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { ScopeOrder } from '../../../shared/persistence/index.js';
 import { PersonFactory } from '../domain/person.factory.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { OrganisationID } from '../../../shared/types/index.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
+import { ConfigService } from '@nestjs/config';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -59,21 +65,69 @@ import { PersonFactory } from '../domain/person.factory.js';
 @ApiOAuth2(['openid'])
 @Controller({ path: 'personen' })
 export class PersonController {
+    public readonly ROOT_ORGANISATION_ID: string;
+
     public constructor(
         private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
         private readonly personFactory: PersonFactory,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
-    ) {}
+        config: ConfigService<ServerConfig>,
+    ) {
+        this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+    }
+
+    private async getPersonIfAllowed(
+        personId: string,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<Result<Person<true>>> {
+        // Find all organisations where user has permission
+        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            true,
+        );
+
+        // Check if user has permission on root organisation
+        if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
+            organisationIDs = undefined;
+        }
+
+        // Find all Personen on child-orgas (+root orgas)
+        const scope: PersonScope = new PersonScope()
+            .findBy({ organisationen: organisationIDs })
+            .sortBy('vorname', ScopeOrder.ASC);
+
+        const [persons]: Counted<Person<true>> = await this.personRepository.findBy(scope);
+
+        const person: Person<true> | undefined = persons.find((p: Person<true>) => p.id === personId);
+
+        if (!person) return { ok: false, error: new EntityNotFoundError() };
+
+        return { ok: true, value: person };
+    }
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({ description: 'The person was successfully created.', type: PersonendatensatzResponse })
-    @ApiBadRequestResponse({ description: 'A username was given. Creation with username is not supported' })
+    @ApiBadRequestResponse({ description: 'A username was given. Creation with username is not supported.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the person.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
-    public async createPerson(@Body() params: CreatePersonBodyParams): Promise<PersonendatensatzResponse> {
+    public async createPerson(
+        @Body() params: CreatePersonBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<PersonendatensatzResponse> {
+        // Find all organisations where user has permission
+        const organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            true,
+        );
+        if (!organisationIDs || organisationIDs.length < 1) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Person')),
+            );
+        }
         const person: Person<false> | DomainError = await this.personFactory.createNew({
             vorname: params.name.vorname,
             familienname: params.name.familienname,
@@ -110,12 +164,17 @@ export class PersonController {
     @ApiOkResponse({ description: 'The person was successfully returned.', type: PersonendatensatzResponse })
     @ApiBadRequestResponse({ description: 'Person ID is required' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the person.' })
-    @ApiNotFoundResponse({ description: 'The person does not exist.' })
+    @ApiNotFoundResponse({ description: 'The person does not exist or insufficient permissions.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the person.' })
-    public async findPersonById(@Param() params: PersonByIdParams): Promise<PersonendatensatzResponse> {
-        const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
-        if (!person) {
+    public async findPersonById(
+        @Param() params: PersonByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<PersonendatensatzResponse> {
+        const getPersonIfAllowed: Result<Person<true>> = await this.getPersonIfAllowed(params.personId, permissions);
+
+        //const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
+        if (!getPersonIfAllowed.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new EntityNotFoundError('Person', params.personId),
@@ -123,7 +182,7 @@ export class PersonController {
             );
         }
 
-        return new PersonendatensatzResponse(person, false);
+        return new PersonendatensatzResponse(getPersonIfAllowed.value, false);
     }
 
     @Post(':personId/personenkontexte')
@@ -132,16 +191,31 @@ export class PersonController {
     @ApiBadRequestResponse({ description: 'The personenkontext already exists.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the personenkontext.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the personenkontext.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to create personenkontext for person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the personenkontext.' })
     public async createPersonenkontext(
         @Param() pathParams: PersonByIdParams,
         @Body() bodyParams: CreatePersonenkontextBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PersonenkontextResponse> {
         const personenkontextDto: CreatePersonenkontextDto = this.mapper.map(
             bodyParams,
             CreatePersonenkontextBodyParams,
             CreatePersonenkontextDto,
         );
+        //check that logged-in user is allowed to update person
+        const getPersonIfAllowed: Result<Person<true>> = await this.getPersonIfAllowed(
+            pathParams.personId,
+            permissions,
+        );
+        if (!getPersonIfAllowed.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', pathParams.personId),
+                ),
+            );
+        }
+
         personenkontextDto.personId = pathParams.personId;
 
         const result: CreatedPersonenkontextDto | SchulConnexError =
@@ -166,12 +240,26 @@ export class PersonController {
     public async findPersonenkontexte(
         @Param() pathParams: PersonByIdParams,
         @Query() queryParams: PersonenkontextQueryParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<PersonenkontextResponse>> {
         const findPersonenkontextDto: FindPersonenkontextDto = this.mapper.map(
             queryParams,
             PersonenkontextQueryParams,
             FindPersonenkontextDto,
         );
+
+        //check that logged-in user is allowed to update person
+        const getPersonIfAllowed: Result<Person<true>> = await this.getPersonIfAllowed(
+            pathParams.personId,
+            permissions,
+        );
+        if (!getPersonIfAllowed.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', pathParams.personId),
+                ),
+            );
+        }
 
         findPersonenkontextDto.personId = pathParams.personId;
 
@@ -204,13 +292,22 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all persons.' })
     public async findPersons(
         @Query() queryParams: PersonenQueryParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<PersonendatensatzResponse>> {
+        // Find all organisations where user has permission
+        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            true,
+        );
+
+        // Check if user has permission on root organisation
+        if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
+            organisationIDs = undefined;
+        }
+
+        // Find all Personen on child-orgas (+root orgas)
         const scope: PersonScope = new PersonScope()
-            .findBy({
-                vorname: undefined,
-                familienname: undefined,
-                geburtsdatum: undefined,
-            })
+            .findBy({ organisationen: organisationIDs })
             .sortBy('vorname', ScopeOrder.ASC)
             .paged(queryParams.offset, queryParams.limit);
 
@@ -233,21 +330,25 @@ export class PersonController {
     })
     @ApiBadRequestResponse({ description: 'Request has wrong format.' })
     @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
-    @ApiNotFoundResponse({ description: 'The person was not found.' })
+    @ApiNotFoundResponse({ description: 'The person was not found or insufficient permissions to update person.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
     public async updatePerson(
         @Param() params: PersonByIdParams,
         @Body() body: UpdatePersonBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse> {
-        const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
-        if (!person) {
+        //check that logged-in user is allowed to update person
+        const getPersonIfAllowed: Result<Person<true>> = await this.getPersonIfAllowed(params.personId, permissions);
+        if (!getPersonIfAllowed.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new EntityNotFoundError('Person', params.personId),
                 ),
             );
         }
+        const person: Person<true> = getPersonIfAllowed.value;
+
         const updateResult: void | DomainError = person.update(
             body.revision,
             body.name.familienname,
@@ -282,18 +383,24 @@ export class PersonController {
     @Patch(':personId/password')
     @HttpCode(HttpStatus.ACCEPTED)
     @ApiAcceptedResponse({ description: 'Password for person was successfully reset.', type: String })
-    @ApiNotFoundResponse({ description: 'The person does not exist.' })
+    @ApiNotFoundResponse({ description: 'The person does not exist or insufficient permissions to update person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
     @UseInterceptors(ResultInterceptor)
-    public async resetPasswordByPersonId(@Param() params: PersonByIdParams): Promise<Result<string>> {
-        const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
-        if (!person) {
+    public async resetPasswordByPersonId(
+        @Param() params: PersonByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<Result<string>> {
+        //check that logged-in user is allowed to update person
+        const getPersonIfAllowed: Result<Person<true>> = await this.getPersonIfAllowed(params.personId, permissions);
+        if (!getPersonIfAllowed.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new EntityNotFoundError('Person', params.personId),
                 ),
             );
         }
+        const person: Person<true> = getPersonIfAllowed.value;
+
         person.resetPassword();
         const saveResult: Person<true> | DomainError = await this.personRepository.update(person);
 
