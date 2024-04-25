@@ -267,8 +267,12 @@ describe('Rolle API', () => {
         });
 
         it('should return rolle with serviceproviders', async () => {
-            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(DoFactory.createServiceProvider(false));
-            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }));
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+            );
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/rolle/${rolle.id}`)
                 .send();
