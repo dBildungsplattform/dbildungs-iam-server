@@ -1,10 +1,10 @@
 import { AutoMap } from '@automapper/classes';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
-import { Transform } from 'class-transformer';
 import { ArrayUnique, IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
 
 export class FindOrganisationQueryParams extends PagedQueryParams {
     @AutoMap()
@@ -47,7 +47,7 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
 
     @AutoMap(() => String)
     @IsOptional()
-    @Transform(({ value }: { value: string | string[] }) => (Array.isArray(value) ? value : [value]))
+    @TransformToArray()
     @IsEnum(RollenSystemRecht, { each: true })
     @ArrayUnique()
     @ApiProperty({
