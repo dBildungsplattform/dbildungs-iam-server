@@ -25,6 +25,6 @@ import { DbSeedReferenceRepo } from './repo/db-seed-reference.repo.js';
         LoggerModule.register(DbSeedModule.name),
     ],
     providers: [DbSeedService, DbSeedMapper, DbSeedConsole, DBiamPersonenkontextRepo, DbSeedRepo, DbSeedReferenceRepo],
-    exports: [DbSeedService, DbSeedMapper, DbSeedConsole],
+    exports: [DbSeedService, DbSeedMapper, DbSeedConsole, DbSeedRepo],
 })
 export class DbSeedModule {}

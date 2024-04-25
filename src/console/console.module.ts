@@ -10,24 +10,16 @@ import { mappingErrorHandler } from '../shared/error/index.js';
 import { DbConsole } from './db.console.js';
 import { DbInitConsole } from './db-init.console.js';
 import { LoggerModule } from '../core/logging/logger.module.js';
-import { DbSeedConsole } from './dbseed/db-seed.console.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { UsernameGeneratorService } from '../modules/person/domain/username-generator.service.js';
-import { DbSeedMapper } from './dbseed/db-seed-mapper.js';
-import { DbSeedService } from './dbseed/domain/db-seed.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
-import { PersonRepository } from '../modules/person/persistence/person.repository.js';
-import { PersonFactory } from '../modules/person/domain/person.factory.js';
 import { OrganisationModule } from '../modules/organisation/organisation.module.js';
-import { RolleRepo } from '../modules/rolle/repo/rolle.repo.js';
-import { RolleFactory } from '../modules/rolle/domain/rolle.factory.js';
-import { ServiceProviderRepo } from '../modules/service-provider/repo/service-provider.repo.js';
 import { RolleModule } from '../modules/rolle/rolle.module.js';
 import { ServiceProviderModule } from '../modules/service-provider/service-provider.module.js';
 import { PersonModule } from '../modules/person/person.module.js';
-import { DbSeedRepo } from './dbseed/repo/db-seed.repo.js';
 import { PersonenKontextModule } from '../modules/personenkontext/personenkontext.module.js';
-import { DbSeedReferenceRepo } from './dbseed/repo/db-seed-reference.repo.js';
+import { DbSeedConsole } from './dbseed/db-seed.console.js';
+import { DbSeedModule } from './dbseed/db-seed.module.js';
 
 @Module({
     imports: [
@@ -38,6 +30,7 @@ import { DbSeedReferenceRepo } from './dbseed/repo/db-seed-reference.repo.js';
         RolleModule,
         ServiceProviderModule,
         PersonenKontextModule,
+        DbSeedModule,
         LoggerModule.register(ConsoleModule.name),
         ConfigModule.forRoot({
             isGlobal: true,
@@ -68,21 +61,6 @@ import { DbSeedReferenceRepo } from './dbseed/repo/db-seed-reference.repo.js';
             inject: [ConfigService],
         }),
     ],
-    providers: [
-        DbConsole,
-        DbInitConsole,
-        DbSeedConsole,
-        UsernameGeneratorService,
-        DbSeedMapper,
-        DbSeedService,
-        PersonRepository,
-        PersonFactory,
-        PersonRepository,
-        RolleRepo,
-        RolleFactory,
-        ServiceProviderRepo,
-        DbSeedRepo,
-        DbSeedReferenceRepo,
-    ],
+    providers: [DbConsole, DbInitConsole, DbSeedConsole, UsernameGeneratorService],
 })
 export class ConsoleModule {}
