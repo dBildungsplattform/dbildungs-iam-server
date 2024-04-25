@@ -6,20 +6,19 @@ import {
     KeycloakConfigTestModule,
     LoggingTestModule,
     MapperTestModule,
-} from '../../../test/utils/index.js';
+} from '../../../../test/utils/index.js';
 import { DbSeedService } from './db-seed.service.js';
-import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
-import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';
-import { KeycloakConfigModule } from '../../modules/keycloak-administration/keycloak-config.module.js';
-import { EntityNotFoundError, InvalidAttributeLengthError } from '../../shared/error/index.js';
-import { OrganisationModule } from '../../modules/organisation/organisation.module.js';
+import { UsernameGeneratorService } from '../../../modules/person/domain/username-generator.service.js';
+import { KeycloakAdministrationModule } from '../../../modules/keycloak-administration/keycloak-administration.module.js';
+import { KeycloakConfigModule } from '../../../modules/keycloak-administration/keycloak-config.module.js';
+import { EntityNotFoundError, InvalidAttributeLengthError } from '../../../shared/error/index.js';
+import { OrganisationModule } from '../../../modules/organisation/organisation.module.js';
 import fs from 'fs';
-import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { ServiceProviderModule } from '../../modules/service-provider/service-provider.module.js';
-import { RolleModule } from '../../modules/rolle/rolle.module.js';
-import { PersonModule } from '../../modules/person/person.module.js';
-import { DbSeedModule } from './db-seed.module.js';
-//import { GleicheRolleAnKlasseWieSchuleError } from '../../modules/personenkontext/specification/error/gleiche-rolle-an-klasse-wie-schule.error.js';
+import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ServiceProviderModule } from '../../../modules/service-provider/service-provider.module.js';
+import { RolleModule } from '../../../modules/rolle/rolle.module.js';
+import { PersonModule } from '../../../modules/person/person.module.js';
+import { DbSeedModule } from '../db-seed.module.js';
 
 describe('DbSeedServiceIntegration', () => {
     let module: TestingModule;

@@ -7,7 +7,7 @@ import {
     LoggingTestModule,
     MapperTestModule,
 } from '../../../test/utils/index.js';
-import { DbSeedService } from './db-seed.service.js';
+import { DbSeedService } from './domain/db-seed.service.js';
 import { DbSeedConsole } from './db-seed.console.js';
 import { UsernameGeneratorService } from '../../modules/person/domain/username-generator.service.js';
 import { KeycloakAdministrationModule } from '../../modules/keycloak-administration/keycloak-administration.module.js';

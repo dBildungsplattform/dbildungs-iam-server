@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
-import { DbSeedReference } from '../db-seed-reference.js';
+import { DbSeedReference } from '../domain/db-seed-reference.js';
 import { DbSeedReferenceEntity, ReferencedEntityType } from './db-seed-reference.entity.js';
 
 /**

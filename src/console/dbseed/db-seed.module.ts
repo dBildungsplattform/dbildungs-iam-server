@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { LoggerModule } from '../../core/logging/logger.module.js';
-import { DbSeedService } from './db-seed.service.js';
+import { DbSeedService } from './domain/db-seed.service.js';
 import { DbSeedMapper } from './db-seed-mapper.js';
 import { DbSeedConsole } from './db-seed.console.js';
 import { PersonModule } from '../../modules/person/person.module.js';

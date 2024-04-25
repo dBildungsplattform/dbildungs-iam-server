@@ -5,14 +5,14 @@ import { MikroORM } from '@mikro-orm/core';
 import { Inject } from '@nestjs/common';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
-import { DbSeedService } from './db-seed.service.js';
+import { DbSeedService } from './domain/db-seed.service.js';
 import { PersonFile } from './file/person-file.js';
 import { RolleEntity } from '../../modules/rolle/entity/rolle.entity.js';
 import { OrganisationFile } from './file/organisation-file.js';
 import { DataProviderEntity } from '../../persistence/data-provider.entity.js';
 import { DataProviderFile } from './file/data-provider-file.js';
 import { createHash, Hash } from 'crypto';
-import { DbSeed } from './db-seed.js';
+import { DbSeed } from './domain/db-seed.js';
 import { DbSeedStatus } from './repo/db-seed.entity.js';
 import { DbSeedRepo } from './repo/db-seed.repo.js';
 
@@ -72,7 +72,7 @@ export class DbSeedConsole extends CommandRunner {
             entityFileNames.forEach((n: string) => this.logger.info(n));
             try {
                 for (const entityFileName of entityFileNames) {
-                    await this.readAndProcessEntitylFile(directory, subDir, entityFileName);
+                    await this.readAndProcessEntityFile(directory, subDir, entityFileName);
                 }
                 await this.orm.em.flush();
                 this.logger.info(`Created seed data from ${subDir} successfully.`);
@@ -84,7 +84,7 @@ export class DbSeedConsole extends CommandRunner {
         }
     }
 
-    private async readAndProcessEntitylFile(directory: string, subDir: string, entityFileName: string): Promise<void> {
+    private async readAndProcessEntityFile(directory: string, subDir: string, entityFileName: string): Promise<void> {
         const fileContentAsStr: string = fs.readFileSync(`./seeding/${directory}/${subDir}/${entityFileName}`, 'utf-8');
         const contentHash: string = this.generateHashForEntityFile(fileContentAsStr);
         const dbSeedE: Option<DbSeed<true>> = await this.dbSeedRepo.findById(contentHash);

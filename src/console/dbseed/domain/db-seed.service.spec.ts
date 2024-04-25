@@ -6,28 +6,28 @@ import {
     DoFactory,
     LoggingTestModule,
     MapperTestModule,
-} from '../../../test/utils/index.js';
+} from '../../../../test/utils/index.js';
 import fs from 'fs';
-import { DataProviderFile } from './file/data-provider-file.js';
-import { PersonFactory } from '../../modules/person/domain/person.factory.js';
-import { PersonRepository } from '../../modules/person/persistence/person.repository.js';
+import { DataProviderFile } from '../file/data-provider-file.js';
+import { PersonFactory } from '../../../modules/person/domain/person.factory.js';
+import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { OrganisationRepo } from '../../modules/organisation/persistence/organisation.repo.js';
-import { OrganisationDo } from '../../modules/organisation/domain/organisation.do.js';
-import { EntityNotFoundError } from '../../shared/error/index.js';
+import { OrganisationRepo } from '../../../modules/organisation/persistence/organisation.repo.js';
+import { OrganisationDo } from '../../../modules/organisation/domain/organisation.do.js';
+import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { faker } from '@faker-js/faker';
-import { RolleRepo } from '../../modules/rolle/repo/rolle.repo.js';
-import { Rolle } from '../../modules/rolle/domain/rolle.js';
-import { RolleFactory } from '../../modules/rolle/domain/rolle.factory.js';
-import { ServiceProviderRepo } from '../../modules/service-provider/repo/service-provider.repo.js';
-import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { ServiceProviderFactory } from '../../modules/service-provider/domain/service-provider.factory.js';
-import { KeycloakUserService, UserDo } from '../../modules/keycloak-administration/index.js';
-import { Person } from '../../modules/person/domain/person.js';
-import { DBiamPersonenkontextService } from '../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
-import { DbSeedReferenceRepo } from './repo/db-seed-reference.repo.js';
-import { ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
-import { GleicheRolleAnKlasseWieSchuleError } from '../../modules/personenkontext/specification/error/gleiche-rolle-an-klasse-wie-schule.error.js';
+import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
+import { Rolle } from '../../../modules/rolle/domain/rolle.js';
+import { RolleFactory } from '../../../modules/rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../../modules/service-provider/repo/service-provider.repo.js';
+import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ServiceProviderFactory } from '../../../modules/service-provider/domain/service-provider.factory.js';
+import { KeycloakUserService, UserDo } from '../../../modules/keycloak-administration/index.js';
+import { Person } from '../../../modules/person/domain/person.js';
+import { DBiamPersonenkontextService } from '../../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
+import { DbSeedReferenceRepo } from '../repo/db-seed-reference.repo.js';
+import { ServiceProvider } from '../../../modules/service-provider/domain/service-provider.js';
+import { GleicheRolleAnKlasseWieSchuleError } from '../../../modules/personenkontext/specification/error/gleiche-rolle-an-klasse-wie-schule.error.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;

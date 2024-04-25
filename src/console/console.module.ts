@@ -14,7 +14,7 @@ import { DbSeedConsole } from './dbseed/db-seed.console.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 import { UsernameGeneratorService } from '../modules/person/domain/username-generator.service.js';
 import { DbSeedMapper } from './dbseed/db-seed-mapper.js';
-import { DbSeedService } from './dbseed/db-seed.service.js';
+import { DbSeedService } from './dbseed/domain/db-seed.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 import { PersonRepository } from '../modules/person/persistence/person.repository.js';
 import { PersonFactory } from '../modules/person/domain/person.factory.js';

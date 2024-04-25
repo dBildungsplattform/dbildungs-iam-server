@@ -8,8 +8,8 @@ export enum DbSeedStatus {
 
 @Entity({ tableName: 'seeding' })
 export class DbSeedEntity extends BaseEntity {
-    @PrimaryKey()
-    public id!: string;
+    @PrimaryKey({ name: 'hash' })
+    public hash!: string;
 
     @Enum(() => DbSeedStatus)
     public status!: DbSeedStatus;
