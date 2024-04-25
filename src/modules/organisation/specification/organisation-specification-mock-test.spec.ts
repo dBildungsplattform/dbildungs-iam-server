@@ -237,7 +237,7 @@ describe('OrganisationSpecificationMockedRepoTest', () => {
                 administriertVon: schule.id,
             });
             organisationRepoMock.findById.mockResolvedValueOnce(schule); //mock call to find schule as parent
-            organisationRepoMock.findChildOrgasForId.mockResolvedValueOnce([andereKlasse]);
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([andereKlasse]);
             expect(await klassenNameAnSchuleEindeutig.isSatisfiedBy(klasse)).toBeFalsy();
         });
 
@@ -260,7 +260,7 @@ describe('OrganisationSpecificationMockedRepoTest', () => {
                 administriertVon: schule.id,
             });
             organisationRepoMock.findById.mockResolvedValueOnce(schule); //mock call to find schule as parent
-            organisationRepoMock.findChildOrgasForId.mockResolvedValueOnce([andereKlasse]);
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([andereKlasse]);
             expect(await klassenNameAnSchuleEindeutig.isSatisfiedBy(klasse)).toBeTruthy();
         });
     });
