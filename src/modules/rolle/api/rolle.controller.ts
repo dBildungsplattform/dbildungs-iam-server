@@ -89,6 +89,35 @@ export class RolleController {
         });
     }
 
+    @Get(':rolleId')
+    @ApiOperation({ description: 'Get rolle by id.' })
+    @ApiOkResponse({
+        description: 'The rolle was successfully returned.',
+        type: RolleWithServiceProvidersResponse,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get rolle by id.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permission to get rolle by id.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rolle by id.' })
+    public async findRolleById(
+        @Param() findRolleByIdParams: FindRolleByIdParams,
+    ): Promise<RolleWithServiceProvidersResponse> {
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
+        if (!rolle) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId),
+                ),
+            );
+        }
+        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
+
+        const rolleServiceProviders: ServiceProvider<true>[] = rolle.serviceProviderIds
+            .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
+            .filter(Boolean) as ServiceProvider<true>[];
+
+        return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
+    }
+
     @Post()
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ description: 'Create a new rolle.' })

@@ -255,6 +255,39 @@ describe('Rolle API', () => {
         });
     });
 
+    describe('/GET rolle by id', () => {
+        it('should return rolle', async () => {
+            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${rolle.id}`)
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+        });
+
+        it('should return rolle with serviceproviders', async () => {
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(DoFactory.createServiceProvider(false));
+            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }));
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${rolle.id}`)
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+        });
+
+        it('should return 404 when rolle could not be found', async () => {
+            await rolleRepo.save(DoFactory.createRolle(false));
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${faker.string.uuid()}`)
+                .send();
+
+            expect(response.status).toBe(404);
+            expect(response.body).toBeInstanceOf(Object);
+        });
+    });
+
     describe('/PATCH rolle, add systemrecht', () => {
         describe('when rolle exists and systemrecht is matching enum', () => {
             it('should return 200', async () => {
