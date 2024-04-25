@@ -130,9 +130,12 @@ export class DbSeedService {
                 const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(spId);
                 serviceProviderUUIDs.push(sp.id);
             }
+            const referencedOrga: OrganisationDo<true> = await this.getReferencedOrganisation(
+                file.administeredBySchulstrukturknoten,
+            );
             const rolle: Rolle<false> = this.rolleFactory.createNew(
                 file.name,
-                (await this.getReferencedOrganisation(file.administeredBySchulstrukturknoten)).id,
+                referencedOrga.id,
                 file.rollenart,
                 file.merkmale,
                 file.systemrechte,
@@ -161,12 +164,15 @@ export class DbSeedService {
         ) as EntityFile<ServiceProviderFile>;
         const files: ServiceProviderFile[] = plainToInstance(ServiceProviderFile, serviceProviderFile.entities);
         for (const file of files) {
+            const referencedOrga: OrganisationDo<true> = await this.getReferencedOrganisation(
+                file.providedOnSchulstrukturknoten,
+            );
             const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
                 file.name,
                 file.target,
                 file.url,
                 file.kategorie,
-                (await this.getReferencedOrganisation(file.providedOnSchulstrukturknoten)).id,
+                referencedOrga.id,
                 file.logoBase64 ? Buffer.from(file.logoBase64, 'base64') : undefined,
                 file.logoMimeType,
             );
@@ -256,13 +262,16 @@ export class DbSeedService {
         const files: PersonenkontextFile[] = plainToInstance(PersonenkontextFile, personenkontextFile.entities);
         const persistedPersonenkontexte: Personenkontext<true>[] = [];
         for (const file of files) {
+            const referencedPerson: Person<true> = await this.getReferencedPerson(file.personId);
+            const referencedOrga: OrganisationDo<true> = await this.getReferencedOrganisation(file.organisationId);
+            const referencedRolle: Rolle<true> = await this.getReferencedRolle(file.rolleId);
             const personenKontext: Personenkontext<false> = Personenkontext.construct(
                 undefined,
                 new Date(),
                 new Date(),
-                (await this.getReferencedPerson(file.personId)).id,
-                (await this.getReferencedOrganisation(file.organisationId)).id,
-                (await this.getReferencedRolle(file.rolleId)).id,
+                referencedPerson.id,
+                referencedOrga.id,
+                referencedRolle.id,
             );
 
             //Check specifications

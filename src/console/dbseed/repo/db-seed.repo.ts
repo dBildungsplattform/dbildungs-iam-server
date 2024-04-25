@@ -3,10 +3,7 @@ import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
 import { DbSeed } from '../domain/db-seed.js';
 import { DbSeedEntity } from './db-seed.entity.js';
 
-/**
- * @deprecated Not for use outside of repo, export will be removed at a later date
- */
-export function mapAggregateToData(dbSeed: DbSeed<boolean>): RequiredEntityData<DbSeedEntity> {
+function mapAggregateToData(dbSeed: DbSeed<boolean>): RequiredEntityData<DbSeedEntity> {
     return {
         // Don't assign executedAt, it is auto-generated!
         hash: dbSeed.hash,

@@ -3,10 +3,7 @@ import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
 import { DbSeedReference } from '../domain/db-seed-reference.js';
 import { DbSeedReferenceEntity, ReferencedEntityType } from './db-seed-reference.entity.js';
 
-/**
- * @deprecated Not for use outside of repo, export will be removed at a later date
- */
-export function mapAggregateToData(dbSeedReference: DbSeedReference): RequiredEntityData<DbSeedReferenceEntity> {
+function mapAggregateToData(dbSeedReference: DbSeedReference): RequiredEntityData<DbSeedReferenceEntity> {
     return {
         // Don't assign executedAt, it is auto-generated!
         referencedEntityType: dbSeedReference.referencedEntityType,
