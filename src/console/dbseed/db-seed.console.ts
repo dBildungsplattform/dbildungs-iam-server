@@ -111,6 +111,7 @@ export class DbSeedConsole extends CommandRunner {
                 await this.dbSeedRepo.update(persistedDbSeed);
             } catch (err) {
                 persistedDbSeed.setFailed();
+                this.dbSeedRepo.forkEntityManager();
                 await this.dbSeedRepo.update(persistedDbSeed);
                 throw err;
             }

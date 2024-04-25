@@ -21,7 +21,7 @@ function mapEntityToAggregate(entity: DbSeedEntity): DbSeed<boolean> {
 
 @Injectable()
 export class DbSeedRepo {
-    public constructor(private readonly em: EntityManager) {}
+    public constructor(private em: EntityManager) {}
 
     public async findById(hash: string): Promise<Option<DbSeed<true>>> {
         const dbSeedEntity: Option<DbSeedEntity> = (await this.em.findOne(DbSeedEntity, {
@@ -46,5 +46,9 @@ export class DbSeedRepo {
         await this.em.persistAndFlush(dbSeedEntity);
 
         return mapEntityToAggregate(dbSeedEntity);
+    }
+
+    public forkEntityManager(): void {
+        this.em = this.em.fork();
     }
 }
