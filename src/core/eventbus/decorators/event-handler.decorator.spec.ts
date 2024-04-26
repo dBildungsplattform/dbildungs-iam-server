@@ -1,4 +1,4 @@
-import { BaseEvent } from '../types/base-event.js';
+import { BaseEvent } from '../../../shared/events/index.js';
 import { EVENT_HANDLER_META } from '../types/metadata-key.js';
 import { EventHandler } from './event-handler.decorator.js';
 

@@ -1,8 +1,8 @@
 import { DiscoveredMethodWithMeta, DiscoveryService } from '@golevelup/nestjs-discovery';
 import { Injectable } from '@nestjs/common';
 
+import { BaseEvent } from '../../../shared/events/index.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { BaseEvent } from '../types/base-event.js';
 import { EVENT_HANDLER_META } from '../types/metadata-key.js';
 import { Constructor, EventHandlerType } from '../types/util.types.js';
 import { EventService } from './event.service.js';

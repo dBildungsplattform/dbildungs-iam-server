@@ -5,8 +5,8 @@ import { Controller, Injectable } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { LoggingTestModule } from '../../../../test/utils/index.js';
+import { BaseEvent } from '../../../shared/events/index.js';
 import { EventHandler } from '../decorators/event-handler.decorator.js';
-import { BaseEvent } from '../types/base-event.js';
 import { EventDiscoveryService } from './event-discovery.service.js';
 import { EventService } from './event.service.js';
 

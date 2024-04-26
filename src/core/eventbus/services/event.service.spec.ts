@@ -2,8 +2,8 @@ import { DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { LoggingTestModule } from '../../../../test/utils/index.js';
+import { BaseEvent } from '../../../shared/events/index.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { BaseEvent } from '../types/base-event.js';
 import { EventHandlerType } from '../types/util.types.js';
 import { EventService } from './event.service.js';
 

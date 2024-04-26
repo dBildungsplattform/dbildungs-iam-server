@@ -9,7 +9,7 @@ A specific order of the event-handlers is not guaranteed and should not be relie
 
 ## Publishing events
 
-All events need to extend the `BaseEvent`.
+All events need to extend the `BaseEvent`. We place all events in [/src/shared/events](`/src/shared/events`).
 
 ```ts
 export class UserCreationEvent extends BaseEvent {

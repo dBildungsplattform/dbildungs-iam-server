@@ -1,6 +1,6 @@
 import { SetMetadata } from '@nestjs/common';
 
-import { BaseEvent } from '../types/base-event.js';
+import { BaseEvent } from '../../../shared/events/index.js';
 import { EVENT_HANDLER_META } from '../types/metadata-key.js';
 import { Constructor, EventHandlerType, TypedMethodDecorator } from '../types/util.types.js';
 

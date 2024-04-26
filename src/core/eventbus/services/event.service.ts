@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Subject, Subscription } from 'rxjs';
 
+import { BaseEvent } from '../../../shared/events/index.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { BaseEvent } from '../types/base-event.js';
 import { Constructor, EventHandlerType } from '../types/util.types.js';
 
 type EventInfo<Event> = {
