@@ -68,7 +68,7 @@ describe('OrganisationServiceSpecificationTest', () => {
     });
 
     describe('create', () => {
-        it('should return DomainError, when Klasse specificatons are not satisfied and type is KLASSE', async () => {
+        it('should return DomainError, when KlasseNurVonSchuleAdministriert specificaton is not satisfied and type is KLASSE', async () => {
             const klasseDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Klasse',
                 administriertVon: traeger1.id,
@@ -83,6 +83,35 @@ describe('OrganisationServiceSpecificationTest', () => {
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: false,
                 error: new KlasseNurVonSchuleAdministriertError(undefined),
+            });
+        });
+
+        it('should return a DomainError when KlassenNameAnSchuleEindeutig specification is not met', async () => {
+            const schuleDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Schule',
+                administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
+            const klasseDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Klasse',
+                administriertVon: schule.id,
+                zugehoerigZu: schule.id,
+                typ: OrganisationsTyp.KLASSE,
+            });
+            await organisationRepo.save(klasseDo);
+            const weitereKlasseDo: OrganisationDo<boolean> = DoFactory.createOrganisation(false, {
+                name: 'Klasse',
+                administriertVon: schule.id,
+                zugehoerigZu: schule.id,
+                typ: OrganisationsTyp.KLASSE,
+            });
+            const result: Result<OrganisationDo<true>> = await organisationService.createOrganisation(weitereKlasseDo);
+
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new KlassenNameAnSchuleEindeutigError(undefined),
             });
         });
     });
