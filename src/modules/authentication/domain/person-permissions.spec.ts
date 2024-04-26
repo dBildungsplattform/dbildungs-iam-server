@@ -180,4 +180,19 @@ describe('PersonPermissions', () => {
             expect(result).toEqual(expected);
         });
     });
+
+    describe('PersonenkontextRolleFieldsResponse', () => {
+        it('should create a valid PersonenkontextRolleFieldsResponse object', () => {
+            const response = new PersonenkontextRolleFieldsResponse();
+            response.organisationsId = 'testOrgId';
+            response.rolle = {
+                systemrechte: ['right1', 'right2'],
+                serviceProviderIds: ['service1', 'service2'],
+            };
+
+            expect(response.organisationsId).toEqual('testOrgId');
+            expect(response.rolle.systemrechte).toEqual(['right1', 'right2']);
+            expect(response.rolle.serviceProviderIds).toEqual(['service1', 'service2']);
+        });
+    });
 });
