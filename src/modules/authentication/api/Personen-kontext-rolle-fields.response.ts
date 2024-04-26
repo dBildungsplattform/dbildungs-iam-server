@@ -6,10 +6,10 @@ export class PersonenkontextRolleFieldsResponse {
     public organisationsId: OrganisationID = '';
 
     @ApiProperty({
-        type: Object,
-        example: {
-            systemrechte: ['systemrecht1', 'systemrecht2'],
-            serviceProviderIds: ['serviceProviderId1', 'serviceProviderId2'],
+        type: 'object',
+        properties: {
+            systemrechte: { type: 'array', items: { type: 'string' } },
+            serviceProviderIds: { type: 'array', items: { type: 'string' } },
         },
     })
     public rolle: {

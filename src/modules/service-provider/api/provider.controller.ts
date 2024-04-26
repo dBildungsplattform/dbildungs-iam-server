@@ -23,7 +23,6 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { RolleID } from '../../../shared/types/index.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('provider')
@@ -65,7 +64,7 @@ export class ProviderController {
     public async getAvailableServiceProviders(
         @Permissions() permissions: PersonPermissions,
     ): Promise<ServiceProviderResponse[]> {
-        const roleIds: RolleID[] = (await permissions.getRoleIds()).map((item: RolleID) => item);
+        const roleIds: string[] = await permissions.getRoleIds();
         const serviceProviders: ServiceProvider<true>[] = [];
         for (const roleId of roleIds) {
             const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(roleId);

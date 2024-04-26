@@ -13,7 +13,7 @@ import { OrganisationRepo } from '../../organisation/persistence/organisation.re
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { PersonenkontextRolleFieldsResponse } from '../api/PersonenkontextRolleFields.response.js';
+import { PersonenkontextRolleFieldsResponse } from '../api/Personen-kontext-rolle-fields.response.js';
 
 function createPerson(): Person<true> {
     return Person.construct(
