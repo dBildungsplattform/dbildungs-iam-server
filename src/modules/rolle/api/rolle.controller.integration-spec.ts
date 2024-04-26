@@ -26,6 +26,7 @@ import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { Rolle } from '../domain/rolle.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RolleServiceProviderQueryParams } from './rolle-service-provider.query.params.js';
+import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -279,6 +280,11 @@ describe('Rolle API', () => {
 
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Object);
+            const responseBody: RolleWithServiceProvidersResponse = response.body as RolleWithServiceProvidersResponse;
+
+            expect(responseBody?.serviceProviders).toContainEqual(
+                expect.objectContaining({ id: serviceProvider.id, name: serviceProvider.name }),
+            );
         });
 
         it('should return 404 when rolle could not be found', async () => {
