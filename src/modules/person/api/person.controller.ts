@@ -58,6 +58,7 @@ import { OrganisationID } from '../../../shared/types/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
+import { PersonUc } from '../domain/person.uc.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -71,39 +72,11 @@ export class PersonController {
         private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
         private readonly personFactory: PersonFactory,
+        private readonly personUc: PersonUc,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
-    }
-
-    private async getPersonIfAllowed(
-        personId: string,
-        permissions: PersonPermissions,
-    ): Promise<Result<Person<true>>> {
-        // Find all organisations where user has permission
-        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
-            true,
-        );
-
-        // Check if user has permission on root organisation
-        if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
-            organisationIDs = undefined;
-        }
-
-        // Find all Personen on child-orgas (+root orgas)
-        const scope: PersonScope = new PersonScope()
-            .findBy({ organisationen: organisationIDs })
-            .sortBy('vorname', ScopeOrder.ASC);
-
-        const [persons]: Counted<Person<true>> = await this.personRepository.findBy(scope);
-
-        const person: Person<true> | undefined = persons.find((p: Person<true>) => p.id === personId);
-
-        if (!person) return { ok: false, error: new EntityNotFoundError() };
-
-        return { ok: true, value: person };
     }
 
     @Post()
@@ -171,8 +144,10 @@ export class PersonController {
         @Param() params: PersonByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse> {
-        const getPersonIfAllowed: Result<Person<true>> = await this.getPersonIfAllowed(params.personId, permissions);
-        //const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
+        const getPersonIfAllowed: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
+            params.personId,
+            permissions,
+        );
         if (!getPersonIfAllowed.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
@@ -180,8 +155,15 @@ export class PersonController {
                 ),
             );
         }
-
-        return new PersonendatensatzResponse(getPersonIfAllowed.value, false);
+        const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
+        if (!person) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', params.personId),
+                ),
+            );
+        }
+        return new PersonendatensatzResponse(person, false);
     }
 
     @Post(':personId/personenkontexte')
@@ -203,7 +185,7 @@ export class PersonController {
             CreatePersonenkontextDto,
         );
         //check that logged-in user is allowed to update person
-        const getPersonIfAllowed: Result<Person<true>> = await this.getPersonIfAllowed(
+        const getPersonIfAllowed: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
             pathParams.personId,
             permissions,
         );
@@ -248,7 +230,7 @@ export class PersonController {
         );
 
         //check that logged-in user is allowed to update person
-        const getPersonIfAllowed: Result<Person<true>> = await this.getPersonIfAllowed(
+        const getPersonIfAllowed: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
             pathParams.personId,
             permissions,
         );
@@ -338,7 +320,10 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse> {
         //check that logged-in user is allowed to update person
-        const getPersonIfAllowed: Result<Person<true>> = await this.getPersonIfAllowed(params.personId, permissions);
+        const getPersonIfAllowed: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
+            params.personId,
+            permissions,
+        );
         if (!getPersonIfAllowed.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
@@ -346,8 +331,14 @@ export class PersonController {
                 ),
             );
         }
-        const person: Person<true> = getPersonIfAllowed.value;
-
+        const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
+        if (!person) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', params.personId),
+                ),
+            );
+        }
         const updateResult: void | DomainError = person.update(
             body.revision,
             body.name.familienname,
@@ -390,7 +381,10 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<Result<string>> {
         //check that logged-in user is allowed to update person
-        const getPersonIfAllowed: Result<Person<true>> = await this.getPersonIfAllowed(params.personId, permissions);
+        const getPersonIfAllowed: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
+            params.personId,
+            permissions,
+        );
         if (!getPersonIfAllowed.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
@@ -398,8 +392,14 @@ export class PersonController {
                 ),
             );
         }
-        const person: Person<true> = getPersonIfAllowed.value;
-
+        const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
+        if (!person) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', params.personId),
+                ),
+            );
+        }
         person.resetPassword();
         const saveResult: Person<true> | DomainError = await this.personRepository.update(person);
 

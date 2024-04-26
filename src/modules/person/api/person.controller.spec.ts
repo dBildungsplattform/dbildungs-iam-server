@@ -30,6 +30,11 @@ import { Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
 import { PersonFactory } from '../domain/person.factory.js';
+import { PersonUc } from '../domain/person.uc.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { ConfigService } from '@nestjs/config';
+import { OrganisationID } from '../../../shared/types/index.js';
+import { EntityNotFoundError } from '../../../shared/error/index.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -37,6 +42,8 @@ describe('PersonController', () => {
     let personenkontextUcMock: DeepMocked<PersonenkontextUc>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
+    let personUcMock: DeepMocked<PersonUc>;
+    let personPermissionsMock: DeepMocked<PersonPermissions>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -65,13 +72,37 @@ describe('PersonController', () => {
                     provide: UsernameGeneratorService,
                     useValue: createMock<UsernameGeneratorService>(),
                 },
+                {
+                    provide: PersonUc,
+                    useValue: createMock<PersonUc>(),
+                },
+                {
+                    provide: ConfigService,
+                    useValue: createMock<ConfigService>(),
+                },
             ],
         }).compile();
         personController = module.get(PersonController);
         personenkontextUcMock = module.get(PersonenkontextUc);
         personRepositoryMock = module.get(PersonRepository);
         usernameGeneratorService = module.get(UsernameGeneratorService);
+        personUcMock = module.get(PersonUc);
+        personPermissionsMock = createMock<PersonPermissions>();
     });
+
+    function getPerson(): Person<true> {
+        return Person.construct(
+            faker.string.uuid(),
+            faker.date.past(),
+            faker.date.recent(),
+            faker.person.lastName(),
+            faker.person.firstName(),
+            '1',
+            faker.lorem.word(),
+            faker.lorem.word(),
+            faker.string.uuid(),
+        );
+    }
 
     afterAll(async () => {
         await module.close();
@@ -88,35 +119,27 @@ describe('PersonController', () => {
     describe('createPerson', () => {
         describe('when creating a person is successful', () => {
             it('should return PersonendatensatzResponse', async () => {
-                const firstName: string = faker.person.firstName();
-                const lastName: string = faker.person.lastName();
-
-                const person: Person<true> = Person.construct(
-                    faker.string.uuid(),
-                    faker.date.past(),
-                    faker.date.recent(),
-                    lastName,
-                    firstName,
-                    '1',
-                    faker.lorem.word(),
-                    faker.lorem.word(),
-                    faker.string.uuid(),
-                );
+                const person: Person<true> = getPerson();
                 const params: CreatePersonBodyParams = {
                     name: {
-                        vorname: firstName,
-                        familienname: lastName,
+                        vorname: person.vorname,
+                        familienname: person.familienname,
                     },
                     geburt: {},
                 };
 
                 personRepositoryMock.create.mockResolvedValue(person);
-
-                await expect(personController.createPerson(params)).resolves.toBeInstanceOf(PersonendatensatzResponse);
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                await expect(personController.createPerson(params, personPermissionsMock)).resolves.toBeInstanceOf(
+                    PersonendatensatzResponse,
+                );
                 expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
-                const result: PersonendatensatzResponse = await personController.createPerson(params);
-                expect(result.person.name.vorname).toEqual(firstName);
-                expect(result.person.name.familienname).toEqual(lastName);
+                const result: PersonendatensatzResponse = await personController.createPerson(
+                    params,
+                    personPermissionsMock,
+                );
+                expect(result.person.name.vorname).toEqual(person.vorname);
+                expect(result.person.name.familienname).toEqual(person.familienname);
             });
         });
 
@@ -130,9 +153,15 @@ describe('PersonController', () => {
             };
 
             it('should throw HttpException', async () => {
+                const person: Person<true> = getPerson();
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                const orgaId: OrganisationID[] = [faker.string.uuid()];
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce(orgaId);
                 usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: '' });
                 personRepositoryMock.create.mockResolvedValue(new KeycloakClientError(''));
-                await expect(personController.createPerson(params)).rejects.toThrow(HttpException);
+                await expect(personController.createPerson(params, personPermissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
                 expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
             });
 
@@ -141,7 +170,9 @@ describe('PersonController', () => {
                     ok: false,
                     error: new KeycloakClientError(''),
                 });
-                await expect(personController.createPerson(params)).rejects.toThrow(HttpException);
+                await expect(personController.createPerson(params, personPermissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
                 expect(personRepositoryMock.create).not.toHaveBeenCalled();
             });
         });
@@ -151,28 +182,27 @@ describe('PersonController', () => {
         const params: PersonByIdParams = {
             personId: faker.string.uuid(),
         };
-        const person: Person<true> = Person.construct(
-            faker.string.uuid(),
-            faker.date.past(),
-            faker.date.recent(),
-            faker.person.lastName(),
-            faker.person.firstName(),
-            '1',
-            faker.lorem.word(),
-            faker.lorem.word(),
-            faker.string.uuid(),
-        );
+        const person: Person<true> = getPerson();
 
         it('should get a person', async () => {
             personRepositoryMock.findById.mockResolvedValue(person);
-            await expect(personController.findPersonById(params)).resolves.not.toThrow();
+            personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+            await expect(personController.findPersonById(params, personPermissionsMock)).resolves.not.toThrow();
             expect(personRepositoryMock.findById).toHaveBeenCalledTimes(1);
         });
 
         it('should throw an Http not found exception', async () => {
             personRepositoryMock.findById.mockResolvedValue(undefined);
-            await expect(personController.findPersonById(params)).rejects.toThrow(HttpException);
+            personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+            await expect(personController.findPersonById(params, personPermissionsMock)).rejects.toThrow(HttpException);
             expect(personRepositoryMock.findById).toHaveBeenCalledTimes(1);
+        });
+
+        it('should throw an HttpNotFoundException when permissions are insufficient', async () => {
+            personRepositoryMock.findById.mockResolvedValue(undefined);
+            personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError() });
+            await expect(personController.findPersonById(params, personPermissionsMock)).rejects.toThrow(HttpException);
+            expect(personRepositoryMock.findById).toHaveBeenCalledTimes(0);
         });
     });
 
@@ -219,7 +249,10 @@ describe('PersonController', () => {
         it('should get all persons', async () => {
             personRepositoryMock.findBy.mockResolvedValue([[person1, person2], 2]);
 
-            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(queryParams);
+            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
+                queryParams,
+                personPermissionsMock,
+            );
             expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
             expect(result.total).toEqual(2);
             expect(result.limit).toEqual(2);
@@ -255,10 +288,10 @@ describe('PersonController', () => {
                     loeschung: { zeitpunkt: faker.date.past() },
                 };
                 personenkontextUcMock.createPersonenkontext.mockResolvedValue(ucResult);
-
-                await expect(personController.createPersonenkontext(pathParams, body)).resolves.toBeInstanceOf(
-                    PersonenkontextResponse,
-                );
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: getPerson() });
+                await expect(
+                    personController.createPersonenkontext(pathParams, body, personPermissionsMock),
+                ).resolves.toBeInstanceOf(PersonenkontextResponse);
                 expect(personenkontextUcMock.createPersonenkontext).toHaveBeenCalledTimes(1);
             });
         });
@@ -277,9 +310,35 @@ describe('PersonController', () => {
                 personenkontextUcMock.createPersonenkontext.mockResolvedValue(
                     new SchulConnexError({} as SchulConnexError),
                 );
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: getPerson() });
 
-                await expect(personController.createPersonenkontext(pathParams, body)).rejects.toThrow(HttpException);
+                await expect(
+                    personController.createPersonenkontext(pathParams, body, personPermissionsMock),
+                ).rejects.toThrow(HttpException);
                 expect(personenkontextUcMock.createPersonenkontext).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when permissions are insufficient to create personenkontext', () => {
+            it('should throw HttpNotFoundException', async () => {
+                const pathParams: PersonByIdParams = {
+                    personId: faker.string.uuid(),
+                };
+                const body: CreatePersonenkontextBodyParams = {
+                    rolle: Rolle.LEHRENDER,
+                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                    personenstatus: Personenstatus.AKTIV,
+                    referrer: 'referrer',
+                };
+                personenkontextUcMock.createPersonenkontext.mockResolvedValue(
+                    new SchulConnexError({} as SchulConnexError),
+                );
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError() });
+
+                await expect(
+                    personController.createPersonenkontext(pathParams, body, personPermissionsMock),
+                ).rejects.toThrow(HttpException);
+                expect(personenkontextUcMock.createPersonenkontext).toHaveBeenCalledTimes(0);
             });
         });
     });
@@ -318,15 +377,58 @@ describe('PersonController', () => {
                 };
 
                 personenkontextUcMock.findAll.mockResolvedValue(personenkontextDtos);
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: getPerson() });
 
                 const result: PagedResponse<PersonenkontextResponse> = await personController.findPersonenkontexte(
                     pathParams,
                     queryParams,
+                    personPermissionsMock,
                 );
 
                 expect(personenkontextUcMock.findAll).toHaveBeenCalledTimes(1);
                 expect(result.items.length).toBe(1);
                 expect(result.items[0]?.id).toBe(personenkontextDtos.items[0]?.id);
+            });
+        });
+
+        describe('when permissions are insufficient to fetch personenkontexte', () => {
+            it('should throw HttpNotFoundException', async () => {
+                const pathParams: PersonByIdParams = {
+                    personId: faker.string.uuid(),
+                };
+                const queryParams: PersonenkontextQueryParams = {
+                    referrer: 'referrer',
+                    sichtfreigabe: SichtfreigabeType.NEIN,
+                    personenstatus: Personenstatus.AKTIV,
+                    rolle: Rolle.LERNENDER,
+                };
+                const personenkontextResponse: PersonenkontextDto = {
+                    id: faker.string.uuid(),
+                    personId: faker.string.uuid(),
+                    organisation: {
+                        id: faker.string.uuid(),
+                    },
+                    revision: '1',
+                    mandant: faker.string.uuid(),
+                    rolle: Rolle.LERNENDER,
+                    referrer: 'referrer',
+                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                    personenstatus: Personenstatus.AKTIV,
+                    loeschung: { zeitpunkt: faker.date.past() },
+                };
+                const personenkontextDtos: Paged<PersonenkontextDto> = {
+                    items: [personenkontextResponse],
+                    total: 1,
+                    offset: 0,
+                    limit: 1,
+                };
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError() });
+                personenkontextUcMock.findAll.mockResolvedValue(personenkontextDtos);
+                await expect(
+                    personController.findPersonenkontexte(pathParams, queryParams, personPermissionsMock),
+                ).rejects.toThrow(HttpException);
+
+                expect(personenkontextUcMock.findAll).toHaveBeenCalledTimes(0);
             });
         });
     });
@@ -336,23 +438,16 @@ describe('PersonController', () => {
             const params: PersonByIdParams = {
                 personId: faker.string.uuid(),
             };
-
-            const person: Person<true> = Person.construct(
-                faker.string.uuid(),
-                faker.date.past(),
-                faker.date.recent(),
-                faker.person.lastName(),
-                faker.person.firstName(),
-                '1',
-                faker.lorem.word(),
-                faker.lorem.word(),
-                faker.string.uuid(),
-            );
+            const person: Person<true> = getPerson();
 
             it('should reset password for person', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
                 personRepositoryMock.update.mockResolvedValue(person);
-                await expect(personController.resetPasswordByPersonId(params)).resolves.not.toThrow();
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+
+                await expect(
+                    personController.resetPasswordByPersonId(params, personPermissionsMock),
+                ).resolves.not.toThrow();
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(1);
             });
         });
@@ -361,23 +456,16 @@ describe('PersonController', () => {
             const params: PersonByIdParams = {
                 personId: faker.string.uuid(),
             };
-
-            const person: Person<true> = Person.construct(
-                faker.string.uuid(),
-                faker.date.past(),
-                faker.date.recent(),
-                faker.person.lastName(),
-                faker.person.firstName(),
-                '1',
-                faker.lorem.word(),
-                faker.lorem.word(),
-                faker.string.uuid(),
-            );
+            const person: Person<true> = getPerson();
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
                 personRepositoryMock.update.mockResolvedValue(new KeycloakClientError(''));
-                await expect(personController.resetPasswordByPersonId(params)).rejects.toThrow(HttpException);
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+
+                await expect(personController.resetPasswordByPersonId(params, personPermissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(1);
             });
         });
@@ -386,23 +474,34 @@ describe('PersonController', () => {
             const params: PersonByIdParams = {
                 personId: faker.string.uuid(),
             };
-
-            const person: Person<true> = Person.construct(
-                faker.string.uuid(),
-                faker.date.past(),
-                faker.date.recent(),
-                faker.person.lastName(),
-                faker.person.firstName(),
-                '1',
-                faker.lorem.word(),
-                faker.lorem.word(),
-                faker.string.uuid(),
-            );
+            const person: Person<true> = getPerson();
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(undefined);
                 personRepositoryMock.update.mockResolvedValue(person);
-                await expect(personController.resetPasswordByPersonId(params)).rejects.toThrow(HttpException);
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+
+                await expect(personController.resetPasswordByPersonId(params, personPermissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when permissions are insufficient to reset user-password', () => {
+            const params: PersonByIdParams = {
+                personId: faker.string.uuid(),
+            };
+            const person: Person<true> = getPerson();
+
+            it('should throw HttpNotFoundException', async () => {
+                personRepositoryMock.findById.mockResolvedValue(undefined);
+                personRepositoryMock.update.mockResolvedValue(person);
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError() });
+
+                await expect(personController.resetPasswordByPersonId(params, personPermissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
@@ -425,73 +524,67 @@ describe('PersonController', () => {
         };
 
         describe('when updating a person is successful', () => {
-            const person: Person<true> = Person.construct(
-                faker.string.uuid(),
-                faker.date.past(),
-                faker.date.recent(),
-                faker.person.lastName(),
-                faker.person.firstName(),
-                '1',
-                faker.lorem.word(),
-                faker.lorem.word(),
-                faker.string.uuid(),
-            );
+            const person: Person<true> = getPerson();
 
             it('should return PersonendatensatzResponse', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
                 personRepositoryMock.update.mockResolvedValue(person);
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
 
-                await expect(personController.updatePerson(params, body)).resolves.toBeInstanceOf(
-                    PersonendatensatzResponse,
-                );
+                await expect(
+                    personController.updatePerson(params, body, personPermissionsMock),
+                ).resolves.toBeInstanceOf(PersonendatensatzResponse);
                 expect(personRepositoryMock.findById).toHaveBeenCalledTimes(1);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(1);
             });
         });
 
         describe('when person does not exist', () => {
-            const person: Person<true> = Person.construct(
-                faker.string.uuid(),
-                faker.date.past(),
-                faker.date.recent(),
-                faker.person.lastName(),
-                faker.person.firstName(),
-                '1',
-                faker.lorem.word(),
-                faker.lorem.word(),
-                faker.string.uuid(),
-            );
+            const person: Person<true> = getPerson();
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(undefined);
                 personRepositoryMock.update.mockResolvedValue(person);
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
 
-                await expect(personController.updatePerson(params, body)).rejects.toThrow(HttpException);
+                await expect(personController.updatePerson(params, body, personPermissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
                 expect(personRepositoryMock.findById).toHaveBeenCalledTimes(1);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
 
         describe('when revision does not match', () => {
-            const person: Person<true> = Person.construct(
-                faker.string.uuid(),
-                faker.date.past(),
-                faker.date.recent(),
-                faker.person.lastName(),
-                faker.person.firstName(),
-                '1',
-                faker.lorem.word(),
-                faker.lorem.word(),
-                faker.string.uuid(),
-            );
+            const person: Person<true> = getPerson();
             person.revision = '10';
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
                 personRepositoryMock.update.mockResolvedValue(person);
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
 
-                await expect(personController.updatePerson(params, body)).rejects.toThrow(HttpException);
+                await expect(personController.updatePerson(params, body, personPermissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
                 expect(personRepositoryMock.findById).toHaveBeenCalledTimes(1);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when permissions are insufficient to update user', () => {
+            const person: Person<true> = getPerson();
+            person.revision = '10';
+
+            it('should throw HttpNotFoundException', async () => {
+                personRepositoryMock.findById.mockResolvedValue(person);
+                personRepositoryMock.update.mockResolvedValue(person);
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError() });
+
+                await expect(personController.updatePerson(params, body, personPermissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
+                expect(personRepositoryMock.findById).toHaveBeenCalledTimes(0);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
