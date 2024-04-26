@@ -14,3 +14,8 @@ export enum Geschlecht {
     D = 'd',
     X = 'x',
 }
+
+export enum Volljaehrig {
+    JA = 'ja',
+    NEIN = 'nein',
+}
