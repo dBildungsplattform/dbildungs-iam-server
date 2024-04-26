@@ -79,7 +79,7 @@ export class PersonController {
 
     private async getPersonIfAllowed(
         personId: string,
-        @Permissions() permissions: PersonPermissions,
+        permissions: PersonPermissions,
     ): Promise<Result<Person<true>>> {
         // Find all organisations where user has permission
         let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
@@ -172,7 +172,6 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse> {
         const getPersonIfAllowed: Result<Person<true>> = await this.getPersonIfAllowed(params.personId, permissions);
-
         //const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
         if (!getPersonIfAllowed.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(

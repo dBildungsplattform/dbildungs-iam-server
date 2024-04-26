@@ -37,6 +37,7 @@ import { Rolle, SichtfreigabeType } from '../../personenkontext/domain/personenk
 import { PersonenkontextQueryParams } from '../../personenkontext/api/personenkontext-query.params.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 describe('PersonController API Integration Test', () => {
     let app: INestApplication;
@@ -112,8 +113,6 @@ describe('PersonController API Integration Test', () => {
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
         personRepository = module.get(PersonRepository);
 
-        //ROOT_ORGANISATION_ID = module.get(DBiamPersonenuebersichtController).ROOT_ORGANISATION_ID;
-
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
@@ -151,11 +150,35 @@ describe('PersonController API Integration Test', () => {
                 expect(responseBody?.person.name.familienname).toEqual(lastname);
             });
         });
+
+        describe('when permissions are insufficient', () => {
+            it('should return 404', async () => {
+                jest.resetAllMocks();
+                const firstname: string = faker.person.firstName();
+                const lastname: string = faker.person.lastName();
+                const params: CreatePersonBodyParams = {
+                    name: {
+                        vorname: firstname,
+                        familienname: lastname,
+                    },
+                };
+                const pp: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                pp.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(pp);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .post(`/personen`)
+                    .send(params);
+
+                expect(response.status).toBe(404);
+            });
+        });
     });
 
     describe('/GET personen (findPersonById)', () => {
         describe('when successfull', () => {
             it('should return person', async () => {
+                jest.resetAllMocks();
                 const firstname: string = faker.person.firstName();
                 const lastname: string = faker.person.lastName();
 
@@ -174,6 +197,26 @@ describe('PersonController API Integration Test', () => {
 
                 expect(responseBody?.person.name.vorname).toEqual(firstname);
                 expect(responseBody?.person.name.familienname).toEqual(lastname);
+            });
+        });
+
+        describe('when permissions are insufficient', () => {
+            it('should return 404', async () => {
+                const person: Person<false> = createMock<Person<false>>();
+                const persistedPerson: Person<true> | DomainError = await personRepository.create(person);
+                if (persistedPerson instanceof DomainError) {
+                    return;
+                }
+
+                /*const pp: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                pp.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(pp);*/
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(`/personen/${persistedPerson.id}`)
+                    .send();
+
+                expect(response.status).toBe(404);
             });
         });
     });
