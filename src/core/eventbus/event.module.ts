@@ -3,7 +3,6 @@ import { Global, Module, OnApplicationBootstrap } from '@nestjs/common';
 
 import { ClassLogger } from '../logging/class-logger.js';
 import { LoggerModule } from '../logging/logger.module.js';
-import { EventPocController } from './poc/poc-controller.js';
 import { EventDiscoveryService } from './services/event-discovery.service.js';
 import { EventService } from './services/event.service.js';
 
@@ -11,7 +10,6 @@ import { EventService } from './services/event.service.js';
 @Module({
     imports: [LoggerModule.register(EventModule.name), DiscoveryModule],
     providers: [EventService, EventDiscoveryService],
-    controllers: [EventPocController], // TODO: Remove
     exports: [EventService],
 })
 export class EventModule implements OnApplicationBootstrap {
