@@ -61,7 +61,7 @@ export class UserinfoResponse {
     public updated_at?: number;
 
     @ApiProperty({ type: PersonenkontextRolleFieldsResponse, isArray: true })
-    public personenkontexte?: PersonenkontextRolleFieldsResponse[];
+    public personenkontexte: PersonenkontextRolleFieldsResponse[];
 
     public constructor(info: PersonPermissions, personenkontexte: PersonenkontextRolleFieldsResponse[]) {
         this.sub = info.personFields.keycloakUserId!;

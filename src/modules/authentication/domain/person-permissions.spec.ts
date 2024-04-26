@@ -14,6 +14,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { PersonenkontextRolleFieldsResponse } from '../api/Personen-kontext-rolle-fields.response.js';
+import { RollenSystemRechtServiceProviderID } from '../api/rolle-systemrechte-serviceproviderid.response.js';
 
 function createPerson(): Person<true> {
     return Person.construct(
@@ -183,12 +184,12 @@ describe('PersonPermissions', () => {
 
     describe('PersonenkontextRolleFieldsResponse', () => {
         it('should create a valid PersonenkontextRolleFieldsResponse object', () => {
-            const response: PersonenkontextRolleFieldsResponse = new PersonenkontextRolleFieldsResponse();
-            response.organisationsId = 'testOrgId';
-            response.rolle = {
-                systemrechte: ['right1', 'right2'],
-                serviceProviderIds: ['service1', 'service2'],
-            };
+            const rollenSystemRechtServiceProviderID: RollenSystemRechtServiceProviderID =
+                new RollenSystemRechtServiceProviderID(['right1', 'right2'], ['service1', 'service2']);
+            const response: PersonenkontextRolleFieldsResponse = new PersonenkontextRolleFieldsResponse(
+                'testOrgId',
+                rollenSystemRechtServiceProviderID,
+            );
 
             expect(response.organisationsId).toEqual('testOrgId');
             expect(response.rolle.systemrechte).toEqual(['right1', 'right2']);
