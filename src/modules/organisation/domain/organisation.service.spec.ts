@@ -156,7 +156,7 @@ describe('OrganisationService', () => {
             });
         });
 
-        it('should return a domain error', async () => {
+        it('should return a domain error when organisation cannot be found on update', async () => {
             const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true);
             organisationRepoMock.findById.mockResolvedValue(undefined);
             const result: Result<OrganisationDo<true>> = await organisationService.updateOrganisation(organisationDo);
