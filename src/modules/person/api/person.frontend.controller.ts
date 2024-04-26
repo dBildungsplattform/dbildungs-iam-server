@@ -72,7 +72,7 @@ export class PersonFrontendController {
             .sortBy('vorname', ScopeOrder.ASC)
             .paged(queryParams.offset, queryParams.limit);
 
-        if (queryParams.suchFilter?.length > 0) {
+        if (queryParams.suchFilter) {
             scope.findBySearchString(queryParams.suchFilter).setScopeWhereOperator(ScopeOperator.AND);
         }
 
