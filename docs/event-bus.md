@@ -1,6 +1,6 @@
 # EventModule
 
-The `EventModule` can be used to listen to and publish events across the whole application. This can be used for decoupling logic.
+The [`EventModule`](/src/core/eventbus/event.module.ts) can be used to listen to and publish events across the whole application. This can be used for decoupling logic.
 
 The event system stores a `RXJS.Subject` for every event that is subscribed to.
 Every event handler is registered as an observer of that subject and when publishing an Event it is pushed into the correct subject.
@@ -9,7 +9,7 @@ A specific order of the event-handlers is not guaranteed and should not be relie
 
 ## Publishing events
 
-All events need to extend the `BaseEvent`. We place all events in [/src/shared/events](`/src/shared/events`).
+All events need to extend the [`BaseEvent`](/src/shared/events/base-event.ts). We place all events in [`/src/shared/events`](/src/shared/events).
 
 ```ts
 export class UserCreationEvent extends BaseEvent {
@@ -19,7 +19,7 @@ export class UserCreationEvent extends BaseEvent {
 }
 ```
 
-Events can be published using the `EventService`. Simply inject it in your classes and publish new events.
+Events can be published using the [`EventService`](/src/core/eventbus/services/event.service.ts). Simply inject it in your classes and publish new events.
 
 ```ts
 @Controller({ path: '/user' })
@@ -46,7 +46,7 @@ You can register your handlers using the following methods:
 
 ### Using @EventHandler()
 
-The `@EventHandler(...)`-Decorator can be used to decorate methods of providers or controllers. Event-handlers will be automatically discovered and registered by the event-service.
+The [`@EventHandler(...)`](/src/core/eventbus/decorators/event-handler.decorator.ts)-Decorator can be used to decorate methods of providers or controllers. Event-handlers will be automatically discovered and registered by the [`EventDiscoveryService`](src/core/eventbus/services/event-discovery.service.ts).
 
 Make sure to add the class to your module definition so it gets registered by NestJS.
 
