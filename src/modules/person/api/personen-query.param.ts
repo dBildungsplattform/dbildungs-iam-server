@@ -45,11 +45,12 @@ export class PersonenQueryParams extends PagedQueryParams {
 
     @AutoMap()
     @IsString()
+    @IsOptional()
     @ApiProperty({
         description:
             'Search filter used to filter for Persons. It could be the vorname, familienname, referrer or the personalnummer.',
-        required: true,
-        nullable: false,
+        required: false,
+        nullable: true,
     })
-    public readonly suchFilter!: string;
+    public readonly suchFilter?: string;
 }
