@@ -183,7 +183,7 @@ describe('PersonPermissions', () => {
 
     describe('PersonenkontextRolleFieldsResponse', () => {
         it('should create a valid PersonenkontextRolleFieldsResponse object', () => {
-            const response = new PersonenkontextRolleFieldsResponse();
+            const response: PersonenkontextRolleFieldsResponse = new PersonenkontextRolleFieldsResponse();
             response.organisationsId = 'testOrgId';
             response.rolle = {
                 systemrechte: ['right1', 'right2'],
