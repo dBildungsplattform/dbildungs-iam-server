@@ -10,18 +10,24 @@ import { EventHandler } from '../decorators/event-handler.decorator.js';
 import { EventDiscoveryService } from './event-discovery.service.js';
 import { EventService } from './event.service.js';
 
+class TestEvent extends BaseEvent {
+    public constructor() {
+        super();
+    }
+}
+
 @Injectable()
 class TestProvider {
-    @EventHandler(BaseEvent)
-    public handleEvent(_event: BaseEvent): void {}
+    @EventHandler(TestEvent)
+    public handleEvent(_event: TestEvent): void {}
 
     public undecoratedMethod(): void {}
 }
 
 @Controller({})
 class TestController {
-    @EventHandler(BaseEvent)
-    public handleEvent(_event: BaseEvent): void {}
+    @EventHandler(TestEvent)
+    public handleEvent(_event: TestEvent): void {}
 
     public undecoratedMethod(): void {}
 }
@@ -71,13 +77,13 @@ describe('EventService', () => {
         it('should discover and register all event handlers in controllers', async () => {
             await sut.registerEventHandlers();
 
-            expect(eventServiceMock.subscribe).toHaveBeenCalledWith(BaseEvent, testController.handleEvent);
+            expect(eventServiceMock.subscribe).toHaveBeenCalledWith(TestEvent, testController.handleEvent);
         });
 
         it('should discover and register all event handlers in providers', async () => {
             await sut.registerEventHandlers();
 
-            expect(eventServiceMock.subscribe).toHaveBeenCalledWith(BaseEvent, testProvider.handleEvent);
+            expect(eventServiceMock.subscribe).toHaveBeenCalledWith(TestEvent, testProvider.handleEvent);
         });
 
         it('should return the number of registered handlers', async () => {

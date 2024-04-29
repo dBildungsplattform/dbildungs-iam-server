@@ -9,7 +9,7 @@ import { EventService } from './event.service.js';
 
 class TestEvent extends BaseEvent {
     public constructor() {
-        super(TestEvent.name);
+        super();
     }
 }
 

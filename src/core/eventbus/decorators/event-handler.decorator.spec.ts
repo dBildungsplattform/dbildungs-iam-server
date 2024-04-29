@@ -1,18 +1,25 @@
+/* eslint-disable max-classes-per-file */
 import { BaseEvent } from '../../../shared/events/index.js';
 import { EVENT_HANDLER_META } from '../types/metadata-key.js';
 import { EventHandler } from './event-handler.decorator.js';
 
+class TestEvent extends BaseEvent {
+    public constructor() {
+        super();
+    }
+}
+
 class TestClass {
-    @EventHandler(BaseEvent)
-    public handler(_ev: BaseEvent): void {}
+    @EventHandler(TestEvent)
+    public handler(_ev: TestEvent): void {}
 
     // @ts-expect-error typechecker should detect invalid function signature
-    @EventHandler(BaseEvent)
+    @EventHandler(TestEvent)
     public invalidArgs(_ev: string): void {}
 
     // @ts-expect-error typechecker should detect invalid function signature
-    @EventHandler(BaseEvent)
-    public invalidArgs2(_ev: BaseEvent, _xyz: string): void {}
+    @EventHandler(TestEvent)
+    public invalidArgs2(_ev: TestEvent, _xyz: string): void {}
 }
 
 describe('EventHandler decorator', () => {
