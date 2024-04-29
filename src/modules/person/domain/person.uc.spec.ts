@@ -80,13 +80,7 @@ describe('PersonUc', () => {
             it('should return EntityNotFoundError', async () => {
                 const requestPerson: Person<true> = getPerson();
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([requestPerson.id]);
-                const mockedResponse: Counted<Person<true>> = [
-                    [
-                        getPerson(), //find another person only for non-matching
-                    ],
-                    1,
-                ];
-                personRepositoryMock.findBy.mockResolvedValueOnce(mockedResponse);
+                personRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
                 const result: Result<Person<true>> = await personUc.getPersonIfAllowed(
                     requestPerson.id,
                     personPermissionsMock,

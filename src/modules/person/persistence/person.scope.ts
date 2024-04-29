@@ -4,6 +4,7 @@ import { PersonEntity } from './person.entity.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 
 type FindProps = {
+    id: string;
     vorname: string;
     familienname: string;
     geburtsdatum: Date;
@@ -18,6 +19,7 @@ export class PersonScope extends ScopeBase<PersonEntity> {
     public findBy(findProps: Findable<FindProps>, operator: ScopeOperator = ScopeOperator.AND): this {
         const filters: QBFilterQuery<PersonEntity> = {
             [operator]: [
+                findProps.id !== undefined && { id: findProps.id },
                 findProps.vorname !== undefined && { vorname: findProps.vorname },
                 findProps.familienname !== undefined && { familienname: findProps.familienname },
                 findProps.geburtsdatum !== undefined && { geburtsdatum: findProps.geburtsdatum },

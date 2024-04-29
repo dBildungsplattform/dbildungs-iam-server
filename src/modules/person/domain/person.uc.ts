@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { PersonScope } from '../persistence/person.scope.js';
-import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Person } from './person.js';
 import { OrganisationID } from '../../../shared/types/index.js';
@@ -22,6 +22,18 @@ export class PersonUc {
     }
 
     public async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<Result<Person<true>>> {
+        const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions);
+        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+
+        const [persons]: Counted<Person<true>> = await this.personRepository.findBy(scope);
+        const person: Person<true> | undefined = persons[0];
+
+        if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
+
+        return { ok: true, value: person };
+    }
+
+    public async getPersonScopeWithPermissions(permissions: PersonPermissions): Promise<PersonScope> {
         // Find all organisations where user has permission
         let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
@@ -33,17 +45,6 @@ export class PersonUc {
             organisationIDs = undefined;
         }
 
-        // Find all Personen on child-orgas (+root orgas)
-        const scope: PersonScope = new PersonScope()
-            .findBy({ organisationen: organisationIDs })
-            .sortBy('vorname', ScopeOrder.ASC);
-
-        const [persons]: Counted<Person<true>> = await this.personRepository.findBy(scope);
-
-        const person: Person<true> | undefined = persons.find((p: Person<true>) => p.id === personId);
-
-        if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
-
-        return { ok: true, value: person };
+        return new PersonScope().findBy({ organisationen: organisationIDs }).setScopeWhereOperator(ScopeOperator.AND);
     }
 }
