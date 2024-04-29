@@ -32,9 +32,9 @@ import { KeycloakClientError } from '../../../shared/error/keycloak-client.error
 import { PersonFactory } from '../domain/person.factory.js';
 import { PersonUc } from '../domain/person.uc.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { ConfigService } from '@nestjs/config';
 import { OrganisationID } from '../../../shared/types/index.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { ConfigService } from '@nestjs/config';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -44,6 +44,7 @@ describe('PersonController', () => {
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personUcMock: DeepMocked<PersonUc>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
+    //let configServiceMock: DeepMocked<ConfigService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -87,6 +88,7 @@ describe('PersonController', () => {
         personRepositoryMock = module.get(PersonRepository);
         usernameGeneratorService = module.get(UsernameGeneratorService);
         personUcMock = module.get(PersonUc);
+        //configServiceMock = module.get(ConfigService);
         personPermissionsMock = createMock<PersonPermissions>();
     });
 
@@ -154,6 +156,7 @@ describe('PersonController', () => {
 
             it('should throw HttpException', async () => {
                 const person: Person<true> = getPerson();
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([faker.string.uuid()]);
                 personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
                 const orgaId: OrganisationID[] = [faker.string.uuid()];
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce(orgaId);
@@ -166,10 +169,19 @@ describe('PersonController', () => {
             });
 
             it('should throw HttpException', async () => {
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([faker.string.uuid()]);
                 usernameGeneratorService.generateUsername.mockResolvedValue({
                     ok: false,
                     error: new KeycloakClientError(''),
                 });
+                await expect(personController.createPerson(params, personPermissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
+                expect(personRepositoryMock.create).not.toHaveBeenCalled();
+            });
+
+            it('should throw HttpException when no user has no PERSONEN_VERWALTEN permission on any organisations', async () => {
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
                 await expect(personController.createPerson(params, personPermissionsMock)).rejects.toThrow(
                     HttpException,
                 );
@@ -247,8 +259,25 @@ describe('PersonController', () => {
         );
 
         it('should get all persons', async () => {
-            personRepositoryMock.findBy.mockResolvedValue([[person1, person2], 2]);
+            personRepositoryMock.findBy.mockResolvedValueOnce([[person1, person2], 2]);
 
+            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
+                queryParams,
+                personPermissionsMock,
+            );
+            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
+            expect(result.total).toEqual(2);
+            expect(result.limit).toEqual(2);
+            expect(result.offset).toEqual(0);
+            expect(result.items.length).toEqual(2);
+            expect(result.items.at(0)?.person.name.vorname).toEqual('Moritz');
+        });
+
+        it('should get all persons when organisationIds is found and is ROOT', async () => {
+            personRepositoryMock.findBy.mockResolvedValueOnce([[person1, person2], 2]);
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
+                personController.ROOT_ORGANISATION_ID,
+            ]);
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 queryParams,
                 personPermissionsMock,
