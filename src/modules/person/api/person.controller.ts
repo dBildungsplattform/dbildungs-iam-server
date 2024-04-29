@@ -79,6 +79,25 @@ export class PersonController {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
 
+    //check that logged-in user is allowed to update person
+    private async getPersonOrThrowException(
+        params: PersonByIdParams,
+        permissions: PersonPermissions,
+    ): Promise<Person<true>> {
+        const getPersonIfAllowed: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
+            params.personId,
+            permissions,
+        );
+        if (!getPersonIfAllowed.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', params.personId),
+                ),
+            );
+        }
+        return getPersonIfAllowed.value;
+    }
+
     @Post()
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({ description: 'The person was successfully created.', type: PersonendatensatzResponse })
@@ -144,17 +163,8 @@ export class PersonController {
         @Param() params: PersonByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse> {
-        const getPersonIfAllowed: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
-            params.personId,
-            permissions,
-        );
-        if (!getPersonIfAllowed.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', params.personId),
-                ),
-            );
-        }
+        //check that logged-in user is allowed to update person
+        await this.getPersonOrThrowException(params, permissions);
         const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
         if (!person) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -185,17 +195,7 @@ export class PersonController {
             CreatePersonenkontextDto,
         );
         //check that logged-in user is allowed to update person
-        const getPersonIfAllowed: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
-            pathParams.personId,
-            permissions,
-        );
-        if (!getPersonIfAllowed.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', pathParams.personId),
-                ),
-            );
-        }
+        await this.getPersonOrThrowException(pathParams, permissions);
 
         personenkontextDto.personId = pathParams.personId;
 
@@ -230,17 +230,7 @@ export class PersonController {
         );
 
         //check that logged-in user is allowed to update person
-        const getPersonIfAllowed: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
-            pathParams.personId,
-            permissions,
-        );
-        if (!getPersonIfAllowed.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', pathParams.personId),
-                ),
-            );
-        }
+        await this.getPersonOrThrowException(pathParams, permissions);
 
         findPersonenkontextDto.personId = pathParams.personId;
 
@@ -320,17 +310,8 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse> {
         //check that logged-in user is allowed to update person
-        const getPersonIfAllowed: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
-            params.personId,
-            permissions,
-        );
-        if (!getPersonIfAllowed.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', params.personId),
-                ),
-            );
-        }
+        await this.getPersonOrThrowException(params, permissions);
+
         const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
         if (!person) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -381,17 +362,7 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<Result<string>> {
         //check that logged-in user is allowed to update person
-        const getPersonIfAllowed: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
-            params.personId,
-            permissions,
-        );
-        if (!getPersonIfAllowed.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', params.personId),
-                ),
-            );
-        }
+        await this.getPersonOrThrowException(params, permissions);
         const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
         if (!person) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
