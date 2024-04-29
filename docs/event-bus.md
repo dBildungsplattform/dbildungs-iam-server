@@ -11,10 +11,12 @@ A specific order of the event-handlers is not guaranteed and should not be relie
 
 All events need to extend the [`BaseEvent`](/src/shared/events/base-event.ts). We place all events in [`/src/shared/events`](/src/shared/events).
 
+BaseEvent uses a marker property to ensure, that object literals can never be given to the event-system. This is important, because the event-system assumes that events are always specific class instances and it uses the constructor to differentiate events.
+
 ```ts
 export class UserCreationEvent extends BaseEvent {
     public constructor(public readonly userId: string) {
-        super(UserCreationEvent.name);
+        super();
     }
 }
 ```
