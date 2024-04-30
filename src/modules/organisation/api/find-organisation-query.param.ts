@@ -70,6 +70,7 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
         nullable: true,
         enum: OrganisationsTyp,
         enumName: OrganisationsTypName,
+        isArray: true,
     })
     public readonly excludeTyp?: OrganisationsTyp[];
 }
