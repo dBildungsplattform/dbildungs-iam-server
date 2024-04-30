@@ -6,6 +6,7 @@ import { OrganisationRepo } from '../../organisation/persistence/organisation.re
 import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
 export class PersonenkontextAnlage {
     public organisationId?: string;
@@ -52,9 +53,11 @@ export class PersonenkontextAnlage {
         ]);
         allOrganisations.push(...childOrganisations);
 
-        const orgas: OrganisationDo<true>[] = ssks.filter((ssk: OrganisationDo<true>) =>
-            allOrganisations.some((organisation: OrganisationDo<true>) => ssk.id === organisation.id),
-        );
+        const orgas: OrganisationDo<true>[] = ssks
+            .filter((ssk: OrganisationDo<true>) =>
+                allOrganisations.some((organisation: OrganisationDo<true>) => ssk.id === organisation.id),
+            )
+            .filter((ssk: OrganisationDo<true>) => ssk.typ !== OrganisationsTyp.KLASSE);
 
         return orgas.slice(0, limit);
     }
