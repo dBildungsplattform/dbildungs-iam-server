@@ -3,7 +3,7 @@ import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { ArrayUnique, IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrganisationsTyp, OrganisationsTypName } from '../domain/organisation.enums.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht, RollenSystemRechtTypName } from '../../rolle/domain/rolle.enums.js';
 import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
 
 export class FindOrganisationQueryParams extends PagedQueryParams {
@@ -55,8 +55,21 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
         required: false,
         nullable: true,
         enum: RollenSystemRecht,
-        enumName: 'RollenSystemRecht',
+        enumName: RollenSystemRechtTypName,
         isArray: true,
     })
     public readonly systemrechte: RollenSystemRecht[] = [];
+
+    @AutoMap(() => String)
+    @IsOptional()
+    @TransformToArray()
+    @IsEnum(OrganisationsTyp, { each: true })
+    @ArrayUnique()
+    @ApiProperty({
+        required: false,
+        nullable: true,
+        enum: OrganisationsTyp,
+        enumName: OrganisationsTypName,
+    })
+    public readonly excludeTyp?: OrganisationsTyp[];
 }
