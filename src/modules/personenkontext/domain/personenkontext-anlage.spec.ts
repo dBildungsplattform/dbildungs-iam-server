@@ -286,6 +286,26 @@ describe('PersonenkontextAnlage', () => {
                 expect(result).toContainEqual(organisationDo);
             });
 
+            it('should return one element, because orga as ROOT does match RollenArt SYSADMIN', async () => {
+                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN });
+                const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                    typ: OrganisationsTyp.ROOT,
+                });
+
+                organisationRepoMock.findByNameOrKennung.mockResolvedValue([organisationDo]);
+                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
+                organisationRepoMock.findById.mockResolvedValue(organisationDo); //mock call to find parent in findSchulstrukturknoten
+                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([organisationDo]);
+
+                const result: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(
+                    rolle.id,
+                    organisationDo.name!,
+                    LIMIT,
+                );
+                expect(result).toHaveLength(1);
+                expect(result).toContainEqual(organisationDo);
+            });
+
             it('should return empty list, because orga as LAND does not match RollenArt LEIT', async () => {
                 const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEIT });
                 const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {

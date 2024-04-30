@@ -30,7 +30,8 @@ export class PersonenkontextAnlage {
 
     // Function to filter organisations, so that only organisations are shown in "new user" dialog, which makes sense regarding the selected rolle.
     private organisationMatchesRollenart(organisation: OrganisationDo<true>, rolle: Rolle<true>): boolean {
-        if (rolle.rollenart === RollenArt.SYSADMIN) return organisation.typ === OrganisationsTyp.LAND;
+        if (rolle.rollenart === RollenArt.SYSADMIN)
+            return organisation.typ === OrganisationsTyp.LAND || organisation.typ === OrganisationsTyp.ROOT;
         if (rolle.rollenart === RollenArt.LEIT) return organisation.typ === OrganisationsTyp.SCHULE;
         if (rolle.rollenart === RollenArt.LERN)
             return organisation.typ === OrganisationsTyp.SCHULE || organisation.typ === OrganisationsTyp.KLASSE;
