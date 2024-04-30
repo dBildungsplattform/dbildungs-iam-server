@@ -16,14 +16,6 @@ export class EventService {
 
     public constructor(private readonly logger: ClassLogger) {}
 
-    public onModuleDestroy(): void {
-        for (const eventInfo of this.eventInfoMap.values()) {
-            for (const subscription of eventInfo.subscriptions.values()) {
-                subscription.unsubscribe();
-            }
-        }
-    }
-
     public subscribe<Event extends BaseEvent>(eventType: Constructor<Event>, handler: EventHandlerType<Event>): void {
         if (!this.eventInfoMap.has(eventType)) {
             this.eventInfoMap.set(eventType, {
