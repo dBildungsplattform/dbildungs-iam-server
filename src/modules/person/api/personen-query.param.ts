@@ -44,6 +44,26 @@ export class PersonenQueryParams extends PagedQueryParams {
     public readonly sichtfreigabe: SichtfreigabeType = SichtfreigabeType.NEIN;
 
     @AutoMap()
+    @IsOptional()
+    @IsString()
+    @ApiProperty({
+        required: false,
+        nullable: true,
+        description: 'Organisation ID used to filter for Persons.',
+    })
+    public readonly organisationID?: string;
+
+    @AutoMap()
+    @IsOptional()
+    @IsString()
+    @ApiProperty({
+        required: false,
+        nullable: true,
+        description: 'Role ID used to filter for Persons.',
+    })
+    public readonly rolleID?: string;
+
+    @AutoMap()
     @IsString()
     @IsOptional()
     @ApiProperty({
