@@ -20,7 +20,7 @@ import { AuthenticationApiModule } from '../modules/authentication/authenticatio
 import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { PersonenKontextApiModule } from '../modules/personenkontext/personenkontext-api.module.js';
 import { SessionAccessTokenMiddleware } from '../modules/authentication/services/session-access-token.middleware.js';
-import { createClient, RedisClientType } from 'redis';
+import { createClient, createCluster, RedisClientOptions, RedisClientType, RedisClusterType } from 'redis';
 import RedisStore from 'connect-redis';
 import session from 'express-session';
 import passport from 'passport';
@@ -98,7 +98,8 @@ export class ServerModule implements NestModule {
 
     public async configure(consumer: MiddlewareConsumer): Promise<void> {
         const redisConfig: RedisConfig = this.configService.getOrThrow<RedisConfig>('REDIS');
-        const redisClient: RedisClientType = createClient({
+        let redisClient: RedisClientType | RedisClusterType;
+        const redisClientOptions: RedisClientOptions = {
             username: redisConfig.USERNAME,
             password: redisConfig.PASSWORD,
             socket: {
@@ -108,7 +109,14 @@ export class ServerModule implements NestModule {
                 key: redisConfig.PRIVATE_KEY,
                 cert: redisConfig.CERTIFICATE_AUTHORITIES,
             },
-        });
+        };
+        if (redisConfig.CLUSTERED) {
+            redisClient = createCluster({
+                rootNodes: [redisClientOptions],
+            });
+        } else {
+            redisClient = createClient(redisClientOptions);
+        }
 
         /*
         Just retrying does not work.
