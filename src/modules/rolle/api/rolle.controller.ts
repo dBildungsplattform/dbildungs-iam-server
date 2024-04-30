@@ -100,7 +100,7 @@ export class RolleController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get rolle by id.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to get rolle by id.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rolle by id.' })
-    public async findRolleById(
+    public async findRolleByIdWithServiceProviders(
         @Param() findRolleByIdParams: FindRolleByIdParams,
     ): Promise<RolleWithServiceProvidersResponse> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
