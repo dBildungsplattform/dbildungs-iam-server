@@ -24,8 +24,7 @@
     "HOST": "dbildungs-iam-server-redis",
     "PORT": 6379,
     "USERNAME": "default",
-    "USE_TLS": false,
-    "CLUSTERED": true
+    "USE_TLS": false
   },
   "DATA": {
     "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
