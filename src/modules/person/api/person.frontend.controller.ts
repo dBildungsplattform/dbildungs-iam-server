@@ -18,7 +18,7 @@ import { PersonRepository } from '../persistence/person.repository.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+// import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
@@ -64,13 +64,10 @@ export class PersonFrontendController {
         }
 
         if (queryParams.organisationID) {
-            organisationIDs = [queryParams.organisationID];
-        }
-
-        let rolleIDs: RolleID[] = await permissions.getRoleIds();
-
-        if (queryParams.rolleID) {
-            rolleIDs.push(queryParams.rolleID);
+            organisationIDs =
+                !organisationIDs || organisationIDs.includes(queryParams.organisationID)
+                    ? [queryParams.organisationID]
+                    : [];
         }
 
         const scope: PersonScope = new PersonScope()
@@ -78,21 +75,14 @@ export class PersonFrontendController {
                 vorname: undefined,
                 familienname: undefined,
                 geburtsdatum: undefined,
+                organisationen: organisationIDs,
+                rollen: queryParams.rolleID ? queryParams.rolleID : undefined,
             })
             .sortBy('vorname', ScopeOrder.ASC)
             .paged(queryParams.offset, queryParams.limit);
 
-        if (organisationIDs || rolleIDs) {
-            scope
-                .findBy({
-                    organisationen: organisationIDs,
-                    rollen: rolleIDs,
-                })
-                .setScopeWhereOperator(ScopeOperator.AND);
-        }
-
         if (queryParams.suchFilter) {
-            scope.findBySearchString(queryParams.suchFilter);
+            scope.findBySearchString(queryParams.suchFilter).setScopeWhereOperator(ScopeOperator.AND);
         }
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);

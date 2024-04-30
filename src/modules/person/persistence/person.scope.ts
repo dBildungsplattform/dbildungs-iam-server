@@ -3,12 +3,12 @@ import { ScopeBase, ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonEntity } from './person.entity.js';
 import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 
-type FindProps = {
+export type FindProps = {
     vorname: string;
     familienname: string;
     geburtsdatum: Date;
     organisationen: OrganisationID[];
-    rollen: RolleID[];
+    rollen: RolleID;
 };
 
 export class PersonScope extends ScopeBase<PersonEntity> {
@@ -26,9 +26,8 @@ export class PersonScope extends ScopeBase<PersonEntity> {
                     personenKontexte: { $some: { organisationId: { $in: findProps.organisationen } } },
                 },
                 findProps.rollen !== undefined && {
-                    personenKontexte: { $some: { rolleId: { $in: findProps.rollen } } },
+                    personenKontexte: { $some: { rolleId: findProps.rollen } },
                 },
-                ,
             ].filter(Boolean),
         };
 
