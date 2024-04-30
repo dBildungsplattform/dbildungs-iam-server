@@ -18,7 +18,6 @@ import { PersonRepository } from '../persistence/person.repository.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-// import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
