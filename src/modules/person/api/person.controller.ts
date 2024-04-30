@@ -175,9 +175,18 @@ export class PersonController {
             CreatePersonenkontextDto,
         );
         //check that logged-in user is allowed to update person
-        await this.personUc.getPersonIfAllowed(pathParams.personId, permissions);
-
-        personenkontextDto.personId = pathParams.personId;
+        const personResult: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
+            pathParams.personId,
+            permissions,
+        );
+        if (!personResult.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', pathParams.personId),
+                ),
+            );
+        }
+        personenkontextDto.personId = personResult.value.id;
 
         const result: CreatedPersonenkontextDto | SchulConnexError =
             await this.personenkontextUc.createPersonenkontext(personenkontextDto);

@@ -1,10 +1,10 @@
 import { EntityName, QBFilterQuery } from '@mikro-orm/core';
 import { ScopeBase, ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonEntity } from './person.entity.js';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 type FindProps = {
-    id: string;
+    id: PersonID;
     vorname: string;
     familienname: string;
     geburtsdatum: Date;
