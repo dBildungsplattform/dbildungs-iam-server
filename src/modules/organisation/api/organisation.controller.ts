@@ -37,6 +37,7 @@ import { OrganisationResponse } from './organisation.response.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { DbiamError } from '../../../shared/error/dbiam.error.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
@@ -52,7 +53,7 @@ export class OrganisationController {
 
     @Post()
     @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponseLegacy })
-    @ApiBadRequestResponse({ description: 'The organisation already exists.' })
+    @ApiBadRequestResponse({ description: 'The organisation already exists.', type: DbiamError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
@@ -75,7 +76,7 @@ export class OrganisationController {
         description: 'The organisation was successfully updated.',
         type: OrganisationResponseLegacy,
     })
-    @ApiBadRequestResponse({ description: 'Request has wrong format.' })
+    @ApiBadRequestResponse({ description: 'Request has wrong format.', type: DbiamError })
     @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
     @ApiNotFoundResponse({ description: 'The organisation was not found.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
@@ -198,7 +199,7 @@ export class OrganisationController {
 
     @Post(':organisationId/administriert')
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
-    @ApiBadRequestResponse({ description: 'The organisation could not be modified.' })
+    @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
@@ -242,7 +243,7 @@ export class OrganisationController {
 
     @Post(':organisationId/zugehoerig')
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
-    @ApiBadRequestResponse({ description: 'The organisation could not be modified.' })
+    @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })

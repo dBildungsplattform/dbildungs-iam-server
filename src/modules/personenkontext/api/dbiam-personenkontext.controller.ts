@@ -22,6 +22,7 @@ import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personen
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
 import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
+import { DbiamError } from '../../../shared/error/dbiam.error.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenkontexte')
@@ -61,6 +62,7 @@ export class DBiamPersonenkontextController {
     })
     @ApiBadRequestResponse({
         description: 'The personenkontext could not be created, may due to unsatisfied specifications.',
+        type: DbiamError,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create personenkontext.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to create personenkontext.' })

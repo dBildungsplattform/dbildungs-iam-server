@@ -1,4 +1,4 @@
-type SchulConnexErrorProps = {
+export type SchulConnexErrorProps = {
     code: number;
     subcode: string;
     titel: string;
