@@ -14,6 +14,7 @@ import { KeycloakAdministrationModule } from '../keycloak-administration/keycloa
 import { DBiamPersonenuebersichtController } from './api/personenuebersicht/dbiam-personenuebersicht.controller.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonInfoController } from './api/person-info.controller.js';
+import { PersonApiMapper } from './mapper/person-api.mapper.js';
 
 @Module({
     imports: [
@@ -31,6 +32,7 @@ import { PersonInfoController } from './api/person-info.controller.js';
         UsernameGeneratorService,
         PersonRepository,
         DBiamPersonenkontextRepo,
+        PersonApiMapper,
     ],
     controllers: [PersonController, PersonFrontendController, DBiamPersonenuebersichtController, PersonInfoController],
 })
