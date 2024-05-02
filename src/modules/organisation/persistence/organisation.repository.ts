@@ -45,4 +45,14 @@ export class OrganisationRepository {
 
         return [organisations, total];
     }
+
+    public async findById(id: string): Promise<Organisation<true>> {
+        const entity: OrganisationEntity | null = await this.em.findOne(OrganisationEntity, { id });
+
+        if (!entity) {
+            throw new Error(`Organisation with id ${id} not found!`);
+        }
+
+        return entity;
+    }
 }
