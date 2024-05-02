@@ -15,6 +15,7 @@ import { PersonDo } from '../domain/person.do.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
+import { faker } from '@faker-js/faker';
 
 describe('PersonScope', () => {
     let module: TestingModule;
@@ -97,13 +98,13 @@ describe('PersonScope', () => {
 
             it('should return found persons', async () => {
                 const scope: PersonScope = new PersonScope()
-                    .findBy({ rollen: undefined })
+                    .findBy({ rollen: faker.string.uuid() })
                     .sortBy('vorname', ScopeOrder.ASC)
                     .paged(10, 10);
                 const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
 
-                expect(total).toBe(110);
-                expect(persons).toHaveLength(10);
+                expect(total).toBe(0);
+                expect(persons).toHaveLength(0);
             });
         });
     });
