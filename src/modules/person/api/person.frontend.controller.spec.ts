@@ -11,13 +11,11 @@ import { PersonRepository } from '../persistence/person.repository.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { PersonScope, FindProps } from '../persistence/person.scope.js';
 
 describe('PersonFrontendController', () => {
     let module: TestingModule;
     let personController: PersonFrontendController;
     let personRepositoryMock: DeepMocked<PersonRepository>;
-    let personScope: PersonScope;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -41,7 +39,6 @@ describe('PersonFrontendController', () => {
 
     beforeEach(() => {
         jest.resetAllMocks();
-        personScope = new PersonScope();
     });
 
     it('should be defined', () => {
@@ -104,53 +101,6 @@ describe('PersonFrontendController', () => {
             expect(result.offset).toEqual(0);
             expect(result.items.length).toEqual(2);
             expect(result.items.at(0)?.person.name.vorname).toEqual('Max');
-        });
-        it('should handle organisationen', () => {
-            const findProps: FindProps = {
-                vorname: '',
-                familienname: '',
-                geburtsdatum: new Date(),
-                organisationen: ['org1', 'org2'],
-                rollen: 'role1',
-            };
-
-            const spy = jest.spyOn(personScope, 'findBy');
-
-            personScope.findBy(findProps);
-
-            expect(spy).toHaveBeenCalledWith(findProps);
-        });
-
-        it('should handle rollen', () => {
-            const findProps: FindProps = {
-                vorname: '',
-                familienname: '',
-                geburtsdatum: new Date(),
-                organisationen: [],
-                rollen: 'role1',
-            };
-
-            const spy = jest.spyOn(personScope, 'findBy');
-
-            personScope.findBy(findProps);
-
-            expect(spy).toHaveBeenCalledWith(findProps);
-        });
-
-        it('should handle undefined organisationen and rollen', () => {
-            const findProps: FindProps = {
-                vorname: '',
-                familienname: '',
-                geburtsdatum: new Date(),
-                organisationen: [],
-                rollen: '',
-            };
-
-            const spy = jest.spyOn(personScope, 'findBy');
-
-            personScope.findBy(findProps);
-
-            expect(spy).toHaveBeenCalledWith(findProps);
         });
     });
 });
