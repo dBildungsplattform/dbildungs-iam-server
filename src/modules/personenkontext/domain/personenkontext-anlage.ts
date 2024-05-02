@@ -6,6 +6,7 @@ import { OrganisationRepo } from '../../organisation/persistence/organisation.re
 import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
 export class PersonenkontextAnlage {
@@ -25,6 +26,19 @@ export class PersonenkontextAnlage {
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
     ): PersonenkontextAnlage {
         return new PersonenkontextAnlage(rolleRepo, organisationRepo, dBiamPersonenkontextRepo);
+    }
+
+    // Function to filter organisations, so that only organisations are shown in "new user" dialog, which makes sense regarding the selected rolle.
+    private organisationMatchesRollenart(organisation: OrganisationDo<true>, rolle: Rolle<true>): boolean {
+        if (rolle.rollenart === RollenArt.SYSADMIN)
+            return organisation.typ === OrganisationsTyp.LAND || organisation.typ === OrganisationsTyp.ROOT;
+        if (rolle.rollenart === RollenArt.LEIT) return organisation.typ === OrganisationsTyp.SCHULE;
+        if (rolle.rollenart === RollenArt.LERN)
+            return organisation.typ === OrganisationsTyp.SCHULE || organisation.typ === OrganisationsTyp.KLASSE;
+        if (rolle.rollenart === RollenArt.LEHR)
+            return organisation.typ === OrganisationsTyp.SCHULE || organisation.typ === OrganisationsTyp.KLASSE;
+
+        return true;
     }
 
     public async findSchulstrukturknoten(
@@ -53,11 +67,12 @@ export class PersonenkontextAnlage {
         ]);
         allOrganisations.push(...childOrganisations);
 
-        const orgas: OrganisationDo<true>[] = ssks
-            .filter((ssk: OrganisationDo<true>) =>
-                allOrganisations.some((organisation: OrganisationDo<true>) => ssk.id === organisation.id),
-            )
-            .filter((ssk: OrganisationDo<true>) => ssk.typ !== OrganisationsTyp.KLASSE);
+        let orgas: OrganisationDo<true>[] = ssks.filter((ssk: OrganisationDo<true>) =>
+            allOrganisations.some((organisation: OrganisationDo<true>) => ssk.id === organisation.id),
+        );
+
+        orgas = orgas.filter((ssk: OrganisationDo<true>) => ssk.typ !== OrganisationsTyp.KLASSE);
+        orgas = orgas.filter((orga: OrganisationDo<true>) => this.organisationMatchesRollenart(orga, rolleResult));
 
         return orgas.slice(0, limit);
     }
