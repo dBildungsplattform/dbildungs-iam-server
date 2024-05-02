@@ -40,3 +40,4 @@ export class RedisConfig {
     @IsBoolean()
     public readonly CLUSTERED?: boolean;
 }
+
