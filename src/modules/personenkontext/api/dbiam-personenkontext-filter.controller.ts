@@ -67,6 +67,7 @@ export class DbiamPersonenkontextFilterController {
             params.rolleId,
             sskName,
             params.limit,
+            true,
         );
         const sskResponses: OrganisationResponseLegacy[] = this.mapper.mapArray(
             ssks,
