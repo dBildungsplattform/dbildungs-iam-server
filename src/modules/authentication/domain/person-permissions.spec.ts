@@ -13,6 +13,8 @@ import { OrganisationRepo } from '../../organisation/persistence/organisation.re
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { PersonenkontextRolleFieldsResponse } from '../api/personen-kontext-rolle-fields.response.js';
+import { RollenSystemRechtServiceProviderIDResponse } from '../api/rolle-systemrechte-serviceproviderid.response.js';
 
 function createPerson(): Person<true> {
     return Person.construct(
@@ -146,6 +148,52 @@ describe('PersonPermissions', () => {
             const ids: OrganisationID[] = await personPermissions.getOrgIdsWithSystemrecht([], true);
             expect(ids).toContain('1');
             expect(ids).toContain('2');
+        });
+    });
+    describe('getPersonenkontextewithRoles', () => {
+        it('should return person context with system rights and service provider ids in an object roles', async () => {
+            const person: Person<true> = createPerson();
+            const personenkontexte: Personenkontext<true>[] = [
+                Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
+            ];
+            const expectedRolle: Rolle<true> = createMock<Rolle<true>>({ hasSystemRecht: () => true });
+            dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
+            rolleRepoMock.findByIds.mockResolvedValueOnce(new Map([['1', expectedRolle]]));
+
+            const personPermissions: PersonPermissions = new PersonPermissions(
+                dbiamPersonenkontextRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
+                person,
+            );
+            const result: PersonenkontextRolleFieldsResponse[] = await personPermissions.getPersonenkontextewithRoles();
+
+            const expected: PersonenkontextRolleFieldsResponse[] = personenkontexte.map(
+                (pk: Personenkontext<true>) => ({
+                    organisationsId: pk.organisationId,
+                    rolle: {
+                        systemrechte: expectedRolle.systemrechte,
+                        serviceProviderIds: expectedRolle.serviceProviderIds,
+                    },
+                }),
+            );
+
+            expect(result).toEqual(expected);
+        });
+    });
+
+    describe('PersonenkontextRolleFieldsResponse', () => {
+        it('should create a valid PersonenkontextRolleFieldsResponse object', () => {
+            const rollenSystemRechtServiceProviderID: RollenSystemRechtServiceProviderIDResponse =
+                new RollenSystemRechtServiceProviderIDResponse(['right1', 'right2'], ['service1', 'service2']);
+            const response: PersonenkontextRolleFieldsResponse = new PersonenkontextRolleFieldsResponse(
+                'testOrgId',
+                rollenSystemRechtServiceProviderID,
+            );
+
+            expect(response.organisationsId).toEqual('testOrgId');
+            expect(response.rolle.systemrechte).toEqual(['right1', 'right2']);
+            expect(response.rolle.serviceProviderIds).toEqual(['service1', 'service2']);
         });
     });
 });
