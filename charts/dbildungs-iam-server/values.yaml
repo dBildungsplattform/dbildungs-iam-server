@@ -152,3 +152,13 @@ redis:
   extraEnvVars: []
   extraVolumes: []
   extraVolumeMounts: []
+
+ldap:
+  image:
+    repository: docker.io/osixia/openldap
+    tag: "1.5.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    ports:
+      ldap: 389
