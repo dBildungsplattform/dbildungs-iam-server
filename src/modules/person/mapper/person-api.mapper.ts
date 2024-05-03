@@ -1,25 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { Person } from '../domain/person.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonInfoResponse } from '../api/person-info.response.js';
 import { Volljaehrig } from '../domain/person.enums.js';
-import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
-import {
-    Jahrgangsstufe,
-    Personenstatus,
-    Rolle,
-    SichtfreigabeType,
-} from '../../personenkontext/domain/personenkontext.enums.js';
+import { PersonenkontextResponse } from '../../personenkontext/api/personenkontext.response.js';
+import { PersonDo } from '../domain/person.do.js';
+import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
 
 @Injectable()
 export class PersonApiMapper {
-    public toPersonInfoResponse(
-        pid: string,
-        person: Person<true>,
-        kontexte: Personenkontext<true>[],
-    ): PersonInfoResponse {
+    public mapToPersonInfoResponse(person: PersonDo<true>, kontexte: PersonenkontextDo<true>[]): PersonInfoResponse {
         const response: PersonInfoResponse = new PersonInfoResponse({
-            pid: pid,
+            pid: person.id,
             person: {
                 id: person.id,
                 referrer: person.referrer,
@@ -46,20 +36,9 @@ export class PersonApiMapper {
                 vertrauensstufe: person.vertrauensstufe,
                 revision: person.revision,
             },
-            personenkontexte: kontexte.map((kontext: Personenkontext<true>) => ({
-                id: kontext.id,
-                referrer: '',
-                mandant: '',
-                organisation: {} as OrganisationResponse,
-                rolle: Rolle.LEHRENDER,
-                personenstatus: Personenstatus.AKTIV,
-                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_10,
-                sichtfreigabe: SichtfreigabeType.JA,
-                loeschung: {
-                    zeitpunkt: new Date(),
-                },
-                revision: '',
-            })),
+            personenkontexte: kontexte.map((kontext: PersonenkontextDo<true>) =>
+                this.mapToPersonenkontextResponse(kontext),
+            ),
             gruppen: [], // TODO: if the gruppe module is implemented, this should be filled out
         });
 
@@ -77,5 +56,24 @@ export class PersonApiMapper {
         const result: Volljaehrig = ageInMs >= msPerYear * 18 ? Volljaehrig.JA : Volljaehrig.NEIN;
 
         return result;
+    }
+
+    private mapToPersonenkontextResponse(kontext: PersonenkontextDo<true>): PersonenkontextResponse {
+        const response: PersonenkontextResponse = new PersonenkontextResponse({
+            id: kontext.id,
+            referrer: kontext.referrer,
+            mandant: kontext.mandant,
+            organisation: {
+                id: kontext.organisation.id,
+            },
+            rolle: kontext.rolle,
+            personenstatus: kontext.personenstatus,
+            jahrgangsstufe: kontext.jahrgangsstufe,
+            sichtfreigabe: kontext.sichtfreigabe,
+            loeschung: kontext.loeschungZeitpunkt ? { zeitpunkt: kontext.loeschungZeitpunkt } : undefined,
+            revision: kontext.revision,
+        });
+
+        return response;
     }
 }

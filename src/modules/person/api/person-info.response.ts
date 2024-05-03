@@ -61,7 +61,7 @@ class PersonBirthResponse {
     }
 }
 
-class PersonResponse {
+class Person {
     @ApiProperty()
     public readonly id: string;
 
@@ -92,7 +92,7 @@ class PersonResponse {
     @ApiProperty()
     public readonly revision: string;
 
-    public constructor(props: Readonly<PersonResponse>) {
+    public constructor(props: Readonly<Person>) {
         this.id = props.id;
         this.referrer = props.referrer;
         this.mandant = props.mandant;
@@ -120,7 +120,7 @@ export class PersonInfoResponse {
     public readonly pid: string;
 
     @ApiProperty()
-    public readonly person: PersonResponse;
+    public readonly person: Person;
 
     @ApiProperty({ type: [PersonenkontextResponse] })
     public readonly personenkontexte: PersonenkontextResponse[];
@@ -130,7 +130,7 @@ export class PersonInfoResponse {
 
     public constructor(props: Readonly<PersonInfoResponse>) {
         this.pid = props.pid;
-        this.person = new PersonResponse(props.person);
+        this.person = new Person(props.person);
         this.personenkontexte = props.personenkontexte.map(
             (kontext: Readonly<PersonenkontextResponse>) => new PersonenkontextResponse(kontext),
         );
