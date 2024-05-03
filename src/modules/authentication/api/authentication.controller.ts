@@ -26,7 +26,7 @@ import { Permissions } from './permissions.decorator.js';
 import { Public } from './public.decorator.js';
 import { PersonenkontextRolleFields } from '../domain/person-permissions.js';
 import { RolleID } from '../../../shared/types/index.js';
-import { PersonenkontextRolleFieldsResponse } from './Personen-kontext-rolle-fields.response.js';
+import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
 import { RollenSystemRechtServiceProviderIDResponse } from './rolle-systemrechte-serviceproviderid.response.js';
 @ApiTags('auth')
 @Controller({ path: 'auth' })

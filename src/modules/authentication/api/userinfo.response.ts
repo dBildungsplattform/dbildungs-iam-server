@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PersonPermissions } from '../domain/person-permissions.js';
-import { PersonenkontextRolleFieldsResponse } from './Personen-kontext-rolle-fields.response.js';
+import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
 
 export class UserinfoResponse {
     @ApiProperty()
