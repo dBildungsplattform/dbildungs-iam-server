@@ -1,0 +1,42 @@
+# --- OUs -------------------------------------
+
+dn: ou=groups,dc=example,dc=org
+objectClass: organizationalunit
+objectClass: top
+ou: Groups
+
+dn: ou=people,dc=example,dc=org
+objectClass: organizationalunit
+objectClass: top
+ou: People
+
+
+# --- People ----------------------------------
+
+dn: cn=jpinkmann,ou=people,dc=example,dc=org
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: top
+cn: jpinkmann
+userpassword: pass
+givenname: Jesse
+sn: Pinkmann
+mail: jpinkmann@walterwhiteltdco.com
+uid: 1001
+
+# --- Groups ----------------------------------
+
+dn: cn=admins,ou=groups,dc=example,dc=org
+objectClass: groupofuniquenames
+objectClass: top
+ou: Groups
+cn: Administrator
+uniquemember: cn=jpinkmann, ou=people, dc=example,dc=org
+
+dn: cn=lehrer,ou=groups,dc=example,dc=org
+objectClass: groupofuniquenames
+objectClass: top
+ou: Groups
+cn: Administrator
+uniquemember: cn=jpinkmann, ou=people, dc=example,dc=org
