@@ -29,8 +29,8 @@ import { AccessGuard } from '../modules/authentication/api/access.guard.js';
 import { PermissionsInterceptor } from '../modules/authentication/services/permissions.interceptor.js';
 import { PassportModule } from '@nestjs/passport';
 import { EventModule } from '../core/eventbus/index.js';
-import {Client} from "ldapts";
-import {LdapConfig} from "../shared/config/ldap.config";
+import { Client } from 'ldapts';
+import { LdapConfig } from '../shared/config/ldap.config.js';
 
 @Module({
     imports: [
@@ -151,21 +151,21 @@ export class ServerModule implements NestModule {
 
         // configure LDAP connection
         const ldapConfig: LdapConfig = this.configService.getOrThrow<LdapConfig>('LDAP');
-        const client = new Client({
+        const client: Client = new Client({
             url: ldapConfig.URL,
         });
         try {
             await client.bind(ldapConfig.BIND_DN, ldapConfig.PASSWORD);
             this.logger.info('Successfully connected to LDAP');
 
-            const entry = {
+            // For test purposes, is connection working as expected?
+            /*  const entry: LdapPersonEntry = {
                 cn: 'wwhite',
                 sn: 'White',
                 mail: ['walterwhite@walterwhiteltdco.com'],
                 objectclass: ['person', 'inetOrgPerson', 'organizationalPerson'],
             };
-            await client.add('cn=wwhite,ou=people,dc=example,dc=org', entry);
-
+            await client.add('cn=wwhite,ou=people,dc=example,dc=org', entry);*/
         } catch (err) {
             this.logger.error(`Could not connect to LDAP, message: ${JSON.stringify(err)}`);
         }
