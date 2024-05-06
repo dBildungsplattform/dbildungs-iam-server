@@ -47,7 +47,6 @@ import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.
 import { RolleNameQueryParams } from './rolle-name-query.param.js';
 import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
-import { DbiamError } from '../../../shared/error/dbiam.error.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
@@ -162,7 +161,6 @@ export class RolleController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rolle.' })
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while adding systemrecht to rolle.',
-        type: DbiamError,
     })
     public async addSystemRecht(
         @Param() findRolleByIdParams: FindRolleByIdParams,

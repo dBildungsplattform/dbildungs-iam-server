@@ -105,7 +105,7 @@ export class SchulConnexErrorMapper {
             new DbiamError({
                 code: 500,
                 subcode: '00',
-                i18n: 'ADD_SYSTEMRECHT_ERROR',
+                i18nKey: 'ADD_SYSTEMRECHT_ERROR',
                 titel: 'Fehlerhafte Anfrage',
                 beschreibung: 'Systemrecht konnte Rolle nicht hinzugefügt werden.',
             }),
@@ -115,16 +115,17 @@ export class SchulConnexErrorMapper {
             new DbiamError({
                 code: 400,
                 subcode: '01',
-                i18n: 'KENNUNG_REQUIRED_FOR_SCHULE',
+                i18nKey: 'KENNUNG_REQUIRED_FOR_SCHULE',
                 titel: 'Fehlerhafte Anfrage',
                 beschreibung: "Das Feld 'kennung' darf nicht leer sein, wenn der Organisationstyp 'SCHULE' ist.",
             }),
         ],
         [
             SchuleUnterTraegerError.name,
-            new SchulConnexError({
+            new DbiamError({
                 code: 400,
                 subcode: '00',
+                i18nKey: 'SCHULE_UNTER_TRAEGER',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
                 beschreibung: 'Schulen können nur Trägern zugeordnet / von Trägern administriert werden.',
             }),
@@ -134,7 +135,7 @@ export class SchulConnexErrorMapper {
             new DbiamError({
                 code: 400,
                 subcode: '00',
-                i18n: 'TRAEGER_IN_TRAEGER',
+                i18nKey: 'TRAEGER_IN_TRAEGER',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
                 beschreibung: 'Träger können nur Trägern zugeordnet / von diesen administriert werden.',
             }),
@@ -144,7 +145,7 @@ export class SchulConnexErrorMapper {
             new DbiamError({
                 code: 400,
                 subcode: '00',
-                i18n: 'NUR_KLASSE_UNTER_SCHULE',
+                i18nKey: 'NUR_KLASSE_UNTER_SCHULE',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
                 beschreibung: 'Nur Klassen und Kurse können zugehörig sein oder administriert werden von Schulen.',
             }),
@@ -154,7 +155,7 @@ export class SchulConnexErrorMapper {
             new DbiamError({
                 code: 400,
                 subcode: '00',
-                i18n: 'ZYKLUS_IN_ORGANISATION',
+                i18nKey: 'ZYKLUS_IN_ORGANISATION',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
                 beschreibung:
                     'Die administriertVon- oder zugehörigZu-Beziehung kann nicht erstellt werden, da keine Zyklen erlaubt sind.',
@@ -165,7 +166,7 @@ export class SchulConnexErrorMapper {
             new DbiamError({
                 code: 400,
                 subcode: '00',
-                i18n: 'ROOT_ORGANISATION_IMMUTABLE',
+                i18nKey: 'ROOT_ORGANISATION_IMMUTABLE',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
                 beschreibung: 'Die Root-Organisation ist bzgl. administriertVon und zugehörigZu unveränderlich.',
             }),
@@ -175,7 +176,7 @@ export class SchulConnexErrorMapper {
             new DbiamError({
                 code: 400,
                 subcode: '00',
-                i18n: 'KLASSE_NUR_VON_SCHULE_ADMINISTRIERT',
+                i18nKey: 'KLASSE_NUR_VON_SCHULE_ADMINISTRIERT',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
                 beschreibung: 'Eine Klasse kann nur von einer Schule administriert werden.',
             }),
@@ -185,7 +186,7 @@ export class SchulConnexErrorMapper {
             new DbiamError({
                 code: 400,
                 subcode: '00',
-                i18n: 'KLASSEN_NAME_A_SCHULE_EINDEUTIG',
+                i18nKey: 'KLASSEN_NAME_AN_SCHULE_EINDEUTIG',
                 titel: 'Spezifikation von Organisation nicht erfüllt',
                 beschreibung: 'Der Klassen-Name muss pro Schule eindeutig sein.',
             }),
@@ -222,7 +223,7 @@ export class SchulConnexErrorMapper {
             new DbiamError({
                 code: 400,
                 subcode: '00',
-                i18n: 'NUR_LEHR_UND_LERN_AN_KLASSE',
+                i18nKey: 'NUR_LEHR_UND_LERN_AN_KLASSE',
                 titel: 'Spezifikation von Personenkontext nicht erfüllt',
                 beschreibung: 'Nur Lehrer und Lernende können Klassen zugeordnet werden.',
             }),
@@ -232,7 +233,7 @@ export class SchulConnexErrorMapper {
             new DbiamError({
                 code: 400,
                 subcode: '00',
-                i18n: 'GLEICHE_ROLLE_AN_KLASSE_WIE_SCHULE',
+                i18nKey: 'GLEICHE_ROLLE_AN_KLASSE_WIE_SCHULE',
                 titel: 'Spezifikation von Personenkontext nicht erfüllt',
                 beschreibung:
                     'Die Rollenart der Person muss für die Klasse dieselbe sein wie an der zugehörigen Schule.',
