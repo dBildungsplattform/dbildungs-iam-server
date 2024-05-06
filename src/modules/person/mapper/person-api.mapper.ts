@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PersonInfoResponse } from '../api/person-info.response.js';
-import { Volljaehrig } from '../domain/person.enums.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/personenkontext.response.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
@@ -39,23 +38,10 @@ export class PersonApiMapper {
             personenkontexte: kontexte.map((kontext: PersonenkontextDo<true>) =>
                 this.mapToPersonenkontextResponse(kontext),
             ),
-            gruppen: [], // TODO: if the gruppe module is implemented, this should be filled out
+            gruppen: [], // TODO: if the gruppe module is implemented, this should be filled out with EW-656 / EW-697
         });
 
         return response;
-    }
-
-    public isPersonVolljaehrig(birthDate: Date | undefined, now: Date): Volljaehrig {
-        const msPerYear: number = 1000 * 60 * 60 * 24 * 365.25;
-
-        if (!birthDate) {
-            return Volljaehrig.NEIN;
-        }
-
-        const ageInMs: number = now.getTime() - birthDate.getTime();
-        const result: Volljaehrig = ageInMs >= msPerYear * 18 ? Volljaehrig.JA : Volljaehrig.NEIN;
-
-        return result;
     }
 
     private mapToPersonenkontextResponse(kontext: PersonenkontextDo<true>): PersonenkontextResponse {
