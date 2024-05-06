@@ -125,6 +125,17 @@ jobs:
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy-branch-to-namespace.yml@3
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
+  
+  determine_playwright_branch:
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if Playwright branch exists
+        id: check_branch
+        run: |
+          playwright_branch=$(git ls-remote --heads origin playwright | wc -l)
+          echo "::set-output name=playwright_branch_exists::$(($playwright_branch > 0))"
+
 
   deploy:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
