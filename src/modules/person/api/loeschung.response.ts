@@ -4,9 +4,13 @@ import { ApiProperty } from '@nestjs/swagger';
 export class LoeschungResponse {
     @AutoMap(() => Date)
     @ApiProperty({ type: Date })
-    public readonly zeitpunkt: Date;
+    public zeitpunkt!: Date;
 
-    public constructor(props: Readonly<LoeschungResponse>) {
-        this.zeitpunkt = props.zeitpunkt;
+    public static new(props: Readonly<LoeschungResponse>): LoeschungResponse {
+        const response: LoeschungResponse = new LoeschungResponse();
+
+        response.zeitpunkt = props.zeitpunkt;
+
+        return response;
     }
 }

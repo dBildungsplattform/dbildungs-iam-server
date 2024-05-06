@@ -7,54 +7,60 @@ import { LoeschungResponse } from '../../person/api/loeschung.response.js';
 export class PersonenkontextResponse {
     @AutoMap()
     @ApiProperty()
-    public readonly id: string;
+    public id!: string;
 
     @AutoMap()
     @ApiProperty({ nullable: true })
-    public readonly referrer?: string;
+    public referrer?: string;
 
     @AutoMap()
     @ApiProperty()
-    public readonly mandant: string;
+    public mandant!: string;
 
     @AutoMap(() => CreatedPersonenkontextOrganisationDto)
     @ApiProperty({ type: CreatedPersonenkontextOrganisationDto })
-    public readonly organisation: CreatedPersonenkontextOrganisationDto;
+    public organisation!: CreatedPersonenkontextOrganisationDto;
 
     @AutoMap(() => String)
     @ApiProperty({ enum: Rolle })
-    public readonly rolle: Rolle;
+    public rolle!: Rolle;
 
     @AutoMap(() => String)
     @ApiProperty({ enum: Personenstatus, nullable: true })
-    public readonly personenstatus?: Personenstatus;
+    public personenstatus?: Personenstatus;
 
     @AutoMap(() => String)
     @ApiProperty({ enum: Jahrgangsstufe, nullable: true })
-    public readonly jahrgangsstufe?: Jahrgangsstufe;
+    public jahrgangsstufe?: Jahrgangsstufe;
 
     @AutoMap(() => String)
     @ApiProperty({ enum: SichtfreigabeType, nullable: true })
-    public readonly sichtfreigabe?: SichtfreigabeType;
+    public sichtfreigabe?: SichtfreigabeType;
 
     @AutoMap(() => LoeschungResponse)
     @ApiProperty({ type: LoeschungResponse, nullable: true })
-    public readonly loeschung?: LoeschungResponse;
+    public loeschung?: LoeschungResponse;
 
     @AutoMap()
     @ApiProperty()
-    public readonly revision: string;
+    public revision!: string;
 
-    public constructor(props: Readonly<PersonenkontextResponse>) {
-        this.id = props.id;
-        this.referrer = props.referrer;
-        this.mandant = props.mandant;
-        this.organisation = new CreatedPersonenkontextOrganisationDto(props.organisation);
-        this.rolle = props.rolle;
-        this.personenstatus = props.personenstatus;
-        this.jahrgangsstufe = props.jahrgangsstufe;
-        this.sichtfreigabe = props.sichtfreigabe;
-        this.loeschung = props.loeschung ? new LoeschungResponse(props.loeschung) : undefined;
-        this.revision = props.revision;
+    public static new(props: Readonly<PersonenkontextResponse>): PersonenkontextResponse {
+        const response: PersonenkontextResponse = new PersonenkontextResponse();
+
+        response.id = props.id;
+        response.referrer = props.referrer;
+        response.mandant = props.mandant;
+        response.organisation = CreatedPersonenkontextOrganisationDto.new(props.organisation);
+        response.rolle = props.rolle;
+        response.personenstatus = props.personenstatus;
+        response.jahrgangsstufe = props.jahrgangsstufe;
+        response.sichtfreigabe = props.sichtfreigabe;
+        response.loeschung = props.loeschung
+            ? LoeschungResponse.new({ zeitpunkt: props.loeschung.zeitpunkt })
+            : undefined;
+        response.revision = props.revision;
+
+        return response;
     }
 }
