@@ -130,6 +130,8 @@ jobs:
   determine_playwright_branch:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     runs-on: ubuntu-latest
+    outputs:
+      playwright_branch: ${{ steps.check_branch.outputs.playwright_branch }}
     steps:
       - name: Check current branch
         run: |
@@ -162,7 +164,6 @@ jobs:
       dbildungs_iam_keycloak_branch: ${{ needs.determine_playwright_branch.outputs.playwright_branch }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
     secrets: inherit
-
           
 
 
