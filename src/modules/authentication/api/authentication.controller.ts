@@ -24,7 +24,10 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonPermissions } from '../domain/person-permissions.js';
 import { Permissions } from './permissions.decorator.js';
 import { Public } from './public.decorator.js';
-
+import { PersonenkontextRolleFields } from '../domain/person-permissions.js';
+import { RolleID } from '../../../shared/types/index.js';
+import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
+import { RollenSystemRechtServiceProviderIDResponse } from './rolle-systemrechte-serviceproviderid.response.js';
 @ApiTags('auth')
 @Controller({ path: 'auth' })
 export class AuthenticationController {
@@ -97,9 +100,20 @@ export class AuthenticationController {
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
     @ApiOkResponse({ description: 'Returns info about the logged in user.', type: UserinfoResponse })
     public async info(@Permissions() permissions: PersonPermissions): Promise<UserinfoResponse> {
-        const roleIds: string[] = await permissions.getRoleIds();
+        const roleIds: RolleID[] = await permissions.getRoleIds();
         this.logger.info('Roles: ' + roleIds.toString());
         this.logger.info('User: ' + JSON.stringify(permissions.personFields));
-        return new UserinfoResponse(permissions);
+        const rolleFields: PersonenkontextRolleFields[] = await permissions.getPersonenkontextewithRoles();
+        const rolleFieldsResponse: PersonenkontextRolleFieldsResponse[] = rolleFields.map(
+            (field: PersonenkontextRolleFields) =>
+                new PersonenkontextRolleFieldsResponse(
+                    field.organisationsId,
+                    new RollenSystemRechtServiceProviderIDResponse(
+                        field.rolle.systemrechte,
+                        field.rolle.serviceProviderIds,
+                    ),
+                ),
+        );
+        return new UserinfoResponse(permissions, rolleFieldsResponse);
     }
 }

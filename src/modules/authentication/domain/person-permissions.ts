@@ -21,11 +21,18 @@ export type PersonFields = Pick<
     | 'updatedAt'
 >;
 type PersonKontextFields = Pick<Personenkontext<true>, 'rolleId' | 'organisationId'>;
+type RolleFields = Pick<Rolle<true>, 'systemrechte' | 'serviceProviderIds'>;
+export type PersonenkontextRolleFields = {
+    organisationsId: OrganisationID;
+    rolle: RolleFields;
+};
 
 export class PersonPermissions {
     private cachedPersonenkontextsFields?: PersonKontextFields[];
 
     private cachedPersonFields: PersonFields;
+
+    private cachedRollenFields?: PersonenkontextRolleFields[];
 
     public constructor(
         private personenkontextRepo: DBiamPersonenkontextRepo,
@@ -95,6 +102,32 @@ export class PersonPermissions {
         }
 
         return this.cachedPersonenkontextsFields;
+    }
+
+    public async getPersonenkontextewithRoles(): Promise<PersonenkontextRolleFields[]> {
+        if (!this.cachedRollenFields) {
+            const personKontextFields: PersonKontextFields[] = await this.getPersonenkontextsFields();
+            const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(
+                personKontextFields.map((pk: PersonKontextFields) => pk.rolleId),
+            );
+
+            this.cachedRollenFields = [];
+
+            for (const pk of personKontextFields) {
+                const rolle: Rolle<true> | undefined = rollen.get(pk.rolleId);
+                if (rolle) {
+                    this.cachedRollenFields.push({
+                        organisationsId: pk.organisationId,
+                        rolle: {
+                            systemrechte: rolle.systemrechte,
+                            serviceProviderIds: rolle.serviceProviderIds,
+                        },
+                    });
+                }
+            }
+        }
+
+        return this.cachedRollenFields;
     }
 
     public get personFields(): PersonFields {
