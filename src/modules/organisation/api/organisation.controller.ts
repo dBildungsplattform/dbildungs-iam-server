@@ -155,6 +155,7 @@ export class OrganisationController {
             })
             .setScopeWhereOperator(ScopeOperator.AND)
             .searchString(queryParams.searchString)
+            .excludeTyp(queryParams.excludeTyp)
             .byIDs(validOrgaIDs)
             .paged(queryParams.offset, queryParams.limit);
 
