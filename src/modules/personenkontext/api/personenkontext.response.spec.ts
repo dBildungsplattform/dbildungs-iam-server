@@ -22,7 +22,7 @@ describe('PersonenkontextResponse', () => {
                 };
 
                 // Act
-                const result: PersonenkontextResponse = new PersonenkontextResponse(props);
+                const result: PersonenkontextResponse = PersonenkontextResponse.new(props);
 
                 // Assert
                 expect(result.loeschung).toBeInstanceOf(LoeschungResponse);
@@ -44,7 +44,7 @@ describe('PersonenkontextResponse', () => {
                 };
 
                 // Act
-                const result: PersonenkontextResponse = new PersonenkontextResponse(props);
+                const result: PersonenkontextResponse = PersonenkontextResponse.new(props);
 
                 // Assert
                 expect(result.loeschung).toBeUndefined();

@@ -45,7 +45,7 @@ export class PersonApiMapper {
     }
 
     private mapToPersonenkontextResponse(kontext: PersonenkontextDo<true>): PersonenkontextResponse {
-        const response: PersonenkontextResponse = new PersonenkontextResponse({
+        const response: PersonenkontextResponse = PersonenkontextResponse.new({
             id: kontext.id,
             referrer: kontext.referrer,
             mandant: kontext.mandant,
