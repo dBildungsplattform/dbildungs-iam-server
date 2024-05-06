@@ -21,6 +21,9 @@ export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: String })
     public readonly rolle: string;
 
+    @ApiProperty({ type: String })
+    public readonly administriertVon?: string;
+
     @ApiProperty({ enum: OrganisationsTyp, enumName: OrganisationsTypName, nullable: true })
     public readonly typ?: OrganisationsTyp;
 
@@ -31,6 +34,7 @@ export class DBiamPersonenzuordnungResponse {
         this.sskName = organisation.name!;
         this.sskDstNr = organisation.kennung!;
         this.rolle = rolle.name;
+        this.administriertVon = organisation.administriertVon;
         this.typ = organisation.typ;
     }
 }

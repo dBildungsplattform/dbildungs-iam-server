@@ -462,6 +462,26 @@ describe('PersonenkontextAnlage', () => {
                 );
                 expect(result).toHaveLength(0);
             });
+
+            it('should not return klassen when excluded', async () => {
+                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LERN });
+                const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                    typ: OrganisationsTyp.KLASSE,
+                });
+
+                organisationRepoMock.findByNameOrKennung.mockResolvedValue([organisationDo]);
+                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
+                organisationRepoMock.findById.mockResolvedValue(organisationDo); //mock call to find parent in findSchulstrukturknoten
+                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([organisationDo]);
+
+                const result: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(
+                    rolle.id,
+                    organisationDo.name!,
+                    LIMIT,
+                    true,
+                );
+                expect(result).toHaveLength(0);
+            });
         });
     });
 
