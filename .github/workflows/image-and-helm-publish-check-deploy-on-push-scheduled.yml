@@ -146,6 +146,14 @@ jobs:
           echo "Playwright branch exists: ${{ steps.check_branch.outputs.playwright_branch_exists }}"
 
 
+      - name: Print output
+        run: |
+          playwright_branch_exists=${{ steps.check_branch.outputs.playwright_branch_exists }}
+          if [ $playwright_branch_exists -eq 1 ]; then
+            echo "Playwright branch exists: ${{ github.ref }}"
+          else
+            echo "Playwright branch does not exist."
+          fi
 
 
   deploy:
