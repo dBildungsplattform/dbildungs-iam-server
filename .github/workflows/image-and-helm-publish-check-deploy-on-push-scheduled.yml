@@ -126,17 +126,6 @@ jobs:
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
   
-  determine_playwright_branch:
-    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check if Playwright branch exists
-        id: check_branch
-        run: |
-          playwright_branch=$(git ls-remote --heads origin playwright | wc -l)
-          echo "::set-output name=playwright_branch_exists::$(($playwright_branch > 0))"
-
-
   deploy:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
@@ -144,7 +133,7 @@ jobs:
       - create_branch_identifier
       - release_helm
       - build_image_on_push
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@dbp-101-deploy-dbildungs-iam-server
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@dbp-757-Playwright-tests
     with:
       dbildungs_iam_server_branch: ${{ needs.branch_meta.outputs.ticket }}
       schulportal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
