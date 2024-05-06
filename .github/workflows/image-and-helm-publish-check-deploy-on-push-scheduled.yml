@@ -141,33 +141,6 @@ jobs:
           playwright_branch=$(git ls-remote --heads https://github.com/dBildungsplattform/schulportal-testautomatisierung ${{ github.ref }} | wc -l)
           echo "playwright_branch_exists=$((playwright_branch > 0))" >> $GITHUB_OUTPUT
           
-      - name: Print output
-        run: |
-          echo "Playwright branch exists: ${{ steps.check_branch.outputs.playwright_branch_exists }}"
-
-
-      - name: Print output
-        run: |
-          playwright_branch_exists=${{ steps.check_branch.outputs.playwright_branch_exists }}
-          if [ $playwright_branch_exists -eq 1 ]; then
-            echo "Playwright branch exists: ${{ github.ref }}"
-          else
-            echo "Playwright branch does not exist."
-          fi
-
-      - name: Determine Playwright branch
-        id: determine_playwright_branch
-        run: |
-          playwright_branch_exists=${{ steps.check_branch.outputs.playwright_branch_exists }}
-          if [ $playwright_branch_exists -eq 1 ]; then
-            echo "Playwright branch exists: ${{ github.ref }}"
-            echo "::set-output name=playwright_branch::${{ github.ref }}"
-          else
-            echo "Playwright branch does not exist."
-            echo "::set-output name=playwright_branch::main"
-          fi
-
-
       - name: Debug Playwright branch
         run: |
           playwright_branch_exists=${{ steps.check_branch.outputs.playwright_branch_exists }}
@@ -191,8 +164,6 @@ jobs:
           dbildungs_iam_keycloak_branch: ${{ needs.determine_playwright_branch.outputs.playwright_branch }}
           namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
         secrets: inherit
-
-
 
           
 
