@@ -45,6 +45,7 @@ export class PersonenkontextAnlage {
         rolleId: string,
         sskName: string,
         limit?: number,
+        excludeKlassen: boolean = false,
     ): Promise<OrganisationDo<true>[]> {
         this.rolleId = rolleId;
 
@@ -70,6 +71,10 @@ export class PersonenkontextAnlage {
         let orgas: OrganisationDo<true>[] = ssks.filter((ssk: OrganisationDo<true>) =>
             allOrganisations.some((organisation: OrganisationDo<true>) => ssk.id === organisation.id),
         );
+
+        if (excludeKlassen) {
+            orgas = orgas.filter((ssk: OrganisationDo<true>) => ssk.typ !== OrganisationsTyp.KLASSE);
+        }
 
         orgas = orgas.filter((orga: OrganisationDo<true>) => this.organisationMatchesRollenart(orga, rolleResult));
 
