@@ -126,6 +126,23 @@ jobs:
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
   
+  determine_playwright_branch:
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if Playwright branch exists
+        id: check_branch
+        run: |
+          playwright_branch=$(git ls-remote --heads https://github.com/dBildungsplattform/schulportal-testautomatisierung ${{ github.ref }} | wc -l)
+          echo "::set-output name=playwright_branch_exists::$(($playwright_branch > 0))"
+
+
+
+
+
+
+
+
   deploy:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
