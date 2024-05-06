@@ -155,15 +155,13 @@ jobs:
       - determine_playwright_branch
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     runs-on: ubuntu-latest
-    steps:
-      - name: Deployment Step
-        uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@main
-        with:
-          dbildungs_iam_server_branch: ${{ needs.determine_playwright_branch.outputs.playwright_branch }}
-          schulportal_client_branch: ${{ needs.determine_playwright_branch.outputs.playwright_branch }}
-          dbildungs_iam_keycloak_branch: ${{ needs.determine_playwright_branch.outputs.playwright_branch }}
-          namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
-        secrets: inherit
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@main
+    with:
+      dbildungs_iam_server_branch: ${{ needs.determine_playwright_branch.outputs.playwright_branch }}
+      schulportal_client_branch: ${{ needs.determine_playwright_branch.outputs.playwright_branch }}
+      dbildungs_iam_keycloak_branch: ${{ needs.determine_playwright_branch.outputs.playwright_branch }}
+      namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
+    secrets: inherit
 
           
 
