@@ -36,7 +36,7 @@
     },
     "LDAP": {
         "URL": "ldap://localhost",
-        "BIND_DN": "cn=admin,dc=example,dc=org",
+        "BIND_DN": "cn=admin,dc=spsh,dc=de",
         "PASSWORD": "admin"
     },
     "DATA": {

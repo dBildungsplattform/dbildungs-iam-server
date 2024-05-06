@@ -162,3 +162,13 @@ ldap:
     type: ClusterIP
     ports:
       ldap: 389
+
+ldapadmin:
+  image:
+    repository: docker.io/osixia/phpldapadmin
+    tag: "0.9.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    ports:
+      ldapadmin: 9007

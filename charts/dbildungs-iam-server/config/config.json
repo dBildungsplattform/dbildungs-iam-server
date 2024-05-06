@@ -26,6 +26,11 @@
     "USERNAME": "default",
     "USE_TLS": false
   },
+    "LDAP": {
+        "URL": "ldap://dbildungs-iam-server-ldap",
+        "BIND_DN": "cn=admin,dc=spsh,dc=de",
+        "PASSWORD": "admin"
+    },
   "DATA": {
     "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
   },
