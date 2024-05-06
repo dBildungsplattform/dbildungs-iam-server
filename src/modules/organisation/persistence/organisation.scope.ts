@@ -38,6 +38,16 @@ export class OrganisationScope extends ScopeBase<OrganisationEntity> {
         return this;
     }
 
+    public excludeTyp(types?: OrganisationsTyp[]): this {
+        if (types) {
+            this.findByQuery({
+                typ: { $nin: types },
+            });
+        }
+
+        return this;
+    }
+
     public searchString(searchString: string | undefined): this {
         if (searchString) {
             this.findBySubstring(['name', 'kennung'], searchString, ScopeOperator.OR);
