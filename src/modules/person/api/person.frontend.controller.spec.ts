@@ -63,6 +63,7 @@ describe('PersonFrontendController', () => {
             sichtfreigabe: SichtfreigabeType.NEIN,
             suchFilter: '',
             rolleID: '',
+            organisationID: '',
         };
         const person1: Person<true> = Person.construct(
             faker.string.uuid(),
@@ -132,6 +133,38 @@ describe('PersonFrontendController', () => {
             expect(result.items.length).toEqual(1);
             expect(result.items.at(0)?.person.name.vorname).toEqual('Max');
             expect(result.items.at(0)?.person.id).toEqual(person1.id);
+        });
+
+        it('should get a person with the given orgnisation id', async () => {
+            const personPermissions: DeepMocked<PersonPermissions> = createMock();
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
+
+            personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
+            const organisationID = personenkontext1.organisationId;
+            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
+                { ...queryParams, organisationID },
+                personPermissions,
+            );
+
+            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
+            expect(result.total).toEqual(1);
+            expect(result.limit).toEqual(1);
+            expect(result.offset).toEqual(0);
+            expect(result.items.length).toEqual(1);
+            expect(result.items.at(0)?.person.name.vorname).toEqual('Max');
+            expect(result.items.at(0)?.person.id).toEqual(person1.id);
+        });
+
+        it('should throw an error when organisationID is not in the permissions', async () => {
+            const personPermissions: DeepMocked<PersonPermissions> = createMock();
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce(['someOtherOrganisationID']);
+
+            personRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
+
+            const organisationID = 'organisationIDNotInPermissions';
+            await expect(
+                personController.findPersons({ ...queryParams, organisationID }, personPermissions),
+            ).rejects.toThrow('NOT_AUTHORIZED');
         });
     });
 });
