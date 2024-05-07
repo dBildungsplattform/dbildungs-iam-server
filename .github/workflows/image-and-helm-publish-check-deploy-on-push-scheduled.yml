@@ -128,10 +128,7 @@ jobs:
   
 
   determine_playwright_branch:
-    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     runs-on: ubuntu-latest
-    outputs:
-      playwright_branch: ${{ steps.check_branch.outputs.playwright_branch }}
     steps:
       - name: Check current branch
         run: |
@@ -143,14 +140,22 @@ jobs:
           playwright_branch=$(git ls-remote --heads https://github.com/dBildungsplattform/schulportal-testautomatisierung ${{ github.ref }} | wc -l)
           echo "playwright_branch_exists=$((playwright_branch > 0))" >> $GITHUB_OUTPUT
           
-      - name: Debug Playwright branch
+      - name: Print output
+        run: |
+          echo "Playwright branch exists: ${{ steps.check_branch.outputs.playwright_branch_exists }}"
+          
+      - name: Determine Playwright branch
+        id: determine_playwright_branch
         run: |
           playwright_branch_exists=${{ steps.check_branch.outputs.playwright_branch_exists }}
           if [ $playwright_branch_exists -eq 1 ]; then
             echo "Playwright branch exists: ${{ github.ref }}"
+            echo "::set-output name=playwright_branch::${{ github.ref }}"
           else
-            echo "Playwright branch does not exist. Falling back to main branch."
+            echo "Playwright branch does not exist."
+            echo "::set-output name=playwright_branch::main"
           fi
+      
   deploy:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
