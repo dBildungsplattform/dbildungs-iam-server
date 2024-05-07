@@ -290,7 +290,7 @@ export class OrganisationService {
         limit?: number,
     ): Promise<Paged<OrganisationDo<true>>> {
         const scope: OrganisationScope = new OrganisationScope()
-        .setScopeWhereOperator(ScopeOperator.AND)
+            .setScopeWhereOperator(ScopeOperator.AND)
             .findAdministrierteVon(parentOrganisationID)
             .searchStringAdministriertVon(searchFilter)
             .paged(offset, limit);
