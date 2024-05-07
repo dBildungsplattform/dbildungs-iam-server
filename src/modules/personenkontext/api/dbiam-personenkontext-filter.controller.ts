@@ -3,6 +3,7 @@ import {
     ApiBearerAuth,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiOAuth2,
     ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -23,6 +24,7 @@ import { Mapper } from '@automapper/core';
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontext')
 @ApiBearerAuth()
+@ApiOAuth2(['openid'])
 @Controller({ path: 'personenkontext' })
 export class DbiamPersonenkontextFilterController {
     public constructor(
@@ -67,6 +69,7 @@ export class DbiamPersonenkontextFilterController {
             params.rolleId,
             sskName,
             params.limit,
+            true,
         );
         const sskResponses: OrganisationResponseLegacy[] = this.mapper.mapArray(
             ssks,
