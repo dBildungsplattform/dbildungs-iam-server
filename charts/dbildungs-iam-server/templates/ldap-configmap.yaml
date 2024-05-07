@@ -8,7 +8,6 @@ metadata:
 data:
   LDAP_ORGANISATION: "spsh-de"
   LDAP_DOMAIN: "spsh.de"
-  LDAP_CONFIG_PASSWORD: "config"
   LDAP_RFC2307BIS_SCHEMA: "true"
   LDAP_REMOVE_CONFIG_AFTER_SETUP: "true"
   LDAP_TLS_VERIFY_CLIENT: "never"

@@ -23,6 +23,7 @@ spec:
           image: "{{ .Values.ldap.image.repository }}:{{ .Values.ldap.image.tag }}"
           imagePullPolicy: {{ .Values.ldap.image.pullPolicy }}
           args: [ "--copy-service", "--loglevel", "debug" ]
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
           volumeMounts:
             - name: ldif-volume
               mountPath: /container/service/slapd/assets/config/bootstrap/ldif/custom
@@ -38,6 +39,11 @@ spec:
                 secretKeyRef:
                   name: {{ template "common.names.name" . }}-ldap
                   key: admin-password
+            - name: LDAP_CONFIG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "common.names.name" . }}-ldap
+                  key: config-password
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}-ldap
