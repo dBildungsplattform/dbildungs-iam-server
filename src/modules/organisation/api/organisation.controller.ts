@@ -37,7 +37,6 @@ import { OrganisationResponse } from './organisation.response.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { query } from 'express';
 import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
@@ -189,7 +188,8 @@ export class OrganisationController {
         @Query() queryParams: OrganisationByIdQueryParams,
     ): Promise<PagedResponse<OrganisationResponseLegacy>> {
         const result: Paged<OrganisationResponseLegacy> | SchulConnexError = await this.uc.findAdministriertVon(
-            routeParams.organisationId, queryParams.searchFilter,
+            routeParams.organisationId,
+            queryParams.searchFilter,
         );
 
         if (result instanceof SchulConnexError) {
