@@ -21,8 +21,7 @@ spec:
       containers:
         - name: openldap
           image: "{{ .Values.ldap.image.repository }}:{{ .Values.ldap.image.tag }}"
-          imagePullPolicy: { { .Values.ldap.image.pullPolicy } }
-          securityContext: { { - omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 } }
+          imagePullPolicy: {{ .Values.ldap.image.pullPolicy }}
           args: [ "--copy-service", "--loglevel", "debug" ]
           volumeMounts:
             - name: ldif-volume
@@ -33,6 +32,12 @@ spec:
             - name: openldap
               containerPort: {{ .Values.ldap.service.ports.ldap }}
               protocol: TCP
+          env:
+            - name: LDAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "common.names.name" . }}-ldap
+                  key: admin-password
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}-ldap
