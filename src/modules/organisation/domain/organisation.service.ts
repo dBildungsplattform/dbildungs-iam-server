@@ -309,7 +309,7 @@ export class OrganisationService {
     ): Promise<Paged<OrganisationDo<true>>> {
         const scope: OrganisationScope = new OrganisationScope()
             .findZugehoerigeZu(parentOrganisationID)
-            .findBy({ name: searchFilter })
+            .searchString(searchFilter)
             .paged(offset, limit);
 
         const [organisations, total]: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);
