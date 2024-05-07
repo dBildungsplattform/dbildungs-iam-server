@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 
 export class OrganisationByIdParams {
     @IsUUID()
@@ -9,4 +9,12 @@ export class OrganisationByIdParams {
         nullable: false,
     })
     public organisationId!: string;
+
+    @ApiProperty({
+        description: 'The search filter to find a specific Klasse',
+        required: false,
+        nullable: true,
+    })
+    @IsOptional()
+    public searchFilter?: string;
 }

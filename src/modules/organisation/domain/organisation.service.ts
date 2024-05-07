@@ -303,11 +303,13 @@ export class OrganisationService {
 
     public async findAllZugehoerigZu(
         parentOrganisationID: string,
+        searchFilter?: string,
         offset?: number,
         limit?: number,
     ): Promise<Paged<OrganisationDo<true>>> {
         const scope: OrganisationScope = new OrganisationScope()
             .findZugehoerigeZu(parentOrganisationID)
+            .findBy({ name: searchFilter })
             .paged(offset, limit);
 
         const [organisations, total]: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);

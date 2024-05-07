@@ -231,6 +231,7 @@ export class OrganisationController {
     ): Promise<PagedResponse<OrganisationResponseLegacy>> {
         const result: Paged<OrganisationResponseLegacy> | SchulConnexError = await this.uc.findZugehoerigZu(
             params.organisationId,
+            params.searchFilter,
         );
 
         if (result instanceof SchulConnexError) {
