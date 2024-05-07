@@ -158,6 +158,14 @@ ldap:
     repository: docker.io/osixia/openldap
     tag: "1.5.0"
     pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 2
+      memory: 4G
+      ephemeral-storage: 2Gi
+    requests:
+      cpu: 200m
+      memory: 200Mi
   adminPassword: admin
   configPassword: config
   service:
