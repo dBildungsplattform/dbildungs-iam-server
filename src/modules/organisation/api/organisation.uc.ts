@@ -157,6 +157,7 @@ export class OrganisationUc {
 
     public async findAdministriertVon(
         parentOrganisationId: string,
+        searchFilter?: string,
     ): Promise<Paged<OrganisationResponseLegacy> | SchulConnexError> {
         const parentOrg: Result<
             OrganisationDo<true>,
@@ -166,8 +167,10 @@ export class OrganisationUc {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(parentOrg.error);
         }
 
-        const result: Paged<OrganisationDo<true>> =
-            await this.organisationService.findAllAdministriertVon(parentOrganisationId);
+        const result: Paged<OrganisationDo<true>> = await this.organisationService.findAllAdministriertVon(
+            parentOrganisationId,
+            searchFilter,
+        );
 
         const organisations: OrganisationResponseLegacy[] = this.mapper.mapArray(
             result.items,
@@ -185,7 +188,6 @@ export class OrganisationUc {
 
     public async findZugehoerigZu(
         parentOrganisationId: string,
-        searchFilter?: string
     ): Promise<Paged<OrganisationResponseLegacy> | SchulConnexError> {
         const parentOrg: Result<
             OrganisationDo<true>,
@@ -195,10 +197,8 @@ export class OrganisationUc {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(parentOrg.error);
         }
 
-        const result: Paged<OrganisationDo<true>> = await this.organisationService.findAllZugehoerigZu(
-            parentOrganisationId,
-            searchFilter,
-        );
+        const result: Paged<OrganisationDo<true>> =
+            await this.organisationService.findAllZugehoerigZu(parentOrganisationId);
 
         const organisations: OrganisationResponseLegacy[] = this.mapper.mapArray(
             result.items,
