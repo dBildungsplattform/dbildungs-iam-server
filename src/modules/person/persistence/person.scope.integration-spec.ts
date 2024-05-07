@@ -16,6 +16,7 @@ import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
+import { faker } from '@faker-js/faker';
 import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 
@@ -88,8 +89,7 @@ describe('PersonScope', () => {
                 expect(persons).toHaveLength(0);
             });
         });
-
-        describe('findBy', () => {
+        describe('findBy with orginisation id', () => {
             describe('when filtering for personenkontexte', () => {
                 let organisation: OrganisationDo<true>;
 
@@ -117,6 +117,30 @@ describe('PersonScope', () => {
                     expect(total).toBe(1);
                     expect(persons).toHaveLength(0);
                 });
+            });
+        });
+
+        describe('when filtering for ids', () => {
+            const knownId: string = faker.string.uuid();
+            beforeEach(async () => {
+                const persons: PersonEntity[] = Array.from({ length: 9 }, () =>
+                    mapper.map(DoFactory.createPerson(false), PersonDo, PersonEntity),
+                );
+                await em.persistAndFlush(persons);
+                await em.persistAndFlush(
+                    mapper.map(DoFactory.createPerson(true, { id: knownId }), PersonDo, PersonEntity),
+                );
+            });
+
+            it('should return found persons', async () => {
+                const scope: PersonScope = new PersonScope()
+                    .findBy({ id: knownId })
+                    .sortBy('vorname', ScopeOrder.ASC)
+                    .paged(0, 10);
+                const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
+
+                expect(total).toBe(1);
+                expect(persons).toHaveLength(1);
             });
         });
     });
