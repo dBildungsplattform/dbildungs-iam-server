@@ -120,7 +120,7 @@ describe('PersonFrontendController', () => {
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
 
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
-            const rolleID = personenkontext1.rolleId;
+            const rolleID: string = personenkontext1.rolleId;
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 { ...queryParams, rolleID },
                 personPermissions,
@@ -140,7 +140,7 @@ describe('PersonFrontendController', () => {
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
 
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
-            const organisationID = personenkontext1.organisationId;
+            const organisationID: string = personenkontext1.organisationId;
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 { ...queryParams, organisationID },
                 personPermissions,
@@ -161,7 +161,7 @@ describe('PersonFrontendController', () => {
 
             personRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
 
-            const organisationID = 'organisationIDNotInPermissions';
+            const organisationID: string = 'organisationIDNotInPermissions';
             await expect(
                 personController.findPersons({ ...queryParams, organisationID }, personPermissions),
             ).rejects.toThrow('NOT_AUTHORIZED');
