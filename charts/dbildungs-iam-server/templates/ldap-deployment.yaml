@@ -22,6 +22,8 @@ spec:
         - name: openldap
           image: "{{ .Values.ldap.image.repository }}:{{ .Values.ldap.image.tag }}"
           imagePullPolicy: {{ .Values.ldap.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
           args: [ "--copy-service", "--loglevel", "debug" ]
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
           volumeMounts:
