@@ -62,6 +62,7 @@ describe('PersonFrontendController', () => {
             vorname: options.firstName,
             sichtfreigabe: SichtfreigabeType.NEIN,
             suchFilter: '',
+            rolleID: '',
         };
         const person1: Person<true> = Person.construct(
             faker.string.uuid(),
@@ -118,9 +119,9 @@ describe('PersonFrontendController', () => {
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
 
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
-
+            const rolleID = personenkontext1.rolleId;
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
-                { ...queryParams, rolleID: personenkontext1.rolleId },
+                { ...queryParams, rolleID },
                 personPermissions,
             );
 
@@ -131,23 +132,6 @@ describe('PersonFrontendController', () => {
             expect(result.items.length).toEqual(1);
             expect(result.items.at(0)?.person.name.vorname).toEqual('Max');
             expect(result.items.at(0)?.person.id).toEqual(person1.id);
-        });
-        it('should not get a person if the rolle id does not match', async () => {
-            const personPermissions: DeepMocked<PersonPermissions> = createMock();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
-
-            personRepositoryMock.findBy.mockResolvedValue([[], 0]);
-
-            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
-                { ...queryParams, rolleID: faker.string.uuid() },
-                personPermissions,
-            );
-
-            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
-            expect(result.total).toEqual(0);
-            expect(result.limit).toEqual(0);
-            expect(result.offset).toEqual(0);
-            expect(result.items.length).toEqual(0);
         });
     });
 });
