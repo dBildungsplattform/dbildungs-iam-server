@@ -24,6 +24,7 @@ import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 
 describe('OrganisationController', () => {
     let module: TestingModule;
@@ -272,8 +273,12 @@ describe('OrganisationController', () => {
     });
 
     describe('getAdministrierteOrganisationen', () => {
-        const params: OrganisationByIdParams = {
+        const routeParams: OrganisationByIdParams = {
             organisationId: faker.string.uuid(),
+        };
+
+        const queryParams: OrganisationByIdQueryParams = {
+            searchFilter: undefined,
         };
 
         describe('when usecase returns a OrganisationResponse', () => {
@@ -306,7 +311,7 @@ describe('OrganisationController', () => {
                 organisationUcMock.findAdministriertVon.mockResolvedValueOnce(mockedPagedResponse);
 
                 const result: Paged<OrganisationResponseLegacy> =
-                    await organisationController.getAdministrierteOrganisationen(params);
+                    await organisationController.getAdministrierteOrganisationen(routeParams, queryParams);
 
                 expect(result).toEqual(mockedPagedResponse);
                 expect(organisationUcMock.findAdministriertVon).toHaveBeenCalledTimes(1);
@@ -319,9 +324,9 @@ describe('OrganisationController', () => {
                 organisationUcMock.findAdministriertVon.mockResolvedValueOnce(
                     new SchulConnexError({ code: 500, subcode: '', titel: '', beschreibung: '' }),
                 );
-                await expect(organisationController.getAdministrierteOrganisationen(params)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    organisationController.getAdministrierteOrganisationen(routeParams, queryParams),
+                ).rejects.toThrow(HttpException);
             });
         });
     });
