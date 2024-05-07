@@ -8,7 +8,7 @@ export type FindProps = {
     familienname: string;
     geburtsdatum: Date;
     organisationen: OrganisationID[];
-    rollen: RolleID;
+    rolle: RolleID;
 };
 
 export class PersonScope extends ScopeBase<PersonEntity> {
@@ -25,8 +25,8 @@ export class PersonScope extends ScopeBase<PersonEntity> {
                 findProps.organisationen !== undefined && {
                     personenKontexte: { $some: { organisationId: { $in: findProps.organisationen } } },
                 },
-                findProps.rollen !== undefined && {
-                    personenKontexte: { $some: { rolleId: findProps.rollen } },
+                findProps.rolle !== undefined && {
+                    personenKontexte: { $some: { rolleId: findProps.rolle } },
                 },
             ].filter(Boolean),
         };

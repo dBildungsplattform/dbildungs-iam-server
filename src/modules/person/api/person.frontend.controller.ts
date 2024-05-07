@@ -61,12 +61,14 @@ export class PersonFrontendController {
         if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
             organisationIDs = undefined;
         }
-
         if (queryParams.organisationID) {
             organisationIDs =
                 !organisationIDs || organisationIDs.includes(queryParams.organisationID)
                     ? [queryParams.organisationID]
                     : [];
+            if (organisationIDs.length === 0) {
+                throw new Error('NOT_AUTHORIZED');
+            }
         }
 
         const scope: PersonScope = new PersonScope()
@@ -75,7 +77,7 @@ export class PersonFrontendController {
                 familienname: undefined,
                 geburtsdatum: undefined,
                 organisationen: organisationIDs,
-                rollen: queryParams.rolleID ? queryParams.rolleID : undefined,
+                rolle: queryParams?.rolleID ?? undefined,
             })
             .sortBy('vorname', ScopeOrder.ASC)
             .paged(queryParams.offset, queryParams.limit);

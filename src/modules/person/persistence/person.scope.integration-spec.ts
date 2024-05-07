@@ -12,10 +12,12 @@ import {
 } from '../../../../test/utils/index.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonDo } from '../domain/person.do.js';
+import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
-import { faker } from '@faker-js/faker';
+import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
+import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 
 describe('PersonScope', () => {
     let module: TestingModule;
@@ -87,24 +89,34 @@ describe('PersonScope', () => {
             });
         });
 
-        describe('when filtering for roles', () => {
-            beforeEach(async () => {
-                const persons: PersonEntity[] = Array.from({ length: 110 }, () =>
-                    mapper.map(DoFactory.createPerson(false), PersonDo, PersonEntity),
-                );
+        describe('findBy', () => {
+            describe('when filtering for personenkontexte', () => {
+                let organisation: OrganisationDo<true>;
 
-                await em.persistAndFlush(persons);
-            });
+                beforeEach(async () => {
+                    const person: PersonDo<true> = DoFactory.createPerson(true);
+                    await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
 
-            it('should return found persons', async () => {
-                const scope: PersonScope = new PersonScope()
-                    .findBy({ rollen: faker.string.uuid() })
-                    .sortBy('vorname', ScopeOrder.ASC)
-                    .paged(10, 10);
-                const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
+                    organisation = DoFactory.createOrganisation(true);
 
-                expect(total).toBe(0);
-                expect(persons).toHaveLength(0);
+                    const dos: PersonenkontextDo<false> = DoFactory.createPersonenkontext<false>(false, {
+                        personId: person.id,
+                        organisation: organisation,
+                    });
+
+                    await em.persistAndFlush(mapper.map(dos, PersonenkontextDo, PersonenkontextEntity));
+                });
+
+                it('should return found persons', async () => {
+                    const scope: PersonScope = new PersonScope()
+                        .findBy({ organisationen: [organisation.id] })
+                        .sortBy('vorname', ScopeOrder.ASC)
+                        .paged(10, 10);
+                    const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
+
+                    expect(total).toBe(1);
+                    expect(persons).toHaveLength(0);
+                });
             });
         });
     });

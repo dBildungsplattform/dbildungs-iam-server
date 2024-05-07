@@ -11,6 +11,7 @@ import { PersonRepository } from '../persistence/person.repository.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 
 describe('PersonFrontendController', () => {
     let module: TestingModule;
@@ -85,6 +86,15 @@ describe('PersonFrontendController', () => {
             faker.string.uuid(),
         );
 
+        const personenkontext1: Personenkontext<true> = Personenkontext.construct(
+            faker.string.uuid(),
+            faker.date.past(),
+            faker.date.recent(),
+            person1.id,
+            faker.string.uuid(),
+            faker.string.uuid(),
+        );
+
         it('should get all persons', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
@@ -101,6 +111,43 @@ describe('PersonFrontendController', () => {
             expect(result.offset).toEqual(0);
             expect(result.items.length).toEqual(2);
             expect(result.items.at(0)?.person.name.vorname).toEqual('Max');
+        });
+
+        it('should get a person with the given rolle id', async () => {
+            const personPermissions: DeepMocked<PersonPermissions> = createMock();
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
+
+            personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
+
+            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
+                { ...queryParams, rolleID: personenkontext1.rolleId },
+                personPermissions,
+            );
+
+            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
+            expect(result.total).toEqual(1);
+            expect(result.limit).toEqual(1);
+            expect(result.offset).toEqual(0);
+            expect(result.items.length).toEqual(1);
+            expect(result.items.at(0)?.person.name.vorname).toEqual('Max');
+            expect(result.items.at(0)?.person.id).toEqual(person1.id);
+        });
+        it('should not get a person if the rolle id does not match', async () => {
+            const personPermissions: DeepMocked<PersonPermissions> = createMock();
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
+
+            personRepositoryMock.findBy.mockResolvedValue([[], 0]);
+
+            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
+                { ...queryParams, rolleID: faker.string.uuid() },
+                personPermissions,
+            );
+
+            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
+            expect(result.total).toEqual(0);
+            expect(result.limit).toEqual(0);
+            expect(result.offset).toEqual(0);
+            expect(result.items.length).toEqual(0);
         });
     });
 });
