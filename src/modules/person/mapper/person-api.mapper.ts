@@ -50,7 +50,7 @@ export class PersonApiMapper {
             referrer: kontext.referrer,
             mandant: kontext.mandant,
             organisation: {
-                id: kontext.organisation.id,
+                id: kontext.organisationId,
             },
             rolle: kontext.rolle,
             personenstatus: kontext.personenstatus,
