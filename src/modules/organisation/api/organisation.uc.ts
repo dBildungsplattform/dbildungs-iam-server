@@ -15,6 +15,7 @@ import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { UpdateOrganisationDto } from './update-organisation.dto.js';
 import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 import { ServerConfig, DataConfig } from '../../../shared/config/index.js';
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 
 @Injectable()
 export class OrganisationUc {
@@ -30,7 +31,7 @@ export class OrganisationUc {
 
     public async createOrganisation(
         organisationDto: CreateOrganisationDto,
-    ): Promise<CreatedOrganisationDto | SchulConnexError> {
+    ): Promise<CreatedOrganisationDto | SchulConnexError | OrganisationSpecificationError> {
         const organisationDo: OrganisationDo<false> = this.mapper.map(
             organisationDto,
             CreateOrganisationDto,
@@ -47,13 +48,17 @@ export class OrganisationUc {
         if (result.ok) {
             return this.mapper.map(result.value, OrganisationDo, CreatedOrganisationDto);
         }
+        //avoid passing OrganisationSpecificationError to SchulConnexErrorMapper
+        if (result.error instanceof OrganisationSpecificationError) {
+            return result.error;
+        }
 
         return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 
     public async updateOrganisation(
         organisationDto: UpdateOrganisationDto,
-    ): Promise<UpdatedOrganisationDto | SchulConnexError> {
+    ): Promise<UpdatedOrganisationDto | SchulConnexError | OrganisationSpecificationError> {
         const organisationDo: OrganisationDo<true> = this.mapper.map(
             organisationDto,
             UpdateOrganisationDto,
@@ -66,7 +71,10 @@ export class OrganisationUc {
         if (result.ok) {
             return this.mapper.map(result.value, OrganisationDo, UpdatedOrganisationDto);
         }
-
+        //avoid passing OrganisationSpecificationError to SchulConnexErrorMapper
+        if (result.error instanceof OrganisationSpecificationError) {
+            return result.error;
+        }
         return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 
@@ -130,13 +138,15 @@ export class OrganisationUc {
     public async setAdministriertVon(
         parentOrganisationId: string,
         childOrganisationId: string,
-    ): Promise<void | SchulConnexError> {
-        const res: Result<void, DomainError> = await this.organisationService.setAdministriertVon(
-            parentOrganisationId,
-            childOrganisationId,
-        );
+    ): Promise<void | SchulConnexError | OrganisationSpecificationError> {
+        const res: Result<void, OrganisationSpecificationError | DomainError> =
+            await this.organisationService.setAdministriertVon(parentOrganisationId, childOrganisationId);
 
         if (!res.ok) {
+            //avoid passing OrganisationSpecificationError to SchulConnexErrorMapper
+            if (res.error instanceof OrganisationSpecificationError) {
+                return res.error;
+            }
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(res.error);
         }
     }
@@ -144,13 +154,17 @@ export class OrganisationUc {
     public async setZugehoerigZu(
         parentOrganisationId: string,
         childOrganisationId: string,
-    ): Promise<void | SchulConnexError> {
+    ): Promise<void | SchulConnexError | OrganisationSpecificationError> {
         const res: Result<void, DomainError> = await this.organisationService.setZugehoerigZu(
             parentOrganisationId,
             childOrganisationId,
         );
 
         if (!res.ok) {
+            //avoid passing OrganisationSpecificationError to SchulConnexErrorMapper
+            if (res.error instanceof OrganisationSpecificationError) {
+                return res.error;
+            }
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(res.error);
         }
     }

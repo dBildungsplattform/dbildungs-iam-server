@@ -1,14 +1,22 @@
-import { SchulConnexError, SchulConnexErrorProps } from './schul-connex.error.js';
 import { ApiProperty } from '@nestjs/swagger';
 
-export type DbiamErrorProps = SchulConnexErrorProps & { i18nKey: string };
+export type DbiamErrorProps = {
+    code: number;
+    titel: string;
+    beschreibung: string;
+};
 
-export class DbiamError extends SchulConnexError {
-    @ApiProperty()
-    public readonly i18nKey: string;
-
+export class DbiamError {
     public constructor(props: DbiamErrorProps) {
-        super(props);
-        this.i18nKey = props.i18nKey;
+        Object.assign(this, props);
     }
+
+    @ApiProperty({ description: 'Corresponds to HTTP Status code like 200, 404, 500' })
+    public readonly code!: number;
+
+    @ApiProperty()
+    public readonly titel!: string;
+
+    @ApiProperty()
+    public readonly beschreibung!: string;
 }

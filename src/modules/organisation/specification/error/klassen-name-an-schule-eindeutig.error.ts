@@ -1,10 +1,11 @@
-import { DomainError } from '../../../../shared/error/index.js';
+import { OrganisationSpecificationError } from './organisation-specification.error.js';
+import { OrganisationSpecificationErrorI18nTypes } from '../../api/dbiam-organisation.error.js';
 
-export class KlassenNameAnSchuleEindeutigError extends DomainError {
+export class KlassenNameAnSchuleEindeutigError extends OrganisationSpecificationError {
     public constructor(entityId?: string, details?: unknown[] | Record<string, undefined>) {
         super(
-            `Organisation with ID ${entityId} could not be updated because it violates Klassen-Name-an-Schule-eindeutig specification`,
-            'ENTITY_COULD_NOT_BE_UPDATED',
+            `Organisation with ID ${entityId} could not be updated because it violates ${OrganisationSpecificationErrorI18nTypes.KLASSEN_NAME_AN_SCHULE_EINDEUTIG} specification`,
+            entityId,
             details,
         );
     }
