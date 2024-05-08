@@ -156,6 +156,26 @@ describe('PersonFrontendController', () => {
             expect(result.items.at(0)?.person.id).toEqual(person1.id);
         });
 
+        it('should get a person rolleID undefined', async () => {
+            const personPermissions: DeepMocked<PersonPermissions> = createMock();
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
+
+            personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
+
+            const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
+                { ...queryParams, rolleID: undefined },
+                personPermissions,
+            );
+
+            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
+            expect(result.total).toEqual(1);
+            expect(result.limit).toEqual(1);
+            expect(result.offset).toEqual(0);
+            expect(result.items.length).toEqual(1);
+            expect(result.items.at(0)?.person.name.vorname).toEqual('Max');
+            expect(result.items.at(0)?.person.id).toEqual(person1.id);
+        });
+
         it('should get a person with the given orgnisation id', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
             const organisationID: string = personenkontext1.organisationId;
