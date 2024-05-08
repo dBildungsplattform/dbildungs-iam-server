@@ -138,7 +138,7 @@ describe('PersonFrontendController', () => {
 
         it('should get a person with the given orgnisation id', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
-            const organisationID = personenkontext1.organisationId;
+            const organisationID: string = personenkontext1.organisationId;
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
                 personController.ROOT_ORGANISATION_ID,
                 organisationID,
