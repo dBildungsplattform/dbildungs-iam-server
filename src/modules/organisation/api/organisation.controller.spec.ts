@@ -24,7 +24,7 @@ import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import {OrganisationSpecificationError} from "../specification/error/organisation-specification.error.js";
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -103,7 +103,9 @@ describe('OrganisationController', () => {
         });
         describe('when usecase returns a OrganisationSpecificationError', () => {
             it('should throw a HttpException', async () => {
-                organisationUcMock.createOrganisation.mockResolvedValueOnce(new OrganisationSpecificationError('error', undefined));
+                organisationUcMock.createOrganisation.mockResolvedValueOnce(
+                    new OrganisationSpecificationError('error', undefined),
+                );
                 await expect(
                     organisationController.createOrganisation({} as CreateOrganisationBodyParams),
                 ).rejects.toThrow(OrganisationSpecificationError);
@@ -155,7 +157,9 @@ describe('OrganisationController', () => {
         });
         describe('when usecase returns a OrganisationSpecificationError', () => {
             it('should throw a HttpException', async () => {
-                organisationUcMock.updateOrganisation.mockResolvedValue(new OrganisationSpecificationError('error', undefined));
+                organisationUcMock.updateOrganisation.mockResolvedValue(
+                    new OrganisationSpecificationError('error', undefined),
+                );
                 await expect(
                     organisationController.updateOrganisation(
                         { organisationId: faker.string.uuid() } as OrganisationByIdParams,
@@ -416,7 +420,7 @@ describe('OrganisationController', () => {
     describe('addAdministrierteOrganisation', () => {
         describe('when usecase succeeds', () => {
             it('should not throw an error', async () => {
-                const [params ,body] = getFakeParamsAndBody();
+                const [params, body]: [OrganisationByIdParams, OrganisationByIdBodyParams] = getFakeParamsAndBody();
 
                 organisationUcMock.setAdministriertVon.mockResolvedValue();
 
@@ -427,9 +431,11 @@ describe('OrganisationController', () => {
 
         describe('when usecase returns a OrganisationSpecificationError', () => {
             it('should throw a HttpException', async () => {
-                const [params ,body] = getFakeParamsAndBody();
+                const [params, body]: [OrganisationByIdParams, OrganisationByIdBodyParams] = getFakeParamsAndBody();
 
-                organisationUcMock.setAdministriertVon.mockResolvedValue(new OrganisationSpecificationError('error', undefined));
+                organisationUcMock.setAdministriertVon.mockResolvedValue(
+                    new OrganisationSpecificationError('error', undefined),
+                );
                 await expect(organisationController.addAdministrierteOrganisation(params, body)).rejects.toThrow(
                     OrganisationSpecificationError,
                 );
@@ -440,7 +446,7 @@ describe('OrganisationController', () => {
 
         describe('when usecase returns a SchulConnexError', () => {
             it('should throw a HttpException', async () => {
-                const [params ,body] = getFakeParamsAndBody();
+                const [params, body]: [OrganisationByIdParams, OrganisationByIdBodyParams] = getFakeParamsAndBody();
 
                 organisationUcMock.setAdministriertVon.mockResolvedValue({} as SchulConnexError);
                 await expect(organisationController.addAdministrierteOrganisation(params, body)).rejects.toThrow(
@@ -455,7 +461,7 @@ describe('OrganisationController', () => {
     describe('addZugehoerigeOrganisation', () => {
         describe('when usecase succeeds', () => {
             it('should not throw an error', async () => {
-                const [params ,body] = getFakeParamsAndBody();
+                const [params, body]: [OrganisationByIdParams, OrganisationByIdBodyParams] = getFakeParamsAndBody();
 
                 organisationUcMock.setZugehoerigZu.mockResolvedValue();
 
@@ -466,9 +472,11 @@ describe('OrganisationController', () => {
 
         describe('when usecase returns a OrganisationSpecificationError', () => {
             it('should throw a HttpException', async () => {
-                const [params ,body] = getFakeParamsAndBody();
+                const [params, body]: [OrganisationByIdParams, OrganisationByIdBodyParams] = getFakeParamsAndBody();
 
-                organisationUcMock.setZugehoerigZu.mockResolvedValue(new OrganisationSpecificationError('error', undefined));
+                organisationUcMock.setZugehoerigZu.mockResolvedValue(
+                    new OrganisationSpecificationError('error', undefined),
+                );
                 await expect(organisationController.addZugehoerigeOrganisation(params, body)).rejects.toThrow(
                     OrganisationSpecificationError,
                 );
@@ -479,7 +487,7 @@ describe('OrganisationController', () => {
 
         describe('when usecase returns a SchulConnexError', () => {
             it('should throw a HttpException', async () => {
-                const [params ,body] = getFakeParamsAndBody();
+                const [params, body]: [OrganisationByIdParams, OrganisationByIdBodyParams] = getFakeParamsAndBody();
 
                 organisationUcMock.setZugehoerigZu.mockResolvedValue({} as SchulConnexError);
                 await expect(organisationController.addZugehoerigeOrganisation(params, body)).rejects.toThrow(

@@ -12,7 +12,6 @@ import { EntityAlreadyExistsError } from './entity-already-exists.error.js';
 import { InvalidCharacterSetError } from './invalid-character-set.error.js';
 import { InvalidAttributeLengthError } from './invalid-attribute-length.error.js';
 import { InvalidNameError } from './invalid-name.error.js';
-import { AddSystemrechtError } from './add-systemrecht.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -87,15 +86,6 @@ export class SchulConnexErrorMapper {
                 subcode: '00',
                 titel: 'Fehlerhafte Anfrage',
                 beschreibung: 'Die Anfrage ist Fehlerhaft: Die Entität existiert bereits.',
-            }),
-        ],
-        [
-            AddSystemrechtError.name,
-            new SchulConnexError({
-                code: 500,
-                subcode: '00',
-                titel: 'Fehlerhafte Anfrage',
-                beschreibung: 'Systemrecht konnte Rolle nicht hinzugefügt werden.',
             }),
         ],
         [

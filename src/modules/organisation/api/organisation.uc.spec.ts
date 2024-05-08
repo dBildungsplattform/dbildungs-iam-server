@@ -17,7 +17,7 @@ import { OrganisationUc } from './organisation.uc.js';
 import { UpdateOrganisationDto } from './update-organisation.dto.js';
 import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
-import {OrganisationSpecificationError} from "../specification/error/organisation-specification.error.js";
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 
 describe('OrganisationUc', () => {
     let module: TestingModule;
@@ -240,7 +240,9 @@ describe('OrganisationUc', () => {
                     error: new OrganisationSpecificationError('error', undefined),
                 });
 
-                await expect(organisationUc.setAdministriertVon('', '')).resolves.toBeInstanceOf(OrganisationSpecificationError);
+                await expect(organisationUc.setAdministriertVon('', '')).resolves.toBeInstanceOf(
+                    OrganisationSpecificationError,
+                );
             });
         });
 
@@ -272,7 +274,9 @@ describe('OrganisationUc', () => {
                     error: new OrganisationSpecificationError('error', undefined),
                 });
 
-                await expect(organisationUc.setZugehoerigZu('', '')).resolves.toBeInstanceOf(OrganisationSpecificationError);
+                await expect(organisationUc.setZugehoerigZu('', '')).resolves.toBeInstanceOf(
+                    OrganisationSpecificationError,
+                );
             });
         });
 

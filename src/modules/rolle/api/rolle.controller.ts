@@ -37,7 +37,7 @@ import { RolleResponse } from './rolle.response.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
-import { AddSystemrechtError } from '../../../shared/error/add-systemrecht.error.js';
+import { AddSystemrechtError } from './add-systemrecht.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { RolleServiceProviderQueryParams } from './rolle-service-provider.query.params.js';
 import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
@@ -47,8 +47,9 @@ import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.
 import { RolleNameQueryParams } from './rolle-name-query.param.js';
 import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { RolleExceptionFilter } from './rolle-exception-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter)
+@UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter())
 @ApiTags('rolle')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -171,9 +172,7 @@ export class RolleController {
             rolle.addSystemRecht(addSystemrechtBodyParams.systemRecht);
             await this.rolleRepo.save(rolle);
         } else {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new AddSystemrechtError()),
-            );
+            throw new AddSystemrechtError(); //hide that rolle is not found
         }
     }
 
