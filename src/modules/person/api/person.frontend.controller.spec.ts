@@ -12,6 +12,7 @@ import { PagedResponse } from '../../../shared/paging/index.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { UnauthorizedException } from '@nestjs/common';
 
 describe('PersonFrontendController', () => {
     let module: TestingModule;
@@ -137,10 +138,14 @@ describe('PersonFrontendController', () => {
 
         it('should get a person with the given orgnisation id', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
+            const organisationID = personenkontext1.organisationId;
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
+                personController.ROOT_ORGANISATION_ID,
+                organisationID,
+            ]);
 
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
-            const organisationID: string = personenkontext1.organisationId;
+
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 { ...queryParams, organisationID },
                 personPermissions,
@@ -164,7 +169,7 @@ describe('PersonFrontendController', () => {
             const organisationID: string = 'organisationIDNotInPermissions';
             await expect(
                 personController.findPersons({ ...queryParams, organisationID }, personPermissions),
-            ).rejects.toThrow('NOT_AUTHORIZED');
+            ).rejects.toThrow(UnauthorizedException);
         });
     });
 });
