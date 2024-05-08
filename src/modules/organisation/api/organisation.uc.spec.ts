@@ -17,6 +17,7 @@ import { OrganisationUc } from './organisation.uc.js';
 import { UpdateOrganisationDto } from './update-organisation.dto.js';
 import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
+import {OrganisationSpecificationError} from "../specification/error/organisation-specification.error.js";
 
 describe('OrganisationUc', () => {
     let module: TestingModule;
@@ -64,6 +65,18 @@ describe('OrganisationUc', () => {
             });
         });
 
+        describe('when result is not ok and instance of OrganisationSpecificationError', () => {
+            it('should return an error', async () => {
+                organisationServiceMock.createOrganisation.mockResolvedValue({
+                    ok: false,
+                    error: new OrganisationSpecificationError('error', undefined),
+                });
+                await expect(organisationUc.createOrganisation({} as CreateOrganisationDto)).resolves.toBeInstanceOf(
+                    OrganisationSpecificationError,
+                );
+            });
+        });
+
         describe('when result is not ok', () => {
             it('should return an error', async () => {
                 organisationServiceMock.createOrganisation.mockResolvedValue({
@@ -86,6 +99,18 @@ describe('OrganisationUc', () => {
                 });
                 await expect(organisationUc.updateOrganisation({} as UpdateOrganisationDto)).resolves.toBeInstanceOf(
                     UpdatedOrganisationDto,
+                );
+            });
+        });
+
+        describe('when result is not ok and instance of OrganisationSpecificationError', () => {
+            it('should return an error', async () => {
+                organisationServiceMock.updateOrganisation.mockResolvedValue({
+                    ok: false,
+                    error: new OrganisationSpecificationError('error', undefined),
+                });
+                await expect(organisationUc.updateOrganisation({} as UpdateOrganisationDto)).resolves.toBeInstanceOf(
+                    OrganisationSpecificationError,
                 );
             });
         });
@@ -208,13 +233,26 @@ describe('OrganisationUc', () => {
             await expect(organisationUc.setAdministriertVon('', '')).resolves.not.toThrow();
         });
 
-        it('should throw an error', async () => {
-            organisationServiceMock.setAdministriertVon.mockResolvedValue({
-                ok: false,
-                error: new EntityCouldNotBeUpdated('', ''),
-            });
+        describe('when result is not ok and instance of OrganisationSpecificationError', () => {
+            it('should return an error', async () => {
+                organisationServiceMock.setAdministriertVon.mockResolvedValue({
+                    ok: false,
+                    error: new OrganisationSpecificationError('error', undefined),
+                });
 
-            await expect(organisationUc.setAdministriertVon('', '')).resolves.toBeInstanceOf(SchulConnexError);
+                await expect(organisationUc.setAdministriertVon('', '')).resolves.toBeInstanceOf(OrganisationSpecificationError);
+            });
+        });
+
+        describe('when result is not ok', () => {
+            it('should throw an error', async () => {
+                organisationServiceMock.setAdministriertVon.mockResolvedValue({
+                    ok: false,
+                    error: new EntityCouldNotBeUpdated('', ''),
+                });
+
+                await expect(organisationUc.setAdministriertVon('', '')).resolves.toBeInstanceOf(SchulConnexError);
+            });
         });
     });
 
@@ -227,13 +265,26 @@ describe('OrganisationUc', () => {
             await expect(organisationUc.setZugehoerigZu('', '')).resolves.not.toThrow();
         });
 
-        it('should throw an error', async () => {
-            organisationServiceMock.setZugehoerigZu.mockResolvedValue({
-                ok: false,
-                error: new EntityCouldNotBeUpdated('', ''),
-            });
+        describe('when result is not ok and instance of OrganisationSpecificationError', () => {
+            it('should throw an error if result is not ok and instanceof OrganisationSpecificationError', async () => {
+                organisationServiceMock.setZugehoerigZu.mockResolvedValue({
+                    ok: false,
+                    error: new OrganisationSpecificationError('error', undefined),
+                });
 
-            await expect(organisationUc.setZugehoerigZu('', '')).resolves.toBeInstanceOf(SchulConnexError);
+                await expect(organisationUc.setZugehoerigZu('', '')).resolves.toBeInstanceOf(OrganisationSpecificationError);
+            });
+        });
+
+        describe('when result is not ok', () => {
+            it('should throw an error', async () => {
+                organisationServiceMock.setZugehoerigZu.mockResolvedValue({
+                    ok: false,
+                    error: new EntityCouldNotBeUpdated('', ''),
+                });
+
+                await expect(organisationUc.setZugehoerigZu('', '')).resolves.toBeInstanceOf(SchulConnexError);
+            });
         });
     });
 

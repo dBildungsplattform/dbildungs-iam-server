@@ -43,10 +43,6 @@ export class PersonenkontextExceptionFilter implements ExceptionFilter<Personenk
         response.status(status);
         response.json(dbiamRolleError);
     }
-    /*
-    private mapDbiamErrorToHttpException(error: OrganisationSpecificationError): HttpException {
-        return new HttpException(error, 400);
-    }*/
 
     private mapDomainErrorToDbiamError(error: PersonenkontextSpecificationError): DbiamPersonenkontextError {
         return (

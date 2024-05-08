@@ -100,10 +100,6 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
         response.status(status);
         response.json(dbiamOrganisationError);
     }
-    /*
-    private mapDbiamErrorToHttpException(error: OrganisationSpecificationError): HttpException {
-        return new HttpException(error, 400);
-    }*/
 
     private mapDomainErrorToDbiamError(error: OrganisationSpecificationError): DbiamOrganisationError {
         return (
