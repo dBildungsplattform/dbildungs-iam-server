@@ -139,7 +139,8 @@ jobs:
         run: |
           playwright_branch=$(git ls-remote --heads https://github.com/dBildungsplattform/schulportal-testautomatisierung ${{ github.ref }} | wc -l)
           echo "::set-output name=playwright_branch_exists::$(($playwright_branch > 0))"
-        
+          echo "::set-output name=playwright_branch::${{ github.ref }}"
+      
       - name: Debug Playwright branch
         run: |
           playwright_branch_exists=${{ steps.check_branch.outputs.playwright_branch_exists }}
@@ -147,6 +148,7 @@ jobs:
             echo "Playwright branch exists: ${{ github.ref }}"
           else
             echo "Playwright branch does not exist. Falling back to main branch."
+            echo "::set-output name=playwright_branch::main"
           fi
 
   deploy:
