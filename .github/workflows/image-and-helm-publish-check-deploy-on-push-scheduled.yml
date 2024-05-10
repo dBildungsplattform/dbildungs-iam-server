@@ -126,26 +126,6 @@ jobs:
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
 
-  determine_playwright_branch-deployment:
-    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    runs-on: ubuntu-latest
-    outputs:
-      playwright_branch: ${{ steps.check_branch.outputs.playwright_branch }}
-    steps:
-      - name: Check current branch
-        run: |
-          echo "Current branch: ${{ github.ref_name }}"
-          
-      - name: Check if Playwright branch exists
-        id: check_branch
-        run: |
-          playwright_branch="${{ github.ref_name }}"
-          if git ls-remote --heads https://github.com/dBildungsplattform/schulportal-testautomatisierung $playwright_branch &> /dev/null; then
-            echo "playwright_branch=$playwright_branch" >> $GITHUB_OUTPUT
-          else
-            echo "playwright_branch=main" >> $GITHUB_OUTPUT
-          fi
-
   deploy:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
@@ -153,14 +133,12 @@ jobs:
       - create_branch_identifier
       - release_helm
       - build_image_on_push
-      - determine_playwright_branch-deployment
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@DBP-757-Playwright-tests
     with:
       dbildungs_iam_server_branch: ${{ needs.branch_meta.outputs.ticket }}
       schulportal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
       dbildungs_iam_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
-      playwright_branch: ${{ needs.determine_playwright_branch-deployment.outputs.playwright_branch }}
     secrets: inherit
 
   create_branch_identifier_for_deletion:
