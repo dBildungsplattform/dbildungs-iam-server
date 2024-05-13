@@ -214,6 +214,14 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                         src.loeschungZeitpunkt ? new LoeschungDto({ zeitpunkt: src.loeschungZeitpunkt }) : undefined,
                     ),
                 ),
+                forMember(
+                    (dest: CreatedPersonenkontextDto) => dest.organisation,
+                    mapFrom((src: PersonenkontextDo<boolean>) =>
+                        CreatedPersonenkontextOrganisationDto.new({
+                            id: src.organisationId,
+                        }),
+                    ),
+                ),
             );
 
             createMap(mapper, OrganisationDo, CreatedPersonenkontextOrganisationDto);
@@ -253,6 +261,14 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     (dest: PersonenkontextDto) => dest.loeschung,
                     mapFrom((src: PersonenkontextDo<boolean>) =>
                         src.loeschungZeitpunkt ? new LoeschungDto({ zeitpunkt: src.loeschungZeitpunkt }) : undefined,
+                    ),
+                ),
+                forMember(
+                    (dest: PersonenkontextDto) => dest.organisation,
+                    mapFrom((src: PersonenkontextDo<boolean>) =>
+                        CreatedPersonenkontextOrganisationDto.new({
+                            id: src.organisationId,
+                        }),
                     ),
                 ),
             );
