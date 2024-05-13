@@ -1,8 +1,9 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
+import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
 
 export class PersonenQueryParams extends PagedQueryParams {
     @AutoMap()
@@ -45,23 +46,29 @@ export class PersonenQueryParams extends PagedQueryParams {
 
     @AutoMap()
     @IsOptional()
-    @IsString()
+    @TransformToArray()
+    @IsUUID(undefined, { each: true })
+    @ArrayUnique()
     @ApiProperty({
         required: false,
         nullable: true,
+        isArray: true,
         description: 'Organisation ID used to filter for Persons.',
     })
-    public readonly organisationID?: string;
+    public readonly organisationID?: string[];
 
     @AutoMap()
     @IsOptional()
-    @IsString()
+    @TransformToArray()
+    @IsUUID(undefined, { each: true })
+    @ArrayUnique()
     @ApiProperty({
         required: false,
         nullable: true,
+        isArray: true,
         description: 'Role ID used to filter for Persons.',
     })
-    public readonly rolleID?: string;
+    public readonly rolleID?: string[];
 
     @AutoMap()
     @IsString()

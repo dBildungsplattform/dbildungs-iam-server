@@ -27,14 +27,25 @@ export class PersonScope extends ScopeBase<PersonEntity> {
                 findProps.organisationen !== undefined && {
                     personenKontexte: { $some: { organisationId: { $in: findProps.organisationen } } },
                 },
-                findProps.rolle !== undefined && {
-                    personenKontexte: { $some: { rolleId: findProps.rolle } },
-                },
+                // findProps.rolle !== undefined && {
+                //     personenKontexte: { $some: { rolleId: findProps.rolle } },
+                // },
             ].filter(Boolean),
         };
 
         this.findByQuery(filters);
 
+        return this;
+    }
+
+    public findByPersonenKontext(organisationen?: string[] | undefined, rollen?: string[] | undefined): this {
+        const filters: QBFilterQuery<PersonEntity> = {
+            personenKontexte: {
+                ...(organisationen ? { organisationId: { $in: organisationen } } : {}),
+                ...(rollen ? { rolleId: { $in: rollen } } : {}),
+            },
+        };
+        this.findByQuery(filters);
         return this;
     }
 
