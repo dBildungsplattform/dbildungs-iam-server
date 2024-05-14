@@ -11,6 +11,3 @@ data:
   LDAP_RFC2307BIS_SCHEMA: "true"
   LDAP_REMOVE_CONFIG_AFTER_SETUP: "true"
   LDAP_TLS_VERIFY_CLIENT: "never"
-  LDAP_ENV_VAR: "just-a-test-value"
-  PHPLDAPADMIN_LDAP_HOSTS: openldap
-  PHPLDAPADMIN_HTTPS: "false"

@@ -5,25 +5,6 @@ objectClass: organizationalunit
 objectClass: top
 ou: Groups
 
-dn: ou=persons,dc=spsh,dc=de
-objectClass: organizationalunit
-objectClass: top
-ou: People
-
-
-# --- People ----------------------------------
-
-dn: cn=jpinkmann,ou=persons,dc=spsh,dc=de
-objectClass: person
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: top
-cn: jpinkmann
-userpassword: pass
-givenname: Jesse
-sn: Pinkmann
-mail: jpinkmann@walterwhiteltdco.com
-uid: 1001
 
 # --- Groups ----------------------------------
 
@@ -32,11 +13,9 @@ objectClass: groupofuniquenames
 objectClass: top
 ou: Groups
 cn: Administrator
-uniquemember: cn=jpinkmann, ou=persons, dc=spsh,dc=de
 
 dn: cn=lehrer,ou=groups,dc=spsh,dc=de
 objectClass: groupofuniquenames
 objectClass: top
 ou: Groups
 cn: Administrator
-uniquemember: cn=jpinkmann, ou=persons, dc=spsh,dc=de
