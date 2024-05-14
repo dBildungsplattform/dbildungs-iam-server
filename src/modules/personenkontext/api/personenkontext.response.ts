@@ -7,41 +7,60 @@ import { LoeschungResponse } from '../../person/api/loeschung.response.js';
 export class PersonenkontextResponse {
     @AutoMap()
     @ApiProperty()
-    public readonly id!: string;
+    public id!: string;
+
+    @AutoMap()
+    @ApiProperty({ nullable: true })
+    public referrer?: string;
 
     @AutoMap()
     @ApiProperty()
-    public readonly referrer?: string;
-
-    @AutoMap()
-    @ApiProperty()
-    public readonly mandant!: string;
+    public mandant!: string;
 
     @AutoMap(() => CreatedPersonenkontextOrganisationDto)
-    @ApiProperty()
-    public readonly organisation!: CreatedPersonenkontextOrganisationDto;
+    @ApiProperty({ type: CreatedPersonenkontextOrganisationDto })
+    public organisation!: CreatedPersonenkontextOrganisationDto;
 
     @AutoMap(() => String)
-    @ApiProperty()
-    public readonly rolle!: Rolle;
+    @ApiProperty({ enum: Rolle })
+    public rolle!: Rolle;
 
     @AutoMap(() => String)
-    @ApiProperty()
-    public readonly personenstatus?: Personenstatus;
+    @ApiProperty({ enum: Personenstatus, nullable: true })
+    public personenstatus?: Personenstatus;
 
     @AutoMap(() => String)
-    @ApiProperty()
-    public readonly jahrgangsstufe?: Jahrgangsstufe;
+    @ApiProperty({ enum: Jahrgangsstufe, nullable: true })
+    public jahrgangsstufe?: Jahrgangsstufe;
 
     @AutoMap(() => String)
-    @ApiProperty()
-    public readonly sichtfreigabe?: SichtfreigabeType;
+    @ApiProperty({ enum: SichtfreigabeType, nullable: true })
+    public sichtfreigabe?: SichtfreigabeType;
 
     @AutoMap(() => LoeschungResponse)
-    @ApiProperty()
-    public readonly loeschung?: LoeschungResponse;
+    @ApiProperty({ type: LoeschungResponse, nullable: true })
+    public loeschung?: LoeschungResponse;
 
     @AutoMap()
     @ApiProperty()
-    public readonly revision!: string;
+    public revision!: string;
+
+    public static new(props: Readonly<PersonenkontextResponse>): PersonenkontextResponse {
+        const response: PersonenkontextResponse = new PersonenkontextResponse();
+
+        response.id = props.id;
+        response.referrer = props.referrer;
+        response.mandant = props.mandant;
+        response.organisation = CreatedPersonenkontextOrganisationDto.new(props.organisation);
+        response.rolle = props.rolle;
+        response.personenstatus = props.personenstatus;
+        response.jahrgangsstufe = props.jahrgangsstufe;
+        response.sichtfreigabe = props.sichtfreigabe;
+        response.loeschung = props.loeschung
+            ? LoeschungResponse.new({ zeitpunkt: props.loeschung.zeitpunkt })
+            : undefined;
+        response.revision = props.revision;
+
+        return response;
+    }
 }
