@@ -79,7 +79,7 @@ services:
   openldap:
     image: osixia/openldap:1.5.0
     container_name: openldap
-    command: --copy-service
+    command: --copy-service --loglevel debug
     ports:
       - 389:389
       - 636:636
@@ -87,8 +87,8 @@ services:
       - ./config/ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom
     environment:
       - LDAP_ORGANISATION=spsh-de
-      - LDAP_DOMAIN=spsh.de
-      - LDAP_BASE_DN=cn=admin,dc=spsh,dc=de
+      - LDAP_DOMAIN=schule-sh.de
+      - LDAP_BASE_DN=dc=schule-sh,dc=de
       - LDAP_ADMIN_PASSWORD=admin
       - LDAP_CONFIG_PASSWORD=config
       - LDAP_RFC2307BIS_SCHEMA=true
