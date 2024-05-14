@@ -63,8 +63,8 @@ describe('PersonFrontendController', () => {
             vorname: options.firstName,
             sichtfreigabe: SichtfreigabeType.NEIN,
             suchFilter: '',
-            rolleID: '',
-            organisationID: '',
+            rolleID: [],
+            organisationID: [],
         };
         const person1: Person<true> = Person.construct(
             faker.string.uuid(),
@@ -136,14 +136,14 @@ describe('PersonFrontendController', () => {
             expect(result.items.at(0)?.person.name.vorname).toEqual('Max');
         });
 
-        it('should get a person with the given rolle id', async () => {
+        it('should filter person with the given rolle id', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
 
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
             const rolleID: string = personenkontext1.rolleId;
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
-                { ...queryParams, rolleID },
+                { ...queryParams, rolleID: [rolleID] },
                 personPermissions,
             );
 
@@ -156,7 +156,7 @@ describe('PersonFrontendController', () => {
             expect(result.items.at(0)?.person.id).toEqual(person1.id);
         });
 
-        it('should get a person rolleID undefined', async () => {
+        it('should filter person rolleID undefined', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
 
@@ -176,7 +176,7 @@ describe('PersonFrontendController', () => {
             expect(result.items.at(0)?.person.id).toEqual(person1.id);
         });
 
-        it('should get a person with the given orgnisation id', async () => {
+        it('should filter person with the given orgnisation id', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
             const organisationID: string = personenkontext1.organisationId;
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
@@ -187,7 +187,7 @@ describe('PersonFrontendController', () => {
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
 
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
-                { ...queryParams, organisationID },
+                { ...queryParams, organisationID: [organisationID] },
                 personPermissions,
             );
 
@@ -202,14 +202,17 @@ describe('PersonFrontendController', () => {
 
         it('should throw an error when organisationID is not in the permissions', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce(['someOtherOrganisationID']);
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
-            personRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
+            personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
 
-            const organisationID: string = 'organisationIDNotInPermissions';
+            const organisationID: string = personenkontext1.organisationId;
+
             await expect(
-                personController.findPersons({ ...queryParams, organisationID }, personPermissions),
-            ).rejects.toThrow(UnauthorizedException);
+                personController.findPersons({ ...queryParams, organisationID: [organisationID] }, personPermissions),
+            ).rejects.toThrow(new UnauthorizedException('NOT_AUTHORIZED'));
+
+            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(0);
         });
     });
 });

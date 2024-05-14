@@ -131,27 +131,6 @@ describe('PersonScope', () => {
             });
         });
 
-        describe('when filtering for rolle ID', () => {
-            const rolleID: string = faker.string.uuid();
-
-            beforeEach(async () => {
-                const person1: PersonEntity = createPersonEntity();
-                const person2: PersonEntity = createPersonEntity();
-                await em.persistAndFlush([person1, person2]);
-                await createPersonenkontext(person1.id, faker.string.uuid(), rolleID);
-            });
-
-            it('should return found persons', async () => {
-                const scope: PersonScope = new PersonScope()
-                    .findBy({ rolle: rolleID })
-                    .sortBy('vorname', ScopeOrder.ASC);
-                const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
-
-                expect(total).toBe(1);
-                expect(persons).toHaveLength(1);
-            });
-        });
-
         describe('when filtering for orginisation ID', () => {
             const orgnisationID: string = faker.string.uuid();
 
@@ -165,6 +144,68 @@ describe('PersonScope', () => {
             it('should return found persons', async () => {
                 const scope: PersonScope = new PersonScope()
                     .findBy({ organisationen: [orgnisationID] })
+                    .sortBy('vorname', ScopeOrder.ASC);
+                const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
+
+                expect(total).toBe(1);
+                expect(persons).toHaveLength(1);
+            });
+        });
+
+        describe('when filtering for orginisation ID & Rollen ID', () => {
+            const orgnisationID: string = faker.string.uuid();
+            const rolleID: string = faker.string.uuid();
+
+            beforeEach(async () => {
+                const person1: PersonEntity = createPersonEntity();
+                const person2: PersonEntity = createPersonEntity();
+                await em.persistAndFlush([person1, person2]);
+                await createPersonenkontext(person1.id, orgnisationID, rolleID);
+            });
+
+            it('should return found persons', async () => {
+                const scope: PersonScope = new PersonScope()
+                    .findByPersonenKontext([orgnisationID], [rolleID])
+                    .sortBy('vorname', ScopeOrder.ASC);
+                const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
+
+                expect(total).toBe(1);
+                expect(persons).toHaveLength(1);
+            });
+        });
+
+        describe('when filtering for organisation ID only', () => {
+            const organisationID: string = faker.string.uuid();
+
+            beforeEach(async () => {
+                const person1: PersonEntity = createPersonEntity();
+                await em.persistAndFlush([person1]);
+                await createPersonenkontext(person1.id, organisationID, faker.string.uuid());
+            });
+
+            it('should return found persons', async () => {
+                const scope: PersonScope = new PersonScope()
+                    .findByPersonenKontext([organisationID])
+                    .sortBy('vorname', ScopeOrder.ASC);
+                const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
+
+                expect(total).toBe(1);
+                expect(persons).toHaveLength(1);
+            });
+        });
+
+        describe('when filtering for Rolle ID only', () => {
+            const rolleID: string = faker.string.uuid();
+
+            beforeEach(async () => {
+                const person1: PersonEntity = createPersonEntity();
+                await em.persistAndFlush([person1]);
+                await createPersonenkontext(person1.id, faker.string.uuid(), rolleID);
+            });
+
+            it('should return found persons', async () => {
+                const scope: PersonScope = new PersonScope()
+                    .findByPersonenKontext(undefined, [rolleID])
                     .sortBy('vorname', ScopeOrder.ASC);
                 const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
 

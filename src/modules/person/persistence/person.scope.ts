@@ -1,7 +1,7 @@
 import { EntityName, QBFilterQuery } from '@mikro-orm/core';
 import { ScopeBase, ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonEntity } from './person.entity.js';
-import { OrganisationID, PersonID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 type FindProps = {
     id: PersonID;
@@ -9,7 +9,6 @@ type FindProps = {
     familienname: string;
     geburtsdatum: Date;
     organisationen: OrganisationID[];
-    rolle: RolleID;
 };
 
 export class PersonScope extends ScopeBase<PersonEntity> {
@@ -27,9 +26,6 @@ export class PersonScope extends ScopeBase<PersonEntity> {
                 findProps.organisationen !== undefined && {
                     personenKontexte: { $some: { organisationId: { $in: findProps.organisationen } } },
                 },
-                // findProps.rolle !== undefined && {
-                //     personenKontexte: { $some: { rolleId: findProps.rolle } },
-                // },
             ].filter(Boolean),
         };
 

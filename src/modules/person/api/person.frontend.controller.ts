@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseFilters } from '@nestjs/common';
+import { Controller, Get, Query, UnauthorizedException, UseFilters } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
@@ -22,7 +22,6 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-// import { UnauthorizedException } from '@nestjs/common';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen-frontend')
@@ -58,15 +57,9 @@ export class PersonFrontendController {
             true,
         );
 
-        // if (queryParams.organisationID) {
-        //     organisationIDs =
-        //         !organisationIDs || organisationIDs.includes(queryParams.organisationID)
-        //             ? [queryParams.organisationID]
-        //             : [];
-        //     if (organisationIDs.length === 0) {
-        //         throw new UnauthorizedException('NOT_AUTHORIZED');
-        //     }
-        // }
+        if (!organisationIDs || organisationIDs.length === 0) {
+            throw new UnauthorizedException('NOT_AUTHORIZED');
+        }
 
         // Check if user has permission on root organisation
         if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
