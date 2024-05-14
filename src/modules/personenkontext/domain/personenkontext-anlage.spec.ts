@@ -157,7 +157,7 @@ describe('PersonenkontextAnlage', () => {
                 expect(result).toHaveLength(1);
             });
 
-            it('should return list of schulstrukturknoten when child of child-organisation is matching with two results', async () => {
+            it('should return list of schulstrukturknoten when child of child-organisation is matching with one results', async () => {
                 const [rolle, parent, child, childOfChild]: [
                     Rolle<true>,
                     OrganisationDo<true>,
@@ -176,7 +176,7 @@ describe('PersonenkontextAnlage', () => {
                     child.name!,
                     LIMIT,
                 );
-                expect(result).toHaveLength(2);
+                expect(result).toHaveLength(1);
             });
 
             it('should return list of schulstrukturknoten when a valid child with name exist', async () => {
