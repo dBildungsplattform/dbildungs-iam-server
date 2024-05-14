@@ -50,15 +50,6 @@ class Person {
     }
 }
 
-class GruppeResponse {
-    // This is a dummy class to make the code compile
-
-    // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-    public constructor(_props: Readonly<GruppeResponse>) {
-        // This is a dummy constructor to make the code compile
-    }
-}
-
 export class PersonInfoResponse {
     @ApiProperty()
     public readonly pid: string;
@@ -70,7 +61,7 @@ export class PersonInfoResponse {
     public readonly personenkontexte: PersonenkontextResponse[];
 
     @ApiProperty({})
-    public readonly gruppen: GruppeResponse[];
+    public readonly gruppen: object[];
 
     public constructor(props: Readonly<PersonInfoResponse>) {
         this.pid = props.pid;
@@ -78,6 +69,6 @@ export class PersonInfoResponse {
         this.personenkontexte = props.personenkontexte.map((kontext: Readonly<PersonenkontextResponse>) =>
             PersonenkontextResponse.new(kontext),
         );
-        this.gruppen = props.gruppen.map((gruppe: Readonly<GruppeResponse>) => new GruppeResponse(gruppe));
+        this.gruppen = [];
     }
 }
