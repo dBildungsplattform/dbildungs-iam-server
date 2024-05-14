@@ -4,6 +4,7 @@ import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.j
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { DBiamPersonenkontextService } from './dbiam-personenkontext.service.js';
 
 export class Personenkontext<WasPersisted extends boolean> {
     private constructor(
@@ -26,12 +27,41 @@ export class Personenkontext<WasPersisted extends boolean> {
         return new Personenkontext(id, createdAt, updatedAt, personId, organisationId, rolleId);
     }
 
-    public static createNew(
+    public static async createNew(
+        personRepo: PersonRepo,
+        organisationRepo: OrganisationRepo,
+        rolleRepo: RolleRepo,
+        dbiamPersonenkontextService: DBiamPersonenkontextService,
         personId: PersonID,
         organisationId: OrganisationID,
         rolleId: RolleID,
-    ): Personenkontext<false> {
-        return new Personenkontext(undefined, undefined, undefined, personId, organisationId, rolleId);
+    ): Promise<Personenkontext<false> | DomainError> {
+        const personenkontext: Personenkontext<false> = new Personenkontext(
+            undefined,
+            undefined,
+            undefined,
+            personId,
+            organisationId,
+            rolleId,
+        );
+
+        const referenceError: Option<DomainError> = await personenkontext.checkReferences(
+            personRepo,
+            organisationRepo,
+            rolleRepo,
+        );
+
+        if (referenceError) {
+            return referenceError;
+        }
+
+        const specificationCheckError: Option<DomainError> = await dbiamPersonenkontextService.checkSpecifications(personenkontext);
+
+        if (specificationCheckError) {
+            return specificationCheckError;
+        }
+
+        return personenkontext;
     }
 
     public async checkReferences(

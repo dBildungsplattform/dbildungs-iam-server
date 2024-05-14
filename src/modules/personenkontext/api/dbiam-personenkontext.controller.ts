@@ -13,15 +13,12 @@ import {
 import { DomainError, EntityAlreadyExistsError } from '../../../shared/error/index.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { PersonRepo } from '../../person/persistence/person.repo.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkontext.body.params.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personenkontext-by-personid.params.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
-import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenkontexte')
@@ -31,10 +28,7 @@ import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.ser
 export class DBiamPersonenkontextController {
     public constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
-        private readonly personRepo: PersonRepo,
-        private readonly organisationRepo: OrganisationRepo,
-        private readonly rolleRepo: RolleRepo,
-        private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
+        private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
     @Get(':personId')
@@ -68,6 +62,7 @@ export class DBiamPersonenkontextController {
     public async createPersonenkontext(
         @Body() params: DBiamCreatePersonenkontextBodyParams,
     ): Promise<DBiamPersonenkontextResponse> {
+        //TODO: Phael in da Repo auslaggern
         // Check if personenkontext already exists
         const exists: boolean = await this.personenkontextRepo.exists(
             params.personId,
@@ -83,32 +78,15 @@ export class DBiamPersonenkontextController {
             );
         }
 
-        // Construct new personenkontext
-        const newPersonenkontext: Personenkontext<false> = Personenkontext.createNew(
+        const newPersonenkontext: Personenkontext<false> | DomainError = await this.personenkontextFactory.createNew(
             params.personId,
             params.organisationId,
-            params.rolleId,
-        );
+            params.rolleId,);
 
-        // Check if all references are valid
-        const referenceError: Option<DomainError> = await newPersonenkontext.checkReferences(
-            this.personRepo,
-            this.organisationRepo,
-            this.rolleRepo,
-        );
 
-        if (referenceError) {
+        if (newPersonenkontext instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(referenceError),
-            );
-        }
-
-        //Check specifications
-        const specificationCheckError: Option<DomainError> =
-            await this.dbiamPersonenkontextService.checkSpecifications(newPersonenkontext);
-        if (specificationCheckError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(specificationCheckError),
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(newPersonenkontext),
             );
         }
 

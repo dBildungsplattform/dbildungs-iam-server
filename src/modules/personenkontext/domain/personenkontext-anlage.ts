@@ -4,10 +4,13 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { DBiamPersonenkontextService } from './dbiam-personenkontext.service.js';
+import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 
 export class PersonenkontextAnlage {
     public organisationId?: string;
@@ -18,14 +21,24 @@ export class PersonenkontextAnlage {
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepo,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly personRepo: PersonRepo,
+        private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
     ) {}
 
     public static createNew(
         rolleRepo: RolleRepo,
         organisationRepo: OrganisationRepo,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        personRepo: PersonRepo,
+        dbiamPersonenkontextService: DBiamPersonenkontextService,
     ): PersonenkontextAnlage {
-        return new PersonenkontextAnlage(rolleRepo, organisationRepo, dBiamPersonenkontextRepo);
+        return new PersonenkontextAnlage(
+            rolleRepo,
+            organisationRepo,
+            dBiamPersonenkontextRepo,
+            personRepo,
+            dbiamPersonenkontextService,
+        );
     }
 
     // Function to filter organisations, so that only organisations are shown in "new user" dialog, which makes sense regarding the selected rolle.
@@ -87,6 +100,7 @@ export class PersonenkontextAnlage {
         return [];
     }
 
+    //Phael:die wird nur von Tests verwendet, brauchen wir die?
     public async validieren(): Promise<Result<boolean, PersonenkontextAnlageError>> {
         if (!this.rolleId)
             return {
@@ -132,6 +146,7 @@ export class PersonenkontextAnlage {
         }
     }
 
+    //Phael:die wird nur von Tests verwendet, brauchen wir die?
     public async zuweisen(personId: string): Promise<Result<Personenkontext<true>, PersonenkontextAnlageError>> {
         if (!this.rolleId)
             return {
@@ -147,12 +162,73 @@ export class PersonenkontextAnlage {
         const isValid: Result<boolean, PersonenkontextAnlageError> = await this.validieren();
         if (!isValid.ok) return { ok: false, error: isValid.error };
 
-        const personenkontext: Personenkontext<false> = Personenkontext.createNew(
+        const personenkontext: Personenkontext<false> | DomainError = await Personenkontext.createNew(
+            this.personRepo,
+            this.organisationRepo,
+            this.rolleRepo,
+            this.dbiamPersonenkontextService,
             personId,
             this.organisationId,
             this.rolleId,
         );
+
+        if (personenkontext instanceof DomainError) {
+            return {
+                ok: false,
+                error: new PersonenkontextAnlageError('PersonenkontextAnlage invalid:' + personenkontext.message),
+            };
+        }
+
         const createdPersonenkontext: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(personenkontext);
         return { ok: true, value: createdPersonenkontext };
+    }
+
+    //TODO: die Methode organisationMatchesRollenart() für die Filterung verwenden
+    public async findRollenArtBasedOnCurrentUserRollen(
+        rolleIds: RolleID[],
+        rollen: Rolle<true>[],
+    ): Promise<Rolle<true>[]> {
+        const ssks: OrganisationDo<true>[] = [];
+
+        for (const rolleId of rolleIds) {
+            ssks.concat(await this.findSchulstrukturknoten(rolleId, ''));
+        }
+
+        ssks.map((ssk: OrganisationDo<true>) => {
+            console.log(ssk.name);
+        });
+        const organisationsTypes: (OrganisationsTyp | undefined)[] = ssks.map(
+            (organisationDo: OrganisationDo<true>) => organisationDo.typ,
+        );
+
+
+        let rollenArten: RollenArt[] = [];
+        const result: Rolle<true>[] = [];
+
+        if ((organisationsTypes && organisationsTypes.includes(OrganisationsTyp.LAND)) ||
+            organisationsTypes.includes(OrganisationsTyp.ROOT)) {
+            rollenArten = [
+                RollenArt.SYSADMIN,
+                RollenArt.LEIT,
+                RollenArt.ORGADMIN,
+                RollenArt.EXTERN,
+                RollenArt.LEHR,
+                RollenArt.LERN,
+            ];
+        } else {
+            if (organisationsTypes && organisationsTypes.includes(OrganisationsTyp.SCHULE))
+                rollenArten = [RollenArt.LEIT, RollenArt.EXTERN, RollenArt.LEHR, RollenArt.LERN];
+        }
+
+        rollenArten.forEach(function (ra) {
+            console.log(ra);
+            const rolleFound: Rolle<true> | undefined = rollen.find((rolle: Rolle<true>) => rolle.rollenart === ra);
+            if (rolleFound != undefined){
+                console.log(rolleFound);
+                result.push(rolleFound);
+            }
+        });
+
+        return result;
     }
 }
