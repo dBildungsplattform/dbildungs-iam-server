@@ -20,7 +20,9 @@ describe('PersonApiMapper', () => {
             it('should return PersonInfoResponse', () => {
                 // Arrange
                 const person: PersonDo<true> = DoFactory.createPerson(true);
-                const kontext: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true);
+                const kontext: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: new Date(),
+                });
                 const kontexte: PersonenkontextDo<true>[] = [kontext];
 
                 // Act
@@ -68,15 +70,29 @@ describe('PersonApiMapper', () => {
                             personenstatus: kontext.personenstatus,
                             jahrgangsstufe: kontext.jahrgangsstufe,
                             sichtfreigabe: kontext.sichtfreigabe,
-                            loeschung: kontext.loeschungZeitpunkt
-                                ? { zeitpunkt: kontext.loeschungZeitpunkt }
-                                : undefined,
+                            loeschung: { zeitpunkt: kontext.loeschungZeitpunkt as Date },
                             revision: kontext.revision,
                         },
                     ],
                     gruppen: [],
                 });
             });
+        });
+
+        it('should return PersonInfoResponse and leave loeschung empty', () => {
+            // Arrange
+            const person: PersonDo<true> = DoFactory.createPerson(true);
+            const kontext: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true, {
+                loeschungZeitpunkt: undefined,
+            });
+            const kontexte: PersonenkontextDo<true>[] = [kontext];
+
+            // Act
+            const result: PersonInfoResponse = sut.mapToPersonInfoResponse(person, kontexte);
+
+            // Assert
+            expect(result).toBeInstanceOf(PersonInfoResponse);
+            expect(result.personenkontexte[0]?.loeschung).toBeUndefined();
         });
     });
 });
