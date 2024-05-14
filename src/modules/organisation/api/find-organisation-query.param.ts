@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
-import { ArrayUnique, IsEnum, IsOptional, IsString } from 'class-validator';
+import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrganisationsTyp, OrganisationsTypName } from '../domain/organisation.enums.js';
 import { RollenSystemRecht, RollenSystemRechtTypName } from '../../rolle/domain/rolle.enums.js';
@@ -78,6 +78,7 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
     @IsOptional()
     @TransformToArray()
     @ArrayUnique()
+    @IsUUID(undefined, { each: true })
     @ApiProperty({
         required: false,
         nullable: true,

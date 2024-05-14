@@ -3,7 +3,6 @@ import { ScopeBase, ScopeOperator } from '../../../shared/persistence/index.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { QBFilterQuery } from '@mikro-orm/core';
 
 export type OrganisationFindByProps = {
     kennung?: string;
@@ -29,12 +28,9 @@ export class OrganisationScope extends ScopeBase<OrganisationEntity> {
         return this;
     }
 
-    public findByAdministriertVonArray(administriertVon?: string[]): this {
+    public findByAdministriertVonArray(administriertVon?: OrganisationID[]): this {
         if (administriertVon) {
-            const filters: QBFilterQuery<OrganisationEntity> = {
-                administriertVon: { $in: administriertVon },
-            };
-            this.findByQuery(filters);
+            this.findByQuery({ administriertVon: { $in: administriertVon } });
         }
         return this;
     }
