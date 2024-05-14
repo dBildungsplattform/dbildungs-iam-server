@@ -73,4 +73,15 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
         isArray: true,
     })
     public readonly excludeTyp?: OrganisationsTyp[];
+
+    @AutoMap()
+    @IsOptional()
+    @TransformToArray()
+    @ArrayUnique()
+    @ApiProperty({
+        required: false,
+        nullable: true,
+        isArray: true,
+    })
+    public readonly administriertVon: string[] = [];
 }

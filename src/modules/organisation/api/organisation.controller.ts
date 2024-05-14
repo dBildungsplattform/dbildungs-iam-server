@@ -129,6 +129,7 @@ export class OrganisationController {
         throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
     }
 
+    // TODO check this one
     @Get()
     @ApiOkResponse({
         description: 'The organizations were successfully returned.',
@@ -153,6 +154,7 @@ export class OrganisationController {
                 name: queryParams.name,
                 typ: queryParams.typ,
             })
+            .findByAdministriertVonArray(queryParams.administriertVon)
             .setScopeWhereOperator(ScopeOperator.AND)
             .searchString(queryParams.searchString)
             .excludeTyp(queryParams.excludeTyp)
