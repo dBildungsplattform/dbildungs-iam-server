@@ -104,6 +104,14 @@
             "password": "test",
             "vorname": "Jesse",
             "familienname": "Pinkmann"
+        },
+        {
+            "id": 14,
+            "username": "migration",
+            "password": "migration",
+            "vorname": "migration",
+            "familienname": "migration",
+            "personalnummer": "9999999"
         }
     ]
 }
