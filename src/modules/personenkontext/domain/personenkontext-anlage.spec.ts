@@ -424,7 +424,7 @@ describe('PersonenkontextAnlage', () => {
                 expect(result).toContainEqual(organisationDo);
             });
 
-            it('should return one element, because orga as KLASSE does match RollenArt LEHR', async () => {
+            it('should return no element, because orga as KLASSE does not match RollenArt LEHR', async () => {
                 const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEHR });
                 const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {
                     typ: OrganisationsTyp.KLASSE,
@@ -440,8 +440,7 @@ describe('PersonenkontextAnlage', () => {
                     organisationDo.name!,
                     LIMIT,
                 );
-                expect(result).toHaveLength(1);
-                expect(result).toContainEqual(organisationDo);
+                expect(result).toHaveLength(0);
             });
 
             it('should return empty list, because orga as LAND does not match RollenArt LEHR', async () => {
