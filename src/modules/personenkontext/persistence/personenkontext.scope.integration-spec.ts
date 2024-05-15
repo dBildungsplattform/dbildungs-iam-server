@@ -44,7 +44,6 @@ describe('PersonenkontextScope', () => {
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
-
     describe('findBy', () => {
         describe('when filtering for personenkontexte', () => {
             beforeEach(async () => {
