@@ -26,7 +26,9 @@
         "start:console": "nest start console --",
         "db:init": "npm run start:console -- db init",
         "db:seed": "npm run start:console -- db seed",
-        "db:migr": "npm run start:console -- db migrate",
+        "db:migration-init": "npm run start:console -- db migration-init",
+        "db:migration-create": "npm run start:console -- db migration-create",
+        "db:migration-apply": "npm run start:console -- db migration-apply",
         "setup": "npm run db:init && npm run db:seed dev"
     },
     "dependencies": {

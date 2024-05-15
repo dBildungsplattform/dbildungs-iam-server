@@ -20,8 +20,10 @@ import { PersonModule } from '../modules/person/person.module.js';
 import { PersonenKontextModule } from '../modules/personenkontext/personenkontext.module.js';
 import { DbSeedConsole } from './dbseed/db-seed.console.js';
 import { DbSeedModule } from './dbseed/db-seed.module.js';
-import { DbMigrateConsole } from './db-migrate.console.js';
 import { Migrator, TSMigrationGenerator } from '@mikro-orm/migrations';
+import { DbInitMigrationConsole } from './dbmigrate/db-init-migration.console.js';
+import { DbCreateMigrationConsole } from './dbmigrate/db-create-migration.console.js';
+import { DbApplyMigrationConsole } from './dbmigrate/db-apply-migration.console.js';
 
 @Module({
     imports: [
@@ -78,6 +80,14 @@ import { Migrator, TSMigrationGenerator } from '@mikro-orm/migrations';
             inject: [ConfigService],
         }),
     ],
-    providers: [DbConsole, DbInitConsole, DbSeedConsole, DbMigrateConsole, UsernameGeneratorService],
+    providers: [
+        DbConsole,
+        DbInitConsole,
+        DbSeedConsole,
+        DbInitMigrationConsole,
+        DbCreateMigrationConsole,
+        DbApplyMigrationConsole,
+        UsernameGeneratorService,
+    ],
 })
 export class ConsoleModule {}
