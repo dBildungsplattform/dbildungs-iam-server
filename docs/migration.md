@@ -2,13 +2,31 @@
 
 ## Commands
 
-Run `npm run db:migr` to create a new migration
+Run `npm run db:migration-create` to create a new migration
 
-Run `npm run db:migr up` apply the latest version of migration to the database, latest migration files MUST BE available in `./dist/migrations`.
+Run `npm run db:migration-apply` apply the latest version of migration to the database, latest migration files MUST BE available in `./dist/migrations`.
 You can ensure this by starting the app via `npm run start`.
 
-Run `npm run db:migr init` to create a new initial migration (not necessary anymore, initial migration has been done)
+Run `npm run db:migration-init` to create a new initial migration (not necessary anymore, initial migration has been done)
+The execution of migration-init can cause following error with current configuration:
+```bash
+...
+[Error: ENOENT: no such file or directory, open '.../dbildungs-iam-server/migrations/.snapshot-dbildungs-iam-server.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '...dbildungs-iam-server/migrations/.snapshot-dbildungs-iam-server.json'
+}
+```
 
+To be able to execute migration-init, temporally adjust `path` in migrations-configuration of console.module.ts
+```typescript
+extensions: [Migrator],
+    migrations: {
+    tableName: 'mikro_orm_migrations'
+        path: './dist/migrations',
+        pathTs: './migrations',
+```
 
 ## Execution
 
