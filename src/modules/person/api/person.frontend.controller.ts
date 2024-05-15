@@ -67,18 +67,20 @@ export class PersonFrontendController {
         }
 
         const scope: PersonScope = new PersonScope()
+            .setScopeWhereOperator(ScopeOperator.AND)
             .findBy({
-                vorname: undefined,
-                familienname: undefined,
+                vorname: queryParams.vorname,
+                familienname: queryParams.familienname,
                 geburtsdatum: undefined,
                 organisationen: organisationIDs,
             })
             .findByPersonenKontext(queryParams.organisationIDs, queryParams.rolleIDs)
+
             .sortBy('vorname', ScopeOrder.ASC)
             .paged(queryParams.offset, queryParams.limit);
 
         if (queryParams.suchFilter) {
-            scope.findBySearchString(queryParams.suchFilter).setScopeWhereOperator(ScopeOperator.AND);
+            scope.findBySearchString(queryParams.suchFilter);
         }
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);

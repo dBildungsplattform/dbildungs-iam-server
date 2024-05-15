@@ -63,8 +63,8 @@ describe('PersonFrontendController', () => {
             vorname: options.firstName,
             sichtfreigabe: SichtfreigabeType.NEIN,
             suchFilter: '',
-            rolleID: [],
-            organisationID: [],
+            rolleIDs: [],
+            organisationIDs: [],
         };
         const person1: Person<true> = Person.construct(
             faker.string.uuid(),
@@ -143,7 +143,7 @@ describe('PersonFrontendController', () => {
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
             const rolleID: string = personenkontext1.rolleId;
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
-                { ...queryParams, rolleID: [rolleID] },
+                { ...queryParams, rolleIDs: [rolleID] },
                 personPermissions,
             );
 
@@ -163,7 +163,7 @@ describe('PersonFrontendController', () => {
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
 
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
-                { ...queryParams, rolleID: undefined },
+                { ...queryParams, rolleIDs: undefined },
                 personPermissions,
             );
 
@@ -187,7 +187,7 @@ describe('PersonFrontendController', () => {
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
 
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
-                { ...queryParams, organisationID: [organisationID] },
+                { ...queryParams, organisationIDs: [organisationID] },
                 personPermissions,
             );
 
@@ -209,7 +209,7 @@ describe('PersonFrontendController', () => {
             const organisationID: string = personenkontext1.organisationId;
 
             await expect(
-                personController.findPersons({ ...queryParams, organisationID: [organisationID] }, personPermissions),
+                personController.findPersons({ ...queryParams, organisationIDs: [organisationID] }, personPermissions),
             ).rejects.toThrow(new UnauthorizedException('NOT_AUTHORIZED'));
 
             expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(0);
