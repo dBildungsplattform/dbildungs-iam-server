@@ -10,7 +10,7 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { DomainError, EntityAlreadyExistsError } from '../../../shared/error/index.js';
+import { DomainError } from '../../../shared/error/index.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Personenkontext } from '../domain/personenkontext.js';
@@ -19,6 +19,9 @@ import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personen
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenkontexte')
@@ -29,6 +32,7 @@ export class DBiamPersonenkontextController {
     public constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personenkontextFactory: PersonenkontextFactory,
+        private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
     ) {}
 
     @Get(':personId')
@@ -61,27 +65,13 @@ export class DBiamPersonenkontextController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating personenkontext.' })
     public async createPersonenkontext(
         @Body() params: DBiamCreatePersonenkontextBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonenkontextResponse> {
-        //TODO: Phael in da Repo auslaggern
-        // Check if personenkontext already exists
-        const exists: boolean = await this.personenkontextRepo.exists(
+        const newPersonenkontext: Personenkontext<false> | DomainError = await this.personenkontextFactory.createNew(
             params.personId,
             params.organisationId,
             params.rolleId,
         );
-
-        if (exists) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityAlreadyExistsError('Personenkontext already exists'),
-                ),
-            );
-        }
-
-        const newPersonenkontext: Personenkontext<false> | DomainError = await this.personenkontextFactory.createNew(
-            params.personId,
-            params.organisationId,
-            params.rolleId,);
 
         if (newPersonenkontext instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -89,9 +79,25 @@ export class DBiamPersonenkontextController {
             );
         }
 
-        // Save personenkontext
-        const savedPersonenkontext: Personenkontext<true> = await this.personenkontextRepo.save(newPersonenkontext);
+        //Check specifications
+        const specificationCheckError: Option<DomainError> =
+            await this.dbiamPersonenkontextService.checkSpecifications(newPersonenkontext);
+        if (specificationCheckError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(specificationCheckError),
+            );
+        }
 
-        return new DBiamPersonenkontextResponse(savedPersonenkontext);
+        const saveResult: Result<Personenkontext<true>, DomainError> = await this.personenkontextRepo.createAuthorized(
+            newPersonenkontext,
+            permissions,
+        );
+        if (!saveResult.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult.error),
+            );
+        }
+
+        return new DBiamPersonenkontextResponse(saveResult.value);
     }
 }

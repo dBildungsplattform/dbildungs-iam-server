@@ -47,11 +47,6 @@ import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.
 import { RolleNameQueryParams } from './rolle-name-query.param.js';
 import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
-import { PersonenkontextAnlage } from '../../personenkontext/domain/personenkontext-anlage.js';
-import { PersonenkontextAnlageFactory } from '../../personenkontext/domain/personenkontext-anlage.factory.js';
-import { PersonPermissions, PersonenkontextOrgaAndRolleFields } from '../../authentication/domain/person-permissions.js';
-import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { RollenSystemRecht } from '../domain/rolle.enums.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('rolle')
@@ -64,7 +59,6 @@ export class RolleController {
         private readonly rolleFactory: RolleFactory,
         private readonly orgService: OrganisationService,
         private readonly serviceProviderRepo: ServiceProviderRepo,
-        private readonly personenkontextAnlageFactory: PersonenkontextAnlageFactory,
     ) {}
 
     @Get()
@@ -73,25 +67,20 @@ export class RolleController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get rollen.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollen.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all rollen.' })
-    public async findRollen(
-        @Query() queryParams: RolleNameQueryParams,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<RolleWithServiceProvidersResponse[]> {
-        const anlage: PersonenkontextAnlage = this.personenkontextAnlageFactory.createNew();
+    public async findRollen(@Query() queryParams: RolleNameQueryParams): Promise<RolleWithServiceProvidersResponse[]> {
+        let rollen: Option<Rolle<true>[]>;
 
-        const knotenMitSystemrechten: PersonenkontextOrgaAndRolleFields[] =
-            await permissions.getOrganisationsAndRolesBySystemRecht(RollenSystemRecht.PERSONEN_VERWALTEN);
+        if (queryParams.searchStr) {
+            rollen = await this.rolleRepo.findByName(queryParams.searchStr);
+        } else {
+            rollen = await this.rolleRepo.find();
+        }
 
-        const rollen: Rolle<true>[] = await anlage.filterRollenBasedOnSchulstrukturknoten(
-            knotenMitSystemrechten,
-            queryParams.searchStr,
-        );
+        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
 
         if (!rollen) {
             return [];
         }
-
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
 
         return rollen.map((r: Rolle<true>) => {
             const sps: ServiceProvider<true>[] = r.serviceProviderIds

@@ -4,7 +4,6 @@ import { OrganisationRepo } from '../../organisation/persistence/organisation.re
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextAnlage } from './personenkontext-anlage.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
-import { DBiamPersonenkontextService } from './dbiam-personenkontext.service.js';
 
 @Injectable()
 export class PersonenkontextAnlageFactory {
@@ -13,10 +12,14 @@ export class PersonenkontextAnlageFactory {
         private organisationRepo: OrganisationRepo,
         private dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private personRepo: PersonRepo,
-        private dbiamPersonenkontextService: DBiamPersonenkontextService
     ) {}
 
     public createNew(): PersonenkontextAnlage {
-        return PersonenkontextAnlage.createNew(this.rolleRepo, this.organisationRepo, this.dBiamPersonenkontextRepo, this.personRepo, this.dbiamPersonenkontextService);
+        return PersonenkontextAnlage.createNew(
+            this.rolleRepo,
+            this.organisationRepo,
+            this.dBiamPersonenkontextRepo,
+            this.personRepo,
+        );
     }
 }

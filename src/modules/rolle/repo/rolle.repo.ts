@@ -1,7 +1,7 @@
 import { EntityData, EntityManager, EntityName, Loaded, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
@@ -144,19 +144,6 @@ export class RolleRepo {
             return this.create(rolle);
         }
     }
-
-    public async findByRollenArten(rollenArten: RollenArt[]): Promise<Option<Rolle<true>[]>> {
-        const rollen: Option<RolleEntity[]> = await this.em.find(
-            RolleEntity,
-            { rollenart: { $in: rollenArten } },
-            {
-                populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
-            },
-        );
-
-        return rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
-    }
-
 
     private async create(rolle: Rolle<false>): Promise<Rolle<true>> {
         const rolleEntity: RolleEntity = this.em.create(RolleEntity, mapAggregateToData(rolle));

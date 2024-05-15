@@ -4,7 +4,7 @@ import { OrganisationRepo } from '../../organisation/persistence/organisation.re
 import { Personenkontext } from './personenkontext.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
-import { DBiamPersonenkontextService } from './dbiam-personenkontext.service.js';
+import { OrganisationID, PersonID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 
 @Injectable()
 export class PersonenkontextFactory {
@@ -12,12 +12,31 @@ export class PersonenkontextFactory {
         private rolleRepo: RolleRepo,
         private organisationRepo: OrganisationRepo,
         private personRepo: PersonRepo,
-        private dbiamPersonenkontextService: DBiamPersonenkontextService,
-    ) {
+    ) {}
 
+    public construct<WasPersisted extends boolean = false>(
+        id: Persisted<string, WasPersisted>,
+        createdAt: Persisted<Date, WasPersisted>,
+        updatedAt: Persisted<Date, WasPersisted>,
+        personId: PersonID,
+        organisationId: OrganisationID,
+        rolleId: RolleID,
+    ): Personenkontext<WasPersisted> {
+        return Personenkontext.construct(
+            this.personRepo,
+            this.organisationRepo,
+            this.rolleRepo,
+            id,
+            createdAt,
+            updatedAt,
+            personId,
+            organisationId,
+            rolleId,
+        );
     }
 
-    public async createNew( personId: string,
+    public async createNew(
+        personId: string,
         organisationId: string,
         rolleId: string,
     ): Promise<Personenkontext<false> | DomainError> {
@@ -25,7 +44,6 @@ export class PersonenkontextFactory {
             this.personRepo,
             this.organisationRepo,
             this.rolleRepo,
-            this.dbiamPersonenkontextService,
             personId,
             organisationId,
             rolleId,

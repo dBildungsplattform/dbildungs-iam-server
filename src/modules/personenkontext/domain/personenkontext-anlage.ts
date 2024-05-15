@@ -8,8 +8,6 @@ import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
-import { DBiamPersonenkontextService } from './dbiam-personenkontext.service.js';
-import { PersonenkontextOrgaAndRolleFields } from '../../authentication/domain/person-permissions.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 export class PersonenkontextAnlage {
@@ -22,23 +20,28 @@ export class PersonenkontextAnlage {
         private readonly organisationRepo: OrganisationRepo,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personRepo: PersonRepo,
-        private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
     ) {}
+
+    // Function to filter organisations, so that only organisations are shown in "new user" dialog, which makes sense regarding the selected rolle.
+    private organisationMatchesRollenart(organisation: OrganisationDo<true>, rolle: Rolle<true>): boolean {
+        if (rolle.rollenart === RollenArt.SYSADMIN)
+            return organisation.typ === OrganisationsTyp.LAND || organisation.typ === OrganisationsTyp.ROOT;
+        if (rolle.rollenart === RollenArt.LEIT) return organisation.typ === OrganisationsTyp.SCHULE;
+        if (rolle.rollenart === RollenArt.LERN)
+            return organisation.typ === OrganisationsTyp.SCHULE || organisation.typ === OrganisationsTyp.KLASSE;
+        if (rolle.rollenart === RollenArt.LEHR)
+            return organisation.typ === OrganisationsTyp.SCHULE || organisation.typ === OrganisationsTyp.KLASSE;
+
+        return true;
+    }
 
     public static createNew(
         rolleRepo: RolleRepo,
         organisationRepo: OrganisationRepo,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         personRepo: PersonRepo,
-        dbiamPersonenkontextService: DBiamPersonenkontextService,
     ): PersonenkontextAnlage {
-        return new PersonenkontextAnlage(
-            rolleRepo,
-            organisationRepo,
-            dBiamPersonenkontextRepo,
-            personRepo,
-            dbiamPersonenkontextService,
-        );
+        return new PersonenkontextAnlage(rolleRepo, organisationRepo, dBiamPersonenkontextRepo, personRepo);
     }
 
     public async findSchulstrukturknoten(
@@ -76,9 +79,7 @@ export class PersonenkontextAnlage {
             orgas = orgas.filter((ssk: OrganisationDo<true>) => ssk.typ !== OrganisationsTyp.KLASSE);
         }
 
-        orgas = orgas.filter((orga: OrganisationDo<true>) =>
-            this.dbiamPersonenkontextService.organisationMatchesRollenart(orga.typ, rolleResult.rollenart),
-        );
+        orgas = orgas.filter((orga: OrganisationDo<true>) => this.organisationMatchesRollenart(orga, rolleResult));
 
         return orgas.slice(0, limit);
     }
@@ -155,7 +156,6 @@ export class PersonenkontextAnlage {
             this.personRepo,
             this.organisationRepo,
             this.rolleRepo,
-            this.dbiamPersonenkontextService,
             personId,
             this.organisationId,
             this.rolleId,
@@ -170,26 +170,5 @@ export class PersonenkontextAnlage {
 
         const createdPersonenkontext: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(personenkontext);
         return { ok: true, value: createdPersonenkontext };
-    }
-
-    public async filterRollenBasedOnSchulstrukturknoten(schulstrukturknoten: PersonenkontextOrgaAndRolleFields[], rolleName?: string): Promise<Rolle<true>[]>{
-        //Default Rollen
-        const rollen: Option<Rolle<true>[]> = await this.rolleRepo.findByRollenArten([RollenArt.LEHR, RollenArt.LERN]);
-        if (!rollen) return [];
-        //Die Rollen des Admins
-        const adminRollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(
-            schulstrukturknoten.map((ssk) => ssk.rolleId),
-        );
-        adminRollen.forEach(function (adminRolle: Rolle<true>) {
-            rollen.push(adminRolle);
-        });
-
-        //Duplicates löschen
-        //Sort & Filter nach Rollennamen & Limit
-        if (rolleName) {
-            return rollen.filter((rolle: Rolle<true>) => rolle.name.includes(rolleName));
-        }
-
-        return rollen;
     }
 }

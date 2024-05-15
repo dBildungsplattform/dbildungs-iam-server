@@ -20,6 +20,12 @@ import { PersonenkontextFactory } from './domain/personenkontext.factory.js';
         DBiamPersonenkontextRepo,
         PersonenkontextFactory,
     ],
-    exports: [PersonenkontextService, PersonenkontextRepo, DBiamPersonenkontextService, DBiamPersonenkontextRepo],
+    exports: [
+        PersonenkontextService,
+        PersonenkontextRepo,
+        DBiamPersonenkontextService,
+        DBiamPersonenkontextRepo,
+        PersonenkontextFactory,
+    ],
 })
 export class PersonenKontextModule {}

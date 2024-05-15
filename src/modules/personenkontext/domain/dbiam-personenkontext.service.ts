@@ -7,9 +7,6 @@ import { GleicheRolleAnKlasseWieSchule } from '../specification/gleiche-rolle-an
 import { PersonenkontextKlasseSpecification } from '../specification/personenkontext-klasse-specification.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-
 @Injectable()
 export class DBiamPersonenkontextService {
     public constructor(
@@ -36,22 +33,5 @@ export class DBiamPersonenkontextService {
         );
 
         return pkKlasseSpecification.returnsError(personenkontext);
-    }
-
-    // Function to filter organisations, so that only organisations are shown in "new user" dialog, which makes sense regarding the selected rolle.
-    public organisationMatchesRollenart(organisationTyp: OrganisationsTyp | undefined, rollenart: RollenArt): boolean {
-        if (!organisationTyp) {
-            return false;
-        }
-
-        if (rollenart === RollenArt.SYSADMIN)
-            return organisationTyp === OrganisationsTyp.LAND || organisationTyp === OrganisationsTyp.ROOT;
-        if (rollenart === RollenArt.LEIT) return organisationTyp === OrganisationsTyp.SCHULE;
-        if (rollenart === RollenArt.LERN)
-            return organisationTyp === OrganisationsTyp.SCHULE || organisationTyp === OrganisationsTyp.KLASSE;
-        if (rollenart === RollenArt.LEHR)
-            return organisationTyp === OrganisationsTyp.SCHULE || organisationTyp === OrganisationsTyp.KLASSE;
-
-        return true;
     }
 }
