@@ -84,5 +84,5 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
         nullable: true,
         isArray: true,
     })
-    public readonly administriertVon?: string[] = [];
+    public readonly administriertVon?: string[];
 }
