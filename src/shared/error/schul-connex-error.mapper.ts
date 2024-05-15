@@ -23,6 +23,7 @@ import { NurLehrUndLernAnKlasseError } from '../../modules/personenkontext/speci
 import { GleicheRolleAnKlasseWieSchuleError } from '../../modules/personenkontext/specification/error/gleiche-rolle-an-klasse-wie-schule.error.js';
 import { KlasseNurVonSchuleAdministriertError } from '../../modules/organisation/specification/error/klasse-nur-von-schule-administriert.error.js';
 import { KlassenNameAnSchuleEindeutigError } from '../../modules/organisation/specification/error/klassen-name-an-schule-eindeutig.error.js';
+import { MissingPermissionsError } from './missing-permissions.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -225,6 +226,16 @@ export class SchulConnexErrorMapper {
                 titel: 'Spezifikation von Personenkontext nicht erfüllt',
                 beschreibung:
                     'Die Rollenart der Person muss für die Klasse dieselbe sein wie an der zugehörigen Schule.',
+            }),
+        ],
+        [
+            MissingPermissionsError.name,
+            new SchulConnexError({
+                code: 403,
+                subcode: '00',
+                titel: 'Fehlende Rechte',
+                beschreibung:
+                    'Die Autorisierung war erfolgreich, aber die erforderlichen Rechte für die Nutzung dieses Endpunktes sind nicht vorhanden.',
             }),
         ],
     ]);

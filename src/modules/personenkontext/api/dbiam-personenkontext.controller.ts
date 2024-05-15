@@ -22,6 +22,10 @@ import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personen
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
 import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
+import { PersonenkontextPermissionsService } from '../pk-permissions.service.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenkontexte')
@@ -35,6 +39,8 @@ export class DBiamPersonenkontextController {
         private readonly organisationRepo: OrganisationRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
+        private readonly permissionService: PersonenkontextPermissionsService,
+        private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
     @Get(':personId')
@@ -47,10 +53,16 @@ export class DBiamPersonenkontextController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting personenkontexte.' })
     public async findPersonenkontextsByPerson(
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonenkontextResponse[]> {
-        const personenkontexte: Personenkontext<true>[] = await this.personenkontextRepo.findByPerson(params.personId);
+        const result: Result<Personenkontext<true>[], DomainError> =
+            await this.personenkontextRepo.findByPersonAuthorized(params.personId, permissions);
 
-        return personenkontexte.map((k: Personenkontext<true>) => new DBiamPersonenkontextResponse(k));
+        if (!result.ok) {
+            throw result.error; // TODO marode: Map error
+        }
+
+        return result.value.map((k: Personenkontext<true>) => new DBiamPersonenkontextResponse(k));
     }
 
     @Post()
@@ -67,6 +79,7 @@ export class DBiamPersonenkontextController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating personenkontext.' })
     public async createPersonenkontext(
         @Body() params: DBiamCreatePersonenkontextBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonenkontextResponse> {
         // Check if personenkontext already exists
         const exists: boolean = await this.personenkontextRepo.exists(
@@ -84,7 +97,7 @@ export class DBiamPersonenkontextController {
         }
 
         // Construct new personenkontext
-        const newPersonenkontext: Personenkontext<false> = Personenkontext.createNew(
+        const newPersonenkontext: Personenkontext<false> = this.personenkontextFactory.createNew(
             params.personId,
             params.organisationId,
             params.rolleId,
@@ -100,6 +113,17 @@ export class DBiamPersonenkontextController {
         if (referenceError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(referenceError),
+            );
+        }
+
+        // Check
+        const writePermissionError: Option<DomainError> = await this.permissionService.canWrite(
+            newPersonenkontext,
+            permissions,
+        );
+        if (writePermissionError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(writePermissionError),
             );
         }
 
