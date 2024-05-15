@@ -54,7 +54,7 @@ import { Migrator, TSMigrationGenerator } from '@mikro-orm/migrations';
                     extensions: [Migrator],
                     migrations: {
                         tableName: 'mikro_orm_migrations', // name of database table with log of executed transactions
-                        path: './migrations', // path to the folder with migrations
+                        path: './dist/migrations', // path to the folder with migrations
                         pathTs: './migrations', // path to the folder with TS migrations (if used, you should put path to compiled files in `path`)
                         glob: '!(*.d).{js,ts}', // how to match migration files (all .js and .ts files, but not .d.ts)
                         transactional: true, // wrap each migration in a transaction

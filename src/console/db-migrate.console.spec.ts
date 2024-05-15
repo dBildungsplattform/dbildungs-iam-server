@@ -34,9 +34,15 @@ describe('DbMigrateConsole', () => {
     });
 
     describe('run', () => {
-        describe('init parameter is provided', () => {
+        describe('when init parameter is provided', () => {
             it('should create init migration', async () => {
                 await expect(sut.run(['init'])).resolves.not.toThrow();
+            });
+        });
+
+        describe('when up parameter is provided', () => {
+            it('should create init migration', async () => {
+                await expect(sut.run(['up'])).resolves.not.toThrow();
             });
         });
 

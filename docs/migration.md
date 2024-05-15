@@ -4,7 +4,13 @@
 
 Run `npm run db:migr` to create a new migration
 
-Run `npm run db:migr init` to create a new initial migration
+Run `npm run db:migr up` apply the latest version of migration to the database, latest migration files MUST BE available in `./dist/migrations`.
+You can ensure this by starting the app via `npm run start`.
+
+Run `npm run db:migr init` to create a new initial migration (not necessary anymore, initial migration has been done)
+
+
+## Execution
 
 ## Files
 
