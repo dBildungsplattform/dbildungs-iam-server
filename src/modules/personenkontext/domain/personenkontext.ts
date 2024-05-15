@@ -15,10 +15,10 @@ import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.r
 
 export class Personenkontext<WasPersisted extends boolean> {
     private constructor(
+        // @ts-expect-error currently unused, remove this comment later
         private readonly personRepo: PersonRepository,
         private readonly organisationRepo: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
-        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         public id: Persisted<string, WasPersisted>,
         public readonly createdAt: Persisted<Date, WasPersisted>,
         public readonly updatedAt: Persisted<Date, WasPersisted>,
@@ -31,7 +31,6 @@ export class Personenkontext<WasPersisted extends boolean> {
         personRepo: PersonRepository,
         organisationRepo: OrganisationRepository,
         rolleRepo: RolleRepo,
-        personenkontextRepo: DBiamPersonenkontextRepo,
         id: Persisted<string, WasPersisted>,
         createdAt: Persisted<Date, WasPersisted>,
         updatedAt: Persisted<Date, WasPersisted>,
@@ -43,7 +42,6 @@ export class Personenkontext<WasPersisted extends boolean> {
             personRepo,
             organisationRepo,
             rolleRepo,
-            personenkontextRepo,
             id,
             createdAt,
             updatedAt,
@@ -57,7 +55,6 @@ export class Personenkontext<WasPersisted extends boolean> {
         personRepo: PersonRepository,
         organisationRepo: OrganisationRepository,
         rolleRepo: RolleRepo,
-        personenkontextRepo: DBiamPersonenkontextRepo,
         personId: PersonID,
         organisationId: OrganisationID,
         rolleId: RolleID,
@@ -66,7 +63,6 @@ export class Personenkontext<WasPersisted extends boolean> {
             personRepo,
             organisationRepo,
             rolleRepo,
-            personenkontextRepo,
             undefined,
             undefined,
             undefined,
@@ -102,7 +98,10 @@ export class Personenkontext<WasPersisted extends boolean> {
         return undefined;
     }
 
-    public async checkValidity(permissions: PersonPermissions): Promise<Option<DomainError>> {
+    public async checkValidity(
+        permissions: PersonPermissions,
+        personenkontextRepo: DBiamPersonenkontextRepo,
+    ): Promise<Option<DomainError>> {
         let orgas: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
@@ -140,7 +139,7 @@ export class Personenkontext<WasPersisted extends boolean> {
         // Check if we can manage the target person
         if (orgas) {
             const result: Result<Personenkontext<true>[], DomainError> =
-                await this.personenkontextRepo.findByPersonAuthorized(this.personId, permissions);
+                await personenkontextRepo.findByPersonAuthorized(this.personId, permissions);
 
             if (!result.ok) {
                 return result.error;
@@ -150,5 +149,7 @@ export class Personenkontext<WasPersisted extends boolean> {
                 return new MissingPermissionsError('Not authorized to manage this person');
             }
         }
+
+        return undefined;
     }
 }

@@ -22,7 +22,6 @@ import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personen
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
 import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
-import { PersonenkontextPermissionsService } from '../pk-permissions.service.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
@@ -39,7 +38,6 @@ export class DBiamPersonenkontextController {
         private readonly organisationRepo: OrganisationRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
-        private readonly permissionService: PersonenkontextPermissionsService,
         private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
@@ -116,17 +114,6 @@ export class DBiamPersonenkontextController {
             );
         }
 
-        // Check
-        const writePermissionError: Option<DomainError> = await this.permissionService.canWrite(
-            newPersonenkontext,
-            permissions,
-        );
-        if (writePermissionError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(writePermissionError),
-            );
-        }
-
         //Check specifications
         const specificationCheckError: Option<DomainError> =
             await this.dbiamPersonenkontextService.checkSpecifications(newPersonenkontext);
@@ -137,8 +124,16 @@ export class DBiamPersonenkontextController {
         }
 
         // Save personenkontext
-        const savedPersonenkontext: Personenkontext<true> = await this.personenkontextRepo.save(newPersonenkontext);
+        const saveResult: Result<Personenkontext<true>, DomainError> = await this.personenkontextRepo.createAuthorized(
+            newPersonenkontext,
+            permissions,
+        );
+        if (!saveResult.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult.error),
+            );
+        }
 
-        return new DBiamPersonenkontextResponse(savedPersonenkontext);
+        return new DBiamPersonenkontextResponse(saveResult.value);
     }
 }

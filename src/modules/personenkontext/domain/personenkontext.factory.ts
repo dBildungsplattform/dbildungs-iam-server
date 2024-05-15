@@ -3,7 +3,6 @@ import { OrganisationID, PersonID, RolleID } from '../../../shared/types/aggrega
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
 
 @Injectable()
@@ -12,7 +11,6 @@ export class PersonenkontextFactory {
         private readonly personRepo: PersonRepository,
         private readonly organisationRepo: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
-        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
     ) {}
 
     public construct<WasPersisted extends boolean = false>(
@@ -27,7 +25,6 @@ export class PersonenkontextFactory {
             this.personRepo,
             this.organisationRepo,
             this.rolleRepo,
-            this.personenkontextRepo,
             id,
             createdAt,
             updatedAt,
@@ -42,7 +39,6 @@ export class PersonenkontextFactory {
             this.personRepo,
             this.organisationRepo,
             this.rolleRepo,
-            this.personenkontextRepo,
             personId,
             organisationId,
             rolleId,

@@ -8,6 +8,7 @@ import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { PersonenkontextFactory } from './personenkontext.factory.js';
 
 export class PersonenkontextAnlage {
     public organisationId?: string;
@@ -18,14 +19,16 @@ export class PersonenkontextAnlage {
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepo,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
     public static createNew(
         rolleRepo: RolleRepo,
         organisationRepo: OrganisationRepo,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        personenkontextFactory: PersonenkontextFactory,
     ): PersonenkontextAnlage {
-        return new PersonenkontextAnlage(rolleRepo, organisationRepo, dBiamPersonenkontextRepo);
+        return new PersonenkontextAnlage(rolleRepo, organisationRepo, dBiamPersonenkontextRepo, personenkontextFactory);
     }
 
     // Function to filter organisations, so that only organisations are shown in "new user" dialog, which makes sense regarding the selected rolle.
@@ -147,7 +150,7 @@ export class PersonenkontextAnlage {
         const isValid: Result<boolean, PersonenkontextAnlageError> = await this.validieren();
         if (!isValid.ok) return { ok: false, error: isValid.error };
 
-        const personenkontext: Personenkontext<false> = Personenkontext.createNew(
+        const personenkontext: Personenkontext<false> = this.personenkontextFactory.createNew(
             personId,
             this.organisationId,
             this.rolleId,
