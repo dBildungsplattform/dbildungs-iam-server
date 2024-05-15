@@ -1,10 +1,11 @@
 import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { Person } from '../../person/domain/person.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 
@@ -25,6 +26,13 @@ type RolleFields = Pick<Rolle<true>, 'systemrechte' | 'serviceProviderIds'>;
 export type PersonenkontextRolleFields = {
     organisationsId: OrganisationID;
     rolle: RolleFields;
+};
+
+export type PersonenkontextOrgaAndRolleFields = {
+    organisationsId: OrganisationID;
+    organisationsTyp: OrganisationsTyp | undefined;
+    rolleId: RolleID;
+    rollenArt: RollenArt;
 };
 
 export class PersonPermissions {
@@ -132,5 +140,35 @@ export class PersonPermissions {
 
     public get personFields(): PersonFields {
         return this.cachedPersonFields;
+    }
+
+    public async getOrganisationsAndRolesBySystemRecht(
+        systemRecht: RollenSystemRecht,
+    ): Promise<PersonenkontextOrgaAndRolleFields[]> {
+        const personenkontexte: Personenkontext<true>[] = await this.personenkontextRepo.findByPerson(
+            this.personFields.id,
+        );
+
+        const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(
+            personenkontexte.map((pk: Personenkontext<true>) => pk.rolleId),
+        );
+
+        const organisationsAndRolleFields: PersonenkontextOrgaAndRolleFields[] = [];
+
+        for (const pk of personenkontexte) {
+            const rolle: Rolle<true> | undefined = rollen.get(pk.rolleId);
+            if (rolle && rolle.hasSystemRecht(systemRecht)) {
+                const organisation = await this.organisationRepo.findById(pk.organisationId);
+
+                organisationsAndRolleFields.push({
+                    organisationsId: pk.organisationId,
+                    organisationsTyp: organisation?.typ,
+                    rolleId: pk.rolleId,
+                    rollenArt: rolle.rollenart,
+                });
+            }
+        }
+
+        return organisationsAndRolleFields;
     }
 }

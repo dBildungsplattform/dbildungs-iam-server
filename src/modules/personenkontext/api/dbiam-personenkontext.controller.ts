@@ -83,7 +83,6 @@ export class DBiamPersonenkontextController {
             params.organisationId,
             params.rolleId,);
 
-
         if (newPersonenkontext instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(newPersonenkontext),

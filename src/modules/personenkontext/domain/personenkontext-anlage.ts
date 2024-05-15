@@ -6,11 +6,11 @@ import { OrganisationRepo } from '../../organisation/persistence/organisation.re
 import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { DBiamPersonenkontextService } from './dbiam-personenkontext.service.js';
-import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonenkontextOrgaAndRolleFields } from '../../authentication/domain/person-permissions.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 export class PersonenkontextAnlage {
     public organisationId?: string;
@@ -39,19 +39,6 @@ export class PersonenkontextAnlage {
             personRepo,
             dbiamPersonenkontextService,
         );
-    }
-
-    // Function to filter organisations, so that only organisations are shown in "new user" dialog, which makes sense regarding the selected rolle.
-    private organisationMatchesRollenart(organisation: OrganisationDo<true>, rolle: Rolle<true>): boolean {
-        if (rolle.rollenart === RollenArt.SYSADMIN)
-            return organisation.typ === OrganisationsTyp.LAND || organisation.typ === OrganisationsTyp.ROOT;
-        if (rolle.rollenart === RollenArt.LEIT) return organisation.typ === OrganisationsTyp.SCHULE;
-        if (rolle.rollenart === RollenArt.LERN)
-            return organisation.typ === OrganisationsTyp.SCHULE || organisation.typ === OrganisationsTyp.KLASSE;
-        if (rolle.rollenart === RollenArt.LEHR)
-            return organisation.typ === OrganisationsTyp.SCHULE || organisation.typ === OrganisationsTyp.KLASSE;
-
-        return true;
     }
 
     public async findSchulstrukturknoten(
@@ -89,7 +76,9 @@ export class PersonenkontextAnlage {
             orgas = orgas.filter((ssk: OrganisationDo<true>) => ssk.typ !== OrganisationsTyp.KLASSE);
         }
 
-        orgas = orgas.filter((orga: OrganisationDo<true>) => this.organisationMatchesRollenart(orga, rolleResult));
+        orgas = orgas.filter((orga: OrganisationDo<true>) =>
+            this.dbiamPersonenkontextService.organisationMatchesRollenart(orga.typ, rolleResult.rollenart),
+        );
 
         return orgas.slice(0, limit);
     }
@@ -183,52 +172,24 @@ export class PersonenkontextAnlage {
         return { ok: true, value: createdPersonenkontext };
     }
 
-    //TODO: die Methode organisationMatchesRollenart() für die Filterung verwenden
-    public async findRollenArtBasedOnCurrentUserRollen(
-        rolleIds: RolleID[],
-        rollen: Rolle<true>[],
-    ): Promise<Rolle<true>[]> {
-        const ssks: OrganisationDo<true>[] = [];
-
-        for (const rolleId of rolleIds) {
-            ssks.concat(await this.findSchulstrukturknoten(rolleId, ''));
-        }
-
-        ssks.map((ssk: OrganisationDo<true>) => {
-            console.log(ssk.name);
-        });
-        const organisationsTypes: (OrganisationsTyp | undefined)[] = ssks.map(
-            (organisationDo: OrganisationDo<true>) => organisationDo.typ,
+    public async filterRollenBasedOnSchulstrukturknoten(schulstrukturknoten: PersonenkontextOrgaAndRolleFields[], rolleName?: string): Promise<Rolle<true>[]>{
+        //Default Rollen
+        const rollen: Option<Rolle<true>[]> = await this.rolleRepo.findByRollenArten([RollenArt.LEHR, RollenArt.LERN]);
+        if (!rollen) return [];
+        //Die Rollen des Admins
+        const adminRollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(
+            schulstrukturknoten.map((ssk) => ssk.rolleId),
         );
-
-
-        let rollenArten: RollenArt[] = [];
-        const result: Rolle<true>[] = [];
-
-        if ((organisationsTypes && organisationsTypes.includes(OrganisationsTyp.LAND)) ||
-            organisationsTypes.includes(OrganisationsTyp.ROOT)) {
-            rollenArten = [
-                RollenArt.SYSADMIN,
-                RollenArt.LEIT,
-                RollenArt.ORGADMIN,
-                RollenArt.EXTERN,
-                RollenArt.LEHR,
-                RollenArt.LERN,
-            ];
-        } else {
-            if (organisationsTypes && organisationsTypes.includes(OrganisationsTyp.SCHULE))
-                rollenArten = [RollenArt.LEIT, RollenArt.EXTERN, RollenArt.LEHR, RollenArt.LERN];
-        }
-
-        rollenArten.forEach(function (ra) {
-            console.log(ra);
-            const rolleFound: Rolle<true> | undefined = rollen.find((rolle: Rolle<true>) => rolle.rollenart === ra);
-            if (rolleFound != undefined){
-                console.log(rolleFound);
-                result.push(rolleFound);
-            }
+        adminRollen.forEach(function (adminRolle: Rolle<true>) {
+            rollen.push(adminRolle);
         });
 
-        return result;
+        //Duplicates löschen
+        //Sort & Filter nach Rollennamen & Limit
+        if (rolleName) {
+            return rollen.filter((rolle: Rolle<true>) => rolle.name.includes(rolleName));
+        }
+
+        return rollen;
     }
 }
