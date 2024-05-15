@@ -18,9 +18,6 @@ describe('PersonenkontextExceptionFilter', () => {
     const generalBadRequestError: DbiamPersonenkontextError = new DbiamPersonenkontextError({
         code: 500,
         i18nKey: PersonenkontextSpecificationErrorI18nTypes.PERSONENKONTEXT_SPECIFICATION_ERROR,
-        titel: 'Spezifikation von Personenkontext nicht erfüllt',
-        beschreibung:
-            'Eine Spezifikation für einen Personenkontext wurde nicht erfüllt, der Fehler konnte jedoch nicht zugeordnet werden.',
     });
 
     beforeEach(() => {

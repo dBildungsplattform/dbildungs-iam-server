@@ -20,8 +20,6 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 400,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.KENNUNG_REQUIRED_FOR_SCHULE,
-                titel: 'Fehlerhafte Anfrage',
-                beschreibung: 'Das Feld kennung darf nicht leer sein, wenn der Organisationstyp SCHULE ist.',
             }),
         ],
         [
@@ -29,8 +27,6 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 400,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.SCHULE_UNTER_TRAEGER,
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Schulen können nur Trägern zugeordnet / von Trägern administriert werden.',
             }),
         ],
         [
@@ -38,8 +34,6 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 400,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.TRAEGER_IN_TRAEGER,
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Träger können nur Trägern zugeordnet / von diesen administriert werden.',
             }),
         ],
         [
@@ -47,8 +41,6 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 400,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.NUR_KLASSE_UNTER_SCHULE,
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Nur Klassen und Kurse können zugehörig sein oder administriert werden von Schulen.',
             }),
         ],
         [
@@ -56,9 +48,6 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 400,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.ZYKLUS_IN_ORGANISATION,
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung:
-                    'Die administriertVon- oder zugehörigZu-Beziehung kann nicht erstellt werden, da keine Zyklen erlaubt sind.',
             }),
         ],
         [
@@ -66,8 +55,6 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 400,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.ROOT_ORGANISATION_IMMUTABLE,
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Die Root-Organisation ist bzgl. administriertVon und zugehörigZu unveränderlich.',
             }),
         ],
         [
@@ -75,8 +62,6 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 400,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.KLASSE_NUR_VON_SCHULE_ADMINISTRIERT,
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Eine Klasse kann nur von einer Schule administriert werden.',
             }),
         ],
         [
@@ -84,8 +69,6 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 400,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.KLASSEN_NAME_AN_SCHULE_EINDEUTIG,
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Der Klassen-Name muss pro Schule eindeutig sein.',
             }),
         ],
     ]);
@@ -107,9 +90,6 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 500,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.ORGANISATION_SPECIFICATION_ERROR,
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung:
-                    'Eine Spezifikation für eine Organisation wurde nicht erfüllt, der Fehler konnte jedoch nicht zugeordnet werden.',
             })
         );
     }

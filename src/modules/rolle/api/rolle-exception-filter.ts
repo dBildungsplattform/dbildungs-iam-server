@@ -13,8 +13,6 @@ export class RolleExceptionFilter implements ExceptionFilter<RolleApiError> {
             new DbiamRolleError({
                 code: 500,
                 i18nKey: RolleErrorI18nTypes.ADD_SYSTEM_RECHT_ERROR,
-                titel: 'Fehler beim Anpassen der Rolle',
-                beschreibung: 'Systemrecht konnte Rolle nicht hinzugefügt werden.',
             }),
         ],
     ]);
@@ -36,9 +34,6 @@ export class RolleExceptionFilter implements ExceptionFilter<RolleApiError> {
             new DbiamRolleError({
                 code: 500,
                 i18nKey: RolleErrorI18nTypes.ROLLE_ERROR,
-                titel: 'Fehler beim Erstellen oder Anpassen einer Rolle',
-                beschreibung:
-                    'Die Rolle konnte nicht erstellt oder angepasst werden, der Fehler konnte jedoch nicht zugeordnet werden.',
             })
         );
     }

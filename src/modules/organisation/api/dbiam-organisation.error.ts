@@ -19,7 +19,7 @@ export type DbiamOrganisationErrorProps = DbiamErrorProps & {
 
 export class DbiamOrganisationError extends DbiamError {
     @ApiProperty({ enum: OrganisationSpecificationErrorI18nTypes })
-    public readonly i18nKey: string;
+    public override readonly i18nKey: string;
 
     public constructor(props: DbiamOrganisationErrorProps) {
         super(props);

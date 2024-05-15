@@ -15,9 +15,6 @@ describe('RolleExceptionFilter', () => {
     const generalBadRequestError: DbiamRolleError = new DbiamRolleError({
         code: 500,
         i18nKey: RolleErrorI18nTypes.ROLLE_ERROR,
-        titel: 'Fehler beim Erstellen oder Anpassen einer Rolle',
-        beschreibung:
-            'Die Rolle konnte nicht erstellt oder angepasst werden, der Fehler konnte jedoch nicht zugeordnet werden.',
     });
 
     beforeEach(() => {

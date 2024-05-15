@@ -12,7 +12,7 @@ export type DbiamRolleErrorProps = DbiamErrorProps & {
 
 export class DbiamRolleError extends DbiamError {
     @ApiProperty({ enum: RolleErrorI18nTypes })
-    public readonly i18nKey: string;
+    public override readonly i18nKey: string;
 
     public constructor(props: DbiamRolleErrorProps) {
         super(props);

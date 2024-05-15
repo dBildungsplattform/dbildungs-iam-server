@@ -15,9 +15,6 @@ describe('OrganisationExceptionFilter', () => {
     const generalBadRequestError: DbiamOrganisationError = new DbiamOrganisationError({
         code: 500,
         i18nKey: OrganisationSpecificationErrorI18nTypes.ORGANISATION_SPECIFICATION_ERROR,
-        titel: 'Spezifikation von Organisation nicht erfüllt',
-        beschreibung:
-            'Eine Spezifikation für eine Organisation wurde nicht erfüllt, der Fehler konnte jedoch nicht zugeordnet werden.',
     });
 
     beforeEach(() => {

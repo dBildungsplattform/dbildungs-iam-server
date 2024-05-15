@@ -17,8 +17,6 @@ export class PersonenkontextExceptionFilter implements ExceptionFilter<Personenk
             new DbiamPersonenkontextError({
                 code: 400,
                 i18nKey: PersonenkontextSpecificationErrorI18nTypes.NUR_LEHR_UND_LERN_AN_KLASSE,
-                titel: 'Spezifikation von Personenkontext nicht erfüllt',
-                beschreibung: 'Nur Lehrer und Lernende können Klassen zugeordnet werden.',
             }),
         ],
         [
@@ -26,9 +24,6 @@ export class PersonenkontextExceptionFilter implements ExceptionFilter<Personenk
             new DbiamPersonenkontextError({
                 code: 400,
                 i18nKey: PersonenkontextSpecificationErrorI18nTypes.GLEICHE_ROLLE_AN_KLASSE_WIE_SCHULE,
-                titel: 'Spezifikation von Personenkontext nicht erfüllt',
-                beschreibung:
-                    'Die Rollenart der Person muss für die Klasse dieselbe sein wie an der zugehörigen Schule.',
             }),
         ],
     ]);
@@ -50,9 +45,6 @@ export class PersonenkontextExceptionFilter implements ExceptionFilter<Personenk
             new DbiamPersonenkontextError({
                 code: 500,
                 i18nKey: PersonenkontextSpecificationErrorI18nTypes.PERSONENKONTEXT_SPECIFICATION_ERROR,
-                titel: 'Spezifikation von Personenkontext nicht erfüllt',
-                beschreibung:
-                    'Eine Spezifikation für einen Personenkontext wurde nicht erfüllt, der Fehler konnte jedoch nicht zugeordnet werden.',
             })
         );
     }

@@ -12,7 +12,7 @@ export type DbiamPersonenkontextErrorProps = DbiamErrorProps & {
 
 export class DbiamPersonenkontextError extends DbiamError {
     @ApiProperty({ enum: PersonenkontextSpecificationErrorI18nTypes })
-    public readonly i18nKey: string;
+    public override readonly i18nKey: string;
 
     public constructor(props: DbiamPersonenkontextErrorProps) {
         super(props);
