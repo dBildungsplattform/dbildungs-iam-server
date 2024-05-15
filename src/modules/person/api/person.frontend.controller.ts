@@ -73,7 +73,7 @@ export class PersonFrontendController {
                 geburtsdatum: undefined,
                 organisationen: organisationIDs,
             })
-            .findByPersonenKontext(queryParams.organisationID, queryParams.rolleID)
+            .findByPersonenKontext(queryParams.organisationIDs, queryParams.rolleIDs)
             .sortBy('vorname', ScopeOrder.ASC)
             .paged(queryParams.offset, queryParams.limit);
 

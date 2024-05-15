@@ -53,9 +53,9 @@ export class PersonenQueryParams extends PagedQueryParams {
         required: false,
         nullable: true,
         isArray: true,
-        description: 'Organisation ID used to filter for Persons.',
+        description: 'List of Organisation ID used to filter for Persons.',
     })
-    public readonly organisationID?: string[];
+    public readonly organisationIDs?: string[];
 
     @AutoMap()
     @IsOptional()
@@ -66,9 +66,9 @@ export class PersonenQueryParams extends PagedQueryParams {
         required: false,
         nullable: true,
         isArray: true,
-        description: 'Role ID used to filter for Persons.',
+        description: 'List of Role ID used to filter for Persons.',
     })
-    public readonly rolleID?: string[];
+    public readonly rolleIDs?: string[];
 
     @AutoMap()
     @IsString()
