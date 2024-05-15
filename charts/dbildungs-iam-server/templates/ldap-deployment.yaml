@@ -18,7 +18,6 @@ spec:
         {{- include "common.labels" . | nindent 8 }}
         app.kubernetes.io/component: server-ldap
     spec:
-      automountServiceAccountToken: false
       containers:
         - name: openldap
           image: "{{ .Values.ldap.image.repository }}:{{ .Values.ldap.image.tag }}"
@@ -53,6 +52,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}-ldap
+      automountServiceAccountToken: false
       volumes:
         - name: ldif-volume
           configMap:
