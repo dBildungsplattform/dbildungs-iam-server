@@ -65,6 +65,8 @@ You can also use another profile, if you want to initialize the db while startin
 * Configuration conventions can be found [here](./docs/config.md)
 * Authentication guides can be found [here](./docs/auth.md)
 * Developer notes can be found [here](./docs/developer-notes.md)
+* Seeding notes can be found [here](./docs/seeding.md)
+* Migration nodes can be found [here](./docs/migration.md)
 
 ## Testing Guides
 * Help on how to test API with Insomnia can be found at [API manuell lokal testen mit Insomnia](./docs/test-api-with-insomnia.md)
