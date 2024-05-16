@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseFilters } from '@nestjs/common';
+import { Controller, Get, Query, UnauthorizedException, UseFilters } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
@@ -57,23 +57,30 @@ export class PersonFrontendController {
             true,
         );
 
+        if (!organisationIDs || organisationIDs.length === 0) {
+            throw new UnauthorizedException('NOT_AUTHORIZED');
+        }
+
         // Check if user has permission on root organisation
         if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
             organisationIDs = undefined;
         }
 
         const scope: PersonScope = new PersonScope()
+            .setScopeWhereOperator(ScopeOperator.AND)
             .findBy({
-                vorname: undefined,
-                familienname: undefined,
+                vorname: queryParams.vorname,
+                familienname: queryParams.familienname,
                 geburtsdatum: undefined,
                 organisationen: organisationIDs,
             })
+            .findByPersonenKontext(queryParams.organisationIDs, queryParams.rolleIDs)
+
             .sortBy('vorname', ScopeOrder.ASC)
             .paged(queryParams.offset, queryParams.limit);
 
         if (queryParams.suchFilter) {
-            scope.findBySearchString(queryParams.suchFilter).setScopeWhereOperator(ScopeOperator.AND);
+            scope.findBySearchString(queryParams.suchFilter);
         }
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
