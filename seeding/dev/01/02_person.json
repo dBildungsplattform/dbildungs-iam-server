@@ -128,6 +128,18 @@
             "password": "test",
             "vorname": "Sönke",
             "familienname": "Büsing-Preuss"
+        },
+        {
+            "id": 18,
+            "password": "test",
+            "vorname": "Mia",
+            "familienname": "Claßen"
+        },
+        {
+            "id": 19,
+            "password": "test",
+            "vorname": "Heinrich",
+            "familienname": "Heinzmann"
         }
     ]
 }
