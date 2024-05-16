@@ -12,7 +12,7 @@ export class RolleExceptionFilter implements ExceptionFilter<RolleApiError> {
             AddSystemrechtError.name,
             new DbiamRolleError({
                 code: 500,
-                i18nKey: RolleErrorI18nTypes.ADD_SYSTEM_RECHT_ERROR,
+                i18nKey: RolleErrorI18nTypes.ADD_SYSTEMRECHT_ERROR,
             }),
         ],
     ]);

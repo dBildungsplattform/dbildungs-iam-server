@@ -3,7 +3,7 @@ import { DbiamError, DbiamErrorProps } from '../../../shared/error/dbiam.error.j
 
 export enum RolleErrorI18nTypes {
     ROLLE_ERROR = 'ROLLE_ERROR',
-    ADD_SYSTEM_RECHT_ERROR = 'ADD_SYSTEM_RECHT_ERROR',
+    ADD_SYSTEMRECHT_ERROR = 'ADD_SYSTEMRECHT_ERROR',
 }
 
 export type DbiamRolleErrorProps = DbiamErrorProps & {
