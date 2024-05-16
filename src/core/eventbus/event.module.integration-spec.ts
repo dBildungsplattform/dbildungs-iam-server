@@ -16,22 +16,24 @@ class TestEvent extends BaseEvent {
 
 @Injectable()
 class TestProvider {
+    // Makes sure that TestProvider and TestController can not be confused by jest
+    public readonly MARKER: symbol = Symbol();
+
     @EventHandler(TestEvent)
     public handleEvent(event: TestEvent): void {
         event.mockCallback(this);
     }
-
-    public undecoratedMethod(): void {}
 }
 
 @Controller({})
 class TestController {
+    // Makes sure that TestProvider and TestController can not be confused by jest
+    public readonly MARKER: symbol = Symbol();
+
     @EventHandler(TestEvent)
     public handleEvent(event: TestEvent): void {
         event.mockCallback(this);
     }
-
-    public undecoratedMethod(): void {}
 }
 
 describe('EventModule (integration test)', () => {
