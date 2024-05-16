@@ -4,3 +4,8 @@ export type LdapPersonEntry = {
     mail: string[];
     objectclass: string[];
 };
+
+export type LdapOrganisationEntry = {
+    ou: string;
+    objectclass: string[];
+};
