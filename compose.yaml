@@ -76,3 +76,33 @@ services:
       - source: 'config'
         target: '/app/config'
         type: bind
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: openldap
+    command: --copy-service --loglevel debug
+    ports:
+      - 389:389
+      - 636:636
+    volumes:
+      - ./config/ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom
+    environment:
+      - LDAP_ORGANISATION=spsh-de
+      - LDAP_DOMAIN=schule-sh.de
+      - LDAP_BASE_DN=dc=schule-sh,dc=de
+      - LDAP_ADMIN_PASSWORD=admin
+      - LDAP_CONFIG_PASSWORD=config
+      - LDAP_RFC2307BIS_SCHEMA=true
+      - LDAP_REMOVE_CONFIG_AFTER_SETUP=true
+      - LDAP_TLS_VERIFY_CLIENT=never
+  openldap-admin:
+    image: osixia/phpldapadmin:0.9.0
+    container_name: ldap-admin
+    restart: "no"
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: openldap
+      PHPLDAPADMIN_HTTPS: "false"
+    depends_on:
+      - openldap
+    ports:
+      - 9007:80
+      - 4443:443
