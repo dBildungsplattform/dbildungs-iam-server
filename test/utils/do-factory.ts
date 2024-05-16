@@ -93,7 +93,7 @@ export class DoFactory {
             personId: faker.string.uuid(),
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
-            organisation: DoFactory.createOrganisation(true),
+            organisationId: faker.string.uuid(),
             revision: '1',
             rolle: Rolle.LEHRENDER,
             jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,

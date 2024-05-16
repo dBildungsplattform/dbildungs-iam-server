@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ldap
+  name: ldap-service
+metadata:
+  name: {{ template "common.names.name" . }}-ldap
+  namespace: {{ template "common.names.namespace" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server-ldap
+spec:
+  selector:
+    {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server-ldap
+  type: {{ .Values.ldap.service.type }}
+  ports:
+    - name: ldap
+      port: {{ .Values.ldap.service.ports.ldap }}
+      protocol: TCP

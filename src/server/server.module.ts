@@ -29,6 +29,8 @@ import { AccessGuard } from '../modules/authentication/api/access.guard.js';
 import { PermissionsInterceptor } from '../modules/authentication/services/permissions.interceptor.js';
 import { PassportModule } from '@nestjs/passport';
 import { EventModule } from '../core/eventbus/index.js';
+import { Client } from 'ldapts';
+import { LdapConfig } from '../shared/config/ldap.config.js';
 
 @Module({
     imports: [
@@ -113,7 +115,7 @@ export class ServerModule implements NestModule {
 
         /*
         Just retrying does not work.
-        Once the connection has failed if no error handler is registered later connection attemps might just fail because
+        Once the connection has failed if no error handler is registered later connection attempts might just fail because
         the client library assumes termination of the process if failure
         Also the documentation expressly requires listening to on('error')
          */
@@ -146,5 +148,26 @@ export class ServerModule implements NestModule {
                 SessionAccessTokenMiddleware,
             )
             .forRoutes('*');
+
+        // configure LDAP connection
+        const ldapConfig: LdapConfig = this.configService.getOrThrow<LdapConfig>('LDAP');
+        const client: Client = new Client({
+            url: ldapConfig.URL,
+        });
+        try {
+            await client.bind(ldapConfig.BIND_DN, ldapConfig.PASSWORD);
+            this.logger.info('Successfully connected to LDAP');
+
+            // For test purposes, is connection working as expected?
+            /*  const entry: LdapPersonEntry = {
+                cn: 'wwhite',
+                sn: 'White',
+                mail: ['walterwhite@walterwhiteltdco.com'],
+                objectclass: ['person', 'inetOrgPerson', 'organizationalPerson'],
+            };
+            await client.add('cn=wwhite,ou=people,dc=example,dc=org', entry);*/
+        } catch (err) {
+            this.logger.error(`Could not connect to LDAP, message: ${JSON.stringify(err)}`);
+        }
     }
 }
