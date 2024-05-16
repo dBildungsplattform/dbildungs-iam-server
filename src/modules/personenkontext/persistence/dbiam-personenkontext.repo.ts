@@ -14,6 +14,8 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { EntityAlreadyExistsError } from '../../../shared/error/entity-already-exists.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
+import { EntityCouldNotBeDeleted } from '../../../shared/error/entity-could-not-be-deleted.error.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
@@ -72,12 +74,7 @@ export class DBiamPersonenkontextRepo {
             };
         }
 
-        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
-            true,
-        );
-
-        if (!organisationIDs.includes(personenkontext.organisationId)) {
+        if (!(await this.canModifyPersonenkontext(personenkontext, permissions))) {
             return {
                 ok: false,
                 error: new MissingPermissionsError('Access denied'),
@@ -207,10 +204,6 @@ export class DBiamPersonenkontextRepo {
             }
         }
 
-        // Permissions
-        {
-        }
-
         const personenKontextEntity: PersonenkontextEntity = this.em.create(
             PersonenkontextEntity,
             mapAggregateToData(personenkontext),
@@ -222,6 +215,36 @@ export class DBiamPersonenkontextRepo {
             ok: true,
             value: mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory),
         };
+    }
+
+    public async deleteAuthorized(
+        id: PersonenkontextID,
+        revision: string,
+        permissions: PersonPermissions,
+    ): Promise<Option<DomainError>> {
+        const personenkontext: Option<PersonenkontextEntity> = await this.em.findOne(PersonenkontextEntity, {
+            id,
+        });
+
+        if (!personenkontext) {
+            return new EntityNotFoundError('Personenkontext', id);
+        }
+
+        if (!(await this.canModifyPersonenkontext(personenkontext, permissions))) {
+            return new MissingPermissionsError('Access denied');
+        }
+
+        if (personenkontext.revision !== revision) {
+            return new MismatchedRevisionError('Personenkontext');
+        }
+
+        const deletedCount: number = await this.em.nativeDelete(PersonenkontextEntity, { id });
+
+        if (deletedCount === 0) {
+            return new EntityCouldNotBeDeleted('Personenkontext', id);
+        }
+
+        return undefined;
     }
 
     private async create(personenKontext: Personenkontext<false>): Promise<Personenkontext<true>> {
@@ -245,5 +268,17 @@ export class DBiamPersonenkontextRepo {
         await this.em.persistAndFlush(personenKontextEntity);
 
         return mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory);
+    }
+
+    private async canModifyPersonenkontext(
+        entity: PersonenkontextEntity,
+        permissions: PersonPermissions,
+    ): Promise<boolean> {
+        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            true,
+        );
+
+        return organisationIDs.includes(entity.organisationId);
     }
 }
