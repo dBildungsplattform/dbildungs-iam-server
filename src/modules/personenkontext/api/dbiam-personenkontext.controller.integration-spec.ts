@@ -26,6 +26,8 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -74,6 +76,8 @@ describe('dbiam Personenkontext API', () => {
                 PersonRepo,
                 OrganisationRepo,
                 RolleRepo,
+                RolleFactory,
+                ServiceProviderRepo,
             ],
         }).compile();
 

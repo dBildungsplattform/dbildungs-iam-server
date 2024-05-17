@@ -22,13 +22,16 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { PersonRepo } from '../../person/persistence/person.repo.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
+    personenkontextFactory: PersonenkontextFactory,
     withId: WasPersisted,
     params: Partial<Personenkontext<boolean>> = {},
 ): Personenkontext<WasPersisted> {
-    const personenkontext: Personenkontext<WasPersisted> = Personenkontext.construct<boolean>(
+    const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
         withId ? faker.string.uuid() : undefined,
         withId ? faker.date.past() : undefined,
         withId ? faker.date.recent() : undefined,
@@ -51,6 +54,7 @@ describe('PersonenkontextSpecificationsTest', () => {
 
     let personFactory: PersonFactory;
     let personRepo: PersonRepository;
+    let personenkontextFactory: PersonenkontextFactory;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -65,6 +69,7 @@ describe('PersonenkontextSpecificationsTest', () => {
                 PersonRepository,
                 PersonFactory,
                 UsernameGeneratorService,
+                PersonenkontextFactory,
                 {
                     provide: OrganisationRepo,
                     useValue: createMock<OrganisationRepo>(),
@@ -72,6 +77,10 @@ describe('PersonenkontextSpecificationsTest', () => {
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
+                },
+                {
+                    provide: PersonRepo,
+                    useValue: createMock<PersonRepo>(),
                 },
             ],
         })
@@ -126,11 +135,17 @@ describe('PersonenkontextSpecificationsTest', () => {
             if (person instanceof DomainError) {
                 throw person;
             }
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false, { personId: person.id });
-            const foundPersonenkontextDummy: Personenkontext<false> = createPersonenkontext(false, {
-                organisationId: schule.id,
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false, {
                 personId: person.id,
             });
+            const foundPersonenkontextDummy: Personenkontext<false> = createPersonenkontext(
+                personenkontextFactory,
+                false,
+                {
+                    organisationId: schule.id,
+                    personId: person.id,
+                },
+            );
             await personenkontextRepo.save(foundPersonenkontextDummy);
 
             organisationRepoMock.findById.mockResolvedValueOnce(klasse); //mock Klasse

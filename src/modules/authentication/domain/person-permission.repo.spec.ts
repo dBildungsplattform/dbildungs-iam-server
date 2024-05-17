@@ -15,6 +15,8 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { UnauthorizedException } from '@nestjs/common';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 
 describe('PersonPermissionRepo', () => {
     let module: TestingModule;
@@ -29,6 +31,8 @@ describe('PersonPermissionRepo', () => {
                 DBiamPersonenkontextRepo,
                 OrganisationRepo,
                 RolleRepo,
+                PersonRepo,
+                PersonenkontextFactory,
                 {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),

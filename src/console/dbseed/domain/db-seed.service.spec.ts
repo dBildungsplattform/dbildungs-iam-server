@@ -28,6 +28,8 @@ import { DBiamPersonenkontextService } from '../../../modules/personenkontext/do
 import { DbSeedReferenceRepo } from '../repo/db-seed-reference.repo.js';
 import { ServiceProvider } from '../../../modules/service-provider/domain/service-provider.js';
 import { GleicheRolleAnKlasseWieSchuleError } from '../../../modules/personenkontext/specification/error/gleiche-rolle-an-klasse-wie-schule.error.js';
+import { PersonRepo } from '../../../modules/person/persistence/person.repo.js';
+import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -52,6 +54,7 @@ describe('DbSeedService', () => {
                 DbSeedService,
                 RolleFactory,
                 ServiceProviderFactory,
+                PersonenkontextFactory,
                 {
                     provide: DBiamPersonenkontextService,
                     useValue: createMock<DBiamPersonenkontextService>(),
@@ -87,6 +90,10 @@ describe('DbSeedService', () => {
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),
+                },
+                {
+                    provide: PersonRepo,
+                    useValue: createMock<PersonRepo>(),
                 },
             ],
         }).compile();

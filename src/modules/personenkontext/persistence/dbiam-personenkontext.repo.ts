@@ -110,8 +110,11 @@ export class DBiamPersonenkontextRepo {
             PersonenkontextEntity,
             mapAggregateToData(personenKontext),
         );
-
-        await this.em.persistAndFlush(personenKontextEntity);
+        try {
+            await this.em.persistAndFlush(personenKontextEntity);
+        } catch (error: unknown) {
+            console.log(error);
+        }
 
         return mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory);
     }
