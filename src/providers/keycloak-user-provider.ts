@@ -9,7 +9,7 @@ export class KeycloakUserProvider {
 
     @EventHandler(DeleteKeycloakUserEvent)
     public async handleDeleteKeycloakUserEvent(event: DeleteKeycloakUserEvent): Promise<void> {
-        const userId: string = event.userId;
-        await this.kcUserService.delete(userId);
+        const keycloakUserId: string = event.keycloakUserId;
+        await this.kcUserService.delete(keycloakUserId);
     }
 }

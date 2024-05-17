@@ -152,10 +152,23 @@ export class PersonController {
         @Param() params: PersonByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
+        const personResult: Result<Person<true>> = await this.personUc.getPersonIfAllowed(params.personId, permissions);
 
-        // Publish an event to delete the person from Keycloak
-        this.eventService.publish(new DeleteKeycloakUserEvent(params.personId));
+        // Check if the person retrieval was successful
+        if (!personResult.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', params.personId),
+                ),
+            );
+        }
 
+        const person: Person<true> = personResult.value;
+
+        if (person.keycloakUserId) {
+            // Publish an event to delete the person from Keycloak if the person has a keycloakUserId
+            this.eventService.publish(new DeleteKeycloakUserEvent(person.keycloakUserId));
+        } 
         // Then delete all kontexte for the personId
         await this.personenkontextUc.deletePersonenkontexteByPersonId(params.personId);
         // Finally delete the person after all their kontexte were deleted
