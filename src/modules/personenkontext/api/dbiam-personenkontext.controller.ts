@@ -22,6 +22,8 @@ import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personen
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
 import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { CreatePersonenkontextEvent } from '../../../shared/events/create-personenkontext.event.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('dbiam-personenkontexte')
@@ -35,6 +37,7 @@ export class DBiamPersonenkontextController {
         private readonly organisationRepo: OrganisationRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
+        private readonly eventService: EventService,
     ) {}
 
     @Get(':personId')
@@ -114,6 +117,7 @@ export class DBiamPersonenkontextController {
 
         // Save personenkontext
         const savedPersonenkontext: Personenkontext<true> = await this.personenkontextRepo.save(newPersonenkontext);
+        this.eventService.publish(new CreatePersonenkontextEvent(savedPersonenkontext));
 
         return new DBiamPersonenkontextResponse(savedPersonenkontext);
     }

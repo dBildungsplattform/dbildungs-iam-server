@@ -24,6 +24,7 @@ import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { EventService } from '../../../core/eventbus/index.js';
 
 describe('OrganisationController', () => {
     let module: TestingModule;
@@ -44,6 +45,10 @@ describe('OrganisationController', () => {
                 {
                     provide: OrganisationRepository,
                     useValue: createMock<OrganisationRepository>(),
+                },
+                {
+                    provide: EventService,
+                    useValue: createMock<EventService>(),
                 },
             ],
         }).compile();

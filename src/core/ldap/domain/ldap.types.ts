@@ -9,3 +9,9 @@ export type LdapOrganisationEntry = {
     ou: string;
     objectclass: string[];
 };
+
+export type LdapRoleEntry = {
+    cn: string;
+    ou: string;
+    objectclass: string[];
+};
