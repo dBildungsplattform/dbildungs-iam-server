@@ -133,4 +133,16 @@ export class PersonenkontextService {
 
         return { ok: true, value: undefined };
     }
+
+    public async deletePersonenkontexteByPersonId(personId: string): Promise<Result<void, DomainError>> {
+
+        const deletedPersonenkontexte: number = await this.dBiamPersonenkontextRepo.deleteByPerson(personId);
+
+        if (deletedPersonenkontexte === 0) {
+            return { ok: false, error: new EntityCouldNotBeDeleted('Personenkontext', personId) };
+        }
+
+        return { ok: true, value: undefined };
+    }
+
 }

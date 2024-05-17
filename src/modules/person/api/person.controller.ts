@@ -3,6 +3,7 @@ import { getMapperToken } from '@automapper/nestjs';
 import {
     Body,
     Controller,
+    Delete,
     Get,
     HttpCode,
     HttpStatus,
@@ -22,6 +23,7 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiNoContentResponse,
     ApiNotFoundResponse,
     ApiOAuth2,
     ApiOkResponse,
@@ -131,6 +133,33 @@ export class PersonController {
         }
 
         return new PersonendatensatzResponse(result, true);
+    }
+
+    @Delete(':personId')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiNoContentResponse({
+        description: 'The person and all their kontexte were successfully deleted.',
+    })
+    @ApiBadRequestResponse({ description: 'Request has wrong format.' })
+    @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
+    @ApiNotFoundResponse({ description: 'The person was not found.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
+    @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
+    public async deletePersonById(
+        @Param() params: PersonByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+
+        // First delete all kontexte for the personId
+        await this.personenkontextUc.deletePersonenkontexteByPersonId(params.personId);
+        // Delete the person after all their kontexte were deleted
+        const response: Result<void, DomainError> = await this.personUc.deletePersonIfAllowed(
+            params.personId,
+            permissions,
+        );
+        if (response instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
+        }
     }
 
     @Get(':personId')

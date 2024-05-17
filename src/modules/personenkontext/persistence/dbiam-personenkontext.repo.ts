@@ -43,6 +43,14 @@ export class DBiamPersonenkontextRepo {
         return personenKontexte.map(mapEntityToAggregate);
     }
 
+    public async deleteByPerson(personId: PersonID): Promise<number> {
+        const deletedPersonenkontexte: number = await this.em.nativeDelete(PersonenkontextEntity, {
+            personId,
+        });
+
+        return deletedPersonenkontexte;
+    }
+
     public async findByPersonIds(personIds: PersonID[]): Promise<Map<PersonID, Personenkontext<true>[]>> {
         const personenKontextEntities: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
             personId: { $in: personIds },

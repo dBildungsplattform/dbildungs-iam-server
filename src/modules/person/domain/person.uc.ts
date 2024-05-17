@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityCouldNotBeDeleted, EntityNotFoundError } from '../../../shared/error/index.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -31,6 +31,27 @@ export class PersonUc {
         if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
 
         return { ok: true, value: person };
+    }
+
+    public async deletePersonIfAllowed(
+        personId: string,
+        permissions: PersonPermissions,
+    ): Promise<Result<void, DomainError>> {
+        const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions);
+        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+
+        const [persons]: Counted<Person<true>> = await this.personRepository.findBy(scope);
+        const person: Person<true> | undefined = persons[0];
+
+        if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
+
+        const deletedPerson: number = await this.personRepository.delete(person);
+
+        if (deletedPerson === 0) {
+            return { ok: false, error: new EntityCouldNotBeDeleted('PersonEntity', person.id) };
+        }
+
+        return { ok: true, value: undefined };
     }
 
     public async getPersonScopeWithPermissions(permissions: PersonPermissions): Promise<PersonScope> {

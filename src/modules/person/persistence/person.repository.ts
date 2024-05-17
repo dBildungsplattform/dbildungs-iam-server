@@ -118,6 +118,12 @@ export class PersonRepository {
         return mapEntityToAggregateInplace(personEntity, personWithKeycloakUser);
     }
 
+    public async delete(person: Person<true>): Promise<number> {
+        const deletedPersons: number = await this.em.nativeDelete(PersonEntity, person.id);
+
+        return deletedPersons;
+    }
+
     public async update(person: Person<true>): Promise<Person<true> | DomainError> {
         const personEntity: Loaded<PersonEntity> = await this.em.findOneOrFail(PersonEntity, person.id);
 
