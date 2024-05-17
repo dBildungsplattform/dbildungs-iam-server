@@ -1,32 +1,45 @@
-import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
-import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
+import {
+    OrganisationsTyp,
+    OrganisationsTypName,
+    Traegerschaft,
+    TraegerschaftTypName,
+} from '../domain/organisation.enums.js';
+import { Organisation } from '../domain/organisation.js';
 
 export class OrganisationResponse {
-    @AutoMap()
     @ApiProperty()
     public readonly id!: string;
 
-    @AutoMap()
-    @ApiProperty()
+    @ApiProperty({ nullable: true })
+    public readonly administriertVon?: string;
+
+    @ApiProperty({ nullable: true })
     public readonly kennung?: string;
 
-    @AutoMap()
     @ApiProperty()
     public readonly name!: string;
 
-    @AutoMap()
-    @ApiProperty()
+    @ApiProperty({ nullable: true })
     public readonly namensergaenzung?: string;
 
-    @AutoMap()
     @ApiProperty()
     public readonly kuerzel?: string;
 
-    @AutoMap(() => String)
-    @ApiProperty({ enum: OrganisationsTyp })
+    @ApiProperty({ enum: OrganisationsTyp, enumName: OrganisationsTypName })
     public readonly typ!: OrganisationsTyp;
 
-    @AutoMap(() => String)
+    @ApiProperty({ enum: Traegerschaft, enumName: TraegerschaftTypName })
     public traegerschaft?: Traegerschaft;
+
+    public constructor(organisation: Organisation<true>) {
+        this.id = organisation.id;
+        this.administriertVon = organisation.administriertVon;
+        this.kennung = organisation.kennung;
+        this.name = organisation.name!;
+        this.namensergaenzung = organisation.namensergaenzung;
+        this.kuerzel = organisation.kuerzel;
+        this.typ = organisation.typ!;
+        this.traegerschaft = organisation.traegerschaft;
+    }
 }

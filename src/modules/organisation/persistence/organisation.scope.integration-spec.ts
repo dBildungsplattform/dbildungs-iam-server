@@ -15,6 +15,7 @@ import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationDo } from '../domain/organisation.do.js';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { OrganisationsTyp } from '../domain/organisation.enums.js';
 
 describe('OrganisationScope', () => {
     let module: TestingModule;
@@ -35,6 +36,7 @@ describe('OrganisationScope', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
+        await orm.close();
         await module.close();
     });
 
@@ -65,6 +67,39 @@ describe('OrganisationScope', () => {
                 const [organisations, total]: Counted<OrganisationEntity> = await scope.executeQuery(em);
 
                 expect(total).toBe(11);
+                expect(organisations).toHaveLength(6);
+            });
+        });
+    });
+
+    describe('excludeTyp', () => {
+        describe('when excluding organisation types', () => {
+            beforeEach(async () => {
+                const organisations: OrganisationEntity[] = mapper.mapArray(
+                    [
+                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.ROOT }),
+                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.LAND }),
+                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.TRAEGER }),
+                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.KLASSE }),
+                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.ANBIETER }),
+                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SONSTIGE }),
+                        DoFactory.createOrganisation(false, { typ: OrganisationsTyp.UNBEST }),
+                    ],
+                    OrganisationDo,
+                    OrganisationEntity,
+                );
+
+                await em.persistAndFlush(organisations);
+            });
+
+            it('should return found organizations', async () => {
+                const scope: OrganisationScope = new OrganisationScope()
+                    .excludeTyp([OrganisationsTyp.SCHULE, OrganisationsTyp.TRAEGER])
+                    .sortBy('name', ScopeOrder.ASC);
+
+                const [organisations]: Counted<OrganisationEntity> = await scope.executeQuery(em);
+
                 expect(organisations).toHaveLength(6);
             });
         });

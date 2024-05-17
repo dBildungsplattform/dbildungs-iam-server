@@ -10,20 +10,26 @@ import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
-import { FindOrganisationDto } from './find-organisation.dto.js';
 import { OrganisationApiMapperProfile } from './organisation-api.mapper.profile.js';
 import { OrganisationByIdParams } from './organisation-by-id.params.js';
 import { OrganisationController } from './organisation.controller.js';
-import { OrganisationResponse } from './organisation.response.js';
+import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { OrganisationUc } from './organisation.uc.js';
 import { UpdateOrganisationBodyParams } from './update-organisation.body.params.js';
 import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js';
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
+import { Organisation } from '../domain/organisation.js';
+import { OrganisationResponse } from './organisation.response.js';
+import { OrganisationScope } from '../persistence/organisation.scope.js';
+import { ScopeOperator } from '../../../shared/persistence/index.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 describe('OrganisationController', () => {
     let module: TestingModule;
     let organisationController: OrganisationController;
     let organisationUcMock: DeepMocked<OrganisationUc>;
+    let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -35,10 +41,15 @@ describe('OrganisationController', () => {
                     provide: OrganisationUc,
                     useValue: createMock<OrganisationUc>(),
                 },
+                {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
+                },
             ],
         }).compile();
         organisationController = module.get(OrganisationController);
         organisationUcMock = module.get(OrganisationUc);
+        organisationRepositoryMock = module.get(OrganisationRepository);
     });
 
     afterAll(async () => {
@@ -140,7 +151,7 @@ describe('OrganisationController', () => {
         const params: OrganisationByIdParams = {
             organisationId: faker.string.uuid(),
         };
-        const response: OrganisationResponse = plainToClass(OrganisationResponse, {
+        const response: OrganisationResponseLegacy = plainToClass(OrganisationResponseLegacy, {
             id: params.organisationId,
             kennung: faker.lorem.word(),
             name: faker.lorem.word(),
@@ -174,61 +185,64 @@ describe('OrganisationController', () => {
     });
 
     describe('findOrganizations', () => {
-        const queryParams: FindOrganisationQueryParams = {
-            kennung: faker.lorem.word(),
-            name: faker.lorem.word(),
-            typ: OrganisationsTyp.SONSTIGE,
-        };
-
         describe('when finding organizations with given query params', () => {
             it('should find all organizations that match', async () => {
-                const organisationDto: FindOrganisationDto = {
-                    kennung: queryParams.kennung,
-                    name: queryParams.name,
-                    typ: queryParams.typ,
+                const queryParams: FindOrganisationQueryParams = {
+                    typ: OrganisationsTyp.SONSTIGE,
+                    searchString: faker.lorem.word(),
+                    systemrechte: [],
                 };
 
-                const response1: OrganisationResponse = {
-                    id: faker.string.uuid(),
-                    kennung: queryParams.kennung ?? faker.lorem.word(),
-                    name: queryParams.name ?? faker.lorem.word(),
-                    namensergaenzung: faker.lorem.word(),
-                    kuerzel: faker.lorem.word(),
-                    typ: queryParams.typ ?? OrganisationsTyp.SONSTIGE,
-                    traegerschaft: Traegerschaft.SONSTIGE,
-                };
+                const mockedRepoResponse: Counted<Organisation<true>> = [
+                    [
+                        {
+                            id: faker.string.uuid(),
+                            createdAt: faker.date.recent(),
+                            updatedAt: faker.date.recent(),
+                            administriertVon: faker.string.uuid(),
+                            zugehoerigZu: faker.string.uuid(),
+                            kennung: faker.lorem.word(),
+                            name: faker.lorem.word(),
+                            namensergaenzung: faker.lorem.word(),
+                            kuerzel: faker.lorem.word(),
+                            typ: OrganisationsTyp.SCHULE,
+                            traegerschaft: Traegerschaft.LAND,
+                        },
+                    ],
+                    1,
+                ];
 
-                const response2: OrganisationResponse = {
-                    id: faker.string.uuid(),
-                    kennung: queryParams.kennung ?? faker.lorem.word(),
-                    name: queryParams.name ?? faker.lorem.word(),
-                    namensergaenzung: faker.lorem.word(),
-                    kuerzel: faker.lorem.word(),
-                    typ: queryParams.typ ?? OrganisationsTyp.SONSTIGE,
-                    traegerschaft: Traegerschaft.SONSTIGE,
-                };
+                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
-                const mockedPagedResponse: Paged<OrganisationResponse> = {
-                    items: [response1, response2],
-                    limit: 10,
-                    offset: 0,
-                    total: 2,
-                };
+                organisationRepositoryMock.findBy.mockResolvedValue(mockedRepoResponse);
 
-                organisationUcMock.findAll.mockResolvedValue(mockedPagedResponse);
+                const result: Paged<OrganisationResponse> = await organisationController.findOrganizations(
+                    queryParams,
+                    permissionsMock,
+                );
 
-                const result: Paged<OrganisationResponse> =
-                    await organisationController.findOrganizations(organisationDto);
+                expect(organisationRepositoryMock.findBy).toHaveBeenCalledTimes(1);
+                expect(organisationRepositoryMock.findBy).toHaveBeenCalledWith(
+                    new OrganisationScope()
+                        .findBy({
+                            kennung: queryParams.kennung,
+                            name: queryParams.name,
+                            typ: queryParams.typ,
+                        })
+                        .setScopeWhereOperator(ScopeOperator.AND)
+                        .searchString(queryParams.searchString)
+                        .byIDs([])
+                        .paged(queryParams.offset, queryParams.limit),
+                );
 
-                expect(result).toEqual(mockedPagedResponse);
-                expect(organisationUcMock.findAll).toHaveBeenCalledTimes(1);
-                expect(result.items.length).toEqual(2);
+                expect(result.items.length).toEqual(1);
             });
         });
     });
 
     describe('getRootOrganisation', () => {
-        const response: OrganisationResponse = plainToClass(OrganisationResponse, {
+        const response: OrganisationResponseLegacy = plainToClass(OrganisationResponseLegacy, {
             id: faker.string.uuid(),
             kennung: faker.lorem.word(),
             name: faker.lorem.word(),
@@ -264,7 +278,7 @@ describe('OrganisationController', () => {
 
         describe('when usecase returns a OrganisationResponse', () => {
             it('should return all organizations that match', async () => {
-                const response1: OrganisationResponse = {
+                const response1: OrganisationResponseLegacy = {
                     id: faker.string.uuid(),
                     kennung: faker.lorem.word(),
                     name: faker.lorem.word(),
@@ -273,7 +287,7 @@ describe('OrganisationController', () => {
                     typ: OrganisationsTyp.SONSTIGE,
                 };
 
-                const response2: OrganisationResponse = {
+                const response2: OrganisationResponseLegacy = {
                     id: faker.string.uuid(),
                     kennung: faker.lorem.word(),
                     name: faker.lorem.word(),
@@ -282,7 +296,7 @@ describe('OrganisationController', () => {
                     typ: OrganisationsTyp.SONSTIGE,
                 };
 
-                const mockedPagedResponse: Paged<OrganisationResponse> = {
+                const mockedPagedResponse: Paged<OrganisationResponseLegacy> = {
                     items: [response1, response2],
                     limit: 10,
                     offset: 0,
@@ -291,7 +305,7 @@ describe('OrganisationController', () => {
 
                 organisationUcMock.findAdministriertVon.mockResolvedValueOnce(mockedPagedResponse);
 
-                const result: Paged<OrganisationResponse> =
+                const result: Paged<OrganisationResponseLegacy> =
                     await organisationController.getAdministrierteOrganisationen(params);
 
                 expect(result).toEqual(mockedPagedResponse);
@@ -319,7 +333,7 @@ describe('OrganisationController', () => {
 
         describe('when usecase returns a OrganisationResponse', () => {
             it('should return all organizations that match', async () => {
-                const response1: OrganisationResponse = {
+                const response1: OrganisationResponseLegacy = {
                     id: faker.string.uuid(),
                     kennung: faker.lorem.word(),
                     name: faker.lorem.word(),
@@ -328,7 +342,7 @@ describe('OrganisationController', () => {
                     typ: OrganisationsTyp.SONSTIGE,
                 };
 
-                const response2: OrganisationResponse = {
+                const response2: OrganisationResponseLegacy = {
                     id: faker.string.uuid(),
                     kennung: faker.lorem.word(),
                     name: faker.lorem.word(),
@@ -337,7 +351,7 @@ describe('OrganisationController', () => {
                     typ: OrganisationsTyp.SONSTIGE,
                 };
 
-                const mockedPagedResponse: Paged<OrganisationResponse> = {
+                const mockedPagedResponse: Paged<OrganisationResponseLegacy> = {
                     items: [response1, response2],
                     limit: 10,
                     offset: 0,
@@ -346,7 +360,7 @@ describe('OrganisationController', () => {
 
                 organisationUcMock.findZugehoerigZu.mockResolvedValue(mockedPagedResponse);
 
-                const result: Paged<OrganisationResponse> =
+                const result: Paged<OrganisationResponseLegacy> =
                     await organisationController.getZugehoerigeOrganisationen(params);
 
                 expect(result).toEqual(mockedPagedResponse);

@@ -20,12 +20,12 @@ import { UpdatePersonenkontextBodyParams } from './update-personenkontext.body.p
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
 import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
-import { HatSystemrechtBodyParams } from './hat-systemrecht.body.params.js';
+import { HatSystemrechtQueryParams } from './hat-systemrecht.query.params.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
-import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 import { OrganisationApiMapperProfile } from '../../organisation/api/organisation-api.mapper.profile.js';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
@@ -162,12 +162,12 @@ describe('PersonenkontextController', () => {
                 const idParams: PersonByIdParams = {
                     personId: '1',
                 };
-                const bodyParams: HatSystemrechtBodyParams = {
+                const bodyParams: HatSystemrechtQueryParams = {
                     systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
                 };
                 const organisations: OrganisationDo<true>[] = [DoFactory.createOrganisation(true)];
-                const organisationResponses: OrganisationResponse[] = organisations.map((o: OrganisationDo<true>) =>
-                    mapper.map(o, OrganisationDo<true>, OrganisationResponse),
+                const organisationResponses: OrganisationResponseLegacy[] = organisations.map(
+                    (o: OrganisationDo<true>) => mapper.map(o, OrganisationDo<true>, OrganisationResponseLegacy),
                 );
                 const systemrechtResponse: SystemrechtResponse = {
                     ROLLEN_VERWALTEN: organisationResponses,
@@ -184,7 +184,7 @@ describe('PersonenkontextController', () => {
                 const idParams: PersonByIdParams = {
                     personId: '1',
                 };
-                const bodyParams: HatSystemrechtBodyParams = {
+                const bodyParams: HatSystemrechtQueryParams = {
                     systemRecht: 'FALSCHER_RECHTE_NAME',
                 };
                 personenkontextUcMock.hatSystemRecht.mockRejectedValue(new EntityNotFoundError());

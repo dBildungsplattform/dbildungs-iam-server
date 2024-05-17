@@ -20,6 +20,7 @@ import {
     ApiInternalServerErrorResponse,
     ApiNoContentResponse,
     ApiNotFoundResponse,
+    ApiOAuth2,
     ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -46,7 +47,7 @@ import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
-import { HatSystemrechtBodyParams } from './hat-systemrecht.body.params.js';
+import { HatSystemrechtQueryParams } from './hat-systemrecht.query.params.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { isEnum } from 'class-validator';
@@ -54,6 +55,7 @@ import { isEnum } from 'class-validator';
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontexte')
 @ApiBearerAuth()
+@ApiOAuth2(['openid'])
 @Controller({ path: 'personenkontexte' })
 export class PersonenkontextController {
     public constructor(
@@ -133,19 +135,19 @@ export class PersonenkontextController {
     @Get(':personId/hatSystemrecht')
     @ApiOkResponse({
         type: SystemrechtResponse,
-        description: 'The SchulStrukturKnoten associated with this personId and systemrecht.',
+        description: 'The SchulStrukturKnoten associated with this personId and systemrecht. Can return empty list',
     })
-    @ApiNotFoundResponse({ description: 'The systemrecht could not be found.' })
+    @ApiNotFoundResponse({ description: 'The systemrecht could not be found (does not exist as type of systemrecht).' })
     public async hatSystemRecht(
         @Param() personByIdParams: PersonByIdParams,
-        @Body() hatSystemrechtBodyParams: HatSystemrechtBodyParams,
+        @Query() hatSystemrechtQueryParams: HatSystemrechtQueryParams,
     ): Promise<SystemrechtResponse> {
-        if (!isEnum(hatSystemrechtBodyParams.systemRecht, RollenSystemRecht)) {
+        if (!isEnum(hatSystemrechtQueryParams.systemRecht, RollenSystemRecht)) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError()),
             );
         }
-        const systemrecht: RollenSystemRecht = hatSystemrechtBodyParams.systemRecht as RollenSystemRecht;
+        const systemrecht: RollenSystemRecht = hatSystemrechtQueryParams.systemRecht as RollenSystemRecht;
         const response: SystemrechtResponse = await this.personenkontextUc.hatSystemRecht(
             personByIdParams.personId,
             systemrecht,

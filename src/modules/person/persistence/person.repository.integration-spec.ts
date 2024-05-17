@@ -68,6 +68,7 @@ describe('PersonRepository', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
+        await orm.close();
         await module.close();
     });
 
@@ -212,7 +213,7 @@ describe('PersonRepository', () => {
             });
         });
 
-        describe('when successfull', () => {
+        describe('when successful', () => {
             it('should return Person', async () => {
                 usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
                 const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {

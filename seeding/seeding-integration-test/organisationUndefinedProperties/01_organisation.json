@@ -1,0 +1,18 @@
+{
+    "entityName": "Organisation",
+    "entities": [
+        {
+            "id": 0,
+            "administriertVon": null,
+            "zugehoerigZu": null,
+            "kennung": null,
+            "name": null,
+            "namensergaenzung": null,
+            "kuerzel": null,
+            "typ": null,
+            "traegerschaft": null
+        }
+    ]
+}
+
+

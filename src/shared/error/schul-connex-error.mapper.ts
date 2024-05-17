@@ -19,6 +19,10 @@ import { InvalidCharacterSetError } from './invalid-character-set.error.js';
 import { InvalidAttributeLengthError } from './invalid-attribute-length.error.js';
 import { InvalidNameError } from './invalid-name.error.js';
 import { KennungRequiredForSchuleError } from '../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
+import { NurLehrUndLernAnKlasseError } from '../../modules/personenkontext/specification/error/nur-lehr-und-lern-an-klasse.error.js';
+import { GleicheRolleAnKlasseWieSchuleError } from '../../modules/personenkontext/specification/error/gleiche-rolle-an-klasse-wie-schule.error.js';
+import { KlasseNurVonSchuleAdministriertError } from '../../modules/organisation/specification/error/klasse-nur-von-schule-administriert.error.js';
+import { KlassenNameAnSchuleEindeutigError } from '../../modules/organisation/specification/error/klassen-name-an-schule-eindeutig.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -160,6 +164,24 @@ export class SchulConnexErrorMapper {
             }),
         ],
         [
+            KlasseNurVonSchuleAdministriertError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '00',
+                titel: 'Spezifikation von Organisation nicht erfüllt',
+                beschreibung: 'Eine Klasse kann nur von einer Schule administriert werden.',
+            }),
+        ],
+        [
+            KlassenNameAnSchuleEindeutigError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '00',
+                titel: 'Spezifikation von Organisation nicht erfüllt',
+                beschreibung: 'Der Klassen-Name muss pro Schule eindeutig sein.',
+            }),
+        ],
+        [
             InvalidAttributeLengthError.name,
             new SchulConnexError({
                 code: 400,
@@ -184,6 +206,25 @@ export class SchulConnexErrorMapper {
                 subcode: '00',
                 titel: 'Fehlerhafte Anfrage',
                 beschreibung: 'Die Anfrage ist fehlerhaft: Es konnte kein Benutzername generiert werden',
+            }),
+        ],
+        [
+            NurLehrUndLernAnKlasseError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '00',
+                titel: 'Spezifikation von Personenkontext nicht erfüllt',
+                beschreibung: 'Nur Lehrer und Lernende können Klassen zugeordnet werden.',
+            }),
+        ],
+        [
+            GleicheRolleAnKlasseWieSchuleError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '00',
+                titel: 'Spezifikation von Personenkontext nicht erfüllt',
+                beschreibung:
+                    'Die Rollenart der Person muss für die Klasse dieselbe sein wie an der zugehörigen Schule.',
             }),
         ],
     ]);

@@ -1,6 +1,12 @@
+export const OrganisationsTypName: string = 'OrganisationsTyp';
+export const TraegerschaftTypName: string = 'TraegerschaftTyp';
+
 export enum OrganisationsTyp {
+    ROOT = 'ROOT',
+    LAND = 'LAND',
     TRAEGER = 'TRAEGER',
     SCHULE = 'SCHULE',
+    KLASSE = 'KLASSE',
     ANBIETER = 'ANBIETER',
     SONSTIGE = 'SONSTIGE ORGANISATION / EINRICHTUNG',
     UNBEST = 'UNBESTAETIGT',

@@ -21,13 +21,13 @@ restartPolicy: Always
 environment: prod
 
 database:
-  name: ""
+  name: "dbildungs_iam_server"
   host: ""
   password: ""
-  username: ""
+  username: "dbildungs_iam_server"
 
 auth:
-   # existingSecret: Refers to a secret already present in the cluster, which is required.
+  # existingSecret: Refers to a secret already present in the cluster, which is required.
   existingSecret: ""
   secretName: dbildungs-iam-server
   keycloak_adminSecret: ""
@@ -50,7 +50,16 @@ backend:
       memory: 4G
     requests:
       cpu: 200m
-      memory: 200Mi 
+      memory: 200Mi
+  startupProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 60
+    failureThreshold: 5
+    httpGet:
+      scheme: 'HTTP'
+      port: 8080
+      path: '/health'
   livenessProbe:
     enabled: true
     initialDelaySeconds: 10
@@ -70,34 +79,34 @@ backend:
     command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
   ingress:
     enabled: true
-    ingressClassName: nginx  
-    pathType: Prefix  
-    portnumber: 80 
+    ingressClassName: nginx
+    pathType: Prefix
+    portnumber: 80
     automountServiceAccountToken: false
-    paths: 
-     - /api
-     - /docs
-     - /docs-json
-     - /docs-yaml
+    paths:
+      - /api
+      - /docs
+      - /docs-json
+      - /docs-yaml
     annotations: []
   service:
     type: ClusterIP
-    ports: 
+    ports:
       http: 80
   serviceMonitor:
     enabled: true
     endpoints:
-      - port: "web" 
+      - port: "web"
   extraEnvVars: []
   extraVolumes: []
-  volumeMounts: 
-  - mountPath: /app/config/config.json
-    subPath: config-json
-    name: config-volume
-    readOnly: true
-  - mountPath: /app/config/secrets.json
-    subPath: secrets-json
-    name: secret-volume
+  volumeMounts:
+    - mountPath: /app/config/config.json
+      subPath: config-json
+      name: config-volume
+      readOnly: true
+    - mountPath: /app/config/secrets.json
+      subPath: secrets-json
+      name: secret-volume
   extraVolumeMounts: []
 
 
@@ -138,9 +147,28 @@ redis:
     periodSeconds: 10
   service:
     type: ClusterIP
-    ports: 
+    ports:
       redis: 6379
   extraEnvVars: []
   extraVolumes: []
   extraVolumeMounts: []
 
+ldap:
+  image:
+    repository: docker.io/osixia/openldap
+    tag: "1.5.0"
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 2
+      memory: 4G
+      ephemeral-storage: 2Gi
+    requests:
+      cpu: 200m
+      memory: 200Mi
+  adminPassword: admin
+  configPassword: config
+  service:
+    type: ClusterIP
+    ports:
+      ldap: 389

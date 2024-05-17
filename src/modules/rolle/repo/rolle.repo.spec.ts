@@ -36,6 +36,7 @@ describe('RolleRepo', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
+        await orm.close();
         await module.close();
     });
 
@@ -112,6 +113,23 @@ describe('RolleRepo', () => {
             const rolle: Option<Rolle<true>> = await sut.findById(faker.string.uuid());
 
             expect(rolle).toBeNull();
+        });
+    });
+
+    describe('findByName', () => {
+        it('should return the rolle', async () => {
+            const rolle: Rolle<true> = await sut.save(DoFactory.createRolle(false));
+            const rolleResult: Option<Rolle<true>[]> = await sut.findByName(rolle.name, 1);
+
+            expect(rolleResult).toBeDefined();
+            expect(rolleResult).toHaveLength(1);
+        });
+
+        it('should return undefined if the entity does not exist', async () => {
+            const rolleResult: Option<Rolle<true>[]> = await sut.findByName(faker.string.alpha(), 1);
+
+            expect(rolleResult).toBeDefined();
+            expect(rolleResult).toHaveLength(0);
         });
     });
 

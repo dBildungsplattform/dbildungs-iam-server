@@ -36,6 +36,7 @@ describe('OrganisationRepo', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
+        await orm.close();
         await module.close();
     });
 
@@ -97,6 +98,17 @@ describe('OrganisationRepo', () => {
         });
     });
 
+    describe('findByIds', () => {
+        it('should find organizations by IDs', async () => {
+            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
+            const organisation: OrganisationDo<boolean> = await sut.save(organisationDo);
+            const foundOrganisations: Map<string, OrganisationDo<true>> = await sut.findByIds([
+                organisation.id as string,
+            ]);
+            expect(foundOrganisations).toBeInstanceOf(Map<string, OrganisationDo<true>>);
+        });
+    });
+
     describe('findBy', () => {
         describe('when matching organisations were found by scope', () => {
             it('should return found organizations', async () => {
@@ -133,6 +145,111 @@ describe('OrganisationRepo', () => {
                 expect(result).toBeInstanceOf(Array);
                 expect(result).toHaveLength(0);
                 await expect(em.find(OrganisationEntity, {})).resolves.toHaveLength(0);
+            });
+        });
+    });
+
+    describe('findByNameOrKennung', () => {
+        describe('when matching organisations were found', () => {
+            it('should return found organizations', async () => {
+                const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                const organisation: OrganisationDo<boolean> = await sut.save(organisationDo);
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findByNameOrKennung(
+                    organisation.name as string,
+                );
+                expect(foundOrganisations).toBeInstanceOf(Array);
+                expect(foundOrganisations).toHaveLength(1);
+            });
+        });
+
+        describe('when no matching organisations were found', () => {
+            it('should return null', async () => {
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findByNameOrKennung('notExisting');
+                expect(foundOrganisations).toBeInstanceOf(Array);
+                expect(foundOrganisations).toHaveLength(0);
+            });
+        });
+    });
+
+    describe('findChildOrgasByIds', () => {
+        describe('when not root', () => {
+            it('should return found childs for root', async () => {
+                const organisationRootDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                const organisationRoot: OrganisationDo<boolean> = await sut.save(organisationRootDo);
+
+                if (!organisationRoot.id) {
+                    return;
+                }
+
+                const organisationChild1Level1Do: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                const organisationChild2Level1Do: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                organisationChild1Level1Do.administriertVon = organisationRoot.id;
+                organisationChild2Level1Do.administriertVon = organisationRoot.id;
+                const organisationChild1Level1: OrganisationDo<boolean> = await sut.save(organisationChild1Level1Do);
+                const organisationChild2Level1: OrganisationDo<boolean> = await sut.save(organisationChild2Level1Do);
+
+                if (!organisationChild1Level1.id || !organisationChild2Level1.id) {
+                    return;
+                }
+
+                const organisationChild1Level2Do: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                organisationChild1Level2Do.administriertVon = organisationChild1Level1.id;
+                await sut.save(organisationChild1Level2Do);
+
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForIds([
+                    organisationChild1Level1.id,
+                ]);
+                expect(foundOrganisations).toBeInstanceOf(Array);
+                expect(foundOrganisations).toHaveLength(1);
+            });
+        });
+
+        describe('when root', () => {
+            it('should return found childs for root', async () => {
+                const organisationRootDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                organisationRootDo.id = sut.ROOT_ORGANISATION_ID;
+                const organisationRoot: OrganisationDo<boolean> = await sut.save(organisationRootDo);
+
+                if (!organisationRoot.id) {
+                    return;
+                }
+
+                const organisationChild1Level1Do: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                const organisationChild2Level1Do: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                organisationChild1Level1Do.administriertVon = organisationRoot.id;
+                organisationChild2Level1Do.administriertVon = organisationRoot.id;
+                const organisationChild1Level1: OrganisationDo<boolean> = await sut.save(organisationChild1Level1Do);
+                const organisationChild2Level1: OrganisationDo<boolean> = await sut.save(organisationChild2Level1Do);
+
+                if (!organisationChild1Level1.id || !organisationChild2Level1.id) {
+                    return;
+                }
+
+                const organisationChild1Level2Do: OrganisationDo<false> = DoFactory.createOrganisation(false);
+                organisationChild1Level2Do.administriertVon = organisationChild1Level1.id;
+                await sut.save(organisationChild1Level2Do);
+
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForIds([
+                    organisationRoot.id,
+                ]);
+                expect(foundOrganisations).toBeInstanceOf(Array);
+                expect(foundOrganisations).toHaveLength(3);
+            });
+        });
+
+        describe('empty input', () => {
+            it('should return null', async () => {
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForIds([]);
+                expect(foundOrganisations).toEqual([]);
+            });
+        });
+
+        describe('does not exist', () => {
+            it('should return null', async () => {
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForIds([
+                    faker.string.uuid(),
+                ]);
+                expect(foundOrganisations).toEqual([]);
             });
         });
     });

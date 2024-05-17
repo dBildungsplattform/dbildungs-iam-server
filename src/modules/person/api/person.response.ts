@@ -1,13 +1,13 @@
 import { PersonNameParams } from './person-name.params.js';
 import { PersonBirthParams } from './person-birth.params.js';
-import { Vertrauensstufe } from '../domain/person.enums.js';
+import { Vertrauensstufe, VertrauensstufeTypName } from '../domain/person.enums.js';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PersonResponse {
     @ApiProperty()
     public id!: string;
 
-    @ApiProperty()
+    @ApiProperty({ nullable: true })
     public referrer?: string;
 
     @ApiProperty()
@@ -16,19 +16,19 @@ export class PersonResponse {
     @ApiProperty({ type: PersonNameParams })
     public name!: PersonNameParams;
 
-    @ApiProperty({ type: PersonBirthParams })
+    @ApiProperty({ type: PersonBirthParams, nullable: true })
     public geburt?: PersonBirthParams;
 
-    @ApiProperty()
+    @ApiProperty({ nullable: true })
     public readonly stammorganisation?: string;
 
-    @ApiProperty()
+    @ApiProperty({ nullable: true })
     public geschlecht?: string;
 
-    @ApiProperty()
+    @ApiProperty({ nullable: true })
     public lokalisierung?: string;
 
-    @ApiProperty({ enum: Vertrauensstufe })
+    @ApiProperty({ enum: Vertrauensstufe, enumName: VertrauensstufeTypName, nullable: true })
     public vertrauensstufe?: Vertrauensstufe;
 
     @ApiProperty()
@@ -36,4 +36,7 @@ export class PersonResponse {
 
     @ApiProperty({ description: 'Initiales Benutzerpasswort, muss nach der ersten Anmeldung geändert werden' })
     public startpasswort?: string;
+
+    @ApiProperty({ nullable: true })
+    public personalnummer?: string;
 }

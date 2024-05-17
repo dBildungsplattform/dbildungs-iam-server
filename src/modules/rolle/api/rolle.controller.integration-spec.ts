@@ -26,6 +26,7 @@ import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { Rolle } from '../domain/rolle.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RolleServiceProviderQueryParams } from './rolle-service-provider.query.params.js';
+import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -62,6 +63,7 @@ describe('Rolle API', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
+        await orm.close();
         await app.close();
     });
 
@@ -201,6 +203,98 @@ describe('Rolle API', () => {
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Array);
             expect(response.body).toHaveLength(3);
+        });
+
+        it('should return rollen with the given queried name', async () => {
+            const testRolle: { name: string } = await rolleRepo.save(DoFactory.createRolle(false));
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .query({ searchStr: testRolle.name })
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Array);
+            expect(response.body).toHaveLength(1);
+            expect(response.body).toContainEqual(expect.objectContaining({ name: testRolle.name }));
+        });
+
+        it('should return rollen with serviceproviders', async () => {
+            const [sp1, sp2, sp3]: [ServiceProvider<true>, ServiceProvider<true>, ServiceProvider<true>] =
+                await Promise.all([
+                    serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
+                    serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
+                    serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
+                ]);
+
+            await Promise.all([
+                rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp1.id] })),
+                rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp2.id, sp3.id] })),
+                rolleRepo.save(DoFactory.createRolle(false)),
+            ]);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Array);
+            expect(response.body).toHaveLength(3);
+
+            expect(response.body).toContainEqual(
+                expect.objectContaining({ serviceProviders: [{ id: sp1.id, name: sp1.name }] }),
+            );
+            expect(response.body).toContainEqual(
+                expect.objectContaining({
+                    serviceProviders: [
+                        { id: sp2.id, name: sp2.name },
+                        { id: sp3.id, name: sp3.name },
+                    ],
+                }),
+            );
+            expect(response.body).toContainEqual(expect.objectContaining({ serviceProviders: [] }));
+        });
+    });
+
+    describe('/GET rolle by id', () => {
+        it('should return rolle', async () => {
+            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${rolle.id}`)
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+        });
+
+        it('should return rolle with serviceproviders', async () => {
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+            );
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${rolle.id}`)
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const responseBody: RolleWithServiceProvidersResponse = response.body as RolleWithServiceProvidersResponse;
+
+            expect(responseBody?.serviceProviders).toContainEqual(
+                expect.objectContaining({ id: serviceProvider.id, name: serviceProvider.name }),
+            );
+        });
+
+        it('should return 404 when rolle could not be found', async () => {
+            await rolleRepo.save(DoFactory.createRolle(false));
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${faker.string.uuid()}`)
+                .send();
+
+            expect(response.status).toBe(404);
+            expect(response.body).toBeInstanceOf(Object);
         });
     });
 

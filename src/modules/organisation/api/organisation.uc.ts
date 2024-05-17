@@ -11,7 +11,7 @@ import { OrganisationService } from '../domain/organisation.service.js';
 import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { FindOrganisationDto } from './find-organisation.dto.js';
-import { OrganisationResponse } from './organisation.response.js';
+import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { UpdateOrganisationDto } from './update-organisation.dto.js';
 import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 import { ServerConfig, DataConfig } from '../../../shared/config/index.js';
@@ -70,29 +70,29 @@ export class OrganisationUc {
         return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 
-    public async findOrganisationById(id: string): Promise<OrganisationResponse | SchulConnexError> {
+    public async findOrganisationById(id: string): Promise<OrganisationResponseLegacy | SchulConnexError> {
         const result: Result<OrganisationDo<true>, DomainError> = await this.organisationService.findOrganisationById(
             id,
         );
         if (result.ok) {
-            return this.mapper.map(result.value, OrganisationDo, OrganisationResponse);
+            return this.mapper.map(result.value, OrganisationDo, OrganisationResponseLegacy);
         }
         return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 
-    public async findRootOrganisation(): Promise<OrganisationResponse | SchulConnexError> {
+    public async findRootOrganisation(): Promise<OrganisationResponseLegacy | SchulConnexError> {
         const result: Result<OrganisationDo<true>, DomainError> = await this.organisationService.findOrganisationById(
             this.ROOT_ORGANISATION_ID,
         );
 
         if (result.ok) {
-            return this.mapper.map(result.value, OrganisationDo, OrganisationResponse);
+            return this.mapper.map(result.value, OrganisationDo, OrganisationResponseLegacy);
         }
 
         return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 
-    public async findAll(organisationDto: FindOrganisationDto): Promise<Paged<OrganisationResponse>> {
+    public async findAll(organisationDto: FindOrganisationDto): Promise<Paged<OrganisationResponseLegacy>> {
         const organisationDo: OrganisationDo<false> = this.mapper.map(
             organisationDto,
             FindOrganisationDto,
@@ -113,10 +113,10 @@ export class OrganisationUc {
             };
         }
 
-        const organisations: OrganisationResponse[] = this.mapper.mapArray(
+        const organisations: OrganisationResponseLegacy[] = this.mapper.mapArray(
             result.items,
             OrganisationDo,
-            OrganisationResponse,
+            OrganisationResponseLegacy,
         );
 
         return {
@@ -157,7 +157,7 @@ export class OrganisationUc {
 
     public async findAdministriertVon(
         parentOrganisationId: string,
-    ): Promise<Paged<OrganisationResponse> | SchulConnexError> {
+    ): Promise<Paged<OrganisationResponseLegacy> | SchulConnexError> {
         const parentOrg: Result<
             OrganisationDo<true>,
             DomainError
@@ -169,10 +169,10 @@ export class OrganisationUc {
         const result: Paged<OrganisationDo<true>> =
             await this.organisationService.findAllAdministriertVon(parentOrganisationId);
 
-        const organisations: OrganisationResponse[] = this.mapper.mapArray(
+        const organisations: OrganisationResponseLegacy[] = this.mapper.mapArray(
             result.items,
             OrganisationDo,
-            OrganisationResponse,
+            OrganisationResponseLegacy,
         );
 
         return {
@@ -185,7 +185,7 @@ export class OrganisationUc {
 
     public async findZugehoerigZu(
         parentOrganisationId: string,
-    ): Promise<Paged<OrganisationResponse> | SchulConnexError> {
+    ): Promise<Paged<OrganisationResponseLegacy> | SchulConnexError> {
         const parentOrg: Result<
             OrganisationDo<true>,
             DomainError
@@ -197,10 +197,10 @@ export class OrganisationUc {
         const result: Paged<OrganisationDo<true>> =
             await this.organisationService.findAllZugehoerigZu(parentOrganisationId);
 
-        const organisations: OrganisationResponse[] = this.mapper.mapArray(
+        const organisations: OrganisationResponseLegacy[] = this.mapper.mapArray(
             result.items,
             OrganisationDo,
-            OrganisationResponse,
+            OrganisationResponseLegacy,
         );
 
         return {
