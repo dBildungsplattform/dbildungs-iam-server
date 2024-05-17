@@ -104,6 +104,42 @@
             "password": "test",
             "vorname": "Jesse",
             "familienname": "Pinkmann"
+        },
+        {
+            "id": 14,
+            "password": "test",
+            "vorname": "Klaus",
+            "familienname": "Büchner"
+        },
+        {
+            "id": 15,
+            "password": "test",
+            "vorname": "Fiete",
+            "familienname": "Altmann"
+        },
+        {
+            "id": 16,
+            "password": "test",
+            "vorname": "Hanna",
+            "familienname": "Kaiser"
+        },
+        {
+            "id": 17,
+            "password": "test",
+            "vorname": "Sönke",
+            "familienname": "Büsing-Preuss"
+        },
+        {
+            "id": 18,
+            "password": "test",
+            "vorname": "Mia",
+            "familienname": "Claßen"
+        },
+        {
+            "id": 19,
+            "password": "test",
+            "vorname": "Heinrich",
+            "familienname": "Heinzmann"
         }
     ]
 }
