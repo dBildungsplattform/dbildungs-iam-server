@@ -135,14 +135,16 @@ export class PersonenkontextService {
     }
 
     public async deletePersonenkontexteByPersonId(personId: string): Promise<Result<void, DomainError>> {
+        const personenkontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(personId);
 
         const deletedPersonenkontexte: number = await this.dBiamPersonenkontextRepo.deleteByPerson(personId);
 
-        if (deletedPersonenkontexte === 0) {
-            return { ok: false, error: new EntityCouldNotBeDeleted('Personenkontext', personId) };
+        if (deletedPersonenkontexte !== personenkontexte.length) {
+            // Create a list of the kontexte IDs that were not deleted
+            const notDeletedEntities: string[] = personenkontexte.map((entity: Personenkontext<true>) => entity.id);
+            return { ok: false, error: new EntityCouldNotBeDeleted('Personenkontext', notDeletedEntities.join(', ')) };
         }
 
         return { ok: true, value: undefined };
     }
-
 }
