@@ -15,7 +15,7 @@ import { OrganisationDo } from './organisation.do.js';
 import { OrganisationService } from './organisation.service.js';
 import { OrganisationsTyp } from './organisation.enums.js';
 import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
-import {NameRequiredForSchuleError} from "../specification/error/name-required-for-schule.error";
+import { NameRequiredForSchuleError } from '../specification/error/name-required-for-schule.error.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
