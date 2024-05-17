@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ template "common.names.name" . }}-ldap"
+  namespace: {{ template "common.names.namespace" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+data:
+  LDAP_ORGANISATION: "spsh-de"
+  LDAP_DOMAIN: "schule-sh.de"
+  LDAP_RFC2307BIS_SCHEMA: "true"
+  LDAP_REMOVE_CONFIG_AFTER_SETUP: "true"
+  LDAP_TLS_VERIFY_CLIENT: "never"
