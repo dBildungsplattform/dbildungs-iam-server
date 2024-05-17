@@ -68,7 +68,7 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             KlassenNameAnSchuleEindeutigError.name,
             new DbiamOrganisationError({
                 code: 400,
-                i18nKey: OrganisationSpecificationErrorI18nTypes.KLASSEN_NAME_AN_SCHULE_EINDEUTIG,
+                i18nKey: OrganisationSpecificationErrorI18nTypes.KLASSENNAME_AN_SCHULE_EINDEUTIG,
             }),
         ],
     ]);

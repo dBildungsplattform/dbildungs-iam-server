@@ -4,7 +4,7 @@ import { OrganisationSpecificationErrorI18nTypes } from '../../api/dbiam-organis
 export class KlassenNameAnSchuleEindeutigError extends OrganisationSpecificationError {
     public constructor(entityId?: string, details?: unknown[] | Record<string, undefined>) {
         super(
-            `Organisation with ID ${entityId} could not be updated because it violates ${OrganisationSpecificationErrorI18nTypes.KLASSEN_NAME_AN_SCHULE_EINDEUTIG} specification`,
+            `Organisation with ID ${entityId} could not be updated because it violates ${OrganisationSpecificationErrorI18nTypes.KLASSENNAME_AN_SCHULE_EINDEUTIG} specification`,
             entityId,
             details,
         );

@@ -7,7 +7,7 @@ describe('KlassenNameAnSchuleEindeutigSpecificationError', () => {
             it('should set message and code', () => {
                 const error: KlassenNameAnSchuleEindeutigError = new KlassenNameAnSchuleEindeutigError('1', {});
                 expect(error.message).toBe(
-                    `Organisation with ID 1 could not be updated because it violates ${OrganisationSpecificationErrorI18nTypes.KLASSEN_NAME_AN_SCHULE_EINDEUTIG} specification`,
+                    `Organisation with ID 1 could not be updated because it violates ${OrganisationSpecificationErrorI18nTypes.KLASSENNAME_AN_SCHULE_EINDEUTIG} specification`,
                 );
                 expect(error.code).toBe('ENTITY_COULD_NOT_BE_UPDATED');
             });
