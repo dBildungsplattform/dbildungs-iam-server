@@ -57,7 +57,6 @@ describe('dbiam Personenkontext API', () => {
     let rolleRepo: RolleRepo;
     let personenkontextFactory: PersonenkontextFactory;
 
-
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [

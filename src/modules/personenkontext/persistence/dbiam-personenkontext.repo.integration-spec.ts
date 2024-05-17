@@ -170,7 +170,9 @@ describe('dbiam Personenkontext Repo', () => {
     describe('save', () => {
         it('should save a new personenkontext', async () => {
             const person: Person<true> = await createPerson();
-            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false, { personId: person.id });
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false, {
+                personId: person.id,
+            });
 
             const savedPersonenkontext: Personenkontext<true> = await sut.save(personenkontext);
 

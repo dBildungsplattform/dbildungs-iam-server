@@ -35,7 +35,7 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
 
-function createPersonenkontext(personenkontextFactory: PersonenkontextFactory,): Personenkontext<true>[] {
+function createPersonenkontext(personenkontextFactory: PersonenkontextFactory): Personenkontext<true>[] {
     return [personenkontextFactory.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1')];
 }
 
