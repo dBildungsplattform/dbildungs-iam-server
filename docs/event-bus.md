@@ -86,3 +86,5 @@ export class ExampleProvider {
     }
 }
 ```
+
+Using the subscribe-method directly will not bind the execution context (In contrast, events registered by the discovery service will be bound to the parent class). This is fine when using arrow-functions like in the example above, but when you want to use an unbounded function you will need to bind the context yourself using [`Function.prototype.bind()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_objects/Function/bind).
