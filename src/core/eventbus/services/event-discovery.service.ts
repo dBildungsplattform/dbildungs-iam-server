@@ -34,7 +34,7 @@ export class EventDiscoveryService {
             const eventConstructor: Constructor<BaseEvent> = method.meta;
             const eventHandler: EventHandlerType<BaseEvent> = method.discoveredMethod.handler;
 
-            this.eventService.subscribe(method.meta, eventHandler);
+            this.eventService.subscribe(method.meta, eventHandler.bind(method.discoveredMethod.parentClass.instance));
 
             const parentClassName: string = method.discoveredMethod.parentClass.name;
             const handlerMethodName: string = method.discoveredMethod.methodName;
