@@ -11,6 +11,7 @@ import { RootOrganisationImmutableError } from '../specification/error/root-orga
 import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
 import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
 import { DbiamOrganisationError, OrganisationSpecificationErrorI18nTypes } from './dbiam-organisation.error.js';
+import { NameRequiredForSchuleError } from '../specification/error/name-required-for-schule.error.js';
 
 @Catch(OrganisationSpecificationError)
 export class OrganisationExceptionFilter implements ExceptionFilter<OrganisationSpecificationError> {
@@ -20,6 +21,13 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 400,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.KENNUNG_REQUIRED_FOR_SCHULE,
+            }),
+        ],
+        [
+            NameRequiredForSchuleError.name,
+            new DbiamOrganisationError({
+                code: 400,
+                i18nKey: OrganisationSpecificationErrorI18nTypes.NAME_REQUIRED_FOR_SCHULE,
             }),
         ],
         [

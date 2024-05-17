@@ -25,6 +25,8 @@ import { KlasseNurVonSchuleAdministriertError } from '../specification/error/kla
 import { KlassenNameAnSchuleEindeutig } from '../specification/klassen-name-an-schule-eindeutig.js';
 import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
+import { NameRequiredForSchule } from '../specification/name-required-for-schule.js';
+import { NameRequiredForSchuleError } from '../specification/error/name-required-for-schule.error.js';
 
 @Injectable()
 export class OrganisationService {
@@ -47,7 +49,11 @@ export class OrganisationService {
             };
         }
 
-        const validationResult: Result<void, DomainError> = await this.validateKennung(organisationDo);
+        let validationResult: Result<void, DomainError> = await this.validateKennungRequiredForSchule(organisationDo);
+        if (!validationResult.ok) {
+            return { ok: false, error: validationResult.error };
+        }
+        validationResult = await this.validateNameRequiredForSchule(organisationDo);
         if (!validationResult.ok) {
             return { ok: false, error: validationResult.error };
         }
@@ -74,7 +80,11 @@ export class OrganisationService {
             return { ok: false, error: new EntityNotFoundError('Organisation', organisationDo.id) };
         }
 
-        const validationResult: Result<void, DomainError> = await this.validateKennung(organisationDo);
+        let validationResult: Result<void, DomainError> = await this.validateKennungRequiredForSchule(organisationDo);
+        if (!validationResult.ok) {
+            return { ok: false, error: validationResult.error };
+        }
+        validationResult = await this.validateNameRequiredForSchule(organisationDo);
         if (!validationResult.ok) {
             return { ok: false, error: validationResult.error };
         }
@@ -95,10 +105,23 @@ export class OrganisationService {
         };
     }
 
-    private async validateKennung(organisation: OrganisationDo<boolean>): Promise<Result<void, DomainError>> {
+    private async validateKennungRequiredForSchule(
+        organisation: OrganisationDo<boolean>,
+    ): Promise<Result<void, DomainError>> {
         const kennungRequiredForSchule: KennungRequiredForSchule = new KennungRequiredForSchule();
         if (!(await kennungRequiredForSchule.isSatisfiedBy(organisation))) {
             return { ok: false, error: new KennungRequiredForSchuleError() };
+        }
+
+        return { ok: true, value: undefined };
+    }
+
+    private async validateNameRequiredForSchule(
+        organisation: OrganisationDo<boolean>,
+    ): Promise<Result<void, DomainError>> {
+        const nameRequiredForSchule: NameRequiredForSchule = new NameRequiredForSchule();
+        if (!(await nameRequiredForSchule.isSatisfiedBy(organisation))) {
+            return { ok: false, error: new NameRequiredForSchuleError() };
         }
 
         return { ok: true, value: undefined };
