@@ -184,8 +184,11 @@ describe('dbiam Personenkontext API', () => {
             const schuleDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
                 typ: OrganisationsTyp.SCHULE,
             });
-            const lehrerRolleDummy: Rolle<false> = DoFactory.createRolle(false, { rollenart: RollenArt.LEHR });
             const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
+            const lehrerRolleDummy: Rolle<false> = DoFactory.createRolle(false, {
+                rollenart: RollenArt.LEHR,
+                administeredBySchulstrukturknoten: schule.id,
+            });
             const lehrerRolle: Rolle<true> = await rolleRepo.save(lehrerRolleDummy);
 
             const newPersonkontext: Personenkontext<false> | DomainError = await personenkontextFactory.createNew(

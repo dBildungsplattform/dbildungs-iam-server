@@ -91,6 +91,7 @@ describe('PersonenkontextSpecificationsTest', () => {
         rolleRepoMock = module.get(RolleRepo);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personFactory = module.get(PersonFactory);
+        personenkontextFactory = module.get(PersonenkontextFactory);
         personRepo = module.get(PersonRepository);
         orm = module.get(MikroORM);
 
