@@ -17,13 +17,20 @@ describe('Personenkontext aggregate', () => {
 
     describe('checkReferences', () => {
         it('should check if all references exist', async () => {
-            const personenkontext: Personenkontext<false> = Personenkontext.createNew(
+            const personenkontext: Personenkontext<false> | DomainError = await Personenkontext.createNew(
+                personRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
                 faker.string.uuid(),
             );
+            expect(personenkontext).not.toBeInstanceOf(DomainError);
+            if (personenkontext instanceof DomainError) {
+                return;
+            }
 
-            await personenkontext.checkReferences(personRepoMock, organisationRepoMock, rolleRepoMock);
+            await personenkontext.checkReferences();
 
             expect(personRepoMock.exists).toHaveBeenCalledWith(personenkontext.personId);
             expect(organisationRepoMock.exists).toHaveBeenCalledWith(personenkontext.organisationId);
@@ -35,19 +42,15 @@ describe('Personenkontext aggregate', () => {
             organisationRepoMock.exists.mockResolvedValueOnce(true);
             rolleRepoMock.exists.mockResolvedValueOnce(true);
 
-            const personenkontext: Personenkontext<false> = Personenkontext.createNew(
-                faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
-            );
-
-            const result: Option<DomainError> = await personenkontext.checkReferences(
+            const personenkontext: Personenkontext<false> | DomainError = await Personenkontext.createNew(
                 personRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.uuid(),
             );
-
-            expect(result).toBeUndefined();
+            expect(personenkontext).not.toBeInstanceOf(DomainError);
         });
 
         it('should return EntityNotFoundError if person does not exist', async () => {
@@ -55,19 +58,16 @@ describe('Personenkontext aggregate', () => {
             organisationRepoMock.exists.mockResolvedValueOnce(true);
             rolleRepoMock.exists.mockResolvedValueOnce(true);
 
-            const personenkontext: Personenkontext<false> = Personenkontext.createNew(
-                faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
-            );
-
-            const result: Option<DomainError> = await personenkontext.checkReferences(
+            const personenkontext: Personenkontext<false> | DomainError = await Personenkontext.createNew(
                 personRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.uuid(),
             );
 
-            expect(result).toBeInstanceOf(EntityNotFoundError);
+            expect(personenkontext).toBeInstanceOf(EntityNotFoundError);
         });
 
         it('should return EntityNotFoundError if organisation does not exist', async () => {
@@ -75,19 +75,15 @@ describe('Personenkontext aggregate', () => {
             organisationRepoMock.exists.mockResolvedValueOnce(false);
             rolleRepoMock.exists.mockResolvedValueOnce(true);
 
-            const personenkontext: Personenkontext<false> = Personenkontext.createNew(
-                faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
-            );
-
-            const result: Option<DomainError> = await personenkontext.checkReferences(
+            const personenkontext: Personenkontext<false> | DomainError = await Personenkontext.createNew(
                 personRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.uuid(),
             );
-
-            expect(result).toBeInstanceOf(EntityNotFoundError);
+            expect(personenkontext).toBeInstanceOf(EntityNotFoundError);
         });
 
         it('should return EntityNotFoundError if rolle does not exist', async () => {
@@ -95,19 +91,15 @@ describe('Personenkontext aggregate', () => {
             organisationRepoMock.exists.mockResolvedValueOnce(true);
             rolleRepoMock.exists.mockResolvedValueOnce(false);
 
-            const personenkontext: Personenkontext<false> = Personenkontext.createNew(
-                faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
-            );
-
-            const result: Option<DomainError> = await personenkontext.checkReferences(
+            const personenkontext: Personenkontext<false> | DomainError = await Personenkontext.createNew(
                 personRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.uuid(),
             );
-
-            expect(result).toBeInstanceOf(EntityNotFoundError);
+            expect(personenkontext).toBeInstanceOf(EntityNotFoundError);
         });
     });
 });

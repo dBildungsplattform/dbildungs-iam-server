@@ -39,6 +39,8 @@ import { PassportUser } from '../../../authentication/types/user.js';
 import { Observable } from 'rxjs';
 import { DBiamPersonenuebersichtController } from './dbiam-personenuebersicht.controller.js';
 import { OrganisationID } from '../../../../shared/types/aggregate-ids.types.js';
+import { PersonRepo } from '../../persistence/person.repo.js';
+import { PersonenkontextFactory } from '../../../personenkontext/domain/personenkontext.factory.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -50,6 +52,7 @@ describe('Personenuebersicht API', () => {
     let organisationRepo: OrganisationRepo;
     let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
+    let personenkontextFactory: PersonenkontextFactory;
 
     let ROOT_ORGANISATION_ID: OrganisationID;
 
@@ -86,10 +89,12 @@ describe('Personenuebersicht API', () => {
                 },
                 ServiceProviderRepo,
                 PersonRepository,
+                PersonRepo,
                 RolleFactory,
                 RolleRepo,
                 OrganisationRepo,
                 DBiamPersonenkontextRepo,
+                PersonenkontextFactory,
                 {
                     provide: APP_INTERCEPTOR,
                     useValue: {
@@ -119,6 +124,7 @@ describe('Personenuebersicht API', () => {
         organisationRepo = module.get(OrganisationRepo);
         dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
+        personenkontextFactory = module.get(PersonenkontextFactory);
 
         ROOT_ORGANISATION_ID = module.get(DBiamPersonenuebersichtController).ROOT_ORGANISATION_ID;
 
@@ -211,15 +217,32 @@ describe('Personenuebersicht API', () => {
                         DoFactory.createOrganisation(true),
                     );
 
-                    const personenkontext1: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle1.id),
-                    );
-                    const personenkontext2: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
-                    );
-                    const personenkontext3: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
-                    );
+                    const newPersonkontext1: Personenkontext<false> | DomainError =
+                        await personenkontextFactory.createNew(savedPerson.id, savedOrganisation1.id, savedRolle1.id);
+                    expect(newPersonkontext1).not.toBeInstanceOf(DomainError);
+                    if (newPersonkontext1 instanceof DomainError) {
+                        return;
+                    }
+                    const personenkontext1: Personenkontext<true> | DomainError =
+                        await dBiamPersonenkontextRepo.save(newPersonkontext1);
+
+                    const newPersonkontext2: Personenkontext<false> | DomainError =
+                        await personenkontextFactory.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id);
+                    expect(newPersonkontext2).not.toBeInstanceOf(DomainError);
+                    if (newPersonkontext2 instanceof DomainError) {
+                        return;
+                    }
+                    const personenkontext2: Personenkontext<true> =
+                        await dBiamPersonenkontextRepo.save(newPersonkontext2);
+
+                    const newPersonkontext3: Personenkontext<false> | DomainError =
+                        await personenkontextFactory.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id);
+                    expect(newPersonkontext3).not.toBeInstanceOf(DomainError);
+                    if (newPersonkontext3 instanceof DomainError) {
+                        return;
+                    }
+                    const personenkontext3: Personenkontext<true> =
+                        await dBiamPersonenkontextRepo.save(newPersonkontext3);
 
                     const response: Response = await request(app.getHttpServer() as App)
                         .get(`/dbiam/personenuebersicht/${savedPerson.id}`)
@@ -339,15 +362,22 @@ describe('Personenuebersicht API', () => {
                         DoFactory.createOrganisation(true),
                     );
 
-                    await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, unsavedRolle1.id),
-                    );
-                    await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
-                    );
-                    await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
-                    );
+                    const newPersonkontext1: Personenkontext<false> | DomainError =
+                        await personenkontextFactory.createNew(savedPerson.id, savedOrganisation1.id, unsavedRolle1.id);
+                    if (newPersonkontext1 instanceof DomainError) {
+                        return;
+                    }
+
+                    await dBiamPersonenkontextRepo.save(newPersonkontext1);
+
+                    const newPersonkontext2: Personenkontext<false> | DomainError =
+                        await personenkontextFactory.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id);
+                    expect(newPersonkontext2).not.toBeInstanceOf(DomainError);
+                    if (newPersonkontext2 instanceof DomainError) {
+                        return;
+                    }
+
+                    await dBiamPersonenkontextRepo.save(newPersonkontext2);
 
                     const response: Response = await request(app.getHttpServer() as App)
                         .get(`/dbiam/personenuebersicht/${savedPerson.id}`)
@@ -389,15 +419,28 @@ describe('Personenuebersicht API', () => {
                         DoFactory.createOrganisation(true),
                     );
 
-                    await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle1.id),
-                    );
-                    await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle2.id),
-                    );
-                    await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
-                    );
+                    const newPersonkontext1: Personenkontext<false> | DomainError =
+                        await personenkontextFactory.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle1.id);
+                    if (newPersonkontext1 instanceof DomainError) {
+                        return;
+                    }
+                    await dBiamPersonenkontextRepo.save(newPersonkontext1);
+
+                    const newPersonkontext2: Personenkontext<false> | DomainError =
+                        await personenkontextFactory.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle2.id);
+                    expect(newPersonkontext2).not.toBeInstanceOf(DomainError);
+                    if (newPersonkontext2 instanceof DomainError) {
+                        return;
+                    }
+                    await dBiamPersonenkontextRepo.save(newPersonkontext2);
+
+                    const newPersonkontext3: Personenkontext<false> | DomainError =
+                        await personenkontextFactory.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id);
+                    expect(newPersonkontext3).not.toBeInstanceOf(DomainError);
+                    if (newPersonkontext3 instanceof DomainError) {
+                        return;
+                    }
+                    await dBiamPersonenkontextRepo.save(newPersonkontext3);
 
                     const response: Response = await request(app.getHttpServer() as App)
                         .get(`/dbiam/personenuebersicht/${savedPerson.id}`)
@@ -457,15 +500,38 @@ describe('Personenuebersicht API', () => {
                 DoFactory.createOrganisation(true),
             );
 
-            await dBiamPersonenkontextRepo.save(
-                Personenkontext.createNew(savedPerson1.id, savedOrganisation1.id, savedRolle1.id),
+            const newPersonkontext1: Personenkontext<false> | DomainError = await personenkontextFactory.createNew(
+                savedPerson1.id,
+                savedOrganisation1.id,
+                savedRolle1.id,
             );
-            await dBiamPersonenkontextRepo.save(
-                Personenkontext.createNew(savedPerson1.id, savedOrganisation1.id, savedRolle2.id),
+            expect(newPersonkontext1).not.toBeInstanceOf(DomainError);
+            if (newPersonkontext1 instanceof DomainError) {
+                return;
+            }
+            await dBiamPersonenkontextRepo.save(newPersonkontext1);
+
+            const newPersonkontext2: Personenkontext<false> | DomainError = await personenkontextFactory.createNew(
+                savedPerson1.id,
+                savedOrganisation1.id,
+                savedRolle2.id,
             );
-            await dBiamPersonenkontextRepo.save(
-                Personenkontext.createNew(savedPerson1.id, savedOrganisation2.id, savedRolle2.id),
+            expect(newPersonkontext2).not.toBeInstanceOf(DomainError);
+            if (newPersonkontext2 instanceof DomainError) {
+                return;
+            }
+            await dBiamPersonenkontextRepo.save(newPersonkontext2);
+
+            const newPersonkontext3: Personenkontext<false> | DomainError = await personenkontextFactory.createNew(
+                savedPerson1.id,
+                savedOrganisation2.id,
+                savedRolle2.id,
             );
+            expect(newPersonkontext3).not.toBeInstanceOf(DomainError);
+            if (newPersonkontext3 instanceof DomainError) {
+                return;
+            }
+            await dBiamPersonenkontextRepo.save(newPersonkontext3);
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);

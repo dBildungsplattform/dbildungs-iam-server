@@ -17,13 +17,20 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
+import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
+    personenkontextFactory: PersonenkontextFactory,
     withId: WasPersisted,
     params: Partial<Personenkontext<boolean>> = {},
 ): Personenkontext<WasPersisted> {
-    const personenkontext: Personenkontext<WasPersisted> = Personenkontext.construct<boolean>(
+    const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
         withId ? faker.string.uuid() : undefined,
         withId ? faker.date.past() : undefined,
         withId ? faker.date.recent() : undefined,
@@ -45,6 +52,7 @@ describe('dbiam Personenkontext Repo', () => {
 
     let personFactory: PersonFactory;
     let personRepo: PersonRepository;
+    let personenkontextFactory: PersonenkontextFactory;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -60,6 +68,12 @@ describe('dbiam Personenkontext Repo', () => {
                 PersonFactory,
                 PersonRepository,
                 UsernameGeneratorService,
+                PersonenkontextFactory,
+                RolleRepo,
+                OrganisationRepo,
+                PersonRepo,
+                RolleFactory,
+                ServiceProviderRepo,
             ],
         })
             .overrideModule(KeycloakConfigModule)
@@ -71,6 +85,7 @@ describe('dbiam Personenkontext Repo', () => {
         em = module.get(EntityManager);
         personFactory = module.get(PersonFactory);
         personRepo = module.get(PersonRepository);
+        personenkontextFactory = module.get(PersonenkontextFactory);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, 10000000);
@@ -111,8 +126,8 @@ describe('dbiam Personenkontext Repo', () => {
             const personB: Person<true> = await createPerson();
 
             await Promise.all([
-                sut.save(createPersonenkontext(false, { personId: personA.id })),
-                sut.save(createPersonenkontext(false, { personId: personB.id })),
+                sut.save(createPersonenkontext(personenkontextFactory, false, { personId: personA.id })),
+                sut.save(createPersonenkontext(personenkontextFactory, false, { personId: personB.id })),
             ]);
 
             const personenkontexte: Personenkontext<true>[] = await sut.findByPerson(personA.id);
@@ -125,7 +140,9 @@ describe('dbiam Personenkontext Repo', () => {
         it('should return all personenkontexte for a rolle', async () => {
             const person: Person<true> = await createPerson();
             const rolleUUID: string = faker.string.uuid();
-            await sut.save(createPersonenkontext(false, { rolleId: rolleUUID, personId: person.id }));
+            await sut.save(
+                createPersonenkontext(personenkontextFactory, false, { rolleId: rolleUUID, personId: person.id }),
+            );
             const personenkontexte: Personenkontext<true>[] = await sut.findByRolle(rolleUUID);
             expect(personenkontexte).toHaveLength(1);
         });
@@ -135,7 +152,7 @@ describe('dbiam Personenkontext Repo', () => {
         it('should return true, if the triplet exists', async () => {
             const person: Person<true> = await createPerson();
             const { personId, organisationId, rolleId }: Personenkontext<true> = await sut.save(
-                createPersonenkontext(false, { personId: person.id }),
+                createPersonenkontext(personenkontextFactory, false, { personId: person.id }),
             );
 
             const exists: boolean = await sut.exists(personId, organisationId, rolleId);
@@ -153,7 +170,7 @@ describe('dbiam Personenkontext Repo', () => {
     describe('save', () => {
         it('should save a new personenkontext', async () => {
             const person: Person<true> = await createPerson();
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false, { personId: person.id });
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false, { personId: person.id });
 
             const savedPersonenkontext: Personenkontext<true> = await sut.save(personenkontext);
 
@@ -163,9 +180,9 @@ describe('dbiam Personenkontext Repo', () => {
         it('should update an existing rolle', async () => {
             const person: Person<true> = await createPerson();
             const existingPersonenkontext: Personenkontext<true> = await sut.save(
-                createPersonenkontext(false, { personId: person.id }),
+                createPersonenkontext(personenkontextFactory, false, { personId: person.id }),
             );
-            const update: Personenkontext<false> = createPersonenkontext(false);
+            const update: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false);
             update.id = existingPersonenkontext.id;
 
             const savedPersonenkontext: Personenkontext<true> = await sut.save(existingPersonenkontext);
@@ -175,7 +192,9 @@ describe('dbiam Personenkontext Repo', () => {
 
         it('should throw UniqueConstraintViolationException when triplet already exists', async () => {
             const person: Person<true> = await createPerson();
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false, { personId: person.id });
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false, {
+                personId: person.id,
+            });
             await sut.save(personenkontext);
 
             await expect(sut.save(personenkontext)).rejects.toThrow(UniqueConstraintViolationException);

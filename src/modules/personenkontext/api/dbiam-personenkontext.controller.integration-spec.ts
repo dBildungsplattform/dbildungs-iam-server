@@ -24,13 +24,16 @@ import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
+    personenkontextFactory: PersonenkontextFactory,
     withId: WasPersisted,
     params: Partial<Personenkontext<boolean>> = {},
 ): Personenkontext<WasPersisted> {
-    const personenkontext: Personenkontext<WasPersisted> = Personenkontext.construct<boolean>(
+    const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
         withId ? faker.string.uuid() : undefined,
         withId ? faker.date.past() : undefined,
         withId ? faker.date.recent() : undefined,
@@ -52,6 +55,8 @@ describe('dbiam Personenkontext API', () => {
     let personRepo: PersonRepo;
     let organisationRepo: OrganisationRepo;
     let rolleRepo: RolleRepo;
+    let personenkontextFactory: PersonenkontextFactory;
+
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -66,6 +71,10 @@ describe('dbiam Personenkontext API', () => {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
                 },
+                PersonenkontextFactory,
+                PersonRepo,
+                OrganisationRepo,
+                RolleRepo,
             ],
         }).compile();
 
@@ -74,6 +83,7 @@ describe('dbiam Personenkontext API', () => {
         personRepo = module.get(PersonRepo);
         organisationRepo = module.get(OrganisationRepo);
         rolleRepo = module.get(RolleRepo);
+        personenkontextFactory = module.get(PersonenkontextFactory);
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
@@ -94,9 +104,15 @@ describe('dbiam Personenkontext API', () => {
             const personA: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
             const personB: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
             await Promise.all([
-                personenkontextRepo.save(createPersonenkontext(false, { personId: personA.id })),
-                personenkontextRepo.save(createPersonenkontext(false, { personId: personA.id })),
-                personenkontextRepo.save(createPersonenkontext(false, { personId: personB.id })),
+                personenkontextRepo.save(
+                    createPersonenkontext(personenkontextFactory, false, { personId: personA.id }),
+                ),
+                personenkontextRepo.save(
+                    createPersonenkontext(personenkontextFactory, false, { personId: personA.id }),
+                ),
+                personenkontextRepo.save(
+                    createPersonenkontext(personenkontextFactory, false, { personId: personB.id }),
+                ),
             ]);
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -141,7 +157,17 @@ describe('dbiam Personenkontext API', () => {
             const lehrerRolleDummy: Rolle<false> = DoFactory.createRolle(false, { rollenart: RollenArt.LEHR });
             const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
             const lehrerRolle: Rolle<true> = await rolleRepo.save(lehrerRolleDummy);
-            await personenkontextRepo.save(Personenkontext.createNew(lehrer.id, schule.id, lehrerRolle.id));
+
+            const newPersonkontext: Personenkontext<false> | DomainError = await personenkontextFactory.createNew(
+                lehrer.id,
+                schule.id,
+                lehrerRolle.id,
+            );
+            expect(newPersonkontext).not.toBeInstanceOf(DomainError);
+            if (newPersonkontext instanceof DomainError) {
+                return;
+            }
+            await personenkontextRepo.save(newPersonkontext);
 
             const klasseDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
                 typ: OrganisationsTyp.KLASSE,
@@ -163,9 +189,16 @@ describe('dbiam Personenkontext API', () => {
             const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
             const organisation: OrganisationDo<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
             const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
-            const personenkontext: Personenkontext<true> = await personenkontextRepo.save(
-                Personenkontext.createNew(person.id, organisation.id, rolle.id),
+            const newPersonkontext: Personenkontext<false> | DomainError = await personenkontextFactory.createNew(
+                person.id,
+                organisation.id,
+                rolle.id,
             );
+            expect(newPersonkontext).not.toBeInstanceOf(DomainError);
+            if (newPersonkontext instanceof DomainError) {
+                return;
+            }
+            const personenkontext: Personenkontext<true> = await personenkontextRepo.save(newPersonkontext);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/dbiam/personenkontext')
@@ -179,7 +212,7 @@ describe('dbiam Personenkontext API', () => {
         });
 
         it('should return error if references do not exist', async () => {
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false);
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/dbiam/personenkontext')
@@ -253,7 +286,16 @@ describe('dbiam Personenkontext API', () => {
 
                 const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
                 const adminRolle: Rolle<true> = await rolleRepo.save(adminRolleDummy);
-                await personenkontextRepo.save(Personenkontext.createNew(admin.id, schule.id, adminRolle.id));
+                const newPersonkontext: Personenkontext<false> | DomainError = await personenkontextFactory.createNew(
+                    admin.id,
+                    schule.id,
+                    adminRolle.id,
+                );
+                expect(newPersonkontext).not.toBeInstanceOf(DomainError);
+                if (newPersonkontext instanceof DomainError) {
+                    return;
+                }
+                await personenkontextRepo.save(newPersonkontext);
 
                 const klasseDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
                     typ: OrganisationsTyp.KLASSE,

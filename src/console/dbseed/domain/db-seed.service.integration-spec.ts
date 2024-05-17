@@ -19,6 +19,7 @@ import { ServiceProviderModule } from '../../../modules/service-provider/service
 import { RolleModule } from '../../../modules/rolle/rolle.module.js';
 import { PersonModule } from '../../../modules/person/person.module.js';
 import { DbSeedModule } from '../db-seed.module.js';
+import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 
 describe('DbSeedServiceIntegration', () => {
     let module: TestingModule;
@@ -39,7 +40,7 @@ describe('DbSeedServiceIntegration', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
             ],
-            providers: [UsernameGeneratorService, DBiamPersonenkontextRepo],
+            providers: [UsernameGeneratorService, DBiamPersonenkontextRepo, PersonenkontextFactory],
         })
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
