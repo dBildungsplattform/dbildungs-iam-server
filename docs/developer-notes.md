@@ -5,7 +5,7 @@
 
 ## Object Mapping
 
-The use of **Automapper** is deprecated, because of slow updates of the lib.
+The use of **Automapper** is deprecated, bbecause it seems to be unmaintained at present.
 
 We are using a library called [Automapper](https://automapperts.netlify.app/) with the [classes strategy](https://automapperts.netlify.app/docs/strategies/classes)
 and [camel case naming convention](https://automapperts.netlify.app/docs/mapping-configuration/naming-conventions).

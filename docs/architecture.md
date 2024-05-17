@@ -9,7 +9,7 @@ Business logic is mainly handled within an Aggregate. If that is not possible, e
 A new Aggregate is created by a factory.<br>
 To load an Aggregate from the persistence layer a Repository is used.<br>
 A changed Aggregate is persisted via a Repository as well.<br>
-A Repository shall not expose any data structures related to the persistence layer i.e. DB-entities or ORM related classes or types.
+A Repository must not expose any data structures related to the persistence layer i.e. DB-entities or ORM related classes or types.
 A Repository should not provide multi purpose methods. If an Aggregate or controller needs to search with specific parameters we create a method just for these specific parameters.
 
 For cross cutting concerns we use Shared Services. Shared services can be injected into Aggregates.
@@ -32,16 +32,16 @@ Decide what services to put in the module's `exports`-array instead of defaultin
 
 ## Authorization
 
-Authorization is done in the Domain Layer, practically the Aggregates. If a service triggers operations in multiple Aggregates, each Aggregate will need to perform its own check. A users roles and rights should be cached in the request context to not retrieve them for each check.
+Authorization is done in the Domain Layer, in practice the Aggregates. If a service triggers operations in multiple Aggregates, each Aggregate will need to perform its own check. A users roles and rights should be cached in the request context to not retrieve them for each check.
 
 The services do not check the user rights again to avoid code duplication. Even services that are exported from a module rely on the authorization being checked by the calling use cases.
 We do not rely on authorization checks in the controllers.
 
 ## Integrity Checks
 
-We need check conditions for data integrity e.g. a class (Klasse) can not be administrated by a school sponsor (Schulträger), but only by a school.
+We need check conditions for data integrity e.g. an organisation of type form (Klasse) can not be administrated by an organisation of type school sponsor (Schulträger), but only by a school.
 To check these conditions we use the specification pattern for reusability.
-An Aggregate can run its own Specifications. This an be done while creating the Aggregate.
+An Aggregate can run its own Specifications. This can be done while creating the Aggregate.
 
-Before persisting an aggregate the Specifications need to be checked. The Repository must trigger the check. We do not rely on the controller.
+Before persisting an aggregate the Specifications need to be checked. The Repository must trigger the check. We do not rely on the controller to do it reliably.
 
