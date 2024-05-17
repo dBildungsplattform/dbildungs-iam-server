@@ -61,6 +61,8 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
 import { PersonUc } from '../domain/person.uc.js';
+import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { DeleteKeycloakUserEvent } from '../../../shared/events/DeleteKeycloakUserEvent.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -75,6 +77,7 @@ export class PersonController {
         private readonly personRepository: PersonRepository,
         private readonly personFactory: PersonFactory,
         private readonly personUc: PersonUc,
+        private readonly eventService: EventService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
     ) {
@@ -150,9 +153,12 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
 
-        // First delete all kontexte for the personId
+        // Publish an event to delete the person from Keycloak
+        this.eventService.publish(new DeleteKeycloakUserEvent(params.personId));
+
+        // Then delete all kontexte for the personId
         await this.personenkontextUc.deletePersonenkontexteByPersonId(params.personId);
-        // Delete the person after all their kontexte were deleted
+        // Finally delete the person after all their kontexte were deleted
         const response: Result<void, DomainError> = await this.personUc.deletePersonIfAllowed(
             params.personId,
             permissions,
