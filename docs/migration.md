@@ -30,12 +30,16 @@ extensions: [Migrator],
 
 ## Execution
 
+### Noteworthy
+
+- The parameter `disableForeignKeys` has to be false for execution in cluster, permissions are not sufficient.
+- Local the usage of `disableForeignKeys: true` is possible.
+
 ### On branched enviroments
 `npm run db:migration-apply` is run via pipeline for the individual environments.
 
 ### On DEV and TEST
 Like with some other tasks regarding database, migration on DEV and TEST is easier to apply, if tables or whole schema can be dropped beforehand.
-
 
 ## Files
 
