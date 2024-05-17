@@ -62,7 +62,8 @@ import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
 import { PersonUc } from '../domain/person.uc.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { DeleteKeycloakUserEvent } from '../../../shared/events/DeleteKeycloakUserEvent.js';
+import { DeleteUserEvent } from '../../../shared/events/DeleteUserEvent.js';
+
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -167,7 +168,7 @@ export class PersonController {
 
         if (person.keycloakUserId) {
             // Publish an event to delete the person from Keycloak if the person has a keycloakUserId
-            this.eventService.publish(new DeleteKeycloakUserEvent(person.keycloakUserId));
+            this.eventService.publish(new DeleteUserEvent(person.keycloakUserId));
         } 
         // Then delete all kontexte for the personId
         await this.personenkontextUc.deletePersonenkontexteByPersonId(params.personId);
