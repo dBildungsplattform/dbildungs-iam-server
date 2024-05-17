@@ -115,27 +115,32 @@ export class Personenkontext<WasPersisted extends boolean> {
         }
 
         // Can rolle be assigned at target orga
-        {
-            const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(this.rolleId);
-            if (!rolle) {
-                return new EntityNotFoundError('rolle', this.rolleId);
-            }
-
-            const rollenOrgas: Organisation<true>[] = await this.organisationRepo.findChildOrgasForIds([
-                rolle.administeredBySchulstrukturknoten,
-            ]);
-
-            const rollenOrgaIds: OrganisationID[] = rollenOrgas.map((orga: Organisation<true>) => orga.id);
-            rollenOrgaIds.push(rolle.administeredBySchulstrukturknoten);
-
-            if (!rollenOrgaIds.includes(this.organisationId)) {
-                return new EntityNotFoundError(''); // TODO: Can't assign rolle at this organisation error
-            }
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(this.rolleId);
+        if (!rolle) {
+            return new EntityNotFoundError('rolle', this.rolleId);
+        }
+        const rollenOrgas: Organisation<true>[] = await this.organisationRepo.findChildOrgasForIds([
+            rolle.administeredBySchulstrukturknoten,
+        ]);
+        const rollenOrgaIds: OrganisationID[] = rollenOrgas.map((orga: Organisation<true>) => orga.id);
+        rollenOrgaIds.push(rolle.administeredBySchulstrukturknoten);
+        if (!rollenOrgaIds.includes(this.organisationId)) {
+            return new EntityNotFoundError(''); // TODO: Can't assign rolle at this organisation error
         }
 
-        //Permissions: Can the current admin assign this role?
-        {
+        //Permissions: Does the current admin have more Systemrechte as the new user?
+        const currentUserRoleID: RolleID | undefined = await permissions.getCurrentUserRoleByOrganisationId(
+            this.organisationId,
+        );
 
+        if (currentUserRoleID) {
+            const currentUserRole: Option<Rolle<true>> = await this.rolleRepo.findById(currentUserRoleID);
+            if (!currentUserRole) {
+                return new EntityNotFoundError('rolle', currentUserRoleID);
+            }
+            if (rolle.systemrechte.length > currentUserRole.systemrechte.length) {
+                return new MissingPermissionsError('Unauthorized to add this role at the organisation');
+            }
         }
 
         return undefined;
