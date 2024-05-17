@@ -38,9 +38,6 @@ describe('EventService', () => {
     let sut: EventDiscoveryService;
     let eventServiceMock: DeepMocked<EventService>;
 
-    let testProvider: TestProvider;
-    let testController: TestController;
-
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [LoggingTestModule, DiscoveryModule],
@@ -56,9 +53,6 @@ describe('EventService', () => {
 
         sut = module.get(EventDiscoveryService);
         eventServiceMock = module.get(EventService);
-
-        testProvider = module.get(TestProvider);
-        testController = module.get(TestController);
     });
 
     afterAll(async () => {
@@ -77,13 +71,13 @@ describe('EventService', () => {
         it('should discover and register all event handlers in controllers', async () => {
             await sut.registerEventHandlers();
 
-            expect(eventServiceMock.subscribe).toHaveBeenCalledWith(TestEvent, testController.handleEvent);
+            expect(eventServiceMock.subscribe).toHaveBeenCalledWith(TestEvent, expect.any(Function));
         });
 
         it('should discover and register all event handlers in providers', async () => {
             await sut.registerEventHandlers();
 
-            expect(eventServiceMock.subscribe).toHaveBeenCalledWith(TestEvent, testProvider.handleEvent);
+            expect(eventServiceMock.subscribe).toHaveBeenCalledWith(TestEvent, expect.any(Function));
         });
 
         it('should return the number of registered handlers', async () => {

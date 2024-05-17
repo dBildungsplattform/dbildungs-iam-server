@@ -7,6 +7,7 @@ import { DataConfig } from './data.config.js';
 import { KeycloakConfig } from './keycloak.config.js';
 import { LoggingConfig } from './logging.config.js';
 import { RedisConfig } from './redis.config.js';
+import { LdapConfig } from './ldap.config.js';
 
 export class JsonConfig {
     @ValidateNested()
@@ -32,6 +33,10 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => RedisConfig)
     public readonly REDIS!: RedisConfig;
+
+    @ValidateNested()
+    @Type(() => LdapConfig)
+    public readonly LDAP!: LdapConfig;
 
     @ValidateNested()
     @Type(() => DataConfig)

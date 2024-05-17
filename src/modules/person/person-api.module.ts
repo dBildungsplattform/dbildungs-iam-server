@@ -13,6 +13,8 @@ import { OrganisationModule } from '../organisation/organisation.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { DBiamPersonenuebersichtController } from './api/personenuebersicht/dbiam-personenuebersicht.controller.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonInfoController } from './api/person-info.controller.js';
+import { PersonApiMapper } from './mapper/person-api.mapper.js';
 
 @Module({
     imports: [
@@ -30,7 +32,8 @@ import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-p
         UsernameGeneratorService,
         PersonRepository,
         DBiamPersonenkontextRepo,
+        PersonApiMapper,
     ],
-    controllers: [PersonController, PersonFrontendController, DBiamPersonenuebersichtController],
+    controllers: [PersonController, PersonFrontendController, DBiamPersonenuebersichtController, PersonInfoController],
 })
 export class PersonApiModule {}
