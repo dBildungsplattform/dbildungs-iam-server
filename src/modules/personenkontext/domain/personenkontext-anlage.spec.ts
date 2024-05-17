@@ -76,6 +76,7 @@ describe('PersonenkontextAnlage', () => {
         module = await Test.createTestingModule({
             providers: [
                 PersonenkontextAnlageFactory,
+                PersonenkontextFactory,
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
@@ -97,8 +98,8 @@ describe('PersonenkontextAnlage', () => {
         rolleRepoMock = module.get(RolleRepo);
         organisationRepoMock = module.get(OrganisationRepo);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
-        personenkontextAnlageFactory = module.get(PersonenkontextAnlageFactory);
         personenkontextFactory = module.get(PersonenkontextFactory);
+        personenkontextAnlageFactory = module.get(PersonenkontextAnlageFactory);
         anlage = personenkontextAnlageFactory.createNew();
     });
 

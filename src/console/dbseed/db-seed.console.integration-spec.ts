@@ -18,6 +18,7 @@ import { PersonModule } from '../../modules/person/person.module.js';
 import { RolleModule } from '../../modules/rolle/rolle.module.js';
 import { ServiceProviderModule } from '../../modules/service-provider/service-provider.module.js';
 import { DbSeedModule } from './db-seed.module.js';
+import { PersonenkontextFactory } from '../../modules/personenkontext/domain/personenkontext.factory.js';
 
 describe('DbSeedConsoleIntegration', () => {
     let module: TestingModule;
@@ -39,7 +40,7 @@ describe('DbSeedConsoleIntegration', () => {
                 RolleModule,
                 ServiceProviderModule,
             ],
-            providers: [UsernameGeneratorService, DBiamPersonenkontextRepo],
+            providers: [UsernameGeneratorService, DBiamPersonenkontextRepo, PersonenkontextFactory],
         })
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))

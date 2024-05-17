@@ -128,21 +128,6 @@ export class Personenkontext<WasPersisted extends boolean> {
             return new EntityNotFoundError(''); // TODO: Can't assign rolle at this organisation error
         }
 
-        //Permissions: Does the current admin have more Systemrechte as the new user?
-        const currentUserRoleID: RolleID | undefined = await permissions.getCurrentUserRoleByOrganisationId(
-            this.organisationId,
-        );
-
-        if (currentUserRoleID) {
-            const currentUserRole: Option<Rolle<true>> = await this.rolleRepo.findById(currentUserRoleID);
-            if (!currentUserRole) {
-                return new EntityNotFoundError('rolle', currentUserRoleID);
-            }
-            if (rolle.systemrechte.length > currentUserRole.systemrechte.length) {
-                return new MissingPermissionsError('Unauthorized to add this role at the organisation');
-            }
-        }
-
         return undefined;
     }
 }

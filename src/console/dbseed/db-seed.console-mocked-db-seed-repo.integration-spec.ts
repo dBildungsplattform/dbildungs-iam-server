@@ -23,6 +23,7 @@ import { DbSeed } from './domain/db-seed.js';
 import { DbSeedStatus } from './repo/db-seed.entity.js';
 import { DBiamPersonenkontextService } from '../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
 import { DbSeedReferenceRepo } from './repo/db-seed-reference.repo.js';
+import { PersonenkontextFactory } from '../../modules/personenkontext/domain/personenkontext.factory.js';
 
 describe('DbSeedConsoleMockedDbSeedRepo', () => {
     let module: TestingModule;
@@ -51,6 +52,7 @@ describe('DbSeedConsoleMockedDbSeedRepo', () => {
                 DbSeedService,
                 DBiamPersonenkontextService,
                 DbSeedReferenceRepo,
+                PersonenkontextFactory,
                 {
                     provide: DbSeedRepo,
                     useValue: createMock<DbSeedRepo>(),

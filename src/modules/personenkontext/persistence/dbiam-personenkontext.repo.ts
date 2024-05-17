@@ -110,11 +110,7 @@ export class DBiamPersonenkontextRepo {
             PersonenkontextEntity,
             mapAggregateToData(personenKontext),
         );
-        try {
-            await this.em.persistAndFlush(personenKontextEntity);
-        } catch (error: unknown) {
-            console.log(error);
-        }
+        await this.em.persistAndFlush(personenKontextEntity);
 
         return mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory);
     }
@@ -136,16 +132,6 @@ export class DBiamPersonenkontextRepo {
         permissions: PersonPermissions,
     ): Promise<Result<Personenkontext<true>, DomainError>> {
         {
-            const result: Option<DomainError> = await personenkontext.checkRolleZuweisungPermissions(permissions);
-            if (result) {
-                return {
-                    ok: false,
-                    error: result,
-                };
-            }
-        }
-
-        {
             const exists: boolean = await this.exists(
                 personenkontext.personId,
                 personenkontext.organisationId,
@@ -156,6 +142,16 @@ export class DBiamPersonenkontextRepo {
                 return {
                     ok: false,
                     error: new EntityAlreadyExistsError('Personenkontext already exists'),
+                };
+            }
+        }
+
+        {
+            const result: Option<DomainError> = await personenkontext.checkRolleZuweisungPermissions(permissions);
+            if (result) {
+                return {
+                    ok: false,
+                    error: result,
                 };
             }
         }

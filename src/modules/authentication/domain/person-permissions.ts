@@ -130,12 +130,6 @@ export class PersonPermissions {
         return this.cachedRollenFields;
     }
 
-    public async getCurrentUserRoleByOrganisationId(organisationId: OrganisationID): Promise<RolleID | undefined> {
-        const personKontextFields: PersonKontextFields[] = await this.getPersonenkontextsFields();
-
-        return personKontextFields.find((pk: PersonKontextFields) => pk.organisationId === organisationId)?.rolleId;
-    }
-
     public get personFields(): PersonFields {
         return this.cachedPersonFields;
     }

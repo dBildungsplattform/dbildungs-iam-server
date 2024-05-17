@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { MikroORM } from '@mikro-orm/core';
-import { INestApplication } from '@nestjs/common';
-import { APP_PIPE } from '@nestjs/core';
+import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
+import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
@@ -28,6 +28,11 @@ import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { Request } from 'express';
+import { Observable } from 'rxjs';
+import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { PassportUser } from '../../authentication/types/user.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -58,6 +63,7 @@ describe('dbiam Personenkontext API', () => {
     let organisationRepo: OrganisationRepo;
     let rolleRepo: RolleRepo;
     let personenkontextFactory: PersonenkontextFactory;
+    let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -78,6 +84,24 @@ describe('dbiam Personenkontext API', () => {
                 RolleRepo,
                 RolleFactory,
                 ServiceProviderRepo,
+                {
+                    provide: PersonPermissionsRepo,
+                    useValue: createMock<PersonPermissionsRepo>(),
+                },
+                {
+                    provide: APP_INTERCEPTOR,
+                    useValue: {
+                        intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+                            const req: Request = context.switchToHttp().getRequest();
+                            req.passportUser = createMock<PassportUser>({
+                                async personPermissions() {
+                                    return personpermissionsRepoMock.loadPersonPermissions('');
+                                },
+                            });
+                            return next.handle();
+                        },
+                    },
+                },
             ],
         }).compile();
 
@@ -87,6 +111,7 @@ describe('dbiam Personenkontext API', () => {
         organisationRepo = module.get(OrganisationRepo);
         rolleRepo = module.get(RolleRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
+        personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
@@ -142,7 +167,9 @@ describe('dbiam Personenkontext API', () => {
         it('should return created personenkontext', async () => {
             const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
             const organisation: OrganisationDo<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
-            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisation.id }),
+            );
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/dbiam/personenkontext')
