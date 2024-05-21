@@ -183,6 +183,7 @@ export class OrganisationController {
                 typ: queryParams.typ,
             })
             .setScopeWhereOperator(ScopeOperator.AND)
+            .findByAdministriertVonArray(queryParams.administriertVon)
             .searchString(queryParams.searchString)
             .excludeTyp(queryParams.excludeTyp)
             .byIDs(validOrgaIDs)
