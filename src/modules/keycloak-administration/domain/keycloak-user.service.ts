@@ -75,6 +75,41 @@ export class KeycloakUserService {
         }
     }
 
+    public async createWithHashedPassword(): Promise<Result<string, DomainError>> {
+        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+            await this.kcAdminService.getAuthedKcAdminClient();
+
+        if (!kcAdminClientResult.ok) {
+            return kcAdminClientResult;
+        }
+
+        try {
+            const userRepresentation: UserRepresentation = {
+                username: 'thisisfixedfortesting1',
+                enabled: true,
+                credentials: [
+                    {
+                        credentialData: JSON.stringify({
+                            hashIterations: 12,
+                            algorithm: 'bcrypt',
+                        }),
+                        secretData: JSON.stringify({
+                            value: '{BCRYPT}$2b$12$P8vBnldUyI3eCJNKyjq3hOfa1zB27lxf69qc.b4QGCI5768l26EzC',
+                        }),
+                        type: 'password',
+                    },
+                ],
+            };
+
+            const response: { id: string } = await kcAdminClientResult.value.users.create(userRepresentation);
+
+            return { ok: true, value: response.id };
+        } catch (err) {
+            this.logger.error(`Could not create user, message: ${JSON.stringify(err)} `);
+            return { ok: false, error: new KeycloakClientError('Could not create user') };
+        }
+    }
+
     public async delete(id: string): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
