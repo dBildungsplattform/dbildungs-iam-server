@@ -35,8 +35,7 @@ export class PersonenkontextAnlage {
         if (rolle.rollenart === RollenArt.LEIT) return organisation.typ === OrganisationsTyp.SCHULE;
         if (rolle.rollenart === RollenArt.LERN)
             return organisation.typ === OrganisationsTyp.SCHULE || organisation.typ === OrganisationsTyp.KLASSE;
-        if (rolle.rollenart === RollenArt.LEHR)
-            return organisation.typ === OrganisationsTyp.SCHULE || organisation.typ === OrganisationsTyp.KLASSE;
+        if (rolle.rollenart === RollenArt.LEHR) return organisation.typ === OrganisationsTyp.SCHULE;
 
         return true;
     }
