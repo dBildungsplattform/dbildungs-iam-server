@@ -188,6 +188,53 @@ describe('PersonController', () => {
         });
     });
 
+    describe('deletePerson', () => {
+        const person: Person<true> = getPerson();
+        const createParams: CreatePersonBodyParams = {
+            name: {
+                vorname: person.vorname,
+                familienname: person.familienname,
+            },
+            geburt: {},
+        };
+        describe('when deleting a person is successful', () => {
+            it('should return no error and call repository ', async () => {
+                personRepositoryMock.create.mockResolvedValue(person);
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                const result: PersonendatensatzResponse = await personController.createPerson(
+                    createParams,
+                    personPermissionsMock,
+                );
+                const deleteParams: PersonByIdParams = {
+                    personId: result.person.id,
+                };
+                const response: Promise<void> = personController.deletePersonById(deleteParams, personPermissionsMock);
+                expect(response).toBeUndefined();
+                expect(personRepositoryMock.delete).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when deleting a person throws a SchulConnexError', () => {
+            it('should throw HttpException', async () => {
+                personRepositoryMock.create.mockResolvedValue(person);
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                const result: PersonendatensatzResponse = await personController.createPerson(
+                    createParams,
+                    personPermissionsMock,
+                );
+                const deleteParams: PersonByIdParams = {
+                    personId: result.person.id,
+                };
+                personUcMock.deletePersonIfAllowed.mockResolvedValue(new SchulConnexError({} as SchulConnexError));
+
+                await expect(personController.deletePersonById(deleteParams, personPermissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
+                expect(personenkontextUcMock.deletePersonenkontextById).toHaveBeenCalledTimes(1);
+            });
+        });
+    });
+
     describe('when getting a person', () => {
         const params: PersonByIdParams = {
             personId: faker.string.uuid(),
