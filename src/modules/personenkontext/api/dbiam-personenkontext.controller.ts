@@ -59,7 +59,7 @@ export class DBiamPersonenkontextController {
     @Post()
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({
-        description: 'Test',
+        description: 'Personenkontext was successfully created.',
         type: DBiamPersonenkontextResponse,
     })
     @ApiBadRequestResponse({

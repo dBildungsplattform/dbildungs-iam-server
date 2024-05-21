@@ -1,13 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { LdapConfig } from '../../../shared/config/ldap.config.js';
-import { ConfigService } from '@nestjs/config';
 import { Client } from 'ldapts';
 import { LdapOrganisationEntry, LdapPersonEntry, LdapRoleEntry } from './ldap.types.js';
 import { CreatedOrganisationDto } from '../../../modules/organisation/api/created-organisation.dto.js';
 import { KennungRequiredForSchuleError } from '../../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
+import { LdapInstanceConfig } from '../ldap-instance-config.js';
 
 @Injectable()
 export class LdapClientService {
@@ -15,18 +14,17 @@ export class LdapClientService {
 
     public constructor(
         private readonly logger: ClassLogger,
-        private readonly configService: ConfigService,
+        private readonly ldapInstanceConfig: LdapInstanceConfig,
     ) {}
 
     public async getClient(): Promise<Result<Client>> {
         if (!this.client) {
             // configure LDAP connection
-            const ldapConfig: LdapConfig = this.configService.getOrThrow<LdapConfig>('LDAP');
             this.client = new Client({
-                url: ldapConfig.URL,
+                url: this.ldapInstanceConfig.URL,
             });
             try {
-                await this.client.bind(ldapConfig.BIND_DN, ldapConfig.PASSWORD);
+                await this.client.bind(this.ldapInstanceConfig.BIND_DN, this.ldapInstanceConfig.PASSWORD);
                 this.logger.info('Successfully connected to LDAP');
             } catch (err) {
                 this.logger.error(`Could not connect to LDAP, message: ${JSON.stringify(err)}`);
