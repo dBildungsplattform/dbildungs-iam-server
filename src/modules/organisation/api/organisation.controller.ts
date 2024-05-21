@@ -37,6 +37,7 @@ import { OrganisationResponse } from './organisation.response.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
@@ -184,10 +185,12 @@ export class OrganisationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get organizations.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
     public async getAdministrierteOrganisationen(
-        @Param() params: OrganisationByIdParams,
+        @Param() routeParams: OrganisationByIdParams,
+        @Query() queryParams: OrganisationByIdQueryParams,
     ): Promise<PagedResponse<OrganisationResponseLegacy>> {
         const result: Paged<OrganisationResponseLegacy> | SchulConnexError = await this.uc.findAdministriertVon(
-            params.organisationId,
+            routeParams.organisationId,
+            queryParams.searchFilter,
         );
 
         if (result instanceof SchulConnexError) {
