@@ -8,6 +8,7 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { Person } from './person.js';
 import { ConfigTestModule } from '../../../../test/utils/index.js';
 import { DataConfig } from '../../../shared/config/index.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 describe('PersonUc', () => {
     let module: TestingModule;
@@ -104,6 +105,56 @@ describe('PersonUc', () => {
                 );
 
                 expect(result.ok).toBeTruthy();
+            });
+        });
+    });
+    describe('deletePersonIfAllowed', () => {
+        describe('when person exists and can be deleted', () => {
+            it('should delete the person and return success', async () => {
+                const requestPerson: Person<true> = getPerson();
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([requestPerson.id]);
+                personRepositoryMock.findBy.mockResolvedValueOnce([[requestPerson], 1]);
+                personRepositoryMock.delete.mockResolvedValueOnce(1);
+
+                const result: Result<void, DomainError> = await personUc.deletePersonIfAllowed(
+                    requestPerson.id,
+                    personPermissionsMock,
+                );
+
+                expect(result.ok).toBeTruthy();
+                expect(personRepositoryMock.delete).toHaveBeenCalledWith(requestPerson);
+            });
+        });
+
+        describe('when person does not exist', () => {
+            it('should return no result', async () => {
+                const requestPersonId: string = faker.string.uuid();
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([requestPersonId]);
+                personRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
+
+                const result: Result<void, DomainError> = await personUc.deletePersonIfAllowed(
+                    requestPersonId,
+                    personPermissionsMock,
+                );
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+
+        describe('when person cannot be deleted', () => {
+            it('should return no result', async () => {
+                const requestPerson: Person<true> = getPerson();
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([requestPerson.id]);
+                personRepositoryMock.findBy.mockResolvedValueOnce([[requestPerson], 1]);
+                personRepositoryMock.delete.mockResolvedValueOnce(0);
+
+                const result: Result<void, DomainError> = await personUc.deletePersonIfAllowed(
+                    requestPerson.id,
+                    personPermissionsMock,
+                );
+
+                expect(result.ok).toBeFalsy();
+
             });
         });
     });
