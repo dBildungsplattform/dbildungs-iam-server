@@ -28,6 +28,13 @@ export class OrganisationScope extends ScopeBase<OrganisationEntity> {
         return this;
     }
 
+    public findByAdministriertVonArray(administriertVon?: OrganisationID[]): this {
+        if (administriertVon) {
+            this.findByQuery({ administriertVon: { $in: administriertVon } });
+        }
+        return this;
+    }
+
     public byIDs(ids?: OrganisationID[]): this {
         if (ids) {
             this.findByQuery({
