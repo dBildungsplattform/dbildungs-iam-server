@@ -35,6 +35,8 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { OrganisationID } from '../../../shared/types/index.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { ConfigService } from '@nestjs/config';
+import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { DeleteUserEvent } from '../../../shared/events/DeleteUserEvent.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -44,6 +46,7 @@ describe('PersonController', () => {
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personUcMock: DeepMocked<PersonUc>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
+    let eventServiceMock: DeepMocked<EventService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -80,6 +83,10 @@ describe('PersonController', () => {
                     provide: ConfigService,
                     useValue: createMock<ConfigService>(),
                 },
+                {
+                    provide: EventService,
+                    useValue: createMock<ConfigService>(),
+                },
             ],
         }).compile();
         personController = module.get(PersonController);
@@ -87,6 +94,7 @@ describe('PersonController', () => {
         personRepositoryMock = module.get(PersonRepository);
         usernameGeneratorService = module.get(UsernameGeneratorService);
         personUcMock = module.get(PersonUc);
+        eventServiceMock = module.get(EventService);
     });
 
     function getPerson(): Person<true> {
@@ -190,41 +198,26 @@ describe('PersonController', () => {
 
     describe('deletePerson', () => {
         const person: Person<true> = getPerson();
-        const createParams: CreatePersonBodyParams = {
-            name: {
-                vorname: person.vorname,
-                familienname: person.familienname,
-            },
-            geburt: {},
+        const deleteParams: PersonByIdParams = {
+            personId: person.id,
         };
         describe('when deleting a person is successful', () => {
-            it('should return no error and call repository ', async () => {
-                personRepositoryMock.create.mockResolvedValue(person);
+            it('should return no error and publish event ', async () => {
                 personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-                const result: PersonendatensatzResponse = await personController.createPerson(
-                    createParams,
-                    personPermissionsMock,
-                );
-                const deleteParams: PersonByIdParams = {
-                    personId: result.person.id,
-                };
-                const response: Promise<void> = personController.deletePersonById(deleteParams, personPermissionsMock);
+
+                const response: void = await personController.deletePersonById(deleteParams, personPermissionsMock);
+
                 expect(response).toBeUndefined();
-                expect(personRepositoryMock.delete).toHaveBeenCalledTimes(1);
+                expect(personenkontextUcMock.deletePersonenkontexteByPersonId).toHaveBeenCalledTimes(1);
+                expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
+                if (person.keycloakUserId) {
+                    expect(eventServiceMock.publish).toHaveBeenCalledWith(new DeleteUserEvent(person.keycloakUserId));
+                }
             });
         });
-
-        describe('when deleting a person throws a SchulConnexError', () => {
+        describe('when deleting a personenkontext returns a SchulConnexError', () => {
             it('should throw HttpException', async () => {
-                personRepositoryMock.create.mockResolvedValue(person);
                 personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-                const result: PersonendatensatzResponse = await personController.createPerson(
-                    createParams,
-                    personPermissionsMock,
-                );
-                const deleteParams: PersonByIdParams = {
-                    personId: result.person.id,
-                };
                 personenkontextUcMock.deletePersonenkontexteByPersonId.mockResolvedValue(
                     new SchulConnexError({} as SchulConnexError),
                 );

@@ -170,14 +170,19 @@ export class PersonController {
             this.eventService.publish(new DeleteUserEvent(person.keycloakUserId));
         }
         // Then delete all kontexte for the personId
-        await this.personenkontextUc.deletePersonenkontexteByPersonId(params.personId);
+        const kontextResponse: void | SchulConnexError = await this.personenkontextUc.deletePersonenkontexteByPersonId(
+            params.personId,
+        );
+        if (kontextResponse instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(kontextResponse);
+        }
         // Finally delete the person after all their kontexte were deleted
-        const response: Result<void, DomainError> = await this.personUc.deletePersonIfAllowed(
+        const personResponse: Result<void, DomainError> = await this.personUc.deletePersonIfAllowed(
             params.personId,
             permissions,
         );
-        if (response instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
+        if (personResponse instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(personResponse);
         }
     }
 
