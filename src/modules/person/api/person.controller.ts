@@ -64,7 +64,6 @@ import { PersonUc } from '../domain/person.uc.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { DeleteUserEvent } from '../../../shared/events/DeleteUserEvent.js';
 
-
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
 @ApiBearerAuth()
@@ -169,7 +168,7 @@ export class PersonController {
         if (person.keycloakUserId) {
             // Publish an event to delete the person from Keycloak if the person has a keycloakUserId
             this.eventService.publish(new DeleteUserEvent(person.keycloakUserId));
-        } 
+        }
         // Then delete all kontexte for the personId
         await this.personenkontextUc.deletePersonenkontexteByPersonId(params.personId);
         // Finally delete the person after all their kontexte were deleted
