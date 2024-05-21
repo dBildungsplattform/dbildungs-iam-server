@@ -37,14 +37,13 @@ export class PersonUc {
         personId: string,
         permissions: PersonPermissions,
     ): Promise<Result<void, DomainError>> {
-        const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions);
-        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+        const personResult: Result<Person<true>> = await this.getPersonIfAllowed(personId, permissions);
 
-        const [persons]: Counted<Person<true>> = await this.personRepository.findBy(scope);
-        const person: Person<true> | undefined = persons[0];
+        if (!personResult.ok) {
+            return { ok: false, error: new EntityNotFoundError('Person') };
+        }
 
-        if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
-
+        const person: Person<true> = personResult.value;
         const deletedPerson: number = await this.personRepository.delete(person);
 
         if (deletedPerson === 0) {

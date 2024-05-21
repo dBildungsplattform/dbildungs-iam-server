@@ -427,4 +427,33 @@ describe('PersonenkontextUc', () => {
             });
         });
     });
+    describe('deletePersonenkontextByPersonId', () => {
+        const personId: string = '1';
+        describe('when deleting personenkontext is successful', () => {
+            it('should return nothing', async () => {
+                personenkontextServiceMock.deletePersonenkontexteByPersonId.mockResolvedValue({
+                    ok: true,
+                    value: undefined,
+                });
+
+                const result: void | SchulConnexError = await sut.deletePersonenkontexteByPersonId(personId);
+
+                expect(result).toBeUndefined();
+            });
+        });
+
+        describe('when person that should be deleted was not found', () => {
+            it('should return SchulConnexError', async () => {
+                personenkontextServiceMock.deletePersonenkontexteByPersonId.mockResolvedValue({
+                    ok: false,
+                    error: new EntityNotFoundError('Personenkontext'),
+                });
+
+                const result: void | SchulConnexError = await sut.deletePersonenkontexteByPersonId(personId);
+
+                expect(result).toBeInstanceOf(SchulConnexError);
+                expect(result?.code).toBe(404);
+            });
+        });
+    });
 });
