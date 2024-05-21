@@ -48,7 +48,7 @@ import { PersonenkontextResponse } from '../../personenkontext/api/personenkonte
 import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { PersonRepository } from '../persistence/person.repository.js';
-import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError, PersonHasNoKeycloakId } from '../../../shared/error/index.js';
 import { Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
@@ -165,14 +165,18 @@ export class PersonController {
 
         const person: Person<true> = personResult.value;
 
-        if (person.keycloakUserId) {
-            // Publish an event to delete the person from Keycloak if the person has a keycloakUserId
-            this.eventService.publish(new DeleteUserEvent(person.keycloakUserId));
+        // Check if the person has a keycloakUserId
+        if (!person.keycloakUserId) {
+            throw new PersonHasNoKeycloakId(params.personId);
         }
+
+        // Publish an event to delete the person from Keycloak if the person has a keycloakUserId
+        this.eventService.publish(new DeleteUserEvent(person.keycloakUserId));
         // Then delete all kontexte for the personId
         const kontextResponse: void | SchulConnexError = await this.personenkontextUc.deletePersonenkontexteByPersonId(
             params.personId,
         );
+        // Throw an HTTP exception if the delete response for kontexte is of type SchulConnex
         if (kontextResponse instanceof SchulConnexError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(kontextResponse);
         }
@@ -181,6 +185,7 @@ export class PersonController {
             params.personId,
             permissions,
         );
+        // Throw an HTTP exception if the delete response for the person is of type SchulConnex
         if (personResponse instanceof SchulConnexError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(personResponse);
         }
