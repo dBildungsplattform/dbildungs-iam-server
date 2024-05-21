@@ -24,6 +24,7 @@ import { KlasseNurVonSchuleAdministriert } from '../specification/klasse-nur-von
 import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
 import { KlassenNameAnSchuleEindeutig } from '../specification/klassen-name-an-schule-eindeutig.js';
 import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
+import { ScopeOperator } from '../../../shared/persistence/index.js';
 
 @Injectable()
 export class OrganisationService {
@@ -284,11 +285,14 @@ export class OrganisationService {
 
     public async findAllAdministriertVon(
         parentOrganisationID: string,
+        searchFilter?: string,
         offset?: number,
         limit?: number,
     ): Promise<Paged<OrganisationDo<true>>> {
         const scope: OrganisationScope = new OrganisationScope()
+            .setScopeWhereOperator(ScopeOperator.AND)
             .findAdministrierteVon(parentOrganisationID)
+            .searchStringAdministriertVon(searchFilter)
             .paged(offset, limit);
 
         const [organisations, total]: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);
