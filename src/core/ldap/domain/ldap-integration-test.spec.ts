@@ -20,15 +20,13 @@ import { LdapModule } from '../ldap.module.js';
 import { OrganisationApiModule } from '../../../modules/organisation/organisation-api.module.js';
 import { OrganisationRepo } from '../../../modules/organisation/persistence/organisation.repo.js';
 import { OrganisationDo } from '../../../modules/organisation/domain/organisation.do.js';
-import {
-    DBiamCreatePersonenkontextBodyParams
-} from "../../../modules/personenkontext/api/dbiam-create-personenkontext.body.params.js";
-import {Rolle} from "../../../modules/rolle/domain/rolle.js";
-import {RollenArt} from "../../../modules/rolle/domain/rolle.enums.js";
-import {RolleRepo} from "../../../modules/rolle/repo/rolle.repo.js";
-import {PersonDo} from "../../../modules/person/domain/person.do.js";
-import {PersonRepo} from "../../../modules/person/persistence/person.repo.js";
-import {PersonenKontextApiModule} from "../../../modules/personenkontext/personenkontext-api.module.js";
+import { DBiamCreatePersonenkontextBodyParams } from '../../../modules/personenkontext/api/dbiam-create-personenkontext.body.params.js';
+import { Rolle } from '../../../modules/rolle/domain/rolle.js';
+import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
+import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
+import { PersonDo } from '../../../modules/person/domain/person.do.js';
+import { PersonRepo } from '../../../modules/person/persistence/person.repo.js';
+import { PersonenKontextApiModule } from '../../../modules/personenkontext/personenkontext-api.module.js';
 
 describe('LDAP Integration Test', () => {
     let app: INestApplication;
