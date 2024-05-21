@@ -191,6 +191,7 @@ describe('OrganisationController', () => {
                     typ: OrganisationsTyp.SONSTIGE,
                     searchString: faker.lorem.word(),
                     systemrechte: [],
+                    administriertVon: [faker.string.uuid(), faker.string.uuid()],
                 };
 
                 const mockedRepoResponse: Counted<Organisation<true>> = [
@@ -231,6 +232,7 @@ describe('OrganisationController', () => {
                             typ: queryParams.typ,
                         })
                         .setScopeWhereOperator(ScopeOperator.AND)
+                        .findByAdministriertVonArray(queryParams.administriertVon)
                         .searchString(queryParams.searchString)
                         .byIDs([])
                         .paged(queryParams.offset, queryParams.limit),
