@@ -225,12 +225,14 @@ describe('PersonController', () => {
                 const deleteParams: PersonByIdParams = {
                     personId: result.person.id,
                 };
-                personUcMock.deletePersonIfAllowed.mockResolvedValue(new SchulConnexError({} as SchulConnexError));
+                personenkontextUcMock.deletePersonenkontexteByPersonId.mockResolvedValue(
+                    new SchulConnexError({} as SchulConnexError),
+                );
 
                 await expect(personController.deletePersonById(deleteParams, personPermissionsMock)).rejects.toThrow(
                     HttpException,
                 );
-                expect(personenkontextUcMock.deletePersonenkontextById).toHaveBeenCalledTimes(1);
+                expect(personenkontextUcMock.deletePersonenkontexteByPersonId).toHaveBeenCalledTimes(1);
             });
         });
     });
