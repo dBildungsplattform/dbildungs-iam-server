@@ -62,6 +62,13 @@ export class OrganisationScope extends ScopeBase<OrganisationEntity> {
         return this;
     }
 
+    public searchStringAdministriertVon(searchString: string | undefined): this {
+        if (searchString) {
+            this.findBySubstring(['name'], searchString);
+        }
+        return this;
+    }
+
     public findAdministrierteVon(parentOrganisationId: string): this {
         this.findByInternal(
             {
