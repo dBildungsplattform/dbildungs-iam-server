@@ -3,9 +3,13 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 import { EntityAlreadyExistsError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 export class Rolle<WasPersisted extends boolean> {
     private constructor(
+        public organisationRepo: OrganisationRepository,
         public serviceProviderRepo: ServiceProviderRepo,
         public id: Persisted<string, WasPersisted>,
         public createdAt: Persisted<Date, WasPersisted>,
@@ -19,6 +23,7 @@ export class Rolle<WasPersisted extends boolean> {
     ) {}
 
     public static createNew(
+        organisationRepo: OrganisationRepository,
         serviceProviderRepo: ServiceProviderRepo,
         name: string,
         administeredBySchulstrukturknoten: string,
@@ -28,6 +33,7 @@ export class Rolle<WasPersisted extends boolean> {
         serviceProviderIds: string[],
     ): Rolle<false> {
         return new Rolle(
+            organisationRepo,
             serviceProviderRepo,
             undefined,
             undefined,
@@ -42,6 +48,7 @@ export class Rolle<WasPersisted extends boolean> {
     }
 
     public static construct<WasPersisted extends boolean = false>(
+        organisationRepo: OrganisationRepository,
         serviceProviderRepo: ServiceProviderRepo,
         id: string,
         createdAt: Date,
@@ -54,6 +61,7 @@ export class Rolle<WasPersisted extends boolean> {
         serviceProviderIds: string[],
     ): Rolle<WasPersisted> {
         return new Rolle(
+            organisationRepo,
             serviceProviderRepo,
             id,
             createdAt,
@@ -65,6 +73,14 @@ export class Rolle<WasPersisted extends boolean> {
             systemrechte,
             serviceProviderIds,
         );
+    }
+
+    public async canBeAssignedToOrga(orgaId: OrganisationID): Promise<boolean> {
+        const childOrgas: Organisation<true>[] = await this.organisationRepo.findChildOrgasForIds([
+            this.administeredBySchulstrukturknoten,
+        ]);
+
+        return !!childOrgas.find((orga: Organisation<true>) => orga.id === orgaId);
     }
 
     public addMerkmal(merkmal: RollenMerkmal): void {

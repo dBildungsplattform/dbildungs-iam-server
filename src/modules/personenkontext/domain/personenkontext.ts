@@ -3,21 +3,14 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 
 export class Personenkontext<WasPersisted extends boolean> {
     private constructor(
-        // @ts-expect-error currently unused, remove this comment later
-        private readonly personRepo: PersonRepository,
-        private readonly organisationRepo: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
         public id: Persisted<string, WasPersisted>,
         public readonly createdAt: Persisted<Date, WasPersisted>,
@@ -28,8 +21,6 @@ export class Personenkontext<WasPersisted extends boolean> {
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
-        personRepo: PersonRepository,
-        organisationRepo: OrganisationRepository,
         rolleRepo: RolleRepo,
         id: Persisted<string, WasPersisted>,
         createdAt: Persisted<Date, WasPersisted>,
@@ -38,38 +29,16 @@ export class Personenkontext<WasPersisted extends boolean> {
         organisationId: OrganisationID,
         rolleId: RolleID,
     ): Personenkontext<WasPersisted> {
-        return new Personenkontext(
-            personRepo,
-            organisationRepo,
-            rolleRepo,
-            id,
-            createdAt,
-            updatedAt,
-            personId,
-            organisationId,
-            rolleId,
-        );
+        return new Personenkontext(rolleRepo, id, createdAt, updatedAt, personId, organisationId, rolleId);
     }
 
     public static createNew(
-        personRepo: PersonRepository,
-        organisationRepo: OrganisationRepository,
         rolleRepo: RolleRepo,
         personId: PersonID,
         organisationId: OrganisationID,
         rolleId: RolleID,
     ): Personenkontext<false> {
-        return new Personenkontext(
-            personRepo,
-            organisationRepo,
-            rolleRepo,
-            undefined,
-            undefined,
-            undefined,
-            personId,
-            organisationId,
-            rolleId,
-        );
+        return new Personenkontext(rolleRepo, undefined, undefined, undefined, personId, organisationId, rolleId);
     }
 
     public async checkReferences(
@@ -98,23 +67,17 @@ export class Personenkontext<WasPersisted extends boolean> {
         return undefined;
     }
 
-    public async checkValidity(
-        permissions: PersonPermissions,
-        personenkontextRepo: DBiamPersonenkontextRepo,
-    ): Promise<Option<DomainError>> {
-        let orgas: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
-            true,
-        );
+    public async checkValidity(permissions: PersonPermissions): Promise<Option<DomainError>> {
+        // Check if logged in person has permission
+        {
+            const hasPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(this.organisationId, [
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ]);
 
-        // If user has permission on root orga, allow everything
-        if (orgas.includes(this.organisationRepo.ROOT_ORGANISATION_ID)) {
-            orgas = undefined;
-        }
-
-        // Missing permission on orga
-        if (orgas && !orgas.includes(this.organisationId)) {
-            return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
+            // Missing permission on orga
+            if (!hasPermissionAtOrga) {
+                return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
+            }
         }
 
         // Can rolle be assigned at target orga
@@ -124,28 +87,17 @@ export class Personenkontext<WasPersisted extends boolean> {
                 return new EntityNotFoundError('rolle', this.rolleId);
             }
 
-            const rollenOrgas: Organisation<true>[] = await this.organisationRepo.findChildOrgasForIds([
-                rolle.administeredBySchulstrukturknoten,
-            ]);
-
-            const rollenOrgaIds: OrganisationID[] = rollenOrgas.map((orga: Organisation<true>) => orga.id);
-            rollenOrgaIds.push(rolle.administeredBySchulstrukturknoten);
-
-            if (!rollenOrgaIds.includes(this.organisationId)) {
+            const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(this.organisationId);
+            if (!canAssignRolle) {
                 return new EntityNotFoundError(''); // TODO: Can't assign rolle at this organisation error
             }
         }
 
-        // Check if we can manage the target person
-        if (orgas) {
-            const result: Result<Personenkontext<true>[], DomainError> =
-                await personenkontextRepo.findByPersonAuthorized(this.personId, permissions);
+        // Check if logged in user can modify target person
+        {
+            const canModifyPerson: boolean = await permissions.canModifyPerson(this.personId);
 
-            if (!result.ok) {
-                return result.error;
-            }
-
-            if (result.value.length === 0) {
+            if (!canModifyPerson) {
                 return new MissingPermissionsError('Not authorized to manage this person');
             }
         }
