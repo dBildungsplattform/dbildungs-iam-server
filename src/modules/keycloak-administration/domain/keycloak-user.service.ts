@@ -75,26 +75,63 @@ export class KeycloakUserService {
         }
     }
 
-    public async createWithHashedPassword(): Promise<Result<string, DomainError>> {
+    public async createWithHashedPassword(
+        user: UserDo<false>,
+        hashedPassword: string,
+    ): Promise<Result<string, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
 
         if (!kcAdminClientResult.ok) {
             return kcAdminClientResult;
         }
+        if (!hashedPassword.startsWith('{BCRYPT}')) {
+            return {
+                ok: false,
+                error: new KeycloakClientError('Password algorithm is not bcrypt'),
+            };
+        }
+        const parts: string[] = hashedPassword.split('$');
+        if (parts.length < 4 || !parts[2]) {
+            return {
+                ok: false,
+                error: new KeycloakClientError('Invalid bcrypt hash format'),
+            };
+        }
+        const hashIterations: number = parseInt(parts[2]);
+        const algorithm: string = 'bcrypt';
 
+        // Check for existing user
+        const filter: FindUserFilter = {
+            username: user.username,
+        };
+
+        if (user.email) {
+            filter.email = user.email;
+        }
+
+        const findResult: Result<UserDo<true>, DomainError> = await this.findOne(filter);
+
+        if (findResult.ok) {
+            return {
+                ok: false,
+                error: new KeycloakClientError('Username or email already exists'),
+            };
+        }
+
+        //credentialData & secretData are stringified, otherwiese KC wont accept it
         try {
             const userRepresentation: UserRepresentation = {
-                username: 'thisisfixedfortesting1',
+                username: user.username,
                 enabled: true,
                 credentials: [
                     {
                         credentialData: JSON.stringify({
-                            hashIterations: 12,
-                            algorithm: 'bcrypt',
+                            hashIterations: hashIterations,
+                            algorithm: algorithm,
                         }),
                         secretData: JSON.stringify({
-                            value: '{BCRYPT}$2b$12$P8vBnldUyI3eCJNKyjq3hOfa1zB27lxf69qc.b4QGCI5768l26EzC',
+                            value: hashedPassword,
                         }),
                         type: 'password',
                     },
