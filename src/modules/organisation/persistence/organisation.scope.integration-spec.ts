@@ -104,4 +104,33 @@ describe('OrganisationScope', () => {
             });
         });
     });
+
+    describe('findBySearchString', () => {
+        describe('when filtering for organizations by name', () => {
+            beforeEach(async () => {
+                const organisations: OrganisationEntity[] = mapper.mapArray(
+                    [
+                        DoFactory.createOrganisation(false, { name: '9a' }),
+                        DoFactory.createOrganisation(false, { name: '9' }),
+                        DoFactory.createOrganisation(false, { name: '9b' }),
+                    ],
+                    OrganisationDo,
+                    OrganisationEntity,
+                );
+
+                await em.persistAndFlush(organisations);
+            });
+
+            it('should return found organizationen', async () => {
+                const scope: OrganisationScope = new OrganisationScope()
+                    .searchStringAdministriertVon('9')
+                    .sortBy('name', ScopeOrder.ASC)
+                    .paged(1, 10);
+
+                const [organisations]: Counted<OrganisationEntity> = await scope.executeQuery(em);
+
+                expect(organisations).toHaveLength(2);
+            });
+        });
+    });
 });
