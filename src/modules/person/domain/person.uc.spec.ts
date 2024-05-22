@@ -154,7 +154,6 @@ describe('PersonUc', () => {
                 );
 
                 expect(result.ok).toBeFalsy();
-
             });
         });
     });
