@@ -8,6 +8,7 @@ import { FrontendConfig, HostConfig, KeycloakConfig, ServerConfig } from '../sha
 import { GlobalValidationPipe } from '../shared/validation/index.js';
 import { ServerModule } from './server.module.js';
 import { GlobalPagingHeadersInterceptor } from '../shared/paging/index.js';
+import { setupTelemetry } from './telemetry.js';
 
 async function bootstrap(): Promise<void> {
     const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(ServerModule);
@@ -70,6 +71,8 @@ async function bootstrap(): Promise<void> {
     if (frontendConfig.TRUST_PROXY !== undefined) {
         app.set('trust proxy', frontendConfig.TRUST_PROXY);
     }
+
+    setupTelemetry(); // Call setupTelemetry before app.listen
 
     await app.listen(port);
 
