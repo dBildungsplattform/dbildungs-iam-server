@@ -24,6 +24,8 @@ import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
+import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 
 describe('OrganisationController', () => {
     let module: TestingModule;
@@ -243,6 +245,84 @@ describe('OrganisationController', () => {
         });
     });
 
+    describe('getRootChildren', () => {
+        describe('when both oeffentlich & ersatz could be found', () => {
+            it('should return offentliche & ersatz organisation', async () => {
+                const oeffentlich: Organisation<true> = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.numeric(),
+                    'Öffentliche Schulen Land Schleswig Holstein',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.ROOT,
+                    undefined,
+                );
+                const ersatz: Organisation<true> = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.numeric(),
+                    'Ersatzschulen Land Schleswig Holstein',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.SCHULE,
+                    undefined,
+                );
+                const mockedRepoResponse: Organisation<true>[] = [oeffentlich, ersatz];
+
+                organisationRepositoryMock.findRootDirectChildren.mockResolvedValue(mockedRepoResponse);
+
+                const result: OrganisationRootChildrenResponse = await organisationController.getRootChildren();
+
+                expect(organisationRepositoryMock.findRootDirectChildren).toHaveBeenCalledTimes(1);
+                expect(result).toBeInstanceOf(OrganisationRootChildrenResponse);
+                expect(result.ersatz).toEqual(new OrganisationResponse(ersatz));
+                expect(result.oeffentlich).toEqual(new OrganisationResponse(oeffentlich));
+            });
+        });
+        describe('when oeffentlich || ersatz could not be found', () => {
+            it('should return an error', async () => {
+                const oeffentlich: Organisation<true> = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.numeric(),
+                    'Random Schule',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.ROOT,
+                    undefined,
+                );
+                const ersatz: Organisation<true> = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.numeric(),
+                    'Random Schule 2',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.SCHULE,
+                    undefined,
+                );
+                const mockedRepoResponse: Organisation<true>[] = [oeffentlich, ersatz];
+
+                organisationRepositoryMock.findRootDirectChildren.mockResolvedValue(mockedRepoResponse);
+
+                await expect(organisationController.getRootChildren()).rejects.toThrow(HttpException);
+            });
+        });
+    });
+
     describe('getRootOrganisation', () => {
         const response: OrganisationResponseLegacy = plainToClass(OrganisationResponseLegacy, {
             id: faker.string.uuid(),
@@ -274,8 +354,12 @@ describe('OrganisationController', () => {
     });
 
     describe('getAdministrierteOrganisationen', () => {
-        const params: OrganisationByIdParams = {
+        const routeParams: OrganisationByIdParams = {
             organisationId: faker.string.uuid(),
+        };
+
+        const queryParams: OrganisationByIdQueryParams = {
+            searchFilter: undefined,
         };
 
         describe('when usecase returns a OrganisationResponse', () => {
@@ -308,7 +392,7 @@ describe('OrganisationController', () => {
                 organisationUcMock.findAdministriertVon.mockResolvedValueOnce(mockedPagedResponse);
 
                 const result: Paged<OrganisationResponseLegacy> =
-                    await organisationController.getAdministrierteOrganisationen(params);
+                    await organisationController.getAdministrierteOrganisationen(routeParams, queryParams);
 
                 expect(result).toEqual(mockedPagedResponse);
                 expect(organisationUcMock.findAdministriertVon).toHaveBeenCalledTimes(1);
@@ -321,9 +405,9 @@ describe('OrganisationController', () => {
                 organisationUcMock.findAdministriertVon.mockResolvedValueOnce(
                     new SchulConnexError({ code: 500, subcode: '', titel: '', beschreibung: '' }),
                 );
-                await expect(organisationController.getAdministrierteOrganisationen(params)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    organisationController.getAdministrierteOrganisationen(routeParams, queryParams),
+                ).rejects.toThrow(HttpException);
             });
         });
     });

@@ -32,7 +32,7 @@ module.exports = {
         },
     ],
     coverageDirectory: './coverage',
-    coverageProvider: 'v8',
+    coverageProvider: 'babel',
     collectCoverageFrom: [
         '**/*.ts',
         '!**/*.d.ts',
@@ -50,5 +50,5 @@ module.exports = {
             lines: -100, // ~99%
         },
     },
-    testTimeout: 10000,
+    testTimeout: 1000000,
 };

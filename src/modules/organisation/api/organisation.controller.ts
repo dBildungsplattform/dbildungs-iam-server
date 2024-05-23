@@ -37,6 +37,9 @@ import { OrganisationResponse } from './organisation.response.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
+import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('organisationen')
@@ -109,6 +112,33 @@ export class OrganisationController {
         }
 
         throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+    }
+
+    @Get('root/children')
+    @ApiOkResponse({
+        description: 'The root organizations were successfully pulled.',
+        type: OrganisationRootChildrenResponse,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get the organizations.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organizations.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
+    public async getRootChildren(): Promise<OrganisationRootChildrenResponse> {
+        const children: Organisation<true>[] = await this.organisationRepository.findRootDirectChildren();
+        const oeffentlich: Organisation<true> | undefined = children.find((orga: Organisation<true>) =>
+            orga.name?.includes('Öffentliche'),
+        );
+        const ersatz: Organisation<true> | undefined = children.find((orga: Organisation<true>) =>
+            orga.name?.includes('Ersatz'),
+        );
+        if (!oeffentlich || !ersatz) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Organisation', `${!oeffentlich && 'Oeffentlich'} ${!ersatz && 'Ersatz'}`),
+                ),
+            );
+        }
+
+        return new OrganisationRootChildrenResponse(oeffentlich, ersatz);
     }
 
     @Get(':organisationId')
@@ -184,10 +214,12 @@ export class OrganisationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get organizations.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
     public async getAdministrierteOrganisationen(
-        @Param() params: OrganisationByIdParams,
+        @Param() routeParams: OrganisationByIdParams,
+        @Query() queryParams: OrganisationByIdQueryParams,
     ): Promise<PagedResponse<OrganisationResponseLegacy>> {
         const result: Paged<OrganisationResponseLegacy> | SchulConnexError = await this.uc.findAdministriertVon(
-            params.organisationId,
+            routeParams.organisationId,
+            queryParams.searchFilter,
         );
 
         if (result instanceof SchulConnexError) {
