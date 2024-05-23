@@ -106,3 +106,17 @@ services:
     ports:
       - 9007:80
       - 4443:443
+
+  collector:
+    image: otel/opentelemetry-collector:latest
+    ports:
+      - '4317:4317'
+      - '4318:4318'
+    volumes:
+      - ./otel-config.yaml:/etc/otel-config.yaml
+    command: ['--config=/etc/otel-config.yaml']
+
+networks:
+  default:
+    external:
+      name: shared-network
