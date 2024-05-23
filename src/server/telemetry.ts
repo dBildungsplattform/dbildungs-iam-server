@@ -4,8 +4,7 @@
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-grpc'; // Ensure this is the gRPC exporter
-// previous implementation
+import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-grpc';
 // import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-proto';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { SimpleSpanProcessor } from '@opentelemetry/tracing';
@@ -13,10 +12,11 @@ import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
 import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
 import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics-base';
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc'; // Use the gRPC exporter for metrics
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
 // previous implementation
 // import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
-import { Counter } from '@opentelemetry/api-metrics';
+// does not work on docker for some reason
+// import { Counter } from '@opentelemetry/api-metrics';
 import { context, trace } from '@opentelemetry/api';
 import { SpanKind } from '@opentelemetry/api';
 import * as grpc from '@grpc/grpc-js'; // Import grpc for creating insecure credentials
@@ -30,7 +30,7 @@ export function setupTelemetry(): void {
     const provider: NodeTracerProvider = new NodeTracerProvider();
     const exporter1: CollectorTraceExporter = new CollectorTraceExporter({
         url: 'grpc://localhost:4317',
-        credentials: grpc.credentials.createInsecure(), // Ensure gRPC without SSL
+        credentials: grpc.credentials.createInsecure(),
     });
 
     console.log('Initializing span processor...');
@@ -51,8 +51,8 @@ export function setupTelemetry(): void {
 
     // Metrics setup
     const metricExporter = new OTLPMetricExporter({
-        url: 'grpc://localhost:4317', // Use gRPC protocol without SSL for metrics
-        credentials: grpc.credentials.createInsecure(), // Explicitly disable SSL
+        url: 'grpc://localhost:4317',
+        credentials: grpc.credentials.createInsecure(),
     });
     const meterProvider = new MeterProvider();
     console.log('Metric exporter and meter provider initialized');
@@ -61,19 +61,23 @@ export function setupTelemetry(): void {
     meterProvider.addMetricReader(
         new PeriodicExportingMetricReader({
             exporter: metricExporter,
-            exportIntervalMillis: 60000,
+            exportIntervalMillis: 6000,
         }),
     );
     console.log('Metric reader added to meter provider');
 
-    const meter = meterProvider.getMeter('meter-meter');
-    const requestCounter: Counter = meter.createCounter('requests', {
-        description: 'Count all incoming requests',
-    });
-    console.log('Request counter created');
+    const meter = meterProvider.getMeter('example-meter');
 
-    requestCounter.add(1);
-    console.log('Request counter incremented');
+    // Define a counter
+    const metricPostCounter = meter.createCounter('metrics_posted');
+
+    function postMetric(): void {
+        metricPostCounter.add(1);
+        console.log('Metric post counter incremented');
+    }
+
+    const interval = 6000;
+    setInterval(postMetric, interval);
 
     // For debugging only
     const tracer = provider.getTracer('example-tracer');
