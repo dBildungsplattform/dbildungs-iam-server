@@ -36,6 +36,7 @@ export class LdapClientService {
     }
 
     public async createOrganisation(organisation: CreatedOrganisationDto): Promise<Result<CreatedOrganisationDto>> {
+        this.logger.info('Inside createOrganisation');
         const clientResult: Result<Client> = await this.getClient();
         if (!clientResult.ok) return clientResult;
         if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
@@ -49,16 +50,17 @@ export class LdapClientService {
             objectclass: ['organizationalRole'],
         };
         const client: Client = clientResult.value;
-
         await client.add(`ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, organisationEntry);
-        await client.add(`cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, roleEntry);
+        this.logger.info(`Successfully created organisation ou=${organisation.kennung}`);
 
-        this.logger.info('Successfully created organisation and corresponding lehrer rolle');
+        await client.add(`cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, roleEntry);
+        this.logger.info(`Successfully created corresponding lehrer rolle for ou=${organisation.kennung}`);
 
         return { ok: true, value: organisation };
     }
 
     public async createLehrer(person: Person<true>, organisation: Organisation<true>): Promise<Result<Person<true>>> {
+        this.logger.info('Inside createLehrer');
         const clientResult: Result<Client> = await this.getClient();
         if (!clientResult.ok) return clientResult;
         if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
@@ -74,7 +76,9 @@ export class LdapClientService {
             `uid=${person.vorname}${person.familienname},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
             entry,
         );
-        this.logger.info('Successfully created lehrer');
+        this.logger.info(
+            `Successfully created lehrer uid=${person.vorname}${person.familienname},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
+        );
 
         return { ok: true, value: person };
     }

@@ -11,10 +11,7 @@ import {
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { LdapConfigModule } from '../ldap-config.module.js';
-import { OrganisationApiModule } from '../../../modules/organisation/organisation-api.module.js';
 import { LdapModule } from '../ldap.module.js';
-import { PersonenKontextApiModule } from '../../../modules/personenkontext/personenkontext-api.module.js';
-
 import { CreatedOrganisationDto } from '../../../modules/organisation/api/created-organisation.dto.js';
 import { faker } from '@faker-js/faker';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
@@ -22,7 +19,7 @@ import { LdapClientService } from './ldap-client.service.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 
-describe('LDAP Client Service', () => {
+describe('LDAP Client Service Create Person', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let em: EntityManager;
@@ -37,8 +34,6 @@ describe('LDAP Client Service', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LdapModule,
                 MapperTestModule,
-                OrganisationApiModule,
-                PersonenKontextApiModule,
             ],
             providers: [
                 {
@@ -55,6 +50,7 @@ describe('LDAP Client Service', () => {
         em = module.get(EntityManager);
         ldapClientService = module.get(LdapClientService);
 
+        //currently only used to wait for the LDAP container, because setupDatabase() is blocking
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
@@ -74,39 +70,21 @@ describe('LDAP Client Service', () => {
         expect(em).toBeDefined();
     });
 
-    describe('createOrganisation', () => {
-        describe('when called with valid organisation', () => {
-            it('should return truthy result', async () => {
-                const createdOrganisationDto: CreatedOrganisationDto = {
-                    id: id,
-                    typ: OrganisationsTyp.SCHULE,
-                    kennung: kennung,
-                    name: faker.company.name(),
-                };
-                const result: Result<CreatedOrganisationDto> =
-                    await ldapClientService.createOrganisation(createdOrganisationDto);
-
-                expect(result.ok).toBeTruthy();
-            });
-        });
-
-        describe('when called with organisation without kennung', () => {
-            it('should return error result', async () => {
-                const createdOrganisationDto: CreatedOrganisationDto = {
-                    id: id,
-                    typ: OrganisationsTyp.SCHULE,
-                    kennung: undefined,
-                    name: faker.company.name(),
-                };
-                const result: Result<CreatedOrganisationDto> =
-                    await ldapClientService.createOrganisation(createdOrganisationDto);
-
-                expect(result.ok).toBeFalsy();
-            });
-        });
-    });
-
     describe('createLehrer', () => {
+        // OU has to be created before
+        beforeAll(async () => {
+            const createdOrganisationDto: CreatedOrganisationDto = {
+                id: id,
+                typ: OrganisationsTyp.SCHULE,
+                kennung: kennung,
+                name: faker.company.name(),
+            };
+            const result: Result<CreatedOrganisationDto> =
+                await ldapClientService.createOrganisation(createdOrganisationDto);
+
+            expect(result.ok).toBeTruthy();
+        });
+
         describe('when called with valid person and organisation', () => {
             it('should return truthy result', async () => {
                 const person: Person<true> = Person.construct(

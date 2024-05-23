@@ -21,14 +21,13 @@ export class LdapTestModule implements OnModuleDestroy {
 
                         if (options?.isLdapRequired) {
                             this.ldap = await new GenericContainer('docker.io/osixia/openldap:1.5.0')
-                                .withCopyFilesToContainer([
+                                .withCopyDirectoriesToContainer([
                                     {
-                                        source: './config/ldif/spsh.ldif',
-                                        target: '/container/service/slapd/assets/config/bootstrap/ldif/custom/ldif/spsh.ldif',
+                                        source: './config/ldif',
+                                        target: '/container/service/slapd/assets/config/bootstrap/ldif/custom/ldif',
                                     },
                                 ])
                                 .withPullPolicy(PullPolicy.defaultPolicy())
-                                .withReuse()
                                 .withExposedPorts(389)
                                 .withEnvironment({
                                     LDAP_ADMIN_PASSWORD: 'admin',
@@ -37,7 +36,7 @@ export class LdapTestModule implements OnModuleDestroy {
                                     LDAP_DOMAIN: 'schule-sh.de',
                                     LDAP_ORGANISATION: 'schule-sh-de',
                                 })
-                                .withCommand(['--copy-service', '--loglevel', 'debug'])
+                                .withCommand(['--copy-service']) // '--loglevel', 'debug'
                                 .withStartupTimeout(240000)
                                 .start();
                         }
