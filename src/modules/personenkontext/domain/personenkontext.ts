@@ -3,14 +3,16 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 
 export class Personenkontext<WasPersisted extends boolean> {
     private constructor(
+        private readonly personRepo: PersonRepository,
+        private readonly organisationRepo: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
         public id: Persisted<string, WasPersisted>,
         public readonly createdAt: Persisted<Date, WasPersisted>,
@@ -21,6 +23,8 @@ export class Personenkontext<WasPersisted extends boolean> {
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
+        personRepo: PersonRepository,
+        organisationRepo: OrganisationRepository,
         rolleRepo: RolleRepo,
         id: Persisted<string, WasPersisted>,
         createdAt: Persisted<Date, WasPersisted>,
@@ -29,27 +33,45 @@ export class Personenkontext<WasPersisted extends boolean> {
         organisationId: OrganisationID,
         rolleId: RolleID,
     ): Personenkontext<WasPersisted> {
-        return new Personenkontext(rolleRepo, id, createdAt, updatedAt, personId, organisationId, rolleId);
+        return new Personenkontext(
+            personRepo,
+            organisationRepo,
+            rolleRepo,
+            id,
+            createdAt,
+            updatedAt,
+            personId,
+            organisationId,
+            rolleId,
+        );
     }
 
     public static createNew(
+        personRepo: PersonRepository,
+        organisationRepo: OrganisationRepository,
         rolleRepo: RolleRepo,
         personId: PersonID,
         organisationId: OrganisationID,
         rolleId: RolleID,
     ): Personenkontext<false> {
-        return new Personenkontext(rolleRepo, undefined, undefined, undefined, personId, organisationId, rolleId);
+        return new Personenkontext(
+            personRepo,
+            organisationRepo,
+            rolleRepo,
+            undefined,
+            undefined,
+            undefined,
+            personId,
+            organisationId,
+            rolleId,
+        );
     }
 
-    public async checkReferences(
-        personRepo: PersonRepo,
-        organisationRepo: OrganisationRepo,
-        rolleRepo: RolleRepo,
-    ): Promise<Option<DomainError>> {
+    public async checkReferences(): Promise<Option<DomainError>> {
         const referencesExist: [boolean, boolean, boolean] = await Promise.all([
-            personRepo.exists(this.personId),
-            organisationRepo.exists(this.organisationId),
-            rolleRepo.exists(this.rolleId),
+            this.personRepo.exists(this.personId),
+            this.organisationRepo.exists(this.organisationId),
+            this.rolleRepo.exists(this.rolleId),
         ]);
 
         if (!referencesExist[0]) {

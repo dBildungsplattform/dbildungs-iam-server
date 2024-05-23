@@ -1,4 +1,4 @@
-import { EntityManager, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityManager, RequiredEntityData, Loaded } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OrganisationEntity } from './organisation.entity.js';
@@ -54,6 +54,16 @@ export class OrganisationRepository {
         );
 
         return [organisations, total];
+    }
+
+    public async exists(id: OrganisationID): Promise<boolean> {
+        const organisation: Option<Loaded<OrganisationEntity, never, 'id', never>> = await this.em.findOne(
+            OrganisationEntity,
+            { id },
+            { fields: ['id'] as const },
+        );
+
+        return !!organisation;
     }
 
     public async findChildOrgasForIds(ids: OrganisationID[]): Promise<Organisation<true>[]> {

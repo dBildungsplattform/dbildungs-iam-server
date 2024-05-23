@@ -5,6 +5,7 @@ import { Person } from '../domain/person.js';
 import { PersonScope } from './person.scope.js';
 import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
 import { DomainError, EntityCouldNotBeCreated } from '../../../shared/error/index.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
     return {
@@ -102,6 +103,16 @@ export class PersonRepository {
         }
 
         return null;
+    }
+
+    public async exists(id: PersonID): Promise<boolean> {
+        const person: Option<Loaded<PersonEntity, never, 'id', never>> = await this.em.findOne(
+            PersonEntity,
+            { id },
+            { fields: ['id'] as const },
+        );
+
+        return !!person;
     }
 
     public async create(person: Person<false>): Promise<Person<true> | DomainError> {
