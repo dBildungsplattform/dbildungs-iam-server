@@ -13,9 +13,6 @@ import {
 import { DomainError, EntityAlreadyExistsError } from '../../../shared/error/index.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { PersonRepo } from '../../person/persistence/person.repo.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkontext.body.params.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personenkontext-by-personid.params.js';
@@ -34,9 +31,6 @@ import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 export class DBiamPersonenkontextController {
     public constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
-        private readonly personRepo: PersonRepo,
-        private readonly organisationRepo: OrganisationRepo,
-        private readonly rolleRepo: RolleRepo,
         private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
         private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
@@ -102,11 +96,7 @@ export class DBiamPersonenkontextController {
         );
 
         // Check if all references are valid
-        const referenceError: Option<DomainError> = await newPersonenkontext.checkReferences(
-            this.personRepo,
-            this.organisationRepo,
-            this.rolleRepo,
-        );
+        const referenceError: Option<DomainError> = await newPersonenkontext.checkReferences();
 
         if (referenceError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(

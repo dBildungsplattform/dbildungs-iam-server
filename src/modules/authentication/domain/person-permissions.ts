@@ -1,7 +1,7 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Person } from '../../person/domain/person.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -37,7 +37,7 @@ export class PersonPermissions {
 
     public constructor(
         private personenkontextRepo: DBiamPersonenkontextRepo,
-        private organisationRepo: OrganisationRepo,
+        private organisationRepo: OrganisationRepository,
         private rolleRepo: RolleRepo,
         person: Person<true>,
     ) {

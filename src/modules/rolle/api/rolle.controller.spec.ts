@@ -12,6 +12,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { RolleController } from './rolle.controller.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -33,6 +34,10 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                 {
                     provide: OrganisationService,
                     useValue: createMock<OrganisationService>(),
+                },
+                {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
                 },
                 {
                     provide: ServiceProviderRepo,

@@ -9,12 +9,13 @@ import { PersonFields, PersonPermissions } from './person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { OrganisationID, RolleID } from '../../../shared/types/index.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { PersonenkontextRolleFieldsResponse } from '../api/personen-kontext-rolle-fields.response.js';
 import { RollenSystemRechtServiceProviderIDResponse } from '../api/rolle-systemrechte-serviceproviderid.response.js';
+import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 function createPerson(): Person<true> {
     return Person.construct(
@@ -33,14 +34,17 @@ function createPerson(): Person<true> {
 describe('PersonPermissions', () => {
     let module: TestingModule;
     let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
-    let organisationRepoMock: DeepMocked<OrganisationRepo>;
+    let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
+
+    let personenkontextFactory: PersonenkontextFactory;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule],
             providers: [
                 PersonPermissionsRepo,
+                PersonenkontextFactory,
                 {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock<DBiamPersonenkontextRepo>(),
@@ -50,8 +54,8 @@ describe('PersonPermissions', () => {
                     useValue: createMock<PersonRepository>(),
                 },
                 {
-                    provide: OrganisationRepo,
-                    useValue: createMock<OrganisationRepo>(),
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
                 },
                 {
                     provide: RolleRepo,
@@ -61,8 +65,9 @@ describe('PersonPermissions', () => {
         }).compile();
 
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
-        organisationRepoMock = module.get(OrganisationRepo);
+        organisationRepoMock = module.get(OrganisationRepository);
         rolleRepoMock = module.get(RolleRepo);
+        personenkontextFactory = module.get(PersonenkontextFactory);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
@@ -76,7 +81,7 @@ describe('PersonPermissions', () => {
             it('should load PersonPermissions', async () => {
                 const person: Person<true> = createPerson();
                 const personenkontexte: Personenkontext<true>[] = [
-                    Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
+                    personenkontextFactory.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
                 ];
                 dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
                 const personPermissions: PersonPermissions = new PersonPermissions(
@@ -96,7 +101,7 @@ describe('PersonPermissions', () => {
             it('should return cached person fields', () => {
                 const person: Person<true> = createPerson();
                 const personenkontexte: Personenkontext<true>[] = [
-                    Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
+                    personenkontextFactory.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
                 ];
                 dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
                 const personPermissions: PersonPermissions = new PersonPermissions(
@@ -129,7 +134,7 @@ describe('PersonPermissions', () => {
                 faker.string.uuid(),
             );
             const personenkontexte: Personenkontext<true>[] = [
-                Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
+                personenkontextFactory.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
             ];
             dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
             rolleRepoMock.findByIds.mockResolvedValueOnce(
@@ -154,7 +159,7 @@ describe('PersonPermissions', () => {
         it('should return person context with system rights and service provider ids in an object roles', async () => {
             const person: Person<true> = createPerson();
             const personenkontexte: Personenkontext<true>[] = [
-                Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
+                personenkontextFactory.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
             ];
             const expectedRolle: Rolle<true> = createMock<Rolle<true>>({ hasSystemRecht: () => true });
             dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
