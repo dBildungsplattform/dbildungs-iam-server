@@ -17,15 +17,16 @@ export class LdapClientService {
         private readonly ldapInstanceConfig: LdapInstanceConfig,
     ) {}
 
-    public async getClient(): Promise<Result<Client>> {
+    private async getClient(): Promise<Result<Client>> {
         if (!this.client) {
             // configure LDAP connection
-            this.client = new Client({
+            const client: Client = new Client({
                 url: this.ldapInstanceConfig.URL,
             });
             try {
-                await this.client.bind(this.ldapInstanceConfig.BIND_DN, this.ldapInstanceConfig.PASSWORD);
+                await client.bind(this.ldapInstanceConfig.BIND_DN, this.ldapInstanceConfig.PASSWORD);
                 this.logger.info('Successfully connected to LDAP');
+                this.client = client;
             } catch (err) {
                 this.logger.error(`Could not connect to LDAP, message: ${JSON.stringify(err)}`);
                 return { ok: false, error: new Error(`Could not connect to LDAP, message: ${JSON.stringify(err)}`) };
