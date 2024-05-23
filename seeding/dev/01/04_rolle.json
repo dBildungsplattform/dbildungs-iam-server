@@ -112,6 +112,22 @@
         10,
         11
       ]
-    }
+    },
+    {
+        "id": 5,
+        "administeredBySchulstrukturknoten": 0,
+        "name": "Migration",
+        "rollenart": "SYSADMIN",
+        "merkmale": [],
+        "systemrechte": [
+          "ROLLEN_VERWALTEN",
+          "PERSONEN_VERWALTEN",
+          "SCHULEN_VERWALTEN",
+          "KLASSEN_VERWALTEN",
+          "SCHULTRAEGER_VERWALTEN",
+          "MIGRATION_DURCHFÜHREN"
+        ],
+        "serviceProviderIds": []
+      }
   ]
 }
