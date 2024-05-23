@@ -1,6 +1,6 @@
 import { DynamicModule, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GenericContainer, PullPolicy, StartedTestContainer } from 'testcontainers';
+import {GenericContainer, PullPolicy, StartedTestContainer, Wait} from 'testcontainers';
 import { ServerConfig } from '../../src/shared/config/index.js';
 import { LdapInstanceConfig } from '../../src/core/ldap/ldap-instance-config.js';
 import { LdapConfig } from '../../src/shared/config/ldap.config.js';
@@ -38,6 +38,7 @@ export class LdapTestModule implements OnModuleDestroy {
                                 })
                                 .withCommand(['--copy-service']) // '--loglevel', 'debug'
                                 .withStartupTimeout(240000)
+                                .withWaitStrategy(Wait.forLogMessage(/openldap | w+ slapd starting/))
                                 .start();
                         }
 
