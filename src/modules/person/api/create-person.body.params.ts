@@ -69,4 +69,10 @@ export class CreatePersonBodyParams {
     @IsString()
     @ApiProperty({ required: false })
     public readonly hashedPassword?: string;
+
+    @AutoMap()
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ required: false })
+    public readonly username?: string;
 }
