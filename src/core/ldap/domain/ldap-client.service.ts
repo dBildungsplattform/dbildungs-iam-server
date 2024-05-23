@@ -52,6 +52,8 @@ export class LdapClientService {
         await client.add(`ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, organisationEntry);
         await client.add(`cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, roleEntry);
 
+        this.logger.info('Successfully created organisation and corresponding lehrer rolle');
+
         return { ok: true, value: organisation };
     }
 
@@ -71,6 +73,7 @@ export class LdapClientService {
             `uid=${person.vorname}${person.familienname},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
             entry,
         );
+        this.logger.info('Successfully created lehrer');
 
         return { ok: true, value: person };
     }
