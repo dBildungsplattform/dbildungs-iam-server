@@ -50,5 +50,5 @@ module.exports = {
             lines: -100, // ~99%
         },
     },
-    testTimeout: 10000000000,
+    testTimeout: 1000000,
 };
