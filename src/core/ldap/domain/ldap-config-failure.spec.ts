@@ -17,8 +17,8 @@ import { CreatedOrganisationDto } from '../../../modules/organisation/api/create
 import { faker } from '@faker-js/faker';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 import { LdapClientService } from './ldap-client.service.js';
-import {Person} from "../../../modules/person/domain/person.js";
-import {Organisation} from "../../../modules/organisation/domain/organisation.js";
+import { Person } from '../../../modules/person/domain/person.js';
+import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 
 describe('LDAP Client Service Config Failure', () => {
     let app: INestApplication;
