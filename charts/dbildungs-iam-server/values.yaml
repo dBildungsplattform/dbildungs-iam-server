@@ -181,8 +181,8 @@ openldap:
     ldapDomain: "schule-sh.de" # translates to LDAP_ROOT
     existingSecret: "dbildungs-iam-ldap" 
     adminUser: "admin" # LDAP_ADMIN_USERNAME
-    configUserEnabled: true # LDAP_CONFIG_ADMIN_ENABLED
-    configUser: "config"  LDAP_CONFIG_ADMIN_USERNAME
+    configUserEnabled: "true" # LDAP_CONFIG_ADMIN_ENABLED
+    configUser: "config"  #LDAP_CONFIG_ADMIN_USERNAME
     ldapPort: 389 # LDAP_PORT_NUMBER
     sslLdapPort: 636 # LDAP_LDAPS_PORT_NUMBER
   image:
