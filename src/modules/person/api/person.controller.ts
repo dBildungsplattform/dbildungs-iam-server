@@ -48,7 +48,7 @@ import { PersonenkontextResponse } from '../../personenkontext/api/personenkonte
 import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { PersonRepository } from '../persistence/person.repository.js';
-import { DomainError, EntityNotFoundError, PersonHasNoKeycloakId } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
@@ -60,8 +60,6 @@ import { OrganisationID } from '../../../shared/types/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonEventService } from '../domain/person-event.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -74,9 +72,7 @@ export class PersonController {
     public constructor(
         private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
-        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personFactory: PersonFactory,
-        private readonly personEventService: PersonEventService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
     ) {
@@ -168,31 +164,14 @@ export class PersonController {
 
         const person: Person<true> = personResult.value;
 
-        // Check if the person has a keycloakUserId
-        if (!person.keycloakUserId) {
-            throw new PersonHasNoKeycloakId(params.personId);
-        }
-
-        // Publish an event to delete the person from Keycloak if the person has a keycloakUserId
-        this.personEventService.publishUserDeletedEvent(person.keycloakUserId);
-        // Then delete all kontexte for the personId
-        const kontextResponse: Result<void, DomainError> =
-            await this.dBiamPersonenkontextRepo.deletePersonenkontexteByPersonId(params.personId);
-        // Throw an HTTP exception if the delete response for kontexte is an error
-        if (kontextResponse instanceof DomainError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(kontextResponse),
-            );
-        }
-        // Finally delete the person after all their kontexte were deleted
-        const personResponse: Result<void, DomainError> = await this.personRepository.deletePersonIfAllowed(
-            params.personId,
+        const response: Result<void, DomainError> = await this.personRepository.deletePersonAndKontexte(
+            person,
             permissions,
         );
-        // Throw an HTTP exception if the delete response for the person is an error
-        if (personResponse instanceof DomainError) {
+        // Throw an HTTP exception if the delete response is an error
+        if (response instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResponse),
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(response),
             );
         }
     }

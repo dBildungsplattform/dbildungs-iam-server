@@ -30,6 +30,7 @@ import { DomainError, KeycloakClientError } from '../../../shared/error/index.js
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 describe('PersonRepository', () => {
     let module: TestingModule;
@@ -42,6 +43,7 @@ describe('PersonRepository', () => {
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let configService: ConfigService;
+    let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -59,6 +61,10 @@ describe('PersonRepository', () => {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),
                 },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                },
             ],
         }).compile();
         sutLegacy = module.get(PersonRepo);
@@ -71,6 +77,7 @@ describe('PersonRepository', () => {
         kcUserServiceMock = module.get(KeycloakUserService);
         usernameGeneratorService = module.get(UsernameGeneratorService);
         configService = module.get(ConfigService);
+        dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -586,6 +593,30 @@ describe('PersonRepository', () => {
                 const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
 
                 expect(result.ok).toBeTruthy();
+            });
+        });
+    });
+    describe('deletePersonAndKontexte', () => {
+        describe('Delete the person and all kontexte', () => {
+            it('should delete the person', async () => {
+                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+
+                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+
+                const personAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
+                    person1.id,
+                    personPermissionsMock,
+                );
+
+                if (personAllowed.ok) {
+                    const result: Result<void, DomainError> = await sut.deletePersonAndKontexte(
+                        personAllowed.value,
+                        personPermissionsMock,
+                    );
+                    expect(dBiamPersonenkontextRepoMock.deletePersonenkontexteByPersonId).toHaveBeenCalledTimes(1);
+                    expect(result.ok).toBeTruthy();
+                }
             });
         });
     });

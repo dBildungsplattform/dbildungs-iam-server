@@ -35,7 +35,6 @@ import { OrganisationID } from '../../../shared/types/index.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { ConfigService } from '@nestjs/config';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonEventService } from '../domain/person-event.service.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -46,7 +45,6 @@ describe('PersonController', () => {
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
 
     let personPermissionsMock: DeepMocked<PersonPermissions>;
-    let userEventServiceMock: DeepMocked<PersonEventService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -80,10 +78,6 @@ describe('PersonController', () => {
                     useValue: createMock<ConfigService>(),
                 },
                 {
-                    provide: PersonEventService,
-                    useValue: createMock<PersonEventService>(),
-                },
-                {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
@@ -93,7 +87,6 @@ describe('PersonController', () => {
         personenkontextUcMock = module.get(PersonenkontextUc);
         personRepositoryMock = module.get(PersonRepository);
         usernameGeneratorService = module.get(UsernameGeneratorService);
-        userEventServiceMock = module.get(PersonEventService);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
     });
 
@@ -209,10 +202,6 @@ describe('PersonController', () => {
 
                 expect(response).toBeUndefined();
                 expect(dBiamPersonenkontextRepoMock.deletePersonenkontexteByPersonId).toHaveBeenCalledTimes(1);
-                expect(userEventServiceMock.publishUserDeletedEvent).toHaveBeenCalledTimes(1);
-                if (person.keycloakUserId) {
-                    expect(userEventServiceMock.publishUserDeletedEvent).toHaveBeenCalledWith(person.keycloakUserId);
-                }
             });
         });
         describe('when deleting a personenkontext returns a SchulConnexError', () => {
