@@ -32,6 +32,7 @@ export class LdapClientService {
                 return { ok: false, error: new Error(`Could not connect to LDAP, message: ${JSON.stringify(err)}`) };
             }
         }
+
         return { ok: true, value: this.client };
     }
 
@@ -59,6 +60,22 @@ export class LdapClientService {
         return { ok: true, value: organisation };
     }
 
+    public async deleteOrganisation(organisation: Organisation<true>): Promise<Result<Organisation<true>>> {
+        this.logger.info('Inside deleteOrganisation');
+        const clientResult: Result<Client> = await this.getClient();
+        if (!clientResult.ok) return clientResult;
+        if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
+        const client: Client = clientResult.value;
+
+        await client.del(`cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`);
+        this.logger.info(`Successfully deleted corresponding lehrer rolle for ou=${organisation.kennung}`);
+
+        await client.del(`ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`);
+        this.logger.info(`Successfully deleted organisation ou=${organisation.kennung}`);
+
+        return { ok: true, value: organisation };
+    }
+
     public async createLehrer(person: Person<true>, organisation: Organisation<true>): Promise<Result<Person<true>>> {
         this.logger.info('Inside createLehrer');
         const clientResult: Result<Client> = await this.getClient();
@@ -78,6 +95,23 @@ export class LdapClientService {
         );
         this.logger.info(
             `Successfully created lehrer uid=${person.vorname}${person.familienname},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
+        );
+
+        return { ok: true, value: person };
+    }
+
+    public async deleteLehrer(person: Person<true>, organisation: Organisation<true>): Promise<Result<Person<true>>> {
+        this.logger.info('Inside deleteLehrer');
+        const clientResult: Result<Client> = await this.getClient();
+        if (!clientResult.ok) return clientResult;
+        if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
+        const client: Client = clientResult.value;
+
+        await client.del(
+            `uid=${person.vorname}${person.familienname},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
+        );
+        this.logger.info(
+            `Successfully deleted lehrer uid=${person.vorname}${person.familienname},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
         );
 
         return { ok: true, value: person };

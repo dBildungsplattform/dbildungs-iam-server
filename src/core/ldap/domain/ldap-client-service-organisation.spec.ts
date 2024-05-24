@@ -16,8 +16,10 @@ import { CreatedOrganisationDto } from '../../../modules/organisation/api/create
 import { faker } from '@faker-js/faker';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 import { LdapClientService } from './ldap-client.service.js';
+import { createMock } from '@golevelup/ts-jest';
+import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 
-describe('LDAP Client Service Create Organisation', () => {
+describe('LDAP Client Service Organisation Methods', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let em: EntityManager;
@@ -60,10 +62,6 @@ describe('LDAP Client Service Create Organisation', () => {
         await app.close();
     });
 
-    beforeEach(() => {
-        //jest.resetAllMocks();
-    });
-
     it('should be defined', () => {
         expect(em).toBeDefined();
     });
@@ -94,6 +92,47 @@ describe('LDAP Client Service Create Organisation', () => {
                 };
                 const result: Result<CreatedOrganisationDto> =
                     await ldapClientService.createOrganisation(createdOrganisationDto);
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+    });
+
+    describe('deleteOrganisation', () => {
+        const deleteOrganisationKennung: string = faker.string.numeric({ length: 7 });
+        const deleteOrganisationName: string = faker.string.alpha({ length: 10 });
+
+        beforeEach(async () => {
+            const createdOrganisationDto: CreatedOrganisationDto = {
+                id: id,
+                typ: OrganisationsTyp.SCHULE,
+                kennung: deleteOrganisationKennung,
+                name: deleteOrganisationName,
+            };
+            await ldapClientService.createOrganisation(createdOrganisationDto);
+        });
+        describe('when called with valid organisation', () => {
+            it('should return truthy result', async () => {
+                const organisation: Organisation<true> = createMock<Organisation<true>>({
+                    name: deleteOrganisationName,
+                    typ: OrganisationsTyp.SCHULE,
+                    kennung: deleteOrganisationKennung,
+                });
+                const result: Result<Organisation<true>> = await ldapClientService.deleteOrganisation(organisation);
+
+                expect(result.ok).toBeTruthy();
+            });
+        });
+
+        describe('when called with organisation without kennung', () => {
+            it('should return error result', async () => {
+                const organisation: Organisation<true> = createMock<Organisation<true>>({
+                    name: deleteOrganisationName,
+                    typ: OrganisationsTyp.SCHULE,
+                    kennung: undefined,
+                });
+
+                const result: Result<Organisation<true>> = await ldapClientService.deleteOrganisation(organisation);
 
                 expect(result.ok).toBeFalsy();
             });

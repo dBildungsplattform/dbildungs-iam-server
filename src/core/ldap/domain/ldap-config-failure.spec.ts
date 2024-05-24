@@ -10,23 +10,19 @@ import {
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { OrganisationApiModule } from '../../../modules/organisation/organisation-api.module.js';
-
 import { LdapModule } from '../ldap.module.js';
 import { PersonenKontextApiModule } from '../../../modules/personenkontext/personenkontext-api.module.js';
 import { CreatedOrganisationDto } from '../../../modules/organisation/api/created-organisation.dto.js';
-import { faker } from '@faker-js/faker';
-import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 import { LdapClientService } from './ldap-client.service.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
+import {createMock} from "@golevelup/ts-jest";
 
 describe('LDAP Client Service Config Failure', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let em: EntityManager;
     let ldapClientService: LdapClientService;
-    const kennung: string = faker.string.numeric({ length: 7 });
-    const id: string = faker.string.uuid();
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -65,10 +61,6 @@ describe('LDAP Client Service Config Failure', () => {
         await app.close();
     });
 
-    beforeEach(() => {
-        jest.resetAllMocks();
-    });
-
     it('should be defined', () => {
         expect(em).toBeDefined();
     });
@@ -76,12 +68,7 @@ describe('LDAP Client Service Config Failure', () => {
     describe('getClient', () => {
         describe('when called by createOrganisation and errors during LDAP connection occurred', () => {
             it('should return error result', async () => {
-                const createdOrganisationDto: CreatedOrganisationDto = {
-                    id: id,
-                    typ: OrganisationsTyp.SCHULE,
-                    kennung: kennung,
-                    name: faker.company.name(),
-                };
+                const createdOrganisationDto: CreatedOrganisationDto = createMock<CreatedOrganisationDto>()
                 const result: Result<CreatedOrganisationDto> =
                     await ldapClientService.createOrganisation(createdOrganisationDto);
 
@@ -89,30 +76,33 @@ describe('LDAP Client Service Config Failure', () => {
             });
         });
 
+        describe('when called by deleteOrganisation and errors during LDAP connection occurred', () => {
+            it('should return error result', async () => {
+                const organisation: Organisation<true> = createMock<Organisation<true>>();
+                const result: Result<Organisation<true>> =
+                    await ldapClientService.deleteOrganisation(organisation);
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+
         describe('when called by createLehrer with valid person and organisation', () => {
             it('should return error result', async () => {
-                const person: Person<true> = Person.construct(
-                    faker.string.uuid(),
-                    faker.date.past(),
-                    faker.date.recent(),
-                    faker.person.lastName(),
-                    faker.person.firstName(),
-                    '1',
-                    faker.lorem.word(),
-                    undefined,
-                    faker.string.uuid(),
-                );
-
-                const organisation: Organisation<true> = {
-                    id: id,
-                    name: faker.company.name(),
-                    kennung: kennung,
-                    typ: OrganisationsTyp.SCHULE,
-                    createdAt: faker.date.past(),
-                    updatedAt: faker.date.recent(),
-                };
+                const person: Person<true> = createMock<Person<true>>()
+                const organisation: Organisation<true> = createMock<Organisation<true>>();
 
                 const result: Result<Person<true>> = await ldapClientService.createLehrer(person, organisation);
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+
+        describe('when called by deleteLehrer with valid person and organisation', () => {
+            it('should return error result', async () => {
+                const person: Person<true> = createMock<Person<true>>()
+                const organisation: Organisation<true> = createMock<Organisation<true>>();
+
+                const result: Result<Person<true>> = await ldapClientService.deleteLehrer(person, organisation);
 
                 expect(result.ok).toBeFalsy();
             });

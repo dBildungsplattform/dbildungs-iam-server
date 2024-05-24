@@ -19,7 +19,7 @@ import { LdapClientService } from './ldap-client.service.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 
-describe('LDAP Client Service Create Person', () => {
+describe('LDAP Client Service Person Methods', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let em: EntityManager;
@@ -138,6 +138,105 @@ describe('LDAP Client Service Create Person', () => {
                 };
 
                 const result: Result<Person<true>> = await ldapClientService.createLehrer(person, organisation);
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+    });
+
+    describe('deleteLehrer', () => {
+        // OU has to be created before
+        const deleteLehrerOrgaKennung: string = faker.string.numeric({ length: 7 });
+        const deleteLehrerPersonFirstname: string = faker.person.firstName();
+        const deleteLehrerPersonLastname: string = faker.person.lastName();
+        const deleteLehrerSchuleName: string = faker.string.alpha({ length: 10 });
+
+        async function createRandom(): Promise<void> {
+            const createdOrganisationDto: CreatedOrganisationDto = {
+                id: id,
+                typ: OrganisationsTyp.SCHULE,
+                kennung: deleteLehrerOrgaKennung,
+                name: deleteLehrerSchuleName,
+            };
+            const organisation: Organisation<true> = {
+                id: id,
+                name: deleteLehrerSchuleName,
+                kennung: deleteLehrerOrgaKennung,
+                typ: OrganisationsTyp.SCHULE,
+                createdAt: faker.date.past(),
+                updatedAt: faker.date.recent(),
+            };
+            await ldapClientService.createOrganisation(createdOrganisationDto);
+
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                deleteLehrerPersonLastname,
+                deleteLehrerPersonFirstname,
+                '1',
+                faker.lorem.word(),
+                undefined,
+                faker.string.uuid(),
+            );
+            await ldapClientService.createLehrer(person, organisation);
+        }
+
+        describe('when called with valid person and organisation', () => {
+            it('should return truthy result', async () => {
+                await createRandom();
+
+                const person: Person<true> = Person.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    deleteLehrerPersonLastname,
+                    deleteLehrerPersonFirstname,
+                    '1',
+                    faker.lorem.word(),
+                    undefined,
+                    faker.string.uuid(),
+                );
+
+                const organisation: Organisation<true> = {
+                    id: id,
+                    name: deleteLehrerSchuleName,
+                    kennung: deleteLehrerOrgaKennung,
+                    typ: OrganisationsTyp.SCHULE,
+                    createdAt: faker.date.past(),
+                    updatedAt: faker.date.recent(),
+                };
+
+                const result: Result<Person<true>> = await ldapClientService.deleteLehrer(person, organisation);
+
+                expect(result.ok).toBeTruthy();
+            });
+        });
+
+        describe('when called with valid person and an organisation without kennung', () => {
+            it('should return error result', async () => {
+                const person: Person<true> = Person.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    deleteLehrerPersonLastname,
+                    deleteLehrerPersonFirstname,
+                    '1',
+                    faker.lorem.word(),
+                    undefined,
+                    faker.string.uuid(),
+                );
+
+                const organisation: Organisation<true> = {
+                    id: id,
+                    name: deleteLehrerSchuleName,
+                    kennung: undefined,
+                    typ: OrganisationsTyp.SCHULE,
+                    createdAt: faker.date.past(),
+                    updatedAt: faker.date.recent(),
+                };
+
+                const result: Result<Person<true>> = await ldapClientService.deleteLehrer(person, organisation);
 
                 expect(result.ok).toBeFalsy();
             });
