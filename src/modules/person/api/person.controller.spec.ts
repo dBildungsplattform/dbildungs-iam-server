@@ -35,7 +35,7 @@ import { OrganisationID } from '../../../shared/types/index.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { ConfigService } from '@nestjs/config';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { UserEventService } from '../domain/person-event.service.js';
+import { PersonEventService } from '../domain/person-event.service.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -46,7 +46,7 @@ describe('PersonController', () => {
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
 
     let personPermissionsMock: DeepMocked<PersonPermissions>;
-    let userEventServiceMock: DeepMocked<UserEventService>;
+    let userEventServiceMock: DeepMocked<PersonEventService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -80,12 +80,12 @@ describe('PersonController', () => {
                     useValue: createMock<ConfigService>(),
                 },
                 {
-                    provide: UserEventService,
-                    useValue: createMock<ConfigService>(),
+                    provide: PersonEventService,
+                    useValue: createMock<PersonEventService>(),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<ConfigService>(),
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
             ],
         }).compile();
@@ -93,7 +93,7 @@ describe('PersonController', () => {
         personenkontextUcMock = module.get(PersonenkontextUc);
         personRepositoryMock = module.get(PersonRepository);
         usernameGeneratorService = module.get(UsernameGeneratorService);
-        userEventServiceMock = module.get(UserEventService);
+        userEventServiceMock = module.get(PersonEventService);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
     });
 
