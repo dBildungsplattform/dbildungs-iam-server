@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { LoggerModule } from '../../core/logging/logger.module.js';
 import { PersonService } from './domain/person.service.js';
+import { PersonEventService } from './domain/person-event.service.js';
 import { PersonPersistenceMapperProfile } from './persistence/person-persistence.mapper.profile.js';
 import { PersonRepo } from './persistence/person.repo.js';
 import { UsernameGeneratorService } from './domain/username-generator.service.js';
@@ -18,6 +19,7 @@ import { PersonFactory } from './domain/person.factory.js';
         PersonRepo,
         PersonRepository,
         PersonService,
+        PersonEventService,
         PersonFactory,
         UsernameGeneratorService,
         KeycloakUserService,
