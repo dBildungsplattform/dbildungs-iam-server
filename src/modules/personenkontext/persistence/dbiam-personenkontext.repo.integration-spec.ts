@@ -181,4 +181,18 @@ describe('dbiam Personenkontext Repo', () => {
             await expect(sut.save(personenkontext)).rejects.toThrow(UniqueConstraintViolationException);
         });
     });
+    describe('deletePersonenkontextByPersonId', () => {
+        describe('when deleting personenkontext is successful', () => {
+            it('should return nothing', async () => {
+                const person: Person<true> = await createPerson();
+                const personenkontext: Personenkontext<false> = createPersonenkontext(false, { personId: person.id });
+
+                void (await sut.save(personenkontext));
+
+                const deletedKontexte: number = await sut.deleteByPerson(person.id);
+
+                expect(deletedKontexte).toEqual(1);
+            });
+        });
+    });
 });

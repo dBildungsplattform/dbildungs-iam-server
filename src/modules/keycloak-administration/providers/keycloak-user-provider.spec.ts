@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { KeycloakUserProvider } from './keycloak-user-provider.js';
-import { KeycloakUserService } from '../modules/keycloak-administration/domain/keycloak-user.service.js';
-import { DeleteUserEvent } from '../shared/events/DeleteUserEvent.js';
+import { KeycloakUserService } from '../domain/keycloak-user.service.js';
+import { DeleteUserEvent } from '../../../shared/events/DeleteUserEvent.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 
 describe('KeycloakUserProvider', () => {

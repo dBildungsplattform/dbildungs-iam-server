@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { KeycloakUserService } from '../modules/keycloak-administration/domain/keycloak-user.service.js';
-import { EventHandler } from '../core/eventbus/decorators/event-handler.decorator.js';
-import { DeleteUserEvent } from '../shared/events/DeleteUserEvent.js';
+import { KeycloakUserService } from '../domain/keycloak-user.service.js';
+import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
+import { DeleteUserEvent } from '../../../shared/events/DeleteUserEvent.js';
 
 @Injectable()
 export class KeycloakUserProvider {

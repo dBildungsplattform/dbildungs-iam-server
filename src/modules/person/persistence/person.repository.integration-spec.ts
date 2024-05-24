@@ -27,6 +27,9 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { DomainError, KeycloakClientError } from '../../../shared/error/index.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { ConfigService } from '@nestjs/config';
+import { DataConfig } from '../../../shared/config/data.config.js';
 
 describe('PersonRepository', () => {
     let module: TestingModule;
@@ -37,6 +40,9 @@ describe('PersonRepository', () => {
     let mapper: Mapper;
     let kcUserServiceMock: DeepMocked<KeycloakUserService>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
+    let personRepositoryMock: DeepMocked<PersonRepository>;
+    let personPermissionsMock: DeepMocked<PersonPermissions>;
+    let configService: ConfigService;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -45,6 +51,7 @@ describe('PersonRepository', () => {
                 PersonPersistenceMapperProfile,
                 PersonRepo,
                 PersonRepository,
+                ConfigService,
                 {
                     provide: UsernameGeneratorService,
                     useValue: createMock<UsernameGeneratorService>(),
@@ -60,9 +67,12 @@ describe('PersonRepository', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
+        personRepositoryMock = module.get(PersonRepository);
+        personPermissionsMock = createMock<PersonPermissions>();
 
         kcUserServiceMock = module.get(KeycloakUserService);
         usernameGeneratorService = module.get(UsernameGeneratorService);
+        configService = module.get(ConfigService);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -76,6 +86,20 @@ describe('PersonRepository', () => {
         await DatabaseTestModule.clearDatabase(orm);
         jest.resetAllMocks();
     });
+
+    function getPerson(): Person<true> {
+        return Person.construct(
+            faker.string.uuid(),
+            faker.date.past(),
+            faker.date.recent(),
+            faker.person.lastName(),
+            faker.person.firstName(),
+            '1',
+            faker.lorem.word(),
+            faker.lorem.word(),
+            faker.string.uuid(),
+        );
+    }
 
     it('should be defined', () => {
         expect(sutLegacy).toBeDefined();
@@ -550,6 +574,53 @@ describe('PersonRepository', () => {
             const deleteResult: number = await sut.delete(personAggregate);
 
             expect(deleteResult).toEqual(0);
+        });
+    });
+    describe('getPersonIfAllowed', () => {
+        describe('when person is found on any same organisations like the affected person', () => {
+            it('should return person', async () => {
+                const requestPerson: Person<true> = getPerson();
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([requestPerson.id]);
+                const mockedResponse: Counted<Person<true>> = [[requestPerson], 1];
+                personRepositoryMock.findBy.mockResolvedValueOnce(mockedResponse);
+                const result: Result<Person<true>> = await sut.getPersonIfAllowed(
+                    requestPerson.id,
+                    personPermissionsMock,
+                );
+
+                expect(result.ok).toBeTruthy();
+            });
+        });
+
+        describe('when person is not on any same organisations like the affected person', () => {
+            it('should return EntityNotFoundError', async () => {
+                const requestPerson: Person<true> = getPerson();
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([requestPerson.id]);
+                personRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
+                const result: Result<Person<true>> = await sut.getPersonIfAllowed(
+                    requestPerson.id,
+                    personPermissionsMock,
+                );
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+
+        describe('when user has permission on root organisation', () => {
+            it('should return person', async () => {
+                const requestPerson: Person<true> = getPerson();
+                const fakeOrganisationId: string = configService.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([fakeOrganisationId]);
+                const mockedResponse: Counted<Person<true>> = [[requestPerson], 1];
+                personRepositoryMock.findBy.mockResolvedValueOnce(mockedResponse);
+                const result: Result<Person<true>> = await sut.getPersonIfAllowed(
+                    requestPerson.id,
+                    personPermissionsMock,
+                );
+
+                expect(result.ok).toBeTruthy();
+            });
         });
     });
 });

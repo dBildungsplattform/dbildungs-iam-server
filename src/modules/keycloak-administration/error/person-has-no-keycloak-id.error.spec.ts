@@ -1,4 +1,4 @@
-import { PersonHasNoKeycloakId } from './person-has-no-keycloak-id.js';
+import { PersonHasNoKeycloakId } from './person-has-no-keycloak-id.error.js';
 
 describe('PersonHasNoKeycloakId', () => {
     describe('constructor', () => {

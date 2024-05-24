@@ -60,9 +60,8 @@ import { OrganisationID } from '../../../shared/types/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
-import { PersonUc } from '../domain/person.uc.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { DeleteUserEvent } from '../../../shared/events/DeleteUserEvent.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { UserEventService } from '../domain/person-event.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -75,9 +74,9 @@ export class PersonController {
     public constructor(
         private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
+        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personFactory: PersonFactory,
-        private readonly personUc: PersonUc,
-        private readonly eventService: EventService,
+        private readonly userEventService: UserEventService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
     ) {
@@ -152,7 +151,11 @@ export class PersonController {
         @Param() params: PersonByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        const personResult: Result<Person<true>> = await this.personUc.getPersonIfAllowed(params.personId, permissions);
+        // Retrieve the person if the permissions are enough
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            params.personId,
+            permissions,
+        );
 
         // Check if the person retrieval was successful
         if (!personResult.ok) {
@@ -171,23 +174,26 @@ export class PersonController {
         }
 
         // Publish an event to delete the person from Keycloak if the person has a keycloakUserId
-        this.eventService.publish(new DeleteUserEvent(person.keycloakUserId));
+        this.userEventService.publishUserDeletedEvent(person.keycloakUserId);
         // Then delete all kontexte for the personId
-        const kontextResponse: void | SchulConnexError = await this.personenkontextUc.deletePersonenkontexteByPersonId(
-            params.personId,
-        );
+        const kontextResponse: Result<void, DomainError> =
+            await this.dBiamPersonenkontextRepo.deletePersonenkontexteByPersonId(params.personId);
         // Throw an HTTP exception if the delete response for kontexte is of type SchulConnex
-        if (kontextResponse instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(kontextResponse);
+        if (kontextResponse instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(kontextResponse),
+            );
         }
         // Finally delete the person after all their kontexte were deleted
-        const personResponse: Result<void, DomainError> = await this.personUc.deletePersonIfAllowed(
+        const personResponse: Result<void, DomainError> = await this.personRepository.deletePersonIfAllowed(
             params.personId,
             permissions,
         );
         // Throw an HTTP exception if the delete response for the person is of type SchulConnex
-        if (personResponse instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(personResponse);
+        if (personResponse instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResponse),
+            );
         }
     }
 
@@ -203,7 +209,10 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse> {
         //check that logged-in user is allowed to update person
-        const personResult: Result<Person<true>> = await this.personUc.getPersonIfAllowed(params.personId, permissions);
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            params.personId,
+            permissions,
+        );
         if (!personResult.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
@@ -233,7 +242,7 @@ export class PersonController {
             CreatePersonenkontextDto,
         );
         //check that logged-in user is allowed to update person
-        const personResult: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             pathParams.personId,
             permissions,
         );
@@ -276,7 +285,7 @@ export class PersonController {
             FindPersonenkontextDto,
         );
         //check that logged-in user is allowed to update person
-        const personResult: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             pathParams.personId,
             permissions,
         );
@@ -365,7 +374,10 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse> {
         //check that logged-in user is allowed to update person
-        const personResult: Result<Person<true>> = await this.personUc.getPersonIfAllowed(params.personId, permissions);
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            params.personId,
+            permissions,
+        );
         if (!personResult.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
@@ -415,7 +427,10 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<Result<string>> {
         //check that logged-in user is allowed to update person
-        const personResult: Result<Person<true>> = await this.personUc.getPersonIfAllowed(params.personId, permissions);
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            params.personId,
+            permissions,
+        );
         if (!personResult.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(

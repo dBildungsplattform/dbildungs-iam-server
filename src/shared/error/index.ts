@@ -12,4 +12,4 @@ export * from './entity-already-exists.error.js';
 export * from './invalid-name.error.js';
 export * from './invalid-character-set.error.js';
 export * from './invalid-attribute-length.error.js';
-export * from './person-has-no-keycloak-id.js';
+export * from '../../modules/keycloak-administration/error/person-has-no-keycloak-id.error.js';

@@ -183,13 +183,4 @@ export class PersonenkontextUc {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
         }
     }
-
-    public async deletePersonenkontexteByPersonId(personId: string): Promise<void | SchulConnexError> {
-        const result: Result<void, DomainError> =
-            await this.personenkontextService.deletePersonenkontexteByPersonId(personId);
-
-        if (!result.ok) {
-            return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
-        }
-    }
 }
