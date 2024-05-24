@@ -4,3 +4,9 @@ version: 0.2.0
 description: dBildungs-IAM-server
 type: application
 appVersion: ""
+dependencies:
+- condition: openldap.enabled
+  name: openldap
+  version: "4.2.4"
+  repository: "https://jp-gouin.github.io/helm-openldap/openldap-stack-ha"
+

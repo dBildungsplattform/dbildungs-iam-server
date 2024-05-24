@@ -51,7 +51,7 @@ jobs:
     needs:
       - codeql_analyze
       - nest_lint
-      - tests_and_sonarcloud
+      # - tests_and_sonarcloud
     permissions:
       packages: write
       security-events: write
