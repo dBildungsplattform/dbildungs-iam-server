@@ -1,10 +1,16 @@
-/* eslint-disable no-console */
-import { setupTelemetry } from './telemetry.js';
+import { setupTelemetry, shutdownTelemetry, flushTelemetry } from './telemetry.js';
 
 describe('setupTelemetry', () => {
-    it('setupTelemetry', () => {
-        //expect(() => setupTelemetry()).not.toThrow();
-        const unregister = setupTelemetry();
-        unregister();
+    beforeAll(() => {
+        setupTelemetry();
+    });
+
+    afterAll(() => {
+        shutdownTelemetry();
+        flushTelemetry();
+    });
+
+    it('should execute setupTelemetry without throwing an error', () => {
+        expect(() => setupTelemetry()).not.toThrow();
     });
 });

@@ -59,6 +59,7 @@
         "@opentelemetry/instrumentation-redis": "^0.39.1",
         "@opentelemetry/node": "^0.24.0",
         "@opentelemetry/sdk-metrics-base": "^0.31.0",
+        "@opentelemetry/sdk-node": "^0.51.1",
         "@opentelemetry/tracing": "^0.24.0",
         "@s3pweb/keycloak-admin-client-cjs": "^22.0.1",
         "axios": "^1.6.8",
