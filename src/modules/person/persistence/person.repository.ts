@@ -262,10 +262,11 @@ export class PersonRepository {
             return kontextResponse; // Return error if deleting kontexte fails
         }
 
+        // Delete the person after all kontexte are deleted
         const personResponse: Result<void, DomainError> = await this.deletePersonIfAllowed(person.id, permissions);
 
         if (personResponse instanceof DomainError) {
-            return personResponse; // Return error if deleting kontexte fails
+            return personResponse; // Return error if deleting person fails
         }
 
         return { ok: true, value: undefined };

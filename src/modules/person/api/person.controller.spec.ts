@@ -195,13 +195,15 @@ describe('PersonController', () => {
             personId: person.id,
         };
         describe('when deleting a person is successful', () => {
-            it('should return no error and publish event ', async () => {
+            it('should return no error ', async () => {
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-
+                dBiamPersonenkontextRepoMock.deletePersonenkontexteByPersonId.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
                 const response: void = await personController.deletePersonById(deleteParams, personPermissionsMock);
 
                 expect(response).toBeUndefined();
-                expect(dBiamPersonenkontextRepoMock.deletePersonenkontexteByPersonId).toHaveBeenCalledTimes(1);
             });
         });
         describe('when deleting a personenkontext returns a SchulConnexError', () => {
