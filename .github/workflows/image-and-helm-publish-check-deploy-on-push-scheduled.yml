@@ -86,7 +86,7 @@ jobs:
 
   select_helm_version_generation_and_image_tag_generation:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    needs: 
+    # needs: 
       # - scan_helm
     runs-on: ubuntu-latest
     outputs: 
