@@ -61,7 +61,7 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { UserEventService } from '../domain/person-event.service.js';
+import { PersonEventService } from '../domain/person-event.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -76,7 +76,7 @@ export class PersonController {
         private readonly personRepository: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personFactory: PersonFactory,
-        private readonly userEventService: UserEventService,
+        private readonly userEventService: PersonEventService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
     ) {
