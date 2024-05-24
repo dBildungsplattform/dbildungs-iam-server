@@ -37,6 +37,7 @@ import { PersonenkontextResponse } from '../../personenkontext/api/personenkonte
 import { PersonenkontextdatensatzResponse } from '../../personenkontext/api/personenkontextdatensatz.response.js';
 import { UpdatePersonenkontextDto } from '../../personenkontext/api/update-personenkontext.dto.js';
 import { UpdatePersonenkontextBodyParams } from '../../personenkontext/api/update-personenkontext.body.params.js';
+import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 
 describe('PersonApiMapperProfile', () => {
     let module: TestingModule;
@@ -81,6 +82,37 @@ describe('PersonApiMapperProfile', () => {
                 referrer: 'referrer',
             };
             expect(() => sut.map(dto, CreatePersonDto, PersonDo)).not.toThrow(MappingError);
+        });
+
+        it('should map PersonDo to PersonendatensatzResponseAutomapper', () => {
+            const personDo: PersonDo<true> = {
+                id: faker.string.uuid(),
+                vorname: 'john',
+                familienname: 'doe',
+                lokalisierung: 'de-DE',
+                referrer: 'referrer',
+                createdAt: faker.date.past(),
+                updatedAt: faker.date.recent(),
+                revision: '1',
+                keycloakUserId: faker.string.uuid(),
+                mandant: '',
+                stammorganisation: faker.string.uuid(),
+                initialenFamilienname: 'd',
+                initialenVorname: 'j',
+                rufname: 'j',
+                nameTitel: '',
+                nameAnrede: [''],
+                namePraefix: [''],
+                nameSuffix: [''],
+                nameSortierindex: 'asc',
+                geburtsdatum: faker.date.past(),
+                geburtsort: 'Hamburg',
+                geschlecht: Geschlecht.W,
+                vertrauensstufe: Vertrauensstufe.KEIN,
+                auskunftssperre: false,
+                personalnummer: faker.string.numeric(),
+            };
+            expect(() => sut.map(personDo, PersonDo, PersonendatensatzResponseAutomapper)).not.toThrow(MappingError);
         });
 
         it('should map CreatePersonenkontextBodyParams to CreatePersonenkontextDto', () => {

@@ -131,7 +131,7 @@ describe('PersonScope', () => {
             });
         });
 
-        describe('when filtering for orginisation ID', () => {
+        describe('when filtering for organisation ID', () => {
             const orgnisationID: string = faker.string.uuid();
 
             beforeEach(async () => {
@@ -152,7 +152,7 @@ describe('PersonScope', () => {
             });
         });
 
-        describe('when filtering for orginisation ID & Rollen ID', () => {
+        describe('when filtering for organisation ID & Rollen ID', () => {
             const orgnisationID: string = faker.string.uuid();
             const rolleID: string = faker.string.uuid();
 

@@ -33,7 +33,7 @@ export class PersonenQueryParams extends PagedQueryParams {
     })
     public readonly vorname?: string;
 
-    @AutoMap(() => String)
+    @AutoMap()
     @IsOptional()
     @IsEnum(SichtfreigabeType)
     @ApiProperty({
