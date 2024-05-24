@@ -22,8 +22,8 @@ import { PersonPermissions } from '../domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Person } from '../../person/domain/person.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -32,7 +32,7 @@ describe('AuthenticationController', () => {
     let frontendConfig: FrontendConfig;
     let personPermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
-    let organisationRepoMock: DeepMocked<OrganisationRepo>;
+    let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
 
     beforeAll(async () => {
@@ -57,8 +57,8 @@ describe('AuthenticationController', () => {
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
-                    provide: OrganisationRepo,
-                    useValue: createMock<OrganisationRepo>(),
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
                 },
                 {
                     provide: RolleRepo,
@@ -78,7 +78,7 @@ describe('AuthenticationController', () => {
         frontendConfig = module.get(ConfigService).getOrThrow<FrontendConfig>('FRONTEND');
         personPermissionsRepoMock = module.get(PersonPermissionsRepo);
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
-        organisationRepoMock = module.get(OrganisationRepo);
+        organisationRepoMock = module.get(OrganisationRepository);
         rolleRepoMock = module.get(RolleRepo);
     });
 

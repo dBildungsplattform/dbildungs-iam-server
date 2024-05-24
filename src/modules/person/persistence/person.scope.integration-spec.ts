@@ -18,6 +18,8 @@ import { PersonScope } from './person.scope.js';
 import { faker } from '@faker-js/faker';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
+import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 
 describe('PersonScope', () => {
     let module: TestingModule;
@@ -25,6 +27,7 @@ describe('PersonScope', () => {
     let em: EntityManager;
     let mapper: Mapper;
     let kontextRepo: DBiamPersonenkontextRepo;
+    let personenkontextFactory: PersonenkontextFactory;
 
     const createPersonEntity = (): PersonEntity => {
         const person: PersonEntity = mapper.map(DoFactory.createPerson(false), PersonDo, PersonEntity);
@@ -32,19 +35,29 @@ describe('PersonScope', () => {
     };
 
     const createPersonenkontext = async (personId: string, orgnisationID: string, rolleID: string): Promise<void> => {
-        const personkentext: Personenkontext<false> = Personenkontext.createNew(personId, orgnisationID, rolleID);
+        const personkentext: Personenkontext<false> = personenkontextFactory.createNew(
+            personId,
+            orgnisationID,
+            rolleID,
+        );
         await kontextRepo.save(personkentext);
     };
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
+            imports: [
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                MapperTestModule,
+                PersonenKontextModule,
+            ],
             providers: [PersonPersistenceMapperProfile, DBiamPersonenkontextRepo],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
         kontextRepo = module.get(DBiamPersonenkontextRepo);
+        personenkontextFactory = module.get(PersonenkontextFactory);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);

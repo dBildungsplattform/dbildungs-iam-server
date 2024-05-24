@@ -17,25 +17,9 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
-
-function createPersonenkontext<WasPersisted extends boolean>(
-    this: void,
-    withId: WasPersisted,
-    params: Partial<Personenkontext<boolean>> = {},
-): Personenkontext<WasPersisted> {
-    const personenkontext: Personenkontext<WasPersisted> = Personenkontext.construct<boolean>(
-        withId ? faker.string.uuid() : undefined,
-        withId ? faker.date.past() : undefined,
-        withId ? faker.date.recent() : undefined,
-        faker.string.uuid(),
-        faker.string.uuid(),
-        faker.string.uuid(),
-    );
-
-    Object.assign(personenkontext, params);
-
-    return personenkontext;
-}
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { RolleModule } from '../../rolle/rolle.module.js';
+import { OrganisationModule } from '../../organisation/organisation.module.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -46,6 +30,27 @@ describe('dbiam Personenkontext Repo', () => {
     let personFactory: PersonFactory;
     let personRepo: PersonRepository;
 
+    let personenkontextFactory: PersonenkontextFactory;
+
+    function createPersonenkontext<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        params: Partial<Personenkontext<boolean>> = {},
+    ): Personenkontext<WasPersisted> {
+        const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
+            withId ? faker.string.uuid() : undefined,
+            withId ? faker.date.past() : undefined,
+            withId ? faker.date.recent() : undefined,
+            faker.string.uuid(),
+            faker.string.uuid(),
+            faker.string.uuid(),
+        );
+
+        Object.assign(personenkontext, params);
+
+        return personenkontext;
+    }
+
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
@@ -53,6 +58,8 @@ describe('dbiam Personenkontext Repo', () => {
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 KeycloakAdministrationModule,
+                RolleModule,
+                OrganisationModule,
             ],
             providers: [
                 DBiamPersonenkontextRepo,
@@ -60,6 +67,7 @@ describe('dbiam Personenkontext Repo', () => {
                 PersonFactory,
                 PersonRepository,
                 UsernameGeneratorService,
+                PersonenkontextFactory,
             ],
         })
             .overrideModule(KeycloakConfigModule)
@@ -71,6 +79,7 @@ describe('dbiam Personenkontext Repo', () => {
         em = module.get(EntityManager);
         personFactory = module.get(PersonFactory);
         personRepo = module.get(PersonRepository);
+        personenkontextFactory = module.get(PersonenkontextFactory);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, 10000000);

@@ -11,25 +11,9 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { GleicheRolleAnKlasseWieSchule } from './gleiche-rolle-an-klasse-wie-schule.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-
-function createPersonenkontext<WasPersisted extends boolean>(
-    this: void,
-    withId: WasPersisted,
-    params: Partial<Personenkontext<boolean>> = {},
-): Personenkontext<WasPersisted> {
-    const personenkontext: Personenkontext<WasPersisted> = Personenkontext.construct<boolean>(
-        withId ? faker.string.uuid() : undefined,
-        withId ? faker.date.past() : undefined,
-        withId ? faker.date.recent() : undefined,
-        faker.string.uuid(),
-        faker.string.uuid(),
-        faker.string.uuid(),
-    );
-
-    Object.assign(personenkontext, params);
-
-    return personenkontext;
-}
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 
 describe('PersonenkontextSpecificationsMockedReposTest', () => {
     let module: TestingModule;
@@ -37,13 +21,43 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
 
+    let personenkontextFactory: PersonenkontextFactory;
+
+    function createPersonenkontext<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        params: Partial<Personenkontext<boolean>> = {},
+    ): Personenkontext<WasPersisted> {
+        const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
+            withId ? faker.string.uuid() : undefined,
+            withId ? faker.date.past() : undefined,
+            withId ? faker.date.recent() : undefined,
+            faker.string.uuid(),
+            faker.string.uuid(),
+            faker.string.uuid(),
+        );
+
+        Object.assign(personenkontext, params);
+
+        return personenkontext;
+    }
+
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false }), MapperTestModule],
             providers: [
+                PersonenkontextFactory,
                 {
                     provide: OrganisationRepo,
                     useValue: createMock<OrganisationRepo>(),
+                },
+                {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
+                },
+                {
+                    provide: PersonRepository,
+                    useValue: createMock<PersonRepository>(),
                 },
                 {
                     provide: RolleRepo,
@@ -58,6 +72,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
         organisationRepoMock = module.get(OrganisationRepo);
         rolleRepoMock = module.get(RolleRepo);
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        personenkontextFactory = module.get(PersonenkontextFactory);
     }, 100000);
 
     beforeEach(() => {

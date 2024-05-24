@@ -32,10 +32,9 @@ import { OrganisationService } from '../../organisation/domain/organisation.serv
 import { OrganisationApiMapperProfile } from '../../organisation/api/organisation-api.mapper.profile.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-
-function createPersonenkontext(): Personenkontext<true>[] {
-    return [Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1')];
-}
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 
 function createRolle(rolleFactory: RolleFactory): RolleAggregate<true> {
     return rolleFactory.construct(
@@ -60,6 +59,11 @@ describe('PersonenkontextUc', () => {
     let organisationRepoMock: DeepMocked<OrganisationRepo>;
     let organisationServiceMock: DeepMocked<OrganisationService>;
     let rolleFactory: RolleFactory;
+    let personenkontextFactory: PersonenkontextFactory;
+
+    function createPersonenkontext(): Personenkontext<true>[] {
+        return [personenkontextFactory.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1')];
+    }
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -69,6 +73,7 @@ describe('PersonenkontextUc', () => {
                 PersonApiMapperProfile,
                 OrganisationApiMapperProfile,
                 RolleFactory,
+                PersonenkontextFactory,
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
@@ -76,6 +81,14 @@ describe('PersonenkontextUc', () => {
                 {
                     provide: OrganisationRepo,
                     useValue: createMock<OrganisationRepo>(),
+                },
+                {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
+                },
+                {
+                    provide: PersonRepository,
+                    useValue: createMock<PersonRepository>(),
                 },
                 {
                     provide: OrganisationService,
@@ -106,6 +119,7 @@ describe('PersonenkontextUc', () => {
         organisationRepoMock = module.get(OrganisationRepo);
         organisationServiceMock = module.get(OrganisationService);
         rolleFactory = module.get(RolleFactory);
+        personenkontextFactory = module.get(PersonenkontextFactory);
     });
 
     afterAll(async () => {

@@ -22,25 +22,8 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
-
-function createPersonenkontext<WasPersisted extends boolean>(
-    this: void,
-    withId: WasPersisted,
-    params: Partial<Personenkontext<boolean>> = {},
-): Personenkontext<WasPersisted> {
-    const personenkontext: Personenkontext<WasPersisted> = Personenkontext.construct<boolean>(
-        withId ? faker.string.uuid() : undefined,
-        withId ? faker.date.past() : undefined,
-        withId ? faker.date.recent() : undefined,
-        faker.string.uuid(),
-        faker.string.uuid(),
-        faker.string.uuid(),
-    );
-
-    Object.assign(personenkontext, params);
-
-    return personenkontext;
-}
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 describe('PersonenkontextSpecificationsTest', () => {
     let module: TestingModule;
@@ -51,6 +34,27 @@ describe('PersonenkontextSpecificationsTest', () => {
 
     let personFactory: PersonFactory;
     let personRepo: PersonRepository;
+
+    let personenkontextFactory: PersonenkontextFactory;
+
+    function createPersonenkontext<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        params: Partial<Personenkontext<boolean>> = {},
+    ): Personenkontext<WasPersisted> {
+        const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
+            withId ? faker.string.uuid() : undefined,
+            withId ? faker.date.past() : undefined,
+            withId ? faker.date.recent() : undefined,
+            faker.string.uuid(),
+            faker.string.uuid(),
+            faker.string.uuid(),
+        );
+
+        Object.assign(personenkontext, params);
+
+        return personenkontext;
+    }
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -65,9 +69,14 @@ describe('PersonenkontextSpecificationsTest', () => {
                 PersonRepository,
                 PersonFactory,
                 UsernameGeneratorService,
+                PersonenkontextFactory,
                 {
                     provide: OrganisationRepo,
                     useValue: createMock<OrganisationRepo>(),
+                },
+                {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
                 },
                 {
                     provide: RolleRepo,
@@ -83,6 +92,7 @@ describe('PersonenkontextSpecificationsTest', () => {
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personFactory = module.get(PersonFactory);
         personRepo = module.get(PersonRepository);
+        personenkontextFactory = module.get(PersonenkontextFactory);
         orm = module.get(MikroORM);
 
         await DatabaseTestModule.setupDatabase(orm);
