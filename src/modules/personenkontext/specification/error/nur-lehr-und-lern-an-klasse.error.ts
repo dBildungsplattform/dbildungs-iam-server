@@ -1,10 +1,10 @@
-import { DomainError } from '../../../../shared/error/index.js';
+import { PersonenkontextSpecificationError } from './personenkontext-specification.error.js';
+import { PersonenkontextSpecificationErrorI18nTypes } from '../../api/dbiam-personenkontext.error.js';
 
-export class NurLehrUndLernAnKlasseError extends DomainError {
+export class NurLehrUndLernAnKlasseError extends PersonenkontextSpecificationError {
     public constructor(details?: unknown[] | Record<string, undefined>) {
         super(
-            `Personenkontext could not be created because it violates NurLehrUndLernAnKlasse specification`,
-            'ENTITY_COULD_NOT_BE_CREATED',
+            `Personenkontext could not be created/updates because it violates ${PersonenkontextSpecificationErrorI18nTypes.NUR_LEHR_UND_LERN_AN_KLASSE} specification`,
             details,
         );
     }
