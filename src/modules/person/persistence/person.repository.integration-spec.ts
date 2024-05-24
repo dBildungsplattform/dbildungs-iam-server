@@ -639,7 +639,6 @@ describe('PersonRepository', () => {
                     throw new EntityNotFoundError('Person', person1.id);
                 }
 
-
                 const result: Result<void, DomainError> = await sut.deletePersonAndKontexte(
                     personAllowed.value,
                     personPermissionsMock,
