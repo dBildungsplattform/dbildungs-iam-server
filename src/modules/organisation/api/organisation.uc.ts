@@ -171,6 +171,7 @@ export class OrganisationUc {
 
     public async findAdministriertVon(
         parentOrganisationId: string,
+        searchFilter?: string,
     ): Promise<Paged<OrganisationResponseLegacy> | SchulConnexError> {
         const parentOrg: Result<
             OrganisationDo<true>,
@@ -180,8 +181,10 @@ export class OrganisationUc {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(parentOrg.error);
         }
 
-        const result: Paged<OrganisationDo<true>> =
-            await this.organisationService.findAllAdministriertVon(parentOrganisationId);
+        const result: Paged<OrganisationDo<true>> = await this.organisationService.findAllAdministriertVon(
+            parentOrganisationId,
+            searchFilter,
+        );
 
         const organisations: OrganisationResponseLegacy[] = this.mapper.mapArray(
             result.items,

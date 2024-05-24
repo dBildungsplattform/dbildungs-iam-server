@@ -28,6 +28,13 @@ export class OrganisationScope extends ScopeBase<OrganisationEntity> {
         return this;
     }
 
+    public findByAdministriertVonArray(administriertVon?: OrganisationID[]): this {
+        if (administriertVon) {
+            this.findByQuery({ administriertVon: { $in: administriertVon } });
+        }
+        return this;
+    }
+
     public byIDs(ids?: OrganisationID[]): this {
         if (ids) {
             this.findByQuery({
@@ -51,6 +58,13 @@ export class OrganisationScope extends ScopeBase<OrganisationEntity> {
     public searchString(searchString: string | undefined): this {
         if (searchString) {
             this.findBySubstring(['name', 'kennung'], searchString, ScopeOperator.OR);
+        }
+        return this;
+    }
+
+    public searchStringAdministriertVon(searchString: string | undefined): this {
+        if (searchString) {
+            this.findBySubstring(['name'], searchString);
         }
         return this;
     }

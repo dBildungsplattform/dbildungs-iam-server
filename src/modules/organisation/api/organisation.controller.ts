@@ -40,6 +40,7 @@ import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { DbiamOrganisationError } from './dbiam-organisation.error.js';
 import { OrganisationExceptionFilter } from './organisation-exception-filter.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
+import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new OrganisationExceptionFilter())
 @ApiTags('organisationen')
@@ -165,6 +166,7 @@ export class OrganisationController {
                 typ: queryParams.typ,
             })
             .setScopeWhereOperator(ScopeOperator.AND)
+            .findByAdministriertVonArray(queryParams.administriertVon)
             .searchString(queryParams.searchString)
             .excludeTyp(queryParams.excludeTyp)
             .byIDs(validOrgaIDs)
@@ -194,10 +196,12 @@ export class OrganisationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get organizations.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
     public async getAdministrierteOrganisationen(
-        @Param() params: OrganisationByIdParams,
+        @Param() routeParams: OrganisationByIdParams,
+        @Query() queryParams: OrganisationByIdQueryParams,
     ): Promise<PagedResponse<OrganisationResponseLegacy>> {
         const result: Paged<OrganisationResponseLegacy> | SchulConnexError = await this.uc.findAdministriertVon(
-            params.organisationId,
+            routeParams.organisationId,
+            queryParams.searchFilter,
         );
 
         if (result instanceof SchulConnexError) {
