@@ -20,6 +20,10 @@ import { PersonModule } from '../modules/person/person.module.js';
 import { PersonenKontextModule } from '../modules/personenkontext/personenkontext.module.js';
 import { DbSeedConsole } from './dbseed/db-seed.console.js';
 import { DbSeedModule } from './dbseed/db-seed.module.js';
+import { Migrator, TSMigrationGenerator } from '@mikro-orm/migrations';
+import { DbInitMigrationConsole } from './dbmigrate/db-init-migration.console.js';
+import { DbCreateMigrationConsole } from './dbmigrate/db-create-migration.console.js';
+import { DbApplyMigrationConsole } from './dbmigrate/db-apply-migration.console.js';
 
 @Module({
     imports: [
@@ -49,6 +53,21 @@ import { DbSeedModule } from './dbseed/db-seed.module.js';
                     password: config.getOrThrow<DbConfig>('DB').SECRET,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
+                    extensions: [Migrator],
+                    migrations: {
+                        tableName: 'mikro_orm_migrations', // name of database table with log of executed transactions
+                        path: './dist/migrations', // path to the folder with migrations
+                        pathTs: './migrations', // path to the folder with TS migrations (if used, you should put path to compiled files in `path`)
+                        glob: '!(*.d).{js,ts}', // how to match migration files (all .js and .ts files, but not .d.ts)
+                        transactional: true, // wrap each migration in a transaction
+                        disableForeignKeys: false, // wrap statements with `set foreign_key_checks = 0` or equivalent
+                        allOrNothing: true, // wrap all migrations in master transaction
+                        dropTables: true, // allow to disable table dropping
+                        safe: false, // allow to disable table and column dropping
+                        snapshot: true, // save snapshot when creating new migrations
+                        emit: 'ts', // migration generation mode
+                        generator: TSMigrationGenerator, // migration generator, e.g. to allow custom formatting
+                    },
                     driverOptions: {
                         connection: {
                             ssl: config.getOrThrow<DbConfig>('DB').USE_SSL,
@@ -61,6 +80,14 @@ import { DbSeedModule } from './dbseed/db-seed.module.js';
             inject: [ConfigService],
         }),
     ],
-    providers: [DbConsole, DbInitConsole, DbSeedConsole, UsernameGeneratorService],
+    providers: [
+        DbConsole,
+        DbInitConsole,
+        DbSeedConsole,
+        DbInitMigrationConsole,
+        DbCreateMigrationConsole,
+        DbApplyMigrationConsole,
+        UsernameGeneratorService,
+    ],
 })
 export class ConsoleModule {}
