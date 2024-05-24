@@ -153,6 +153,7 @@ redis:
   extraVolumes: []
   extraVolumeMounts: []
 
+ldap:
   enabled: false
 #   image:
 #     repository: docker.io/osixia/openldap
@@ -173,10 +174,9 @@ redis:
 #       ldap: 389
 
 
-
 # https://github.com/jp-gouin/helm-openldap/blob/master/values.yaml
 openldap:
-  enabled: true
+  # enabled: true
   global:
     ldapDomain: "schule-sh.de" # translates to LDAP_ROOT
     existingSecret: "dbildungs-iam-ldap" 
