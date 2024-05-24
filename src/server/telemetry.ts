@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/typedef */
 /* eslint-disable no-console */
 
 //import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
@@ -13,8 +12,10 @@ import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
 import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics-base';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
 import * as grpc from '@grpc/grpc-js';
+import { Meter } from '@opentelemetry/api';
+import { Counter } from '@opentelemetry/api-metrics';
 
-export function setupTelemetry(): void {
+export function setupTelemetry(): () => void {
     // diagnostics logger toggle for debugging
     //diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL);
 
@@ -28,24 +29,12 @@ export function setupTelemetry(): void {
     provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
     provider.register();
 
-    registerInstrumentations({
-        tracerProvider: provider,
-        instrumentations: [
-            new HttpInstrumentation(),
-            new PgInstrumentation(),
-            new RedisInstrumentation(),
-            new NestInstrumentation(),
-        ],
-    });
-    console.log('Instrumentations registered');
-
     // Metrics setup
-    const metricExporter = new OTLPMetricExporter({
+    const metricExporter: OTLPMetricExporter = new OTLPMetricExporter({
         url: 'grpc://localhost:4317',
         credentials: grpc.credentials.createInsecure(),
     });
-    const meterProvider = new MeterProvider();
-    console.log('Metric exporter and meter provider initialized');
+    const meterProvider: MeterProvider = new MeterProvider();
 
     meterProvider.addMetricReader(
         new PeriodicExportingMetricReader({
@@ -54,15 +43,24 @@ export function setupTelemetry(): void {
         }),
     );
 
-    const meter = meterProvider.getMeter('example-meter');
+    const meter: Meter = meterProvider.getMeter('meter-meter');
+    const requestCounter: Counter = meter.createCounter('requests', {
+        description: 'Count all incoming requests',
+    });
+    requestCounter.add(1);
 
-    // Define a counter
-    const metricPostCounter = meter.createCounter('metrics_posted');
+    const unregister: () => void = registerInstrumentations({
+        tracerProvider: provider,
+        meterProvider: meterProvider,
+        instrumentations: [
+            new HttpInstrumentation(),
+            new PgInstrumentation(),
+            new RedisInstrumentation(),
+            new NestInstrumentation(),
+        ],
+    });
 
-    function postMetric(): void {
-        metricPostCounter.add(1);
-    }
+    meter.createCounter('metrics_posted');
 
-    const interval = 6000;
-    setInterval(postMetric, interval);
+    return unregister;
 }

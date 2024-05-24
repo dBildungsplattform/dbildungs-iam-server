@@ -72,7 +72,7 @@ async function bootstrap(): Promise<void> {
         app.set('trust proxy', frontendConfig.TRUST_PROXY);
     }
 
-    setupTelemetry(); // Call setupTelemetry before app.listen
+    setupTelemetry();
 
     await app.listen(port);
 
