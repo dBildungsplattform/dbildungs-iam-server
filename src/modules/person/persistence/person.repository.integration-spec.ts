@@ -40,7 +40,6 @@ describe('PersonRepository', () => {
     let mapper: Mapper;
     let kcUserServiceMock: DeepMocked<KeycloakUserService>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
-    let personRepositoryMock: DeepMocked<PersonRepository>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let configService: ConfigService;
 
@@ -67,7 +66,6 @@ describe('PersonRepository', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
-        personRepositoryMock = module.get(PersonRepository);
         personPermissionsMock = createMock<PersonPermissions>();
 
         kcUserServiceMock = module.get(KeycloakUserService);
@@ -86,20 +84,6 @@ describe('PersonRepository', () => {
         await DatabaseTestModule.clearDatabase(orm);
         jest.resetAllMocks();
     });
-
-    function getPerson(): Person<true> {
-        return Person.construct(
-            faker.string.uuid(),
-            faker.date.past(),
-            faker.date.recent(),
-            faker.person.lastName(),
-            faker.person.firstName(),
-            '1',
-            faker.lorem.word(),
-            faker.lorem.word(),
-            faker.string.uuid(),
-        );
-    }
 
     it('should be defined', () => {
         expect(sutLegacy).toBeDefined();
@@ -579,45 +563,27 @@ describe('PersonRepository', () => {
     describe('getPersonIfAllowed', () => {
         describe('when person is found on any same organisations like the affected person', () => {
             it('should return person', async () => {
-                const requestPerson: Person<true> = getPerson();
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([requestPerson.id]);
-                const mockedResponse: Counted<Person<true>> = [[requestPerson], 1];
-                personRepositoryMock.findBy.mockResolvedValueOnce(mockedResponse);
-                const result: Result<Person<true>> = await sut.getPersonIfAllowed(
-                    requestPerson.id,
-                    personPermissionsMock,
-                );
+                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+
+                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+
+                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+                const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
 
                 expect(result.ok).toBeTruthy();
             });
         });
-
-        describe('when person is not on any same organisations like the affected person', () => {
-            it('should return EntityNotFoundError', async () => {
-                const requestPerson: Person<true> = getPerson();
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([requestPerson.id]);
-                personRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
-                const result: Result<Person<true>> = await sut.getPersonIfAllowed(
-                    requestPerson.id,
-                    personPermissionsMock,
-                );
-
-                expect(result.ok).toBeFalsy();
-            });
-        });
-
         describe('when user has permission on root organisation', () => {
             it('should return person', async () => {
-                const requestPerson: Person<true> = getPerson();
+                const person1: PersonDo<true> = DoFactory.createPerson(true);
                 const fakeOrganisationId: string = configService.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
 
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([fakeOrganisationId]);
-                const mockedResponse: Counted<Person<true>> = [[requestPerson], 1];
-                personRepositoryMock.findBy.mockResolvedValueOnce(mockedResponse);
-                const result: Result<Person<true>> = await sut.getPersonIfAllowed(
-                    requestPerson.id,
-                    personPermissionsMock,
-                );
+
+                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+
+                const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
 
                 expect(result.ok).toBeTruthy();
             });

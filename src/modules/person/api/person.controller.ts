@@ -76,7 +76,7 @@ export class PersonController {
         private readonly personRepository: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personFactory: PersonFactory,
-        private readonly userEventService: PersonEventService,
+        private readonly personEventService: PersonEventService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
     ) {
@@ -174,11 +174,11 @@ export class PersonController {
         }
 
         // Publish an event to delete the person from Keycloak if the person has a keycloakUserId
-        this.userEventService.publishUserDeletedEvent(person.keycloakUserId);
+        this.personEventService.publishUserDeletedEvent(person.keycloakUserId);
         // Then delete all kontexte for the personId
         const kontextResponse: Result<void, DomainError> =
             await this.dBiamPersonenkontextRepo.deletePersonenkontexteByPersonId(params.personId);
-        // Throw an HTTP exception if the delete response for kontexte is of type SchulConnex
+        // Throw an HTTP exception if the delete response for kontexte is an error
         if (kontextResponse instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(kontextResponse),
@@ -189,7 +189,7 @@ export class PersonController {
             params.personId,
             permissions,
         );
-        // Throw an HTTP exception if the delete response for the person is of type SchulConnex
+        // Throw an HTTP exception if the delete response for the person is an error
         if (personResponse instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResponse),
