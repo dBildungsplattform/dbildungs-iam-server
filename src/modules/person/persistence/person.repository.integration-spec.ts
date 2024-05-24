@@ -26,7 +26,7 @@ import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { DomainError, KeycloakClientError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
@@ -596,6 +596,32 @@ describe('PersonRepository', () => {
             });
         });
     });
+    describe('deletePersonIfAllowed', () => {
+        describe('when person is found, delete it', () => {
+            it('should delete person', async () => {
+                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+
+                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+                const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+
+                if (!result.ok) {
+                    throw new EntityNotFoundError('Person', person1.id);
+                }
+
+                dBiamPersonenkontextRepoMock.deletePersonenkontexteByPersonId.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+
+                await sut.deletePersonIfAllowed(result.value.id, personPermissionsMock);
+
+                expect(result.ok).toBeTruthy();
+            });
+        });
+    });
+
     describe('deletePersonAndKontexte', () => {
         describe('Delete the person and all kontexte', () => {
             it('should delete the person', async () => {
@@ -603,20 +629,23 @@ describe('PersonRepository', () => {
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
 
                 await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
-
+                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const personAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
                     person1.id,
                     personPermissionsMock,
                 );
 
-                if (personAllowed.ok) {
-                    const result: Result<void, DomainError> = await sut.deletePersonAndKontexte(
-                        personAllowed.value,
-                        personPermissionsMock,
-                    );
-                    expect(dBiamPersonenkontextRepoMock.deletePersonenkontexteByPersonId).toHaveBeenCalledTimes(1);
-                    expect(result.ok).toBeTruthy();
+                if (!personAllowed.ok) {
+                    throw new EntityNotFoundError('Person', person1.id);
                 }
+
+
+                const result: Result<void, DomainError> = await sut.deletePersonAndKontexte(
+                    personAllowed.value,
+                    personPermissionsMock,
+                );
+                expect(dBiamPersonenkontextRepoMock.deletePersonenkontexteByPersonId).toHaveBeenCalledTimes(1);
+                expect(result.ok).toBeTruthy();
             });
         });
     });
