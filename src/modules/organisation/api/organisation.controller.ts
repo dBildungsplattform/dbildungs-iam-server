@@ -37,9 +37,12 @@ import { OrganisationResponse } from './organisation.response.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { DbiamOrganisationError } from './dbiam-organisation.error.js';
+import { OrganisationExceptionFilter } from './organisation-exception-filter.js';
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 
-@UseFilters(SchulConnexValidationErrorFilter)
+@UseFilters(new SchulConnexValidationErrorFilter(), new OrganisationExceptionFilter())
 @ApiTags('organisationen')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -53,7 +56,7 @@ export class OrganisationController {
 
     @Post()
     @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponseLegacy })
-    @ApiBadRequestResponse({ description: 'The organisation already exists.' })
+    @ApiBadRequestResponse({ description: 'The organisation already exists.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
@@ -63,10 +66,14 @@ export class OrganisationController {
             CreateOrganisationBodyParams,
             CreateOrganisationDto,
         );
-        const result: CreatedOrganisationDto | SchulConnexError = await this.uc.createOrganisation(organisationDto);
+        const result: CreatedOrganisationDto | SchulConnexError | OrganisationSpecificationError =
+            await this.uc.createOrganisation(organisationDto);
 
         if (result instanceof CreatedOrganisationDto) {
             return this.mapper.map(result, CreatedOrganisationDto, OrganisationResponseLegacy);
+        }
+        if (result instanceof OrganisationSpecificationError) {
+            throw result;
         }
         throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
     }
@@ -76,7 +83,7 @@ export class OrganisationController {
         description: 'The organisation was successfully updated.',
         type: OrganisationResponseLegacy,
     })
-    @ApiBadRequestResponse({ description: 'Request has wrong format.' })
+    @ApiBadRequestResponse({ description: 'Request has wrong format.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
     @ApiNotFoundResponse({ description: 'The organisation was not found.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
@@ -88,10 +95,14 @@ export class OrganisationController {
         const dto: UpdateOrganisationDto = this.mapper.map(body, UpdateOrganisationBodyParams, UpdateOrganisationDto);
         dto.id = params.organisationId;
 
-        const response: UpdatedOrganisationDto | SchulConnexError = await this.uc.updateOrganisation(dto);
+        const response: UpdatedOrganisationDto | SchulConnexError | OrganisationSpecificationError =
+            await this.uc.updateOrganisation(dto);
 
         if (response instanceof UpdatedOrganisationDto) {
             return this.mapper.map(response, UpdatedOrganisationDto, OrganisationResponseLegacy);
+        }
+        if (response instanceof OrganisationSpecificationError) {
+            throw response;
         }
         throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
     }
@@ -203,7 +214,7 @@ export class OrganisationController {
 
     @Post(':organisationId/administriert')
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
-    @ApiBadRequestResponse({ description: 'The organisation could not be modified.' })
+    @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
@@ -211,11 +222,14 @@ export class OrganisationController {
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByIdBodyParams,
     ): Promise<void> {
-        const result: void | SchulConnexError = await this.uc.setAdministriertVon(
+        const result: void | SchulConnexError | OrganisationSpecificationError = await this.uc.setAdministriertVon(
             params.organisationId,
             body.organisationId,
         );
 
+        if (result instanceof OrganisationSpecificationError) {
+            throw result;
+        }
         if (result) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
         }
@@ -247,7 +261,7 @@ export class OrganisationController {
 
     @Post(':organisationId/zugehoerig')
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
-    @ApiBadRequestResponse({ description: 'The organisation could not be modified.' })
+    @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
@@ -255,11 +269,14 @@ export class OrganisationController {
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByIdBodyParams,
     ): Promise<void> {
-        const result: void | SchulConnexError = await this.uc.setZugehoerigZu(
+        const result: void | SchulConnexError | OrganisationSpecificationError = await this.uc.setZugehoerigZu(
             params.organisationId,
             body.organisationId,
         );
 
+        if (result instanceof OrganisationSpecificationError) {
+            throw result;
+        }
         if (result) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
         }

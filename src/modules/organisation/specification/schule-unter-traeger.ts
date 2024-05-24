@@ -17,13 +17,13 @@ export class SchuleUnterTraeger extends CompositeSpecification<OrganisationDo<tr
         if (!t.administriertVon) return false;
         const parent: Option<OrganisationDo<true>> = await this.organisationRepo.findById(t.administriertVon);
         if (!parent) return false;
-        return parent.typ === OrganisationsTyp.TRAEGER;
+        return parent.typ === OrganisationsTyp.TRAEGER || parent.typ === OrganisationsTyp.LAND;
     }
 
     private async validateZugehoerigZu(t: OrganisationDo<true>): Promise<boolean> {
         if (!t.zugehoerigZu) return false;
         const parent: Option<OrganisationDo<true>> = await this.organisationRepo.findById(t.zugehoerigZu);
         if (!parent) return false;
-        return parent.typ === OrganisationsTyp.TRAEGER;
+        return parent.typ === OrganisationsTyp.TRAEGER || parent.typ === OrganisationsTyp.LAND;
     }
 }
