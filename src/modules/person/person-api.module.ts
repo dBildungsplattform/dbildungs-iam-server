@@ -16,6 +16,7 @@ import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-p
 import { PersonInfoController } from './api/person-info.controller.js';
 import { PersonApiMapper } from './mapper/person-api.mapper.js';
 import { EventModule } from '../../core/eventbus/event.module.js';
+import { PersonEventService } from './domain/person-event.service.js';
 
 @Module({
     imports: [
@@ -35,6 +36,7 @@ import { EventModule } from '../../core/eventbus/event.module.js';
         PersonRepository,
         DBiamPersonenkontextRepo,
         PersonApiMapper,
+        PersonEventService,
     ],
     controllers: [PersonController, PersonFrontendController, DBiamPersonenuebersichtController, PersonInfoController],
 })
