@@ -152,7 +152,7 @@ export class PersonRepository {
         }
 
         const person: Person<true> = personResult.value;
-        const deletedPerson: number = await this.delete(person);
+        const deletedPerson: number = await this.em.nativeDelete(PersonEntity, person.id);
 
         if (deletedPerson === 0) {
             return { ok: false, error: new EntityCouldNotBeDeleted('PersonEntity', person.id) };
@@ -182,12 +182,6 @@ export class PersonRepository {
         await this.em.persistAndFlush(personEntity);
 
         return mapEntityToAggregateInplace(personEntity, personWithKeycloakUser);
-    }
-
-    private async delete(person: Person<true>): Promise<number> {
-        const deletedPersons: number = await this.em.nativeDelete(PersonEntity, person.id);
-
-        return deletedPersons;
     }
 
     public async update(person: Person<true>): Promise<Person<true> | DomainError> {

@@ -1,5 +1,15 @@
 import { AutoMap } from '@automapper/classes';
-import { ArrayType, Cascade, Collection, DateTimeType, Entity, Enum, ManyToOne, OneToMany, Property } from '@mikro-orm/core';
+import {
+    ArrayType,
+    Cascade,
+    Collection,
+    DateTimeType,
+    Entity,
+    Enum,
+    ManyToOne,
+    OneToMany,
+    Property,
+} from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
 import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';

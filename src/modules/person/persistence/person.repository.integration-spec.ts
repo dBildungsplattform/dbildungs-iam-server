@@ -1,7 +1,7 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
-import { EntityManager, Loaded, MikroORM, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -531,40 +531,6 @@ describe('PersonRepository', () => {
             expect(personAfterUpdate).toBeInstanceOf(Person);
             expect(personAfterUpdate.vorname).toEqual(person.vorname);
             expect(personAfterUpdate.familienname).toEqual(person.familienname);
-        });
-    });
-    describe('delete', () => {
-        it('should delete a person and return the number of deleted rows', async () => {
-            const person: PersonDo<true> = DoFactory.createPerson(true);
-            await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
-
-            const personAggregate: Person<true> = mapEntityToAggregate(mapper.map(person, PersonDo, PersonEntity));
-            const deleteResult: number = await sut.delete(personAggregate);
-
-            const foundPerson: Loaded<PersonEntity, never, '*', never> | null = await em.findOne(PersonEntity, {
-                id: person.id,
-            });
-
-            expect(deleteResult).toEqual(1);
-            expect(foundPerson).toBeNull();
-        });
-
-        it('should return 0 if the person does not exist', async () => {
-            const personAggregate: Person<true> = Person.construct(
-                faker.string.uuid(),
-                faker.date.past(),
-                faker.date.recent(),
-                faker.person.lastName(),
-                faker.person.firstName(),
-                '1',
-                faker.lorem.word(),
-                faker.lorem.word(),
-                faker.string.uuid(),
-            );
-
-            const deleteResult: number = await sut.delete(personAggregate);
-
-            expect(deleteResult).toEqual(0);
         });
     });
     describe('getPersonIfAllowed', () => {
