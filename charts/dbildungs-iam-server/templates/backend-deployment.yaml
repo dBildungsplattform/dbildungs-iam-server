@@ -21,6 +21,25 @@ spec:
       automountServiceAccountToken: false
       {{- if .Values.backend.dbseeding.enabled }}
       initContainers:
+        - name: "{{ template "common.names.name" . }}-db-migrate"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always" }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          command: [ "node", "dist/src/console/main.js", "db", "migration-apply" ]
+          env:
+            {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+              {{- if .Values.backend.extraEnvVars }}
+              {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+              {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}
+          volumeMounts:
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+            - mountPath: /app/dist/migrations
+              name: migration-volume
+              readOnly: true
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         - name: "{{ template "common.names.name" . }}-db-init"
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always"}}
@@ -90,6 +109,9 @@ spec:
         - name: secret-volume
           secret:
             secretName: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        - name: migration-volume
+          configMap:
+            name: {{ template "common.names.name" . }}-backend-migration
         {{if .Values.backend.dbseeding.enabled }}
         - name: seeding-volume
           configMap:

@@ -85,6 +85,9 @@ web_modules/
 # config files
 config/secrets.json
 
+# migration files only used for (integration-)tests
+test-migrations/
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
