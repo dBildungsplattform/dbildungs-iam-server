@@ -40,7 +40,6 @@ describe('PersonController', () => {
     let module: TestingModule;
     let personController: PersonController;
     let personenkontextUcMock: DeepMocked<PersonenkontextUc>;
-    let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
 
@@ -87,7 +86,6 @@ describe('PersonController', () => {
         personenkontextUcMock = module.get(PersonenkontextUc);
         personRepositoryMock = module.get(PersonRepository);
         usernameGeneratorService = module.get(UsernameGeneratorService);
-        dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
     });
 
     function getPerson(): Person<true> {
@@ -196,17 +194,18 @@ describe('PersonController', () => {
         };
         describe('when deleting a person is successful', () => {
             it('should return no error ', async () => {
+                personRepositoryMock.findById.mockResolvedValue(person);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-                dBiamPersonenkontextRepoMock.deletePersonenkontexteByPersonId.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                });
+                personRepositoryMock.deletePersonAndKontexte.mockResolvedValueOnce({ ok: true, value: undefined });
+                personRepositoryMock.deletePersonIfAllowed.mockResolvedValueOnce({ ok: true, value: undefined });
+
                 const response: void = await personController.deletePersonById(deleteParams, personPermissionsMock);
 
                 expect(response).toBeUndefined();
+                expect(personRepositoryMock.deletePersonAndKontexte).toHaveBeenCalledTimes(1);
             });
         });
-        describe('when deleting a personenkontext returns a SchulConnexError', () => {
+        describe('when deleting a person returns a SchulConnexError', () => {
             it('should throw HttpException', async () => {
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: false,

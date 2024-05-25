@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { ArrayType, Collection, DateTimeType, Entity, Enum, ManyToOne, OneToMany, Property } from '@mikro-orm/core';
+import { ArrayType, Cascade, Collection, DateTimeType, Entity, Enum, ManyToOne, OneToMany, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
 import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
@@ -105,6 +105,6 @@ export class PersonEntity extends TimestampedEntity {
     @Property({ nullable: true })
     public personalnummer?: string;
 
-    @OneToMany({ entity: () => PersonenkontextEntity, mappedBy: 'personId' })
+    @OneToMany({ entity: () => PersonenkontextEntity, mappedBy: 'personId', cascade: [Cascade.REMOVE] })
     public personenKontexte: Collection<PersonenkontextEntity> = new Collection<PersonenkontextEntity>(this);
 }

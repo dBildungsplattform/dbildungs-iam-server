@@ -3,13 +3,12 @@ import { Injectable } from '@nestjs/common';
 import { PersonEntity } from './person.entity.js';
 import { Person } from '../domain/person.js';
 import { PersonScope } from './person.scope.js';
-import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
+import { KeycloakUserService, PersonHasNoKeycloakId, UserDo } from '../../keycloak-administration/index.js';
 import {
     DomainError,
     EntityCouldNotBeCreated,
     EntityCouldNotBeDeleted,
     EntityNotFoundError,
-    PersonHasNoKeycloakId,
 } from '../../../shared/error/index.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -99,7 +98,7 @@ export class PersonRepository {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
 
-    public async getPersonScopeWithPermissions(permissions: PersonPermissions): Promise<PersonScope> {
+    private async getPersonScopeWithPermissions(permissions: PersonPermissions): Promise<PersonScope> {
         // Find all organisations where user has permission
         let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
@@ -185,7 +184,7 @@ export class PersonRepository {
         return mapEntityToAggregateInplace(personEntity, personWithKeycloakUser);
     }
 
-    public async delete(person: Person<true>): Promise<number> {
+    private async delete(person: Person<true>): Promise<number> {
         const deletedPersons: number = await this.em.nativeDelete(PersonEntity, person.id);
 
         return deletedPersons;
@@ -253,7 +252,7 @@ export class PersonRepository {
         if (!person.keycloakUserId) {
             throw new PersonHasNoKeycloakId(person.id);
         }
-        // Delete the person from Keyclock
+        // Delete the person from Keycloack
         await this.kcUserService.delete(person.keycloakUserId);
         // First, delete all kontexte for the personId
         const kontextResponse: Result<void, DomainError> =
