@@ -17,7 +17,6 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
     return {
@@ -93,7 +92,6 @@ export class PersonRepository {
         private readonly kcUserService: KeycloakUserService,
         private readonly em: EntityManager,
         config: ConfigService<ServerConfig>,
-        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
@@ -236,7 +234,6 @@ export class PersonRepository {
 
         return person;
     }
-    // In your PersonRepository class
 
     public async deletePersonAndKontexte(
         person: Person<true>,
@@ -248,18 +245,12 @@ export class PersonRepository {
         }
         // Delete the person from Keycloack
         await this.kcUserService.delete(person.keycloakUserId);
-        // First, delete all kontexte for the personId
-        const kontextResponse: Result<void, DomainError> =
-            await this.dBiamPersonenkontextRepo.deletePersonenkontexteByPersonId(person.id);
-        if (kontextResponse instanceof DomainError) {
-            return kontextResponse; // Return error if deleting kontexte fails
-        }
 
-        // Delete the person after all kontexte are deleted
+        // Delete the person and all their kontexte
         const personResponse: Result<void, DomainError> = await this.deletePersonIfAllowed(person.id, permissions);
 
         if (personResponse instanceof DomainError) {
-            return personResponse; // Return error if deleting person fails
+            return personResponse;
         }
 
         return { ok: true, value: undefined };

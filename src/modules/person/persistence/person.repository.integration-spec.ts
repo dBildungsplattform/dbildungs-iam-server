@@ -609,7 +609,6 @@ describe('PersonRepository', () => {
                     personAllowed.value,
                     personPermissionsMock,
                 );
-                expect(dBiamPersonenkontextRepoMock.deletePersonenkontexteByPersonId).toHaveBeenCalledTimes(1);
                 expect(result.ok).toBeTruthy();
             });
         });

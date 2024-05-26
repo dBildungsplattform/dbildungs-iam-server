@@ -6,8 +6,6 @@ import { Rolle } from '../domain/personenkontext.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { EntityCouldNotBeDeleted } from '../../../shared/error/entity-could-not-be-deleted.error.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
@@ -43,14 +41,6 @@ export class DBiamPersonenkontextRepo {
         });
 
         return personenKontexte.map(mapEntityToAggregate);
-    }
-
-    public async deleteByPerson(personId: PersonID): Promise<number> {
-        const deletedPersonenkontexte: number = await this.em.nativeDelete(PersonenkontextEntity, {
-            personId,
-        });
-
-        return deletedPersonenkontexte;
     }
 
     public async findByPersonIds(personIds: PersonID[]): Promise<Map<PersonID, Personenkontext<true>[]>> {
@@ -122,19 +112,5 @@ export class DBiamPersonenkontextRepo {
         await this.em.persistAndFlush(personenKontextEntity);
 
         return mapEntityToAggregate(personenKontextEntity);
-    }
-
-    public async deletePersonenkontexteByPersonId(personId: string): Promise<Result<void, DomainError>> {
-        const personenkontexte: Personenkontext<true>[] = await this.findByPerson(personId);
-
-        const deletedPersonenkontexte: number = await this.deleteByPerson(personId);
-
-        if (deletedPersonenkontexte !== personenkontexte.length) {
-            // Create a list of the kontexte IDs that were not deleted
-            const notDeletedEntities: string[] = personenkontexte.map((entity: Personenkontext<true>) => entity.id);
-            return { ok: false, error: new EntityCouldNotBeDeleted('Personenkontext', notDeletedEntities.join(', ')) };
-        }
-
-        return { ok: true, value: undefined };
     }
 }

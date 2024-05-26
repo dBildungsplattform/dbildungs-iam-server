@@ -28,6 +28,8 @@ export class Migration20240515131039 extends Migration {
         this.addSql('alter table "schulstrukturknoten" add constraint "schulstrukturknoten_organizational_parent_id_foreign" foreign key ("organizational_parent_id") references "schulstrukturknoten" ("id") on update cascade;');
         this.addSql('alter table "rolle_service_provider" add constraint "rolle_service_provider_rolle_id_foreign" foreign key ("rolle_id") references "rolle" ("id") on update cascade;');
         this.addSql('alter table "rolle_service_provider" add constraint "rolle_service_provider_service_provider_id_foreign" foreign key ("service_provider_id") references "service_provider" ("id") on update cascade;');
+        this.addSql('alter table "personenkontext" DROP CONSTRAINT "personenkontext_person_id_id_foreign";');
+        this.addSql('alter table "personenkontext" add constraint "personenkontext_person_id_id_foreign" foreign key ("person_id_id") references "person" ("id") ON DELETE CASCADE;');
     }
 }
 //# sourceMappingURL=Migration20240515131039.js.map
