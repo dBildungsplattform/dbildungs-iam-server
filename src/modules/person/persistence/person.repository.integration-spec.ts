@@ -43,7 +43,6 @@ describe('PersonRepository', () => {
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let configService: ConfigService;
-    let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -77,7 +76,6 @@ describe('PersonRepository', () => {
         kcUserServiceMock = module.get(KeycloakUserService);
         usernameGeneratorService = module.get(UsernameGeneratorService);
         configService = module.get(ConfigService);
-        dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -575,11 +573,6 @@ describe('PersonRepository', () => {
                 if (!result.ok) {
                     throw new EntityNotFoundError('Person', person1.id);
                 }
-
-                dBiamPersonenkontextRepoMock.deletePersonenkontexteByPersonId.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                });
 
                 await sut.deletePersonIfAllowed(result.value.id, personPermissionsMock);
 
