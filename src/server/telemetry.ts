@@ -41,6 +41,21 @@ const requestCounter: Counter = meter.createCounter('requests', {
 });
 requestCounter.add(1);
 
+export function setupTelemetry(): () => void {
+    const unregister: () => void = registerInstrumentations({
+        tracerProvider: provider,
+        meterProvider: meterProvider,
+        instrumentations: [
+            new HttpInstrumentation(),
+            new PgInstrumentation(),
+            new RedisInstrumentation(),
+            new NestInstrumentation(),
+        ],
+    });
+
+    return unregister;
+}
+
 export function shutdownTelemetry(): void {
     provider
         .shutdown()
@@ -64,19 +79,4 @@ export function flushTelemetry(): void {
             console.log('Telemetry data flushed successfully.');
         })
         .catch((err: string) => console.error('Telemetry data flush failed:', err));
-}
-
-export function setupTelemetry(): () => void {
-    const unregister: () => void = registerInstrumentations({
-        tracerProvider: provider,
-        meterProvider: meterProvider,
-        instrumentations: [
-            new HttpInstrumentation(),
-            new PgInstrumentation(),
-            new RedisInstrumentation(),
-            new NestInstrumentation(),
-        ],
-    });
-
-    return unregister;
 }
