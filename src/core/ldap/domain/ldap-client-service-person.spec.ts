@@ -24,7 +24,7 @@ describe('LDAP Client Service Person Methods', () => {
     let orm: MikroORM;
     let em: EntityManager;
     let ldapClientService: LdapClientService;
-    const kennung: string = faker.string.numeric({ length: 7 });
+    //const kennung: string = faker.string.numeric({ length: 7 });
     const id: string = faker.string.uuid();
 
     beforeAll(async () => {
@@ -72,7 +72,7 @@ describe('LDAP Client Service Person Methods', () => {
 
     describe('createLehrer', () => {
         // OU has to be created before
-        beforeAll(async () => {
+     /*   beforeAll(async () => {
             const createdOrganisationDto: CreatedOrganisationDto = {
                 id: id,
                 typ: OrganisationsTyp.SCHULE,
@@ -83,10 +83,24 @@ describe('LDAP Client Service Person Methods', () => {
                 await ldapClientService.createOrganisation(createdOrganisationDto);
 
             expect(result.ok).toBeTruthy();
-        });
+        });*/
 
-        describe('when called with valid person and organisation', () => {
+        describe('when called with valid person and organisation',  () => {
             it('should return truthy result', async () => {
+                //create an OU
+                const ouId: string = faker.string.uuid();
+                const createdOrganisationDto: CreatedOrganisationDto = {
+                    id: ouId,
+                    typ: OrganisationsTyp.SCHULE,
+                    kennung: '991991',
+                    name: faker.company.name(),
+                };
+                const ouResult: Result<CreatedOrganisationDto> =
+                    await ldapClientService.createOrganisation(createdOrganisationDto);
+
+                expect(ouResult.ok).toBeTruthy();
+                //
+
                 const person: Person<true> = Person.construct(
                     faker.string.uuid(),
                     faker.date.past(),
@@ -100,9 +114,9 @@ describe('LDAP Client Service Person Methods', () => {
                 );
 
                 const organisation: Organisation<true> = {
-                    id: id,
+                    id: ouId,
                     name: faker.company.name(),
-                    kennung: kennung,
+                    kennung: '991991',
                     typ: OrganisationsTyp.SCHULE,
                     createdAt: faker.date.past(),
                     updatedAt: faker.date.recent(),
@@ -150,12 +164,7 @@ describe('LDAP Client Service Person Methods', () => {
         const deleteLehrerPersonFirstname: string = faker.person.firstName();
         const deleteLehrerPersonLastname: string = faker.person.lastName();
         const deleteLehrerSchuleName: string = faker.string.alpha({ length: 10 });
-
-        const deleteLehrerOrgaKennung2: string = faker.string.numeric({ length: 7 });
-        const deleteLehrerPersonFirstname2: string = faker.person.firstName();
-        const deleteLehrerPersonLastname2: string = faker.person.lastName();
-        const deleteLehrerSchuleName2: string = faker.string.alpha({ length: 10 });
-
+        
         async function createRandom(): Promise<void> {
             const createdOrganisationDto: CreatedOrganisationDto = {
                 id: id,
@@ -187,41 +196,9 @@ describe('LDAP Client Service Person Methods', () => {
             await ldapClientService.createLehrer(person, organisation);
         }
 
-        async function createRandom2(): Promise<void> {
-            const createdOrganisationDto: CreatedOrganisationDto = {
-                id: id,
-                typ: OrganisationsTyp.SCHULE,
-                kennung: deleteLehrerOrgaKennung2,
-                name: deleteLehrerSchuleName2,
-            };
-            const organisation: Organisation<true> = {
-                id: id,
-                name: deleteLehrerSchuleName2,
-                kennung: deleteLehrerOrgaKennung2,
-                typ: OrganisationsTyp.SCHULE,
-                createdAt: faker.date.past(),
-                updatedAt: faker.date.recent(),
-            };
-            await ldapClientService.createOrganisation(createdOrganisationDto);
-
-            const person: Person<true> = Person.construct(
-                faker.string.uuid(),
-                faker.date.past(),
-                faker.date.recent(),
-                deleteLehrerPersonLastname2,
-                deleteLehrerPersonFirstname2,
-                '1',
-                faker.lorem.word(),
-                undefined,
-                faker.string.uuid(),
-            );
-            await ldapClientService.createLehrer(person, organisation);
-        }
-
         describe('when called with valid person and organisation', () => {
             it('should return truthy result', async () => {
                 await createRandom();
-                await createRandom2();
 
                 const person: Person<true> = Person.construct(
                     faker.string.uuid(),
