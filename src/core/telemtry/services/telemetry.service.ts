@@ -13,6 +13,9 @@ import * as grpc from '@grpc/grpc-js';
 import { Meter } from '@opentelemetry/api';
 import { Counter } from '@opentelemetry/api-metrics';
 import { ClassLogger } from '../../logging/class-logger.js';
+import { ConfigService } from '@nestjs/config';
+import { ServerConfig } from '../../../shared/config/server.config.js';
+import { TelemetryConfig } from '../../../shared/config/telemtry.config.js';
 
 @Injectable()
 export class TelemetryService implements OnModuleInit, OnModuleDestroy {
@@ -30,12 +33,24 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
 
     private unregister!: () => void;
 
+    private host: string;
+
+    private port: number;
+
     //private logger: ClassLogger;
 
-    public constructor(private readonly logger: ClassLogger) {
+    public constructor(
+        private readonly logger: ClassLogger,
+        configService: ConfigService<ServerConfig>,
+    ) {
+        const TelemtryConfig: TelemetryConfig = configService.getOrThrow<TelemetryConfig>('Telemtry');
+        this.host = TelemtryConfig.HOST;
+        this.port = TelemtryConfig.PORT;
+
         this.provider = new NodeTracerProvider();
         this.exporter = new CollectorTraceExporter({
-            url: 'grpc://localhost:4317',
+            url: `${this.host}:${this.port}`,
+
             credentials: grpc.credentials.createInsecure(),
         });
 
@@ -43,7 +58,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         this.provider.register();
 
         this.metricExporter = new OTLPMetricExporter({
-            url: 'grpc://localhost:4317',
+            url: `${this.host}:${this.port}`,
             credentials: grpc.credentials.createInsecure(),
         });
 
