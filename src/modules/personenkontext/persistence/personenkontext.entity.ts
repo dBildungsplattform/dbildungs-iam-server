@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { DateTimeType, Entity, Enum, ManyToOne, Opt, Property, Ref, Unique } from '@mikro-orm/core';
+import { Cascade, DateTimeType, Entity, Enum, ManyToOne, Opt, Property, Ref, Unique } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
@@ -10,6 +10,7 @@ export class PersonenkontextEntity extends TimestampedEntity {
     @AutoMap()
     @ManyToOne({
         columnType: 'uuid',
+        cascade: [Cascade.REMOVE],
         ref: true,
         nullable: false,
         entity: () => PersonEntity,
