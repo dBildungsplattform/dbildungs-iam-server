@@ -22,8 +22,11 @@ import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.ser
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
+import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
+import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 
-@UseFilters(SchulConnexValidationErrorFilter)
+@UseFilters(new SchulConnexValidationErrorFilter(), new PersonenkontextExceptionFilter())
 @ApiTags('dbiam-personenkontexte')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -65,6 +68,7 @@ export class DBiamPersonenkontextController {
     })
     @ApiBadRequestResponse({
         description: 'The personenkontext could not be created, may due to unsatisfied specifications.',
+        type: DbiamPersonenkontextError,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create personenkontext.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to create personenkontext.' })
@@ -105,12 +109,10 @@ export class DBiamPersonenkontextController {
         }
 
         //Check specifications
-        const specificationCheckError: Option<DomainError> =
+        const specificationCheckError: Option<PersonenkontextSpecificationError> =
             await this.dbiamPersonenkontextService.checkSpecifications(newPersonenkontext);
         if (specificationCheckError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(specificationCheckError),
-            );
+            throw specificationCheckError;
         }
 
         // Save personenkontext

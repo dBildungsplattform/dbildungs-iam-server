@@ -316,7 +316,7 @@ describe('Rolle API', () => {
         });
 
         describe('when rolle does not exist', () => {
-            it('should return 200', async () => {
+            it('should return 500', async () => {
                 await rolleRepo.save(DoFactory.createRolle(false));
                 const validButNonExistingUUID: string = faker.string.uuid();
                 const params: AddSystemrechtBodyParams = {
