@@ -142,7 +142,7 @@ export class PersonRepository {
         return { ok: true, value: person };
     }
 
-    public async deletePersonIfAllowed(
+    private async checkIfDeleteIsAllowed(
         personId: string,
         permissions: PersonPermissions,
     ): Promise<Result<Person<true>>> {
@@ -172,7 +172,7 @@ export class PersonRepository {
         }
 
         // Now check if the user has the permission to delete immediately
-        const deletePermissionResult: Result<Person<true>> = await this.deletePersonIfAllowed(personId, permissions);
+        const deletePermissionResult: Result<Person<true>> = await this.checkIfDeleteIsAllowed(personId, permissions);
 
         if (!deletePermissionResult.ok) {
             return { ok: false, error: new EntityCouldNotBeDeleted('Person', personId) };
