@@ -15,6 +15,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { PersonenkontextRolleFieldsResponse } from '../api/personen-kontext-rolle-fields.response.js';
 import { RollenSystemRechtServiceProviderIDResponse } from '../api/rolle-systemrechte-serviceproviderid.response.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 
 function createPerson(): Person<true> {
     return Person.construct(
@@ -145,7 +146,10 @@ describe('PersonPermissions', () => {
                 rolleRepoMock,
                 person,
             );
-            const ids: OrganisationID[] = await personPermissions.getOrgIdsWithSystemrecht([], true);
+            const ids: OrganisationID[] = await personPermissions.getOrgIdsWithSystemrecht(
+                [RollenSystemRecht.PERSONEN_VERWALTEN],
+                true,
+            );
             expect(ids).toContain('1');
             expect(ids).toContain('2');
         });
