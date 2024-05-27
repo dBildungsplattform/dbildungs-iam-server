@@ -88,3 +88,54 @@ export class ExampleProvider {
 ```
 
 Using the subscribe-method directly will not bind the execution context (In contrast, events registered by the discovery service will be bound to the parent class). This is fine when using arrow-functions like in the example above, but when you want to use an unbounded function you will need to bind the context yourself using [`Function.prototype.bind()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_objects/Function/bind).
+
+## Architectural considerations
+
+In this section we have codified requirements around using the event system which go beyond simple technical operation.
+An event system brings with it a mode of thinking about software which bears detailing.
+
+### Event-Systems, use and limits thereof
+
+Event-Systems, whether built on available buses or handcrafted, decouple system components.
+It is neither useful, necessary nor desirable for components to know of each other when communicating through events.
+
+Indeed, an event bus should be completely un-knowing of its users' specificities.
+If it were cognisant of those this knowledge would introduce coupling. (If only semantically.)
+Separate evolution would thus no longer be possible.
+Would the bus know of **multiple** clients we'd introduce a dangerous dependency and the effort of using and maintaining
+the event bus would be moot.
+
+Hence, we must demand that the event bus would only ever send, route and receive events.
+Changes in the application state itself can only happen if an event triggers them.
+It is **strictly forbidden** for the event-bus to change application state.
+As a corollary, it follows that the event bus cannot care about the number or lack thereof of registered clients.
+
+### Semantics of events
+
+An event on a bus is something that already happened.
+Its name should thence be formulated as a participle (UserDeleted not DeleteUser or UserDeleting)
+
+Events are **caused** not expected. So its name should be creator centric. No commands just facts.
+
+Event should have a timestamp.
+Also they can carry further payloads which should be small and be **simple**
+* Not nested
+* simple types (numbers, timestamps ids) only
+
+### Summary
+
+When planning to use events keep in mind the following:
+
+1. You communicate through the bus not with it
+   1. Only send and receive events
+   2. The bus cannot call or even know of the components using it
+2. Events are **things that happened**
+   1. Neither are they things that will happen
+   2. Nor things that should happen
+   3. It's "UserDeleted" **not** "DeleteUser" or "UserDeleting"
+3. Events are defined by the sender. If multiple things should happen in different components
+   the same event must be processed by multiple receivers
+4. Event-Payload should be as minimal as possible.
+   Use IDs if you can.
+5. Payloads should however contain a timestamp to facilitate tracing.
+
