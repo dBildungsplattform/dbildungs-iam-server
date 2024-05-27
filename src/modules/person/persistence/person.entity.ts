@@ -115,6 +115,11 @@ export class PersonEntity extends TimestampedEntity {
     @Property({ nullable: true })
     public personalnummer?: string;
 
-    @OneToMany({ entity: () => PersonenkontextEntity, mappedBy: 'personId', cascade: [Cascade.REMOVE] })
+    @OneToMany({
+        entity: () => PersonenkontextEntity,
+        mappedBy: 'personId',
+        cascade: [Cascade.REMOVE],
+        orphanRemoval: true,
+    })
     public personenKontexte: Collection<PersonenkontextEntity> = new Collection<PersonenkontextEntity>(this);
 }

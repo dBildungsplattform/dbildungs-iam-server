@@ -206,7 +206,7 @@ describe('PersonController', () => {
         });
         describe('when deleting a person returns a SchulConnexError', () => {
             it('should throw HttpException', async () => {
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
+                personRepositoryMock.deletePerson.mockResolvedValueOnce({
                     ok: false,
                     error: new EntityNotFoundError(),
                 });

@@ -26,7 +26,12 @@ import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
+import {
+    DomainError,
+    EntityCouldNotBeDeleted,
+    EntityNotFoundError,
+    KeycloakClientError,
+} from '../../../shared/error/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
@@ -561,20 +566,34 @@ describe('PersonRepository', () => {
         });
     });
     describe('deletePersonIfAllowed', () => {
-        describe('when person is found, delete it', () => {
-            it('should delete person', async () => {
+        describe('when person is found on any same organisations like the affected person', () => {
+            it('should return person', async () => {
                 const person1: PersonDo<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
 
                 await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
-                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
-                const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+                await sut.deletePersonIfAllowed(person1.id, personPermissionsMock);
+                const result: Result<Person<true>> = await sut.deletePersonIfAllowed(person1.id, personPermissionsMock);
 
                 if (!result.ok) {
                     throw new EntityNotFoundError('Person', person1.id);
                 }
 
                 await sut.deletePerson(result.value.id, personPermissionsMock);
+
+                expect(result.ok).toBeTruthy();
+            });
+        });
+        describe('when user has permission on root organisation', () => {
+            it('should return person', async () => {
+                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                const fakeOrganisationId: string = configService.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([fakeOrganisationId]);
+
+                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+
+                const result: Result<Person<true>> = await sut.deletePersonIfAllowed(person1.id, personPermissionsMock);
 
                 expect(result.ok).toBeTruthy();
             });
@@ -589,17 +608,25 @@ describe('PersonRepository', () => {
 
                 await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
-                const personAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
+                await sut.deletePersonIfAllowed(person1.id, personPermissionsMock);
+                const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
                     person1.id,
                     personPermissionsMock,
                 );
-
-                if (!personAllowed.ok) {
+                if (!personGetAllowed.ok) {
                     throw new EntityNotFoundError('Person', person1.id);
                 }
 
+                const personDeleteAllowed: Result<Person<true>> = await sut.deletePersonIfAllowed(
+                    person1.id,
+                    personPermissionsMock,
+                );
+                if (!personDeleteAllowed.ok) {
+                    throw new EntityCouldNotBeDeleted('Person', person1.id);
+                }
+
                 const result: Result<void, DomainError> = await sut.deletePerson(
-                    personAllowed.value.id,
+                    personGetAllowed.value.id,
                     personPermissionsMock,
                 );
                 expect(result.ok).toBeTruthy();

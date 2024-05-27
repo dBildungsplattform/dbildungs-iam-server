@@ -96,10 +96,13 @@ export class PersonRepository {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
 
-    private async getPersonScopeWithPermissions(permissions: PersonPermissions): Promise<PersonScope> {
-        // Find all organisations where user has permission
+    private async getPersonScopeWithPermissions(
+        permissions: PersonPermissions,
+        requiredRight: RollenSystemRecht = RollenSystemRecht.PERSONEN_VERWALTEN,
+    ): Promise<PersonScope> {
+        // Find all organisations where user has the required permission
         let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            [requiredRight],
             true,
         );
 
@@ -139,22 +142,53 @@ export class PersonRepository {
         return { ok: true, value: person };
     }
 
+    public async deletePersonIfAllowed(
+        personId: string,
+        permissions: PersonPermissions,
+    ): Promise<Result<Person<true>>> {
+        // Check if the user has permission to delete immediately
+        const scope: PersonScope = await this.getPersonScopeWithPermissions(
+            permissions,
+            RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN,
+        );
+        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+
+        const [persons]: Counted<Person<true>> = await this.findBy(scope);
+        const person: Person<true> | undefined = persons[0];
+
+        if (!person) {
+            return { ok: false, error: new EntityCouldNotBeDeleted('Person', personId) };
+        }
+
+        return { ok: true, value: person };
+    }
+
     public async deletePerson(personId: string, permissions: PersonPermissions): Promise<Result<void, DomainError>> {
+        // First check if the user has permission to view the person
         const personResult: Result<Person<true>> = await this.getPersonIfAllowed(personId, permissions);
 
         if (!personResult.ok) {
             return { ok: false, error: new EntityNotFoundError('Person') };
         }
 
-        const person: Person<true> = personResult.value;
+        // Now check if the user has the permission to delete immediately
+        const deletePermissionResult: Result<Person<true>> = await this.deletePersonIfAllowed(personId, permissions);
+
+        if (!deletePermissionResult.ok) {
+            return { ok: false, error: new EntityCouldNotBeDeleted('Person', personId) };
+        }
+
+        const person: Person<true> = deletePermissionResult.value;
 
         // Check if the person has a keycloakUserId
         if (!person.keycloakUserId) {
             throw new PersonHasNoKeycloakId(person.id);
         }
-        // Delete the person from Keycloack
+
+        // Delete the person from Keycloak
         await this.kcUserService.delete(person.keycloakUserId);
 
+        // Delete the person from the database with all their kontexte
         const deletedPerson: number = await this.em.nativeDelete(PersonEntity, person.id);
 
         if (deletedPerson === 0) {

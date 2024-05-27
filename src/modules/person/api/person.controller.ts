@@ -152,9 +152,9 @@ export class PersonController {
             permissions,
         );
         // Throw an HTTP exception if the delete response is an error
-        if (response instanceof DomainError) {
+        if (!response.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(response),
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(response.error),
             );
         }
     }
