@@ -122,7 +122,7 @@ Also they can carry further payloads which should be small and be **simple**
 * Not nested
 * simple types (numbers, timestamps ids) only
 
-### Summarized
+### Summary
 
 When planning to use events keep in mind the following:
 
