@@ -23,11 +23,12 @@ describe('LDAP Client Service Person Methods', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let em: EntityManager;
+    let module: TestingModule;
     let ldapClientService: LdapClientService;
     const id: string = faker.string.uuid();
 
     beforeAll(async () => {
-        const module: TestingModule = await Test.createTestingModule({
+        module = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
@@ -61,8 +62,8 @@ describe('LDAP Client Service Person Methods', () => {
         await app.close();
     });
 
-    beforeEach(() => {
-        jest.resetAllMocks();
+    beforeEach(async () => {
+        await DatabaseTestModule.clearDatabase(orm);
     });
 
     it('should be defined', () => {
@@ -166,7 +167,9 @@ describe('LDAP Client Service Person Methods', () => {
                     createdAt: faker.date.past(),
                     updatedAt: faker.date.recent(),
                 };
-                await ldapClientService.createOrganisation(createdOrganisationDto);
+                const ouResult: Result<CreatedOrganisationDto> =
+                    await ldapClientService.createOrganisation(createdOrganisationDto);
+                expect(ouResult).toBeTruthy();
 
                 //create lehrer
                 const person: Person<true> = Person.construct(
@@ -180,9 +183,10 @@ describe('LDAP Client Service Person Methods', () => {
                     undefined,
                     faker.string.uuid(),
                 );
-                await ldapClientService.createLehrer(person, organisation);
-                //
+                const lehrer: Result<Person<true>> = await ldapClientService.createLehrer(person, organisation);
+                expect(lehrer.ok).toBeTruthy();
 
+                //
                 const result: Result<Person<true>> = await ldapClientService.deleteLehrer(person, organisation);
 
                 expect(result.ok).toBeTruthy();

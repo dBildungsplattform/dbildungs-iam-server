@@ -24,11 +24,10 @@ describe('LDAP Client Service Organisation Methods', () => {
     let orm: MikroORM;
     let em: EntityManager;
     let ldapClientService: LdapClientService;
-    const kennung: string = faker.string.numeric({ length: 7 });
-    const id: string = faker.string.uuid();
+    let module: TestingModule;
 
     beforeAll(async () => {
-        const module: TestingModule = await Test.createTestingModule({
+        module = await Test.createTestingModule({
             imports: [
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
@@ -62,6 +61,10 @@ describe('LDAP Client Service Organisation Methods', () => {
         await app.close();
     });
 
+    beforeEach(async () => {
+        await DatabaseTestModule.clearDatabase(orm);
+    });
+
     it('should be defined', () => {
         expect(em).toBeDefined();
     });
@@ -70,9 +73,9 @@ describe('LDAP Client Service Organisation Methods', () => {
         describe('when called with valid organisation', () => {
             it('should return truthy result', async () => {
                 const createdOrganisationDto: CreatedOrganisationDto = {
-                    id: id,
+                    id: faker.string.uuid(),
                     typ: OrganisationsTyp.SCHULE,
-                    kennung: kennung,
+                    kennung: faker.string.numeric({ length: 7 }),
                     name: faker.company.name(),
                 };
                 const result: Result<CreatedOrganisationDto> =
@@ -85,7 +88,7 @@ describe('LDAP Client Service Organisation Methods', () => {
         describe('when called with organisation without kennung', () => {
             it('should return error result', async () => {
                 const createdOrganisationDto: CreatedOrganisationDto = {
-                    id: id,
+                    id: faker.string.uuid(),
                     typ: OrganisationsTyp.SCHULE,
                     kennung: undefined,
                     name: faker.company.name(),
@@ -99,20 +102,22 @@ describe('LDAP Client Service Organisation Methods', () => {
     });
 
     describe('deleteOrganisation', () => {
-        const deleteOrganisationKennung: string = faker.string.numeric({ length: 7 });
-        const deleteOrganisationName: string = faker.string.alpha({ length: 10 });
-
-        beforeEach(async () => {
-            const createdOrganisationDto: CreatedOrganisationDto = {
-                id: id,
-                typ: OrganisationsTyp.SCHULE,
-                kennung: deleteOrganisationKennung,
-                name: deleteOrganisationName,
-            };
-            await ldapClientService.createOrganisation(createdOrganisationDto);
-        });
         describe('when called with valid organisation', () => {
             it('should return truthy result', async () => {
+                //create OU
+                const deleteOrganisationKennung: string = faker.string.numeric({ length: 7 });
+                const deleteOrganisationName: string = faker.string.alpha({ length: 10 });
+                const deleteOrganisationId: string = faker.string.uuid();
+
+                const createdOrganisationDto: CreatedOrganisationDto = {
+                    id: deleteOrganisationId,
+                    typ: OrganisationsTyp.SCHULE,
+                    kennung: deleteOrganisationKennung,
+                    name: deleteOrganisationName,
+                };
+                await ldapClientService.createOrganisation(createdOrganisationDto);
+
+                //
                 const organisation: Organisation<true> = createMock<Organisation<true>>({
                     name: deleteOrganisationName,
                     typ: OrganisationsTyp.SCHULE,
@@ -127,7 +132,7 @@ describe('LDAP Client Service Organisation Methods', () => {
         describe('when called with organisation without kennung', () => {
             it('should return error result', async () => {
                 const organisation: Organisation<true> = createMock<Organisation<true>>({
-                    name: deleteOrganisationName,
+                    name: faker.string.alpha(),
                     typ: OrganisationsTyp.SCHULE,
                     kennung: undefined,
                 });
