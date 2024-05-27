@@ -19,20 +19,20 @@ export class UpdatePersonBodyParams {
     @ApiProperty({ required: false })
     public readonly stammorganisation?: string;
 
-    @AutoMap(() => PersonNameParams)
+    @AutoMap()
     @ValidateNested()
     @Type(() => PersonNameParams)
     @ApiProperty({ type: PersonNameParams, required: true })
     public readonly name!: PersonNameParams;
 
-    @AutoMap(() => PersonBirthParams)
+    @AutoMap()
     @IsOptional()
     @ValidateNested()
     @Type(() => PersonBirthParams)
     @ApiProperty({ type: PersonBirthParams, required: false })
     public readonly geburt?: PersonBirthParams;
 
-    @AutoMap(() => String)
+    @AutoMap()
     @IsOptional()
     @IsString()
     @IsEnum(Geschlecht)
@@ -45,7 +45,7 @@ export class UpdatePersonBodyParams {
     @ApiProperty({ required: false })
     public readonly lokalisierung?: string;
 
-    @AutoMap(() => String)
+    @AutoMap()
     @IsOptional()
     @IsString()
     @IsEnum(Vertrauensstufe)

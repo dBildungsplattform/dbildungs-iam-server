@@ -32,7 +32,7 @@ module.exports = {
         },
     ],
     coverageDirectory: './coverage',
-    coverageProvider: 'v8',
+    coverageProvider: 'babel',
     collectCoverageFrom: [
         '**/*.ts',
         '!**/*.d.ts',
@@ -44,10 +44,10 @@ module.exports = {
     ],
     coverageThreshold: {
         global: {
-            statements: -100, // ~99%
-            branches: -50, // ~96%
-            functions: -5, // ~99%
-            lines: -100, // ~99%
+            statements: 100, // ~99%
+            branches: 100, // ~96%
+            functions: 100, // ~99%
+            lines: 100, // ~99%
         },
     },
     testTimeout: 10000,

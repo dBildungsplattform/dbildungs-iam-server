@@ -80,6 +80,29 @@ describe('PersonScope', () => {
             });
         });
 
+        describe('when filtering by birthday', () => {
+            const birthday: Date = faker.date.past();
+
+            beforeEach(async () => {
+                const persons: PersonEntity[] = Array.from({ length: 20 }, () =>
+                    mapper.map(DoFactory.createPerson(false, { geburtsdatum: birthday }), PersonDo, PersonEntity),
+                );
+
+                await em.persistAndFlush(persons);
+            });
+
+            it('should return found persons', async () => {
+                const scope: PersonScope = new PersonScope()
+                    .findBy({ geburtsdatum: birthday })
+                    .sortBy('vorname', ScopeOrder.ASC)
+                    .paged(10, 10);
+                const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
+
+                expect(total).toBe(20);
+                expect(persons).toHaveLength(10);
+            });
+        });
+
         describe('when filtering by suchFilter', () => {
             const suchFilter: string = 'Max';
 
@@ -131,7 +154,7 @@ describe('PersonScope', () => {
             });
         });
 
-        describe('when filtering for orginisation ID', () => {
+        describe('when filtering for organisation ID', () => {
             const orgnisationID: string = faker.string.uuid();
 
             beforeEach(async () => {
@@ -152,7 +175,7 @@ describe('PersonScope', () => {
             });
         });
 
-        describe('when filtering for orginisation ID & Rollen ID', () => {
+        describe('when filtering for organisation ID & Rollen ID', () => {
             const orgnisationID: string = faker.string.uuid();
             const rolleID: string = faker.string.uuid();
 

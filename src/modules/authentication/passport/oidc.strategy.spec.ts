@@ -7,6 +7,7 @@ import { AuthorizationParameters, Client, Issuer, TokenSet, UserinfoResponse } f
 import { ConfigTestModule } from '../../../../test/utils/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
 import { OpenIdConnectStrategy } from './oidc.strategy.js';
+import { PassportUser } from '../types/user.js';
 
 describe('OpenIdConnectStrategy', () => {
     let module: TestingModule;
@@ -68,6 +69,14 @@ describe('OpenIdConnectStrategy', () => {
             jest.spyOn(openIdClient, 'userinfo').mockRejectedValueOnce(new Error());
 
             await expect(sut.validate(new TokenSet())).rejects.toThrow(UnauthorizedException);
+        });
+
+        it('should set personPermissions to return rejected promise', async () => {
+            jest.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createMock<UserinfoResponse>());
+
+            const user: AuthorizationParameters & PassportUser = await sut.validate(new TokenSet());
+
+            await expect(user.personPermissions()).rejects.toBeUndefined();
         });
     });
 });
