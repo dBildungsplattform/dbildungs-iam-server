@@ -222,7 +222,7 @@ describe('LDAP Client Service Person Methods', () => {
             it('should return truthy result', async () => {
                 await createRandom();
                 await createRandom2();
-                
+
                 const person: Person<true> = Person.construct(
                     faker.string.uuid(),
                     faker.date.past(),
