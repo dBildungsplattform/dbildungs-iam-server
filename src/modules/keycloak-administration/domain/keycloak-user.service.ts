@@ -85,21 +85,34 @@ export class KeycloakUserService {
         if (!kcAdminClientResult.ok) {
             return kcAdminClientResult;
         }
-        if (!hashedPassword.startsWith('{BCRYPT}')) {
+        let algorithm: string;
+        let hashIterations: number | undefined;
+        if (hashedPassword.startsWith('{BCRYPT}')) {
+            algorithm = 'bcrypt';
+            const parts: string[] = hashedPassword.split('$');
+            if (parts.length < 4 || !parts[2]) {
+                return {
+                    ok: false,
+                    error: new KeycloakClientError('Invalid bcrypt hash format'),
+                };
+            }
+            hashIterations = parseInt(parts[2]);
+        } else if (hashedPassword.startsWith('{crypt}')) {
+            algorithm = 'crypt';
+            const parts: string[] = hashedPassword.split('$');
+            if (parts.length < 4 || !parts[1] || !parts[2]) {
+                return {
+                    ok: false,
+                    error: new KeycloakClientError('Invalid crypt hash format'),
+                };
+            }
+            hashIterations = undefined;
+        } else {
             return {
                 ok: false,
-                error: new KeycloakClientError('Password algorithm is not bcrypt'),
+                error: new KeycloakClientError('Unsupported password algorithm'),
             };
         }
-        const parts: string[] = hashedPassword.split('$');
-        if (parts.length < 4 || !parts[2]) {
-            return {
-                ok: false,
-                error: new KeycloakClientError('Invalid bcrypt hash format'),
-            };
-        }
-        const hashIterations: number = parseInt(parts[2]);
-        const algorithm: string = 'bcrypt';
 
         // Check for existing user
         const filter: FindUserFilter = {
