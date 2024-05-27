@@ -103,9 +103,16 @@ export class DBiamPersonenkontextRepo {
             true,
         );
 
+        // Find all kontexte, where the personID matches and that person has at least one organisation in common
         const personenkontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
-            personId,
-            organisationId: { $in: organisationIDs },
+            personId: {
+                id: personId,
+                personenKontexte: {
+                    $some: {
+                        organisationId: { $in: organisationIDs },
+                    },
+                },
+            },
         });
 
         return {

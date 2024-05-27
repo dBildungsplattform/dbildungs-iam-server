@@ -120,6 +120,7 @@ export class DBiamPersonenkontextController {
             newPersonenkontext,
             permissions,
         );
+
         if (!saveResult.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult.error),
