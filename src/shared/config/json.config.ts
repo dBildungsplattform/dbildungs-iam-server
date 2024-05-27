@@ -45,5 +45,5 @@ export class JsonConfig {
 
     @ValidateNested()
     @Type(() => TelemetryConfig)
-    public readonly Telemtry!: TelemetryConfig;
+    public readonly Telemetry!: TelemetryConfig;
 }

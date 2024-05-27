@@ -35,6 +35,10 @@
     "DATA": {
         "ROOT_ORGANISATION_ID": "a10852ab-1d75-45a7-9421-b1cbd8abe693"
     },
+    "Telemetry": {
+        "HOST": "grpc://localhost",
+        "PORT": 4317
+    },
     "LOGGING": {
         "DEFAULT_LOG_LEVEL": "info"
     }

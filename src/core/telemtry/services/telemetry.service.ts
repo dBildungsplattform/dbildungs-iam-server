@@ -43,7 +43,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         private readonly logger: ClassLogger,
         configService: ConfigService<ServerConfig>,
     ) {
-        const TelemtryConfig: TelemetryConfig = configService.getOrThrow<TelemetryConfig>('Telemtry');
+        const TelemtryConfig: TelemetryConfig = configService.getOrThrow<TelemetryConfig>('Telemetry');
         this.host = TelemtryConfig.HOST;
         this.port = TelemtryConfig.PORT;
 
