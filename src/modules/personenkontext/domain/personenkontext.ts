@@ -111,7 +111,7 @@ export class Personenkontext<WasPersisted extends boolean> {
 
             const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(this.organisationId);
             if (!canAssignRolle) {
-                return new EntityNotFoundError(''); // TODO: Can't assign rolle at this organisation error
+                return new EntityNotFoundError('rolle', this.rolleId); // Rolle does not exist for the chosen organisation
             }
         }
 

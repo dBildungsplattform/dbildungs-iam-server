@@ -140,11 +140,10 @@ export class SchulConnexErrorMapper {
         [
             MissingPermissionsError.name,
             new SchulConnexError({
-                code: 403,
-                subcode: '00',
-                titel: 'Fehlende Rechte',
-                beschreibung:
-                    'Die Autorisierung war erfolgreich, aber die erforderlichen Rechte für die Nutzung dieses Endpunktes sind nicht vorhanden.',
+                code: 404,
+                subcode: '01',
+                titel: 'Angefragte Entität existiert nicht',
+                beschreibung: 'Die angeforderte Entität existiert nicht',
             }),
         ],
     ]);

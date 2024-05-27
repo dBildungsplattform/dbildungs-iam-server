@@ -54,6 +54,7 @@ import { isEnum } from 'class-validator';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontexte')
@@ -128,13 +129,23 @@ export class PersonenkontextController {
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
     public async findPersonenkontexte(
         @Query() queryParams: PersonenkontextQueryParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<PersonenkontextdatensatzResponse>> {
         const findPersonenkontextDto: FindPersonenkontextDto = this.mapper.map(
             queryParams,
             PersonenkontextQueryParams,
             FindPersonenkontextDto,
         );
-        const result: Paged<PersonenkontextDto> = await this.personenkontextUc.findAll(findPersonenkontextDto);
+
+        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            true,
+        );
+
+        const result: Paged<PersonenkontextDto> = await this.personenkontextUc.findAll(
+            findPersonenkontextDto,
+            organisationIDs,
+        );
         const responseItems: PersonenkontextdatensatzResponse[] = this.mapper.mapArray(
             result.items,
             PersonenkontextDto,

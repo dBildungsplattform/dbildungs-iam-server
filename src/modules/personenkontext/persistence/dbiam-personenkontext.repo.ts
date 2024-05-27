@@ -98,8 +98,10 @@ export class DBiamPersonenkontextRepo {
         personId: PersonID,
         permissions: PersonPermissions,
     ): Promise<Result<Personenkontext<true>[], DomainError>> {
+        const relevantSystemRechte: RollenSystemRecht[] = [RollenSystemRecht.PERSONEN_VERWALTEN];
+
         const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            relevantSystemRechte,
             true,
         );
 
@@ -114,6 +116,17 @@ export class DBiamPersonenkontextRepo {
                 },
             },
         });
+
+        if (personenkontexte.length === 0) {
+            const isAuthorizedAtRoot = await permissions.hasSystemrechtAtRootOrganisation(relevantSystemRechte);
+
+            if (!isAuthorizedAtRoot) {
+                return {
+                    ok: false,
+                    error: new MissingPermissionsError('Not allowed to view the requested personenkontexte'),
+                };
+            }
+        }
 
         return {
             ok: true,

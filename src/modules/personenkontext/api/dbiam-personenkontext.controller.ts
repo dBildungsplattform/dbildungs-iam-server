@@ -54,7 +54,9 @@ export class DBiamPersonenkontextController {
             await this.personenkontextRepo.findByPersonAuthorized(params.personId, permissions);
 
         if (!result.ok) {
-            throw result.error; // TODO marode: Map error
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
+            );
         }
 
         return result.value.map((k: Personenkontext<true>) => new DBiamPersonenkontextResponse(k));
