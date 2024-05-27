@@ -72,7 +72,7 @@ describe('LDAP Client Service Person Methods', () => {
 
     describe('createLehrer', () => {
         // OU has to be created before
-     /*   beforeAll(async () => {
+        /*   beforeAll(async () => {
             const createdOrganisationDto: CreatedOrganisationDto = {
                 id: id,
                 typ: OrganisationsTyp.SCHULE,
@@ -85,7 +85,7 @@ describe('LDAP Client Service Person Methods', () => {
             expect(result.ok).toBeTruthy();
         });*/
 
-        describe('when called with valid person and organisation',  () => {
+        describe('when called with valid person and organisation', () => {
             it('should return truthy result', async () => {
                 //create an OU
                 const ouId: string = faker.string.uuid();
@@ -164,7 +164,7 @@ describe('LDAP Client Service Person Methods', () => {
         const deleteLehrerPersonFirstname: string = faker.person.firstName();
         const deleteLehrerPersonLastname: string = faker.person.lastName();
         const deleteLehrerSchuleName: string = faker.string.alpha({ length: 10 });
-        
+
         async function createRandom(): Promise<void> {
             const createdOrganisationDto: CreatedOrganisationDto = {
                 id: id,
