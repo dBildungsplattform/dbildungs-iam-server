@@ -139,10 +139,7 @@ export class PersonRepository {
         return { ok: true, value: person };
     }
 
-    public async deletePersonIfAllowed(
-        personId: string,
-        permissions: PersonPermissions,
-    ): Promise<Result<void, DomainError>> {
+    public async deletePerson(personId: string, permissions: PersonPermissions): Promise<Result<void, DomainError>> {
         const personResult: Result<Person<true>> = await this.getPersonIfAllowed(personId, permissions);
 
         if (!personResult.ok) {
@@ -150,6 +147,14 @@ export class PersonRepository {
         }
 
         const person: Person<true> = personResult.value;
+
+        // Check if the person has a keycloakUserId
+        if (!person.keycloakUserId) {
+            throw new PersonHasNoKeycloakId(person.id);
+        }
+        // Delete the person from Keycloack
+        await this.kcUserService.delete(person.keycloakUserId);
+
         const deletedPerson: number = await this.em.nativeDelete(PersonEntity, person.id);
 
         if (deletedPerson === 0) {
@@ -233,26 +238,5 @@ export class PersonRepository {
         }
 
         return person;
-    }
-
-    public async deletePersonAndKontexte(
-        person: Person<true>,
-        permissions: PersonPermissions,
-    ): Promise<Result<void, DomainError>> {
-        // Check if the person has a keycloakUserId
-        if (!person.keycloakUserId) {
-            throw new PersonHasNoKeycloakId(person.id);
-        }
-        // Delete the person from Keycloack
-        await this.kcUserService.delete(person.keycloakUserId);
-
-        // Delete the person and all their kontexte
-        const personResponse: Result<void, DomainError> = await this.deletePersonIfAllowed(person.id, permissions);
-
-        if (personResponse instanceof DomainError) {
-            return personResponse;
-        }
-
-        return { ok: true, value: undefined };
     }
 }

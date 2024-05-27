@@ -196,13 +196,12 @@ describe('PersonController', () => {
             it('should return no error ', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-                personRepositoryMock.deletePersonAndKontexte.mockResolvedValueOnce({ ok: true, value: undefined });
-                personRepositoryMock.deletePersonIfAllowed.mockResolvedValueOnce({ ok: true, value: undefined });
+                personRepositoryMock.deletePerson.mockResolvedValueOnce({ ok: true, value: undefined });
 
                 const response: void = await personController.deletePersonById(deleteParams, personPermissionsMock);
 
                 expect(response).toBeUndefined();
-                expect(personRepositoryMock.deletePersonAndKontexte).toHaveBeenCalledTimes(1);
+                expect(personRepositoryMock.deletePerson).toHaveBeenCalledTimes(1);
             });
         });
         describe('when deleting a person returns a SchulConnexError', () => {

@@ -147,25 +147,8 @@ export class PersonController {
         @Param() params: PersonByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        // Retrieve the person if the permissions are enough
-        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+        const response: Result<void, DomainError> = await this.personRepository.deletePerson(
             params.personId,
-            permissions,
-        );
-
-        // Check if the person retrieval was successful
-        if (!personResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', params.personId),
-                ),
-            );
-        }
-
-        const person: Person<true> = personResult.value;
-
-        const response: Result<void, DomainError> = await this.personRepository.deletePersonAndKontexte(
-            person,
             permissions,
         );
         // Throw an HTTP exception if the delete response is an error

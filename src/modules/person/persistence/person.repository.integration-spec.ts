@@ -574,7 +574,7 @@ describe('PersonRepository', () => {
                     throw new EntityNotFoundError('Person', person1.id);
                 }
 
-                await sut.deletePersonIfAllowed(result.value.id, personPermissionsMock);
+                await sut.deletePerson(result.value.id, personPermissionsMock);
 
                 expect(result.ok).toBeTruthy();
             });
@@ -598,8 +598,8 @@ describe('PersonRepository', () => {
                     throw new EntityNotFoundError('Person', person1.id);
                 }
 
-                const result: Result<void, DomainError> = await sut.deletePersonAndKontexte(
-                    personAllowed.value,
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    personAllowed.value.id,
                     personPermissionsMock,
                 );
                 expect(result.ok).toBeTruthy();
