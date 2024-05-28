@@ -75,7 +75,9 @@ describe('PersonPermissions', () => {
         await module.close();
     });
 
-    beforeEach(async () => {});
+    beforeEach(() => {
+        jest.resetAllMocks();
+    });
 
     describe('getRoleIds', () => {
         describe('when person can be found', () => {
@@ -236,6 +238,174 @@ describe('PersonPermissions', () => {
             expect(response.organisationsId).toEqual('testOrgId');
             expect(response.rolle.systemrechte).toEqual(['right1', 'right2']);
             expect(response.rolle.serviceProviderIds).toEqual(['service1', 'service2']);
+        });
+    });
+
+    describe('hasSystemrechtAtOrganisation', () => {
+        it('should return true if person has the recht', async () => {
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                undefined,
+                faker.string.uuid(),
+            );
+            const personenkontexte: Personenkontext<true>[] = [
+                personenkontextFactory.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
+            ];
+            dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
+            rolleRepoMock.findByIds.mockResolvedValueOnce(
+                new Map([['1', createMock<Rolle<true>>({ hasSystemRecht: () => true })]]),
+            );
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([
+                createMock<OrganisationDo<true>>({ id: '2' }),
+            ]);
+
+            const personPermissions: PersonPermissions = new PersonPermissions(
+                dbiamPersonenkontextRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
+                person,
+            );
+            const result: boolean = await personPermissions.hasSystemrechtAtOrganisation('2', [
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ]);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('hasSystemrechtAtOrganisation', () => {
+        it('should return true if person has the recht at the root', async () => {
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                undefined,
+                faker.string.uuid(),
+            );
+            const personenkontexte: Personenkontext<true>[] = [
+                personenkontextFactory.construct(
+                    '1',
+                    faker.date.past(),
+                    faker.date.recent(),
+                    '1',
+                    organisationRepoMock.ROOT_ORGANISATION_ID,
+                    '1',
+                ),
+            ];
+            dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
+            rolleRepoMock.findByIds.mockResolvedValueOnce(
+                new Map([['1', createMock<Rolle<true>>({ hasSystemRecht: () => true })]]),
+            );
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([
+                createMock<OrganisationDo<true>>({ id: organisationRepoMock.ROOT_ORGANISATION_ID }),
+            ]);
+
+            const personPermissions: PersonPermissions = new PersonPermissions(
+                dbiamPersonenkontextRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
+                person,
+            );
+            const result: boolean = await personPermissions.hasSystemrechtAtRootOrganisation([
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ]);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('canModifyPerson', () => {
+        it('should return true, if person has permission at root', async () => {
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                undefined,
+                faker.string.uuid(),
+            );
+            const personPermissions: PersonPermissions = new PersonPermissions(
+                dbiamPersonenkontextRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
+                person,
+            );
+            jest.spyOn(personPermissions, 'hasSystemrechtAtRootOrganisation').mockResolvedValueOnce(true);
+
+            const result: boolean = await personPermissions.canModifyPerson('2');
+
+            expect(result).toBe(true);
+        });
+
+        it('should return false, if person is missing permissions on target person', async () => {
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                undefined,
+                faker.string.uuid(),
+            );
+            dbiamPersonenkontextRepoMock.findByPersonAuthorized.mockResolvedValueOnce({
+                ok: false,
+                error: createMock(),
+            });
+            const personPermissions: PersonPermissions = new PersonPermissions(
+                dbiamPersonenkontextRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
+                person,
+            );
+            jest.spyOn(personPermissions, 'hasSystemrechtAtRootOrganisation').mockResolvedValueOnce(false);
+
+            const result: boolean = await personPermissions.canModifyPerson('2');
+
+            expect(result).toBe(false);
+        });
+
+        it('should return false, if person does not have organisations in common with target', async () => {
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                undefined,
+                faker.string.uuid(),
+            );
+            dbiamPersonenkontextRepoMock.findByPersonAuthorized.mockResolvedValueOnce({
+                ok: true,
+                value: [],
+            });
+            const personPermissions: PersonPermissions = new PersonPermissions(
+                dbiamPersonenkontextRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
+                person,
+            );
+            jest.spyOn(personPermissions, 'hasSystemrechtAtRootOrganisation').mockResolvedValueOnce(false);
+
+            const result: boolean = await personPermissions.canModifyPerson('2');
+
+            expect(result).toBe(false);
         });
     });
 });

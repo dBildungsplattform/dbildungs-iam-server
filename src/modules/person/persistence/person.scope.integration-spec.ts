@@ -12,7 +12,6 @@ import {
 } from '../../../../test/utils/index.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonDo } from '../domain/person.do.js';
-import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { faker } from '@faker-js/faker';
@@ -51,7 +50,7 @@ describe('PersonScope', () => {
                 MapperTestModule,
                 PersonenKontextModule,
             ],
-            providers: [PersonPersistenceMapperProfile, DBiamPersonenkontextRepo],
+            providers: [DBiamPersonenkontextRepo],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);

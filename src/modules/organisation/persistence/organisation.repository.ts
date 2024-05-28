@@ -9,6 +9,7 @@ import { ServerConfig, DataConfig } from '../../../shared/config/index.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
+        id: organisation.id,
         administriertVon: organisation.administriertVon,
         zugehoerigZu: organisation.zugehoerigZu,
         kennung: organisation.kennung,

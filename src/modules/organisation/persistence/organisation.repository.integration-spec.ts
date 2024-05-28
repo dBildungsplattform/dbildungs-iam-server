@@ -244,4 +244,86 @@ describe('PersonRepository', () => {
             });
         });
     });
+
+    describe('findChildOrgasByIds', () => {
+        async function createOrgaTree(): Promise<[root: string, traeger: string, schule: string]> {
+            const root: Organisation<true> = Organisation.construct(
+                sut.ROOT_ORGANISATION_ID,
+                faker.date.past(),
+                faker.date.recent(),
+                undefined,
+                undefined,
+                faker.string.numeric(6),
+                faker.string.alphanumeric(10),
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.ROOT,
+                undefined,
+            );
+
+            const traeger: Organisation<true> = Organisation.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                root.id,
+                root.id,
+                faker.string.numeric(6),
+                faker.string.alphanumeric(10),
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.ROOT,
+                undefined,
+            );
+
+            const schule: Organisation<true> = Organisation.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                traeger.id,
+                traeger.id,
+                faker.string.numeric(6),
+                faker.string.alphanumeric(10),
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.ROOT,
+                undefined,
+            );
+
+            await em.persistAndFlush([
+                em.create(OrganisationEntity, mapAggregateToData(root)),
+                em.create(OrganisationEntity, mapAggregateToData(traeger)),
+                em.create(OrganisationEntity, mapAggregateToData(schule)),
+            ]);
+
+            return [root.id, traeger.id, schule.id];
+        }
+
+        describe('when no input IDs are given', () => {
+            it('should return empty array', async () => {
+                const result: Organisation<true>[] = await sut.findChildOrgasForIds([]);
+
+                expect(result).toHaveLength(0);
+            });
+        });
+
+        describe('when root organisation', () => {
+            it('should return all organisations', async () => {
+                const [rootId]: [string, string, string] = await createOrgaTree();
+
+                const result: Organisation<true>[] = await sut.findChildOrgasForIds([rootId]);
+
+                expect(result).toHaveLength(2);
+            });
+        });
+
+        describe('when not root organisation', () => {
+            it('should return all child organisations', async () => {
+                const [, traegerId]: [string, string, string] = await createOrgaTree();
+
+                const result: Organisation<true>[] = await sut.findChildOrgasForIds([traegerId]);
+
+                expect(result).toHaveLength(1);
+            });
+        });
+    });
 });

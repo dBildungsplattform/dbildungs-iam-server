@@ -159,6 +159,25 @@ describe('dbiam Personenkontext API', () => {
             expect(response.body).toBeInstanceOf(Array);
             expect(response.body).toHaveLength(0);
         });
+
+        it('should return error when no results found and user is not admin', async () => {
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+            personpermissions.hasSystemrechtAtRootOrganisation.mockResolvedValueOnce(false);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/dbiam/personenkontext/${faker.string.uuid()}`)
+                .send();
+
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual({
+                code: 404,
+                subcode: '01',
+                titel: 'Angefragte Entität existiert nicht',
+                beschreibung: 'Die angeforderte Entität existiert nicht',
+            });
+        });
     });
 
     describe('/POST create personenkontext', () => {
@@ -330,6 +349,34 @@ describe('dbiam Personenkontext API', () => {
                     });
 
                 expect(response.status).toBe(400);
+            });
+        });
+
+        describe('when user is not authorized', () => {
+            it('should return error', async () => {
+                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                const organisation: OrganisationDo<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false),
+                );
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisation.id }),
+                );
+
+                const personpermissions: DeepMocked<PersonPermissions> = createMock();
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+                personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .post('/dbiam/personenkontext')
+                    .send({ personId: person.id, organisationId: organisation.id, rolleId: rolle.id });
+
+                expect(response.status).toBe(404);
+                expect(response.body).toEqual({
+                    code: 404,
+                    subcode: '01',
+                    titel: 'Angefragte Entität existiert nicht',
+                    beschreibung: 'Die angeforderte Entität existiert nicht',
+                });
             });
         });
     });
