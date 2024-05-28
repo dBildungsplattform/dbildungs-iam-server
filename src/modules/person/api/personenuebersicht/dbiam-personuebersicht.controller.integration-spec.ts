@@ -39,6 +39,8 @@ import { PassportUser } from '../../../authentication/types/user.js';
 import { Observable } from 'rxjs';
 import { DBiamPersonenuebersichtController } from './dbiam-personenuebersicht.controller.js';
 import { OrganisationID } from '../../../../shared/types/aggregate-ids.types.js';
+import { PersonenkontextFactory } from '../../../personenkontext/domain/personenkontext.factory.js';
+import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -48,6 +50,7 @@ describe('Personenuebersicht API', () => {
     let rolleFactory: RolleFactory;
     let rolleRepo: RolleRepo;
     let organisationRepo: OrganisationRepo;
+    let personenkontextFactory: PersonenkontextFactory;
     let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
 
@@ -90,6 +93,9 @@ describe('Personenuebersicht API', () => {
                 RolleRepo,
                 OrganisationRepo,
                 DBiamPersonenkontextRepo,
+                PersonenkontextFactory,
+                PersonRepository,
+                OrganisationRepository,
                 {
                     provide: APP_INTERCEPTOR,
                     useValue: {
@@ -119,6 +125,7 @@ describe('Personenuebersicht API', () => {
         organisationRepo = module.get(OrganisationRepo);
         dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
+        personenkontextFactory = module.get(PersonenkontextFactory);
 
         ROOT_ORGANISATION_ID = module.get(DBiamPersonenuebersichtController).ROOT_ORGANISATION_ID;
 
@@ -212,13 +219,13 @@ describe('Personenuebersicht API', () => {
                     );
 
                     const personenkontext1: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle1.id),
+                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation1.id, savedRolle1.id),
                     );
                     const personenkontext2: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
+                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
                     );
                     const personenkontext3: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
+                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
                     );
 
                     const response: Response = await request(app.getHttpServer() as App)
@@ -340,13 +347,13 @@ describe('Personenuebersicht API', () => {
                     );
 
                     await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, unsavedRolle1.id),
+                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation1.id, unsavedRolle1.id),
                     );
                     await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
+                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
                     );
                     await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
+                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
                     );
 
                     const response: Response = await request(app.getHttpServer() as App)
@@ -390,13 +397,13 @@ describe('Personenuebersicht API', () => {
                     );
 
                     await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle1.id),
+                        personenkontextFactory.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle1.id),
                     );
                     await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle2.id),
+                        personenkontextFactory.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle2.id),
                     );
                     await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
+                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
                     );
 
                     const response: Response = await request(app.getHttpServer() as App)
@@ -458,13 +465,13 @@ describe('Personenuebersicht API', () => {
             );
 
             await dBiamPersonenkontextRepo.save(
-                Personenkontext.createNew(savedPerson1.id, savedOrganisation1.id, savedRolle1.id),
+                personenkontextFactory.createNew(savedPerson1.id, savedOrganisation1.id, savedRolle1.id),
             );
             await dBiamPersonenkontextRepo.save(
-                Personenkontext.createNew(savedPerson1.id, savedOrganisation1.id, savedRolle2.id),
+                personenkontextFactory.createNew(savedPerson1.id, savedOrganisation1.id, savedRolle2.id),
             );
             await dBiamPersonenkontextRepo.save(
-                Personenkontext.createNew(savedPerson1.id, savedOrganisation2.id, savedRolle2.id),
+                personenkontextFactory.createNew(savedPerson1.id, savedOrganisation2.id, savedRolle2.id),
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();

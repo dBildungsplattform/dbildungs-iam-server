@@ -18,15 +18,12 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
-function createRolle(
-    this: void,
-    serviceProviderRepo: ServiceProviderRepo,
-    params: Partial<Rolle<boolean>> = {},
-): Rolle<false> {
-    const rolle: Rolle<false> = Rolle.createNew(
-        serviceProviderRepo,
+function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
+    const rolle: Rolle<false> = rolleFactory.createNew(
         faker.string.alpha(),
         faker.string.uuid(),
         faker.helpers.enumValue(RollenArt),
@@ -44,7 +41,7 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
     let orm: MikroORM;
     let organisationRepo: OrganisationRepo;
     let rolleRepo: RolleRepo;
-    let serviceProviderRepo: ServiceProviderRepo;
+    let rolleFactory: RolleFactory;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -55,6 +52,9 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
                 PersonenKontextApiModule,
             ],
             providers: [
+                RolleFactory,
+                OrganisationRepository,
+                ServiceProviderRepo,
                 {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
@@ -65,7 +65,7 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
         orm = module.get(MikroORM);
         organisationRepo = module.get(OrganisationRepo);
         rolleRepo = module.get(RolleRepo);
-        serviceProviderRepo = module.get(ServiceProviderRepo);
+        rolleFactory = module.get(RolleFactory);
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
@@ -84,7 +84,7 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
     describe('/GET rollen for personenkontext', () => {
         it('should return all rollen for a personenkontext based on PersonenkontextAnlage', async () => {
             const rolleName: string = faker.string.alpha({ length: 10 });
-            await rolleRepo.save(createRolle(serviceProviderRepo, { name: rolleName }));
+            await rolleRepo.save(createRolle(rolleFactory, { name: rolleName }));
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/personenkontext/rollen?rolleName=${rolleName}&limit=25`)
                 .send();
@@ -107,7 +107,7 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
         it('should return all schulstrukturknoten for a personenkontext based on PersonenkontextAnlage', async () => {
             const rolleName: string = faker.string.alpha({ length: 10 });
             const sskName: string = faker.company.name();
-            const rolle: Rolle<true> = await rolleRepo.save(createRolle(serviceProviderRepo, { name: rolleName }));
+            const rolle: Rolle<true> = await rolleRepo.save(createRolle(rolleFactory, { name: rolleName }));
             const rolleId: string = rolle.id;
             await organisationRepo.save(DoFactory.createOrganisation(false, { name: sskName }));
 

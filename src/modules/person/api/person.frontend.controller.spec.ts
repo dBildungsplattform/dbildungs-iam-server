@@ -89,14 +89,11 @@ describe('PersonFrontendController', () => {
             faker.string.uuid(),
         );
 
-        const personenkontext1: Personenkontext<true> = Personenkontext.construct(
-            faker.string.uuid(),
-            faker.date.past(),
-            faker.date.recent(),
-            person1.id,
-            faker.string.uuid(),
-            faker.string.uuid(),
-        );
+        const personenkontext1: Pick<Personenkontext<true>, 'personId' | 'rolleId' | 'organisationId'> = {
+            personId: person1.id,
+            organisationId: faker.string.uuid(),
+            rolleId: faker.string.uuid(),
+        };
 
         it('should get all persons', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();

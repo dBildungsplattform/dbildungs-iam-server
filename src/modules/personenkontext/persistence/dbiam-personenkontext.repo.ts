@@ -118,7 +118,8 @@ export class DBiamPersonenkontextRepo {
         });
 
         if (personenkontexte.length === 0) {
-            const isAuthorizedAtRoot = await permissions.hasSystemrechtAtRootOrganisation(relevantSystemRechte);
+            const isAuthorizedAtRoot: boolean =
+                await permissions.hasSystemrechtAtRootOrganisation(relevantSystemRechte);
 
             if (!isAuthorizedAtRoot) {
                 return {

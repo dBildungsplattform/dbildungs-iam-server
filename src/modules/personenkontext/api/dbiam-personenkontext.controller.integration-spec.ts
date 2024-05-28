@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { MikroORM } from '@mikro-orm/core';
-import { INestApplication } from '@nestjs/common';
-import { APP_PIPE } from '@nestjs/core';
+import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
+import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
@@ -24,25 +24,13 @@ import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-
-function createPersonenkontext<WasPersisted extends boolean>(
-    this: void,
-    withId: WasPersisted,
-    params: Partial<Personenkontext<boolean>> = {},
-): Personenkontext<WasPersisted> {
-    const personenkontext: Personenkontext<WasPersisted> = Personenkontext.construct<boolean>(
-        withId ? faker.string.uuid() : undefined,
-        withId ? faker.date.past() : undefined,
-        withId ? faker.date.recent() : undefined,
-        faker.string.uuid(),
-        faker.string.uuid(),
-        faker.string.uuid(),
-    );
-
-    Object.assign(personenkontext, params);
-
-    return personenkontext;
-}
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { Observable } from 'rxjs';
+import { PassportUser } from '../../authentication/types/user.js';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
+import { Request } from 'express';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 describe('dbiam Personenkontext API', () => {
     let app: INestApplication;
@@ -52,6 +40,29 @@ describe('dbiam Personenkontext API', () => {
     let personRepo: PersonRepo;
     let organisationRepo: OrganisationRepo;
     let rolleRepo: RolleRepo;
+
+    let personenkontextFactory: PersonenkontextFactory;
+
+    let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
+
+    function createPersonenkontext<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        params: Partial<Personenkontext<boolean>> = {},
+    ): Personenkontext<WasPersisted> {
+        const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
+            withId ? faker.string.uuid() : undefined,
+            withId ? faker.date.past() : undefined,
+            withId ? faker.date.recent() : undefined,
+            faker.string.uuid(),
+            faker.string.uuid(),
+            faker.string.uuid(),
+        );
+
+        Object.assign(personenkontext, params);
+
+        return personenkontext;
+    }
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -66,6 +77,24 @@ describe('dbiam Personenkontext API', () => {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
                 },
+                {
+                    provide: PersonPermissionsRepo,
+                    useValue: createMock<PersonPermissionsRepo>(),
+                },
+                {
+                    provide: APP_INTERCEPTOR,
+                    useValue: {
+                        intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+                            const req: Request = context.switchToHttp().getRequest();
+                            req.passportUser = createMock<PassportUser>({
+                                async personPermissions() {
+                                    return personpermissionsRepoMock.loadPersonPermissions('');
+                                },
+                            });
+                            return next.handle();
+                        },
+                    },
+                },
             ],
         }).compile();
 
@@ -74,6 +103,9 @@ describe('dbiam Personenkontext API', () => {
         personRepo = module.get(PersonRepo);
         organisationRepo = module.get(OrganisationRepo);
         rolleRepo = module.get(RolleRepo);
+        personenkontextFactory = module.get(PersonenkontextFactory);
+
+        personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
@@ -93,11 +125,17 @@ describe('dbiam Personenkontext API', () => {
         it('should return all personenkontexte for the person', async () => {
             const personA: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
             const personB: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
-            await Promise.all([
-                personenkontextRepo.save(createPersonenkontext(false, { personId: personA.id })),
-                personenkontextRepo.save(createPersonenkontext(false, { personId: personA.id })),
-                personenkontextRepo.save(createPersonenkontext(false, { personId: personB.id })),
-            ]);
+            const [pk1, pk2]: [Personenkontext<true>, Personenkontext<true>, Personenkontext<true>] = await Promise.all(
+                [
+                    personenkontextRepo.save(createPersonenkontext(false, { personId: personA.id })),
+                    personenkontextRepo.save(createPersonenkontext(false, { personId: personA.id })),
+                    personenkontextRepo.save(createPersonenkontext(false, { personId: personB.id })),
+                ],
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([pk1.organisationId, pk2.organisationId]);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/dbiam/personenkontext/${personA.id}`)
@@ -109,6 +147,10 @@ describe('dbiam Personenkontext API', () => {
         });
 
         it('should return empty list', async () => {
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/dbiam/personenkontext/${faker.string.uuid()}`)
                 .send();
@@ -123,7 +165,14 @@ describe('dbiam Personenkontext API', () => {
         it('should return created personenkontext', async () => {
             const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
             const organisation: OrganisationDo<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
-            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisation.id }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            personpermissions.hasSystemrechtAtRootOrganisation.mockResolvedValueOnce(true);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/dbiam/personenkontext')
@@ -138,16 +187,25 @@ describe('dbiam Personenkontext API', () => {
             const schuleDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
                 typ: OrganisationsTyp.SCHULE,
             });
-            const lehrerRolleDummy: Rolle<false> = DoFactory.createRolle(false, { rollenart: RollenArt.LEHR });
             const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
+            const lehrerRolleDummy: Rolle<false> = DoFactory.createRolle(false, {
+                rollenart: RollenArt.LEHR,
+                administeredBySchulstrukturknoten: schule.id,
+            });
             const lehrerRolle: Rolle<true> = await rolleRepo.save(lehrerRolleDummy);
-            await personenkontextRepo.save(Personenkontext.createNew(lehrer.id, schule.id, lehrerRolle.id));
+            await personenkontextRepo.save(personenkontextFactory.createNew(lehrer.id, schule.id, lehrerRolle.id));
 
             const klasseDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
                 typ: OrganisationsTyp.KLASSE,
                 administriertVon: schule.id,
             });
             const klasse: OrganisationDo<true> = await organisationRepo.save(klasseDo);
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([schule.id, klasse.id]);
+            personpermissions.hasSystemrechtAtRootOrganisation.mockResolvedValueOnce(true);
+
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/dbiam/personenkontext')
                 .send({
@@ -164,7 +222,7 @@ describe('dbiam Personenkontext API', () => {
             const organisation: OrganisationDo<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
             const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
             const personenkontext: Personenkontext<true> = await personenkontextRepo.save(
-                Personenkontext.createNew(person.id, organisation.id, rolle.id),
+                personenkontextFactory.createNew(person.id, organisation.id, rolle.id),
             );
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -253,7 +311,7 @@ describe('dbiam Personenkontext API', () => {
 
                 const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
                 const adminRolle: Rolle<true> = await rolleRepo.save(adminRolleDummy);
-                await personenkontextRepo.save(Personenkontext.createNew(admin.id, schule.id, adminRolle.id));
+                await personenkontextRepo.save(personenkontextFactory.createNew(admin.id, schule.id, adminRolle.id));
 
                 const klasseDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
                     typ: OrganisationsTyp.KLASSE,

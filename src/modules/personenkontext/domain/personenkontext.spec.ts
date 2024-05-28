@@ -178,7 +178,7 @@ describe('Personenkontext aggregate', () => {
             );
 
             await expect(personenkontext.checkValidity(permissions)).resolves.toEqual(
-                new EntityNotFoundError(''), // TODO: Specific error type
+                new EntityNotFoundError('rolle', personenkontext.rolleId),
             );
         });
 
