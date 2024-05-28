@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../test/utils/index.js';
-import { TelemetryModule } from './telemtry.module.js';
+import { TelemetryModule } from './telemetry.module.js';
 import { TelemetryService } from './services/telemetry.service.js';
 import { ServerConfig } from '../../shared/config/index.js';
 import { TelemetryConfig } from '../../shared/config/telemtry.config.js';

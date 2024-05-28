@@ -31,7 +31,7 @@ import { PassportModule } from '@nestjs/passport';
 import { EventModule } from '../core/eventbus/index.js';
 import { Client } from 'ldapts';
 import { LdapConfig } from '../shared/config/ldap.config.js';
-import { TelemetryModule } from '../core/telemtry/telemtry.module.js';
+import { TelemetryModule } from '../core/telemtry/telemetry.module.js';
 
 @Module({
     imports: [
