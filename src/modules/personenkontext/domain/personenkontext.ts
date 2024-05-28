@@ -1,6 +1,7 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { RoleAssignmentError } from '../../../shared/error/role-assignment.error.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -125,7 +126,7 @@ export class Personenkontext<WasPersisted extends boolean> {
         const rollenOrgaIds: OrganisationID[] = rollenOrgas.map((orga: Organisation<true>) => orga.id);
         rollenOrgaIds.push(rolle.administeredBySchulstrukturknoten);
         if (!rollenOrgaIds.includes(this.organisationId)) {
-            return new EntityNotFoundError(''); // TODO: Can't assign rolle at this organisation error
+            return new RoleAssignmentError('Role cannot be assigned to this organisation');
         }
 
         return undefined;

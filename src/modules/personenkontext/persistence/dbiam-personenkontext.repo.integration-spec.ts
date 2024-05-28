@@ -23,6 +23,9 @@ import { OrganisationRepo } from '../../organisation/persistence/organisation.re
 import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -200,6 +203,27 @@ describe('dbiam Personenkontext Repo', () => {
             await sut.save(personenkontext);
 
             await expect(sut.save(personenkontext)).rejects.toThrow(UniqueConstraintViolationException);
+        });
+    });
+
+    describe('createAuthorized', () => {
+        it('Should return error, if checkRolleZuweisungPermissions fails', async () => {
+            const person: Person<true> = await createPerson();
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false, {
+                personId: person.id,
+            });
+            const personPermissions: DeepMocked<PersonPermissions> = createMock();
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([faker.string.uuid()]);
+
+            const result: Result<Personenkontext<true>, DomainError> = await sut.createAuthorized(
+                personenkontext,
+                personPermissions,
+            );
+
+            expect(result).toStrictEqual<Result<Personenkontext<true>, DomainError>>({
+                ok: false,
+                error: new MissingPermissionsError('Unauthorized to manage persons at the organisation'),
+            });
         });
     });
 });

@@ -244,4 +244,219 @@ describe('PersonRepository', () => {
             });
         });
     });
+
+    describe('findChildOrgasByIds', () => {
+        let organisationRoot: Organisation<false>;
+        let organisation1Level1: Organisation<false>;
+        let organisation2Level1: Organisation<false>;
+        let organisation1Level2: Organisation<false>;
+
+        describe('when not root', () => {
+            it('should return found childs for root', async () => {
+                organisationRoot = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    '05674',
+                    'TestRoot',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.SONSTIGE,
+                    undefined,
+                );
+                organisation1Level1 = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    organisationRoot.id ?? undefined,
+                    faker.string.uuid(),
+                    '44123',
+                    'TestChild1',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.SONSTIGE,
+                    undefined,
+                );
+                organisation2Level1 = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    organisationRoot.id ?? undefined,
+                    faker.string.uuid(),
+                    '75693',
+                    'TestChild2',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.SONSTIGE,
+                    undefined,
+                );
+                organisation1Level2 = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    organisation1Level1.id ?? undefined,
+                    faker.string.uuid(),
+                    '44123',
+                    'TestChild1Child1',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.SONSTIGE,
+                    undefined,
+                );
+                const organisationRootEntity: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(organisationRoot),
+                );
+                const organisation1Level1Entity: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(organisation1Level1),
+                );
+                const organisation2Level1Entity: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(organisation2Level1),
+                );
+                const organisation1Level2Entity: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(organisation1Level2),
+                );
+                await em.persistAndFlush([
+                    organisationRootEntity,
+                    organisation1Level1Entity,
+                    organisation2Level1Entity,
+                    organisation1Level2Entity,
+                ]);
+                if (!organisation1Level1.id) {
+                    return;
+                }
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForIds([
+                    organisation1Level1.id,
+                ]);
+                expect(foundOrganisations).toBeInstanceOf(Array);
+                expect(foundOrganisations).toHaveLength(1);
+
+                await em.removeAndFlush([
+                    organisationRootEntity,
+                    organisation1Level1Entity,
+                    organisation2Level1Entity,
+                    organisation1Level2Entity,
+                ]);
+            });
+        });
+
+        describe('when root', () => {
+            it('should return found childs for root', async () => {
+                organisationRoot = Organisation.construct(
+                    sut.ROOT_ORGANISATION_ID ?? undefined,
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    '05674',
+                    'TestRoot',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.ROOT,
+                    undefined,
+                );
+
+                if (!organisationRoot.id) {
+                    return;
+                }
+
+                organisation1Level1 = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    organisationRoot.id ?? undefined,
+                    faker.string.uuid(),
+                    '44123',
+                    'TestChild1',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.SONSTIGE,
+                    undefined,
+                );
+                organisation2Level1 = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    organisationRoot.id ?? undefined,
+                    faker.string.uuid(),
+                    '75693',
+                    'TestChild2',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.SONSTIGE,
+                    undefined,
+                );
+                organisation1Level2 = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    organisation1Level1.id ?? undefined,
+                    faker.string.uuid(),
+                    '44123',
+                    'TestChild1Child1',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.SONSTIGE,
+                    undefined,
+                );
+                const organisationRootEntity: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(organisationRoot),
+                );
+                organisationRootEntity.assign(organisationRoot);
+                const organisation1Level1Entity: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(organisation1Level1),
+                );
+                const organisation2Level1Entity: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(organisation2Level1),
+                );
+                const organisation1Level2Entity: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(organisation1Level2),
+                );
+                await em.persistAndFlush([
+                    organisationRootEntity,
+                    organisation1Level1Entity,
+                    organisation2Level1Entity,
+                    organisation1Level2Entity,
+                ]);
+
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForIds([
+                    organisationRoot.id,
+                ]);
+                expect(foundOrganisations).toBeInstanceOf(Array);
+                expect(foundOrganisations).toHaveLength(3);
+
+                await em.removeAndFlush([
+                    organisationRootEntity,
+                    organisation1Level1Entity,
+                    organisation2Level1Entity,
+                    organisation1Level2Entity,
+                ]);
+            });
+        });
+
+        describe('empty input', () => {
+            it('should return null', async () => {
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForIds([]);
+                expect(foundOrganisations).toEqual([]);
+            });
+        });
+
+        describe('does not exist', () => {
+            it('should return null', async () => {
+                const foundOrganisations: Option<OrganisationDo<true>[]> = await sut.findChildOrgasForIds([
+                    faker.string.uuid(),
+                ]);
+                expect(foundOrganisations).toEqual([]);
+            });
+        });
+    });
 });
