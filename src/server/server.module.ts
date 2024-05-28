@@ -118,6 +118,7 @@ export class ServerModule implements NestModule {
         Also the documentation expressly requires listening to on('error')
          */
 
+        /* istanbul ignore next */
         await redisClient
             .on('error', (error: Error) => this.logger.error(`Redis connection failed: ${error.message}`))
             .connect();
