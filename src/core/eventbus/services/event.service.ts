@@ -59,7 +59,6 @@ export class EventService {
         const info: EventInfo<Event> | undefined = this.eventInfoMap.get(
             event.constructor as Constructor<BaseEvent>,
         ) as EventInfo<Event>;
-
         info?.subject.next(event);
     }
 

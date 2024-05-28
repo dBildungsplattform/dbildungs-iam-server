@@ -36,7 +36,7 @@ export class PersonPersistenceMapperProfile extends AutomapperProfile {
                 mapper,
                 PersonenkontextEntity,
                 PersonenkontextDo,
-                forMember((dest: PersonenkontextDo<boolean>) => dest.organisation, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.organisationId, ignore()),
                 forMember(
                     (dest: PersonenkontextDo<boolean>) => dest.personId,
                     mapFrom((from: PersonenkontextEntity) => from.personId?.id),

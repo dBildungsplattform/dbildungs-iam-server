@@ -179,6 +179,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     (dest: PersonendatensatzResponseAutomapper) => dest.person.name.namenspraefix,
                     mapFrom((src: PersonDo<true>) => src.namePraefix),
                 ),
+                forMember((dest: PersonendatensatzResponseAutomapper) => dest.personenkontexte, ignore()),
             );
 
             createMap(mapper, CreatePersonDto, UserDo);
@@ -198,7 +199,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonenkontextDo<boolean>) => dest.createdAt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.updatedAt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.mandant, ignore()),
-                forMember((dest: PersonenkontextDo<boolean>) => dest.organisation, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.organisationId, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.loeschungZeitpunkt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.revision, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.sichtfreigabe, ignore()),
@@ -212,6 +213,14 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     (dest: CreatedPersonenkontextDto) => dest.loeschung,
                     mapFrom((src: PersonenkontextDo<boolean>) =>
                         src.loeschungZeitpunkt ? new LoeschungDto({ zeitpunkt: src.loeschungZeitpunkt }) : undefined,
+                    ),
+                ),
+                forMember(
+                    (dest: CreatedPersonenkontextDto) => dest.organisation,
+                    mapFrom((src: PersonenkontextDo<boolean>) =>
+                        CreatedPersonenkontextOrganisationDto.new({
+                            id: src.organisationId,
+                        }),
                     ),
                 ),
             );
@@ -234,7 +243,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonenkontextDo<boolean>) => dest.createdAt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.updatedAt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.mandant, ignore()),
-                forMember((dest: PersonenkontextDo<boolean>) => dest.organisation, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.organisationId, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.jahrgangsstufe, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.loeschungZeitpunkt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.revision, ignore()),
@@ -253,6 +262,14 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     (dest: PersonenkontextDto) => dest.loeschung,
                     mapFrom((src: PersonenkontextDo<boolean>) =>
                         src.loeschungZeitpunkt ? new LoeschungDto({ zeitpunkt: src.loeschungZeitpunkt }) : undefined,
+                    ),
+                ),
+                forMember(
+                    (dest: PersonenkontextDto) => dest.organisation,
+                    mapFrom((src: PersonenkontextDo<boolean>) =>
+                        CreatedPersonenkontextOrganisationDto.new({
+                            id: src.organisationId,
+                        }),
                     ),
                 ),
             );
@@ -359,7 +376,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonenkontextDo<boolean>) => dest.updatedAt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.personId, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.mandant, ignore()),
-                forMember((dest: PersonenkontextDo<boolean>) => dest.organisation, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.organisationId, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.rolle, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.loeschungZeitpunkt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.sichtfreigabe, ignore()),

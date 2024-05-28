@@ -18,6 +18,7 @@ import { RollenSystemRechtServiceProviderIDResponse } from '../api/rolle-systemr
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { EntityManager } from '@mikro-orm/postgresql';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 
 function createPerson(): Person<true> {
     return Person.construct(
@@ -159,11 +160,47 @@ describe('PersonPermissions', () => {
                 rolleRepoMock,
                 person,
             );
-            const ids: OrganisationID[] = await personPermissions.getOrgIdsWithSystemrecht([], true);
+            const ids: OrganisationID[] = await personPermissions.getOrgIdsWithSystemrecht(
+                [RollenSystemRecht.PERSONEN_VERWALTEN],
+                true,
+            );
             expect(ids).toContain('1');
             expect(ids).toContain('2');
         });
     });
+
+    describe('getOrgIdsWithSystemrecht without Children', () => {
+        it('should return organisations', async () => {
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                undefined,
+                faker.string.uuid(),
+            );
+            const personenkontexte: Personenkontext<true>[] = [
+                Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
+            ];
+            dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
+            rolleRepoMock.findByIds.mockResolvedValueOnce(
+                new Map([['1', createMock<Rolle<true>>({ hasSystemRecht: () => true })]]),
+            );
+
+            const personPermissions: PersonPermissions = new PersonPermissions(
+                dbiamPersonenkontextRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
+                person,
+            );
+            const ids: OrganisationID[] = await personPermissions.getOrgIdsWithSystemrecht([]);
+            expect(ids).toContain('1');
+        });
+    });
+
     describe('getPersonenkontextewithRoles', () => {
         it('should return person context with system rights and service provider ids in an object roles', async () => {
             const person: Person<true> = createPerson();
