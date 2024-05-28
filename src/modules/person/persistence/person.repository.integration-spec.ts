@@ -657,7 +657,6 @@ describe('PersonRepository', () => {
                     throw new EntityNotFoundError('Person', person1.id);
                 }
 
-
                 personRepositoryMock.checkIfDeleteIsAllowed.mockResolvedValueOnce({
                     ok: false,
                     error: new EntityCouldNotBeDeleted('Person', person1.id),
