@@ -662,6 +662,14 @@ describe('PersonRepository', () => {
                     error: new EntityCouldNotBeDeleted('Person', person1.id),
                 });
                 await sut.checkIfDeleteIsAllowed(person1.id, personPermissionsMock);
+                const checkIfDeleteIsAllowed: Result<Person<true>> = await sut.checkIfDeleteIsAllowed(
+                    person1.id,
+                    personPermissionsMock,
+                );
+
+                if (!checkIfDeleteIsAllowed.ok) {
+                    throw new EntityCouldNotBeDeleted('Person', person1.id);
+                }
                 const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
 
                 if (!result.ok) {
