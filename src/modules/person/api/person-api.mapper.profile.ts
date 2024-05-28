@@ -179,6 +179,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                     (dest: PersonendatensatzResponseAutomapper) => dest.person.name.namenspraefix,
                     mapFrom((src: PersonDo<true>) => src.namePraefix),
                 ),
+                forMember((dest: PersonendatensatzResponseAutomapper) => dest.personenkontexte, ignore()),
             );
 
             createMap(mapper, CreatePersonDto, UserDo);
