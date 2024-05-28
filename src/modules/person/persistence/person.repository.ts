@@ -189,11 +189,7 @@ export class PersonRepository {
         await this.kcUserService.delete(person.keycloakUserId);
 
         // Delete the person from the database with all their kontexte
-        const deletedPerson: number = await this.em.nativeDelete(PersonEntity, person.id);
-
-        if (deletedPerson === 0) {
-            return { ok: false, error: new EntityCouldNotBeDeleted('PersonEntity', person.id) };
-        }
+        await this.em.nativeDelete(PersonEntity, person.id);
 
         return { ok: true, value: undefined };
     }
