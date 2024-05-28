@@ -647,34 +647,15 @@ describe('PersonRepository', () => {
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
 
                 await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
-                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
-                const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
-                    person1.id,
-                    personPermissionsMock,
-                );
-
-                if (!personGetAllowed.ok) {
-                    throw new EntityNotFoundError('Person', person1.id);
-                }
 
                 personRepositoryMock.checkIfDeleteIsAllowed.mockResolvedValueOnce({
                     ok: false,
                     error: new EntityCouldNotBeDeleted('Person', person1.id),
                 });
-                await sut.checkIfDeleteIsAllowed(person1.id, personPermissionsMock);
-                const checkIfDeleteIsAllowed: Result<Person<true>> = await sut.checkIfDeleteIsAllowed(
-                    person1.id,
-                    personPermissionsMock,
-                );
 
-                if (!checkIfDeleteIsAllowed.ok) {
-                    throw new EntityCouldNotBeDeleted('Person', person1.id);
-                }
                 const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
 
-                if (!result.ok) {
-                    expect(result.error).toBeInstanceOf(EntityCouldNotBeDeleted);
-                }
+                expect(result.ok).toBeFalsy();
             });
             it('should not delete the person because it has no keycloakId', async () => {
                 const person1: PersonDo<true> = DoFactory.createPerson(true);
