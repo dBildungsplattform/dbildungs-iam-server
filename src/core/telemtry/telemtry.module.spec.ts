@@ -16,6 +16,7 @@ describe('TelemetryModule', () => {
             imports: [TelemetryModule, ConfigTestModule],
         }).compile();
         configService = module.get(ConfigService);
+        telemetryService = module.get(TelemetryService);
         await module.init();
     });
 

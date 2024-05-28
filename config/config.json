@@ -43,7 +43,7 @@
         "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
     },
     "Telemetry": {
-        "HOST": "grpc://localhost",
+        "HOST": "localhost",
         "PORT": 4317
     },
     "LOGGING": {

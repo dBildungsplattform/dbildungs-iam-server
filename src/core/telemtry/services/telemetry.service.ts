@@ -1,81 +1,81 @@
+/* eslint-disable @typescript-eslint/typedef */
+/* eslint-disable no-console */
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { NodeTracerProvider } from '@opentelemetry/node';
-import { SimpleSpanProcessor } from '@opentelemetry/tracing';
-import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-grpc';
+import { BatchSpanProcessor, WebTracerProvider } from '@opentelemetry/sdk-trace-web';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
 import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
-import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics-base';
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
-import * as grpc from '@grpc/grpc-js';
-import { Meter } from '@opentelemetry/api';
-import { Counter } from '@opentelemetry/api-metrics';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { ConfigService } from '@nestjs/config';
-import { ServerConfig } from '../../../shared/config/server.config.js';
-import { TelemetryConfig } from '../../../shared/config/telemtry.config.js';
+import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
+import { Counter, Meter } from '@opentelemetry/api';
 
 @Injectable()
 export class TelemetryService implements OnModuleInit, OnModuleDestroy {
-    private provider: NodeTracerProvider;
+    private provider: WebTracerProvider;
 
-    private exporter: CollectorTraceExporter;
-
-    private metricExporter: OTLPMetricExporter;
+    private exporter: OTLPTraceExporter;
 
     private meterProvider: MeterProvider;
 
+    private metricsExporter: OTLPMetricExporter;
+
     private meter: Meter;
 
-    private requestCounter: Counter;
+    private metricPostCounter: Counter;
 
     private unregister!: () => void;
 
-    private host: string;
+    public constructor(private readonly logger: ClassLogger) {
+        // traces
+        const collectorOptions = {
+            url: 'http://localhost:4317/v1/traces',
+            headers: {},
+            concurrencyLimit: 10,
+        };
 
-    private port: number;
-
-    //private logger: ClassLogger;
-
-    public constructor(
-        private readonly logger: ClassLogger,
-        configService: ConfigService<ServerConfig>,
-    ) {
-        const TelemtryConfig: TelemetryConfig = configService.getOrThrow<TelemetryConfig>('Telemetry');
-        this.host = TelemtryConfig.HOST;
-        this.port = TelemtryConfig.PORT;
-
-        this.provider = new NodeTracerProvider();
-        this.exporter = new CollectorTraceExporter({
-            url: `${this.host}:${this.port}`,
-
-            credentials: grpc.credentials.createInsecure(),
-        });
-
-        this.provider.addSpanProcessor(new SimpleSpanProcessor(this.exporter));
-        this.provider.register();
-
-        this.metricExporter = new OTLPMetricExporter({
-            url: `${this.host}:${this.port}`,
-            credentials: grpc.credentials.createInsecure(),
-        });
-
-        this.meterProvider = new MeterProvider();
-        this.meterProvider.addMetricReader(
-            new PeriodicExportingMetricReader({
-                exporter: this.metricExporter,
-                exportIntervalMillis: 6000,
+        this.provider = new WebTracerProvider();
+        this.exporter = new OTLPTraceExporter(collectorOptions);
+        this.provider.addSpanProcessor(
+            new BatchSpanProcessor(this.exporter, {
+                maxQueueSize: 1000,
+                maxExportBatchSize: 10,
+                scheduledDelayMillis: 500,
+                exportTimeoutMillis: 30000,
             }),
         );
 
+        this.provider.register();
+
+        // Metrics setup
+        const metricsCollectorOptions = {
+            url: 'http://localhost:4317/v1/metrics',
+            headers: {},
+            concurrencyLimit: 1,
+        };
+
+        this.metricsExporter = new OTLPMetricExporter(metricsCollectorOptions);
+        this.meterProvider = new MeterProvider();
+        console.log('Metric exporter and meter provider initialized');
+
+        this.meterProvider.addMetricReader(
+            new PeriodicExportingMetricReader({
+                exporter: this.metricsExporter,
+                exportIntervalMillis: 6000,
+            }),
+        );
+        console.log('Metric reader added to meter provider');
+
         this.meter = this.meterProvider.getMeter('meter-meter');
-        this.requestCounter = this.meter.createCounter('requests', {
-            description: 'Count all incoming requests',
-        });
-        this.requestCounter.add(1);
-        //this.unregister;
+
+        // Define a counter
+        this.metricPostCounter = this.meter.createCounter('metrics_posted');
+        console.log('Metric post counter created');
+
+        this.metricPostCounter.add(1);
     }
 
     public onModuleInit(): void {
@@ -106,13 +106,6 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
                 this.logger.info('Tracer provider shutdown successfully.');
             })
             .catch((err: string) => this.logger.error('Tracer provider shutdown failed:', err));
-
-        this.meterProvider
-            .shutdown()
-            .then(() => {
-                this.logger.info('Meter provider shutdown successfully.');
-            })
-            .catch((err: string) => this.logger.error('Meter provider shutdown failed:', err));
     }
 
     public flushTelemetry(): void {
