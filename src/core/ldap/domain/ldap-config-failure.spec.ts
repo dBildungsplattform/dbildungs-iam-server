@@ -68,8 +68,7 @@ describe('LDAP Client Service Config Failure', () => {
         describe('when called by createOrganisation and errors during LDAP connection occurred', () => {
             it('should return error result', async () => {
                 const organisation: Organisation<true> = createMock<Organisation<true>>();
-                const result: Result<Organisation<true>> =
-                    await ldapClientService.createOrganisation(organisation);
+                const result: Result<Organisation<true>> = await ldapClientService.createOrganisation(organisation);
 
                 expect(result.ok).toBeFalsy();
             });

@@ -1,4 +1,3 @@
-import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
@@ -6,7 +5,6 @@ import { SichtfreigabeType } from '../../personenkontext/domain/personenkontext.
 import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
 
 export class PersonenQueryParams extends PagedQueryParams {
-    @AutoMap()
     @IsOptional()
     @IsString()
     @ApiProperty({
@@ -15,7 +13,6 @@ export class PersonenQueryParams extends PagedQueryParams {
     })
     public readonly referrer?: string;
 
-    @AutoMap()
     @IsOptional()
     @IsString()
     @ApiProperty({
@@ -24,7 +21,6 @@ export class PersonenQueryParams extends PagedQueryParams {
     })
     public readonly familienname?: string;
 
-    @AutoMap()
     @IsOptional()
     @IsString()
     @ApiProperty({
@@ -33,7 +29,6 @@ export class PersonenQueryParams extends PagedQueryParams {
     })
     public readonly vorname?: string;
 
-    @AutoMap()
     @IsOptional()
     @IsEnum(SichtfreigabeType)
     @ApiProperty({
@@ -44,7 +39,6 @@ export class PersonenQueryParams extends PagedQueryParams {
     })
     public readonly sichtfreigabe: SichtfreigabeType = SichtfreigabeType.NEIN;
 
-    @AutoMap()
     @IsOptional()
     @TransformToArray()
     @IsUUID(undefined, { each: true })
@@ -57,7 +51,6 @@ export class PersonenQueryParams extends PagedQueryParams {
     })
     public readonly organisationIDs?: string[];
 
-    @AutoMap()
     @IsOptional()
     @TransformToArray()
     @IsUUID(undefined, { each: true })
@@ -70,7 +63,6 @@ export class PersonenQueryParams extends PagedQueryParams {
     })
     public readonly rolleIDs?: string[];
 
-    @AutoMap()
     @IsString()
     @IsOptional()
     @ApiProperty({

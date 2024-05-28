@@ -86,7 +86,7 @@ describe('LDAP Event Handler', () => {
             .useValue(createMock<PersonRepository>())
             .overrideProvider(RolleRepo)
             .useValue(createMock<RolleRepo>())
-       /*     .overrideProvider(DBiamPersonenkontextRepo)
+            /*     .overrideProvider(DBiamPersonenkontextRepo)
             .useValue(createMock<DBiamPersonenkontextRepo>())*/
             .compile();
 
