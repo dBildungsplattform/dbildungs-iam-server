@@ -18,7 +18,7 @@ import { PersonModule } from '../../person/person.module.js';
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
 import { MikroORM } from '@mikro-orm/core';
-import { PersonPermissions } from '../domain/person-permissions.js';
+import { PersonenkontextRolleFields, PersonPermissions } from '../domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Person } from '../../person/domain/person.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
@@ -239,6 +239,13 @@ describe('AuthenticationController', () => {
                         updatedAt: new Date(Date.now()),
                     });
                 },
+                getPersonenkontextewithRoles: (): Promise<PersonenkontextRolleFields[]> =>
+                    Promise.resolve([
+                        {
+                            organisationsId: '',
+                            rolle: { systemrechte: [], serviceProviderIds: [] },
+                        },
+                    ]),
             });
             const result: UserinfoResponse = await authController.info(permissions);
 

@@ -20,7 +20,7 @@ export class SchulConnexValidationErrorFilter implements ExceptionFilter<Detaile
 
     private handleValidationErrors(
         validationError: DetailedValidationError,
-        statusCode: number = 400,
+        statusCode: number, //default was 400, but method wasn't used elsewhere without statusCode provided
     ): SchulConnexError {
         const validationErrors: ValidationError[] = validationError.validationErrors;
         let schulConnexError: SchulConnexError = new SchulConnexError({

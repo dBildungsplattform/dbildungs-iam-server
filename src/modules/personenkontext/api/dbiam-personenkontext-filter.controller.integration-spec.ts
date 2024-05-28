@@ -119,11 +119,35 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
             expect(response.body).toBeInstanceOf(Object);
         });
 
+        it('should return all schulstrukturknoten for a personenkontext based on PersonenkontextAnlage even when no sskName is provided', async () => {
+            const rolleName: string = faker.string.alpha({ length: 10 });
+            const sskName: string = faker.company.name();
+            const rolle: Rolle<true> = await rolleRepo.save(createRolle(rolleFactory, { name: rolleName }));
+            const rolleId: string = rolle.id;
+            await organisationRepo.save(DoFactory.createOrganisation(false, { name: sskName }));
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/personenkontext/schulstrukturknoten?rolleId=${rolleId}&limit=25`)
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+        });
+
         it('should return empty list', async () => {
             const response: Response = await request(app.getHttpServer() as App)
                 .get(
                     `/personenkontext/schulstrukturknoten?rolleId=${faker.string.uuid()}&sskName=${faker.string.alpha()}&limit=25`,
                 )
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+        });
+
+        it('should return empty list even when no sskName is provided', async () => {
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/personenkontext/schulstrukturknoten?rolleId=${faker.string.uuid()}&limit=25`)
                 .send();
 
             expect(response.status).toBe(200);
