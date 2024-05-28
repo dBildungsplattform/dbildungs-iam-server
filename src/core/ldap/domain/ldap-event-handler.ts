@@ -10,7 +10,6 @@ import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { Person } from '../../../modules/person/domain/person.js';
-import { OrganisationRepo } from '../../../modules/organisation/persistence/organisation.repo.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { DeletedSchuleEvent } from '../../../shared/events/deleted-schule.event.js';
 import { DeletedPersonenkontextEvent } from '../../../shared/events/deleted-personenkontext.event.js';
@@ -27,7 +26,6 @@ export class LdapEventHandler {
         private readonly personRepository: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly organisationRepository: OrganisationRepository,
-        private readonly organisationRepo: OrganisationRepo,
     ) {}
 
     @EventHandler(CreatedSchuleEvent)
@@ -90,7 +88,9 @@ export class LdapEventHandler {
 
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(personenkontext.rolleId);
         const person: Option<Person<true>> = await this.personRepository.findById(personenkontext.personId);
-        const orga: Option<Organisation<true>> = await this.organisationRepo.findById(personenkontext.organisationId);
+        const orga: Option<Organisation<true>> = await this.organisationRepository.findById(
+            personenkontext.organisationId,
+        );
 
         if (!rolle) {
             this.logger.error(`Rolle with id ${personenkontext.rolleId} could not be found!`);
@@ -129,7 +129,9 @@ export class LdapEventHandler {
 
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(personenkontext.rolleId);
         const person: Option<Person<true>> = await this.personRepository.findById(personenkontext.personId);
-        const orga: Option<Organisation<true>> = await this.organisationRepo.findById(personenkontext.organisationId);
+        const orga: Option<Organisation<true>> = await this.organisationRepository.findById(
+            personenkontext.organisationId,
+        );
 
         if (!rolle) {
             this.logger.error(`Rolle with id ${personenkontext.rolleId} could not be found!`);

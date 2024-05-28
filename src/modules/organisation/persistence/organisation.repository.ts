@@ -56,4 +56,15 @@ export class OrganisationRepository {
 
         return [organisations, total];
     }
+
+    public async save(organisation: Organisation<boolean>): Promise<Organisation<true>> {
+        const organisationEntity: OrganisationEntity = this.em.create(
+            OrganisationEntity,
+            mapAggregateToData(organisation),
+        );
+
+        await this.em.persistAndFlush(organisationEntity);
+
+        return mapEntityToAggregate(organisationEntity);
+    }
 }

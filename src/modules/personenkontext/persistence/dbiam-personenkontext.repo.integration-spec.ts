@@ -105,6 +105,26 @@ describe('dbiam Personenkontext Repo', () => {
         expect(em).toBeDefined();
     });
 
+    describe('findById', () => {
+        it('should return one personenkontext by id', async () => {
+            const person: Person<true> = await createPerson();
+            const personenkontext: Personenkontext<true> = await sut.save(
+                createPersonenkontext(false, { personId: person.id }),
+            );
+            const pk: Option<Personenkontext<true>> = await sut.findById(personenkontext.id);
+
+            expect(pk).toBeTruthy();
+            expect(pk).toEqual(personenkontext);
+        });
+
+        it('should return undefined when personenkontext cannot be found', async () => {
+            const pk: Option<Personenkontext<true>> = await sut.findById(faker.string.uuid());
+
+            expect(pk).toBeFalsy();
+            expect(pk).toBeNull();
+        });
+    });
+
     describe('findByPerson', () => {
         it('should return all personenkontexte for a person', async () => {
             const personA: Person<true> = await createPerson();
