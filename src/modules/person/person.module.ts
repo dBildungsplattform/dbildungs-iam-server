@@ -10,7 +10,7 @@ import { KeycloakAdministrationService } from '../keycloak-administration/domain
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 import { PersonRepository } from './persistence/person.repository.js';
 import { PersonFactory } from './domain/person.factory.js';
-import { PersonUc } from './domain/person.uc.js';
+import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 @Module({
     imports: [KeycloakAdministrationModule, LoggerModule.register(PersonModule.name)],
@@ -18,14 +18,14 @@ import { PersonUc } from './domain/person.uc.js';
         PersonPersistenceMapperProfile,
         PersonRepo,
         PersonRepository,
+        DBiamPersonenkontextRepo,
         PersonService,
-        PersonUc,
         PersonFactory,
         UsernameGeneratorService,
         KeycloakUserService,
         KeycloakAdministrationService,
         KeycloakAdminClient,
     ],
-    exports: [PersonService, PersonUc, PersonFactory, PersonRepo, PersonRepository],
+    exports: [PersonService, PersonFactory, PersonRepo, PersonRepository],
 })
 export class PersonModule {}
