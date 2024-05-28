@@ -12,6 +12,9 @@ import { ClassLogger } from '../../logging/class-logger.js';
 import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { Counter, Meter } from '@opentelemetry/api';
+import { ConfigService } from '@nestjs/config';
+import { ServerConfig } from '../../../shared/config/server.config.js';
+import { TelemetryConfig } from '../../../shared/config/telemtry.config.js';
 
 @Injectable()
 export class TelemetryService implements OnModuleInit, OnModuleDestroy {
@@ -27,12 +30,22 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
 
     private metricPostCounter: Counter;
 
+    private metrics_url: string;
+
+    private traces_url: string;
+
     private unregister!: () => void;
 
-    public constructor(private readonly logger: ClassLogger) {
+    public constructor(
+        private readonly logger: ClassLogger,
+        configService: ConfigService<ServerConfig>,
+    ) {
+        const TelemtryConfig: TelemetryConfig = configService.getOrThrow<TelemetryConfig>('Telemetry');
+        this.metrics_url = TelemtryConfig.METRICS_URL;
+        this.traces_url = TelemtryConfig.TRACES_URL;
         // traces
         const collectorOptions = {
-            url: 'http://localhost:4317/v1/traces',
+            url: this.traces_url,
             headers: {},
             concurrencyLimit: 10,
         };
@@ -52,7 +65,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
 
         // Metrics setup
         const metricsCollectorOptions = {
-            url: 'http://localhost:4317/v1/metrics',
+            url: this.metrics_url,
             headers: {},
             concurrencyLimit: 1,
         };

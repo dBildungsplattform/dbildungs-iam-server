@@ -1,12 +1,11 @@
-import { IsInt, IsNotEmpty, IsString, Max, Min } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class TelemetryConfig {
     @IsString()
     @IsNotEmpty()
-    public readonly HOST!: string;
+    public readonly METRICS_URL!: string;
 
-    @IsInt()
-    @Min(1024)
-    @Max(10000)
-    public readonly PORT!: number;
+    @IsString()
+    @IsNotEmpty()
+    public readonly TRACES_URL!: string;
 }
