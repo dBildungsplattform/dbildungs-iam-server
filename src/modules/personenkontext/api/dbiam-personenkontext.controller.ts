@@ -23,7 +23,7 @@ import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.r
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
 import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
 import { EventService } from '../../../core/eventbus/index.js';
-import { CreatePersonenkontextEvent } from '../../../shared/events/create-personenkontext.event.js';
+import { CreatedPersonenkontextEvent } from '../../../shared/events/created-personenkontext.event.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
@@ -119,7 +119,7 @@ export class DBiamPersonenkontextController {
 
         // Save personenkontext
         const savedPersonenkontext: Personenkontext<true> = await this.personenkontextRepo.save(newPersonenkontext);
-        this.eventService.publish(new CreatePersonenkontextEvent(savedPersonenkontext));
+        this.eventService.publish(new CreatedPersonenkontextEvent(savedPersonenkontext.id));
 
         return new DBiamPersonenkontextResponse(savedPersonenkontext);
     }

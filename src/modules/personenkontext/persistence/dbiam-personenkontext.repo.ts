@@ -1,7 +1,7 @@
 import { Loaded, RequiredEntityData, rel } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
+import { OrganisationID, PersonenkontextID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { Rolle } from '../domain/personenkontext.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
@@ -34,6 +34,16 @@ function mapEntityToAggregate(entity: PersonenkontextEntity): Personenkontext<bo
 @Injectable()
 export class DBiamPersonenkontextRepo {
     public constructor(private readonly em: EntityManager) {}
+
+    public async findById(id: PersonenkontextID): Promise<Option<Personenkontext<true>>> {
+        const personenKontext: Option<PersonenkontextEntity> = await this.em.findOne(PersonenkontextEntity, {
+            id,
+        });
+        if (personenKontext) {
+            return mapEntityToAggregate(personenKontext);
+        }
+        return null;
+    }
 
     public async findByPerson(personId: PersonID): Promise<Personenkontext<true>[]> {
         const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {

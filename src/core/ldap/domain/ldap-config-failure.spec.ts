@@ -12,7 +12,6 @@ import { GlobalValidationPipe } from '../../../shared/validation/global-validati
 import { OrganisationApiModule } from '../../../modules/organisation/organisation-api.module.js';
 import { LdapModule } from '../ldap.module.js';
 import { PersonenKontextApiModule } from '../../../modules/personenkontext/personenkontext-api.module.js';
-import { CreatedOrganisationDto } from '../../../modules/organisation/api/created-organisation.dto.js';
 import { LdapClientService } from './ldap-client.service.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
@@ -68,9 +67,9 @@ describe('LDAP Client Service Config Failure', () => {
     describe('getClient', () => {
         describe('when called by createOrganisation and errors during LDAP connection occurred', () => {
             it('should return error result', async () => {
-                const createdOrganisationDto: CreatedOrganisationDto = createMock<CreatedOrganisationDto>();
-                const result: Result<CreatedOrganisationDto> =
-                    await ldapClientService.createOrganisation(createdOrganisationDto);
+                const organisation: Organisation<true> = createMock<Organisation<true>>();
+                const result: Result<Organisation<true>> =
+                    await ldapClientService.createOrganisation(organisation);
 
                 expect(result.ok).toBeFalsy();
             });

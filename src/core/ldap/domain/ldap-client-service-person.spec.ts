@@ -12,12 +12,12 @@ import {
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { LdapConfigModule } from '../ldap-config.module.js';
 import { LdapModule } from '../ldap.module.js';
-import { CreatedOrganisationDto } from '../../../modules/organisation/api/created-organisation.dto.js';
 import { faker } from '@faker-js/faker';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 import { LdapClientService } from './ldap-client.service.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
+import { createMock } from '@golevelup/ts-jest';
 
 describe('LDAP Client Service Person Methods', () => {
     let app: INestApplication;
@@ -76,14 +76,13 @@ describe('LDAP Client Service Person Methods', () => {
                 //create an OU
                 const ouId: string = faker.string.uuid();
                 const ouKennung: string = faker.string.numeric({ length: 7 });
-                const createdOrganisationDto: CreatedOrganisationDto = {
+                const orga: Organisation<true> = createMock<Organisation<true>>({
                     id: ouId,
                     typ: OrganisationsTyp.SCHULE,
                     kennung: ouKennung,
                     name: faker.company.name(),
-                };
-                const ouResult: Result<CreatedOrganisationDto> =
-                    await ldapClientService.createOrganisation(createdOrganisationDto);
+                });
+                const ouResult: Result<Organisation<true>> = await ldapClientService.createOrganisation(orga);
 
                 expect(ouResult.ok).toBeTruthy();
                 //
@@ -153,12 +152,12 @@ describe('LDAP Client Service Person Methods', () => {
                 const deleteLehrerPersonFirstname: string = faker.person.firstName();
                 const deleteLehrerPersonLastname: string = faker.person.lastName();
                 const deleteLehrerSchuleName: string = faker.string.alpha({ length: 10 });
-                const createdOrganisationDto: CreatedOrganisationDto = {
+                const orga: Organisation<true> = createMock<Organisation<true>>({
                     id: id,
                     typ: OrganisationsTyp.SCHULE,
                     kennung: deleteLehrerOrgaKennung,
                     name: deleteLehrerSchuleName,
-                };
+                });
                 const organisation: Organisation<true> = {
                     id: id,
                     name: deleteLehrerSchuleName,
@@ -167,8 +166,7 @@ describe('LDAP Client Service Person Methods', () => {
                     createdAt: faker.date.past(),
                     updatedAt: faker.date.recent(),
                 };
-                const ouResult: Result<CreatedOrganisationDto> =
-                    await ldapClientService.createOrganisation(createdOrganisationDto);
+                const ouResult: Result<Organisation<true>> = await ldapClientService.createOrganisation(orga);
                 expect(ouResult).toBeTruthy();
 
                 //create lehrer

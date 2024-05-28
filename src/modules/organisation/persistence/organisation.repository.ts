@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { OrganisationEntity } from './organisation.entity.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationScope } from './organisation.scope.js';
+import { OrganisationID } from '../../../shared/types/index.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -36,6 +37,16 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
 @Injectable()
 export class OrganisationRepository {
     public constructor(private readonly em: EntityManager) {}
+
+    public async findById(id: OrganisationID): Promise<Option<Organisation<true>>> {
+        const organisation: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, {
+            id,
+        });
+        if (organisation) {
+            return mapEntityToAggregate(organisation);
+        }
+        return null;
+    }
 
     public async findBy(scope: OrganisationScope): Promise<Counted<Organisation<true>>> {
         const [entities, total]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);

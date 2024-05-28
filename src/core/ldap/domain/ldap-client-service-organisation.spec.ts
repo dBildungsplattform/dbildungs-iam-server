@@ -12,7 +12,6 @@ import {
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { LdapConfigModule } from '../ldap-config.module.js';
 import { LdapModule } from '../ldap.module.js';
-import { CreatedOrganisationDto } from '../../../modules/organisation/api/created-organisation.dto.js';
 import { faker } from '@faker-js/faker';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 import { LdapClientService } from './ldap-client.service.js';
@@ -72,14 +71,13 @@ describe('LDAP Client Service Organisation Methods', () => {
     describe('createOrganisation', () => {
         describe('when called with valid organisation', () => {
             it('should return truthy result', async () => {
-                const createdOrganisationDto: CreatedOrganisationDto = {
+                const organisation: Organisation<true> = createMock<Organisation<true>>({
                     id: faker.string.uuid(),
                     typ: OrganisationsTyp.SCHULE,
                     kennung: faker.string.numeric({ length: 7 }),
                     name: faker.company.name(),
-                };
-                const result: Result<CreatedOrganisationDto> =
-                    await ldapClientService.createOrganisation(createdOrganisationDto);
+                });
+                const result: Result<Organisation<true>> = await ldapClientService.createOrganisation(organisation);
 
                 expect(result.ok).toBeTruthy();
             });
@@ -87,14 +85,13 @@ describe('LDAP Client Service Organisation Methods', () => {
 
         describe('when called with organisation without kennung', () => {
             it('should return error result', async () => {
-                const createdOrganisationDto: CreatedOrganisationDto = {
+                const organisation: Organisation<true> = createMock<Organisation<true>>({
                     id: faker.string.uuid(),
                     typ: OrganisationsTyp.SCHULE,
                     kennung: undefined,
                     name: faker.company.name(),
-                };
-                const result: Result<CreatedOrganisationDto> =
-                    await ldapClientService.createOrganisation(createdOrganisationDto);
+                });
+                const result: Result<Organisation<true>> = await ldapClientService.createOrganisation(organisation);
 
                 expect(result.ok).toBeFalsy();
             });
@@ -109,12 +106,12 @@ describe('LDAP Client Service Organisation Methods', () => {
                 const deleteOrganisationName: string = faker.string.alpha({ length: 10 });
                 const deleteOrganisationId: string = faker.string.uuid();
 
-                const createdOrganisationDto: CreatedOrganisationDto = {
+                const createdOrganisationDto: Organisation<true> = createMock<Organisation<true>>({
                     id: deleteOrganisationId,
                     typ: OrganisationsTyp.SCHULE,
                     kennung: deleteOrganisationKennung,
                     name: deleteOrganisationName,
-                };
+                });
                 await ldapClientService.createOrganisation(createdOrganisationDto);
 
                 //

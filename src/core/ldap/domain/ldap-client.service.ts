@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../logging/class-logger.js';
 import { Client } from 'ldapts';
 import { LdapOrganisationEntry, LdapPersonEntry, LdapRoleEntry } from './ldap.types.js';
-import { CreatedOrganisationDto } from '../../../modules/organisation/api/created-organisation.dto.js';
 import { KennungRequiredForSchuleError } from '../../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
@@ -36,7 +35,7 @@ export class LdapClientService {
         return { ok: true, value: this.client };
     }
 
-    public async createOrganisation(organisation: CreatedOrganisationDto): Promise<Result<CreatedOrganisationDto>> {
+    public async createOrganisation(organisation: Organisation<true>): Promise<Result<Organisation<true>>> {
         this.logger.info('Inside createOrganisation');
         const clientResult: Result<Client> = await this.getClient();
         if (!clientResult.ok) return clientResult;

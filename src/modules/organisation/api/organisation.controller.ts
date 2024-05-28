@@ -38,7 +38,7 @@ import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { EventService } from '../../../core/eventbus/index.js';
-import { CreateSchuleEvent } from '../../../shared/events/create-schule.event.js';
+import { CreatedSchuleEvent } from '../../../shared/events/created-schule.event.js';
 import { DbiamOrganisationError } from './dbiam-organisation.error.js';
 import { OrganisationExceptionFilter } from './organisation-exception-filter.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
@@ -73,7 +73,7 @@ export class OrganisationController {
             await this.uc.createOrganisation(organisationDto);
 
         if (result instanceof CreatedOrganisationDto) {
-            this.eventService.publish(new CreateSchuleEvent(result));
+            this.eventService.publish(new CreatedSchuleEvent(result.id));
             return this.mapper.map(result, CreatedOrganisationDto, OrganisationResponseLegacy);
         }
         if (result instanceof OrganisationSpecificationError) {
