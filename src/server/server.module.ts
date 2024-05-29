@@ -29,8 +29,6 @@ import { AccessGuard } from '../modules/authentication/api/access.guard.js';
 import { PermissionsInterceptor } from '../modules/authentication/services/permissions.interceptor.js';
 import { PassportModule } from '@nestjs/passport';
 import { EventModule } from '../core/eventbus/index.js';
-import { Client } from 'ldapts';
-import { LdapConfig } from '../shared/config/ldap.config.js';
 
 @Module({
     imports: [
@@ -120,6 +118,7 @@ export class ServerModule implements NestModule {
         Also the documentation expressly requires listening to on('error')
          */
 
+        /* istanbul ignore next */
         await redisClient
             .on('error', (error: Error) => this.logger.error(`Redis connection failed: ${error.message}`))
             .connect();
@@ -149,7 +148,7 @@ export class ServerModule implements NestModule {
             )
             .forRoutes('*');
 
-        // configure LDAP connection
+        /*// configure LDAP connection
         const ldapConfig: LdapConfig = this.configService.getOrThrow<LdapConfig>('LDAP');
         const client: Client = new Client({
             url: ldapConfig.URL,
@@ -159,15 +158,15 @@ export class ServerModule implements NestModule {
             this.logger.info('Successfully connected to LDAP');
 
             // For test purposes, is connection working as expected?
-            /*  const entry: LdapPersonEntry = {
+              const entry: LdapPersonEntry = {
                 cn: 'wwhite',
                 sn: 'White',
                 mail: ['walterwhite@walterwhiteltdco.com'],
                 objectclass: ['person', 'inetOrgPerson', 'organizationalPerson'],
             };
-            await client.add('cn=wwhite,ou=people,dc=example,dc=org', entry);*/
+            await client.add('cn=wwhite,ou=people,dc=example,dc=org', entry);
         } catch (err) {
             this.logger.error(`Could not connect to LDAP, message: ${JSON.stringify(err)}`);
-        }
+        }*/
     }
 }

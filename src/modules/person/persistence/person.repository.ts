@@ -3,8 +3,20 @@ import { Injectable } from '@nestjs/common';
 import { PersonEntity } from './person.entity.js';
 import { Person } from '../domain/person.js';
 import { PersonScope } from './person.scope.js';
-import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
-import { DomainError, EntityCouldNotBeCreated } from '../../../shared/error/index.js';
+import { KeycloakUserService, PersonHasNoKeycloakId, UserDo } from '../../keycloak-administration/index.js';
+import {
+    DomainError,
+    EntityCouldNotBeCreated,
+    EntityCouldNotBeDeleted,
+    EntityNotFoundError,
+} from '../../../shared/error/index.js';
+import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { ConfigService } from '@nestjs/config';
+import { DataConfig } from '../../../shared/config/data.config.js';
+import { ServerConfig } from '../../../shared/config/server.config.js';
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
     return {
@@ -74,10 +86,33 @@ export function mapEntityToAggregateInplace(entity: PersonEntity, person: Person
 
 @Injectable()
 export class PersonRepository {
+    public readonly ROOT_ORGANISATION_ID: string;
+
     public constructor(
         private readonly kcUserService: KeycloakUserService,
         private readonly em: EntityManager,
-    ) {}
+        config: ConfigService<ServerConfig>,
+    ) {
+        this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+    }
+
+    private async getPersonScopeWithPermissions(
+        permissions: PersonPermissions,
+        requiredRight: RollenSystemRecht = RollenSystemRecht.PERSONEN_VERWALTEN,
+    ): Promise<PersonScope> {
+        // Find all organisations where user has the required permission
+        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
+            [requiredRight],
+            true,
+        );
+
+        // Check if user has permission on root organisation
+        if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
+            organisationIDs = undefined;
+        }
+
+        return new PersonScope().findBy({ organisationen: organisationIDs }).setScopeWhereOperator(ScopeOperator.AND);
+    }
 
     public async findBy(scope: PersonScope): Promise<Counted<Person<true>>> {
         const [entities, total]: Counted<PersonEntity> = await scope.executeQuery(this.em);
@@ -93,6 +128,70 @@ export class PersonRepository {
         }
 
         return null;
+    }
+
+    public async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<Result<Person<true>>> {
+        const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions);
+        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+
+        const [persons]: Counted<Person<true>> = await this.findBy(scope);
+        const person: Person<true> | undefined = persons[0];
+
+        if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
+
+        return { ok: true, value: person };
+    }
+
+    public async checkIfDeleteIsAllowed(
+        personId: string,
+        permissions: PersonPermissions,
+    ): Promise<Result<Person<true>>> {
+        // Check if the user has permission to delete immediately
+        const scope: PersonScope = await this.getPersonScopeWithPermissions(
+            permissions,
+            RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN,
+        );
+        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+
+        const [persons]: Counted<Person<true>> = await this.findBy(scope);
+        const person: Person<true> | undefined = persons[0];
+
+        if (!person) {
+            return { ok: false, error: new EntityCouldNotBeDeleted('Person', personId) };
+        }
+
+        return { ok: true, value: person };
+    }
+
+    public async deletePerson(personId: string, permissions: PersonPermissions): Promise<Result<void, DomainError>> {
+        // First check if the user has permission to view the person
+        const personResult: Result<Person<true>> = await this.getPersonIfAllowed(personId, permissions);
+
+        if (!personResult.ok) {
+            return { ok: false, error: new EntityNotFoundError('Person') };
+        }
+
+        // Now check if the user has the permission to delete immediately
+        const deletePermissionResult: Result<Person<true>> = await this.checkIfDeleteIsAllowed(personId, permissions);
+
+        if (!deletePermissionResult.ok) {
+            return { ok: false, error: new EntityCouldNotBeDeleted('Person', personId) };
+        }
+
+        const person: Person<true> = deletePermissionResult.value;
+
+        // Check if the person has a keycloakUserId
+        if (!person.keycloakUserId) {
+            throw new PersonHasNoKeycloakId(person.id);
+        }
+
+        // Delete the person from Keycloak
+        await this.kcUserService.delete(person.keycloakUserId);
+
+        // Delete the person from the database with all their kontexte
+        await this.em.nativeDelete(PersonEntity, person.id);
+
+        return { ok: true, value: undefined };
     }
 
     public async findByKeycloakUserId(keycloakUserId: string): Promise<Option<Person<true>>> {

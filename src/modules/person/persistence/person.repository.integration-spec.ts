@@ -25,8 +25,17 @@ import { PersonScope } from './person.scope.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
-import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { DomainError, KeycloakClientError } from '../../../shared/error/index.js';
+import { KeycloakUserService, PersonHasNoKeycloakId } from '../../keycloak-administration/index.js';
+import {
+    DomainError,
+    EntityCouldNotBeDeleted,
+    EntityNotFoundError,
+    KeycloakClientError,
+} from '../../../shared/error/index.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { ConfigService } from '@nestjs/config';
+import { DataConfig } from '../../../shared/config/data.config.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 describe('PersonRepository', () => {
     let module: TestingModule;
@@ -37,6 +46,8 @@ describe('PersonRepository', () => {
     let mapper: Mapper;
     let kcUserServiceMock: DeepMocked<KeycloakUserService>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
+    let personPermissionsMock: DeepMocked<PersonPermissions>;
+    let configService: ConfigService;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -45,6 +56,7 @@ describe('PersonRepository', () => {
                 PersonPersistenceMapperProfile,
                 PersonRepo,
                 PersonRepository,
+                ConfigService,
                 {
                     provide: UsernameGeneratorService,
                     useValue: createMock<UsernameGeneratorService>(),
@@ -53,6 +65,10 @@ describe('PersonRepository', () => {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),
                 },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                },
             ],
         }).compile();
         sutLegacy = module.get(PersonRepo);
@@ -60,9 +76,11 @@ describe('PersonRepository', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
+        personPermissionsMock = createMock<PersonPermissions>();
 
         kcUserServiceMock = module.get(KeycloakUserService);
         usernameGeneratorService = module.get(UsernameGeneratorService);
+        configService = module.get(ConfigService);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -516,6 +534,162 @@ describe('PersonRepository', () => {
             expect(personAfterUpdate).toBeInstanceOf(Person);
             expect(personAfterUpdate.vorname).toEqual(person.vorname);
             expect(personAfterUpdate.familienname).toEqual(person.familienname);
+        });
+    });
+    describe('getPersonIfAllowed', () => {
+        describe('when person is found on any same organisations like the affected person', () => {
+            it('should return person', async () => {
+                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+
+                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+
+                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+                const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+
+                expect(result.ok).toBeTruthy();
+            });
+        });
+        describe('when user has permission on root organisation', () => {
+            it('should return person', async () => {
+                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                const fakeOrganisationId: string = configService.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([fakeOrganisationId]);
+
+                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+
+                const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+
+                expect(result.ok).toBeTruthy();
+            });
+        });
+    });
+    describe('checkIfDeleteIsAllowed', () => {
+        describe('when person is found on any same organisations like the affected person', () => {
+            it('should delete with no error', async () => {
+                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+
+                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+
+                expect(result.ok).toBeTruthy();
+            });
+        });
+        describe('when user has no permission on root organisation', () => {
+            it('should not delete', async () => {
+                const person1: PersonDo<true> = DoFactory.createPerson(true);
+
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+
+                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+
+                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+        it('should return an EntityCouldNotBeDeleted exception', async () => {
+            const person1: PersonDo<true> = DoFactory.createPerson(true);
+
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+
+            await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+
+            const result: Result<Person<true>, Error> = await sut.checkIfDeleteIsAllowed(
+                person1.id,
+                personPermissionsMock,
+            );
+
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(EntityCouldNotBeDeleted);
+            }
+        });
+    });
+    describe('deletePerson', () => {
+        describe('Delete the person and all kontexte', () => {
+            it('should delete the person', async () => {
+                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+
+                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+                const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
+                    person1.id,
+                    personPermissionsMock,
+                );
+                if (!personGetAllowed.ok) {
+                    throw new EntityNotFoundError('Person', person1.id);
+                }
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    personGetAllowed.value.id,
+                    personPermissionsMock,
+                );
+                expect(result.ok).toBeTruthy();
+            });
+            it('should not delete the person because of unsufficient permissions to find the person', async () => {
+                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+
+                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+
+                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+
+                expect(result.ok).toBeFalsy();
+            });
+            it('should not delete the person because of unsufficient permissions to delete the person', async () => {
+                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+
+                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+                const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
+                    person1.id,
+                    personPermissionsMock,
+                );
+                if (!personGetAllowed.ok) {
+                    throw new EntityNotFoundError('Person', person1.id);
+                }
+                const checkIfDeleteIsAllowedSpy: jest.SpyInstance<
+                    Promise<Result<Person<true>, Error>>,
+                    [personId: string, permissions: PersonPermissions]
+                > = jest.spyOn(sut, 'checkIfDeleteIsAllowed').mockResolvedValue({
+                    ok: false,
+                    error: new EntityCouldNotBeDeleted('Person', person1.id),
+                });
+
+                await sut.checkIfDeleteIsAllowed(personGetAllowed.value.id, personPermissionsMock);
+
+                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+
+                expect(result.ok).toBeFalsy();
+                if (!result.ok) {
+                    expect(result.error).toBeInstanceOf(EntityCouldNotBeDeleted);
+                }
+                checkIfDeleteIsAllowedSpy.mockRestore();
+            });
+            it('should not delete the person because it has no keycloakId', async () => {
+                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                person1.keycloakUserId = '';
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+
+                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+                const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
+                    person1.id,
+                    personPermissionsMock,
+                );
+
+                if (!personGetAllowed.ok) {
+                    throw new EntityNotFoundError('Person', person1.id);
+                }
+
+                await expect(sut.deletePerson(personGetAllowed.value.id, personPermissionsMock)).rejects.toThrow(
+                    PersonHasNoKeycloakId,
+                );
+            });
         });
     });
 });
