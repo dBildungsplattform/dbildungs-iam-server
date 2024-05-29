@@ -16,6 +16,7 @@ import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { OrganisationRepo } from '../organisation/persistence/organisation.repo.js';
 import { RolleFactory } from '../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
+import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
 
 @Module({
     imports: [KeycloakAdministrationModule, LoggerModule.register(PersonModule.name)],
@@ -33,6 +34,7 @@ import { ServiceProviderRepo } from '../service-provider/repo/service-provider.r
         PersonenkontextFactory,
         RolleRepo,
         OrganisationRepo,
+        OrganisationRepository,
         RolleFactory,
         ServiceProviderRepo,
     ],
