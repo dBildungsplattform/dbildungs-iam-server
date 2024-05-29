@@ -211,7 +211,9 @@ describe('dbiam Personenkontext Repo', () => {
     describe('save', () => {
         it('should save a new personenkontext', async () => {
             const person: Person<true> = await createPerson();
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false, { personId: person.id });
+            const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
+                personId: person.id,
+            });
 
             const savedPersonenkontext: Personenkontext<true> = await sut.save(personenkontext);
 
@@ -233,7 +235,9 @@ describe('dbiam Personenkontext Repo', () => {
 
         it('should throw UniqueConstraintViolationException when triplet already exists', async () => {
             const person: Person<true> = await createPerson();
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false, { personId: person.id });
+            const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
+                personId: person.id,
+            });
             await sut.save(personenkontext);
 
             await expect(sut.save(personenkontext)).rejects.toThrow(UniqueConstraintViolationException);

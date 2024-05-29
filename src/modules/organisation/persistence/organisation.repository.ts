@@ -1,11 +1,11 @@
-import { EntityManager, RequiredEntityData, Loaded } from '@mikro-orm/postgresql';
+import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OrganisationEntity } from './organisation.entity.js';
-import { Organisation } from '../domain/organisation.js';
-import { OrganisationScope } from './organisation.scope.js';
+import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { ServerConfig, DataConfig } from '../../../shared/config/index.js';
+import { Organisation } from '../domain/organisation.js';
+import { OrganisationEntity } from './organisation.entity.js';
+import { OrganisationScope } from './organisation.scope.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {

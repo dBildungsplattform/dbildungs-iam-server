@@ -66,6 +66,10 @@ describe('PersonenkontextService', () => {
                     provide: getMapperToken(),
                     useValue: createMock<Mapper>(),
                 },
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
             ],
         }).compile();
         personenkontextService = module.get(PersonenkontextService);
@@ -74,6 +78,7 @@ describe('PersonenkontextService', () => {
         dbiamPersonenKontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
         mapperMock = module.get(getMapperToken());
+        personenkontextFactory = module.get(PersonenkontextFactory);
     });
 
     afterAll(async () => {

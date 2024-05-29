@@ -25,6 +25,26 @@ import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-con
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
+function createPersonenkontext<WasPersisted extends boolean>(
+    this: void,
+    personenkontextFactory: PersonenkontextFactory,
+    withId: WasPersisted,
+    params: Partial<Personenkontext<boolean>> = {},
+): Personenkontext<WasPersisted> {
+    const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
+        withId ? faker.string.uuid() : undefined,
+        withId ? faker.date.past() : undefined,
+        withId ? faker.date.recent() : undefined,
+        faker.string.uuid(),
+        faker.string.uuid(),
+        faker.string.uuid(),
+    );
+
+    Object.assign(personenkontext, params);
+
+    return personenkontext;
+}
+
 describe('PersonenkontextSpecificationsTest', () => {
     let module: TestingModule;
     let orm: MikroORM;
@@ -36,25 +56,6 @@ describe('PersonenkontextSpecificationsTest', () => {
     let personRepo: PersonRepository;
 
     let personenkontextFactory: PersonenkontextFactory;
-
-    function createPersonenkontext<WasPersisted extends boolean>(
-        this: void,
-        withId: WasPersisted,
-        params: Partial<Personenkontext<boolean>> = {},
-    ): Personenkontext<WasPersisted> {
-        const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
-            withId ? faker.string.uuid() : undefined,
-            withId ? faker.date.past() : undefined,
-            withId ? faker.date.recent() : undefined,
-            faker.string.uuid(),
-            faker.string.uuid(),
-            faker.string.uuid(),
-        );
-
-        Object.assign(personenkontext, params);
-
-        return personenkontext;
-    }
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -91,6 +92,7 @@ describe('PersonenkontextSpecificationsTest', () => {
         rolleRepoMock = module.get(RolleRepo);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personFactory = module.get(PersonFactory);
+        personenkontextFactory = module.get(PersonenkontextFactory);
         personRepo = module.get(PersonRepository);
         personenkontextFactory = module.get(PersonenkontextFactory);
         orm = module.get(MikroORM);
@@ -136,11 +138,17 @@ describe('PersonenkontextSpecificationsTest', () => {
             if (person instanceof DomainError) {
                 throw person;
             }
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false, { personId: person.id });
-            const foundPersonenkontextDummy: Personenkontext<false> = createPersonenkontext(false, {
-                organisationId: schule.id,
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false, {
                 personId: person.id,
             });
+            const foundPersonenkontextDummy: Personenkontext<false> = createPersonenkontext(
+                personenkontextFactory,
+                false,
+                {
+                    organisationId: schule.id,
+                    personId: person.id,
+                },
+            );
             await personenkontextRepo.save(foundPersonenkontextDummy);
 
             organisationRepoMock.findById.mockResolvedValueOnce(klasse); //mock Klasse

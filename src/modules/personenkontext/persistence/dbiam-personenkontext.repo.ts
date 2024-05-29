@@ -283,7 +283,6 @@ export class DBiamPersonenkontextRepo {
             PersonenkontextEntity,
             mapAggregateToData(personenKontext),
         );
-
         await this.em.persistAndFlush(personenKontextEntity);
 
         return mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory);

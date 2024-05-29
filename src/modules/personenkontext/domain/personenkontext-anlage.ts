@@ -4,11 +4,11 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 export class PersonenkontextAnlage {
     public organisationId?: string;
@@ -89,6 +89,7 @@ export class PersonenkontextAnlage {
         return [];
     }
 
+    //Phael:die wird nur von Tests verwendet, brauchen wir die?
     public async validieren(): Promise<Result<boolean, PersonenkontextAnlageError>> {
         if (!this.rolleId)
             return {
@@ -134,6 +135,7 @@ export class PersonenkontextAnlage {
         }
     }
 
+    //Phael:die wird nur von Tests verwendet, brauchen wir die?
     public async zuweisen(personId: string): Promise<Result<Personenkontext<true>, PersonenkontextAnlageError>> {
         if (!this.rolleId)
             return {
@@ -154,6 +156,14 @@ export class PersonenkontextAnlage {
             this.organisationId,
             this.rolleId,
         );
+
+        if (personenkontext instanceof DomainError) {
+            return {
+                ok: false,
+                error: new PersonenkontextAnlageError('PersonenkontextAnlage invalid:' + personenkontext.message),
+            };
+        }
+
         const createdPersonenkontext: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(personenkontext);
         return { ok: true, value: createdPersonenkontext };
     }

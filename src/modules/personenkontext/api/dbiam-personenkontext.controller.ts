@@ -10,21 +10,21 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { DomainError, EntityAlreadyExistsError } from '../../../shared/error/index.js';
+import { DomainError } from '../../../shared/error/index.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { Personenkontext } from '../domain/personenkontext.js';
-import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkontext.body.params.js';
-import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personenkontext-by-personid.params.js';
-import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
-import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
-import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
-import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
+import { Personenkontext } from '../domain/personenkontext.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
+import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkontext.body.params.js';
+import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personenkontext-by-personid.params.js';
+import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
+import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
+import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new PersonenkontextExceptionFilter())
 @ApiTags('dbiam-personenkontexte')
@@ -79,36 +79,12 @@ export class DBiamPersonenkontextController {
         @Body() params: DBiamCreatePersonenkontextBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonenkontextResponse> {
-        // Check if personenkontext already exists
-        const exists: boolean = await this.personenkontextRepo.exists(
-            params.personId,
-            params.organisationId,
-            params.rolleId,
-        );
-
-        if (exists) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityAlreadyExistsError('Personenkontext already exists'),
-                ),
-            );
-        }
-
         // Construct new personenkontext
         const newPersonenkontext: Personenkontext<false> = this.personenkontextFactory.createNew(
             params.personId,
             params.organisationId,
             params.rolleId,
         );
-
-        // Check if all references are valid
-        const referenceError: Option<DomainError> = await newPersonenkontext.checkReferences();
-
-        if (referenceError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(referenceError),
-            );
-        }
 
         //Check specifications
         const specificationCheckError: Option<PersonenkontextSpecificationError> =

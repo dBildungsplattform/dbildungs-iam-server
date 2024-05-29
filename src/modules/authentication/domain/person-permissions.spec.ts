@@ -62,6 +62,7 @@ describe('PersonPermissions', () => {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
                 },
+                PersonenkontextFactory,
             ],
         }).compile();
 

@@ -1,15 +1,15 @@
 import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Personenkontext } from './personenkontext.js';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PersonenkontextFactory } from './personenkontext.factory.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { PersonenkontextFactory } from './personenkontext.factory.js';
+import { Personenkontext } from './personenkontext.js';
 
 describe('Personenkontext aggregate', () => {
     let module: TestingModule;
@@ -126,9 +126,35 @@ describe('Personenkontext aggregate', () => {
 
             expect(result).toBeInstanceOf(EntityNotFoundError);
         });
+
+        it('should return RoleAssignmentError if rolle can not be assigned to organisation', async () => {
+            personRepoMock.exists.mockResolvedValueOnce(true);
+            organisationRepoMock.exists.mockResolvedValueOnce(true);
+            rolleRepoMock.exists.mockResolvedValueOnce(true);
+            rolleRepoMock.findById.mockResolvedValueOnce(createMock<Rolle<true>>());
+
+            const personenkontext: Personenkontext<false> | DomainError = await Personenkontext.createNew(
+                personRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+            );
+
+            expect(personenkontext).not.toBeInstanceOf(DomainError);
+            if (personenkontext instanceof DomainError) {
+                return;
+            }
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
+
+            const result: Option<DomainError> = await personenkontext.checkReferences();
+
+            expect(result).toBeInstanceOf(EntityNotFoundError);
+        });
     });
 
-    describe('checkValidity', () => {
+    describe('checkPermissions', () => {
         it('should return MissingPermissionsError, if logged in user is not authorized at organisation', async () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false); // Check orga permissions
@@ -146,40 +172,6 @@ describe('Personenkontext aggregate', () => {
             expect(permissions.hasSystemrechtAtOrganisation).toHaveBeenCalledWith(personenkontext.organisationId, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
-        });
-
-        it('should return EntityNotFoundError, if rolle could not be found', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true); // Check orga permissions
-            rolleRepoMock.findById.mockResolvedValueOnce(undefined);
-
-            const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(
-                faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
-            );
-
-            await expect(personenkontext.checkPermissions(permissions)).resolves.toEqual(
-                new EntityNotFoundError('rolle', personenkontext.rolleId),
-            );
-        });
-
-        it('should return EntityNotFoundError, if rolle can not be assigned to the organisation', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true); // Check orga permissions
-            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
-            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(false); // Check rolle<->orga validity
-            rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
-
-            const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(
-                faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
-            );
-
-            await expect(personenkontext.checkPermissions(permissions)).resolves.toEqual(
-                new EntityNotFoundError('rolle', personenkontext.rolleId),
-            );
         });
 
         it('should return MissingPermissionsError, if target person can not be modified by logged in user', async () => {

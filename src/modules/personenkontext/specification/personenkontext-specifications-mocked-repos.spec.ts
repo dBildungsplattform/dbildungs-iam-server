@@ -15,6 +15,26 @@ import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 
+function createPersonenkontext<WasPersisted extends boolean>(
+    this: void,
+    personenkontextFactory: PersonenkontextFactory,
+    withId: WasPersisted,
+    params: Partial<Personenkontext<boolean>> = {},
+): Personenkontext<WasPersisted> {
+    const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
+        withId ? faker.string.uuid() : undefined,
+        withId ? faker.date.past() : undefined,
+        withId ? faker.date.recent() : undefined,
+        faker.string.uuid(),
+        faker.string.uuid(),
+        faker.string.uuid(),
+    );
+
+    Object.assign(personenkontext, params);
+
+    return personenkontext;
+}
+
 describe('PersonenkontextSpecificationsMockedReposTest', () => {
     let module: TestingModule;
     let organisationRepoMock: DeepMocked<OrganisationRepo>;
@@ -22,25 +42,6 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
 
     let personenkontextFactory: PersonenkontextFactory;
-
-    function createPersonenkontext<WasPersisted extends boolean>(
-        this: void,
-        withId: WasPersisted,
-        params: Partial<Personenkontext<boolean>> = {},
-    ): Personenkontext<WasPersisted> {
-        const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
-            withId ? faker.string.uuid() : undefined,
-            withId ? faker.date.past() : undefined,
-            withId ? faker.date.recent() : undefined,
-            faker.string.uuid(),
-            faker.string.uuid(),
-            faker.string.uuid(),
-        );
-
-        Object.assign(personenkontext, params);
-
-        return personenkontext;
-    }
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -67,6 +68,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
+                PersonenkontextFactory,
             ],
         }).compile();
         organisationRepoMock = module.get(OrganisationRepo);
@@ -95,7 +97,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 organisationRepoMock,
                 rolleRepoMock,
             );
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false);
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false);
             organisationRepoMock.findById.mockResolvedValueOnce(organisation);
 
             expect(await specification.isSatisfiedBy(personenkontext)).toBeTruthy();
@@ -106,7 +108,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 organisationRepoMock,
                 rolleRepoMock,
             );
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false);
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false);
             organisationRepoMock.findById.mockResolvedValueOnce(undefined);
             expect(await specification.isSatisfiedBy(personenkontext)).toBeFalsy();
         });
@@ -118,7 +120,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 organisationRepoMock,
                 rolleRepoMock,
             );
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false);
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false);
 
             organisationRepoMock.findById.mockResolvedValueOnce(organisation);
             rolleRepoMock.findById.mockResolvedValueOnce(undefined);
@@ -136,7 +138,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 personenkontextRepoMock,
                 rolleRepoMock,
             );
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false);
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false);
             organisationRepoMock.findById.mockResolvedValueOnce(organisation);
 
             expect(await specification.isSatisfiedBy(personenkontext)).toBeTruthy();
@@ -148,7 +150,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 personenkontextRepoMock,
                 rolleRepoMock,
             );
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false);
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false);
             organisationRepoMock.findById.mockResolvedValueOnce(undefined);
             expect(await specification.isSatisfiedBy(personenkontext)).toBeFalsy();
         });
@@ -162,7 +164,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 personenkontextRepoMock,
                 rolleRepoMock,
             );
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false);
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false);
             organisationRepoMock.findById.mockResolvedValueOnce(organisation);
 
             expect(await specification.isSatisfiedBy(personenkontext)).toBeFalsy();
@@ -179,7 +181,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 personenkontextRepoMock,
                 rolleRepoMock,
             );
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false);
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false);
             const foundPersonenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
             schule.id = foundPersonenkontext.organisationId;
             const foundPersonenkontexte: Personenkontext<true>[] = [foundPersonenkontext];
@@ -202,7 +204,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
                 personenkontextRepoMock,
                 rolleRepoMock,
             );
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false);
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false);
 
             organisationRepoMock.findById.mockResolvedValueOnce(organisation);
             rolleRepoMock.findById.mockResolvedValueOnce(rolle);

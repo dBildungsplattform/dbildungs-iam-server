@@ -31,6 +31,34 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { Request } from 'express';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { Request } from 'express';
+import { Observable } from 'rxjs';
+import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { PassportUser } from '../../authentication/types/user.js';
+
+function createPersonenkontext<WasPersisted extends boolean>(
+    this: void,
+    personenkontextFactory: PersonenkontextFactory,
+    withId: WasPersisted,
+    params: Partial<Personenkontext<boolean>> = {},
+): Personenkontext<WasPersisted> {
+    const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
+        withId ? faker.string.uuid() : undefined,
+        withId ? faker.date.past() : undefined,
+        withId ? faker.date.recent() : undefined,
+        faker.string.uuid(),
+        faker.string.uuid(),
+        faker.string.uuid(),
+    );
+
+    Object.assign(personenkontext, params);
+
+    return personenkontext;
+}
 
 describe('dbiam Personenkontext API', () => {
     let app: INestApplication;
@@ -44,25 +72,6 @@ describe('dbiam Personenkontext API', () => {
     let personenkontextFactory: PersonenkontextFactory;
 
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
-
-    function createPersonenkontext<WasPersisted extends boolean>(
-        this: void,
-        withId: WasPersisted,
-        params: Partial<Personenkontext<boolean>> = {},
-    ): Personenkontext<WasPersisted> {
-        const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
-            withId ? faker.string.uuid() : undefined,
-            withId ? faker.date.past() : undefined,
-            withId ? faker.date.recent() : undefined,
-            faker.string.uuid(),
-            faker.string.uuid(),
-            faker.string.uuid(),
-        );
-
-        Object.assign(personenkontext, params);
-
-        return personenkontext;
-    }
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -104,7 +113,6 @@ describe('dbiam Personenkontext API', () => {
         organisationRepo = module.get(OrganisationRepo);
         rolleRepo = module.get(RolleRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
-
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -127,9 +135,15 @@ describe('dbiam Personenkontext API', () => {
             const personB: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
             const [pk1, pk2]: [Personenkontext<true>, Personenkontext<true>, Personenkontext<true>] = await Promise.all(
                 [
-                    personenkontextRepo.save(createPersonenkontext(false, { personId: personA.id })),
-                    personenkontextRepo.save(createPersonenkontext(false, { personId: personA.id })),
-                    personenkontextRepo.save(createPersonenkontext(false, { personId: personB.id })),
+                    personenkontextRepo.save(
+                        createPersonenkontext(personenkontextFactory, false, { personId: personA.id }),
+                    ),
+                    personenkontextRepo.save(
+                        createPersonenkontext(personenkontextFactory, false, { personId: personA.id }),
+                    ),
+                    personenkontextRepo.save(
+                        createPersonenkontext(personenkontextFactory, false, { personId: personB.id }),
+                    ),
                 ],
             );
 
@@ -256,7 +270,7 @@ describe('dbiam Personenkontext API', () => {
         });
 
         it('should return error if references do not exist', async () => {
-            const personenkontext: Personenkontext<false> = createPersonenkontext(false);
+            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/dbiam/personenkontext')
