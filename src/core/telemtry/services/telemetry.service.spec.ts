@@ -55,7 +55,15 @@ describe('TelemetryService', () => {
 
         provider.shutdown.mockRejectedValue('An error');
         await service.shutdownTelemetry(provider);
-        expect(logger.error).toHaveBeenCalledWith('Tracer provider shutdown failed:', "An error");
+        expect(logger.error).toHaveBeenCalledWith('Tracer provider shutdown failed:', 'An error');
+    });
+
+    it('should fail its force flush when the passed in service fails', async () => {
+        const provider: DeepMocked<WebTracerProvider> = createMock<WebTracerProvider>();
+
+        provider.forceFlush.mockRejectedValue('An error');
+        await service.flushTelemetry(provider);
+        expect(logger.error).toHaveBeenCalledWith('Tracer provider shutdown failed:', 'An error');
     });
 
     describe('shutdownTelemetry ', () => {

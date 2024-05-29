@@ -18,7 +18,7 @@ describe('TelemetryModule', () => {
     });
 
     afterEach(async () => {
-        telemetryService.onModuleDestroy();
+        await telemetryService.onModuleDestroy();
         await module.close();
     });
 

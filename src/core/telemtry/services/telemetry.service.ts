@@ -108,12 +108,12 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         this.unregister();
     }
 
-    public async onModuleDestroy(): void {
+    public async onModuleDestroy(): Promise<void> {
         if (this.unregister) {
             this.unregister();
         }
         await this.shutdownTelemetry();
-        this.flushTelemetry();
+        await this.flushTelemetry();
     }
 
     public async shutdownTelemetry(provider: WebTracerProvider = this.provider): Promise<void> {
@@ -126,12 +126,13 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         }
     }
 
-    public flushTelemetry(provider: WebTracerProvider = this.provider): void {
-        provider
-            .forceFlush()
-            .then(() => {
-                this.logger.info('Telemetry data flushed successfully.');
-            })
-            .catch((err: string) => this.logger.error('Telemetry data flush failed:', err));
+    public async flushTelemetry(provider: WebTracerProvider = this.provider): Promise<void> {
+        try {
+            await provider.forceFlush();
+
+            this.logger.info('Telemetry data flushed successfully.');
+        } catch (err: unknown) {
+            this.logger.error('Tracer provider shutdown failed:', err);
+        }
     }
 }
