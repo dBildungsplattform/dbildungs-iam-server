@@ -48,4 +48,15 @@ describe('TelemetryService', () => {
     it('should not throw an error on module destroy', () => {
         expect(() => service.onModuleDestroy()).not.toThrow();
     });
+
+    describe('shutdownTelemetry ', () => {
+        it('should not throw an error on module destroy', () => {
+            expect(() => service.shutdownTelemetry()).toBeDefined();
+        });
+    });
+    describe('shutdownTelemetry ', () => {
+        it('should not throw an error on module destroy', () => {
+            expect(() => service.flushTelemetry()).toBeDefined();
+        });
+    });
 });

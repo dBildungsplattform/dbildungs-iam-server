@@ -105,6 +105,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
                 new NestInstrumentation(),
             ],
         });
+        this.unregister();
     }
 
     public onModuleDestroy(): void {
@@ -115,8 +116,8 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         this.flushTelemetry();
     }
 
-    public shutdownTelemetry(): void {
-        this.provider
+    public shutdownTelemetry(provider: WebTracerProvider = this.provider): void {
+        provider
             .shutdown()
             .then(() => {
                 this.logger.info('Tracer provider shutdown successfully.');
@@ -124,8 +125,8 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
             .catch((err: string) => this.logger.error('Tracer provider shutdown failed:', err));
     }
 
-    public flushTelemetry(): void {
-        this.provider
+    public flushTelemetry(provider: WebTracerProvider = this.provider): void {
+        provider
             .forceFlush()
             .then(() => {
                 this.logger.info('Telemetry data flushed successfully.');
