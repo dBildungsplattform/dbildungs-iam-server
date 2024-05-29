@@ -71,12 +71,19 @@ describe('LDAP Client Service Organisation Methods', () => {
     describe('createOrganisation', () => {
         describe('when called with valid organisation', () => {
             it('should return truthy result', async () => {
-                const organisation: Organisation<true> = createMock<Organisation<true>>({
-                    id: faker.string.uuid(),
-                    typ: OrganisationsTyp.SCHULE,
-                    kennung: faker.string.numeric({ length: 7 }),
-                    name: faker.company.name(),
-                });
+                const organisation: Organisation<true> = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    undefined,
+                    undefined,
+                    faker.string.numeric({ length: 7 }),
+                    faker.company.name(),
+                    undefined,
+                    undefined,
+                    OrganisationsTyp.SCHULE,
+                    undefined,
+                );
                 const result: Result<Organisation<true>> = await ldapClientService.createOrganisation(organisation);
 
                 expect(result.ok).toBeTruthy();
