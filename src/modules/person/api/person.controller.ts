@@ -3,6 +3,7 @@ import { getMapperToken } from '@automapper/nestjs';
 import {
     Body,
     Controller,
+    Delete,
     Get,
     HttpCode,
     HttpStatus,
@@ -22,6 +23,7 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiNoContentResponse,
     ApiNotFoundResponse,
     ApiOAuth2,
     ApiOkResponse,
@@ -58,7 +60,6 @@ import { OrganisationID } from '../../../shared/types/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
-import { PersonUc } from '../domain/person.uc.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personen')
@@ -72,7 +73,6 @@ export class PersonController {
         private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
         private readonly personFactory: PersonFactory,
-        private readonly personUc: PersonUc,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
     ) {
@@ -141,6 +141,32 @@ export class PersonController {
         return new PersonendatensatzResponse(result, isMigrationCall === true ? false : true);
     }
 
+    @Delete(':personId')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiNoContentResponse({
+        description: 'The person and all their kontexte were successfully deleted.',
+    })
+    @ApiBadRequestResponse({ description: 'Request has wrong format.' })
+    @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
+    @ApiNotFoundResponse({ description: 'The person was not found.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
+    @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
+    public async deletePersonById(
+        @Param() params: PersonByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        const response: Result<void, DomainError> = await this.personRepository.deletePerson(
+            params.personId,
+            permissions,
+        );
+        // Throw an HTTP exception if the delete response is an error
+        if (!response.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(response.error),
+            );
+        }
+    }
+
     @Get(':personId')
     @ApiOkResponse({ description: 'The person was successfully returned.', type: PersonendatensatzResponse })
     @ApiBadRequestResponse({ description: 'Person ID is required' })
@@ -153,7 +179,10 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse> {
         //check that logged-in user is allowed to update person
-        const personResult: Result<Person<true>> = await this.personUc.getPersonIfAllowed(params.personId, permissions);
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            params.personId,
+            permissions,
+        );
         if (!personResult.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
@@ -183,7 +212,7 @@ export class PersonController {
             CreatePersonenkontextDto,
         );
         //check that logged-in user is allowed to update person
-        const personResult: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             pathParams.personId,
             permissions,
         );
@@ -226,7 +255,7 @@ export class PersonController {
             FindPersonenkontextDto,
         );
         //check that logged-in user is allowed to update person
-        const personResult: Result<Person<true>> = await this.personUc.getPersonIfAllowed(
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             pathParams.personId,
             permissions,
         );
@@ -315,7 +344,10 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse> {
         //check that logged-in user is allowed to update person
-        const personResult: Result<Person<true>> = await this.personUc.getPersonIfAllowed(params.personId, permissions);
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            params.personId,
+            permissions,
+        );
         if (!personResult.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
@@ -365,7 +397,10 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<Result<string>> {
         //check that logged-in user is allowed to update person
-        const personResult: Result<Person<true>> = await this.personUc.getPersonIfAllowed(params.personId, permissions);
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            params.personId,
+            permissions,
+        );
         if (!personResult.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(

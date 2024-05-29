@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { DomainError } from '../../../shared/error/index.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
 import { NurLehrUndLernAnKlasse } from '../specification/nur-lehr-und-lern-an-klasse.js';
@@ -7,6 +6,7 @@ import { GleicheRolleAnKlasseWieSchule } from '../specification/gleiche-rolle-an
 import { PersonenkontextKlasseSpecification } from '../specification/personenkontext-klasse-specification.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 
 @Injectable()
 export class DBiamPersonenkontextService {
@@ -16,7 +16,9 @@ export class DBiamPersonenkontextService {
         private readonly rolleRepo: RolleRepo,
     ) {}
 
-    public async checkSpecifications(personenkontext: Personenkontext<false>): Promise<Option<DomainError>> {
+    public async checkSpecifications(
+        personenkontext: Personenkontext<false>,
+    ): Promise<Option<PersonenkontextSpecificationError>> {
         //Check that only teachers and students are added to classes.
         const nurLehrUndLernAnKlasse: NurLehrUndLernAnKlasse = new NurLehrUndLernAnKlasse(
             this.organisationRepo,

@@ -24,6 +24,9 @@ import { KlasseNurVonSchuleAdministriert } from '../specification/klasse-nur-von
 import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
 import { KlassenNameAnSchuleEindeutig } from '../specification/klassen-name-an-schule-eindeutig.js';
 import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
+import { NameRequiredForSchule } from '../specification/name-required-for-schule.js';
+import { NameRequiredForSchuleError } from '../specification/error/name-required-for-schule.error.js';
 import { ScopeOperator } from '../../../shared/persistence/index.js';
 
 @Injectable()
@@ -47,7 +50,11 @@ export class OrganisationService {
             };
         }
 
-        const validationResult: Result<void, DomainError> = await this.validateKennung(organisationDo);
+        let validationResult: Result<void, DomainError> = await this.validateKennungRequiredForSchule(organisationDo);
+        if (!validationResult.ok) {
+            return { ok: false, error: validationResult.error };
+        }
+        validationResult = await this.validateNameRequiredForSchule(organisationDo);
         if (!validationResult.ok) {
             return { ok: false, error: validationResult.error };
         }
@@ -74,7 +81,11 @@ export class OrganisationService {
             return { ok: false, error: new EntityNotFoundError('Organisation', organisationDo.id) };
         }
 
-        const validationResult: Result<void, DomainError> = await this.validateKennung(organisationDo);
+        let validationResult: Result<void, DomainError> = await this.validateKennungRequiredForSchule(organisationDo);
+        if (!validationResult.ok) {
+            return { ok: false, error: validationResult.error };
+        }
+        validationResult = await this.validateNameRequiredForSchule(organisationDo);
         if (!validationResult.ok) {
             return { ok: false, error: validationResult.error };
         }
@@ -95,10 +106,23 @@ export class OrganisationService {
         };
     }
 
-    private async validateKennung(organisation: OrganisationDo<boolean>): Promise<Result<void, DomainError>> {
+    private async validateKennungRequiredForSchule(
+        organisation: OrganisationDo<boolean>,
+    ): Promise<Result<void, DomainError>> {
         const kennungRequiredForSchule: KennungRequiredForSchule = new KennungRequiredForSchule();
         if (!(await kennungRequiredForSchule.isSatisfiedBy(organisation))) {
             return { ok: false, error: new KennungRequiredForSchuleError() };
+        }
+
+        return { ok: true, value: undefined };
+    }
+
+    private async validateNameRequiredForSchule(
+        organisation: OrganisationDo<boolean>,
+    ): Promise<Result<void, DomainError>> {
+        const nameRequiredForSchule: NameRequiredForSchule = new NameRequiredForSchule();
+        if (!(await nameRequiredForSchule.isSatisfiedBy(organisation))) {
+            return { ok: false, error: new NameRequiredForSchuleError() };
         }
 
         return { ok: true, value: undefined };
@@ -134,7 +158,10 @@ export class OrganisationService {
         };
     }
 
-    public async setAdministriertVon(parentId: string, childId: string): Promise<Result<void, DomainError>> {
+    public async setAdministriertVon(
+        parentId: string,
+        childId: string,
+    ): Promise<Result<void, OrganisationSpecificationError | DomainError>> {
         const parentExists: boolean = await this.organisationRepo.exists(parentId);
         if (!parentExists) {
             return {
@@ -172,16 +199,16 @@ export class OrganisationService {
     private async validateAdministriertVon(
         childOrganisation: OrganisationDo<true>,
         parentId: string,
-    ): Promise<Result<boolean, DomainError>> {
+    ): Promise<Result<boolean, OrganisationSpecificationError>> {
         //check version from DB before administriertVon is altered
         if (!childOrganisation.administriertVon) return { ok: false, error: new RootOrganisationImmutableError() };
         childOrganisation.administriertVon = parentId;
 
-        const validateStructureSpecifications: Result<boolean, DomainError> =
+        const validateStructureSpecifications: Result<boolean, OrganisationSpecificationError> =
             await this.validateStructureSpecifications(childOrganisation);
         if (!validateStructureSpecifications.ok) return { ok: false, error: validateStructureSpecifications.error };
 
-        const validateKlassenSpecifications: Result<boolean, DomainError> =
+        const validateKlassenSpecifications: Result<boolean, OrganisationSpecificationError> =
             await this.validateKlassenSpecifications(childOrganisation);
         if (!validateKlassenSpecifications.ok) return { ok: false, error: validateKlassenSpecifications.error };
 
@@ -227,16 +254,16 @@ export class OrganisationService {
     private async validateZugehoerigZu(
         childOrganisation: OrganisationDo<true>,
         parentId: string,
-    ): Promise<Result<boolean, DomainError>> {
+    ): Promise<Result<boolean, OrganisationSpecificationError>> {
         //check version from DB before zugehoerigZu is altered
         if (!childOrganisation.zugehoerigZu) return { ok: false, error: new RootOrganisationImmutableError() };
         childOrganisation.zugehoerigZu = parentId;
 
-        const validateStructureSpecifications: Result<boolean, DomainError> =
+        const validateStructureSpecifications: Result<boolean, OrganisationSpecificationError> =
             await this.validateStructureSpecifications(childOrganisation);
         if (!validateStructureSpecifications.ok) return { ok: false, error: validateStructureSpecifications.error };
 
-        const validateKlassenSpecifications: Result<boolean, DomainError> =
+        const validateKlassenSpecifications: Result<boolean, OrganisationSpecificationError> =
             await this.validateKlassenSpecifications(childOrganisation);
         if (!validateKlassenSpecifications.ok) return { ok: false, error: validateKlassenSpecifications.error };
 
@@ -245,7 +272,7 @@ export class OrganisationService {
 
     private async validateKlassenSpecifications(
         childOrganisation: OrganisationDo<boolean>,
-    ): Promise<Result<boolean, DomainError>> {
+    ): Promise<Result<boolean, OrganisationSpecificationError>> {
         const klasseNurVonSchuleAdministriert: KlasseNurVonSchuleAdministriert = new KlasseNurVonSchuleAdministriert(
             this.organisationRepo,
         );
@@ -263,7 +290,7 @@ export class OrganisationService {
 
     private async validateStructureSpecifications(
         childOrganisation: OrganisationDo<true>,
-    ): Promise<Result<boolean, DomainError>> {
+    ): Promise<Result<boolean, OrganisationSpecificationError>> {
         const schuleUnterTraeger: SchuleUnterTraeger = new SchuleUnterTraeger(this.organisationRepo);
         if (!(await schuleUnterTraeger.isSatisfiedBy(childOrganisation))) {
             return { ok: false, error: new SchuleUnterTraegerError(childOrganisation.id) };
