@@ -34,6 +34,8 @@ import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 
 function createPersonenkontext(personenkontextFactory: PersonenkontextFactory): Personenkontext<true>[] {
     return [personenkontextFactory.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1')];
@@ -82,6 +84,10 @@ describe('PersonenkontextUc', () => {
                     useValue: createMock<OrganisationRepo>(),
                 },
                 {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
+                },
+                {
                     provide: OrganisationService,
                     useValue: createMock<OrganisationService>(),
                 },
@@ -104,6 +110,10 @@ describe('PersonenkontextUc', () => {
                 {
                     provide: PersonRepo,
                     useValue: createMock<PersonRepo>(),
+                },
+                {
+                    provide: PersonRepository,
+                    useValue: createMock<PersonRepository>(),
                 },
             ],
         }).compile();
