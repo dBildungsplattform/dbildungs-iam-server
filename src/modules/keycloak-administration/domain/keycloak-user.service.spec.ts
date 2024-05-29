@@ -273,6 +273,7 @@ describe('KeycloakUserService', () => {
         describe('when username and email already exists', () => {
             it('should return error result', async () => {
                 const user: UserDo<true> = DoFactory.createUser(true);
+                kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
                 kcUsersMock.find.mockResolvedValueOnce([
                     {
                         username: user.username,
@@ -303,6 +304,14 @@ describe('KeycloakUserService', () => {
         describe('when user could not be created', () => {
             it('should return error result', async () => {
                 kcUsersMock.create.mockRejectedValueOnce(new Error());
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: faker.string.alphanumeric(),
+                        email: faker.string.alphanumeric(),
+                        id: faker.string.uuid(),
+                        createdTimestamp: faker.date.recent(),
+                    },
+                ] as unknown as UserRepresentation[]);
                 const user: UserDo<false> = DoFactory.createUser(false);
 
                 const res: Result<string> = await service.createWithHashedPassword(
@@ -310,6 +319,8 @@ describe('KeycloakUserService', () => {
                     `{BCRYPT}$2b$12$hqG5T3z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
                     GgKOau`,
                 );
+
+                console.log(res)
 
                 expect(res).toEqual<Result<string>>({
                     ok: false,
