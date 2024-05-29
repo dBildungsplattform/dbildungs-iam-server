@@ -129,7 +129,6 @@ describe('PersonController', () => {
                 };
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([faker.string.uuid()]);
                 personRepositoryMock.create.mockResolvedValue(person);
-                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
                 await expect(personController.createPerson(params, personPermissionsMock)).resolves.toBeInstanceOf(
                     PersonendatensatzResponse,
                 );
@@ -156,7 +155,6 @@ describe('PersonController', () => {
                 };
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([]);
                 personRepositoryMock.create.mockResolvedValue(person);
-                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
                 await expect(personController.createPerson(params, personPermissionsMock)).rejects.toThrow(
                     HttpException,
                 );
