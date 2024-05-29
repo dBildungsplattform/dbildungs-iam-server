@@ -108,21 +108,22 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         this.unregister();
     }
 
-    public onModuleDestroy(): void {
+    public async onModuleDestroy(): void {
         if (this.unregister) {
             this.unregister();
         }
-        this.shutdownTelemetry();
+        await this.shutdownTelemetry();
         this.flushTelemetry();
     }
 
-    public shutdownTelemetry(provider: WebTracerProvider = this.provider): void {
-        provider
-            .shutdown()
-            .then(() => {
-                this.logger.info('Tracer provider shutdown successfully.');
-            })
-            .catch((err: string) => this.logger.error('Tracer provider shutdown failed:', err));
+    public async shutdownTelemetry(provider: WebTracerProvider = this.provider): Promise<void> {
+        try {
+            await provider.shutdown();
+
+            this.logger.info('Tracer provider shutdown successfully.');
+        } catch (err: unknown) {
+            this.logger.error('Tracer provider shutdown failed:', err);
+        }
     }
 
     public flushTelemetry(provider: WebTracerProvider = this.provider): void {
