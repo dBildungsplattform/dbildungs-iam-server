@@ -110,18 +110,20 @@ export class RolleRepo {
         return rollenMap;
     }
 
-    public async findByName(searchStr: string, limit?: number): Promise<Option<Rolle<true>[]>> {
+    public async findByName(searchStr: string, limit?: number, offset?: number): Promise<Option<Rolle<true>[]>> {
         const rollen: Option<RolleEntity[]> = await this.em.find(
             this.entityName,
             { name: { $ilike: '%' + searchStr + '%' } },
-            { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit },
+            { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit, offset: offset },
         );
         return rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
     }
 
-    public async find(): Promise<Rolle<true>[]> {
+    public async find(limit?: number, offset?: number): Promise<Rolle<true>[]> {
         const rollen: RolleEntity[] = await this.em.findAll(RolleEntity, {
             populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+            limit: limit,
+            offset: offset,
         });
 
         return rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
