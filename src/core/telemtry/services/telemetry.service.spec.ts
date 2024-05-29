@@ -9,6 +9,7 @@ describe('TelemetryService', () => {
     let module: TestingModule;
     let service: TelemetryService;
     let logger: DeepMocked<ClassLogger>;
+    let provider: DeepMocked<WebTracerProvider>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -38,42 +39,46 @@ describe('TelemetryService', () => {
         await module.close();
     });
 
-    it('should be defined', () => {
-        expect(service).toBeDefined();
+    beforeEach(() => {
+        provider = createMock<WebTracerProvider>();
+        logger = module.get(ClassLogger);
     });
 
-    it('should not throw an error on module init', () => {
-        expect(() => service.onModuleInit()).not.toThrow();
-    });
+    describe('Initialization', () => {
+        it('should be defined', () => {
+            expect(service).toBeDefined();
+        });
 
-    it('should not throw an error on module destroy', () => {
-        expect(() => service.onModuleDestroy()).not.toThrow();
-    });
+        it('should not throw an error on module init', () => {
+            expect(() => service.onModuleInit()).not.toThrow();
+        });
 
-    it('should fail its shutdown when the passed in service fails', async () => {
-        const provider: DeepMocked<WebTracerProvider> = createMock<WebTracerProvider>();
-
-        provider.shutdown.mockRejectedValue('An error');
-        await service.shutdownTelemetry(provider);
-        expect(logger.error).toHaveBeenCalledWith('Tracer provider shutdown failed:', 'An error');
-    });
-
-    it('should fail its force flush when the passed in service fails', async () => {
-        const provider: DeepMocked<WebTracerProvider> = createMock<WebTracerProvider>();
-
-        provider.forceFlush.mockRejectedValue('An error');
-        await service.flushTelemetry(provider);
-        expect(logger.error).toHaveBeenCalledWith('Tracer provider shutdown failed:', 'An error');
-    });
-
-    describe('shutdownTelemetry ', () => {
         it('should not throw an error on module destroy', () => {
-            expect(() => service.shutdownTelemetry()).toBeDefined();
+            expect(() => service.onModuleDestroy()).not.toThrow();
         });
     });
-    describe('shutdownTelemetry ', () => {
-        it('should not throw an error on module destroy', () => {
+
+    describe('shutdownTelemetry', () => {
+        it('should complete successfully when no errors occur', () => {
+            expect(() => service.shutdownTelemetry()).toBeDefined();
+        });
+
+        it('should log an error when the provider shutdown fails', async () => {
+            provider.shutdown.mockRejectedValue('An error');
+            await service.shutdownTelemetry(provider);
+            expect(logger.error).toHaveBeenCalledWith('Tracer provider shutdown failed:', 'An error');
+        });
+    });
+
+    describe('flushTelemetry', () => {
+        it('should complete successfully when no errors occur', () => {
             expect(() => service.flushTelemetry()).toBeDefined();
+        });
+
+        it('should log an error when the provider force flush fails', async () => {
+            provider.forceFlush.mockRejectedValue('An error');
+            await service.flushTelemetry(provider);
+            expect(logger.error).toHaveBeenCalledWith('Tracer provider shutdown failed:', 'An error');
         });
     });
 });
