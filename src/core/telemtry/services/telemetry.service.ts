@@ -43,7 +43,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         const TelemtryConfig: TelemetryConfig = configService.getOrThrow<TelemetryConfig>('Telemetry');
         this.metrics_url = TelemtryConfig.METRICS_URL;
         this.traces_url = TelemtryConfig.TRACES_URL;
-        // traces
+        // traces setup
         const collectorOptions = {
             url: this.traces_url,
             headers: {},
@@ -84,7 +84,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
 
         this.meter = this.meterProvider.getMeter('meter-meter');
 
-        // Define a counter
+        // counter
         this.metricPostCounter = this.meter.createCounter('metrics_posted');
         console.log('Metric post counter created');
 
