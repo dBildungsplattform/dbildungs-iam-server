@@ -48,6 +48,7 @@ import { RolleNameQueryParams } from './rolle-name-query.param.js';
 import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
+import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -64,32 +65,54 @@ export class RolleController {
 
     @Get()
     @ApiOperation({ description: 'List all rollen.' })
-    @ApiOkResponse({ description: 'The rollen were successfully returned', type: [RolleWithServiceProvidersResponse] })
+    @ApiOkResponse({
+        description: 'The rollen were successfully returned',
+        type: [RolleWithServiceProvidersResponse],
+        headers: PagingHeadersObject,
+    })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get rollen.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollen.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all rollen.' })
-    public async findRollen(@Query() queryParams: RolleNameQueryParams): Promise<RolleWithServiceProvidersResponse[]> {
+    public async findRollen(
+        @Query() queryParams: RolleNameQueryParams,
+    ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
         let rollen: Option<Rolle<true>[]>;
 
         if (queryParams.searchStr) {
-            rollen = await this.rolleRepo.findByName(queryParams.searchStr);
+            rollen = await this.rolleRepo.findByName(queryParams.searchStr, queryParams.limit, queryParams.offset);
         } else {
-            rollen = await this.rolleRepo.find();
+            rollen = await this.rolleRepo.find(queryParams.limit, queryParams.offset);
         }
 
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
 
         if (!rollen) {
-            return [];
+            const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
+                total: 0,
+                offset: 0,
+                limit: queryParams.limit ?? 0,
+                items: [],
+            };
+            return new PagedResponse(pagedRolleWithServiceProvidersResponse);
         }
 
-        return rollen.map((r: Rolle<true>) => {
-            const sps: ServiceProvider<true>[] = r.serviceProviderIds
-                .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
-                .filter(Boolean) as ServiceProvider<true>[];
+        const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
+            (r: Rolle<true>) => {
+                const sps: ServiceProvider<true>[] = r.serviceProviderIds
+                    .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
+                    .filter(Boolean) as ServiceProvider<true>[];
 
-            return new RolleWithServiceProvidersResponse(r, sps);
-        });
+                return new RolleWithServiceProvidersResponse(r, sps);
+            },
+        );
+        const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
+            total: rollenWithServiceProvidersResponses.length,
+            offset: queryParams.offset ?? 0,
+            limit: queryParams.limit ?? rollenWithServiceProvidersResponses.length,
+            items: rollenWithServiceProvidersResponses,
+        };
+
+        return new PagedResponse(pagedRolleWithServiceProvidersResponse);
     }
 
     @Get(':rolleId')
