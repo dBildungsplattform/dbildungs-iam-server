@@ -32,6 +32,7 @@ import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js'
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { createMock } from '@golevelup/ts-jest';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { EntityAlreadyExistsError } from '../../../shared/error/entity-already-exists.error.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -426,15 +427,12 @@ describe('dbiam Personenkontext Repo', () => {
     });
 
     describe('createAuthorized', () => {
-        it('should create a new personenkontext when authorized and kontext valid', async () => {
+        it('should create kontext when authorized', async () => {
             const adminUser: Person<true> = await createPerson();
             const rootOrga: OrganisationID = await createOrganisation(undefined, true);
-            const schuleA: OrganisationID = await createOrganisation(rootOrga, false);
-            const lehrerRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
             const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
-
             await sut.save(
                 createPersonenkontext(false, {
                     personId: adminUser.id,
@@ -444,9 +442,12 @@ describe('dbiam Personenkontext Repo', () => {
             );
 
             const person: Person<true> = await createPerson();
+            const schule: OrganisationID = await createOrganisation(rootOrga, false);
+            const lehrerRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
+
             const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
                 personId: person.id,
-                organisationId: schuleA,
+                organisationId: schule,
                 rolleId: lehrerRolle.id,
             });
 
@@ -459,7 +460,113 @@ describe('dbiam Personenkontext Repo', () => {
 
             expect(result).toEqual({
                 ok: true,
-                value: expect.objectContaining(personenkontext) as Personenkontext<true>,
+                value: expect.any(Personenkontext) as Personenkontext<true>,
+            });
+        });
+
+        it('should return error, if references are invalid', async () => {
+            const adminUser: Person<true> = await createPerson();
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true);
+            const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ]);
+            await sut.save(
+                createPersonenkontext(false, {
+                    personId: adminUser.id,
+                    organisationId: rootOrga,
+                    rolleId: adminRolle.id,
+                }),
+            );
+
+            const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
+                personId: faker.string.uuid(),
+                organisationId: faker.string.uuid(),
+                rolleId: faker.string.uuid(),
+            });
+
+            const permissions: PersonPermissions = createPermissions(adminUser);
+
+            const result: Result<Personenkontext<true>, DomainError> = await sut.createAuthorized(
+                personenkontext,
+                permissions,
+            );
+
+            expect(result).toEqual({
+                ok: false,
+                error: new EntityNotFoundError('Person', personenkontext.personId),
+            });
+        });
+
+        it('should create kontext when authorized', async () => {
+            const userWithoutPermission: Person<true> = await createPerson();
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true);
+            const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, []);
+            await sut.save(
+                createPersonenkontext(false, {
+                    personId: userWithoutPermission.id,
+                    organisationId: rootOrga,
+                    rolleId: adminRolle.id,
+                }),
+            );
+
+            const person: Person<true> = await createPerson();
+            const schule: OrganisationID = await createOrganisation(rootOrga, false);
+            const lehrerRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
+
+            const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
+                personId: person.id,
+                organisationId: schule,
+                rolleId: lehrerRolle.id,
+            });
+
+            const permissions: PersonPermissions = createPermissions(userWithoutPermission);
+
+            const result: Result<Personenkontext<true>, DomainError> = await sut.createAuthorized(
+                personenkontext,
+                permissions,
+            );
+
+            expect(result).toEqual({
+                ok: false,
+                error: new MissingPermissionsError('Unauthorized to manage persons at the organisation'),
+            });
+        });
+
+        it('should return error if it already exists', async () => {
+            const adminUser: Person<true> = await createPerson();
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true);
+            const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ]);
+            await sut.save(
+                createPersonenkontext(false, {
+                    personId: adminUser.id,
+                    organisationId: rootOrga,
+                    rolleId: adminRolle.id,
+                }),
+            );
+
+            const person: Person<true> = await createPerson();
+            const schule: OrganisationID = await createOrganisation(rootOrga, false);
+            const lehrerRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
+
+            const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
+                personId: person.id,
+                organisationId: schule,
+                rolleId: lehrerRolle.id,
+            });
+            await sut.save(personenkontext);
+
+            const permissions: PersonPermissions = createPermissions(adminUser);
+
+            const result: Result<Personenkontext<true>, DomainError> = await sut.createAuthorized(
+                personenkontext,
+                permissions,
+            );
+
+            expect(result).toEqual({
+                ok: false,
+                error: new EntityAlreadyExistsError('Personenkontext already exists'),
             });
         });
     });
