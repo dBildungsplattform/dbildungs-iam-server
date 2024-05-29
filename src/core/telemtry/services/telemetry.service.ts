@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/typedef */
-/* eslint-disable no-console */
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { BatchSpanProcessor, WebTracerProvider } from '@opentelemetry/sdk-trace-web';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
@@ -44,7 +42,11 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         this.metrics_url = TelemtryConfig.METRICS_URL;
         this.traces_url = TelemtryConfig.TRACES_URL;
         // traces setup
-        const collectorOptions = {
+        const collectorOptions: {
+            url: string;
+            headers: object;
+            concurrencyLimit: number;
+        } = {
             url: this.traces_url,
             headers: {},
             concurrencyLimit: 10,
@@ -64,7 +66,11 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         this.provider.register();
 
         // Metrics setup
-        const metricsCollectorOptions = {
+        const metricsCollectorOptions: {
+            url: string;
+            headers: object;
+            concurrencyLimit: number;
+        } = {
             url: this.metrics_url,
             headers: {},
             concurrencyLimit: 1,
@@ -72,7 +78,6 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
 
         this.metricsExporter = new OTLPMetricExporter(metricsCollectorOptions);
         this.meterProvider = new MeterProvider();
-        console.log('Metric exporter and meter provider initialized');
 
         this.meterProvider.addMetricReader(
             new PeriodicExportingMetricReader({
@@ -80,13 +85,11 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
                 exportIntervalMillis: 6000,
             }),
         );
-        console.log('Metric reader added to meter provider');
 
         this.meter = this.meterProvider.getMeter('meter-meter');
 
         // counter
         this.metricPostCounter = this.meter.createCounter('metrics_posted');
-        console.log('Metric post counter created');
 
         this.metricPostCounter.add(1);
     }
