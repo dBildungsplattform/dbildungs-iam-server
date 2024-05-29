@@ -116,6 +116,53 @@ describe('PersonController', () => {
     });
 
     describe('createPerson', () => {
+        describe('when is authorized migration call with username & password', () => {
+            it('should return PersonendatensatzResponse', async () => {
+                const person: Person<true> = getPerson();
+                const params: CreatePersonBodyParams = {
+                    name: {
+                        vorname: person.vorname,
+                        familienname: person.familienname,
+                    },
+                    geburt: {},
+                    username: 'fixedusername',
+                    hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
+                };
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([faker.string.uuid()]);
+                personRepositoryMock.create.mockResolvedValue(person);
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                await expect(personController.createPerson(params, personPermissionsMock)).resolves.toBeInstanceOf(
+                    PersonendatensatzResponse,
+                );
+                expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
+                const result: PersonendatensatzResponse = await personController.createPerson(
+                    params,
+                    personPermissionsMock,
+                );
+                expect(result.person.name.vorname).toEqual(person.vorname);
+                expect(result.person.name.familienname).toEqual(person.familienname);
+            });
+        });
+        describe('when is not authorized migration call with username & password', () => {
+            it('should return error', async () => {
+                const person: Person<true> = getPerson();
+                const params: CreatePersonBodyParams = {
+                    name: {
+                        vorname: person.vorname,
+                        familienname: person.familienname,
+                    },
+                    geburt: {},
+                    username: 'fixedusername',
+                    hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
+                };
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([]);
+                personRepositoryMock.create.mockResolvedValue(person);
+                personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                await expect(personController.createPerson(params, personPermissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
+            });
+        });
         describe('when creating a person is successful', () => {
             it('should return PersonendatensatzResponse', async () => {
                 const person: Person<true> = getPerson();
@@ -126,7 +173,7 @@ describe('PersonController', () => {
                     },
                     geburt: {},
                 };
-
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([faker.string.uuid()]);
                 personRepositoryMock.create.mockResolvedValue(person);
                 personUcMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
                 await expect(personController.createPerson(params, personPermissionsMock)).resolves.toBeInstanceOf(
