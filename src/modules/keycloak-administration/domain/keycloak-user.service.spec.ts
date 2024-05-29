@@ -158,6 +158,187 @@ describe('KeycloakUserService', () => {
         });
     });
 
+    describe('createUserWithHashedPassword', () => {
+        describe('when user does not exist & HashAlgo is Valid BCRYPT', () => {
+            it('should return user id', async () => {
+                const user: UserDo<true> = DoFactory.createUser(true);
+                kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
+
+                const res: Result<string> = await service.createWithHashedPassword(
+                    {
+                        id: undefined,
+                        createdDate: undefined,
+                        username: user.username,
+                        email: user.email,
+                    },
+                    `{BCRYPT}$2b$12$hqG5T3z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
+                    GgKOau`,
+                );
+
+                expect(res).toStrictEqual<Result<string>>({
+                    ok: true,
+                    value: user.id,
+                });
+            });
+        });
+        describe('when user does not exist & HashAlgo is Valid CRYPT', () => {
+            it('should return user id', async () => {
+                const user: UserDo<true> = DoFactory.createUser(true);
+                kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
+
+                const res: Result<string> = await service.createWithHashedPassword(
+                    {
+                        id: undefined,
+                        createdDate: undefined,
+                        username: user.username,
+                        email: user.email,
+                    },
+                    `{crypt}$6$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
+                    sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
+                );
+
+                expect(res).toStrictEqual<Result<string>>({
+                    ok: true,
+                    value: user.id,
+                });
+            });
+        });
+        describe('when user does not exist & HashAlgo is Invalid BCRYPT', () => {
+            it('should return user id', async () => {
+                const user: UserDo<true> = DoFactory.createUser(true);
+                kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
+
+                const res: Result<string> = await service.createWithHashedPassword(
+                    {
+                        id: undefined,
+                        createdDate: undefined,
+                        username: user.username,
+                        email: user.email,
+                    },
+                    `{BCRYPT}xxxxxhqG5T3$z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
+                    GgKOau`,
+                );
+
+                expect(res).toEqual<Result<string>>({
+                    ok: false,
+                    error: new KeycloakClientError('Invalid bcrypt hash format'),
+                });
+            });
+        });
+        describe('when user does not exist & HashAlgo is Invalid crypt', () => {
+            it('should return user id', async () => {
+                const user: UserDo<true> = DoFactory.createUser(true);
+                kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
+
+                const res: Result<string> = await service.createWithHashedPassword(
+                    {
+                        id: undefined,
+                        createdDate: undefined,
+                        username: user.username,
+                        email: user.email,
+                    },
+                    `{crypt}$$x$$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
+                    sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
+                );
+
+                expect(res).toEqual<Result<string>>({
+                    ok: false,
+                    error: new KeycloakClientError('Invalid crypt hash format'),
+                });
+            });
+        });
+        describe('when user does not exist & HashAlgo is not supported', () => {
+            it('should return user id', async () => {
+                const user: UserDo<true> = DoFactory.createUser(true);
+                kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
+
+                const res: Result<string> = await service.createWithHashedPassword(
+                    {
+                        id: undefined,
+                        createdDate: undefined,
+                        username: user.username,
+                        email: user.email,
+                    },
+                    `{notsupported}$6$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
+                    sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
+                );
+
+                expect(res).toStrictEqual<Result<string>>({
+                    ok: false,
+                    error: new KeycloakClientError('Unsupported password algorithm'),
+                });
+            });
+        });
+
+        describe('when username and email already exists', () => {
+            it('should return error result', async () => {
+                const user: UserDo<true> = DoFactory.createUser(true);
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: user.username,
+                        email: user.email,
+                        id: user.id,
+                        createdTimestamp: user.createdDate.getTime(),
+                    },
+                ] as unknown as UserRepresentation[]);
+
+                const res: Result<string> = await service.createWithHashedPassword(
+                    {
+                        id: undefined,
+                        createdDate: undefined,
+                        username: user.username,
+                        email: user.email,
+                    },
+                    `{BCRYPT}$2b$12$hqG5T3z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
+                    GgKOau`,
+                );
+
+                expect(res).toStrictEqual<Result<string>>({
+                    ok: false,
+                    error: new KeycloakClientError('Username or email already exists'),
+                });
+            });
+        });
+
+        describe('when user could not be created', () => {
+            it('should return error result', async () => {
+                kcUsersMock.create.mockRejectedValueOnce(new Error());
+                const user: UserDo<false> = DoFactory.createUser(false);
+
+                const res: Result<string> = await service.createWithHashedPassword(
+                    user,
+                    `{BCRYPT}$2b$12$hqG5T3z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
+                    GgKOau`,
+                );
+
+                expect(res).toEqual<Result<string>>({
+                    ok: false,
+                    error: new KeycloakClientError('Could not create user'),
+                });
+            });
+        });
+
+        describe('when getAuthedKcAdminClient fails', () => {
+            it('should pass along error result', async () => {
+                const error: Result<KeycloakAdminClient, DomainError> = {
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                };
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
+                const user: UserDo<false> = DoFactory.createUser(false);
+
+                const res: Result<string> = await service.createWithHashedPassword(
+                    user,
+                    `{BCRYPT}$2b$12$hqG5T3z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
+                    GgKOau`,
+                );
+
+                expect(res).toBe(error);
+            });
+        });
+    });
+
     describe('delete', () => {
         it('should return ok result if user exists', async () => {
             kcUsersMock.del.mockResolvedValueOnce();
