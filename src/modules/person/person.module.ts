@@ -11,6 +11,11 @@ import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 import { PersonRepository } from './persistence/person.repository.js';
 import { PersonFactory } from './domain/person.factory.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonenkontextFactory } from '../personenkontext/domain/personenkontext.factory.js';
+import { RolleRepo } from '../rolle/repo/rolle.repo.js';
+import { OrganisationRepo } from '../organisation/persistence/organisation.repo.js';
+import { RolleFactory } from '../rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
 
 @Module({
     imports: [KeycloakAdministrationModule, LoggerModule.register(PersonModule.name)],
@@ -25,6 +30,11 @@ import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-p
         KeycloakUserService,
         KeycloakAdministrationService,
         KeycloakAdminClient,
+        PersonenkontextFactory,
+        RolleRepo,
+        OrganisationRepo,
+        RolleFactory,
+        ServiceProviderRepo,
     ],
     exports: [PersonService, PersonFactory, PersonRepo, PersonRepository],
 })

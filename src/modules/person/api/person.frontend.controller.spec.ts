@@ -13,11 +13,13 @@ import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { UnauthorizedException } from '@nestjs/common';
+import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 
 describe('PersonFrontendController', () => {
     let module: TestingModule;
     let personController: PersonFrontendController;
     let personRepositoryMock: DeepMocked<PersonRepository>;
+    let personenkontextFactory: PersonenkontextFactory;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -25,6 +27,7 @@ describe('PersonFrontendController', () => {
             providers: [
                 PersonFrontendController,
                 PersonApiMapperProfile,
+                PersonenkontextFactory,
                 {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
@@ -33,6 +36,7 @@ describe('PersonFrontendController', () => {
         }).compile();
         personController = module.get(PersonFrontendController);
         personRepositoryMock = module.get(PersonRepository);
+        personenkontextFactory = module.get(PersonenkontextFactory);
     });
 
     afterAll(async () => {
@@ -89,7 +93,7 @@ describe('PersonFrontendController', () => {
             faker.string.uuid(),
         );
 
-        const personenkontext1: Personenkontext<true> = Personenkontext.construct(
+        const personenkontext1: Personenkontext<true> = personenkontextFactory.construct(
             faker.string.uuid(),
             faker.date.past(),
             faker.date.recent(),

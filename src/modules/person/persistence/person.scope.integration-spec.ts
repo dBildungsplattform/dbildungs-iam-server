@@ -18,6 +18,13 @@ import { PersonScope } from './person.scope.js';
 import { faker } from '@faker-js/faker';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
+import { PersonRepo } from './person.repo.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
 describe('PersonScope', () => {
     let module: TestingModule;
@@ -25,6 +32,9 @@ describe('PersonScope', () => {
     let em: EntityManager;
     let mapper: Mapper;
     let kontextRepo: DBiamPersonenkontextRepo;
+    let rolleRepo: RolleRepo;
+    let organisationRepo: OrganisationRepo;
+    let personRepo: PersonRepo;
 
     const createPersonEntity = (): PersonEntity => {
         const person: PersonEntity = mapper.map(DoFactory.createPerson(false), PersonDo, PersonEntity);
@@ -32,19 +42,41 @@ describe('PersonScope', () => {
     };
 
     const createPersonenkontext = async (personId: string, orgnisationID: string, rolleID: string): Promise<void> => {
-        const personkentext: Personenkontext<false> = Personenkontext.createNew(personId, orgnisationID, rolleID);
-        await kontextRepo.save(personkentext);
+        const personkontext: Personenkontext<false> | DomainError = await Personenkontext.createNew(
+            personRepo,
+            organisationRepo,
+            rolleRepo,
+            personId,
+            orgnisationID,
+            rolleID,
+        );
+        if (personkontext instanceof DomainError) {
+            return;
+        }
+        await kontextRepo.save(personkontext);
     };
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [PersonPersistenceMapperProfile, DBiamPersonenkontextRepo],
+            providers: [
+                PersonPersistenceMapperProfile,
+                DBiamPersonenkontextRepo,
+                RolleRepo,
+                OrganisationRepo,
+                PersonRepo,
+                PersonenkontextFactory,
+                RolleFactory,
+                ServiceProviderRepo,
+            ],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
         kontextRepo = module.get(DBiamPersonenkontextRepo);
+        rolleRepo = module.get(RolleRepo);
+        organisationRepo = module.get(OrganisationRepo);
+        personRepo = module.get(PersonRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);

@@ -183,7 +183,7 @@ describe('PersonPermissions', () => {
                 faker.string.uuid(),
             );
             const personenkontexte: Personenkontext<true>[] = [
-                Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
+                personenkontextFactory.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
             ];
             dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
             rolleRepoMock.findByIds.mockResolvedValueOnce(
