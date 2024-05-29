@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
-import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
+import { OrganisationID, PersonID, RolleID } from '../../../../shared/types/index.js';
 
 export class DBiamCreatePersonenkontextBodyParams {
     @IsString()

@@ -25,7 +25,7 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
-import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
+import { SystemrechtResponse } from './response/personenkontext-systemrecht.response.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 
 @Injectable()

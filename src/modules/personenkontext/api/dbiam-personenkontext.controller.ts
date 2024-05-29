@@ -1,7 +1,8 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
+    ApiConflictResponse,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
@@ -17,14 +18,15 @@ import { OrganisationRepo } from '../../organisation/persistence/organisation.re
 import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
-import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkontext.body.params.js';
-import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personenkontext-by-personid.params.js';
+import { DBiamCreatePersonenkontextBodyParams } from './param/dbiam-create-personenkontext.body.params.js';
+import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
+import { DBiamPersonenkontextResponse } from './response/dbiam-personenkontext.response.js';
 import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
+import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new PersonenkontextExceptionFilter())
 @ApiTags('dbiam-personenkontexte')
@@ -118,5 +120,26 @@ export class DBiamPersonenkontextController {
         const savedPersonenkontext: Personenkontext<true> = await this.personenkontextRepo.save(newPersonenkontext);
 
         return new DBiamPersonenkontextResponse(savedPersonenkontext);
+    }
+
+    @Put()
+    @HttpCode(HttpStatus.CREATED)
+    @ApiCreatedResponse({
+        description: 'Add or remove personenkontexte as one operation.',
+        type: DBiamPersonenkontextResponse,
+    })
+    @ApiBadRequestResponse({
+        description: 'The personenkontexte could not be updated, may due to unsatisfied specifications.',
+        type: DbiamPersonenkontextError,
+    })
+    @ApiConflictResponse({ description: 'Changes are conflicting with current state of personenkontexte.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update personenkontexte.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permission to update personenkontexte.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while updating personenkontexte.' })
+    public async updatesPersonenkontexte(@Body() params: DbiamUpdatePersonenkontexteBodyParams): Promise<void> {
+        const pks: DBiamCreatePersonenkontextBodyParams[] = params.personenkontexte;
+        pks.forEach((pk: DBiamCreatePersonenkontextBodyParams) => {
+            console.log(`orga:${pk.organisationId}, person:${pk.personId}, rolle:${pk.rolleId}`);
+        });
     }
 }
