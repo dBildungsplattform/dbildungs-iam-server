@@ -27,6 +27,8 @@ import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
+import { DbiamPersonenkontextFactory } from '../domain/dbiam-personenkontext.factory.js';
+import { PersonenkontexteUpdate } from '../domain/personenkontexte-update.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new PersonenkontextExceptionFilter())
 @ApiTags('dbiam-personenkontexte')
@@ -35,6 +37,7 @@ import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-pers
 @Controller({ path: 'dbiam/personenkontext' })
 export class DBiamPersonenkontextController {
     public constructor(
+        private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personRepo: PersonRepo,
         private readonly organisationRepo: OrganisationRepo,
@@ -137,9 +140,14 @@ export class DBiamPersonenkontextController {
     @ApiForbiddenResponse({ description: 'Insufficient permission to update personenkontexte.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while updating personenkontexte.' })
     public async updatesPersonenkontexte(@Body() params: DbiamUpdatePersonenkontexteBodyParams): Promise<void> {
-        const pks: DBiamCreatePersonenkontextBodyParams[] = params.personenkontexte;
-        pks.forEach((pk: DBiamCreatePersonenkontextBodyParams) => {
-            console.log(`orga:${pk.organisationId}, person:${pk.personId}, rolle:${pk.rolleId}`);
-        });
+        const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNew(
+            params.lastModified,
+            params.count,
+            params.personenkontexte,
+        );
+        const result: boolean | PersonenkontextSpecificationError = await pkUpdate.validate();
+        if (result instanceof PersonenkontextSpecificationError) {
+            throw result;
+        }
     }
 }
