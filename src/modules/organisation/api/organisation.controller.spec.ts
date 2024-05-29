@@ -24,7 +24,9 @@ import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
+import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -35,7 +37,6 @@ function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyPa
     };
     return [params, body];
 }
-import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 
 describe('OrganisationController', () => {
     let module: TestingModule;
@@ -276,6 +277,84 @@ describe('OrganisationController', () => {
                 );
 
                 expect(result.items.length).toEqual(1);
+            });
+        });
+    });
+
+    describe('getRootChildren', () => {
+        describe('when both oeffentlich & ersatz could be found', () => {
+            it('should return offentliche & ersatz organisation', async () => {
+                const oeffentlich: Organisation<true> = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.numeric(),
+                    'Öffentliche Schulen Land Schleswig Holstein',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.ROOT,
+                    undefined,
+                );
+                const ersatz: Organisation<true> = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.numeric(),
+                    'Ersatzschulen Land Schleswig Holstein',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.SCHULE,
+                    undefined,
+                );
+                const mockedRepoResponse: Organisation<true>[] = [oeffentlich, ersatz];
+
+                organisationRepositoryMock.findRootDirectChildren.mockResolvedValue(mockedRepoResponse);
+
+                const result: OrganisationRootChildrenResponse = await organisationController.getRootChildren();
+
+                expect(organisationRepositoryMock.findRootDirectChildren).toHaveBeenCalledTimes(1);
+                expect(result).toBeInstanceOf(OrganisationRootChildrenResponse);
+                expect(result.ersatz).toEqual(new OrganisationResponse(ersatz));
+                expect(result.oeffentlich).toEqual(new OrganisationResponse(oeffentlich));
+            });
+        });
+        describe('when oeffentlich || ersatz could not be found', () => {
+            it('should return an error', async () => {
+                const oeffentlich: Organisation<true> = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.numeric(),
+                    'Random Schule',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.ROOT,
+                    undefined,
+                );
+                const ersatz: Organisation<true> = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.numeric(),
+                    'Random Schule 2',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.SCHULE,
+                    undefined,
+                );
+                const mockedRepoResponse: Organisation<true>[] = [oeffentlich, ersatz];
+
+                organisationRepositoryMock.findRootDirectChildren.mockResolvedValue(mockedRepoResponse);
+
+                await expect(organisationController.getRootChildren()).rejects.toThrow(HttpException);
             });
         });
     });

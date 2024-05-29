@@ -95,4 +95,15 @@ export class OrganisationRepository {
 
         return rawResult.map(mapEntityToAggregate);
     }
+
+    public async findRootDirectChildren(): Promise<Organisation<true>[]> {
+        const scope: OrganisationScope = new OrganisationScope().findAdministrierteVon(this.ROOT_ORGANISATION_ID);
+
+        const [entities]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
+        const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
+            mapEntityToAggregate(entity),
+        );
+
+        return organisations;
+    }
 }

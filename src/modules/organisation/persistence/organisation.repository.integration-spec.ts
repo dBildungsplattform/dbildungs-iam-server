@@ -18,13 +18,19 @@ import { Organisation } from '../domain/organisation.js';
 import { OrganisationScope } from './organisation.scope.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { ScopeOperator } from '../../../shared/persistence/index.js';
+import { ConfigService } from '@nestjs/config';
+import { ServerConfig } from '../../../shared/config/server.config.js';
+import { DataConfig } from '../../../shared/config/index.js';
 
-describe('PersonRepository', () => {
+describe('OrganisationRepository', () => {
     let module: TestingModule;
     let sut: OrganisationRepository;
     let orm: MikroORM;
     let em: EntityManager;
     let mapper: Mapper;
+    let config: ConfigService<ServerConfig>;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let ROOT_ORGANISATION_ID: string;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -35,12 +41,17 @@ describe('PersonRepository', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
+        config = module.get(ConfigService<ServerConfig>);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await module.close();
+    });
+
+    beforeAll(() => {
+        ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     });
 
     beforeEach(async () => {
@@ -323,6 +334,70 @@ describe('PersonRepository', () => {
                 const result: Organisation<true>[] = await sut.findChildOrgasForIds([traegerId]);
 
                 expect(result).toHaveLength(1);
+            });
+        });
+    });
+
+    describe('findRootDirectChildren', () => {
+        let root: Organisation<false>;
+        let oeffentlich: Organisation<false>;
+        let ersatz: Organisation<false>;
+        let organisationEntity1: OrganisationEntity;
+        let organisationEntity2: OrganisationEntity;
+        let organisationEntity3: OrganisationEntity;
+
+        beforeEach(async () => {
+            root = Organisation.construct(
+                ROOT_ORGANISATION_ID,
+                faker.date.past(),
+                faker.date.recent(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.numeric(),
+                'Root',
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.SCHULE,
+                undefined,
+            );
+            oeffentlich = Organisation.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                ROOT_ORGANISATION_ID,
+                faker.string.uuid(),
+                faker.string.numeric(),
+                'Öffentliche Schulen Land Schleswig Holstein',
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.ROOT,
+                undefined,
+            );
+            ersatz = Organisation.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                ROOT_ORGANISATION_ID,
+                faker.string.uuid(),
+                faker.string.numeric(),
+                'Ersatzschulen Land Schleswig Holstein',
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.SCHULE,
+                undefined,
+            );
+            organisationEntity1 = em.create(OrganisationEntity, mapAggregateToData(root));
+            organisationEntity2 = em.create(OrganisationEntity, mapAggregateToData(oeffentlich));
+            organisationEntity3 = em.create(OrganisationEntity, mapAggregateToData(ersatz));
+            await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
+        });
+
+        describe('When Called', () => {
+            it('should return flaged oeffentlich & ersatz root nodes', async () => {
+                const result: Organisation<true>[] = await sut.findRootDirectChildren();
+
+                expect(result).toBeInstanceOf(Array);
+                expect(result).toHaveLength(2);
             });
         });
     });

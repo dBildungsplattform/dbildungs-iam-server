@@ -12,7 +12,8 @@
                 "PERSONEN_VERWALTEN",
                 "SCHULEN_VERWALTEN",
                 "KLASSEN_VERWALTEN",
-                "SCHULTRAEGER_VERWALTEN"
+                "SCHULTRAEGER_VERWALTEN",
+                "PERSONEN_SOFORT_LOESCHEN"
             ],
             "serviceProviderIds": [
                 0,
