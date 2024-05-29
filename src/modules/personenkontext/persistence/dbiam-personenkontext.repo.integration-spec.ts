@@ -3,21 +3,19 @@ import { EntityManager, MikroORM, UniqueConstraintViolationException } from '@mi
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
-    KeycloakConfigTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from './dbiam-personenkontext.repo.js';
 import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
-import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { RolleModule } from '../../rolle/rolle.module.js';
 import { OrganisationModule } from '../../organisation/organisation.module.js';
@@ -32,6 +30,8 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { createMock } from '@golevelup/ts-jest';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -73,7 +73,6 @@ describe('dbiam Personenkontext Repo', () => {
                 ConfigTestModule,
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                KeycloakAdministrationModule,
                 RolleModule,
                 OrganisationModule,
             ],
@@ -84,11 +83,23 @@ describe('dbiam Personenkontext Repo', () => {
                 PersonRepository,
                 UsernameGeneratorService,
                 PersonenkontextFactory,
+                {
+                    provide: KeycloakUserService,
+                    useValue: createMock<KeycloakUserService>({
+                        create: () =>
+                            Promise.resolve({
+                                ok: true,
+                                value: faker.string.uuid(),
+                            }),
+                        setPassword: () =>
+                            Promise.resolve({
+                                ok: true,
+                                value: faker.string.alphanumeric(16),
+                            }),
+                    }),
+                },
             ],
-        })
-            .overrideModule(KeycloakConfigModule)
-            .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
-            .compile();
+        }).compile();
 
         sut = module.get(DBiamPersonenkontextRepo);
         orm = module.get(MikroORM);
@@ -102,12 +113,14 @@ describe('dbiam Personenkontext Repo', () => {
         personenkontextFactory = module.get(PersonenkontextFactory);
 
         await DatabaseTestModule.setupDatabase(orm);
-    }, 10000000);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     async function createPerson(): Promise<Person<true>> {
         const personResult: Person<false> | DomainError = await personFactory.createNew({
             vorname: faker.person.firstName(),
             familienname: faker.person.lastName(),
+            username: faker.internet.userName(),
+            password: faker.string.alphanumeric(8),
         });
         if (personResult instanceof DomainError) {
             throw personResult;
