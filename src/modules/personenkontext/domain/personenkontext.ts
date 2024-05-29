@@ -8,6 +8,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { LandesadminNurVonLandesadminAdministriert } from '../specification/landesadmin-nur-von-landesadmin-administriert.js';
 
 export class Personenkontext<WasPersisted extends boolean> {
     private constructor(
@@ -121,6 +122,15 @@ export class Personenkontext<WasPersisted extends boolean> {
 
             if (!canModifyPerson) {
                 return new MissingPermissionsError('Not authorized to manage this person');
+            }
+        }
+        //Permissions: Can the current admin assign landesadmin role in the personenkontext?
+        {
+            //Permissions: Does the current admin have more Systemrechte as the new user?
+            const landesadminNurVonLandesadminAdministriert: LandesadminNurVonLandesadminAdministriert =
+                new LandesadminNurVonLandesadminAdministriert(this.rolleRepo, permissions);
+            if (!(await landesadminNurVonLandesadminAdministriert.isSatisfiedBy(this))) {
+                return new MissingPermissionsError('Not authorized to assign this role for the personenkontext');
             }
         }
 
