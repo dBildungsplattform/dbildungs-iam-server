@@ -1,44 +1,36 @@
 import { faker } from '@faker-js/faker';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Request } from 'express';
+import { Observable } from 'rxjs';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
-    DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DatabaseTestModule,
     DoFactory,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
+import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PassportUser } from '../../authentication/types/user.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { PersonDo } from '../../person/domain/person.do.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Personenkontext } from '../domain/personenkontext.js';
-import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
-import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
-import { Observable } from 'rxjs';
-import { PassportUser } from '../../authentication/types/user.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
-import { Request } from 'express';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { Request } from 'express';
-import { Observable } from 'rxjs';
-import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { PassportUser } from '../../authentication/types/user.js';
+import { Personenkontext } from '../domain/personenkontext.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
