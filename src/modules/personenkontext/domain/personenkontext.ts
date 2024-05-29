@@ -69,35 +69,28 @@ export class Personenkontext<WasPersisted extends boolean> {
     }
 
     public async checkReferences(): Promise<Option<DomainError>> {
-        const referencesExist: [boolean, boolean, boolean] = await Promise.all([
+        const [personExists, orgaExists, rolle]: [boolean, boolean, Option<Rolle<true>>] = await Promise.all([
             this.personRepo.exists(this.personId),
             this.organisationRepo.exists(this.organisationId),
-            this.rolleRepo.exists(this.rolleId),
+            this.rolleRepo.findById(this.rolleId),
         ]);
 
-        if (!referencesExist[0]) {
+        if (!personExists) {
             return new EntityNotFoundError('Person', this.personId);
         }
 
-        if (!referencesExist[1]) {
+        if (!orgaExists) {
             return new EntityNotFoundError('Organisation', this.organisationId);
         }
 
-        if (!referencesExist[2]) {
+        if (!rolle) {
             return new EntityNotFoundError('Rolle', this.rolleId);
         }
 
         // Can rolle be assigned at target orga
-        {
-            const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(this.rolleId);
-            if (!rolle) {
-                return new EntityNotFoundError('rolle', this.rolleId);
-            }
-
-            const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(this.organisationId);
-            if (!canAssignRolle) {
-                return new EntityNotFoundError('rolle', this.rolleId); // Rolle does not exist for the chosen organisation
-            }
+        const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(this.organisationId);
+        if (!canAssignRolle) {
+            return new EntityNotFoundError('rolle', this.rolleId); // Rolle does not exist for the chosen organisation
         }
 
         return undefined;
