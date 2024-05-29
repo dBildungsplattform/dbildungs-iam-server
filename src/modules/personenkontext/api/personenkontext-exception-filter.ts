@@ -8,8 +8,10 @@ import {
 import { NurLehrUndLernAnKlasseError } from '../specification/error/nur-lehr-und-lern-an-klasse.error.js';
 import { GleicheRolleAnKlasseWieSchuleError } from '../specification/error/gleiche-rolle-an-klasse-wie-schule.error.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
-import { PersonenkontexteUpdateCountError } from '../specification/error/personenkontexte-update-count.error.js';
-import { PersonenkontexteUpdateNotFoundError } from '../specification/error/personenkontexte-update-not-found.error.js';
+import { UpdateCountError } from '../specification/error/update-count.error.js';
+import { UpdateNotFoundError } from '../specification/error/update-not-found.error.js';
+import { UpdateOutdatedError } from '../specification/error/update-outdated.error.js';
+import { UpdatePersonIdMismatchError } from '../specification/error/update-person-id-mismatch.error.js';
 
 @Catch(PersonenkontextSpecificationError)
 export class PersonenkontextExceptionFilter implements ExceptionFilter<PersonenkontextSpecificationError> {
@@ -29,17 +31,31 @@ export class PersonenkontextExceptionFilter implements ExceptionFilter<Personenk
             }),
         ],
         [
-            PersonenkontexteUpdateCountError.name,
+            UpdateCountError.name,
             new DbiamPersonenkontextError({
                 code: 400,
                 i18nKey: PersonenkontextSpecificationErrorI18nTypes.COUNT_MISMATCHING_ERROR,
             }),
         ],
         [
-            PersonenkontexteUpdateNotFoundError.name,
+            UpdateNotFoundError.name,
             new DbiamPersonenkontextError({
                 code: 400,
                 i18nKey: PersonenkontextSpecificationErrorI18nTypes.PERSONENKONTEXT_NOT_FOUND,
+            }),
+        ],
+        [
+            UpdateOutdatedError.name,
+            new DbiamPersonenkontextError({
+                code: 400,
+                i18nKey: PersonenkontextSpecificationErrorI18nTypes.NEWER_VERSION_OF_PERSONENKONTEXTE_AVAILABLE,
+            }),
+        ],
+        [
+            UpdatePersonIdMismatchError.name,
+            new DbiamPersonenkontextError({
+                code: 400,
+                i18nKey: PersonenkontextSpecificationErrorI18nTypes.PERSON_ID_MISMATCH_ERROR,
             }),
         ],
     ]);

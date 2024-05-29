@@ -6,6 +6,7 @@ import { Rolle } from '../domain/personenkontext.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
+import { EntityNotFoundError } from '../../../shared/error/index.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
@@ -133,5 +134,25 @@ export class DBiamPersonenkontextRepo {
         await this.em.persistAndFlush(personenKontextEntity);
 
         return mapEntityToAggregate(personenKontextEntity);
+    }
+
+    public async delete(personenKontext: Personenkontext<true>): Promise<Option<EntityNotFoundError>> {
+        const personId: PersonID = personenKontext.personId;
+        const organisationId: OrganisationID = personenKontext.organisationId;
+        const rolleId: RolleID = personenKontext.rolleId;
+        const personenKontextEntity: Option<PersonenkontextEntity> = await this.em.findOne(
+            PersonenkontextEntity,
+            {
+                personId,
+                organisationId,
+                rolleId,
+            },
+            {},
+        );
+        if (!personenKontextEntity) {
+            return new EntityNotFoundError();
+        }
+        await this.em.removeAndFlush(personenKontextEntity);
+        return null;
     }
 }

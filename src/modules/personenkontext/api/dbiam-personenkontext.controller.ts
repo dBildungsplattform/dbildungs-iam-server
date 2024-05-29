@@ -125,7 +125,7 @@ export class DBiamPersonenkontextController {
         return new DBiamPersonenkontextResponse(savedPersonenkontext);
     }
 
-    @Put()
+    @Put(':personId')
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({
         description: 'Add or remove personenkontexte as one operation.',
@@ -139,15 +139,19 @@ export class DBiamPersonenkontextController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to update personenkontexte.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to update personenkontexte.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while updating personenkontexte.' })
-    public async updatesPersonenkontexte(@Body() params: DbiamUpdatePersonenkontexteBodyParams): Promise<void> {
+    public async updatesPersonenkontexte(
+        @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
+        @Body() bodyParams: DbiamUpdatePersonenkontexteBodyParams,
+    ): Promise<void> {
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNew(
-            params.lastModified,
-            params.count,
-            params.personenkontexte,
+            params.personId,
+            bodyParams.lastModified,
+            bodyParams.count,
+            bodyParams.personenkontexte,
         );
-        const result: boolean | PersonenkontextSpecificationError = await pkUpdate.validate();
-        if (result instanceof PersonenkontextSpecificationError) {
-            throw result;
+        const updateError: Option<PersonenkontextSpecificationError> = await pkUpdate.update();
+        if (updateError) {
+            throw updateError;
         }
     }
 }
