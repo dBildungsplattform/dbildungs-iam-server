@@ -35,6 +35,10 @@
     "DATA": {
         "ROOT_ORGANISATION_ID": "a10852ab-1d75-45a7-9421-b1cbd8abe693"
     },
+    "TELEMETRY": {
+        "METRICS_URL": "http:localhost:4317/v1/metrics",
+        "TRACES_URL": "http:localhost:4317/v1/traces"
+    },
     "LOGGING": {
         "DEFAULT_LOG_LEVEL": "info"
     }

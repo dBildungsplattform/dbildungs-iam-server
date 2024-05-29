@@ -38,7 +38,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         private readonly logger: ClassLogger,
         configService: ConfigService<ServerConfig>,
     ) {
-        const TelemtryConfig: TelemetryConfig = configService.getOrThrow<TelemetryConfig>('Telemetry');
+        const TelemtryConfig: TelemetryConfig = configService.getOrThrow<TelemetryConfig>('TELEMETRY');
         this.metrics_url = TelemtryConfig.METRICS_URL;
         this.traces_url = TelemtryConfig.TRACES_URL;
         // traces setup
