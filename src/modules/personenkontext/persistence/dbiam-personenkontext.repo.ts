@@ -201,7 +201,17 @@ export class DBiamPersonenkontextRepo {
         permissions: PersonPermissions,
     ): Promise<Result<Personenkontext<true>, DomainError>> {
         {
-            const result: Option<DomainError> = await personenkontext.checkValidity(permissions);
+            const result: Option<DomainError> = await personenkontext.checkReferences();
+            if (result) {
+                return {
+                    ok: false,
+                    error: result,
+                };
+            }
+        }
+
+        {
+            const result: Option<DomainError> = await personenkontext.checkPermissions(permissions);
             if (result) {
                 return {
                     ok: false,

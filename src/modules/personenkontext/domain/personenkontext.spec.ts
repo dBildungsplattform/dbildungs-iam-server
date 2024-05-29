@@ -139,7 +139,7 @@ describe('Personenkontext aggregate', () => {
                 faker.string.uuid(),
             );
 
-            await expect(personenkontext.checkValidity(permissions)).resolves.toEqual(
+            await expect(personenkontext.checkPermissions(permissions)).resolves.toEqual(
                 new MissingPermissionsError('Unauthorized to manage persons at the organisation'),
             );
 
@@ -159,7 +159,7 @@ describe('Personenkontext aggregate', () => {
                 faker.string.uuid(),
             );
 
-            await expect(personenkontext.checkValidity(permissions)).resolves.toEqual(
+            await expect(personenkontext.checkPermissions(permissions)).resolves.toEqual(
                 new EntityNotFoundError('rolle', personenkontext.rolleId),
             );
         });
@@ -177,7 +177,7 @@ describe('Personenkontext aggregate', () => {
                 faker.string.uuid(),
             );
 
-            await expect(personenkontext.checkValidity(permissions)).resolves.toEqual(
+            await expect(personenkontext.checkPermissions(permissions)).resolves.toEqual(
                 new EntityNotFoundError('rolle', personenkontext.rolleId),
             );
         });
@@ -196,7 +196,7 @@ describe('Personenkontext aggregate', () => {
                 faker.string.uuid(),
             );
 
-            await expect(personenkontext.checkValidity(permissions)).resolves.toEqual(
+            await expect(personenkontext.checkPermissions(permissions)).resolves.toEqual(
                 new MissingPermissionsError('Not authorized to manage this person'),
             );
         });
@@ -215,7 +215,7 @@ describe('Personenkontext aggregate', () => {
                 faker.string.uuid(),
             );
 
-            await expect(personenkontext.checkValidity(permissions)).resolves.toBeUndefined();
+            await expect(personenkontext.checkPermissions(permissions)).resolves.toBeUndefined();
         });
     });
 });

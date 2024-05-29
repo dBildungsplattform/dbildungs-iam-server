@@ -86,22 +86,6 @@ export class Personenkontext<WasPersisted extends boolean> {
             return new EntityNotFoundError('Rolle', this.rolleId);
         }
 
-        return undefined;
-    }
-
-    public async checkValidity(permissions: PersonPermissions): Promise<Option<DomainError>> {
-        // Check if logged in person has permission
-        {
-            const hasPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(this.organisationId, [
-                RollenSystemRecht.PERSONEN_VERWALTEN,
-            ]);
-
-            // Missing permission on orga
-            if (!hasPermissionAtOrga) {
-                return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
-            }
-        }
-
         // Can rolle be assigned at target orga
         {
             const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(this.rolleId);
@@ -112,6 +96,22 @@ export class Personenkontext<WasPersisted extends boolean> {
             const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(this.organisationId);
             if (!canAssignRolle) {
                 return new EntityNotFoundError('rolle', this.rolleId); // Rolle does not exist for the chosen organisation
+            }
+        }
+
+        return undefined;
+    }
+
+    public async checkPermissions(permissions: PersonPermissions): Promise<Option<DomainError>> {
+        // Check if logged in person has permission
+        {
+            const hasPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(this.organisationId, [
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ]);
+
+            // Missing permission on orga
+            if (!hasPermissionAtOrga) {
+                return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
             }
         }
 
