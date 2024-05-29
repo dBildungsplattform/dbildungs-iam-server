@@ -3,6 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { OrganisationEntity } from './organisation.entity.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationScope } from './organisation.scope.js';
+import { ServerConfig, DataConfig } from '../../../shared/config/index.js';
+import { ConfigService } from '@nestjs/config';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -35,7 +37,14 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
 
 @Injectable()
 export class OrganisationRepository {
-    public constructor(private readonly em: EntityManager) {}
+    public readonly ROOT_ORGANISATION_ID: string;
+
+    public constructor(
+        private readonly em: EntityManager,
+        config: ConfigService<ServerConfig>,
+    ) {
+        this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+    }
 
     public async findBy(scope: OrganisationScope): Promise<Counted<Organisation<true>>> {
         const [entities, total]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
@@ -44,5 +53,16 @@ export class OrganisationRepository {
         );
 
         return [organisations, total];
+    }
+
+    public async findRootDirectChildren(): Promise<Organisation<true>[]> {
+        const scope: OrganisationScope = new OrganisationScope().findAdministrierteVon(this.ROOT_ORGANISATION_ID);
+
+        const [entities]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
+        const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
+            mapEntityToAggregate(entity),
+        );
+
+        return organisations;
     }
 }
