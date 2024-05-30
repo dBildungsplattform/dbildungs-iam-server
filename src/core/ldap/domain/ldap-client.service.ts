@@ -59,6 +59,20 @@ export class LdapClientService {
         return { ok: true, value: organisation };
     }
 
+    /*  public async notExistsOrganisation(organisation: Organisation<true>): Promise<Option<Error>> {
+        this.logger.info('Inside findOrganisation');
+        const clientResult: Result<Client> = await this.getClient();
+        if (!clientResult.ok) return clientResult.error;
+        if (!organisation.kennung) return new KennungRequiredForSchuleError();
+        const client: Client = clientResult.value;
+        try {
+            await client.search(`ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`);
+            return null;
+        } catch(ex) {
+            return new EntityNotFoundError();
+        }
+    }*/
+    
     public async deleteOrganisation(organisation: Organisation<true>): Promise<Result<Organisation<true>>> {
         this.logger.info('Inside deleteOrganisation');
         const clientResult: Result<Client> = await this.getClient();
