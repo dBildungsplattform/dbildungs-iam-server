@@ -34,6 +34,8 @@ import { createMock } from '@golevelup/ts-jest';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { EntityAlreadyExistsError } from '../../../shared/error/entity-already-exists.error.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { PersonenkontextScope } from './personenkontext.scope.js';
+import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -178,6 +180,59 @@ describe('dbiam Personenkontext Repo', () => {
     it('should be defined', () => {
         expect(sut).toBeDefined();
         expect(em).toBeDefined();
+    });
+
+    describe('findByID', () => {
+        it('should return personenkontext by ID', async () => {
+            const person: Person<true> = await createPerson();
+            const personenkontext: Personenkontext<true> = await sut.save(
+                createPersonenkontext(false, { personId: person.id }),
+            );
+
+            const result: Option<Personenkontext<true>> = await sut.findByID(personenkontext.id);
+
+            expect(result).toEqual(personenkontext);
+        });
+
+        it('should return null if not found', async () => {
+            const result: Option<Personenkontext<true>> = await sut.findByID(faker.string.uuid());
+
+            expect(result).toBeNull();
+        });
+    });
+
+    describe('findBy', () => {
+        describe('When personenkontext for person exists', () => {
+            it('should find all personenkontexte for this person', async () => {
+                const person: Person<true> = await createPerson();
+                const personenkontextA: Personenkontext<true> = await sut.save(
+                    createPersonenkontext(false, { personId: person.id }),
+                );
+                const personenkontextB: Personenkontext<true> = await sut.save(
+                    createPersonenkontext(false, { personId: person.id }),
+                );
+
+                const scope: PersonenkontextScope = new PersonenkontextScope().findBy({
+                    personId: person.id,
+                });
+
+                const [result, count]: Counted<Personenkontext<true>> = await sut.findBy(scope);
+
+                expect(result).toContainEqual(personenkontextA);
+                expect(result).toContainEqual(personenkontextB);
+                expect(result).toHaveLength(2);
+                expect(count).toBe(2);
+            });
+        });
+
+        describe('When no personenkontext matches', () => {
+            it('should return an empty list', async () => {
+                const [result]: Counted<Personenkontext<true>> = await sut.findBy(new PersonenkontextScope());
+
+                expect(result).not.toBeNull();
+                expect(result).toHaveLength(0);
+            });
+        });
     });
 
     describe('findByPerson', () => {
@@ -571,6 +626,128 @@ describe('dbiam Personenkontext Repo', () => {
                 ok: false,
                 error: new EntityAlreadyExistsError('Personenkontext already exists'),
             });
+        });
+    });
+
+    describe('deleteAuthorized', () => {
+        it('should delete kontext when authorized', async () => {
+            const adminUser: Person<true> = await createPerson();
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
+            const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ]);
+            await sut.save(
+                createPersonenkontext(false, {
+                    personId: adminUser.id,
+                    organisationId: rootOrga,
+                    rolleId: adminRolle.id,
+                }),
+            );
+
+            const person: Person<true> = await createPerson();
+            const schule: OrganisationID = await createOrganisation(rootOrga, false, OrganisationsTyp.SCHULE);
+            const lehrerRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
+
+            const personenkontext: Personenkontext<true> = await sut.save(
+                createPersonenkontext(false, {
+                    personId: person.id,
+                    organisationId: schule,
+                    rolleId: lehrerRolle.id,
+                }),
+            );
+
+            const permissions: PersonPermissions = createPermissions(adminUser);
+
+            const result: Option<DomainError> = await sut.deleteAuthorized(personenkontext.id, '1', permissions);
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should return EntityNotFoundError if the kontext does not exist', async () => {
+            const adminUser: Person<true> = await createPerson();
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
+            const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ]);
+            await sut.save(
+                createPersonenkontext(false, {
+                    personId: adminUser.id,
+                    organisationId: rootOrga,
+                    rolleId: adminRolle.id,
+                }),
+            );
+
+            const permissions: PersonPermissions = createPermissions(adminUser);
+
+            const id: string = faker.string.uuid();
+
+            const result: Option<DomainError> = await sut.deleteAuthorized(id, '1', permissions);
+
+            expect(result).toEqual(new EntityNotFoundError('Personenkontext', id));
+        });
+
+        it('should return MissingPermissionsError if not authorized', async () => {
+            const adminUser: Person<true> = await createPerson();
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
+            const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, []);
+            await sut.save(
+                createPersonenkontext(false, {
+                    personId: adminUser.id,
+                    organisationId: rootOrga,
+                    rolleId: adminRolle.id,
+                }),
+            );
+
+            const person: Person<true> = await createPerson();
+            const schule: OrganisationID = await createOrganisation(rootOrga, false, OrganisationsTyp.SCHULE);
+            const lehrerRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
+
+            const personenkontext: Personenkontext<true> = await sut.save(
+                createPersonenkontext(false, {
+                    personId: person.id,
+                    organisationId: schule,
+                    rolleId: lehrerRolle.id,
+                }),
+            );
+
+            const permissions: PersonPermissions = createPermissions(adminUser);
+
+            const result: Option<DomainError> = await sut.deleteAuthorized(personenkontext.id, '1', permissions);
+
+            expect(result).toEqual(new MissingPermissionsError('Access denied'));
+        });
+
+        it('should delete kontext when authorized', async () => {
+            const adminUser: Person<true> = await createPerson();
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
+            const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ]);
+            await sut.save(
+                createPersonenkontext(false, {
+                    personId: adminUser.id,
+                    organisationId: rootOrga,
+                    rolleId: adminRolle.id,
+                }),
+            );
+
+            const person: Person<true> = await createPerson();
+            const schule: OrganisationID = await createOrganisation(rootOrga, false, OrganisationsTyp.SCHULE);
+            const lehrerRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
+
+            const personenkontext: Personenkontext<true> = await sut.save(
+                createPersonenkontext(false, {
+                    personId: person.id,
+                    organisationId: schule,
+                    rolleId: lehrerRolle.id,
+                }),
+            );
+
+            const permissions: PersonPermissions = createPermissions(adminUser);
+
+            const result: Option<DomainError> = await sut.deleteAuthorized(personenkontext.id, '2', permissions);
+
+            expect(result).toEqual(new MismatchedRevisionError('Personenkontext'));
         });
     });
 });
