@@ -6,19 +6,37 @@ import { KennungRequiredForSchuleError } from '../../../modules/organisation/spe
 import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { LdapClient } from './ldap-client.js';
+import { LdapInstanceConfig } from '../ldap-instance-config.js';
 
 @Injectable()
 export class LdapClientService {
-
     public constructor(
         private readonly ldapClient: LdapClient,
+        private readonly ldapInstanceConfig: LdapInstanceConfig,
         private readonly logger: ClassLogger,
     ) {}
 
+    private async bind(): Promise<Result<boolean>> {
+        this.logger.info('Inside bind');
+        try {
+            await this.ldapClient.getClient().bind(this.ldapInstanceConfig.BIND_DN, this.ldapInstanceConfig.PASSWORD);
+            this.logger.info('Successfully connected to LDAP');
+            return {
+                ok: true,
+                value: true,
+            };
+        } catch (err) {
+            const errMsg: string = `Could not connect to LDAP, message: ${JSON.stringify(err)}`;
+            this.logger.error(errMsg);
+            return { ok: false, error: new Error(errMsg) };
+        }
+    }
+
     public async createOrganisation(organisation: Organisation<true>): Promise<Result<Organisation<true>>> {
         this.logger.info('Inside createOrganisation');
-        const clientResult: Result<Client> = await this.ldapClient.getClient();
-        if (!clientResult.ok) return clientResult;
+        const client: Client = this.ldapClient.getClient();
+        const bindResult: Result<boolean> = await this.bind();
+        if (!bindResult.ok) return bindResult;
         if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
         const organisationEntry: LdapOrganisationEntry = {
             ou: organisation.kennung,
@@ -29,7 +47,6 @@ export class LdapClientService {
             ou: organisation.kennung,
             objectclass: ['organizationalRole'],
         };
-        const client: Client = clientResult.value;
         await client.add(`ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, organisationEntry);
         this.logger.info(`Successfully created organisation ou=${organisation.kennung}`);
 
@@ -41,10 +58,12 @@ export class LdapClientService {
 
     public async deleteOrganisation(organisation: Organisation<true>): Promise<Result<Organisation<true>>> {
         this.logger.info('Inside deleteOrganisation');
-        const clientResult: Result<Client> = await this.ldapClient.getClient();
-        if (!clientResult.ok) return clientResult;
+        const client: Client = this.ldapClient.getClient();
+        const bindResult: Result<boolean> = await this.bind();
+        if (!bindResult.ok) return bindResult;
         if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
-        const client: Client = clientResult.value;
+
+        this.logger.info('Successfully connected to LDAP');
 
         await client.del(`cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`);
         this.logger.info(`Successfully deleted corresponding lehrer rolle for ou=${organisation.kennung}`);
@@ -57,8 +76,9 @@ export class LdapClientService {
 
     public async createLehrer(person: Person<true>, organisation: Organisation<true>): Promise<Result<Person<true>>> {
         this.logger.info('Inside createLehrer');
-        const clientResult: Result<Client> = await this.ldapClient.getClient();
-        if (!clientResult.ok) return clientResult;
+        const client: Client = this.ldapClient.getClient();
+        const bindResult: Result<boolean> = await this.bind();
+        if (!bindResult.ok) return bindResult;
         if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
         const entry: LdapPersonEntry = {
             cn: person.vorname,
@@ -66,7 +86,6 @@ export class LdapClientService {
             mail: ['testme@mail.de'],
             objectclass: ['inetOrgPerson'],
         };
-        const client: Client = clientResult.value;
 
         await client.add(
             `uid=${person.vorname}${person.familienname},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
@@ -81,10 +100,10 @@ export class LdapClientService {
 
     public async deleteLehrer(person: Person<true>, organisation: Organisation<true>): Promise<Result<Person<true>>> {
         this.logger.info('Inside deleteLehrer');
-        const clientResult: Result<Client> = await this.ldapClient.getClient();
-        if (!clientResult.ok) return clientResult;
+        const client: Client = this.ldapClient.getClient();
+        const bindResult: Result<boolean> = await this.bind();
+        if (!bindResult.ok) return bindResult;
         if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
-        const client: Client = clientResult.value;
 
         await client.del(
             `uid=${person.vorname}${person.familienname},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
