@@ -1,6 +1,7 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -70,17 +71,18 @@ export class Personenkontext<WasPersisted extends boolean> {
     }
 
     public async checkReferences(): Promise<Option<DomainError>> {
-        const [personExists, orgaExists, rolle]: [boolean, boolean, Option<Rolle<true>>] = await Promise.all([
-            this.personRepo.exists(this.personId),
-            this.organisationRepo.exists(this.organisationId),
-            this.rolleRepo.findById(this.rolleId),
-        ]);
+        const [personExists, orga, rolle]: [boolean, Option<Organisation<true>>, Option<Rolle<true>>] =
+            await Promise.all([
+                this.personRepo.exists(this.personId),
+                this.organisationRepo.findById(this.organisationId),
+                this.rolleRepo.findById(this.rolleId),
+            ]);
 
         if (!personExists) {
             return new EntityNotFoundError('Person', this.personId);
         }
 
-        if (!orgaExists) {
+        if (!orga) {
             return new EntityNotFoundError('Organisation', this.organisationId);
         }
 
@@ -92,6 +94,14 @@ export class Personenkontext<WasPersisted extends boolean> {
         const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(this.organisationId);
         if (!canAssignRolle) {
             return new EntityNotFoundError('rolle', this.rolleId); // Rolle does not exist for the chosen organisation
+        }
+
+        //The aimed organisation needs to match the type of role to be assigned
+        const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
+        if (!organisationMatchesRollenart.isSatisfiedBy(orga, rolle)) {
+            return new PersonenkontextAnlageError(
+                'PersonenkontextAnlage invalid: role type does not match organistaion type',
+            );
         }
 
         return undefined;
@@ -116,23 +126,6 @@ export class Personenkontext<WasPersisted extends boolean> {
 
             if (!canModifyPerson) {
                 return new MissingPermissionsError('Not authorized to manage this person');
-            }
-        }
-        //The aimed organisation needs to match the type of role to be assigned
-        {
-            const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(this.rolleId);
-            if (!rolle) {
-                return;
-            }
-
-            const orga: Option<Organisation<true>> = await this.organisationRepo.findById(this.organisationId);
-            if (!orga) {
-                return;
-            }
-
-            const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-            if (!organisationMatchesRollenart.isSatisfiedBy(orga, rolle)) {
-                return new MissingPermissionsError('Not authorized to assign this role for the personenkontext');
             }
         }
 
