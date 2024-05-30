@@ -53,8 +53,8 @@ describe('TelemetryService', () => {
             expect(() => service.onModuleInit()).not.toThrow();
         });
 
-        it('should not throw an error on module destroy', () => {
-            expect(() => service.onModuleDestroy()).not.toThrow();
+        it('should not throw an error on module destroy', async () => {
+            await expect(service.onModuleDestroy()).resolves.toBeUndefined();
         });
     });
 
@@ -71,8 +71,8 @@ describe('TelemetryService', () => {
     });
 
     describe('flushTelemetry', () => {
-        it('should complete successfully when no errors occur', () => {
-            expect(() => service.flushTelemetry()).toBeDefined();
+        it('should complete successfully when no errors occur', async () => {
+            await expect(service.flushTelemetry()).resolves.toBeUndefined();
         });
 
         it('should log an error when the provider force flush fails', async () => {

@@ -105,7 +105,6 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
                 new NestInstrumentation(),
             ],
         });
-        this.unregister();
     }
 
     public async onModuleDestroy(): Promise<void> {
