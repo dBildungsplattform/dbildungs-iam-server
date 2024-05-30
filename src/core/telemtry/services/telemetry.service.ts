@@ -92,18 +92,18 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         };
 
         this.metricsExporter = new OTLPMetricExporter(metricsCollectorOptions);
-        this.meterProvider = new MeterProvider();
 
-        this.meterProvider.addMetricReader(
-            new PeriodicExportingMetricReader({
-                exporter: this.metricsExporter,
-                exportIntervalMillis: this.export_interval,
-            }),
-        );
+        const metricReader: PeriodicExportingMetricReader = new PeriodicExportingMetricReader({
+            exporter: this.metricsExporter,
+            exportIntervalMillis: this.export_interval,
+        });
+
+        this.meterProvider = new MeterProvider({
+            readers: [metricReader],
+        });
 
         this.meter = this.meterProvider.getMeter('meter-meter');
 
-        // counter
         this.metricPostCounter = this.meter.createCounter('metrics_posted');
 
         this.metricPostCounter.add(1);
