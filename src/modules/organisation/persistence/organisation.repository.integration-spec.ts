@@ -111,6 +111,52 @@ describe('OrganisationRepository', () => {
         });
     });
 
+    describe('exists', () => {
+        it('should return true if the orga exists', async () => {
+            const orga: OrganisationEntity = em.create(
+                OrganisationEntity,
+                mapAggregateToData(
+                    Organisation.createNew(
+                        sut.ROOT_ORGANISATION_ID,
+                        sut.ROOT_ORGANISATION_ID,
+                        faker.string.numeric(6),
+                        faker.company.name(),
+                    ),
+                ),
+            );
+            await em.persistAndFlush(orga);
+
+            await expect(sut.exists(orga.id)).resolves.toBe(true);
+        });
+
+        it('should return false if the orga does not exists', async () => {
+            await expect(sut.exists(faker.string.uuid())).resolves.toBe(false);
+        });
+    });
+
+    describe('findById', () => {
+        it('should return the organisation if it exists', async () => {
+            const orga: OrganisationEntity = em.create(
+                OrganisationEntity,
+                mapAggregateToData(
+                    Organisation.createNew(
+                        sut.ROOT_ORGANISATION_ID,
+                        sut.ROOT_ORGANISATION_ID,
+                        faker.string.numeric(6),
+                        faker.company.name(),
+                    ),
+                ),
+            );
+            await em.persistAndFlush(orga);
+
+            await expect(sut.findById(orga.id)).resolves.toBeInstanceOf(Organisation);
+        });
+
+        it('should return null', async () => {
+            await expect(sut.findById(faker.string.uuid())).resolves.toBeNull();
+        });
+    });
+
     describe('findBy', () => {
         let organisation1: Organisation<false>;
         let organisation2: Organisation<false>;
