@@ -54,14 +54,11 @@ export class PersonenkontexteUpdate {
             }
             personenKontexte.push(pk);
         }
-        if (personenKontexte.length == 0) {
-            return new EntityNotFoundError();
-        }
 
         return personenKontexte;
     }
 
-    public validate(existingPKs: Personenkontext<true>[]): Option<PersonenkontextSpecificationError> {
+    private validate(existingPKs: Personenkontext<true>[]): Option<PersonenkontextSpecificationError> {
         if (existingPKs.length == 0) {
             return new EntityNotFoundError();
         }
@@ -75,7 +72,7 @@ export class PersonenkontexteUpdate {
         const mostRecentUpdatedAt: Date = sortedExistingPKs[0]!.updatedAt;
 
         if (mostRecentUpdatedAt.getTime() != this.lastModified.getTime()) {
-            throw new UpdateOutdatedError();
+            return new UpdateOutdatedError();
         }
 
         return null;
@@ -89,7 +86,6 @@ export class PersonenkontexteUpdate {
         }
 
         const existingPKs: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(this.personId);
-
         const validationError: Option<PersonenkontextSpecificationError> = this.validate(existingPKs);
         if (validationError) {
             return validationError;
@@ -105,6 +101,7 @@ export class PersonenkontexteUpdate {
                 )
             ) {
                 this.logger.info(`DELETE ${existingPK.organisationId}`);
+                await this.dBiamPersonenkontextRepo.delete(existingPK);
             }
         }
 

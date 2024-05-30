@@ -64,7 +64,7 @@ export class DBiamPersonenkontextController {
     @Post()
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({
-        description: 'Test',
+        description: 'Successfully created personenkontext.',
         type: DBiamPersonenkontextResponse,
     })
     @ApiBadRequestResponse({
@@ -139,7 +139,7 @@ export class DBiamPersonenkontextController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to update personenkontexte.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to update personenkontexte.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while updating personenkontexte.' })
-    public async updatesPersonenkontexte(
+    public async updatePersonenkontexte(
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
         @Body() bodyParams: DbiamUpdatePersonenkontexteBodyParams,
     ): Promise<void> {

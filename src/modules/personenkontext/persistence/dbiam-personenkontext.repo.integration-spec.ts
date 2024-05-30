@@ -131,6 +131,45 @@ describe('dbiam Personenkontext Repo', () => {
         });
     });
 
+    describe('find', () => {
+        describe('when personenkontext exists', () => {
+            it('should return a personenkontext by personId, organisationId, rolleId', async () => {
+                const person: Person<true> = await createPerson();
+                const organisationUUID: string = faker.string.uuid();
+                const rolleUUID: string = faker.string.uuid();
+                await sut.save(
+                    createPersonenkontext(false, {
+                        rolleId: rolleUUID,
+                        organisationId: organisationUUID,
+                        personId: person.id,
+                    }),
+                );
+                const personenkontext: Option<Personenkontext<true>> = await sut.find(
+                    person.id,
+                    organisationUUID,
+                    rolleUUID,
+                );
+
+                expect(personenkontext).toBeTruthy();
+            });
+        });
+
+        describe('when personenkontext does NOT exist', () => {
+            it('should return null', async () => {
+                const personUUID: string = faker.string.uuid();
+                const organisationUUID: string = faker.string.uuid();
+                const rolleUUID: string = faker.string.uuid();
+                const personenkontext: Option<Personenkontext<true>> = await sut.find(
+                    personUUID,
+                    organisationUUID,
+                    rolleUUID,
+                );
+
+                expect(personenkontext).toBeNull();
+            });
+        });
+    });
+
     describe('exists', () => {
         it('should return true, if the triplet exists', async () => {
             const person: Person<true> = await createPerson();
@@ -179,6 +218,30 @@ describe('dbiam Personenkontext Repo', () => {
             await sut.save(personenkontext);
 
             await expect(sut.save(personenkontext)).rejects.toThrow(UniqueConstraintViolationException);
+        });
+    });
+
+    describe('delete', () => {
+        describe('when personenkontext is found', () => {
+            it('should delete personenkontext', async () => {
+                const person: Person<true> = await createPerson();
+                const personenkontext: Personenkontext<false> = createPersonenkontext(false, { personId: person.id });
+                const savedPersonenkontext: Personenkontext<true> = await sut.save(personenkontext);
+                const deletionError: Option<DomainError> = await sut.delete(savedPersonenkontext);
+
+                expect(deletionError).toBeFalsy();
+            });
+        });
+
+        describe('when personenkontext is NOT found', () => {
+            it('should return EntityNotFoundError', async () => {
+                const person: Person<true> = await createPerson();
+                const personenkontext: Personenkontext<true> = createPersonenkontext(true, { personId: person.id });
+                const deletionError: Option<DomainError> = await sut.delete(personenkontext);
+
+                expect(deletionError).toBeTruthy();
+                expect(deletionError).toBeInstanceOf(DomainError);
+            });
         });
     });
 });

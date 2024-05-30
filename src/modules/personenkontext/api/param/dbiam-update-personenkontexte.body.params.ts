@@ -10,7 +10,7 @@ export class DbiamUpdatePersonenkontexteBodyParams {
         nullable: false,
         description: 'Date of the most recent changed personenkontext',
     })
-    public lastModified!: Date;
+    public readonly lastModified!: Date;
 
     @IsNumber()
     @ApiProperty({
@@ -18,10 +18,10 @@ export class DbiamUpdatePersonenkontexteBodyParams {
         nullable: false,
         description: 'The amount of personenkontexte',
     })
-    public count!: number;
+    public readonly count!: number;
 
     @ApiProperty({ type: [DBiamCreatePersonenkontextBodyParams], required: true, nullable: false })
     @Type(() => DBiamCreatePersonenkontextBodyParams)
     @ValidateNested({ each: true })
-    public personenkontexte!: DBiamCreatePersonenkontextBodyParams[];
+    public readonly personenkontexte!: DBiamCreatePersonenkontextBodyParams[];
 }
