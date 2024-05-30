@@ -8,7 +8,6 @@ import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
 
 export class PersonenkontextAnlage {
