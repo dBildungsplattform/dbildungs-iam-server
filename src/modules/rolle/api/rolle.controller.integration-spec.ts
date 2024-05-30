@@ -28,6 +28,7 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { RolleServiceProviderQueryParams } from './rolle-service-provider.query.params.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PagedResponse } from '../../../shared/paging/index.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -203,8 +204,10 @@ describe('Rolle API', () => {
                 .send();
 
             expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Array);
-            expect(response.body).toHaveLength(3);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(3);
         });
 
         it('should return rollen with the given queried name', async () => {
@@ -216,9 +219,11 @@ describe('Rolle API', () => {
                 .send();
 
             expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Array);
-            expect(response.body).toHaveLength(1);
-            expect(response.body).toContainEqual(expect.objectContaining({ name: testRolle.name }));
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(1);
+            expect(pagedResponse.items).toContainEqual(expect.objectContaining({ name: testRolle.name }));
         });
 
         it('should return rollen with serviceproviders', async () => {
@@ -240,13 +245,15 @@ describe('Rolle API', () => {
                 .send();
 
             expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Array);
-            expect(response.body).toHaveLength(3);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(3);
 
-            expect(response.body).toContainEqual(
+            expect(pagedResponse.items).toContainEqual(
                 expect.objectContaining({ serviceProviders: [{ id: sp1.id, name: sp1.name }] }),
             );
-            expect(response.body).toContainEqual(
+            expect(pagedResponse.items).toContainEqual(
                 expect.objectContaining({
                     serviceProviders: [
                         { id: sp2.id, name: sp2.name },
@@ -254,7 +261,7 @@ describe('Rolle API', () => {
                     ],
                 }),
             );
-            expect(response.body).toContainEqual(expect.objectContaining({ serviceProviders: [] }));
+            expect(pagedResponse.items).toContainEqual(expect.objectContaining({ serviceProviders: [] }));
         });
     });
 
