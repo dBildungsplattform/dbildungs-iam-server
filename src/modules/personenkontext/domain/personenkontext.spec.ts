@@ -5,12 +5,14 @@ import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../..
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { Personenkontext } from './personenkontext.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
 describe('Personenkontext aggregate', () => {
     let module: TestingModule;
@@ -147,6 +149,27 @@ describe('Personenkontext aggregate', () => {
             const result: Option<DomainError> = await personenkontext.checkReferences();
 
             expect(result).toBeInstanceOf(EntityNotFoundError);
+        });
+
+        it('should return PersonenkontextAnlageError if rolle does not match orga', async () => {
+            personRepoMock.exists.mockResolvedValueOnce(true);
+            const orgaMock: DeepMocked<Organisation<true>> = createMock<Organisation<true>>();
+            orgaMock.typ = OrganisationsTyp.SCHULE;
+            organisationRepoMock.findById.mockResolvedValueOnce(orgaMock);
+            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
+            rolleMock.rollenart = RollenArt.SYSADMIN;
+            rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+
+            const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+            );
+
+            const result: Option<DomainError> = await personenkontext.checkReferences();
+
+            expect(result).toBeInstanceOf(PersonenkontextAnlageError);
         });
     });
 
