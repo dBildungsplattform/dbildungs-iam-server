@@ -8,8 +8,6 @@ import { DoFactory } from '../../../../test/utils/index.js';
 import { Personenkontext } from './personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { faker } from '@faker-js/faker';
-import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextAnlageFactory } from './personenkontext-anlage.factory.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
