@@ -1,14 +1,14 @@
 import { DBiamCreatePersonenkontextBodyParams } from '../api/param/dbiam-create-personenkontext.body.params.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
-import { UpdateCountError } from '../specification/error/update-count.error.js';
-import { UpdateNotFoundError } from '../specification/error/update-not-found.error.js';
-import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
+import { UpdateCountError } from './error/update-count.error.js';
+import { UpdateNotFoundError } from './error/update-not-found.error.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
-import { UpdateOutdatedError } from '../specification/error/update-outdated.error.js';
+import { UpdateOutdatedError } from './error/update-outdated.error.js';
 import { PersonID } from '../../../shared/types/index.js';
-import { UpdatePersonIdMismatchError } from '../specification/error/update-person-id-mismatch.error.js';
+import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -38,7 +38,7 @@ export class PersonenkontexteUpdate {
         );
     }
 
-    private async getSentPersonenkontexte(): Promise<Personenkontext<true>[] | PersonenkontextSpecificationError> {
+    private async getSentPersonenkontexte(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
         const personenKontexte: Personenkontext<true>[] = [];
         for (const pkBodyParam of this.dBiamPersonenkontextBodyParams) {
             if (pkBodyParam.personId != this.personId) {
@@ -58,7 +58,7 @@ export class PersonenkontexteUpdate {
         return personenKontexte;
     }
 
-    private validate(existingPKs: Personenkontext<true>[]): Option<PersonenkontextSpecificationError> {
+    private validate(existingPKs: Personenkontext<true>[]): Option<PersonenkontexteUpdateError> {
         if (existingPKs.length == 0) {
             return new EntityNotFoundError();
         }
@@ -71,22 +71,21 @@ export class PersonenkontexteUpdate {
         );
         const mostRecentUpdatedAt: Date = sortedExistingPKs[0]!.updatedAt;
 
-        if (mostRecentUpdatedAt.getTime() != this.lastModified.getTime()) {
+        if (mostRecentUpdatedAt.getTime() > this.lastModified.getTime()) {
             return new UpdateOutdatedError();
         }
 
         return null;
     }
 
-    public async update(): Promise<Option<PersonenkontextSpecificationError>> {
-        const sentPKs: Personenkontext<true>[] | PersonenkontextSpecificationError =
-            await this.getSentPersonenkontexte();
-        if (sentPKs instanceof PersonenkontextSpecificationError) {
+    public async update(): Promise<Option<PersonenkontexteUpdateError>> {
+        const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
+        if (sentPKs instanceof PersonenkontexteUpdateError) {
             return sentPKs;
         }
 
         const existingPKs: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(this.personId);
-        const validationError: Option<PersonenkontextSpecificationError> = this.validate(existingPKs);
+        const validationError: Option<PersonenkontexteUpdateError> = this.validate(existingPKs);
         if (validationError) {
             return validationError;
         }

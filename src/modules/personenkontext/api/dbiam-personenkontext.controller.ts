@@ -29,8 +29,14 @@ import { PersonenkontextSpecificationError } from '../specification/error/person
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
 import { DbiamPersonenkontextFactory } from '../domain/dbiam-personenkontext.factory.js';
 import { PersonenkontexteUpdate } from '../domain/personenkontexte-update.js';
+import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
+import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-update.error.js';
 
-@UseFilters(new SchulConnexValidationErrorFilter(), new PersonenkontextExceptionFilter())
+@UseFilters(
+    new SchulConnexValidationErrorFilter(),
+    new PersonenkontextExceptionFilter(),
+    new PersonenkontexteUpdateExceptionFilter(),
+)
 @ApiTags('dbiam-personenkontexte')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -133,7 +139,7 @@ export class DBiamPersonenkontextController {
     })
     @ApiBadRequestResponse({
         description: 'The personenkontexte could not be updated, may due to unsatisfied specifications.',
-        type: DbiamPersonenkontextError,
+        type: DbiamPersonenkontexteUpdateError,
     })
     @ApiConflictResponse({ description: 'Changes are conflicting with current state of personenkontexte.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to update personenkontexte.' })

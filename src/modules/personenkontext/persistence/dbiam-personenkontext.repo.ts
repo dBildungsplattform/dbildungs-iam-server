@@ -153,7 +153,6 @@ export class DBiamPersonenkontextRepo {
             return new EntityNotFoundError();
         }
         await this.em.removeAndFlush(personenKontextEntity);
-
         return null;
     }
 }

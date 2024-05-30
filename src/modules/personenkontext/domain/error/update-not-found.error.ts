@@ -1,7 +1,7 @@
-import { PersonenkontextSpecificationError } from './personenkontext-specification.error.js';
 import { OrganisationID, PersonID, RolleID } from '../../../../shared/types/index.js';
+import { PersonenkontexteUpdateError } from './personenkontexte-update.error.js';
 
-export class UpdateNotFoundError extends PersonenkontextSpecificationError {
+export class UpdateNotFoundError extends PersonenkontexteUpdateError {
     public constructor(
         personId: PersonID,
         organisationId: OrganisationID,

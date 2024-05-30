@@ -6,13 +6,13 @@ import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { PersonID } from '../../../shared/types/index.js';
 import { DBiamCreatePersonenkontextBodyParams } from '../api/param/dbiam-create-personenkontext.body.params.js';
-import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { UpdatePersonIdMismatchError } from '../specification/error/update-person-id-mismatch.error.js';
+import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.error.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { Personenkontext } from './personenkontext.js';
-import { UpdateCountError } from '../specification/error/update-count.error.js';
-import { UpdateOutdatedError } from '../specification/error/update-outdated.error.js';
+import { UpdateCountError } from './error/update-count.error.js';
+import { UpdateOutdatedError } from './error/update-outdated.error.js';
+import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 
 function createPKBodyParams(personId: PersonID): DBiamCreatePersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DBiamCreatePersonenkontextBodyParams =
@@ -114,7 +114,7 @@ describe('PersonenkontexteUpdate', () => {
 
             it('should return PersonenkontextSpecificationError', async () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(null);
-                const updateError: Option<PersonenkontextSpecificationError> = await sut.update();
+                const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
 
                 expect(updateError).toBeTruthy();
             });
@@ -132,7 +132,7 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return UpdatePersonIdMismatchError', async () => {
-                const updateError: Option<PersonenkontextSpecificationError> = await sut.update();
+                const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
 
                 expect(updateError).toBeTruthy();
                 expect(updateError).toBeInstanceOf(UpdatePersonIdMismatchError);
@@ -149,7 +149,7 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([]); //mock: no existing pks are found
-                const updateError: Option<PersonenkontextSpecificationError> = await sut.update();
+                const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
 
                 expect(updateError).toBeTruthy();
                 expect(updateError).toBeInstanceOf(EntityNotFoundError);
@@ -166,7 +166,7 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]); //mock: only one PK is found
-                const updateError: Option<PersonenkontextSpecificationError> = await sut.update();
+                const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
 
                 expect(updateError).toBeTruthy();
                 expect(updateError).toBeInstanceOf(UpdateCountError);
@@ -187,7 +187,7 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: both PKs are found
-                const updateError: Option<PersonenkontextSpecificationError> = await sut.update();
+                const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
 
                 expect(updateError).toBeTruthy();
                 expect(updateError).toBeInstanceOf(UpdateOutdatedError);
@@ -204,7 +204,7 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: both PKs are found
-                const updateError: Option<PersonenkontextSpecificationError> = await sut.update();
+                const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
 
                 expect(updateError).toBeNull();
             });
@@ -216,7 +216,7 @@ describe('PersonenkontexteUpdate', () => {
 
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk2, pk1]); //mock: both PKs are found
 
-                const updateError: Option<PersonenkontextSpecificationError> = await sut.update();
+                const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
                 expect(updateError).toBeNull();
             });
         });
