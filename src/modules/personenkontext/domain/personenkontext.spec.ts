@@ -10,6 +10,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { Personenkontext } from './personenkontext.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('Personenkontext aggregate', () => {
     let module: TestingModule;
@@ -59,13 +60,14 @@ describe('Personenkontext aggregate', () => {
             await personenkontext.checkReferences();
 
             expect(personRepoMock.exists).toHaveBeenCalledWith(personenkontext.personId);
-            expect(organisationRepoMock.exists).toHaveBeenCalledWith(personenkontext.organisationId);
+            expect(organisationRepoMock.findById).toHaveBeenCalledWith(personenkontext.organisationId);
             expect(rolleRepoMock.findById).toHaveBeenCalledWith(personenkontext.rolleId);
         });
 
         it('should return no error if all references are valid', async () => {
             personRepoMock.exists.mockResolvedValueOnce(true);
-            organisationRepoMock.exists.mockResolvedValueOnce(true);
+            const orgaMock: DeepMocked<Organisation<true>> = createMock<Organisation<true>>();
+            organisationRepoMock.findById.mockResolvedValueOnce(orgaMock);
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
