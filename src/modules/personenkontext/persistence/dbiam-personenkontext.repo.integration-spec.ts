@@ -33,6 +33,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { createMock } from '@golevelup/ts-jest';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { EntityAlreadyExistsError } from '../../../shared/error/entity-already-exists.error.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -137,10 +138,12 @@ describe('dbiam Personenkontext Repo', () => {
     async function createOrganisation(
         parentOrga: OrganisationID | undefined,
         isRoot: boolean,
+        typ: OrganisationsTyp,
     ): Promise<OrganisationID> {
         const organisation: OrganisationDo<false> = DoFactory.createOrganisation(false, {
             administriertVon: parentOrga,
             zugehoerigZu: parentOrga,
+            typ,
         });
         if (isRoot) organisation.id = organisationRepo.ROOT_ORGANISATION_ID;
 
@@ -261,7 +264,7 @@ describe('dbiam Personenkontext Repo', () => {
     describe('findByIDAuthorized', () => {
         it('should succeed if the user is authorized', async () => {
             const person: Person<true> = await createPerson();
-            const rootOrga: OrganisationID = await createOrganisation(undefined, true);
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
             const rolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
@@ -283,7 +286,7 @@ describe('dbiam Personenkontext Repo', () => {
 
         it('should return EntityNotFoundError if not found', async () => {
             const person: Person<true> = await createPerson();
-            const rootOrga: OrganisationID = await createOrganisation(undefined, true);
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
             const sysadmin: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
@@ -304,7 +307,7 @@ describe('dbiam Personenkontext Repo', () => {
 
         it('should return MissingPermissionsError if not authorized', async () => {
             const person: Person<true> = await createPerson();
-            const schule: OrganisationID = await createOrganisation(undefined, false);
+            const schule: OrganisationID = await createOrganisation(undefined, false, OrganisationsTyp.SCHULE);
             const lehrer: Rolle<true> = await createRolle(schule, RollenArt.LEHR, []);
             const personenkontext: Personenkontext<true> = await sut.save(
                 createPersonenkontext(false, { personId: person.id, organisationId: schule, rolleId: lehrer.id }),
@@ -326,9 +329,9 @@ describe('dbiam Personenkontext Repo', () => {
     describe('findByPersonAuthorized', () => {
         it('should return all personenkontexte for a person when authorized', async () => {
             const adminUser: Person<true> = await createPerson();
-            const rootOrga: OrganisationID = await createOrganisation(undefined, true);
-            const schuleA: OrganisationID = await createOrganisation(rootOrga, false);
-            const schuleB: OrganisationID = await createOrganisation(rootOrga, false);
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
+            const schuleA: OrganisationID = await createOrganisation(rootOrga, false, OrganisationsTyp.SCHULE);
+            const schuleB: OrganisationID = await createOrganisation(rootOrga, false, OrganisationsTyp.SCHULE);
             const lehrerRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
             const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
@@ -400,7 +403,7 @@ describe('dbiam Personenkontext Repo', () => {
 
         it('should return empty array, when person has no kontexte but user is admin', async () => {
             const adminUser: Person<true> = await createPerson();
-            const rootOrga: OrganisationID = await createOrganisation(undefined, true);
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
             const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
@@ -429,7 +432,7 @@ describe('dbiam Personenkontext Repo', () => {
     describe('createAuthorized', () => {
         it('should create kontext when authorized', async () => {
             const adminUser: Person<true> = await createPerson();
-            const rootOrga: OrganisationID = await createOrganisation(undefined, true);
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
             const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
@@ -442,7 +445,7 @@ describe('dbiam Personenkontext Repo', () => {
             );
 
             const person: Person<true> = await createPerson();
-            const schule: OrganisationID = await createOrganisation(rootOrga, false);
+            const schule: OrganisationID = await createOrganisation(rootOrga, false, OrganisationsTyp.SCHULE);
             const lehrerRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
 
             const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
@@ -466,7 +469,7 @@ describe('dbiam Personenkontext Repo', () => {
 
         it('should return error, if references are invalid', async () => {
             const adminUser: Person<true> = await createPerson();
-            const rootOrga: OrganisationID = await createOrganisation(undefined, true);
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
             const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
@@ -499,7 +502,7 @@ describe('dbiam Personenkontext Repo', () => {
 
         it('should create kontext when authorized', async () => {
             const userWithoutPermission: Person<true> = await createPerson();
-            const rootOrga: OrganisationID = await createOrganisation(undefined, true);
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
             const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, []);
             await sut.save(
                 createPersonenkontext(false, {
@@ -510,7 +513,7 @@ describe('dbiam Personenkontext Repo', () => {
             );
 
             const person: Person<true> = await createPerson();
-            const schule: OrganisationID = await createOrganisation(rootOrga, false);
+            const schule: OrganisationID = await createOrganisation(rootOrga, false, OrganisationsTyp.SCHULE);
             const lehrerRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
 
             const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
@@ -534,7 +537,7 @@ describe('dbiam Personenkontext Repo', () => {
 
         it('should return error if it already exists', async () => {
             const adminUser: Person<true> = await createPerson();
-            const rootOrga: OrganisationID = await createOrganisation(undefined, true);
+            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
             const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
@@ -547,7 +550,7 @@ describe('dbiam Personenkontext Repo', () => {
             );
 
             const person: Person<true> = await createPerson();
-            const schule: OrganisationID = await createOrganisation(rootOrga, false);
+            const schule: OrganisationID = await createOrganisation(rootOrga, false, OrganisationsTyp.SCHULE);
             const lehrerRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
 
             const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
