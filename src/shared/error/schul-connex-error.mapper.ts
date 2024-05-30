@@ -15,6 +15,7 @@ import { InvalidNameError } from './invalid-name.error.js';
 import { NurLehrUndLernAnKlasseError } from '../../modules/personenkontext/specification/error/nur-lehr-und-lern-an-klasse.error.js';
 import { GleicheRolleAnKlasseWieSchuleError } from '../../modules/personenkontext/specification/error/gleiche-rolle-an-klasse-wie-schule.error.js';
 import { MissingPermissionsError } from './missing-permissions.error.js';
+import { PersonenkontextAnlageError } from './personenkontext-anlage.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -144,6 +145,15 @@ export class SchulConnexErrorMapper {
                 subcode: '01',
                 titel: 'Angefragte Entität existiert nicht',
                 beschreibung: 'Die angeforderte Entität existiert nicht',
+            }),
+        ],
+        [
+            PersonenkontextAnlageError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '00',
+                titel: 'Spezifikation von Personenkontext nicht erfüllt',
+                beschreibung: 'Die Rollenart passt nicht zu der Organisation.',
             }),
         ],
     ]);
