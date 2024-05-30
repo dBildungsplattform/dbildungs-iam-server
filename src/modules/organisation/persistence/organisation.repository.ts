@@ -106,4 +106,12 @@ export class OrganisationRepository {
 
         return organisations;
     }
+
+    public async findById(id: string): Promise<Option<Organisation<true>>> {
+        const organisation: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
+        if (organisation) {
+            return mapEntityToAggregate(organisation);
+        }
+        return null;
+    }
 }

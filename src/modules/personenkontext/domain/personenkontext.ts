@@ -3,12 +3,13 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { LandesadminNurVonLandesadminAdministriert } from '../specification/landesadmin-nur-von-landesadmin-administriert.js';
+import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
 
 export class Personenkontext<WasPersisted extends boolean> {
     private constructor(
@@ -117,12 +118,20 @@ export class Personenkontext<WasPersisted extends boolean> {
                 return new MissingPermissionsError('Not authorized to manage this person');
             }
         }
-        //Permissions: Can the current admin assign landesadmin role in the personenkontext?
+        //The aimed organisation needs to match the type of role to be assigned
         {
-            //Permissions: Does the current admin have more Systemrechte as the new user?
-            const landesadminNurVonLandesadminAdministriert: LandesadminNurVonLandesadminAdministriert =
-                new LandesadminNurVonLandesadminAdministriert(this.rolleRepo, permissions);
-            if (!(await landesadminNurVonLandesadminAdministriert.isSatisfiedBy(this))) {
+            const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(this.rolleId);
+            if (!rolle) {
+                return;
+            }
+
+            const orga: Option<Organisation<true>> = await this.organisationRepo.findById(this.organisationId);
+            if (!orga) {
+                return;
+            }
+
+            const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
+            if (!organisationMatchesRollenart.isSatisfiedBy(orga, rolle)) {
                 return new MissingPermissionsError('Not authorized to assign this role for the personenkontext');
             }
         }

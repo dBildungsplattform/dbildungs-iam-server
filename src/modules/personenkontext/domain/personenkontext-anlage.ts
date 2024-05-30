@@ -9,6 +9,7 @@ import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.r
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
 
 export class PersonenkontextAnlage {
     public organisationId?: string;
@@ -29,18 +30,6 @@ export class PersonenkontextAnlage {
         personenkontextFactory: PersonenkontextFactory,
     ): PersonenkontextAnlage {
         return new PersonenkontextAnlage(rolleRepo, organisationRepo, dBiamPersonenkontextRepo, personenkontextFactory);
-    }
-
-    // Function to filter organisations, so that only organisations are shown in "new user" dialog, which makes sense regarding the selected rolle.
-    private organisationMatchesRollenart(organisation: OrganisationDo<true>, rolle: Rolle<true>): boolean {
-        if (rolle.rollenart === RollenArt.SYSADMIN)
-            return organisation.typ === OrganisationsTyp.LAND || organisation.typ === OrganisationsTyp.ROOT;
-        if (rolle.rollenart === RollenArt.LEIT) return organisation.typ === OrganisationsTyp.SCHULE;
-        if (rolle.rollenart === RollenArt.LERN)
-            return organisation.typ === OrganisationsTyp.SCHULE || organisation.typ === OrganisationsTyp.KLASSE;
-        if (rolle.rollenart === RollenArt.LEHR) return organisation.typ === OrganisationsTyp.SCHULE;
-
-        return true;
     }
 
     public async findSchulstrukturknoten(
@@ -78,7 +67,10 @@ export class PersonenkontextAnlage {
             orgas = orgas.filter((ssk: OrganisationDo<true>) => ssk.typ !== OrganisationsTyp.KLASSE);
         }
 
-        orgas = orgas.filter((orga: OrganisationDo<true>) => this.organisationMatchesRollenart(orga, rolleResult));
+        const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
+        orgas = orgas.filter((orga: OrganisationDo<true>) =>
+            organisationMatchesRollenart.isSatisfiedBy(orga, rolleResult),
+        );
 
         return orgas.slice(0, limit);
     }
