@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TelemetryService } from './telemetry.service.js';
-import { ConfigService } from '@nestjs/config';
 import { ClassLogger } from '../../logging/class-logger.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { WebTracerProvider } from '@opentelemetry/sdk-trace-web';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 
 describe('TelemetryService', () => {
     let module: TestingModule;
@@ -13,26 +14,12 @@ describe('TelemetryService', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            providers: [
-                TelemetryService,
-                {
-                    provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
-                },
-                {
-                    provide: ConfigService,
-                    useValue: {
-                        getOrThrow: jest.fn().mockReturnValue({
-                            METRICS_URL: 'http://localhost:8080/metrics',
-                            TRACES_URL: 'http://localhost:8080/traces',
-                        }),
-                    },
-                },
-            ],
+            imports: [LoggingTestModule, ConfigTestModule],
+            providers: [TelemetryService],
         }).compile();
 
         service = module.get(TelemetryService);
-        logger = await module.resolve(ClassLogger);
+        logger = module.get(ClassLogger);
     });
 
     afterAll(async () => {
@@ -41,7 +28,6 @@ describe('TelemetryService', () => {
 
     beforeEach(() => {
         provider = createMock<WebTracerProvider>();
-        logger = module.get(ClassLogger);
     });
 
     describe('Initialization', () => {
