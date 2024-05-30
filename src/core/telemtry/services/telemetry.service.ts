@@ -32,15 +32,30 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
 
     private traces_url: string;
 
+    private export_interval: number;
+
+    private max_queue_size: number;
+
+    private max_export_batch_size: number;
+
+    private scheduled_delay_millis: number;
+
+    private export_timeout_millis: number;
+
     private unregister!: () => void;
 
     public constructor(
         private readonly logger: ClassLogger,
         configService: ConfigService<ServerConfig>,
     ) {
-        const TelemtryConfig: TelemetryConfig = configService.getOrThrow<TelemetryConfig>('TELEMETRY');
-        this.metrics_url = TelemtryConfig.METRICS_URL;
-        this.traces_url = TelemtryConfig.TRACES_URL;
+        const TelemetryConfigSettings: TelemetryConfig = configService.getOrThrow<TelemetryConfig>('TELEMETRY');
+        this.metrics_url = TelemetryConfigSettings.METRICS_URL;
+        this.traces_url = TelemetryConfigSettings.TRACES_URL;
+        this.export_interval = TelemetryConfigSettings.EXPORT_INTERVAL;
+        this.max_queue_size = TelemetryConfigSettings.MAX_QUEUE_SIZE;
+        this.max_export_batch_size = TelemetryConfigSettings.MAX_EXPORT_BATCH_SIZE;
+        this.scheduled_delay_millis = TelemetryConfigSettings.SCHEDULED_DELAY_MILLIS;
+        this.export_timeout_millis = TelemetryConfigSettings.EXPORT_TIMEOUT_MILLIS;
         // traces setup
         const collectorOptions: {
             url: string;
@@ -56,10 +71,10 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         this.exporter = new OTLPTraceExporter(collectorOptions);
         this.provider.addSpanProcessor(
             new BatchSpanProcessor(this.exporter, {
-                maxQueueSize: 1000,
-                maxExportBatchSize: 10,
-                scheduledDelayMillis: 500,
-                exportTimeoutMillis: 30000,
+                maxQueueSize: this.max_queue_size,
+                maxExportBatchSize: this.max_export_batch_size,
+                scheduledDelayMillis: this.scheduled_delay_millis,
+                exportTimeoutMillis: this.export_timeout_millis,
             }),
         );
 
@@ -82,7 +97,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         this.meterProvider.addMetricReader(
             new PeriodicExportingMetricReader({
                 exporter: this.metricsExporter,
-                exportIntervalMillis: 6000,
+                exportIntervalMillis: this.export_interval,
             }),
         );
 

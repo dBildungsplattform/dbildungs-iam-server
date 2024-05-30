@@ -36,8 +36,13 @@
         "ROOT_ORGANISATION_ID": "a10852ab-1d75-45a7-9421-b1cbd8abe693"
     },
     "TELEMETRY": {
-        "METRICS_URL": "http:localhost:4317/v1/metrics",
-        "TRACES_URL": "http:localhost:4317/v1/traces"
+        "METRICS_URL": "http://localhost:4317/v1/metrics",
+        "TRACES_URL": "http://localhost:4317/v1/traces",
+        "EXPORT_INTERVAL": 60000,
+        "MAX_QUEUE_SIZE": 1000,
+        "MAX_EXPORT_BATCH_SIZE": 10,
+        "SCHEDULED_DELAY_MILLIS": 500,
+        "EXPORT_TIMEOUT_MILLIS": 30000
     },
     "LOGGING": {
         "DEFAULT_LOG_LEVEL": "info"

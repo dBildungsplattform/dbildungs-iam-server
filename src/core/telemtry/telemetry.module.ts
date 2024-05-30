@@ -10,12 +10,12 @@ import { LoggerModule } from '../logging/logger.module.js';
 })
 export class TelemetryModule implements OnApplicationBootstrap {
     public constructor(
-        private readonly telemetryService: TelemetryService,
+        //private readonly telemetryService: TelemetryService,
         private readonly logger: ClassLogger,
     ) {}
 
     public onApplicationBootstrap(): void {
-        this.telemetryService.onModuleInit();
+        //this.telemetryService.onModuleInit();
         this.logger.info('Telemetry module initialized.');
     }
 }

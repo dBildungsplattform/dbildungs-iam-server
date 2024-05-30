@@ -45,8 +45,8 @@ describe('TelemetryService', () => {
     });
 
     describe('shutdownTelemetry', () => {
-        it('should complete successfully when no errors occur', () => {
-            expect(() => service.shutdownTelemetry()).toBeDefined();
+        it('should complete successfully when no errors occur', async () => {
+            await expect(service.shutdownTelemetry()).resolves.toBeUndefined();
         });
 
         it('should log an error when the provider shutdown fails', async () => {
