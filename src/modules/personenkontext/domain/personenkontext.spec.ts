@@ -85,7 +85,7 @@ describe('Personenkontext aggregate', () => {
 
         it('should return EntityNotFoundError if person does not exist', async () => {
             personRepoMock.exists.mockResolvedValueOnce(false);
-            organisationRepoMock.exists.mockResolvedValueOnce(true);
+            organisationRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>());
             rolleRepoMock.findById.mockResolvedValueOnce(createMock<Rolle<true>>());
 
             const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(
@@ -101,7 +101,7 @@ describe('Personenkontext aggregate', () => {
 
         it('should return EntityNotFoundError if organisation does not exist', async () => {
             personRepoMock.exists.mockResolvedValueOnce(true);
-            organisationRepoMock.exists.mockResolvedValueOnce(false);
+            organisationRepoMock.findById.mockResolvedValueOnce(undefined);
             rolleRepoMock.findById.mockResolvedValueOnce(createMock<Rolle<true>>());
 
             const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(
@@ -117,7 +117,7 @@ describe('Personenkontext aggregate', () => {
 
         it('should return EntityNotFoundError if rolle does not exist', async () => {
             personRepoMock.exists.mockResolvedValueOnce(true);
-            organisationRepoMock.exists.mockResolvedValueOnce(true);
+            organisationRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>());
             rolleRepoMock.findById.mockResolvedValueOnce(undefined);
 
             const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(
@@ -133,7 +133,7 @@ describe('Personenkontext aggregate', () => {
 
         it('should return EntityNotFoundError if rolle can not be assigned to orga', async () => {
             personRepoMock.exists.mockResolvedValueOnce(true);
-            organisationRepoMock.exists.mockResolvedValueOnce(true);
+            organisationRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>());
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(false);
