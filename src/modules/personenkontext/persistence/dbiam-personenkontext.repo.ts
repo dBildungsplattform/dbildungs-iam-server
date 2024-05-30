@@ -15,7 +15,6 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { EntityAlreadyExistsError } from '../../../shared/error/entity-already-exists.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
-import { EntityCouldNotBeDeleted } from '../../../shared/error/entity-could-not-be-deleted.error.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
@@ -269,13 +268,9 @@ export class DBiamPersonenkontextRepo {
             return new MismatchedRevisionError('Personenkontext');
         }
 
-        const deletedCount: number = await this.em.nativeDelete(PersonenkontextEntity, { id });
+        await this.em.nativeDelete(PersonenkontextEntity, { id });
 
-        if (deletedCount === 0) {
-            return new EntityCouldNotBeDeleted('Personenkontext', id);
-        }
-
-        return undefined;
+        return;
     }
 
     private async create(personenKontext: Personenkontext<false>): Promise<Personenkontext<true>> {
