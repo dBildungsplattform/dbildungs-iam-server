@@ -189,9 +189,14 @@ describe('dbiam Personenkontext API', () => {
     describe('/POST create personenkontext', () => {
         it('should return created personenkontext', async () => {
             const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
-            const organisation: OrganisationDo<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisation: OrganisationDo<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
             const rolle: Rolle<true> = await rolleRepo.save(
-                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisation.id }),
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
@@ -213,12 +218,12 @@ describe('dbiam Personenkontext API', () => {
                 typ: OrganisationsTyp.SCHULE,
             });
             const schule: OrganisationDo<true> = await organisationRepo.save(schuleDo);
-            const lehrerRolleDummy: Rolle<false> = DoFactory.createRolle(false, {
-                rollenart: RollenArt.LEHR,
+            const schuelerRolleDummy: Rolle<false> = DoFactory.createRolle(false, {
+                rollenart: RollenArt.LERN,
                 administeredBySchulstrukturknoten: schule.id,
             });
-            const lehrerRolle: Rolle<true> = await rolleRepo.save(lehrerRolleDummy);
-            await personenkontextRepo.save(personenkontextFactory.createNew(lehrer.id, schule.id, lehrerRolle.id));
+            const schuelerRolle: Rolle<true> = await rolleRepo.save(schuelerRolleDummy);
+            await personenkontextRepo.save(personenkontextFactory.createNew(lehrer.id, schule.id, schuelerRolle.id));
 
             const klasseDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
                 typ: OrganisationsTyp.KLASSE,
@@ -236,7 +241,7 @@ describe('dbiam Personenkontext API', () => {
                 .send({
                     personId: lehrer.id,
                     organisationId: klasse.id,
-                    rolleId: lehrerRolle.id,
+                    rolleId: schuelerRolle.id,
                 });
 
             expect(response.status).toBe(201);
@@ -244,9 +249,14 @@ describe('dbiam Personenkontext API', () => {
 
         it('should return error if personenkontext already exists', async () => {
             const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
-            const organisation: OrganisationDo<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisation: OrganisationDo<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
             const rolle: Rolle<true> = await rolleRepo.save(
-                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisation.id }),
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
             );
             const personenkontext: Personenkontext<true> = await personenkontextRepo.save(
                 personenkontextFactory.createNew(person.id, organisation.id, rolle.id),
@@ -293,7 +303,7 @@ describe('dbiam Personenkontext API', () => {
                         rolleId: rolle.id,
                     });
 
-                expect(response.status).toBe(400); // TODO: Fix
+                expect(response.status).toBe(400);
             });
 
             it('when rolle is not found', async () => {
@@ -368,10 +378,13 @@ describe('dbiam Personenkontext API', () => {
             it('should return error', async () => {
                 const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
                 const organisation: OrganisationDo<true> = await organisationRepo.save(
-                    DoFactory.createOrganisation(false),
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                 );
                 const rolle: Rolle<true> = await rolleRepo.save(
-                    DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisation.id }),
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisation.id,
+                        rollenart: RollenArt.LEHR,
+                    }),
                 );
 
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
