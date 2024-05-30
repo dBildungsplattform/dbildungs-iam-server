@@ -5,39 +5,19 @@ import { LdapOrganisationEntry, LdapPersonEntry, LdapRoleEntry } from './ldap.ty
 import { KennungRequiredForSchuleError } from '../../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
-import { LdapInstanceConfig } from '../ldap-instance-config.js';
+import { LdapClient } from './ldap-client.js';
 
 @Injectable()
 export class LdapClientService {
-    private client: Client | undefined;
 
     public constructor(
+        private readonly ldapClient: LdapClient,
         private readonly logger: ClassLogger,
-        private readonly ldapInstanceConfig: LdapInstanceConfig,
     ) {}
-
-    private async getClient(): Promise<Result<Client>> {
-        if (!this.client) {
-            // configure LDAP connection
-            const client: Client = new Client({
-                url: this.ldapInstanceConfig.URL,
-            });
-            try {
-                await client.bind(this.ldapInstanceConfig.BIND_DN, this.ldapInstanceConfig.PASSWORD);
-                this.logger.info('Successfully connected to LDAP');
-                this.client = client;
-            } catch (err) {
-                this.logger.error(`Could not connect to LDAP, message: ${JSON.stringify(err)}`);
-                return { ok: false, error: new Error(`Could not connect to LDAP, message: ${JSON.stringify(err)}`) };
-            }
-        }
-
-        return { ok: true, value: this.client };
-    }
 
     public async createOrganisation(organisation: Organisation<true>): Promise<Result<Organisation<true>>> {
         this.logger.info('Inside createOrganisation');
-        const clientResult: Result<Client> = await this.getClient();
+        const clientResult: Result<Client> = await this.ldapClient.getClient();
         if (!clientResult.ok) return clientResult;
         if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
         const organisationEntry: LdapOrganisationEntry = {
@@ -59,23 +39,9 @@ export class LdapClientService {
         return { ok: true, value: organisation };
     }
 
-    /*  public async notExistsOrganisation(organisation: Organisation<true>): Promise<Option<Error>> {
-        this.logger.info('Inside findOrganisation');
-        const clientResult: Result<Client> = await this.getClient();
-        if (!clientResult.ok) return clientResult.error;
-        if (!organisation.kennung) return new KennungRequiredForSchuleError();
-        const client: Client = clientResult.value;
-        try {
-            await client.search(`ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`);
-            return null;
-        } catch(ex) {
-            return new EntityNotFoundError();
-        }
-    }*/
-    
     public async deleteOrganisation(organisation: Organisation<true>): Promise<Result<Organisation<true>>> {
         this.logger.info('Inside deleteOrganisation');
-        const clientResult: Result<Client> = await this.getClient();
+        const clientResult: Result<Client> = await this.ldapClient.getClient();
         if (!clientResult.ok) return clientResult;
         if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
         const client: Client = clientResult.value;
@@ -91,7 +57,7 @@ export class LdapClientService {
 
     public async createLehrer(person: Person<true>, organisation: Organisation<true>): Promise<Result<Person<true>>> {
         this.logger.info('Inside createLehrer');
-        const clientResult: Result<Client> = await this.getClient();
+        const clientResult: Result<Client> = await this.ldapClient.getClient();
         if (!clientResult.ok) return clientResult;
         if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
         const entry: LdapPersonEntry = {
@@ -115,7 +81,7 @@ export class LdapClientService {
 
     public async deleteLehrer(person: Person<true>, organisation: Organisation<true>): Promise<Result<Person<true>>> {
         this.logger.info('Inside deleteLehrer');
-        const clientResult: Result<Client> = await this.getClient();
+        const clientResult: Result<Client> = await this.ldapClient.getClient();
         if (!clientResult.ok) return clientResult;
         if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
         const client: Client = clientResult.value;
