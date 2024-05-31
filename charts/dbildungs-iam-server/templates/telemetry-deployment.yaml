@@ -22,6 +22,11 @@ spec:
         - name: opentelemetry
           image: "{{ .Values.telemetry.image.repository }}:{{ .Values.telemetry.image.tag }}"
           imagePullPolicy: {{ .Values.telemetry.pullPolicy }}
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ "NET_RAW" ]
           args: ["--config=/etc/config/otel-config.yaml"]
           resources: {{- toYaml .Values.telemetry.resources | nindent 12 }}
           volumeMounts:
