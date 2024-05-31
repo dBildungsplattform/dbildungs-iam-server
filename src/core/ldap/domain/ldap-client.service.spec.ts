@@ -33,6 +33,7 @@ describe('LDAP Client Service', () => {
     let organisation: Organisation<true>;
     let invalidOrganisation: Organisation<true>;
     let person: Person<true>;
+    let personWithoutReferrer: Person<true>;
     let ouKennung: string;
 
     beforeAll(async () => {
@@ -94,6 +95,17 @@ describe('LDAP Client Service', () => {
             faker.lorem.word(),
             undefined,
             faker.string.uuid(),
+        );
+        personWithoutReferrer = Person.construct(
+            faker.string.uuid(),
+            faker.date.past(),
+            faker.date.recent(),
+            faker.person.lastName(),
+            faker.person.firstName(),
+            '1',
+            faker.lorem.word(),
+            undefined,
+            undefined,
         );
 
         //currently only used to wait for the LDAP container, because setupDatabase() is blocking
@@ -183,6 +195,20 @@ describe('LDAP Client Service', () => {
                 expect(result.ok).toBeFalsy();
             });
 
+            it('when called with person without referrer should return error result', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.add.mockResolvedValueOnce();
+                    return clientMock;
+                });
+                const result: Result<Person<true>> = await ldapClientService.createLehrer(
+                    personWithoutReferrer,
+                    organisation,
+                );
+
+                expect(result.ok).toBeFalsy();
+            });
+
             it('when bind returns error', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockRejectedValueOnce(new Error());
@@ -217,6 +243,20 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
                 const result: Result<Person<true>> = await ldapClientService.deleteLehrer(person, invalidOrganisation);
+
+                expect(result.ok).toBeFalsy();
+            });
+
+            it('when called with person without referrer should return error result', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.add.mockResolvedValueOnce();
+                    return clientMock;
+                });
+                const result: Result<Person<true>> = await ldapClientService.deleteLehrer(
+                    personWithoutReferrer,
+                    organisation,
+                );
 
                 expect(result.ok).toBeFalsy();
             });

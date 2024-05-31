@@ -7,6 +7,7 @@ import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { LdapClient } from './ldap-client.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
+import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
 
 @Injectable()
 export class LdapClientService {
@@ -80,19 +81,26 @@ export class LdapClientService {
         const bindResult: Result<boolean> = await this.bind();
         if (!bindResult.ok) return bindResult;
         if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
+        if (!person.referrer)
+            return {
+                ok: false,
+                error: new UsernameRequiredError(
+                    `Lehrer ${person.vorname} ${person.familienname} does not have a username`,
+                ),
+            };
         const entry: LdapPersonEntry = {
             cn: person.vorname,
             sn: person.familienname,
-            mail: ['testme@mail.de'],
+            mail: [`${person.referrer}@schule-sh.de`],
             objectclass: ['inetOrgPerson'],
         };
 
         await client.add(
-            `uid=${person.vorname}${person.familienname},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
+            `uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
             entry,
         );
         this.logger.info(
-            `Successfully created lehrer uid=${person.vorname}${person.familienname},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
+            `Successfully created lehrer uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
         );
 
         return { ok: true, value: person };
@@ -104,12 +112,18 @@ export class LdapClientService {
         const bindResult: Result<boolean> = await this.bind();
         if (!bindResult.ok) return bindResult;
         if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
-
+        if (!person.referrer)
+            return {
+                ok: false,
+                error: new UsernameRequiredError(
+                    `Lehrer ${person.vorname} ${person.familienname} does not have a username`,
+                ),
+            };
         await client.del(
-            `uid=${person.vorname}${person.familienname},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
+            `uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
         );
         this.logger.info(
-            `Successfully deleted lehrer uid=${person.vorname}${person.familienname},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
+            `Successfully deleted lehrer uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
         );
 
         return { ok: true, value: person };

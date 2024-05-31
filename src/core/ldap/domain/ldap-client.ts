@@ -13,6 +13,7 @@ export class LdapClient {
             // configure LDAP connection
             const client: Client = new Client({
                 url: this.ldapInstanceConfig.URL,
+                timeout: 3000,
             });
             this.client = client;
         }
