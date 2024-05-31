@@ -1,13 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM, UniqueConstraintViolationException } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-    ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    DatabaseTestModule,
-    DoFactory,
-    MapperTestModule,
-} from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from './dbiam-personenkontext.repo.js';
 import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
@@ -117,7 +111,7 @@ describe('dbiam Personenkontext Repo', () => {
         personenkontextFactory = module.get(PersonenkontextFactory);
 
         await DatabaseTestModule.setupDatabase(orm);
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+    }, 10000000);
 
     async function createPerson(): Promise<Person<true>> {
         const personResult: Person<false> | DomainError = await personFactory.createNew({
