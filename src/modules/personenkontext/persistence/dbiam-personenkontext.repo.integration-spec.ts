@@ -8,7 +8,7 @@ import {
     LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { Personenkontext } from '../domain/personenkontext.js';
+import { Personenkontext, mapAggregateToPartial } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from './dbiam-personenkontext.repo.js';
 import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
@@ -207,8 +207,12 @@ describe('dbiam Personenkontext Repo', () => {
         describe('When personenkontext for person exists', () => {
             it('should find all personenkontexte for this person', async () => {
                 const person: Person<true> = await createPerson();
-                await sut.save(createPersonenkontext(false, { personId: person.id }));
-                await sut.save(createPersonenkontext(false, { personId: person.id }));
+                const personenkontextA: Personenkontext<true> = await sut.save(
+                    createPersonenkontext(false, { personId: person.id }),
+                );
+                const personenkontextB: Personenkontext<true> = await sut.save(
+                    createPersonenkontext(false, { personId: person.id }),
+                );
 
                 const scope: PersonenkontextScope = new PersonenkontextScope().findBy({
                     personId: person.id,
@@ -216,10 +220,11 @@ describe('dbiam Personenkontext Repo', () => {
 
                 const [result, count]: Counted<Personenkontext<true>> = await sut.findBy(scope);
 
-                expect(result).toHaveLength(2);
+                expect(result).toMatchObject([
+                    mapAggregateToPartial(personenkontextA),
+                    mapAggregateToPartial(personenkontextB),
+                ]);
                 expect(count).toBe(2);
-                expect(result[0]).toBeInstanceOf(Personenkontext);
-                expect(result[1]).toBeInstanceOf(Personenkontext);
             });
         });
 
@@ -300,7 +305,7 @@ describe('dbiam Personenkontext Repo', () => {
 
             const savedPersonenkontext: Personenkontext<true> = await sut.save(existingPersonenkontext);
 
-            expect(savedPersonenkontext).toBeInstanceOf(Personenkontext);
+            expect(savedPersonenkontext).toMatchObject(mapAggregateToPartial(existingPersonenkontext));
         });
 
         it('should throw UniqueConstraintViolationException when triplet already exists', async () => {
@@ -333,7 +338,7 @@ describe('dbiam Personenkontext Repo', () => {
 
             expect(result).toEqual({
                 ok: true,
-                value: expect.objectContaining({ id: personenkontext.id }) as Personenkontext<true>,
+                value: expect.objectContaining(mapAggregateToPartial(personenkontext)) as Personenkontext<true>,
             });
         });
 
@@ -436,8 +441,8 @@ describe('dbiam Personenkontext Repo', () => {
             expect(result).toEqual({
                 ok: true,
                 value: expect.arrayContaining([
-                    expect.objectContaining({ id: kontext1.id }),
-                    expect.objectContaining({ id: kontext2.id }),
+                    expect.objectContaining(mapAggregateToPartial(kontext1)),
+                    expect.objectContaining(mapAggregateToPartial(kontext2)),
                 ]) as Personenkontext<true>[],
             });
         });

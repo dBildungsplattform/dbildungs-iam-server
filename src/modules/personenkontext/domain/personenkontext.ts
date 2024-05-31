@@ -12,6 +12,22 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
 
+export type PersonenkontextPartial = Pick<
+    Personenkontext<boolean>,
+    'id' | 'createdAt' | 'updatedAt' | 'personId' | 'organisationId' | 'rolleId'
+>;
+
+export function mapAggregateToPartial(personenkontext: Personenkontext<boolean>): PersonenkontextPartial {
+    return {
+        id: personenkontext.id,
+        createdAt: personenkontext.createdAt,
+        updatedAt: personenkontext.updatedAt,
+        personId: personenkontext.personId,
+        organisationId: personenkontext.organisationId,
+        rolleId: personenkontext.rolleId,
+    };
+}
+
 export class Personenkontext<WasPersisted extends boolean> {
     private constructor(
         private readonly personRepo: PersonRepository,
