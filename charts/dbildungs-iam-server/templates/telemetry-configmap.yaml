@@ -6,6 +6,6 @@ metadata:
   labels:
     {{- include "common.labels" . | nindent 4 }}
 data:
-  otel-config: |-
+  otel-config.yaml: |-
     {{ .Files.Get "config/telemetry/otel-config.yaml" | nindent 4 }}
 

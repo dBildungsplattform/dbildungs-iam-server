@@ -22,11 +22,11 @@ spec:
         - name: opentelemetry
           image: "{{ .Values.telemetry.image.repository }}:{{ .Values.telemetry.image.tag }}"
           imagePullPolicy: {{ .Values.telemetry.pullPolicy }}
-          args: ["--config=/etc/otel-config.yaml"]
+          args: ["--config=/etc/config/otel-config.yaml"]
           resources: {{- toYaml .Values.telemetry.resources | nindent 12 }}
           volumeMounts:
             - name: telemetry-volume
-              mountPath: /etc/
+              mountPath: /etc/config
               readOnly: false
           ports:
             - name: opentelemetry
