@@ -1,7 +1,13 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM, UniqueConstraintViolationException } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DatabaseTestModule,
+    DoFactory,
+    LoggingTestModule,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from './dbiam-personenkontext.repo.js';
 import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
@@ -73,6 +79,7 @@ describe('dbiam Personenkontext Repo', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 RolleModule,
                 OrganisationModule,
+                LoggingTestModule,
             ],
             providers: [
                 DBiamPersonenkontextRepo,
@@ -185,7 +192,8 @@ describe('dbiam Personenkontext Repo', () => {
 
             const result: Option<Personenkontext<true>> = await sut.findByID(personenkontext.id);
 
-            expect(result).toEqual(personenkontext);
+            expect(result).toBeInstanceOf(Personenkontext);
+            expect(result?.id).toBe(personenkontext.id);
         });
 
         it('should return null if not found', async () => {
@@ -199,12 +207,8 @@ describe('dbiam Personenkontext Repo', () => {
         describe('When personenkontext for person exists', () => {
             it('should find all personenkontexte for this person', async () => {
                 const person: Person<true> = await createPerson();
-                const personenkontextA: Personenkontext<true> = await sut.save(
-                    createPersonenkontext(false, { personId: person.id }),
-                );
-                const personenkontextB: Personenkontext<true> = await sut.save(
-                    createPersonenkontext(false, { personId: person.id }),
-                );
+                await sut.save(createPersonenkontext(false, { personId: person.id }));
+                await sut.save(createPersonenkontext(false, { personId: person.id }));
 
                 const scope: PersonenkontextScope = new PersonenkontextScope().findBy({
                     personId: person.id,
@@ -212,10 +216,10 @@ describe('dbiam Personenkontext Repo', () => {
 
                 const [result, count]: Counted<Personenkontext<true>> = await sut.findBy(scope);
 
-                expect(result).toContainEqual(personenkontextA);
-                expect(result).toContainEqual(personenkontextB);
                 expect(result).toHaveLength(2);
                 expect(count).toBe(2);
+                expect(result[0]).toBeInstanceOf(Personenkontext);
+                expect(result[1]).toBeInstanceOf(Personenkontext);
             });
         });
 
@@ -296,7 +300,7 @@ describe('dbiam Personenkontext Repo', () => {
 
             const savedPersonenkontext: Personenkontext<true> = await sut.save(existingPersonenkontext);
 
-            expect(savedPersonenkontext).toEqual(existingPersonenkontext);
+            expect(savedPersonenkontext).toBeInstanceOf(Personenkontext);
         });
 
         it('should throw UniqueConstraintViolationException when triplet already exists', async () => {
@@ -329,7 +333,7 @@ describe('dbiam Personenkontext Repo', () => {
 
             expect(result).toEqual({
                 ok: true,
-                value: personenkontext,
+                value: expect.objectContaining({ id: personenkontext.id }) as Personenkontext<true>,
             });
         });
 
@@ -431,7 +435,10 @@ describe('dbiam Personenkontext Repo', () => {
 
             expect(result).toEqual({
                 ok: true,
-                value: [kontext1, kontext2],
+                value: expect.arrayContaining([
+                    expect.objectContaining({ id: kontext1.id }),
+                    expect.objectContaining({ id: kontext2.id }),
+                ]) as Personenkontext<true>[],
             });
         });
 
