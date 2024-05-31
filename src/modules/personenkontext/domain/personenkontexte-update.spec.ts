@@ -100,23 +100,20 @@ describe('PersonenkontexteUpdate', () => {
     });
 
     describe('update', () => {
-        describe('when sent personenkontexte contain non-existing personkontext', () => {
+        describe('when sent personenkontexte contain new personenkontext', () => {
             beforeAll(() => {
-                const count: number = 2;
-
-                sut = dbiamPersonenkontextFactory.createNew(
-                    personId,
-                    lastModified,
-                    count,
-                    createPKBodyParams(personId),
-                );
+                const count: number = 1;
+                sut = dbiamPersonenkontextFactory.createNew(personId, lastModified, count, [bodyParam1, bodyParam2]);
             });
 
-            it('should return PersonenkontextSpecificationError', async () => {
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(null);
+            it('should return null', async () => {
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(null); //mock: pk2 is not found => therefore handled as new
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]); //mock: pk1 is found as existing in DB
                 const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
 
-                expect(updateError).toBeTruthy();
+                expect(updateError).toBeNull();
+                expect(dBiamPersonenkontextRepoMock.save).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -139,20 +136,23 @@ describe('PersonenkontexteUpdate', () => {
             });
         });
 
-        describe('when existing personenkontexte cannot be found', () => {
-            beforeAll(() => {
+        describe('when some personenkontext should deleted and errors occur during deletion', () => {
+            beforeEach(() => {
                 const count: number = 2;
-                sut = dbiamPersonenkontextFactory.createNew(personId, lastModified, count, [bodyParam1, bodyParam2]);
+                sut = dbiamPersonenkontextFactory.createNew(personId, lastModified, count, [bodyParam1]);
             });
 
-            it('should return EntityNotFoundError', async () => {
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([]); //mock: no existing pks are found
+            it('should return PersonenkontexteUpdateError', async () => {
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                // pk2 is not sent => so it should be deleted
+
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk2, pk1]); //mock: both PKs are found
+                dBiamPersonenkontextRepoMock.delete.mockResolvedValueOnce(new EntityNotFoundError());
+
                 const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
 
                 expect(updateError).toBeTruthy();
-                expect(updateError).toBeInstanceOf(EntityNotFoundError);
+                expect(updateError).toBeInstanceOf(PersonenkontexteUpdateError);
             });
         });
 
@@ -163,8 +163,8 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return UpdateCountError', async () => {
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]); //mock: only one PK is found
                 const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
 
@@ -184,8 +184,8 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return UpdateOutdatedError', async () => {
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: both PKs are found
                 const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
 
@@ -195,29 +195,31 @@ describe('PersonenkontexteUpdate', () => {
         });
 
         describe('when validate returns no errors', () => {
-            beforeAll(() => {
+            beforeEach(() => {
                 const count: number = 2;
                 sut = dbiamPersonenkontextFactory.createNew(personId, lastModified, count, [bodyParam1, bodyParam2]);
             });
 
-            it('should return null', async () => {
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
+            it('should return null asc order', async () => {
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: both PKs are found
                 const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
 
                 expect(updateError).toBeNull();
+                expect(dBiamPersonenkontextRepoMock.delete).toHaveBeenCalledTimes(0);
             });
 
             // This test only test for right sorting by date of PKs, pk2 and pk1 are switched in retrieval order
-            it('should return null', async () => {
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
-
+            it('should return null desc order', async () => {
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk2, pk1]); //mock: both PKs are found
 
                 const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
+
                 expect(updateError).toBeNull();
+                expect(dBiamPersonenkontextRepoMock.delete).toHaveBeenCalledTimes(0);
             });
         });
     });
