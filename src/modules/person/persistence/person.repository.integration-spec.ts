@@ -456,7 +456,7 @@ describe('PersonRepository', () => {
                     personWithKeycloak.keycloakUserId = faker.string.uuid();
                     kcUserServiceMock.createWithHashedPassword.mockResolvedValueOnce({
                         ok: false,
-                        error: new KeycloakClientError(""),
+                        error: new KeycloakClientError(''),
                     });
                     kcUserServiceMock.setPassword.mockResolvedValueOnce({
                         ok: true,
