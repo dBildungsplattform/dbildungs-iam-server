@@ -135,26 +135,6 @@ describe('PersonenkontexteUpdate', () => {
             });
         });
 
-        /* describe('when some personenkontext should be deleted and errors occur during deletion', () => {
-            beforeEach(() => {
-                const count: number = 2;
-                sut = dbiamPersonenkontextFactory.createNew(personId, lastModified, count, [bodyParam1]);
-            });
-
-            it('should return PersonenkontexteUpdateError', async () => {
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
-                // pk2 is not sent => so it should be deleted
-
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk2, pk1]); //mock: both PKs are found
-                dBiamPersonenkontextRepoMock.delete.mockResolvedValueOnce(new EntityNotFoundError());
-
-                const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
-
-                expect(updateError).toBeTruthy();
-                expect(updateError).toBeInstanceOf(PersonenkontexteUpdateError);
-            });
-        });*/
-
         describe('when existing personenkontexte amount does NOT match count', () => {
             beforeAll(() => {
                 const count: number = 2;

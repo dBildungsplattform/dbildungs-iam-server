@@ -63,9 +63,6 @@ export class PersonenkontexteUpdate {
     }
 
     private validate(existingPKs: Personenkontext<true>[]): Option<PersonenkontexteUpdateError> {
-        /*  if (existingPKs.length == 0) {
-            return new EntityNotFoundError();
-        }*/
         if (existingPKs.length != this.count) {
             return new UpdateCountError();
         }
