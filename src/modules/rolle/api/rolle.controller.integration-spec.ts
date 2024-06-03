@@ -28,6 +28,7 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { RolleServiceProviderQueryParams } from './rolle-service-provider.query.params.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
+import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -248,6 +249,12 @@ describe('Rolle API', () => {
                 response.body as PagedResponse<RolleWithServiceProvidersResponse>;
             expect(pagedResponse.items).toHaveLength(3);
 
+            pagedResponse.items.forEach((item: RolleWithServiceProvidersResponse) => {
+                item.serviceProviders.sort((a: ServiceProviderIdNameResponse, b: ServiceProviderIdNameResponse) =>
+                    a.id.localeCompare(b.id),
+                );
+            });
+
             expect(pagedResponse.items).toContainEqual(
                 expect.objectContaining({ serviceProviders: [{ id: sp1.id, name: sp1.name }] }),
             );
@@ -256,7 +263,18 @@ describe('Rolle API', () => {
                     serviceProviders: [
                         { id: sp2.id, name: sp2.name },
                         { id: sp3.id, name: sp3.name },
-                    ],
+                    ].sort(
+                        (
+                            a: {
+                                id: string;
+                                name: string;
+                            },
+                            b: {
+                                id: string;
+                                name: string;
+                            },
+                        ) => a.id.localeCompare(b.id),
+                    ),
                 }),
             );
             expect(pagedResponse.items).toContainEqual(expect.objectContaining({ serviceProviders: [] }));
