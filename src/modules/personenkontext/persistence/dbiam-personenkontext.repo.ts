@@ -6,6 +6,7 @@ import { Rolle } from '../domain/personenkontext.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
+import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
@@ -15,7 +16,7 @@ export function mapAggregateToData(
         id: personenKontext.id,
         personId: rel(PersonEntity, personenKontext.personId),
         organisationId: personenKontext.organisationId,
-        rolleId: personenKontext.rolleId,
+        rolleId: rel(RolleEntity, personenKontext.rolleId),
         rolle: Rolle.LERNENDER, // Placeholder, until rolle is removed from entity
     };
 }
@@ -27,7 +28,7 @@ function mapEntityToAggregate(entity: PersonenkontextEntity): Personenkontext<bo
         entity.updatedAt,
         entity.personId.id,
         entity.organisationId,
-        entity.rolleId,
+        entity.rolleId.id,
     );
 }
 

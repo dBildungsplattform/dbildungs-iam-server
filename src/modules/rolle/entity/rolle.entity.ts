@@ -4,6 +4,7 @@ import { RollenArt } from '../domain/rolle.enums.js';
 import { RolleMerkmalEntity } from './rolle-merkmal.entity.js';
 import { RolleServiceProviderEntity } from './rolle-service-provider.entity.js';
 import { RolleSystemrechtEntity } from './rolle-systemrecht.entity.js';
+import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 
 @Entity({ tableName: 'rolle' })
 export class RolleEntity extends TimestampedEntity {
@@ -42,4 +43,12 @@ export class RolleEntity extends TimestampedEntity {
         cascade: [Cascade.ALL],
     })
     public serviceProvider: Collection<RolleServiceProviderEntity> = new Collection<RolleServiceProviderEntity>(this);
+
+    @OneToMany({
+        entity: () => PersonenkontextEntity,
+        mappedBy: 'rolleId',
+        cascade: [Cascade.REMOVE],
+        orphanRemoval: true,
+    })
+    public personenKontexte: Collection<PersonenkontextEntity> = new Collection<PersonenkontextEntity>(this);
 }

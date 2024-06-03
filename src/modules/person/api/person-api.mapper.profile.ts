@@ -378,6 +378,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonenkontextDo<boolean>) => dest.mandant, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.organisationId, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.rolle, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.rolleId, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.loeschungZeitpunkt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.sichtfreigabe, ignore()),
             );

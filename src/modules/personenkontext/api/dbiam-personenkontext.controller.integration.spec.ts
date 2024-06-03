@@ -95,10 +95,12 @@ describe('dbiam Personenkontext API', () => {
         it('should return all personenkontexte for the person', async () => {
             const personA: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
             const personB: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
             await Promise.all([
-                personenkontextRepo.save(createPersonenkontext(false, { personId: personA.id })),
-                personenkontextRepo.save(createPersonenkontext(false, { personId: personA.id })),
-                personenkontextRepo.save(createPersonenkontext(false, { personId: personB.id })),
+                personenkontextRepo.save(createPersonenkontext(false, { personId: personA.id, rolleId: rolle.id })),
+                personenkontextRepo.save(createPersonenkontext(false, { personId: personA.id, rolleId: rolle.id })),
+                personenkontextRepo.save(createPersonenkontext(false, { personId: personB.id, rolleId: rolle.id })),
             ]);
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -282,8 +284,9 @@ describe('dbiam Personenkontext API', () => {
         describe('when sending no PKs', () => {
             it('should delete and therefore return 201', async () => {
                 const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                 const savedPK: Personenkontext<true> = await personenkontextRepo.save(
-                    createPersonenkontext(false, { personId: person.id }),
+                    createPersonenkontext(false, { personId: person.id, rolleId: rolle.id }),
                 );
                 const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
                     createMock<DbiamUpdatePersonenkontexteBodyParams>({
@@ -303,8 +306,9 @@ describe('dbiam Personenkontext API', () => {
         describe('when errors occur (e.g. because count is wrong)', () => {
             it('should return error', async () => {
                 const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                 const savedPK: Personenkontext<true> = await personenkontextRepo.save(
-                    createPersonenkontext(false, { personId: person.id }),
+                    createPersonenkontext(false, { personId: person.id, rolleId: rolle.id }),
                 );
                 const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
                     createMock<DbiamUpdatePersonenkontexteBodyParams>({
