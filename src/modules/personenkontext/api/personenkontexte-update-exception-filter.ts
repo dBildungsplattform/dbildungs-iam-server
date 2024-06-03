@@ -10,6 +10,7 @@ import {
     PersonenkontexteUpdateErrorI18nTypes,
 } from './dbiam-personenkontexte-update.error.js';
 import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
+import { UpdateInvalidLastModifiedError } from '../domain/error/update-invalid-last-modified.error.js';
 
 @Catch(PersonenkontexteUpdateError)
 export class PersonenkontexteUpdateExceptionFilter implements ExceptionFilter<PersonenkontexteUpdateError> {
@@ -18,7 +19,7 @@ export class PersonenkontexteUpdateExceptionFilter implements ExceptionFilter<Pe
             UpdateCountError.name,
             new DbiamPersonenkontexteUpdateError({
                 code: 400,
-                i18nKey: PersonenkontexteUpdateErrorI18nTypes.COUNT_MISMATCHING_ERROR,
+                i18nKey: PersonenkontexteUpdateErrorI18nTypes.COUNT_MISMATCHING,
             }),
         ],
         [
@@ -29,10 +30,17 @@ export class PersonenkontexteUpdateExceptionFilter implements ExceptionFilter<Pe
             }),
         ],
         [
+            UpdateInvalidLastModifiedError.name,
+            new DbiamPersonenkontexteUpdateError({
+                code: 400,
+                i18nKey: PersonenkontexteUpdateErrorI18nTypes.INVALID_LAST_MODIFIED_VALUE,
+            }),
+        ],
+        [
             UpdatePersonIdMismatchError.name,
             new DbiamPersonenkontexteUpdateError({
                 code: 400,
-                i18nKey: PersonenkontexteUpdateErrorI18nTypes.PERSON_ID_MISMATCH_ERROR,
+                i18nKey: PersonenkontexteUpdateErrorI18nTypes.PERSON_ID_MISMATCH,
             }),
         ],
     ]);

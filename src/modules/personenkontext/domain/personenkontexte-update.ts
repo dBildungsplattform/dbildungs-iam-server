@@ -7,6 +7,7 @@ import { PersonID } from '../../../shared/types/index.js';
 import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
+import { UpdateInvalidLastModifiedError } from './error/update-invalid-last-modified.error.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -63,9 +64,6 @@ export class PersonenkontexteUpdate {
     }
 
     private validate(existingPKs: Personenkontext<true>[]): Option<PersonenkontexteUpdateError> {
-        /*  if (existingPKs.length == 0) {
-            return new EntityNotFoundError();
-        }*/
         if (existingPKs.length != this.count) {
             return new UpdateCountError();
         }
@@ -77,6 +75,9 @@ export class PersonenkontexteUpdate {
 
         if (mostRecentUpdatedAt.getTime() > this.lastModified.getTime()) {
             return new UpdateOutdatedError();
+        }
+        if (mostRecentUpdatedAt.getTime() < this.lastModified.getTime()) {
+            return new UpdateInvalidLastModifiedError();
         }
 
         return null;

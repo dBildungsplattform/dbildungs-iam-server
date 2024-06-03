@@ -12,6 +12,7 @@ import { Personenkontext } from './personenkontext.js';
 import { UpdateCountError } from './error/update-count.error.js';
 import { UpdateOutdatedError } from './error/update-outdated.error.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
+import { UpdateInvalidLastModifiedError } from './error/update-invalid-last-modified.error.js';
 
 function createPKBodyParams(personId: PersonID): DBiamCreatePersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DBiamCreatePersonenkontextBodyParams =
@@ -190,6 +191,27 @@ describe('PersonenkontexteUpdate', () => {
 
                 expect(updateError).toBeTruthy();
                 expect(updateError).toBeInstanceOf(UpdateOutdatedError);
+            });
+        });
+
+        describe('when most recent updated PK time does not match lastModified time', () => {
+            beforeAll(() => {
+                const wrongLastModified: Date = faker.date.future();
+                const count: number = 2;
+                sut = dbiamPersonenkontextFactory.createNew(personId, wrongLastModified, count, [
+                    bodyParam1,
+                    bodyParam2,
+                ]);
+            });
+
+            it('should return UpdateInvalidLastModifiedError', async () => {
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: both PKs are found
+                const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
+
+                expect(updateError).toBeTruthy();
+                expect(updateError).toBeInstanceOf(UpdateInvalidLastModifiedError);
             });
         });
 
