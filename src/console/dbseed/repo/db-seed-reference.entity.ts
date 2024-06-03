@@ -9,7 +9,7 @@ export enum ReferencedEntityType {
 
 @Entity({ tableName: 'seeding_reference' })
 export class DbSeedReferenceEntity extends BaseEntity {
-    @Enum(() => ReferencedEntityType)
+    @Enum({ items: () => ReferencedEntityType, nativeEnumName: 'referenced_entity_type_enum' })
     public referencedEntityType!: ReferencedEntityType;
 
     @Property({ primary: true, nullable: false })
