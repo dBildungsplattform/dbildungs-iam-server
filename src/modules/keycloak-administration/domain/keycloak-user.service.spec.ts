@@ -48,6 +48,10 @@ describe('KeycloakUserService', () => {
         adminService = module.get(KeycloakAdministrationService);
     });
 
+    beforeEach(() => {
+        jest.restoreAllMocks();
+    });
+
     afterAll(async () => {
         await module.close();
     });
@@ -206,7 +210,6 @@ describe('KeycloakUserService', () => {
         describe('when user does not exist & HashAlgo is Invalid BCRYPT', () => {
             it('should return user id', async () => {
                 const user: UserDo<true> = DoFactory.createUser(true);
-                kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
 
                 const res: Result<string> = await service.createWithHashedPassword(
                     {
@@ -228,7 +231,6 @@ describe('KeycloakUserService', () => {
         describe('when user does not exist & HashAlgo is Invalid crypt', () => {
             it('should return user id', async () => {
                 const user: UserDo<true> = DoFactory.createUser(true);
-                kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
 
                 const res: Result<string> = await service.createWithHashedPassword(
                     {
@@ -250,7 +252,6 @@ describe('KeycloakUserService', () => {
         describe('when user does not exist & HashAlgo is not supported', () => {
             it('should return user id', async () => {
                 const user: UserDo<true> = DoFactory.createUser(true);
-                kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
 
                 const res: Result<string> = await service.createWithHashedPassword(
                     {
@@ -273,7 +274,6 @@ describe('KeycloakUserService', () => {
         describe('when username and email already exists', () => {
             it('should return error result', async () => {
                 const user: UserDo<true> = DoFactory.createUser(true);
-                kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
                 kcUsersMock.find.mockResolvedValueOnce([
                     {
                         username: user.username,
@@ -301,7 +301,6 @@ describe('KeycloakUserService', () => {
             });
         });
 
-        /* FAILS DUE TO jest.resetAllMocks Missing
         describe('when user could not be created', () => {
             it('should return error result', async () => {
                 kcUsersMock.find.mockResolvedValueOnce([
@@ -313,7 +312,7 @@ describe('KeycloakUserService', () => {
                     },
                 ] as unknown as UserRepresentation[]);
                 const user: UserDo<false> = DoFactory.createUser(false);
-                kcUsersMock.create.mockRejectedValue(new Error());
+                kcUsersMock.create.mockRejectedValueOnce(new Error());
 
                 const res: Result<string> = await service.createWithHashedPassword(
                     user,
@@ -327,7 +326,6 @@ describe('KeycloakUserService', () => {
                 });
             });
         });
-        */
 
         describe('when getAuthedKcAdminClient fails', () => {
             it('should pass along error result', async () => {
