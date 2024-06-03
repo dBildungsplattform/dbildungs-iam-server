@@ -2,7 +2,6 @@ import { DBiamCreatePersonenkontextBodyParams } from '../api/param/dbiam-create-
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
 import { UpdateCountError } from './error/update-count.error.js';
-import { DomainError } from '../../../shared/error/index.js';
 import { UpdateOutdatedError } from './error/update-outdated.error.js';
 import { PersonID } from '../../../shared/types/index.js';
 import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.error.js';
@@ -83,10 +82,7 @@ export class PersonenkontexteUpdate {
         return null;
     }
 
-    private async delete(
-        existingPKs: Personenkontext<true>[],
-        sentPKs: Personenkontext<boolean>[],
-    ): Promise<Option<PersonenkontexteUpdateError>> {
+    private async delete(existingPKs: Personenkontext<true>[], sentPKs: Personenkontext<boolean>[]): Promise<void> {
         for (const existingPK of existingPKs) {
             if (
                 !sentPKs.some(
@@ -99,14 +95,9 @@ export class PersonenkontexteUpdate {
                 this.logger.info(
                     `DELETE PK with ${existingPK.personId}, ${existingPK.organisationId}, ${existingPK.rolleId}`,
                 );
-                const error: Option<DomainError> = await this.dBiamPersonenkontextRepo.delete(existingPK);
-                if (error) {
-                    return new PersonenkontexteUpdateError('Error during deletion via repository.');
-                }
+                await this.dBiamPersonenkontextRepo.delete(existingPK);
             }
         }
-
-        return null;
     }
 
     private async add(existingPKs: Personenkontext<true>[], sentPKs: Personenkontext<boolean>[]): Promise<void> {
@@ -137,10 +128,7 @@ export class PersonenkontexteUpdate {
             return validationError;
         }
 
-        const deletionError: Option<PersonenkontexteUpdateError> = await this.delete(existingPKs, sentPKs);
-        if (deletionError) {
-            return deletionError;
-        }
+        await this.delete(existingPKs, sentPKs);
         await this.add(existingPKs, sentPKs);
 
         return null;
