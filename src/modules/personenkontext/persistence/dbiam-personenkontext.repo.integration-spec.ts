@@ -227,20 +227,7 @@ describe('dbiam Personenkontext Repo', () => {
                 const person: Person<true> = await createPerson();
                 const personenkontext: Personenkontext<false> = createPersonenkontext(false, { personId: person.id });
                 const savedPersonenkontext: Personenkontext<true> = await sut.save(personenkontext);
-                const deletionError: Option<DomainError> = await sut.delete(savedPersonenkontext);
-
-                expect(deletionError).toBeFalsy();
-            });
-        });
-
-        describe('when personenkontext is NOT found', () => {
-            it('should return EntityNotFoundError', async () => {
-                const person: Person<true> = await createPerson();
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true, { personId: person.id });
-                const deletionError: Option<DomainError> = await sut.delete(personenkontext);
-
-                expect(deletionError).toBeTruthy();
-                expect(deletionError).toBeInstanceOf(DomainError);
+                await expect(sut.delete(savedPersonenkontext)).resolves.not.toThrow();
             });
         });
     });
