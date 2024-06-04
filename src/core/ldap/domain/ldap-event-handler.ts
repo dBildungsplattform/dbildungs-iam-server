@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { CreatedSchuleEvent } from '../../../shared/events/created-schule.event.js';
+import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { EventHandler } from '../../eventbus/decorators/event-handler.decorator.js';
 import { LdapClientService } from './ldap-client.service.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
-import { CreatedPersonenkontextEvent } from '../../../shared/events/created-personenkontext.event.js';
+import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
 import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
-import { DeletedSchuleEvent } from '../../../shared/events/deleted-schule.event.js';
-import { DeletedPersonenkontextEvent } from '../../../shared/events/deleted-personenkontext.event.js';
+import { SchuleDeletedEvent } from '../../../shared/events/schule-deleted.event.js';
+import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
 import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
@@ -28,8 +28,8 @@ export class LdapEventHandler {
         private readonly organisationRepository: OrganisationRepository,
     ) {}
 
-    @EventHandler(CreatedSchuleEvent)
-    public async asyncCreateSchuleEventHandler(event: CreatedSchuleEvent): Promise<void> {
+    @EventHandler(SchuleCreatedEvent)
+    public async asyncCreateSchuleEventHandler(event: SchuleCreatedEvent): Promise<void> {
         this.logger.info(`Received CreateSchuleEvent, organisationId:${event.organisationId}`);
 
         const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
@@ -51,8 +51,8 @@ export class LdapEventHandler {
         }
     }
 
-    @EventHandler(DeletedSchuleEvent)
-    public async asyncDeleteSchuleEventHandler(event: DeletedSchuleEvent): Promise<void> {
+    @EventHandler(SchuleDeletedEvent)
+    public async asyncDeleteSchuleEventHandler(event: SchuleDeletedEvent): Promise<void> {
         this.logger.info(`Received DeleteSchuleEvent, organisationId:${event.organisationId}`);
         const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
             event.organisationId,
@@ -73,8 +73,8 @@ export class LdapEventHandler {
         }
     }
 
-    @EventHandler(CreatedPersonenkontextEvent)
-    public async asyncCreatePersonenkontextEventHandler(event: CreatedPersonenkontextEvent): Promise<void> {
+    @EventHandler(PersonenkontextCreatedEvent)
+    public async asyncCreatePersonenkontextEventHandler(event: PersonenkontextCreatedEvent): Promise<void> {
         this.logger.info(`Received CreatePersonenkontextEvent, personenKontextId is ${event.personenkontextId}`);
 
         const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findById(
@@ -114,8 +114,8 @@ export class LdapEventHandler {
         }
     }
 
-    @EventHandler(DeletedPersonenkontextEvent)
-    public async asyncDeletePersonenkontextEventHandler(event: DeletedPersonenkontextEvent): Promise<void> {
+    @EventHandler(PersonenkontextDeletedEvent)
+    public async asyncDeletePersonenkontextEventHandler(event: PersonenkontextDeletedEvent): Promise<void> {
         this.logger.info(`Received DeletePersonenkontextEvent, personenKontextId is ${event.personenkontextId}`);
 
         const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findById(

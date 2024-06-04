@@ -1,6 +1,6 @@
 import { BaseEvent } from './base-event.js';
 
-export class DeletedSchuleEvent extends BaseEvent {
+export class SchuleDeletedEvent extends BaseEvent {
     public constructor(public readonly organisationId: string) {
         super();
     }
