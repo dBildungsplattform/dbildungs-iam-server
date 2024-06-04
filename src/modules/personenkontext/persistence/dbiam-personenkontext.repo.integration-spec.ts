@@ -220,10 +220,12 @@ describe('dbiam Personenkontext Repo', () => {
 
                 const [result, count]: Counted<Personenkontext<true>> = await sut.findBy(scope);
 
-                expect(result).toMatchObject([
-                    mapAggregateToPartial(personenkontextA),
-                    mapAggregateToPartial(personenkontextB),
-                ]);
+                expect(result).toEqual(
+                    expect.arrayContaining([
+                        expect.objectContaining(mapAggregateToPartial(personenkontextA)),
+                        expect.objectContaining(mapAggregateToPartial(personenkontextB)),
+                    ]),
+                );
                 expect(count).toBe(2);
             });
         });
