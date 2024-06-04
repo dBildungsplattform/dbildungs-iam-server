@@ -65,12 +65,6 @@ export class PersonenkontextAnlage {
         return orgas.slice(0, limit);
     }
 
-    public async findRollen(rolleName: string, limit?: number): Promise<Rolle<true>[]> {
-        const rollen: Option<Rolle<true>[]> = await this.rolleRepo.findByName(rolleName, limit);
-        if (rollen) return rollen;
-        return [];
-    }
-
     public async findAuthorizedRollen(
         permissions: PersonPermissions,
         rolleName?: string,

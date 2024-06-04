@@ -109,7 +109,7 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
     });
 
     describe('/GET rollen for personenkontext', () => {
-        it('should return all rollen for a personenkontext, if the user is Landesadmin', async () => {
+        it('should return all rollen for a personenkontext without filter, if the user is Landesadmin', async () => {
             const rolleName: string = faker.string.alpha({ length: 10 });
             await rolleRepo.save(createRolle(rolleFactory, { name: rolleName, rollenart: RollenArt.SYSADMIN }));
             const schuladminRolleName: string = faker.string.alpha({ length: 10 });
