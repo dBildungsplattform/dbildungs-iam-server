@@ -17,21 +17,27 @@ import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { PersonDo } from '../../person/domain/person.do.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
 describe('PersonenkontextScope', () => {
     let module: TestingModule;
     let orm: MikroORM;
     let em: EntityManager;
     let mapper: Mapper;
+    let rolleRepo: RolleRepo;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [PersonPersistenceMapperProfile],
+            providers: [PersonPersistenceMapperProfile, RolleFactory, RolleRepo, ServiceProviderRepo],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
+        rolleRepo = module.get(RolleRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -48,13 +54,15 @@ describe('PersonenkontextScope', () => {
         describe('when filtering for personenkontexte', () => {
             beforeEach(async () => {
                 const person: PersonDo<true> = DoFactory.createPerson(true);
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
                 await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
 
                 const dos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
                     30,
                     false,
                     DoFactory.createPersonenkontext,
-                    { personId: person.id },
+                    { personId: person.id, rolleId: rolle.id },
                 );
 
                 await em.persistAndFlush(

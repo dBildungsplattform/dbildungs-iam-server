@@ -18,6 +18,10 @@ import { PersonScope } from './person.scope.js';
 import { faker } from '@faker-js/faker';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
 describe('PersonScope', () => {
     let module: TestingModule;
@@ -25,6 +29,7 @@ describe('PersonScope', () => {
     let em: EntityManager;
     let mapper: Mapper;
     let kontextRepo: DBiamPersonenkontextRepo;
+    let rolleRepo: RolleRepo;
 
     const createPersonEntity = (): PersonEntity => {
         const person: PersonEntity = mapper.map(DoFactory.createPerson(false), PersonDo, PersonEntity);
@@ -39,12 +44,19 @@ describe('PersonScope', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [PersonPersistenceMapperProfile, DBiamPersonenkontextRepo],
+            providers: [
+                PersonPersistenceMapperProfile,
+                DBiamPersonenkontextRepo,
+                RolleRepo,
+                RolleFactory,
+                ServiceProviderRepo,
+            ],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
         kontextRepo = module.get(DBiamPersonenkontextRepo);
+        rolleRepo = module.get(RolleRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -160,8 +172,9 @@ describe('PersonScope', () => {
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
                 const person2: PersonEntity = createPersonEntity();
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                 await em.persistAndFlush([person1, person2]);
-                await createPersonenkontext(person1.id, orgnisationID, faker.string.uuid());
+                await createPersonenkontext(person1.id, orgnisationID, rolle.id);
             });
 
             it('should return found persons', async () => {
@@ -177,13 +190,15 @@ describe('PersonScope', () => {
 
         describe('when filtering for organisation ID & Rollen ID', () => {
             const orgnisationID: string = faker.string.uuid();
-            const rolleID: string = faker.string.uuid();
+            let rolleID: string;
 
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
                 const person2: PersonEntity = createPersonEntity();
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                rolleID = rolle.id;
                 await em.persistAndFlush([person1, person2]);
-                await createPersonenkontext(person1.id, orgnisationID, rolleID);
+                await createPersonenkontext(person1.id, orgnisationID, rolle.id);
             });
 
             it('should return found persons', async () => {
@@ -202,8 +217,10 @@ describe('PersonScope', () => {
 
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
                 await em.persistAndFlush([person1]);
-                await createPersonenkontext(person1.id, organisationID, faker.string.uuid());
+                await createPersonenkontext(person1.id, organisationID, rolle.id);
             });
 
             it('should return found persons', async () => {
@@ -218,10 +235,12 @@ describe('PersonScope', () => {
         });
 
         describe('when filtering for Rolle ID only', () => {
-            const rolleID: string = faker.string.uuid();
+            let rolleID: string;
 
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                rolleID = rolle.id;
                 await em.persistAndFlush([person1]);
                 await createPersonenkontext(person1.id, faker.string.uuid(), rolleID);
             });
