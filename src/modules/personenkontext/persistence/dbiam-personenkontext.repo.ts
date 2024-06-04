@@ -195,7 +195,7 @@ export class DBiamPersonenkontextRepo {
         }
     }
 
-    public async createAuthorized(
+    public async saveAuthorized(
         personenkontext: Personenkontext<false>,
         permissions: PersonPermissions,
     ): Promise<Result<Personenkontext<true>, DomainError>> {

@@ -490,8 +490,8 @@ describe('dbiam Personenkontext Repo', () => {
         });
     });
 
-    describe('createAuthorized', () => {
-        it('should create kontext when authorized', async () => {
+    describe('saveAuthorized', () => {
+        it('should save kontext when authorized', async () => {
             const adminUser: Person<true> = await createPerson();
             const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
             const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
@@ -517,7 +517,7 @@ describe('dbiam Personenkontext Repo', () => {
 
             const permissions: PersonPermissions = createPermissions(adminUser);
 
-            const result: Result<Personenkontext<true>, DomainError> = await sut.createAuthorized(
+            const result: Result<Personenkontext<true>, DomainError> = await sut.saveAuthorized(
                 personenkontext,
                 permissions,
             );
@@ -550,7 +550,7 @@ describe('dbiam Personenkontext Repo', () => {
 
             const permissions: PersonPermissions = createPermissions(adminUser);
 
-            const result: Result<Personenkontext<true>, DomainError> = await sut.createAuthorized(
+            const result: Result<Personenkontext<true>, DomainError> = await sut.saveAuthorized(
                 personenkontext,
                 permissions,
             );
@@ -561,7 +561,7 @@ describe('dbiam Personenkontext Repo', () => {
             });
         });
 
-        it('should create kontext when authorized', async () => {
+        it('should save kontext when authorized', async () => {
             const userWithoutPermission: Person<true> = await createPerson();
             const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
             const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, []);
@@ -585,7 +585,7 @@ describe('dbiam Personenkontext Repo', () => {
 
             const permissions: PersonPermissions = createPermissions(userWithoutPermission);
 
-            const result: Result<Personenkontext<true>, DomainError> = await sut.createAuthorized(
+            const result: Result<Personenkontext<true>, DomainError> = await sut.saveAuthorized(
                 personenkontext,
                 permissions,
             );
@@ -623,7 +623,7 @@ describe('dbiam Personenkontext Repo', () => {
 
             const permissions: PersonPermissions = createPermissions(adminUser);
 
-            const result: Result<Personenkontext<true>, DomainError> = await sut.createAuthorized(
+            const result: Result<Personenkontext<true>, DomainError> = await sut.saveAuthorized(
                 personenkontext,
                 permissions,
             );

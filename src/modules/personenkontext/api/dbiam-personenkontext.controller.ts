@@ -94,7 +94,7 @@ export class DBiamPersonenkontextController {
         }
 
         // Save personenkontext
-        const saveResult: Result<Personenkontext<true>, DomainError> = await this.personenkontextRepo.createAuthorized(
+        const saveResult: Result<Personenkontext<true>, DomainError> = await this.personenkontextRepo.saveAuthorized(
             newPersonenkontext,
             permissions,
         );
