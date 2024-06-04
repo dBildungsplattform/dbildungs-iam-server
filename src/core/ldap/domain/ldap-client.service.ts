@@ -23,10 +23,10 @@ export class LdapClientService {
     }
 
     private async bind(): Promise<Result<boolean>> {
-        this.logger.info('Inside bind');
+        this.logger.info('LDAP: bind');
         try {
             await this.ldapClient.getClient().bind(this.ldapInstanceConfig.BIND_DN, this.ldapInstanceConfig.PASSWORD);
-            this.logger.info('Successfully connected to LDAP');
+            this.logger.info('LDAP: Successfully connected');
             return {
                 ok: true,
                 value: true,
@@ -39,7 +39,7 @@ export class LdapClientService {
     }
 
     public async createOrganisation(organisation: Organisation<true>): Promise<Result<Organisation<true>>> {
-        this.logger.info('Inside createOrganisation');
+        this.logger.info('LDAP: createOrganisation');
         return this.mutex.runExclusive(async () => {
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
@@ -55,13 +55,13 @@ export class LdapClientService {
                 objectclass: ['organizationalRole'],
             };
             await client.add(`ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, organisationEntry);
-            this.logger.info(`Successfully created organisation ou=${organisation.kennung}`);
+            this.logger.info(`LDAP: Successfully created organisation ou=${organisation.kennung}`);
 
             await client.add(
                 `cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
                 roleEntry,
             );
-            this.logger.info(`Successfully created corresponding lehrer rolle for ou=${organisation.kennung}`);
+            this.logger.info(`LDAP: Successfully created corresponding lehrer rolle for ou=${organisation.kennung}`);
 
             return { ok: true, value: organisation };
         });
@@ -69,19 +69,19 @@ export class LdapClientService {
 
     public async deleteOrganisation(organisation: Organisation<true>): Promise<Result<Organisation<true>>> {
         return this.mutex.runExclusive(async () => {
-            this.logger.info('Inside deleteOrganisation');
+            this.logger.info('LDAP: deleteOrganisation');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
             if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
 
-            this.logger.info('Successfully connected to LDAP');
+            this.logger.info('LDAP: Successfully connected to LDAP');
 
             await client.del(`cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`);
-            this.logger.info(`Successfully deleted corresponding lehrer rolle for ou=${organisation.kennung}`);
+            this.logger.info(`LDAP: Successfully deleted corresponding lehrer rolle for ou=${organisation.kennung}`);
 
             await client.del(`ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`);
-            this.logger.info(`Successfully deleted organisation ou=${organisation.kennung}`);
+            this.logger.info(`LDAP: Successfully deleted organisation ou=${organisation.kennung}`);
 
             return { ok: true, value: organisation };
         });
@@ -89,7 +89,7 @@ export class LdapClientService {
 
     public async createLehrer(person: Person<true>, organisation: Organisation<true>): Promise<Result<Person<true>>> {
         return this.mutex.runExclusive(async () => {
-            this.logger.info('Inside createLehrer');
+            this.logger.info('LDAP: createLehrer');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
@@ -113,7 +113,7 @@ export class LdapClientService {
                 entry,
             );
             this.logger.info(
-                `Successfully created lehrer uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
+                `LDAP: Successfully created lehrer uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
             );
 
             return { ok: true, value: person };
@@ -122,7 +122,7 @@ export class LdapClientService {
 
     public async deleteLehrer(person: Person<true>, organisation: Organisation<true>): Promise<Result<Person<true>>> {
         return this.mutex.runExclusive(async () => {
-            this.logger.info('Inside deleteLehrer');
+            this.logger.info('LDAP: deleteLehrer');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
@@ -138,7 +138,7 @@ export class LdapClientService {
                 `uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
             );
             this.logger.info(
-                `Successfully deleted lehrer uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
+                `LDAP: Successfully deleted lehrer uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
             );
 
             return { ok: true, value: person };

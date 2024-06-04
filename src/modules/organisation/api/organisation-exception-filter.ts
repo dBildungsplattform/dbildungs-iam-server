@@ -12,6 +12,7 @@ import { KlasseNurVonSchuleAdministriertError } from '../specification/error/kla
 import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
 import { DbiamOrganisationError, OrganisationSpecificationErrorI18nTypes } from './dbiam-organisation.error.js';
 import { NameRequiredForSchuleError } from '../specification/error/name-required-for-schule.error.js';
+import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
 
 @Catch(OrganisationSpecificationError)
 export class OrganisationExceptionFilter implements ExceptionFilter<OrganisationSpecificationError> {
@@ -28,6 +29,13 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 400,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.NAME_REQUIRED_FOR_SCHULE,
+            }),
+        ],
+        [
+            SchuleKennungEindeutigError.name,
+            new DbiamOrganisationError({
+                code: 400,
+                i18nKey: OrganisationSpecificationErrorI18nTypes.SCHULE_KENNUNG_EINDEUTIG,
             }),
         ],
         [
