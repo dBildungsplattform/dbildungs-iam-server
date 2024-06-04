@@ -18,6 +18,10 @@ import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextRepo } from './personenkontext.repo.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
 describe('PersonenkontextRepo', () => {
     let module: TestingModule;
@@ -25,16 +29,25 @@ describe('PersonenkontextRepo', () => {
     let orm: MikroORM;
     let em: EntityManager;
     let mapper: Mapper;
+    let rolleRepo: RolleRepo;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [PersonPersistenceMapperProfile, PersonenkontextRepo],
+            providers: [
+                PersonPersistenceMapperProfile,
+                PersonenkontextRepo,
+                RolleRepo,
+                RolleFactory,
+                ServiceProviderRepo,
+            ],
         }).compile();
         sut = module.get(PersonenkontextRepo);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
+        rolleRepo = module.get(RolleRepo);
+
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
@@ -55,6 +68,8 @@ describe('PersonenkontextRepo', () => {
         describe('When referenced person entity exists', () => {
             it('should create a personenkontext', async () => {
                 const newPerson: PersonDo<false> = DoFactory.createPerson(false);
+                const rolle: RolleAggregate<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
                 await em.persistAndFlush(mapper.map(newPerson, PersonDo<false>, PersonEntity));
 
                 const personEntity: PersonEntity = await em.findOneOrFail(PersonEntity, {
@@ -62,6 +77,7 @@ describe('PersonenkontextRepo', () => {
                 });
                 const newPersonenkontext: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false, {
                     personId: personEntity.id,
+                    rolleId: rolle.id,
                 });
 
                 const savedPersonenkontext: Option<PersonenkontextDo<true>> = await sut.save(newPersonenkontext);
@@ -73,6 +89,8 @@ describe('PersonenkontextRepo', () => {
 
             it('should update a personenkontext and should not create a new personenkontext', async () => {
                 const newPerson: PersonDo<false> = DoFactory.createPerson(false);
+                const rolle: RolleAggregate<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
                 await em.persistAndFlush(mapper.map(newPerson, PersonDo<false>, PersonEntity));
 
                 const personEntity: PersonEntity = await em.findOneOrFail(PersonEntity, {
@@ -80,6 +98,7 @@ describe('PersonenkontextRepo', () => {
                 });
                 const newPersonenkontext: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false, {
                     personId: personEntity.id,
+                    rolleId: rolle.id,
                 });
 
                 const savedPersonenkontext: Option<PersonenkontextDo<true>> = await sut.save(newPersonenkontext);
@@ -93,6 +112,8 @@ describe('PersonenkontextRepo', () => {
 
             it('should update a personenkontext with id and should not create a new personenkontext', async () => {
                 const newPerson: PersonDo<false> = DoFactory.createPerson(false);
+                const rolle: RolleAggregate<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
                 await em.persistAndFlush(mapper.map(newPerson, PersonDo<false>, PersonEntity));
 
                 const personEntity: PersonEntity = await em.findOneOrFail(PersonEntity, {
@@ -100,6 +121,7 @@ describe('PersonenkontextRepo', () => {
                 });
                 const newPersonenkontext: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true, {
                     personId: personEntity.id,
+                    rolleId: rolle.id,
                 });
 
                 const savedPersonenkontext: Option<PersonenkontextDo<true>> = await sut.save(newPersonenkontext);
@@ -124,6 +146,8 @@ describe('PersonenkontextRepo', () => {
                 };
                 const person1: PersonDo<true> = DoFactory.createPerson(true);
                 const person2: PersonDo<true> = DoFactory.createPerson(true);
+                const rolle: RolleAggregate<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
                 await em.persistAndFlush([
                     mapper.map(person1, PersonDo, PersonEntity),
                     mapper.map(person2, PersonDo, PersonEntity),
@@ -131,10 +155,12 @@ describe('PersonenkontextRepo', () => {
                 const personenkontextDo1: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false, {
                     ...props,
                     personId: person1.id,
+                    rolleId: rolle.id,
                 });
                 const personenkontextDo2: PersonenkontextDo<false> = DoFactory.createPersonenkontext(false, {
                     ...props,
                     personId: person2.id,
+                    rolleId: rolle.id,
                 });
                 await em.persistAndFlush(mapper.map(personenkontextDo1, PersonenkontextDo, PersonenkontextEntity));
                 await em.persistAndFlush(mapper.map(personenkontextDo2, PersonenkontextDo, PersonenkontextEntity));
@@ -168,13 +194,15 @@ describe('PersonenkontextRepo', () => {
     describe('findById', () => {
         beforeEach(async () => {
             const person: PersonDo<true> = DoFactory.createPerson(true);
+            const rolle: RolleAggregate<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
             await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
 
             const personenkontextDos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
                 10,
                 false,
                 DoFactory.createPersonenkontext,
-                { personId: person.id },
+                { personId: person.id, rolleId: rolle.id },
             );
 
             await em.persistAndFlush(
@@ -212,13 +240,15 @@ describe('PersonenkontextRepo', () => {
         describe('when deleting personenkontext by id', () => {
             it('should return number of deleted rows', async () => {
                 const person: PersonDo<true> = DoFactory.createPerson(true);
+                const rolle: RolleAggregate<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
                 await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
 
                 const personenkontextDos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
                     5,
                     false,
                     DoFactory.createPersonenkontext,
-                    { personId: person.id },
+                    { personId: person.id, rolleId: rolle.id },
                 );
 
                 await em.persistAndFlush(

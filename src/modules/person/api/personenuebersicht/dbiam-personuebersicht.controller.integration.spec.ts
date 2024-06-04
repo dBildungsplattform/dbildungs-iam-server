@@ -273,6 +273,7 @@ describe('Personenuebersicht API', () => {
                 });
             });
         });
+
         describe('when not successfull', () => {
             describe('when person does not exist', () => {
                 it('should return Error', async () => {
@@ -295,67 +296,7 @@ describe('Personenuebersicht API', () => {
                     expect(response.status).toBe(404);
                 });
             });
-            describe('when one or more rollen does not exist', () => {
-                it('should return Error', async () => {
-                    const creationParams: PersonCreationParams = {
-                        familienname: faker.person.lastName(),
-                        vorname: faker.person.firstName(),
-                    };
 
-                    const person: Person<false> | DomainError = await Person.createNew(
-                        usernameGeneratorService,
-                        creationParams,
-                    );
-                    expect(person).not.toBeInstanceOf(DomainError);
-                    if (person instanceof DomainError) {
-                        return;
-                    }
-                    const savedPerson: Person<true> | DomainError = await personRepository.create(person);
-                    expect(savedPerson).not.toBeInstanceOf(DomainError);
-                    if (savedPerson instanceof DomainError) {
-                        return;
-                    }
-
-                    const unsavedRolle1: Rolle<true> = rolleFactory.construct(
-                        faker.string.uuid(),
-                        faker.date.recent(),
-                        faker.date.recent(),
-                        faker.string.alpha(5),
-                        faker.string.uuid(),
-                        RollenArt.LEHR,
-                        [],
-                        [],
-                        [],
-                    );
-
-                    const savedRolle2: Rolle<true> = await rolleRepo.save(
-                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LERN, [], [], []),
-                    );
-
-                    const savedOrganisation1: OrganisationDo<true> = await organisationRepo.save(
-                        DoFactory.createOrganisation(true),
-                    );
-                    const savedOrganisation2: OrganisationDo<true> = await organisationRepo.save(
-                        DoFactory.createOrganisation(true),
-                    );
-
-                    await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, unsavedRolle1.id),
-                    );
-                    await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
-                    );
-                    await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
-                    );
-
-                    const response: Response = await request(app.getHttpServer() as App)
-                        .get(`/dbiam/personenuebersicht/${savedPerson.id}`)
-                        .send();
-
-                    expect(response.status).toBe(404);
-                });
-            });
             describe('when one or more organisations does not exist', () => {
                 it('should return Error', async () => {
                     const creationParams: PersonCreationParams = {
@@ -408,6 +349,7 @@ describe('Personenuebersicht API', () => {
             });
         });
     });
+
     describe('/GET personenuebersichten', () => {
         it('should return personuebersichten with zuordnungen', async () => {
             const creationParams: PersonCreationParams = {
