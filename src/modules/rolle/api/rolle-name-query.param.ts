@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional } from 'class-validator';
 import { AutoMap } from '@automapper/classes';
+import { PagedQueryParams } from '../../../shared/paging/index.js';
 
-export class RolleNameQueryParams {
+export class RolleNameQueryParams extends PagedQueryParams {
     @AutoMap()
     @IsOptional()
     @IsString()
