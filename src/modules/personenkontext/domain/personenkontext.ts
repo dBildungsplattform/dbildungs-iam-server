@@ -116,7 +116,7 @@ export class Personenkontext<WasPersisted extends boolean> {
         const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
         if (!organisationMatchesRollenart.isSatisfiedBy(orga, rolle)) {
             return new PersonenkontextAnlageError(
-                'PersonenkontextAnlage invalid: role type does not match organistaion type',
+                'PersonenkontextAnlage invalid: role type does not match organisation type',
             );
         }
 
