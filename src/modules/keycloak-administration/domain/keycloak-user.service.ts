@@ -1,7 +1,12 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
-import { KeycloakAdminClient, type UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
+import {
+    GroupRepresentation,
+    KeycloakAdminClient,
+    RoleRepresentation,
+    type UserRepresentation,
+} from '@s3pweb/keycloak-admin-client-cjs';
 import { plainToClass } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 
@@ -179,5 +184,49 @@ export class KeycloakUserService {
         }
 
         return { ok: true, value: this.mapper.map(userReprDto, UserRepresentationDto, UserDo) };
+    }
+
+    public async createGroup(groupName: string): Promise<Result<string, DomainError>> {
+        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+            await this.kcAdminService.getAuthedKcAdminClient();
+
+        if (!kcAdminClientResult.ok) {
+            return kcAdminClientResult;
+        }
+
+        try {
+            const groupRepresentation: GroupRepresentation = {
+                name: groupName,
+            };
+
+            const response: { id: string } = await kcAdminClientResult.value.groups.create(groupRepresentation);
+
+            return { ok: true, value: response.id };
+        } catch (err) {
+            this.logger.error(`Could not create group, message: ${JSON.stringify(err)} `);
+            return { ok: false, error: new KeycloakClientError('Could not create group') };
+        }
+    }
+
+    public async createRole(roleName: string): Promise<Result<string, DomainError>> {
+        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+            await this.kcAdminService.getAuthedKcAdminClient();
+
+        if (!kcAdminClientResult.ok) {
+            return kcAdminClientResult;
+        }
+
+        try {
+            const roleRepresentation: RoleRepresentation = {
+                name: roleName,
+            };
+
+            const response: { roleName: string } = await kcAdminClientResult.value.roles.create(roleRepresentation);
+
+            return { ok: true, value: response.roleName };
+        } catch (err) {
+            this.logger.error(`Could not create role, message: ${JSON.stringify(err)} `);
+            return { ok: false, error: new KeycloakClientError('Could not create role') };
+        }
     }
 }

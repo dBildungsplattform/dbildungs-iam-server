@@ -10,6 +10,6 @@ import { KeycloakConfigModule } from './keycloak-config.module.js';
 @Module({
     imports: [LoggerModule.register(KeycloakAdministrationModule.name), KeycloakConfigModule],
     providers: [UserMapperProfile, KeycloakAdminClient, KeycloakUserService, KeycloakAdministrationService],
-    exports: [KeycloakUserService],
+    exports: [KeycloakUserService, KeycloakAdminClient],
 })
 export class KeycloakAdministrationModule {}

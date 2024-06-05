@@ -3,7 +3,13 @@ import { Injectable } from '@nestjs/common';
 
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
+import { CreateGroupEvent } from '../../../shared/events/kc-group-event.js';
+import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EventService } from '../../../core/eventbus/index.js';
 
+/* eslint-disable no-console */
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
  */
@@ -44,7 +50,11 @@ type ServiceProviderFindOptions = {
 
 @Injectable()
 export class ServiceProviderRepo {
-    public constructor(private readonly em: EntityManager) {}
+    public constructor(
+        private readonly em: EntityManager,
+        private readonly keycloakUserService: KeycloakUserService,
+        private readonly eventService: EventService,
+    ) {}
 
     public async findById(id: string, options?: ServiceProviderFindOptions): Promise<Option<ServiceProvider<true>>> {
         const exclude: readonly ['logo'] | undefined = options?.withLogo ? undefined : ['logo'];
@@ -76,6 +86,8 @@ export class ServiceProviderRepo {
         }
     }
 
+    // TODO probably add the api here
+
     private async create(serviceProvider: ServiceProvider<false>): Promise<ServiceProvider<true>> {
         const serviceProviderEntity: ServiceProviderEntity = this.em.create(
             ServiceProviderEntity,
@@ -84,7 +96,19 @@ export class ServiceProviderRepo {
 
         await this.em.persistAndFlush(serviceProviderEntity);
 
+        this.eventService.publish(new CreateGroupEvent(serviceProviderEntity.name));
+
         return mapEntityToAggregate(serviceProviderEntity);
+    }
+
+    @EventHandler(CreateGroupEvent)
+    public async handleCreateGroupEvent(event: CreateGroupEvent): Promise<void> {
+        console.log(`Received CreateGroupEvent, groupName: ${event.groupName}`);
+
+        const result: Result<string, DomainError> = await this.keycloakUserService.createGroup(event.groupName);
+        if (!result.ok) {
+            console.error(`Could not create group, message: ${result.error.message}`);
+        }
     }
 
     private async update(serviceProvider: ServiceProvider<true>): Promise<ServiceProvider<true>> {
