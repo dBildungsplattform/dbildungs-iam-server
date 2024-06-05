@@ -34,10 +34,10 @@ export class OrganisationEntity extends TimestampedEntity {
     public kuerzel?: string;
 
     @AutoMap(() => String)
-    @Enum({ items: () => OrganisationsTyp, nullable: true })
+    @Enum({ items: () => OrganisationsTyp, nullable: true, nativeEnumName: 'organisations_typ_enum' })
     public typ?: OrganisationsTyp;
 
     @AutoMap(() => String)
-    @Enum({ items: () => Traegerschaft, nullable: true })
+    @Enum({ items: () => Traegerschaft, nullable: true, nativeEnumName: 'traegerschaft_enum' })
     public traegerschaft?: Traegerschaft;
 }
