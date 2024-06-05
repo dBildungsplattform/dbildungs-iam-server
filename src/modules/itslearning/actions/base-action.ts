@@ -47,7 +47,7 @@ export abstract class IMSESAction<ResponseBodyType, ResultType> {
      * Will be called if the response was successful
      * @param body The contents of the response body
      */
-    protected abstract parseBody(body: ResponseBodyType): Result<ResultType, DomainError>;
+    public abstract parseBody(body: ResponseBodyType): Result<ResultType, DomainError>;
 
     public parseResponse(input: string): Result<ResultType, DomainError> {
         const result: BaseResponse<ResponseBodyType> = this.xmlParser.parse(input) as BaseResponse<ResponseBodyType>;

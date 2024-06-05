@@ -62,7 +62,7 @@ export class CreateGroupAction extends IMSESAction<CreateGroupResponseBody, void
         };
     }
 
-    protected override parseBody(): Result<void, DomainError> {
+    public override parseBody(): Result<void, DomainError> {
         // Response does not contain data
         return {
             ok: true,

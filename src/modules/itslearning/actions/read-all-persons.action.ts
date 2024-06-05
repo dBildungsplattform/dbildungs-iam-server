@@ -21,16 +21,6 @@ type PersonIdPair = {
         identifier: string;
     };
     person: {
-        formatName: {
-            '#text'?: unknown;
-        };
-        name: {
-            partName: {
-                namePartType: string;
-                namePartValue?: string;
-            };
-        };
-        email: string;
         userId: {
             userIdValue: string;
         };
@@ -78,7 +68,7 @@ export class ReadAllPersonsAction extends IMSESAction<ReadAllPersonsReponseBody,
         return ['personIdPair', 'partName', 'tel'].includes(tagName);
     }
 
-    protected override parseBody(body: ReadAllPersonsReponseBody): Result<PersonResponse[], DomainError> {
+    public override parseBody(body: ReadAllPersonsReponseBody): Result<PersonResponse[], DomainError> {
         const persons: PersonResponse[] = body.readAllPersonsResponse.personIdPairSet.personIdPair.map(
             mapPersonIdPairToPersonResponse,
         );

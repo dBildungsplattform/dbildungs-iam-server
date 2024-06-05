@@ -32,9 +32,9 @@ export class ItsLearningIMSESService {
     }
 
     public async send<ResponseBody, ResultType>(
-        request: IMSESAction<ResponseBody, ResultType>,
+        action: IMSESAction<ResponseBody, ResultType>,
     ): Promise<Result<ResultType, DomainError>> {
-        const body: object = request.buildRequest();
+        const body: object = action.buildRequest();
         const message: string = this.createMessage(body);
 
         try {
@@ -42,12 +42,12 @@ export class ItsLearningIMSESService {
                 this.httpService.post(this.endpoint, message, {
                     headers: {
                         'Content-Type': 'text/xml;charset=UTF-8',
-                        SOAPAction: `"${request.action}"`,
+                        SOAPAction: `"${action.action}"`,
                     },
                 }),
             );
 
-            return request.parseResponse(response.data);
+            return action.parseResponse(response.data);
         } catch (err: unknown) {
             return {
                 ok: false,
