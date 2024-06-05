@@ -2,12 +2,14 @@ import { DbConfig } from './db.config.js';
 import { KeycloakConfig } from './keycloak.config.js';
 import { FrontendConfig } from './frontend.config.js';
 import { HostConfig } from './host.config.js';
+import { ItsLearningConfig } from './itslearning.config.js';
 
 export default (): {
     DB: Partial<DbConfig>;
     KEYCLOAK: Partial<KeycloakConfig>;
     FRONTEND: Partial<FrontendConfig>;
     HOST: Partial<HostConfig>;
+    ITSLEARNING: Partial<ItsLearningConfig>;
 } => ({
     DB: {
         DB_NAME: process.env['DB_NAME'],
@@ -27,5 +29,10 @@ export default (): {
     },
     HOST: {
         HOSTNAME: process.env['BACKEND_HOSTNAME'],
+    },
+    ITSLEARNING: {
+        ENDPOINT: process.env['ITSLEARNING_ENDPOINT'],
+        USERNAME: process.env['ITSLEARNING_USERNAME'],
+        PASSWORD: process.env['ITSLEARNING_PASSWORD'],
     },
 });
