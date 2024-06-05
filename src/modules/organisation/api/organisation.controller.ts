@@ -43,6 +43,7 @@ import { DbiamOrganisationError } from './dbiam-organisation.error.js';
 import { OrganisationExceptionFilter } from './organisation-exception-filter.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
+import { OrganisationsTyp } from '../domain/organisation.enums.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new OrganisationExceptionFilter())
 @ApiTags('organisationen')
@@ -188,7 +189,24 @@ export class OrganisationController {
             true,
         );
 
-        const scope: OrganisationScope = new OrganisationScope()
+        const scope: OrganisationScope = new OrganisationScope();
+
+        // If the typ is Klasse then only search by Name using the search string
+        if (queryParams.typ === OrganisationsTyp.KLASSE) {
+            scope
+                .findBy({
+                    kennung: queryParams.kennung,
+                    name: queryParams.name,
+                    typ: queryParams.typ,
+                })
+                .setScopeWhereOperator(ScopeOperator.AND)
+                .findByAdministriertVonArray(queryParams.administriertVon)
+                .searchStringAdministriertVon(queryParams.searchString)
+                .excludeTyp(queryParams.excludeTyp)
+                .byIDs(validOrgaIDs)
+                .paged(queryParams.offset, queryParams.limit);
+        }
+        scope
             .findBy({
                 kennung: queryParams.kennung,
                 name: queryParams.name,
