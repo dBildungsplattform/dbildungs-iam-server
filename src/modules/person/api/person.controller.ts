@@ -97,7 +97,7 @@ export class PersonController {
 
         if (isMigrationCall === true) {
             organisationIDs = await permissions.getOrgIdsWithSystemrecht(
-                [RollenSystemRecht.MIGRATION_DURCHFÜHREN],
+                [RollenSystemRecht.MIGRATION_DURCHFUEHREN],
                 true,
             );
         } else {

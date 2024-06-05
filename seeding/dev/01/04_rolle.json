@@ -113,7 +113,7 @@
           "SCHULEN_VERWALTEN",
           "KLASSEN_VERWALTEN",
           "SCHULTRAEGER_VERWALTEN",
-          "MIGRATION_DURCHFÜHREN"
+          "MIGRATION_DURCHFUEHREN"
         ],
         "serviceProviderIds": []
       }
