@@ -37,5 +37,10 @@
     },
     "LOGGING": {
         "DEFAULT_LOG_LEVEL": "info"
+    },
+    "ITSLEARNING": {
+        "ENDPOINT": "https://localhost",
+        "USERNAME": "username",
+        "PASSWORD": "password"
     }
 }

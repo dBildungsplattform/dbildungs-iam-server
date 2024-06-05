@@ -29,6 +29,7 @@ import { AccessGuard } from '../modules/authentication/api/access.guard.js';
 import { PermissionsInterceptor } from '../modules/authentication/services/permissions.interceptor.js';
 import { PassportModule } from '@nestjs/passport';
 import { EventModule } from '../core/eventbus/index.js';
+import { ItsLearningModule } from '../modules/itslearning/itslearning.module.js';
 
 @Module({
     imports: [
@@ -79,6 +80,7 @@ import { EventModule } from '../core/eventbus/index.js';
         PersonenKontextApiModule,
         ErrorModule,
         KeycloakConfigModule,
+        ItsLearningModule,
     ],
     providers: [
         {

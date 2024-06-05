@@ -1,49 +1,54 @@
 {
-  "HOST": {
-    "PORT": 8080
-  },
-  "FRONTEND": {
-    "PORT": 8080,
-    "SECURE_COOKIE": true,
-    "SESSION_SECRET": "SessionSecretForDevelopment",
-    "SESSION_TTL_MS": 3600000,
-    "BACKEND_ADDRESS": "http://dbildungs-iam-server-backend:80",
-    "DEFAULT_AUTH_REDIRECT": "/",
-    "TRUST_PROXY": 1
-  },
-  "DB": {
-    "USE_SSL": true
-  },
-  "KEYCLOAK": {
-    "ADMIN_REALM_NAME": "SPSH",
-    "REALM_NAME": "SPSH",
-    "ADMIN_CLIENT_ID": "spsh-admin",
-    "CLIENT_ID": "spsh"
-  },
-  "REDIS": {
-    "HOST": "dbildungs-iam-server-redis",
-    "PORT": 6379,
-    "USERNAME": "default",
-    "USE_TLS": false
-  },
+    "HOST": {
+        "PORT": 8080
+    },
+    "FRONTEND": {
+        "PORT": 8080,
+        "SECURE_COOKIE": true,
+        "SESSION_SECRET": "SessionSecretForDevelopment",
+        "SESSION_TTL_MS": 3600000,
+        "BACKEND_ADDRESS": "http://dbildungs-iam-server-backend:80",
+        "DEFAULT_AUTH_REDIRECT": "/",
+        "TRUST_PROXY": 1
+    },
+    "DB": {
+        "USE_SSL": true
+    },
+    "KEYCLOAK": {
+        "ADMIN_REALM_NAME": "SPSH",
+        "REALM_NAME": "SPSH",
+        "ADMIN_CLIENT_ID": "spsh-admin",
+        "CLIENT_ID": "spsh"
+    },
+    "REDIS": {
+        "HOST": "dbildungs-iam-server-redis",
+        "PORT": 6379,
+        "USERNAME": "default",
+        "USE_TLS": false
+    },
     "LDAP": {
         "URL": "ldap://dbildungs-iam-server-ldap",
         "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
         "PASSWORD": "admin"
     },
-  "DATA": {
-    "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
-  },
-  "LOGGING": {
-    "DEFAULT_LOG_LEVEL": "info",
-    "PERSON_MODULE_LOG_LEVEL": "debug",
-    "PERSON_API_MODULE_LOG_LEVEL": "debug",
-    "ORGANISATION_MODULE_LOG_LEVEL": "debug",
-    "ORGANISATION_API_MODULE_LOG_LEVEL": "debug",
-    "ROLLE_MODULE_LOG_LEVEL": "debug",
-    "ROLLE_API_MODULE_LOG_LEVEL": "debug",
-    "KEYCLOAK_ADMINISTRATION_MODULE_LOG_LEVEL": "debug",
-    "HEALTH_MODULE_LOG_LEVEL": "debug",
-    "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
-  }
+    "DATA": {
+        "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
+    },
+    "LOGGING": {
+        "DEFAULT_LOG_LEVEL": "info",
+        "PERSON_MODULE_LOG_LEVEL": "debug",
+        "PERSON_API_MODULE_LOG_LEVEL": "debug",
+        "ORGANISATION_MODULE_LOG_LEVEL": "debug",
+        "ORGANISATION_API_MODULE_LOG_LEVEL": "debug",
+        "ROLLE_MODULE_LOG_LEVEL": "debug",
+        "ROLLE_API_MODULE_LOG_LEVEL": "debug",
+        "KEYCLOAK_ADMINISTRATION_MODULE_LOG_LEVEL": "debug",
+        "HEALTH_MODULE_LOG_LEVEL": "debug",
+        "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
+    },
+    "ITSLEARNING": {
+        "ENDPOINT": "https://localhost",
+        "USERNAME": "username",
+        "PASSWORD": "password"
+    }
 }

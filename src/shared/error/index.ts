@@ -12,3 +12,4 @@ export * from './entity-already-exists.error.js';
 export * from './invalid-name.error.js';
 export * from './invalid-character-set.error.js';
 export * from './invalid-attribute-length.error.js';
+export * from './its-learning.error.js';
