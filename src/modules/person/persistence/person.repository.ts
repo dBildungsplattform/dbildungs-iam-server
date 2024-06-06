@@ -203,11 +203,17 @@ export class PersonRepository {
         return null;
     }
 
-    public async create(person: Person<false>): Promise<Person<true> | DomainError> {
-        const personWithKeycloakUser: Person<false> | DomainError = await this.createKeycloakUser(
-            person,
-            this.kcUserService,
-        );
+    public async create(person: Person<false>, hashedPassword?: string): Promise<Person<true> | DomainError> {
+        let personWithKeycloakUser: Person<false> | DomainError;
+        if (!hashedPassword) {
+            personWithKeycloakUser = await this.createKeycloakUser(person, this.kcUserService);
+        } else {
+            personWithKeycloakUser = await this.createKeycloakUserWithHashedPassword(
+                person,
+                hashedPassword,
+                this.kcUserService,
+            );
+        }
         if (personWithKeycloakUser instanceof DomainError) {
             return personWithKeycloakUser;
         }
@@ -266,6 +272,32 @@ export class PersonRepository {
             await kcUserService.delete(person.keycloakUserId);
             return setPasswordResult.error;
         }
+
+        return person;
+    }
+
+    private async createKeycloakUserWithHashedPassword(
+        person: Person<boolean>,
+        hashedPassword: string,
+        kcUserService: KeycloakUserService,
+    ): Promise<Person<boolean> | DomainError> {
+        if (person.keycloakUserId || !person.username) {
+            return new EntityCouldNotBeCreated('Person');
+        }
+        person.referrer = person.username;
+        const userDo: UserDo<false> = {
+            username: person.username,
+            id: undefined,
+            createdDate: undefined,
+        } satisfies UserDo<false>;
+        const creationResult: Result<string, DomainError> = await kcUserService.createWithHashedPassword(
+            userDo,
+            hashedPassword,
+        );
+        if (!creationResult.ok) {
+            return creationResult.error;
+        }
+        person.keycloakUserId = creationResult.value;
 
         return person;
     }
