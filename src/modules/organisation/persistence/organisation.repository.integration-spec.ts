@@ -111,6 +111,52 @@ describe('OrganisationRepository', () => {
         });
     });
 
+    describe('exists', () => {
+        it('should return true if the orga exists', async () => {
+            const orga: OrganisationEntity = em.create(
+                OrganisationEntity,
+                mapAggregateToData(
+                    Organisation.createNew(
+                        sut.ROOT_ORGANISATION_ID,
+                        sut.ROOT_ORGANISATION_ID,
+                        faker.string.numeric(6),
+                        faker.company.name(),
+                    ),
+                ),
+            );
+            await em.persistAndFlush(orga);
+
+            await expect(sut.exists(orga.id)).resolves.toBe(true);
+        });
+
+        it('should return false if the orga does not exists', async () => {
+            await expect(sut.exists(faker.string.uuid())).resolves.toBe(false);
+        });
+    });
+
+    describe('findById', () => {
+        it('should return the organisation if it exists', async () => {
+            const orga: OrganisationEntity = em.create(
+                OrganisationEntity,
+                mapAggregateToData(
+                    Organisation.createNew(
+                        sut.ROOT_ORGANISATION_ID,
+                        sut.ROOT_ORGANISATION_ID,
+                        faker.string.numeric(6),
+                        faker.company.name(),
+                    ),
+                ),
+            );
+            await em.persistAndFlush(orga);
+
+            await expect(sut.findById(orga.id)).resolves.toBeInstanceOf(Organisation);
+        });
+
+        it('should return null', async () => {
+            await expect(sut.findById(faker.string.uuid())).resolves.toBeNull();
+        });
+    });
+
     describe('findBy', () => {
         let organisation1: Organisation<false>;
         let organisation2: Organisation<false>;
@@ -252,6 +298,88 @@ describe('OrganisationRepository', () => {
 
                 expect(result).toBeInstanceOf(Array);
                 expect(result).toHaveLength(2);
+            });
+        });
+    });
+
+    describe('findChildOrgasByIds', () => {
+        async function createOrgaTree(): Promise<[root: string, traeger: string, schule: string]> {
+            const root: Organisation<true> = Organisation.construct(
+                sut.ROOT_ORGANISATION_ID,
+                faker.date.past(),
+                faker.date.recent(),
+                undefined,
+                undefined,
+                faker.string.numeric(6),
+                faker.string.alphanumeric(10),
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.ROOT,
+                undefined,
+            );
+
+            const traeger: Organisation<true> = Organisation.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                root.id,
+                root.id,
+                faker.string.numeric(6),
+                faker.string.alphanumeric(10),
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.ROOT,
+                undefined,
+            );
+
+            const schule: Organisation<true> = Organisation.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                traeger.id,
+                traeger.id,
+                faker.string.numeric(6),
+                faker.string.alphanumeric(10),
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.ROOT,
+                undefined,
+            );
+
+            await em.persistAndFlush([
+                em.create(OrganisationEntity, mapAggregateToData(root)),
+                em.create(OrganisationEntity, mapAggregateToData(traeger)),
+                em.create(OrganisationEntity, mapAggregateToData(schule)),
+            ]);
+
+            return [root.id, traeger.id, schule.id];
+        }
+
+        describe('when no input IDs are given', () => {
+            it('should return empty array', async () => {
+                const result: Organisation<true>[] = await sut.findChildOrgasForIds([]);
+
+                expect(result).toHaveLength(0);
+            });
+        });
+
+        describe('when root organisation', () => {
+            it('should return all organisations', async () => {
+                const [rootId]: [string, string, string] = await createOrgaTree();
+
+                const result: Organisation<true>[] = await sut.findChildOrgasForIds([rootId]);
+
+                expect(result).toHaveLength(2);
+            });
+        });
+
+        describe('when not root organisation', () => {
+            it('should return all child organisations', async () => {
+                const [, traegerId]: [string, string, string] = await createOrgaTree();
+
+                const result: Organisation<true>[] = await sut.findChildOrgasForIds([traegerId]);
+
+                expect(result).toHaveLength(1);
             });
         });
     });

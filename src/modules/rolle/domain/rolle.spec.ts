@@ -9,11 +9,14 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RolleFactory } from './rolle.factory.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('Rolle Aggregate', () => {
     let module: TestingModule;
     let rolleFactory: RolleFactory;
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
+    let organisationRepo: DeepMocked<OrganisationRepository>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -24,6 +27,10 @@ describe('Rolle Aggregate', () => {
                     useValue: createMock<ServiceProviderRepo>(),
                 },
                 {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
+                },
+                {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
                 },
@@ -31,6 +38,7 @@ describe('Rolle Aggregate', () => {
         }).compile();
         rolleFactory = module.get(RolleFactory);
         serviceProviderRepo = module.get(ServiceProviderRepo);
+        organisationRepo = module.get(OrganisationRepository);
     });
 
     afterAll(async () => {
@@ -39,6 +47,32 @@ describe('Rolle Aggregate', () => {
 
     afterEach(() => {
         jest.resetAllMocks();
+    });
+
+    describe('canBeAssignedToOrga', () => {
+        it('should resolve to true, if the rolle is administered by the given organisation', async () => {
+            const rolle: Rolle<false> = rolleFactory.createNew('test', faker.string.uuid(), RollenArt.LERN, [], [], []);
+
+            await expect(rolle.canBeAssignedToOrga(rolle.administeredBySchulstrukturknoten)).resolves.toBe(true);
+        });
+
+        it('should resolve to true, if the given organisation id is a suborganisation', async () => {
+            const rolle: Rolle<false> = rolleFactory.createNew('test', faker.string.uuid(), RollenArt.LERN, [], [], []);
+
+            const orgaId: string = faker.string.uuid();
+            organisationRepo.findChildOrgasForIds.mockResolvedValueOnce([
+                createMock<Organisation<true>>({ id: orgaId }),
+            ]);
+
+            await expect(rolle.canBeAssignedToOrga(orgaId)).resolves.toBe(true);
+        });
+
+        it('should resolve to false, if the given organisation id is not a suborganisation', async () => {
+            const rolle: Rolle<false> = rolleFactory.createNew('test', faker.string.uuid(), RollenArt.LERN, [], [], []);
+            organisationRepo.findChildOrgasForIds.mockResolvedValueOnce([]);
+
+            await expect(rolle.canBeAssignedToOrga(faker.string.uuid())).resolves.toBe(false);
+        });
     });
 
     describe('addMerkmal', () => {

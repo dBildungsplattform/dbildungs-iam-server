@@ -27,6 +27,7 @@ import { Rolle } from '../domain/rolle.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RolleServiceProviderQueryParams } from './rolle-service-provider.query.params.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 
@@ -50,6 +51,7 @@ describe('Rolle API', () => {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
                 },
+                OrganisationRepository,
                 RolleFactory,
                 ServiceProviderRepo,
             ],
