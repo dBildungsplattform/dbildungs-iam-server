@@ -10,21 +10,23 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { DomainError, EntityAlreadyExistsError } from '../../../shared/error/index.js';
+import { DomainError } from '../../../shared/error/index.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { PersonRepo } from '../../person/persistence/person.repo.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { Personenkontext } from '../domain/personenkontext.js';
+import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkontext.body.params.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personenkontext-by-personid.params.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
-import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
+import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
-import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new PersonenkontextExceptionFilter())
 @ApiTags('dbiam-personenkontexte')
@@ -34,10 +36,9 @@ import { PersonenkontextSpecificationError } from '../specification/error/person
 export class DBiamPersonenkontextController {
     public constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
-        private readonly personRepo: PersonRepo,
-        private readonly organisationRepo: OrganisationRepo,
-        private readonly rolleRepo: RolleRepo,
         private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
+        private readonly eventService: EventService,
+        private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
     @Get(':personId')
@@ -50,16 +51,24 @@ export class DBiamPersonenkontextController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting personenkontexte.' })
     public async findPersonenkontextsByPerson(
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonenkontextResponse[]> {
-        const personenkontexte: Personenkontext<true>[] = await this.personenkontextRepo.findByPerson(params.personId);
+        const result: Result<Personenkontext<true>[], DomainError> =
+            await this.personenkontextRepo.findByPersonAuthorized(params.personId, permissions);
 
-        return personenkontexte.map((k: Personenkontext<true>) => new DBiamPersonenkontextResponse(k));
+        if (!result.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
+            );
+        }
+
+        return result.value.map((k: Personenkontext<true>) => new DBiamPersonenkontextResponse(k));
     }
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({
-        description: 'Test',
+        description: 'Personenkontext was successfully created.',
         type: DBiamPersonenkontextResponse,
     })
     @ApiBadRequestResponse({
@@ -71,41 +80,14 @@ export class DBiamPersonenkontextController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating personenkontext.' })
     public async createPersonenkontext(
         @Body() params: DBiamCreatePersonenkontextBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonenkontextResponse> {
-        // Check if personenkontext already exists
-        const exists: boolean = await this.personenkontextRepo.exists(
-            params.personId,
-            params.organisationId,
-            params.rolleId,
-        );
-
-        if (exists) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityAlreadyExistsError('Personenkontext already exists'),
-                ),
-            );
-        }
-
         // Construct new personenkontext
-        const newPersonenkontext: Personenkontext<false> = Personenkontext.createNew(
+        const newPersonenkontext: Personenkontext<false> = this.personenkontextFactory.createNew(
             params.personId,
             params.organisationId,
             params.rolleId,
         );
-
-        // Check if all references are valid
-        const referenceError: Option<DomainError> = await newPersonenkontext.checkReferences(
-            this.personRepo,
-            this.organisationRepo,
-            this.rolleRepo,
-        );
-
-        if (referenceError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(referenceError),
-            );
-        }
 
         //Check specifications
         const specificationCheckError: Option<PersonenkontextSpecificationError> =
@@ -115,8 +97,18 @@ export class DBiamPersonenkontextController {
         }
 
         // Save personenkontext
-        const savedPersonenkontext: Personenkontext<true> = await this.personenkontextRepo.save(newPersonenkontext);
+        const saveResult: Result<Personenkontext<true>, DomainError> = await this.personenkontextRepo.saveAuthorized(
+            newPersonenkontext,
+            permissions,
+        );
 
-        return new DBiamPersonenkontextResponse(savedPersonenkontext);
+        if (!saveResult.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult.error),
+            );
+        }
+        this.eventService.publish(new PersonenkontextCreatedEvent(saveResult.value.id));
+
+        return new DBiamPersonenkontextResponse(saveResult.value);
     }
 }

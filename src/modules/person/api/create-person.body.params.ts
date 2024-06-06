@@ -63,4 +63,16 @@ export class CreatePersonBodyParams {
     @IsBoolean()
     @ApiProperty({ required: false })
     public readonly auskunftssperre?: boolean;
+
+    @AutoMap()
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ required: false })
+    public readonly hashedPassword?: string;
+
+    @AutoMap()
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ required: false })
+    public readonly username?: string;
 }

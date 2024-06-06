@@ -86,7 +86,7 @@ services:
     volumes:
       - ./config/ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom
     environment:
-      - LDAP_ORGANISATION=spsh-de
+      - LDAP_ORGANISATION=schule-sh-de
       - LDAP_DOMAIN=schule-sh.de
       - LDAP_BASE_DN=dc=schule-sh,dc=de
       - LDAP_ADMIN_PASSWORD=admin

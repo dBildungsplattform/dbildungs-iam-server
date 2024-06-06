@@ -49,8 +49,12 @@ import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
 import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 import { HatSystemrechtQueryParams } from './hat-systemrecht.query.params.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { isEnum } from 'class-validator';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontexte')
@@ -61,6 +65,7 @@ export class PersonenkontextController {
     public constructor(
         private readonly personenkontextUc: PersonenkontextUc,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
+        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
     ) {}
 
     @Get(':personenkontextId')
@@ -75,7 +80,21 @@ export class PersonenkontextController {
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
     public async findPersonenkontextById(
         @Param() params: FindPersonenkontextByIdParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponseAutomapper> {
+        {
+            // Check permissions
+            const result: Result<unknown, DomainError> = await this.personenkontextRepo.findByIDAuthorized(
+                params.personenkontextId,
+                permissions,
+            );
+            if (!result.ok) {
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
+                );
+            }
+        }
+
         const request: FindPersonenkontextByIdDto = this.mapper.map(
             params,
             FindPersonenkontextByIdParams,
@@ -110,13 +129,23 @@ export class PersonenkontextController {
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
     public async findPersonenkontexte(
         @Query() queryParams: PersonenkontextQueryParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<PersonenkontextdatensatzResponse>> {
         const findPersonenkontextDto: FindPersonenkontextDto = this.mapper.map(
             queryParams,
             PersonenkontextQueryParams,
             FindPersonenkontextDto,
         );
-        const result: Paged<PersonenkontextDto> = await this.personenkontextUc.findAll(findPersonenkontextDto);
+
+        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            true,
+        );
+
+        const result: Paged<PersonenkontextDto> = await this.personenkontextUc.findAll(
+            findPersonenkontextDto,
+            organisationIDs,
+        );
         const responseItems: PersonenkontextdatensatzResponse[] = this.mapper.mapArray(
             result.items,
             PersonenkontextDto,
@@ -168,7 +197,21 @@ export class PersonenkontextController {
     public async updatePersonenkontextWithId(
         @Param() params: FindPersonenkontextByIdParams,
         @Body() body: UpdatePersonenkontextBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponseAutomapper> {
+        {
+            // Check permissions
+            const result: Result<unknown, DomainError> = await this.personenkontextRepo.findByIDAuthorized(
+                params.personenkontextId,
+                permissions,
+            );
+            if (!result.ok) {
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
+                );
+            }
+        }
+
         const dto: UpdatePersonenkontextDto = this.mapper.map(
             body,
             UpdatePersonenkontextBodyParams,
@@ -199,7 +242,21 @@ export class PersonenkontextController {
     public async deletePersonenkontextById(
         @Param() params: FindPersonenkontextByIdParams,
         @Body() body: DeleteRevisionBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
+        {
+            // Check permissions
+            const result: Result<unknown, DomainError> = await this.personenkontextRepo.findByIDAuthorized(
+                params.personenkontextId,
+                permissions,
+            );
+            if (!result.ok) {
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
+                );
+            }
+        }
+
         const dto: DeletePersonenkontextDto = this.mapper.map(body, DeleteRevisionBodyParams, DeletePersonenkontextDto);
         dto.id = params.personenkontextId;
 

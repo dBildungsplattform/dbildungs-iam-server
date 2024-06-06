@@ -75,6 +75,91 @@ export class KeycloakUserService {
         }
     }
 
+    public async createWithHashedPassword(
+        user: UserDo<false>,
+        hashedPassword: string,
+    ): Promise<Result<string, DomainError>> {
+        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+            await this.kcAdminService.getAuthedKcAdminClient();
+
+        if (!kcAdminClientResult.ok) {
+            return kcAdminClientResult;
+        }
+        let algorithm: string;
+        let hashIterations: number | undefined;
+        if (hashedPassword.startsWith('{BCRYPT}')) {
+            algorithm = 'bcrypt';
+            const parts: string[] = hashedPassword.split('$');
+            if (parts.length < 4 || !parts[2]) {
+                return {
+                    ok: false,
+                    error: new KeycloakClientError('Invalid bcrypt hash format'),
+                };
+            }
+            hashIterations = parseInt(parts[2]);
+        } else if (hashedPassword.startsWith('{crypt}')) {
+            algorithm = 'crypt';
+            const parts: string[] = hashedPassword.split('$');
+            if (parts.length < 4 || !parts[1] || !parts[2]) {
+                return {
+                    ok: false,
+                    error: new KeycloakClientError('Invalid crypt hash format'),
+                };
+            }
+            hashIterations = undefined;
+        } else {
+            return {
+                ok: false,
+                error: new KeycloakClientError('Unsupported password algorithm'),
+            };
+        }
+
+        // Check for existing user
+        const filter: FindUserFilter = {
+            username: user.username,
+        };
+
+        if (user.email) {
+            filter.email = user.email;
+        }
+
+        const findResult: Result<UserDo<true>, DomainError> = await this.findOne(filter);
+
+        if (findResult.ok) {
+            return {
+                ok: false,
+                error: new KeycloakClientError('Username or email already exists'),
+            };
+        }
+
+        //credentialData & secretData are stringified, otherwiese KC wont accept it
+        try {
+            const userRepresentation: UserRepresentation = {
+                username: user.username,
+                enabled: true,
+                credentials: [
+                    {
+                        credentialData: JSON.stringify({
+                            hashIterations: hashIterations,
+                            algorithm: algorithm,
+                        }),
+                        secretData: JSON.stringify({
+                            value: hashedPassword,
+                        }),
+                        type: 'password',
+                    },
+                ],
+            };
+
+            const response: { id: string } = await kcAdminClientResult.value.users.create(userRepresentation);
+
+            return { ok: true, value: response.id };
+        } catch (err) {
+            this.logger.error(`Could not create user, message: ${JSON.stringify(err)} `);
+            return { ok: false, error: new KeycloakClientError('Could not create user') };
+        }
+    }
+
     public async delete(id: string): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
