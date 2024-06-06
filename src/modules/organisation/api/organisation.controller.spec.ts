@@ -24,6 +24,7 @@ import { OrganisationResponse } from './organisation.response.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { EventService } from '../../../core/eventbus/index.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
@@ -57,6 +58,10 @@ describe('OrganisationController', () => {
                 {
                     provide: OrganisationRepository,
                     useValue: createMock<OrganisationRepository>(),
+                },
+                {
+                    provide: EventService,
+                    useValue: createMock<EventService>(),
                 },
             ],
         }).compile();
