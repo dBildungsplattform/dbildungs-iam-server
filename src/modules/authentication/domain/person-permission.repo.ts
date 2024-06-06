@@ -3,15 +3,15 @@ import { PersonPermissions } from './person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 @Injectable()
 export class PersonPermissionsRepo {
     public constructor(
         private personRepo: PersonRepository,
         private personenkontextRepo: DBiamPersonenkontextRepo,
-        private organisationRepo: OrganisationRepo,
+        private organisationRepo: OrganisationRepository,
         private rollenRepo: RolleRepo,
     ) {}
 

@@ -30,6 +30,7 @@ import { DBiamPersonenkontextService } from '../../../modules/personenkontext/do
 import { DbSeedReferenceRepo } from '../repo/db-seed-reference.repo.js';
 import { DbSeedReference } from './db-seed-reference.js';
 import { ReferencedEntityType } from '../repo/db-seed-reference.entity.js';
+import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 
 @Injectable()
 export class DbSeedService {
@@ -48,6 +49,7 @@ export class DbSeedService {
         private readonly kcUserService: KeycloakUserService,
         private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
         private readonly dbSeedReferenceRepo: DbSeedReferenceRepo,
+        private readonly personenkontextFactory: PersonenkontextFactory,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -265,7 +267,7 @@ export class DbSeedService {
             const referencedPerson: Person<true> = await this.getReferencedPerson(file.personId);
             const referencedOrga: OrganisationDo<true> = await this.getReferencedOrganisation(file.organisationId);
             const referencedRolle: Rolle<true> = await this.getReferencedRolle(file.rolleId);
-            const personenKontext: Personenkontext<false> = Personenkontext.construct(
+            const personenKontext: Personenkontext<false> = this.personenkontextFactory.construct(
                 undefined,
                 new Date(),
                 new Date(),
