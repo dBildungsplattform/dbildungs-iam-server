@@ -31,13 +31,15 @@ import { SchuleDeletedEvent } from '../../../shared/events/schule-deleted.event.
 import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
     withId: WasPersisted,
+    personenkontextFactory: PersonenkontextFactory,
     params: Partial<Personenkontext<boolean>> = {},
 ): Personenkontext<WasPersisted> {
-    const personenkontext: Personenkontext<WasPersisted> = Personenkontext.construct<boolean>(
+    const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
         withId ? faker.string.uuid() : undefined,
         withId ? faker.date.past() : undefined,
         withId ? faker.date.recent() : undefined,
@@ -55,6 +57,7 @@ describe('LDAP Event Handler', () => {
     let app: INestApplication;
     let orm: MikroORM;
 
+    let personenkontextFactory: PersonenkontextFactory;
     let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
@@ -86,6 +89,8 @@ describe('LDAP Event Handler', () => {
             .useValue(createMock<OrganisationRepository>())
             .overrideProvider(PersonRepository)
             .useValue(createMock<PersonRepository>())
+            .overrideProvider(PersonenkontextFactory)
+            .useClass(PersonenkontextFactory)
             .overrideProvider(RolleRepo)
             .useValue(createMock<RolleRepo>())
             .overrideProvider(DBiamPersonenkontextRepo)
@@ -94,6 +99,7 @@ describe('LDAP Event Handler', () => {
 
         orm = module.get(MikroORM);
 
+        personenkontextFactory = module.get(PersonenkontextFactory);
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         organisationRepositoryMock = module.get(OrganisationRepository);
         personRepositoryMock = module.get(PersonRepository);
@@ -234,7 +240,7 @@ describe('LDAP Event Handler', () => {
             it('should execute without errors', async () => {
                 const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(faker.string.uuid());
 
-                dbiamPersonenkontextRepoMock.findById.mockResolvedValueOnce(undefined);
+                dbiamPersonenkontextRepoMock.findByID.mockResolvedValueOnce(undefined);
 
                 await ldapEventHandler.asyncCreatePersonenkontextEventHandler(event);
                 expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
@@ -243,10 +249,10 @@ describe('LDAP Event Handler', () => {
 
         describe('when rolle is not found', () => {
             it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true);
+                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
                 const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(personenkontext.id);
 
-                dbiamPersonenkontextRepoMock.findById.mockResolvedValueOnce(personenkontext);
+                dbiamPersonenkontextRepoMock.findByID.mockResolvedValueOnce(personenkontext);
                 rolleRepoMock.findById.mockResolvedValueOnce(undefined);
 
                 await ldapEventHandler.asyncCreatePersonenkontextEventHandler(event);
@@ -256,11 +262,11 @@ describe('LDAP Event Handler', () => {
 
         describe('when person is not found', () => {
             it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true);
+                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
                 const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(personenkontext.id);
                 const rolle: Rolle<true> = createMock<Rolle<true>>();
 
-                dbiamPersonenkontextRepoMock.findById.mockResolvedValueOnce(personenkontext);
+                dbiamPersonenkontextRepoMock.findByID.mockResolvedValueOnce(personenkontext);
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
@@ -271,12 +277,12 @@ describe('LDAP Event Handler', () => {
 
         describe('when organisation is not found', () => {
             it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true);
+                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
                 const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(personenkontext.id);
                 const rolle: Rolle<true> = createMock<Rolle<true>>();
                 const person: Person<true> = createMock<Person<true>>();
 
-                dbiamPersonenkontextRepoMock.findById.mockResolvedValueOnce(personenkontext);
+                dbiamPersonenkontextRepoMock.findByID.mockResolvedValueOnce(personenkontext);
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 organisationRepositoryMock.findById.mockResolvedValueOnce(undefined);
@@ -288,13 +294,13 @@ describe('LDAP Event Handler', () => {
 
         describe('when creation of lehrer in LDAP fails', () => {
             it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true);
+                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
                 const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(personenkontext.id);
                 const rolle: Rolle<true> = createMock<Rolle<true>>({ rollenart: RollenArt.LEHR });
                 const person: Person<true> = createMock<Person<true>>();
                 const organisation: Organisation<true> = createMock<Organisation<true>>();
 
-                dbiamPersonenkontextRepoMock.findById.mockResolvedValueOnce(personenkontext);
+                dbiamPersonenkontextRepoMock.findByID.mockResolvedValueOnce(personenkontext);
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 organisationRepositoryMock.findById.mockResolvedValueOnce(organisation);
@@ -314,7 +320,7 @@ describe('LDAP Event Handler', () => {
             it('should execute without errors', async () => {
                 const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(faker.string.uuid());
 
-                dbiamPersonenkontextRepoMock.findById.mockResolvedValueOnce(undefined);
+                dbiamPersonenkontextRepoMock.findByID.mockResolvedValueOnce(undefined);
 
                 await ldapEventHandler.asyncDeletePersonenkontextEventHandler(event);
                 expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(0);
@@ -323,10 +329,10 @@ describe('LDAP Event Handler', () => {
 
         describe('when rolle is not found', () => {
             it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true);
+                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
                 const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(personenkontext.id);
 
-                dbiamPersonenkontextRepoMock.findById.mockResolvedValueOnce(personenkontext);
+                dbiamPersonenkontextRepoMock.findByID.mockResolvedValueOnce(personenkontext);
                 rolleRepoMock.findById.mockResolvedValueOnce(undefined);
 
                 await ldapEventHandler.asyncDeletePersonenkontextEventHandler(event);
@@ -336,11 +342,11 @@ describe('LDAP Event Handler', () => {
 
         describe('when person is not found', () => {
             it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true);
+                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
                 const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(personenkontext.id);
                 const rolle: Rolle<true> = createMock<Rolle<true>>();
 
-                dbiamPersonenkontextRepoMock.findById.mockResolvedValueOnce(personenkontext);
+                dbiamPersonenkontextRepoMock.findByID.mockResolvedValueOnce(personenkontext);
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
@@ -351,12 +357,12 @@ describe('LDAP Event Handler', () => {
 
         describe('when organisation is not found', () => {
             it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true);
+                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
                 const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(personenkontext.id);
                 const rolle: Rolle<true> = createMock<Rolle<true>>();
                 const person: Person<true> = createMock<Person<true>>();
 
-                dbiamPersonenkontextRepoMock.findById.mockResolvedValueOnce(personenkontext);
+                dbiamPersonenkontextRepoMock.findByID.mockResolvedValueOnce(personenkontext);
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 organisationRepositoryMock.findById.mockResolvedValueOnce(undefined);
@@ -368,13 +374,13 @@ describe('LDAP Event Handler', () => {
 
         describe('when creation of lehrer in LDAP fails', () => {
             it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true);
+                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
                 const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(personenkontext.id);
                 const rolle: Rolle<true> = createMock<Rolle<true>>({ rollenart: RollenArt.LEHR });
                 const person: Person<true> = createMock<Person<true>>();
                 const organisation: Organisation<true> = createMock<Organisation<true>>();
 
-                dbiamPersonenkontextRepoMock.findById.mockResolvedValueOnce(personenkontext);
+                dbiamPersonenkontextRepoMock.findByID.mockResolvedValueOnce(personenkontext);
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 organisationRepositoryMock.findById.mockResolvedValueOnce(organisation);

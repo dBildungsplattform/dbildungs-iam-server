@@ -77,7 +77,7 @@ export class LdapEventHandler {
     public async asyncCreatePersonenkontextEventHandler(event: PersonenkontextCreatedEvent): Promise<void> {
         this.logger.info(`Received CreatePersonenkontextEvent, personenKontextId is ${event.personenkontextId}`);
 
-        const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findById(
+        const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findByID(
             event.personenkontextId,
         );
 
@@ -118,7 +118,7 @@ export class LdapEventHandler {
     public async asyncDeletePersonenkontextEventHandler(event: PersonenkontextDeletedEvent): Promise<void> {
         this.logger.info(`Received DeletePersonenkontextEvent, personenKontextId is ${event.personenkontextId}`);
 
-        const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findById(
+        const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findByID(
             event.personenkontextId,
         );
 

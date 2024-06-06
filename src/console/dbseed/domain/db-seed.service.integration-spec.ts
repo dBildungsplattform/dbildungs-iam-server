@@ -19,6 +19,7 @@ import { ServiceProviderModule } from '../../../modules/service-provider/service
 import { RolleModule } from '../../../modules/rolle/rolle.module.js';
 import { PersonModule } from '../../../modules/person/person.module.js';
 import { DbSeedModule } from '../db-seed.module.js';
+import { PersonenKontextModule } from '../../../modules/personenkontext/personenkontext.module.js';
 
 describe('DbSeedServiceIntegration', () => {
     let module: TestingModule;
@@ -38,6 +39,7 @@ describe('DbSeedServiceIntegration', () => {
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LoggingTestModule,
+                PersonenKontextModule,
             ],
             providers: [UsernameGeneratorService, DBiamPersonenkontextRepo],
         })

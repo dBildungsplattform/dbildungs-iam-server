@@ -1,9 +1,8 @@
 import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { PersonEntity } from './person.entity.js';
-import { Person } from '../domain/person.js';
-import { PersonScope } from './person.scope.js';
-import { KeycloakUserService, PersonHasNoKeycloakId, UserDo } from '../../keycloak-administration/index.js';
+import { ConfigService } from '@nestjs/config';
+import { DataConfig } from '../../../shared/config/data.config.js';
+import { ServerConfig } from '../../../shared/config/server.config.js';
 import {
     DomainError,
     EntityCouldNotBeCreated,
@@ -11,12 +10,13 @@ import {
     EntityNotFoundError,
 } from '../../../shared/error/index.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { KeycloakUserService, PersonHasNoKeycloakId, UserDo } from '../../keycloak-administration/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { ConfigService } from '@nestjs/config';
-import { DataConfig } from '../../../shared/config/data.config.js';
-import { ServerConfig } from '../../../shared/config/server.config.js';
+import { Person } from '../domain/person.js';
+import { PersonEntity } from './person.entity.js';
+import { PersonScope } from './person.scope.js';
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
     return {
@@ -203,11 +203,27 @@ export class PersonRepository {
         return null;
     }
 
-    public async create(person: Person<false>): Promise<Person<true> | DomainError> {
-        const personWithKeycloakUser: Person<false> | DomainError = await this.createKeycloakUser(
-            person,
-            this.kcUserService,
+    public async exists(id: PersonID): Promise<boolean> {
+        const person: Option<Loaded<PersonEntity, never, 'id', never>> = await this.em.findOne(
+            PersonEntity,
+            { id },
+            { fields: ['id'] as const },
         );
+
+        return !!person;
+    }
+
+    public async create(person: Person<false>, hashedPassword?: string): Promise<Person<true> | DomainError> {
+        let personWithKeycloakUser: Person<false> | DomainError;
+        if (!hashedPassword) {
+            personWithKeycloakUser = await this.createKeycloakUser(person, this.kcUserService);
+        } else {
+            personWithKeycloakUser = await this.createKeycloakUserWithHashedPassword(
+                person,
+                hashedPassword,
+                this.kcUserService,
+            );
+        }
         if (personWithKeycloakUser instanceof DomainError) {
             return personWithKeycloakUser;
         }
@@ -266,6 +282,32 @@ export class PersonRepository {
             await kcUserService.delete(person.keycloakUserId);
             return setPasswordResult.error;
         }
+
+        return person;
+    }
+
+    private async createKeycloakUserWithHashedPassword(
+        person: Person<boolean>,
+        hashedPassword: string,
+        kcUserService: KeycloakUserService,
+    ): Promise<Person<boolean> | DomainError> {
+        if (person.keycloakUserId || !person.username) {
+            return new EntityCouldNotBeCreated('Person');
+        }
+        person.referrer = person.username;
+        const userDo: UserDo<false> = {
+            username: person.username,
+            id: undefined,
+            createdDate: undefined,
+        } satisfies UserDo<false>;
+        const creationResult: Result<string, DomainError> = await kcUserService.createWithHashedPassword(
+            userDo,
+            hashedPassword,
+        );
+        if (!creationResult.ok) {
+            return creationResult.error;
+        }
+        person.keycloakUserId = creationResult.value;
 
         return person;
     }

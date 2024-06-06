@@ -14,6 +14,7 @@ import { DbiamPersonenkontextFilterController } from './api/dbiam-personenkontex
 import { PersonenkontextAnlageFactory } from './domain/personenkontext-anlage.factory.js';
 import { DBiamPersonenkontextService } from './domain/dbiam-personenkontext.service.js';
 import { EventModule } from '../../core/eventbus/index.js';
+import { PersonenkontextFactory } from './domain/personenkontext.factory.js';
 
 @Module({
     imports: [
@@ -31,6 +32,7 @@ import { EventModule } from '../../core/eventbus/index.js';
         PersonRepo,
         DBiamPersonenkontextRepo,
         PersonenkontextAnlageFactory,
+        PersonenkontextFactory,
     ],
     controllers: [PersonenkontextController, DBiamPersonenkontextController, DbiamPersonenkontextFilterController],
 })

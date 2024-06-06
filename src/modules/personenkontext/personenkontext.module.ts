@@ -8,6 +8,7 @@ import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.re
 import { RolleModule } from '../rolle/rolle.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { DBiamPersonenkontextService } from './domain/dbiam-personenkontext.service.js';
+import { PersonenkontextFactory } from './domain/personenkontext.factory.js';
 
 @Module({
     imports: [PersonModule, RolleModule, OrganisationModule, LoggerModule.register(PersonenKontextModule.name)],
@@ -17,7 +18,14 @@ import { DBiamPersonenkontextService } from './domain/dbiam-personenkontext.serv
         PersonRepo,
         DBiamPersonenkontextService,
         DBiamPersonenkontextRepo,
+        PersonenkontextFactory,
     ],
-    exports: [PersonenkontextService, PersonenkontextRepo, DBiamPersonenkontextService, DBiamPersonenkontextRepo],
+    exports: [
+        PersonenkontextService,
+        PersonenkontextRepo,
+        DBiamPersonenkontextService,
+        DBiamPersonenkontextRepo,
+        PersonenkontextFactory,
+    ],
 })
 export class PersonenKontextModule {}
