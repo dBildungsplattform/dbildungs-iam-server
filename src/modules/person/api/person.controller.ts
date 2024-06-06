@@ -92,10 +92,17 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse> {
         // Find all organisations where user has permission
-        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
-            true,
-        );
+        const isMigrationCall: boolean = !(!params.hashedPassword && !params.username);
+        let organisationIDs: OrganisationID[];
+
+        if (isMigrationCall === true) {
+            organisationIDs = await permissions.getOrgIdsWithSystemrecht(
+                [RollenSystemRecht.MIGRATION_DURCHFUEHREN],
+                true,
+            );
+        } else {
+            organisationIDs = await permissions.getOrgIdsWithSystemrecht([RollenSystemRecht.PERSONEN_VERWALTEN], true);
+        }
         if (organisationIDs.length < 1) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Person')),
@@ -115,6 +122,7 @@ export class PersonController {
             auskunftssperre: params.auskunftssperre,
             geburtsdatum: params.geburt?.datum,
             geburtsort: params.geburt?.geburtsort,
+            username: params.username,
             ...params,
         });
         if (person instanceof DomainError) {
@@ -123,14 +131,14 @@ export class PersonController {
             );
         }
 
-        const result: Person<true> | DomainError = await this.personRepository.create(person);
+        const result: Person<true> | DomainError = await this.personRepository.create(person, params.hashedPassword);
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
 
-        return new PersonendatensatzResponse(result, true);
+        return new PersonendatensatzResponse(result, isMigrationCall === true ? false : true);
     }
 
     @Delete(':personId')
