@@ -18,6 +18,7 @@ import { PersonModule } from '../../modules/person/person.module.js';
 import { RolleModule } from '../../modules/rolle/rolle.module.js';
 import { ServiceProviderModule } from '../../modules/service-provider/service-provider.module.js';
 import { DbSeedModule } from './db-seed.module.js';
+import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
 
 describe('DbSeedConsoleIntegration', () => {
     let module: TestingModule;
@@ -38,6 +39,7 @@ describe('DbSeedConsoleIntegration', () => {
                 PersonModule,
                 RolleModule,
                 ServiceProviderModule,
+                PersonenKontextModule,
             ],
             providers: [UsernameGeneratorService, DBiamPersonenkontextRepo],
         })
