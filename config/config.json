@@ -55,6 +55,7 @@
         "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
     },
     "ITSLEARNING": {
+        "ENABLED": false,
         "ENDPOINT": "https://localhost",
         "USERNAME": "username",
         "PASSWORD": "password"
