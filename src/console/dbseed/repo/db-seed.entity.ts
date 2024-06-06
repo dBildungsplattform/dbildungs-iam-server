@@ -11,7 +11,7 @@ export class DbSeedEntity extends BaseEntity {
     @PrimaryKey({ name: 'hash' })
     public hash!: string;
 
-    @Enum(() => DbSeedStatus)
+    @Enum({ items: () => DbSeedStatus, nativeEnumName: 'db_seed_status_enum' })
     public status!: DbSeedStatus;
 
     @Property({ onCreate: () => new Date(), onUpdate: () => new Date(), type: DateTimeType })
