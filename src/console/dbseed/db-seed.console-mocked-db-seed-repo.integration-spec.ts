@@ -23,6 +23,7 @@ import { DbSeed } from './domain/db-seed.js';
 import { DbSeedStatus } from './repo/db-seed.entity.js';
 import { DBiamPersonenkontextService } from '../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
 import { DbSeedReferenceRepo } from './repo/db-seed-reference.repo.js';
+import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
 
 describe('DbSeedConsoleMockedDbSeedRepo', () => {
     let module: TestingModule;
@@ -43,6 +44,7 @@ describe('DbSeedConsoleMockedDbSeedRepo', () => {
                 PersonModule,
                 RolleModule,
                 ServiceProviderModule,
+                PersonenKontextModule,
             ],
             providers: [
                 UsernameGeneratorService,

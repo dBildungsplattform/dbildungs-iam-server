@@ -27,6 +27,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { SystemrechtResponse } from './response/personenkontext-systemrecht.response.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -58,7 +59,10 @@ export class PersonenkontextUc {
         return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 
-    public async findAll(findPersonenkontextDto: FindPersonenkontextDto): Promise<Paged<PersonenkontextDto>> {
+    public async findAll(
+        findPersonenkontextDto: FindPersonenkontextDto,
+        organisationIDs?: OrganisationID[] | undefined,
+    ): Promise<Paged<PersonenkontextDto>> {
         const personenkontextDo: PersonenkontextDo<false> = this.mapper.map(
             findPersonenkontextDto,
             FindPersonenkontextDto,
@@ -67,6 +71,7 @@ export class PersonenkontextUc {
 
         const result: Paged<PersonenkontextDo<true>> = await this.personenkontextService.findAllPersonenkontexte(
             personenkontextDo,
+            organisationIDs,
             findPersonenkontextDto.offset,
             findPersonenkontextDto.limit,
         );

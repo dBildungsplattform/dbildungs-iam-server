@@ -18,6 +18,10 @@ import { EntityCouldNotBeDeleted } from '../../../shared/error/index.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
 import { faker } from '@faker-js/faker';
+import { PersonenkontextFactory } from './personenkontext.factory.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 describe('PersonenkontextService', () => {
     let module: TestingModule;
@@ -27,10 +31,13 @@ describe('PersonenkontextService', () => {
     let dbiamPersonenKontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let mapperMock: DeepMocked<Mapper>;
 
+    let personenkontextFactory: PersonenkontextFactory;
+
     beforeAll(async () => {
         module = await Test.createTestingModule({
             providers: [
                 PersonenkontextService,
+                PersonenkontextFactory,
                 {
                     provide: PersonenkontextRepo,
                     useValue: createMock<PersonenkontextRepo>(),
@@ -40,6 +47,18 @@ describe('PersonenkontextService', () => {
                     useValue: createMock<PersonRepo>(),
                 },
                 {
+                    provide: PersonRepository,
+                    useValue: createMock<PersonRepository>(),
+                },
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
+                {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
+                },
+                {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
@@ -47,13 +66,19 @@ describe('PersonenkontextService', () => {
                     provide: getMapperToken(),
                     useValue: createMock<Mapper>(),
                 },
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
             ],
         }).compile();
         personenkontextService = module.get(PersonenkontextService);
         personenkontextRepoMock = module.get(PersonenkontextRepo);
         personRepoMock = module.get(PersonRepo);
         dbiamPersonenKontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        personenkontextFactory = module.get(PersonenkontextFactory);
         mapperMock = module.get(getMapperToken());
+        personenkontextFactory = module.get(PersonenkontextFactory);
     });
 
     afterAll(async () => {
@@ -207,7 +232,7 @@ describe('PersonenkontextService', () => {
         describe('when finding personenkontext via personId', () => {
             it('should return found personenkontext', async () => {
                 const personenkontexte: Personenkontext<true>[] = [
-                    Personenkontext.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
+                    personenkontextFactory.construct('1', faker.date.past(), faker.date.recent(), '1', '1', '1'),
                 ];
                 dbiamPersonenKontextRepoMock.findByPerson.mockResolvedValue(personenkontexte);
                 expect(await personenkontextService.findPersonenkontexteByPersonId('1')).toHaveLength(1);

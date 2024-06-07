@@ -89,7 +89,7 @@ export class PersonEntity extends TimestampedEntity {
     public geburtsort?: string;
 
     @AutoMap(() => String)
-    @Enum({ items: () => Geschlecht, nullable: true })
+    @Enum({ items: () => Geschlecht, nullable: true, nativeEnumName: 'geschlecht_enum' })
     public geschlecht?: Geschlecht;
 
     @AutoMap()
@@ -97,7 +97,7 @@ export class PersonEntity extends TimestampedEntity {
     public lokalisierung?: string;
 
     @AutoMap(() => String)
-    @Enum({ items: () => Vertrauensstufe, nullable: true })
+    @Enum({ items: () => Vertrauensstufe, nullable: true, nativeEnumName: 'vertrauensstufe_enum' })
     public vertrauensstufe?: Vertrauensstufe;
 
     @AutoMap()

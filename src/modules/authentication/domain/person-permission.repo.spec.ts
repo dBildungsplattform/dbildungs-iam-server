@@ -13,8 +13,8 @@ import { Person } from '../../person/domain/person.js';
 import { PersonPermissions } from './person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UnauthorizedException } from '@nestjs/common';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 describe('PersonPermissionRepo', () => {
     let module: TestingModule;
@@ -26,9 +26,6 @@ describe('PersonPermissionRepo', () => {
             imports: [ConfigTestModule, MapperTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
             providers: [
                 PersonPermissionsRepo,
-                DBiamPersonenkontextRepo,
-                OrganisationRepo,
-                RolleRepo,
                 {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
@@ -36,6 +33,14 @@ describe('PersonPermissionRepo', () => {
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
+                },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                },
+                {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
                 },
             ],
         }).compile();

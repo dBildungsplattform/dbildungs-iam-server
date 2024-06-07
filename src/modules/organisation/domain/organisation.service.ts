@@ -28,6 +28,8 @@ import { OrganisationSpecificationError } from '../specification/error/organisat
 import { NameRequiredForSchule } from '../specification/name-required-for-schule.js';
 import { NameRequiredForSchuleError } from '../specification/error/name-required-for-schule.error.js';
 import { ScopeOperator } from '../../../shared/persistence/index.js';
+import { SchuleKennungEindeutig } from '../specification/schule-kennung-eindeutig.js';
+import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
 
 @Injectable()
 export class OrganisationService {
@@ -55,6 +57,10 @@ export class OrganisationService {
             return { ok: false, error: validationResult.error };
         }
         validationResult = await this.validateNameRequiredForSchule(organisationDo);
+        if (!validationResult.ok) {
+            return { ok: false, error: validationResult.error };
+        }
+        validationResult = await this.validateSchuleKennungUnique(organisationDo);
         if (!validationResult.ok) {
             return { ok: false, error: validationResult.error };
         }
@@ -86,6 +92,10 @@ export class OrganisationService {
             return { ok: false, error: validationResult.error };
         }
         validationResult = await this.validateNameRequiredForSchule(organisationDo);
+        if (!validationResult.ok) {
+            return { ok: false, error: validationResult.error };
+        }
+        validationResult = await this.validateSchuleKennungUnique(organisationDo);
         if (!validationResult.ok) {
             return { ok: false, error: validationResult.error };
         }
@@ -123,6 +133,17 @@ export class OrganisationService {
         const nameRequiredForSchule: NameRequiredForSchule = new NameRequiredForSchule();
         if (!(await nameRequiredForSchule.isSatisfiedBy(organisation))) {
             return { ok: false, error: new NameRequiredForSchuleError() };
+        }
+
+        return { ok: true, value: undefined };
+    }
+
+    private async validateSchuleKennungUnique(
+        organisation: OrganisationDo<boolean>,
+    ): Promise<Result<void, DomainError>> {
+        const schuleKennungEindeutig: SchuleKennungEindeutig = new SchuleKennungEindeutig(this.organisationRepo);
+        if (!(await schuleKennungEindeutig.isSatisfiedBy(organisation))) {
+            return { ok: false, error: new SchuleKennungEindeutigError() };
         }
 
         return { ok: true, value: undefined };

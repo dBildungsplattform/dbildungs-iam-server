@@ -48,11 +48,11 @@ export class PersonenkontextEntity extends TimestampedEntity {
     public rolle!: Rolle;
 
     @AutoMap(() => String)
-    @Enum({ nullable: true, items: () => Personenstatus })
+    @Enum({ nullable: true, items: () => Personenstatus, nativeEnumName: 'personenstatus_enum' })
     public personenstatus?: Personenstatus;
 
     @AutoMap(() => String)
-    @Enum({ nullable: true, items: () => Jahrgangsstufe })
+    @Enum({ nullable: true, items: () => Jahrgangsstufe, nativeEnumName: 'jahrgangsstufe_enum' })
     public jahrgangsstufe?: Jahrgangsstufe;
 
     @AutoMap(() => String)
