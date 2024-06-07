@@ -27,6 +27,7 @@ import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkont
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
+import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new PersonenkontextExceptionFilter())
 @ApiTags('dbiam-personenkontexte')
@@ -103,6 +104,10 @@ export class DBiamPersonenkontextController {
         );
 
         if (!saveResult.ok) {
+            if (saveResult.error instanceof OrganisationMatchesRollenartError) {
+                throw saveResult.error;
+            }
+
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult.error),
             );
