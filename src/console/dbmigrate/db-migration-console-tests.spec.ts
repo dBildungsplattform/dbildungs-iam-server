@@ -29,7 +29,7 @@ describe('DbMigrateConsole', () => {
 
         orm = module.get(MikroORM);
         fs.rmSync('test-migrations', { recursive: true, force: true });
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+    }, 2 * DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await orm.close();

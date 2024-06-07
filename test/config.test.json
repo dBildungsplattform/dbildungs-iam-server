@@ -32,6 +32,11 @@
         "PASSWORD": "password",
         "USE_TLS": false
     },
+    "LDAP": {
+        "URL": "ldap://localhost",
+        "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
+        "PASSWORD": "admin"
+    },
     "DATA": {
         "ROOT_ORGANISATION_ID": "a10852ab-1d75-45a7-9421-b1cbd8abe693"
     },
