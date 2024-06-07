@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
-import { INestApplication } from '@nestjs/common';
-import { APP_PIPE } from '@nestjs/core';
+import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
+import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
@@ -30,6 +30,12 @@ import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
+//import {PersonPermissions} from "../../authentication/domain/person-permissions.js";
+import { Observable } from 'rxjs';
+import { Request } from 'express';
+import { PassportUser } from '../../authentication/types/user.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -37,6 +43,7 @@ describe('Rolle API', () => {
     let em: EntityManager;
     let rolleRepo: RolleRepo;
     let serviceProviderRepo: ServiceProviderRepo;
+    let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -51,6 +58,24 @@ describe('Rolle API', () => {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
                 },
+                {
+                    provide: APP_INTERCEPTOR,
+                    useValue: {
+                        intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+                            const req: Request = context.switchToHttp().getRequest();
+                            req.passportUser = createMock<PassportUser>({
+                                async personPermissions() {
+                                    return personpermissionsRepoMock.loadPersonPermissions('');
+                                },
+                            });
+                            return next.handle();
+                        },
+                    },
+                },
+                {
+                    provide: PersonPermissionsRepo,
+                    useValue: createMock<PersonPermissionsRepo>(),
+                },
                 OrganisationRepository,
                 RolleFactory,
                 ServiceProviderRepo,
@@ -61,6 +86,8 @@ describe('Rolle API', () => {
         em = module.get(EntityManager);
         rolleRepo = module.get(RolleRepo);
         serviceProviderRepo = module.get(ServiceProviderRepo);
+        personpermissionsRepoMock = module.get(PersonPermissionsRepo);
+
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
@@ -286,6 +313,10 @@ describe('Rolle API', () => {
     describe('/GET rolle by id', () => {
         it('should return rolle', async () => {
             const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
+            /* const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(personpermissions);
+*/
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/rolle/${rolle.id}`)
                 .send();

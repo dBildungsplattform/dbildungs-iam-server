@@ -14,6 +14,9 @@ import { RolleFactory } from '../domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { OrganisationID } from '../../../shared/types/index.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
@@ -114,6 +117,35 @@ describe('RolleRepo', () => {
             const rolle: Option<Rolle<true>> = await sut.findById(faker.string.uuid());
 
             expect(rolle).toBeNull();
+        });
+    });
+
+    describe('findByIdAuthorized', () => {
+        it('should return the rolle', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            const rolle: Rolle<true> = await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
+
+            const rolleResult: Result<Rolle<true>> = await sut.findByIdAuthorized(rolle.id, permissions);
+
+            expect(rolleResult.ok).toBeTruthy();
+        });
+
+        it('should return error when permissions are insufficient', async () => {
+            const rolle: Rolle<true> = await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: faker.string.uuid() }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+
+            const rolleResult: Result<Rolle<true>> = await sut.findByIdAuthorized(rolle.id, permissions);
+
+            expect(rolleResult.ok).toBeFalsy();
         });
     });
 
