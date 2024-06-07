@@ -16,7 +16,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { OrganisationRepo } from '../organisation/persistence/organisation.repo.js';
 import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
 
-describe('PersonKontextApiModule', () => {
+describe('PersonenKontextApiModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
