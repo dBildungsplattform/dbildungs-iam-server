@@ -63,6 +63,23 @@ describe('OrganisationRepository', () => {
         expect(sut).toBeDefined();
     });
 
+    describe('findById', () => {
+        it('should return one organisation by id', async () => {
+            const orga: Organisation<false> = Organisation.createNew();
+            const organisaiton: Organisation<true> = await sut.save(orga);
+            const foundOrganisation: Option<Organisation<true>> = await sut.findById(organisaiton.id);
+
+            expect(foundOrganisation).toBeTruthy();
+            expect(foundOrganisation).toEqual(organisaiton);
+        });
+
+        it('should return undefined when organisation cannot be found', async () => {
+            const foundOrganisation: Option<Organisation<true>> = await sut.findById(faker.string.uuid());
+            expect(foundOrganisation).toBeFalsy();
+            expect(foundOrganisation).toBeNull();
+        });
+    });
+
     describe('mapAggregateToData', () => {
         it('should return Person RequiredEntityData', () => {
             const organisation: Organisation<true> = Organisation.construct(

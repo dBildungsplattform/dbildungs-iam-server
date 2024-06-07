@@ -16,6 +16,7 @@ import { OrganisationService } from './organisation.service.js';
 import { OrganisationsTyp } from './organisation.enums.js';
 import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
 import { NameRequiredForSchuleError } from '../specification/error/name-required-for-schule.error.js';
+import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -126,6 +127,36 @@ describe('OrganisationService', () => {
             });
         });
 
+        it('should return a domain error if kennung is not unique and type is schule', async () => {
+            const name: string = faker.string.alpha();
+            const kennung: string = faker.string.numeric({ length: 7 });
+            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+                typ: OrganisationsTyp.SCHULE,
+                kennung: kennung,
+                name: name,
+            });
+            const counted: Counted<OrganisationDo<true>> = [
+                [
+                    DoFactory.createOrganisation(true, {
+                        typ: OrganisationsTyp.SCHULE,
+                        kennung: kennung,
+                        name: name,
+                    }),
+                ],
+                1,
+            ];
+            organisationRepoMock.findBy.mockResolvedValueOnce(counted);
+            organisationRepoMock.save.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
+            mapperMock.map.mockReturnValue(organisationDo as unknown as Dictionary<unknown>);
+
+            const result: Result<OrganisationDo<true>> = await organisationService.createOrganisation(organisationDo);
+
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new SchuleKennungEindeutigError(),
+            });
+        });
+
         it('should return a domain error', async () => {
             const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
             organisationDo.id = faker.string.uuid();
@@ -187,6 +218,28 @@ describe('OrganisationService', () => {
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: false,
                 error: new NameRequiredForSchuleError(),
+            });
+        });
+
+        it('should return a domain error if kennung is not unique and type is schule', async () => {
+            const name: string = faker.string.alpha();
+            const kennung: string = faker.string.numeric({ length: 7 });
+            const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.SCHULE,
+                kennung: kennung,
+                name: name,
+            });
+            const counted: Counted<OrganisationDo<true>> = [[organisationDo], 1];
+            organisationRepoMock.findById.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
+            organisationRepoMock.findBy.mockResolvedValueOnce(counted);
+            organisationRepoMock.save.mockResolvedValue(organisationDo as unknown as OrganisationDo<true>);
+            mapperMock.map.mockReturnValue(organisationDo as unknown as Dictionary<unknown>);
+
+            const result: Result<OrganisationDo<true>> = await organisationService.updateOrganisation(organisationDo);
+
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new SchuleKennungEindeutigError(),
             });
         });
 

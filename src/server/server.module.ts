@@ -30,6 +30,7 @@ import { PermissionsInterceptor } from '../modules/authentication/services/permi
 import { PassportModule } from '@nestjs/passport';
 import { EventModule } from '../core/eventbus/index.js';
 import { ItsLearningModule } from '../modules/itslearning/itslearning.module.js';
+import { LdapModule } from '../core/ldap/ldap.module.js';
 
 @Module({
     imports: [
@@ -81,6 +82,7 @@ import { ItsLearningModule } from '../modules/itslearning/itslearning.module.js'
         ErrorModule,
         KeycloakConfigModule,
         ItsLearningModule,
+        LdapModule,
     ],
     providers: [
         {
@@ -149,26 +151,5 @@ export class ServerModule implements NestModule {
                 SessionAccessTokenMiddleware,
             )
             .forRoutes('*');
-
-        /*// configure LDAP connection
-        const ldapConfig: LdapConfig = this.configService.getOrThrow<LdapConfig>('LDAP');
-        const client: Client = new Client({
-            url: ldapConfig.URL,
-        });
-        try {
-            await client.bind(ldapConfig.BIND_DN, ldapConfig.PASSWORD);
-            this.logger.info('Successfully connected to LDAP');
-
-            // For test purposes, is connection working as expected?
-              const entry: LdapPersonEntry = {
-                cn: 'wwhite',
-                sn: 'White',
-                mail: ['walterwhite@walterwhiteltdco.com'],
-                objectclass: ['person', 'inetOrgPerson', 'organizationalPerson'],
-            };
-            await client.add('cn=wwhite,ou=people,dc=example,dc=org', entry);
-        } catch (err) {
-            this.logger.error(`Could not connect to LDAP, message: ${JSON.stringify(err)}`);
-        }*/
     }
 }
