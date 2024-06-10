@@ -12,6 +12,10 @@ import { Personenkontext } from './personenkontext.js';
 import { UpdateCountError } from './error/update-count.error.js';
 import { UpdateOutdatedError } from './error/update-outdated.error.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
+import { PersonenkontextFactory } from './personenkontext.factory.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 
 function createPKBodyParams(personId: PersonID): DBiamCreatePersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DBiamCreatePersonenkontextBodyParams =
@@ -54,7 +58,20 @@ describe('PersonenkontexteUpdate', () => {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
+                {
+                    provide: PersonRepository,
+                    useValue: createMock<PersonRepository>(),
+                },
+                {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
+                },
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
                 DbiamPersonenkontextFactory,
+                PersonenkontextFactory,
             ],
         }).compile();
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
