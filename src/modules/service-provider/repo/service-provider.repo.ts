@@ -117,7 +117,7 @@ export class ServiceProviderRepo {
             console.error(`Could not create role, error: ${role.error.message}`);
             return;
         }
-        const roleName: string = role.value;
+        const roleName: string = decodeURIComponent(role.value);
 
         const addRoleToGroup: Result<boolean, DomainError> = await this.keycloakUserService.addRoleToGroup(
             groupId,
