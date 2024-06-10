@@ -23,7 +23,6 @@ import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
-import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 describe('PersonScope', () => {
@@ -57,14 +56,7 @@ describe('PersonScope', () => {
                 MapperTestModule,
                 PersonenKontextModule,
             ],
-            providers: [
-                PersonPersistenceMapperProfile,
-                DBiamPersonenkontextRepo,
-                RolleRepo,
-                RolleFactory,
-                ServiceProviderRepo,
-                OrganisationRepository,
-            ],
+            providers: [DBiamPersonenkontextRepo, RolleRepo, RolleFactory, ServiceProviderRepo, OrganisationRepository],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
