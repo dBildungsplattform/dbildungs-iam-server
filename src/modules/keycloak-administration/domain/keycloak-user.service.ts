@@ -194,29 +194,24 @@ export class KeycloakUserService {
             return kcAdminClientResult;
         }
 
+        const groupNameWithSuffix: string = groupName + '-Service';
+        const [existingGroup]: GroupRepresentation[] = await kcAdminClientResult.value.groups.find({
+            search: groupNameWithSuffix,
+        });
+
+        if (existingGroup) {
+            this.logger.info(`Group already exists: ${groupNameWithSuffix}`);
+            return { ok: false, error: new KeycloakClientError('Group name already exists') };
+        }
+
         try {
-            const groupNameWithSuffix: string = groupName + '-Service';
-            // the find one method can only seach by id
-            const [existingGroup]: GroupRepresentation[] = await kcAdminClientResult.value.groups.find({
-                search: groupNameWithSuffix,
-            });
-
-            if (existingGroup?.id) {
-                this.logger.info(`Group already exists: ${groupNameWithSuffix}`);
-                return { ok: true, value: existingGroup.id };
-            }
-
             const groupRepresentation: GroupRepresentation = {
                 name: groupNameWithSuffix,
             };
-            const response: {
-                id: string;
-            } = await kcAdminClientResult.value.groups.create(groupRepresentation);
-            if (response && response.id) {
-                return { ok: true, value: response.id };
-            } else {
-                throw new Error('Failed to create group: No ID returned');
-            }
+
+            const response: { id: string } = await kcAdminClientResult.value.groups.create(groupRepresentation);
+            this.logger.info(`keycloack group created:  ${groupNameWithSuffix}`);
+            return { ok: true, value: response.id };
         } catch (err) {
             this.logger.error(`Could not create group, message: ${JSON.stringify(err)} `);
             return { ok: false, error: new KeycloakClientError('Could not create group') };
@@ -232,12 +227,22 @@ export class KeycloakUserService {
         }
 
         try {
+            const roleNameWithSuffix: string = roleName + '-User';
+            const existingRole: RoleRepresentation | undefined = await kcAdminClientResult.value.roles.findOneByName({
+                name: roleNameWithSuffix,
+            });
+
+            if (existingRole) {
+                this.logger.info(`Role already exists: ${roleNameWithSuffix}`);
+                return { ok: false, error: new KeycloakClientError('Role name already exists') };
+            }
+
             const roleRepresentation: RoleRepresentation = {
-                name: roleName + '-User',
+                name: roleNameWithSuffix,
             };
 
             const response: { roleName: string } = await kcAdminClientResult.value.roles.create(roleRepresentation);
-
+            this.logger.info(`Keycloak role created: ${roleNameWithSuffix}`);
             return { ok: true, value: response.roleName };
         } catch (err) {
             this.logger.error(`Could not create role, message: ${JSON.stringify(err)} `);
@@ -254,14 +259,14 @@ export class KeycloakUserService {
         }
 
         try {
+            const roleNameWithSuffix: string = roleName;
             const role: RoleRepresentation | undefined = await kcAdminClientResult.value.roles.findOneByName({
-                name: roleName,
+                name: roleNameWithSuffix,
             });
 
             if (!role || !role.id || !role.name) {
-                const errorMessage: string = 'Role not found or id/name is undefined';
-                this.logger.error(`Could not create role, message: ${errorMessage}`);
-                throw new Error(errorMessage);
+                this.logger.error(`Role not found or id/name is undefined for: ${roleNameWithSuffix}`);
+                return { ok: false, error: new KeycloakClientError('Role not found or id/name is undefined') };
             }
 
             await kcAdminClientResult.value.groups.addRealmRoleMappings({
@@ -274,6 +279,7 @@ export class KeycloakUserService {
                 ],
             });
 
+            this.logger.info(`Role ${roleNameWithSuffix} added to group with ID: ${groupId}`);
             return { ok: true, value: true };
         } catch (err) {
             this.logger.error(`Could not add role to group, message: ${JSON.stringify(err)}`);

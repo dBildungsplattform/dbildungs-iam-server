@@ -107,17 +107,25 @@ export class ServiceProviderRepo {
 
         const group: Result<string, DomainError> = await this.keycloakUserService.createGroup(event.groupName);
         if (!group.ok) {
-            console.error(`Could not create group, message: ${group.error.message}`);
+            console.error(`Could not create group, error: ${group.error.message}`);
+            return;
         }
+        const groupId: string = group.value;
+
         const role: Result<string, DomainError> = await this.keycloakUserService.createRole(event.roleName);
         if (!role.ok) {
-            console.error(`Could not create group, message: ${role.error.message}`);
+            console.error(`Could not create role, error: ${role.error.message}`);
+            return;
         }
+        const roleName: string = role.value;
 
-        // const addRoleToGroup = await this.keycloakUserService.addRoleToGroup(group.value, role.value);
-        // if (!addRoleToGroup.ok) {
-        //     console.error(`Could not create group, message: ${addRoleToGroup.error.message}`);
-        // }
+        const addRoleToGroup: Result<boolean, DomainError> = await this.keycloakUserService.addRoleToGroup(
+            groupId,
+            roleName,
+        );
+        if (!addRoleToGroup.ok) {
+            console.error(`Could not add role to group, message: ${addRoleToGroup.error.message}`);
+        }
     }
 
     private async update(serviceProvider: ServiceProvider<true>): Promise<ServiceProvider<true>> {
