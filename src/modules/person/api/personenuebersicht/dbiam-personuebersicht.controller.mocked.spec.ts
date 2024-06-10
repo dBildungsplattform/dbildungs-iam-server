@@ -22,13 +22,20 @@ import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/d
 import { DBiamPersonenuebersichtController } from './dbiam-personenuebersicht.controller.js';
 import { DBiamFindPersonenuebersichtByPersonIdParams } from './dbiam-find-personenuebersicht-by-personid.params.js';
 import { Person } from '../../domain/person.js';
+import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
     withId: WasPersisted,
+    personRepository: PersonRepository,
+    organisationRepository: OrganisationRepository,
+    rolleRepo: RolleRepo,
     params: Partial<Personenkontext<boolean>> = {},
 ): Personenkontext<WasPersisted> {
     const personenkontext: Personenkontext<WasPersisted> = Personenkontext.construct<boolean>(
+        personRepository,
+        organisationRepository,
+        rolleRepo,
         withId ? faker.string.uuid() : undefined,
         withId ? faker.date.past() : undefined,
         withId ? faker.date.recent() : undefined,
@@ -59,7 +66,9 @@ function createPerson(): Person<true> {
 describe('Personenuebersicht API Mocked', () => {
     let sut: DBiamPersonenuebersichtController;
     let rolleRepoMock: DeepMocked<RolleRepo>;
-    let organisationRepositoryMock: DeepMocked<OrganisationRepo>;
+    let organisationRepoMock: DeepMocked<OrganisationRepo>;
+    let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
+
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
 
@@ -71,7 +80,7 @@ describe('Personenuebersicht API Mocked', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
                 MapperTestModule,
             ],
-            providers: [ServiceProviderRepo, RolleFactory],
+            providers: [ServiceProviderRepo, RolleFactory, OrganisationRepository],
         })
             .overrideProvider(DBiamPersonenkontextRepo)
             .useValue(createMock<DBiamPersonenkontextRepo>())
@@ -79,6 +88,8 @@ describe('Personenuebersicht API Mocked', () => {
             .useValue(createMock<RolleRepo>())
             .overrideProvider(OrganisationRepo)
             .useValue(createMock<OrganisationRepo>())
+            .overrideProvider(OrganisationRepository)
+            .useValue(createMock<OrganisationRepository>())
             .overrideProvider(PersonRepository)
             .useValue(createMock<PersonRepository>())
 
@@ -86,7 +97,8 @@ describe('Personenuebersicht API Mocked', () => {
 
         sut = module.get(DBiamPersonenuebersichtController);
         rolleRepoMock = module.get(RolleRepo);
-        organisationRepositoryMock = module.get(OrganisationRepo);
+        organisationRepoMock = module.get(OrganisationRepo);
+        organisationRepositoryMock = module.get(OrganisationRepository);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personRepositoryMock = module.get(PersonRepository);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -105,16 +117,22 @@ describe('Personenuebersicht API Mocked', () => {
                     const orga: OrganisationDo<true> = DoFactory.createOrganisation(true);
                     const orgaMap: Map<string, OrganisationDo<true>> = new Map();
                     orgaMap.set(orga.id, orga);
-                    const pk: Personenkontext<true> = createPersonenkontext(true, {
-                        personId: person.id,
-                        rolleId: rolle.id,
-                        organisationId: orga.id,
-                    });
+                    const pk: Personenkontext<true> = createPersonenkontext(
+                        true,
+                        personRepositoryMock,
+                        organisationRepositoryMock,
+                        rolleRepoMock,
+                        {
+                            personId: person.id,
+                            rolleId: rolle.id,
+                            organisationId: orga.id,
+                        },
+                    );
 
                     personRepositoryMock.findById.mockResolvedValueOnce(person);
                     dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
                     rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
-                    organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
+                    organisationRepoMock.findByIds.mockResolvedValueOnce(orgaMap);
 
                     await expect(sut.findPersonenuebersichtenByPerson(params)).rejects.toThrow(HttpException);
                 });

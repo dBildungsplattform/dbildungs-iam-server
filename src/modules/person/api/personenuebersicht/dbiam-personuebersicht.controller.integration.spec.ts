@@ -39,6 +39,8 @@ import { PassportUser } from '../../../authentication/types/user.js';
 import { Observable } from 'rxjs';
 import { DBiamPersonenuebersichtController } from './dbiam-personenuebersicht.controller.js';
 import { OrganisationID } from '../../../../shared/types/aggregate-ids.types.js';
+import { PersonenkontextFactory } from '../../../personenkontext/domain/personenkontext.factory.js';
+import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -48,6 +50,7 @@ describe('Personenuebersicht API', () => {
     let rolleFactory: RolleFactory;
     let rolleRepo: RolleRepo;
     let organisationRepo: OrganisationRepo;
+    let personenkontextFactory: PersonenkontextFactory;
     let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
 
@@ -90,6 +93,9 @@ describe('Personenuebersicht API', () => {
                 RolleRepo,
                 OrganisationRepo,
                 DBiamPersonenkontextRepo,
+                PersonenkontextFactory,
+                PersonRepository,
+                OrganisationRepository,
                 {
                     provide: APP_INTERCEPTOR,
                     useValue: {
@@ -119,6 +125,7 @@ describe('Personenuebersicht API', () => {
         organisationRepo = module.get(OrganisationRepo);
         dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
+        personenkontextFactory = module.get(PersonenkontextFactory);
 
         ROOT_ORGANISATION_ID = module.get(DBiamPersonenuebersichtController).ROOT_ORGANISATION_ID;
 
@@ -212,13 +219,13 @@ describe('Personenuebersicht API', () => {
                     );
 
                     const personenkontext1: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle1.id),
+                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation1.id, savedRolle1.id),
                     );
                     const personenkontext2: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
+                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
                     );
                     const personenkontext3: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
+                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
                     );
 
                     const response: Response = await request(app.getHttpServer() as App)
@@ -296,7 +303,69 @@ describe('Personenuebersicht API', () => {
                     expect(response.status).toBe(404);
                 });
             });
+            /*//HEAD
+            describe('when one or more organisations does not exist', () => {
+                it('should return Error', async () => {
+                    const creationParams: PersonCreationParams = {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    };
 
+                    const person: Person<false> | DomainError = await Person.createNew(
+                        usernameGeneratorService,
+                        creationParams,
+                    );
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError) {
+                        return;
+                    }
+                    const savedPerson: Person<true> | DomainError = await personRepository.create(person);
+                    expect(savedPerson).not.toBeInstanceOf(DomainError);
+                    if (savedPerson instanceof DomainError) {
+                        return;
+                    }
+
+                    const unsavedRolle1: Rolle<true> = rolleFactory.construct(
+                        faker.string.uuid(),
+                        faker.date.recent(),
+                        faker.date.recent(),
+                        faker.string.alpha(5),
+                        faker.string.uuid(),
+                        RollenArt.LEHR,
+                        [],
+                        [],
+                        [],
+                    );
+
+                    const savedRolle2: Rolle<true> = await rolleRepo.save(
+                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LERN, [], [], []),
+                    );
+
+                    const savedOrganisation1: OrganisationDo<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(true),
+                    );
+                    const savedOrganisation2: OrganisationDo<true> = await organisationRepo.save(
+                        DoFactory.createOrganisation(true),
+                    );
+
+                    await dBiamPersonenkontextRepo.save(
+                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation1.id, unsavedRolle1.id),
+                    );
+                    await dBiamPersonenkontextRepo.save(
+                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
+                    );
+                    await dBiamPersonenkontextRepo.save(
+                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
+                    );
+
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .get(`/dbiam/personenuebersicht/${savedPerson.id}`)
+                        .send();
+
+                    expect(response.status).toBe(404);
+                });
+            });*/
+            //MAIN
             describe('when one or more organisations does not exist', () => {
                 it('should return Error', async () => {
                     const creationParams: PersonCreationParams = {
@@ -331,13 +400,13 @@ describe('Personenuebersicht API', () => {
                     );
 
                     await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle1.id),
+                        personenkontextFactory.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle1.id),
                     );
                     await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle2.id),
+                        personenkontextFactory.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle2.id),
                     );
                     await dBiamPersonenkontextRepo.save(
-                        Personenkontext.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
+                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
                     );
 
                     const response: Response = await request(app.getHttpServer() as App)
@@ -400,13 +469,13 @@ describe('Personenuebersicht API', () => {
             );
 
             await dBiamPersonenkontextRepo.save(
-                Personenkontext.createNew(savedPerson1.id, savedOrganisation1.id, savedRolle1.id),
+                personenkontextFactory.createNew(savedPerson1.id, savedOrganisation1.id, savedRolle1.id),
             );
             await dBiamPersonenkontextRepo.save(
-                Personenkontext.createNew(savedPerson1.id, savedOrganisation1.id, savedRolle2.id),
+                personenkontextFactory.createNew(savedPerson1.id, savedOrganisation1.id, savedRolle2.id),
             );
             await dBiamPersonenkontextRepo.save(
-                Personenkontext.createNew(savedPerson1.id, savedOrganisation2.id, savedRolle2.id),
+                personenkontextFactory.createNew(savedPerson1.id, savedOrganisation2.id, savedRolle2.id),
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();

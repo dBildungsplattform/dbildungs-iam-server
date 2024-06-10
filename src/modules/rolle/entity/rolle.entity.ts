@@ -17,7 +17,7 @@ export class RolleEntity extends TimestampedEntity {
     @Property({ columnType: 'uuid' })
     public administeredBySchulstrukturknoten!: string;
 
-    @Enum(() => RollenArt)
+    @Enum({ items: () => RollenArt, nativeEnumName: 'rollen_art_enum' })
     public rollenart!: RollenArt;
 
     @OneToMany({

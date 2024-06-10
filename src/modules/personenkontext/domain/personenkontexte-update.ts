@@ -8,11 +8,13 @@ import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.e
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { UpdateInvalidLastModifiedError } from './error/update-invalid-last-modified.error.js';
+import { PersonenkontextFactory } from './personenkontext.factory.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
         private readonly logger: ClassLogger,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly personenkontextFactory: PersonenkontextFactory,
         private readonly personId: PersonID,
         private readonly lastModified: Date,
         private readonly count: number,
@@ -22,6 +24,7 @@ export class PersonenkontexteUpdate {
     public static createNew(
         logger: ClassLogger,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        personenkontextFactory: PersonenkontextFactory,
         personId: PersonID,
         lastModified: Date,
         count: number,
@@ -30,6 +33,7 @@ export class PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
             logger,
             dBiamPersonenkontextRepo,
+            personenkontextFactory,
             personId,
             lastModified,
             count,
@@ -49,7 +53,7 @@ export class PersonenkontexteUpdate {
                 pkBodyParam.rolleId,
             );
             if (!pk) {
-                const newPK: Personenkontext<false> = Personenkontext.createNew(
+                const newPK: Personenkontext<false> = this.personenkontextFactory.createNew(
                     pkBodyParam.personId,
                     pkBodyParam.organisationId,
                     pkBodyParam.rolleId,

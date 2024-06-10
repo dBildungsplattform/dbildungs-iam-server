@@ -9,6 +9,7 @@ import { RolleModule } from '../rolle/rolle.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { DBiamPersonenkontextService } from './domain/dbiam-personenkontext.service.js';
 import { DbiamPersonenkontextFactory } from './domain/dbiam-personenkontext.factory.js';
+import { PersonenkontextFactory } from './domain/personenkontext.factory.js';
 
 @Module({
     imports: [PersonModule, RolleModule, OrganisationModule, LoggerModule.register(PersonenKontextModule.name)],
@@ -19,6 +20,7 @@ import { DbiamPersonenkontextFactory } from './domain/dbiam-personenkontext.fact
         DBiamPersonenkontextService,
         DBiamPersonenkontextRepo,
         DbiamPersonenkontextFactory,
+        PersonenkontextFactory,
     ],
     exports: [
         PersonenkontextService,
@@ -26,6 +28,7 @@ import { DbiamPersonenkontextFactory } from './domain/dbiam-personenkontext.fact
         DBiamPersonenkontextService,
         DBiamPersonenkontextRepo,
         DbiamPersonenkontextFactory,
+        PersonenkontextFactory,
     ],
 })
 export class PersonenKontextModule {}
