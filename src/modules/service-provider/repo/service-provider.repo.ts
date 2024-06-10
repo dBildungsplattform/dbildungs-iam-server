@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
-import { CreateGroupEvent } from '../../../shared/events/kc-group-event.js';
+import { CreateGroupAndRoleEvent } from '../../../shared/events/kc-group-and-role-event.js';
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -96,19 +96,28 @@ export class ServiceProviderRepo {
 
         await this.em.persistAndFlush(serviceProviderEntity);
 
-        this.eventService.publish(new CreateGroupEvent(serviceProviderEntity.name));
+        this.eventService.publish(new CreateGroupAndRoleEvent(serviceProviderEntity.name, serviceProviderEntity.name));
 
         return mapEntityToAggregate(serviceProviderEntity);
     }
 
-    @EventHandler(CreateGroupEvent)
-    public async handleCreateGroupEvent(event: CreateGroupEvent): Promise<void> {
-        console.log(`Received CreateGroupEvent, groupName: ${event.groupName}`);
+    @EventHandler(CreateGroupAndRoleEvent)
+    public async handleCreateGroupAndRoleEvent(event: CreateGroupAndRoleEvent): Promise<void> {
+        console.log(`Received CreateGroupAndRoleEvent, groupName: ${event.groupName}`);
 
-        const result: Result<string, DomainError> = await this.keycloakUserService.createGroup(event.groupName);
-        if (!result.ok) {
-            console.error(`Could not create group, message: ${result.error.message}`);
+        const group: Result<string, DomainError> = await this.keycloakUserService.createGroup(event.groupName);
+        if (!group.ok) {
+            console.error(`Could not create group, message: ${group.error.message}`);
         }
+        const role: Result<string, DomainError> = await this.keycloakUserService.createRole(event.roleName);
+        if (!role.ok) {
+            console.error(`Could not create group, message: ${role.error.message}`);
+        }
+
+        // const addRoleToGroup = await this.keycloakUserService.addRoleToGroup(group.value, role.value);
+        // if (!addRoleToGroup.ok) {
+        //     console.error(`Could not create group, message: ${addRoleToGroup.error.message}`);
+        // }
     }
 
     private async update(serviceProvider: ServiceProvider<true>): Promise<ServiceProvider<true>> {

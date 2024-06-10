@@ -195,13 +195,28 @@ export class KeycloakUserService {
         }
 
         try {
+            const groupNameWithSuffix: string = groupName + '-Service';
+            // the find one method can only seach by id
+            const [existingGroup]: GroupRepresentation[] = await kcAdminClientResult.value.groups.find({
+                search: groupNameWithSuffix,
+            });
+
+            if (existingGroup?.id) {
+                this.logger.info(`Group already exists: ${groupNameWithSuffix}`);
+                return { ok: true, value: existingGroup.id };
+            }
+
             const groupRepresentation: GroupRepresentation = {
-                name: groupName,
+                name: groupNameWithSuffix,
             };
-
-            const response: { id: string } = await kcAdminClientResult.value.groups.create(groupRepresentation);
-
-            return { ok: true, value: response.id };
+            const response: {
+                id: string;
+            } = await kcAdminClientResult.value.groups.create(groupRepresentation);
+            if (response && response.id) {
+                return { ok: true, value: response.id };
+            } else {
+                throw new Error('Failed to create group: No ID returned');
+            }
         } catch (err) {
             this.logger.error(`Could not create group, message: ${JSON.stringify(err)} `);
             return { ok: false, error: new KeycloakClientError('Could not create group') };
@@ -218,7 +233,7 @@ export class KeycloakUserService {
 
         try {
             const roleRepresentation: RoleRepresentation = {
-                name: roleName,
+                name: roleName + '-User',
             };
 
             const response: { roleName: string } = await kcAdminClientResult.value.roles.create(roleRepresentation);
@@ -227,6 +242,42 @@ export class KeycloakUserService {
         } catch (err) {
             this.logger.error(`Could not create role, message: ${JSON.stringify(err)} `);
             return { ok: false, error: new KeycloakClientError('Could not create role') };
+        }
+    }
+
+    public async addRoleToGroup(groupId: string, roleName: string): Promise<Result<boolean, DomainError>> {
+        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+            await this.kcAdminService.getAuthedKcAdminClient();
+
+        if (!kcAdminClientResult.ok) {
+            return kcAdminClientResult;
+        }
+
+        try {
+            const role: RoleRepresentation | undefined = await kcAdminClientResult.value.roles.findOneByName({
+                name: roleName,
+            });
+
+            if (!role || !role.id || !role.name) {
+                const errorMessage: string = 'Role not found or id/name is undefined';
+                this.logger.error(`Could not create role, message: ${errorMessage}`);
+                throw new Error(errorMessage);
+            }
+
+            await kcAdminClientResult.value.groups.addRealmRoleMappings({
+                id: groupId,
+                roles: [
+                    {
+                        id: role.id,
+                        name: role.name,
+                    },
+                ],
+            });
+
+            return { ok: true, value: true };
+        } catch (err) {
+            this.logger.error(`Could not add role to group, message: ${JSON.stringify(err)}`);
+            return { ok: false, error: new KeycloakClientError('Could not add role to group') };
         }
     }
 }
