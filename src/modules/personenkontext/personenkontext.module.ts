@@ -10,6 +10,7 @@ import { OrganisationModule } from '../organisation/organisation.module.js';
 import { DBiamPersonenkontextService } from './domain/dbiam-personenkontext.service.js';
 import { DbiamPersonenkontextFactory } from './domain/dbiam-personenkontext.factory.js';
 import { PersonenkontextFactory } from './domain/personenkontext.factory.js';
+import {EventService} from "../../core/eventbus/index.js";
 
 @Module({
     imports: [PersonModule, RolleModule, OrganisationModule, LoggerModule.register(PersonenKontextModule.name)],
@@ -21,6 +22,7 @@ import { PersonenkontextFactory } from './domain/personenkontext.factory.js';
         DBiamPersonenkontextRepo,
         DbiamPersonenkontextFactory,
         PersonenkontextFactory,
+        EventService,
     ],
     exports: [
         PersonenkontextService,

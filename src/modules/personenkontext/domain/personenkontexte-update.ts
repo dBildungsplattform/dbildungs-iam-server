@@ -9,9 +9,12 @@ import { PersonID } from '../../../shared/types/index.js';
 import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
+        private readonly eventService: EventService,
         private readonly logger: ClassLogger,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personId: PersonID,
@@ -21,6 +24,7 @@ export class PersonenkontexteUpdate {
     ) {}
 
     public static createNew(
+        eventService: EventService,
         logger: ClassLogger,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         personId: PersonID,
@@ -29,6 +33,7 @@ export class PersonenkontexteUpdate {
         dBiamPersonenkontextBodyParams: DBiamCreatePersonenkontextBodyParams[],
     ): PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
+            eventService,
             logger,
             dBiamPersonenkontextRepo,
             personId,
@@ -101,6 +106,9 @@ export class PersonenkontexteUpdate {
             ) {
                 this.logger.info(`DELETE ${existingPK.organisationId}`);
                 await this.dBiamPersonenkontextRepo.delete(existingPK);
+                this.eventService.publish(
+                    new PersonenkontextDeletedEvent(existingPK.personId, existingPK.organisationId, existingPK.rolleId),
+                );
             }
         }
 

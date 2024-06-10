@@ -13,6 +13,7 @@ import { Personenkontext } from './personenkontext.js';
 import { UpdateCountError } from './error/update-count.error.js';
 import { UpdateOutdatedError } from './error/update-outdated.error.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
+import {EventService} from "../../../core/eventbus/index.js";
 
 function createPKBodyParams(personId: PersonID): DBiamCreatePersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DBiamCreatePersonenkontextBodyParams =
@@ -55,6 +56,7 @@ describe('PersonenkontexteUpdate', () => {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
+                EventService,
                 DbiamPersonenkontextFactory,
             ],
         }).compile();
