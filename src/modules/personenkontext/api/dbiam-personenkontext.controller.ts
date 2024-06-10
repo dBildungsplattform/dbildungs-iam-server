@@ -22,6 +22,8 @@ import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.r
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkontext.body.params.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personenkontext-by-personid.params.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
@@ -35,6 +37,7 @@ export class DBiamPersonenkontextController {
     public constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
+        private readonly eventService: EventService,
         private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
@@ -65,7 +68,7 @@ export class DBiamPersonenkontextController {
     @Post()
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({
-        description: 'Test',
+        description: 'Personenkontext was successfully created.',
         type: DBiamPersonenkontextResponse,
     })
     @ApiBadRequestResponse({
@@ -104,6 +107,7 @@ export class DBiamPersonenkontextController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult.error),
             );
         }
+        this.eventService.publish(new PersonenkontextCreatedEvent(saveResult.value.id));
 
         return new DBiamPersonenkontextResponse(saveResult.value);
     }
