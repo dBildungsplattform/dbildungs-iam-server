@@ -3,6 +3,7 @@ import { ScopeBase } from '../../../shared/persistence/scope-base.js';
 import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 import { Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 
 type FindProps = {
     personId: string;
@@ -28,6 +29,16 @@ export class PersonenkontextScope extends ScopeBase<PersonenkontextEntity> {
             },
             operator,
         );
+
+        return this;
+    }
+
+    public byOrganisations(organisationIDs: OrganisationID[] | undefined): this {
+        if (organisationIDs) {
+            this.findByQuery({
+                organisationId: { $in: organisationIDs },
+            });
+        }
 
         return this;
     }

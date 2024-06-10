@@ -22,6 +22,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 describe('PersonenkontextRepo', () => {
     let module: TestingModule;
@@ -40,6 +41,7 @@ describe('PersonenkontextRepo', () => {
                 RolleRepo,
                 RolleFactory,
                 ServiceProviderRepo,
+                OrganisationRepository,
             ],
         }).compile();
         sut = module.get(PersonenkontextRepo);

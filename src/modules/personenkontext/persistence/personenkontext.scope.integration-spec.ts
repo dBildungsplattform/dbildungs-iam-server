@@ -21,6 +21,8 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { faker } from '@faker-js/faker';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 describe('PersonenkontextScope', () => {
     let module: TestingModule;
@@ -32,7 +34,13 @@ describe('PersonenkontextScope', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [PersonPersistenceMapperProfile, RolleFactory, RolleRepo, ServiceProviderRepo],
+            providers: [
+                PersonPersistenceMapperProfile,
+                RolleFactory,
+                RolleRepo,
+                ServiceProviderRepo,
+                OrganisationRepository,
+            ],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
@@ -50,11 +58,11 @@ describe('PersonenkontextScope', () => {
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
+
     describe('findBy', () => {
         describe('when filtering for personenkontexte', () => {
             beforeEach(async () => {
                 const person: PersonDo<true> = DoFactory.createPerson(true);
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
 
                 await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
 
@@ -62,8 +70,12 @@ describe('PersonenkontextScope', () => {
                     30,
                     false,
                     DoFactory.createPersonenkontext,
-                    { personId: person.id, rolleId: rolle.id },
+                    { personId: person.id },
                 );
+                for (const doObj of dos) {
+                    const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                    doObj.rolleId = rolle.id;
+                }
 
                 await em.persistAndFlush(
                     // Don't use mapArray, because beforeMap does not get called
@@ -76,6 +88,47 @@ describe('PersonenkontextScope', () => {
             it('should return found personenkontexte', async () => {
                 const scope: PersonenkontextScope = new PersonenkontextScope()
                     .findBy({ referrer: 'referrer' })
+                    .sortBy('id', ScopeOrder.ASC)
+                    .paged(10, 10);
+                const [personenkontext, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(em);
+
+                expect(total).toBe(30);
+                expect(personenkontext).toHaveLength(10);
+            });
+        });
+    });
+
+    describe('byOrganisations', () => {
+        describe('when filtering for personenkontexte', () => {
+            const orgaId: string = faker.string.uuid();
+
+            beforeEach(async () => {
+                const person: PersonDo<true> = DoFactory.createPerson(true);
+
+                await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
+
+                const dos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
+                    30,
+                    false,
+                    DoFactory.createPersonenkontext,
+                    { personId: person.id, organisationId: orgaId },
+                );
+                for (const doObj of dos) {
+                    const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                    doObj.rolleId = rolle.id;
+                }
+
+                await em.persistAndFlush(
+                    // Don't use mapArray, because beforeMap does not get called
+                    dos.map((pkDo: PersonenkontextDo<false>) =>
+                        mapper.map(pkDo, PersonenkontextDo, PersonenkontextEntity),
+                    ),
+                );
+            });
+
+            it('should return found personenkontexte', async () => {
+                const scope: PersonenkontextScope = new PersonenkontextScope()
+                    .byOrganisations([orgaId])
                     .sortBy('id', ScopeOrder.ASC)
                     .paged(10, 10);
                 const [personenkontext, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(em);

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { DomainError, EntityCouldNotBeDeleted, EntityNotFoundError } from '../../../shared/error/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
-import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { PersonenkontextRepo } from '../persistence/personenkontext.repo.js';
 import { PersonenkontextScope } from '../persistence/personenkontext.scope.js';
@@ -12,6 +12,7 @@ import { MismatchedRevisionError } from '../../../shared/error/mismatched-revisi
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 
 @Injectable()
 export class PersonenkontextService {
@@ -38,10 +39,13 @@ export class PersonenkontextService {
 
     public async findAllPersonenkontexte(
         personenkontextDo: PersonenkontextDo<false>,
+        organisationIDs?: OrganisationID[] | undefined,
         offset?: number,
         limit?: number,
     ): Promise<Paged<PersonenkontextDo<true>>> {
         const scope: PersonenkontextScope = new PersonenkontextScope()
+            .setScopeWhereOperator(ScopeOperator.AND)
+            .byOrganisations(organisationIDs)
             .findBy({
                 personId: personenkontextDo.personId,
                 referrer: personenkontextDo.referrer,

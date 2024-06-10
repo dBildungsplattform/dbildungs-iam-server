@@ -1,6 +1,7 @@
-import { OrganisationID, RolleID } from '../../../shared/types/index.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Person } from '../../person/domain/person.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -36,7 +37,7 @@ export class PersonPermissions {
 
     public constructor(
         private personenkontextRepo: DBiamPersonenkontextRepo,
-        private organisationRepo: OrganisationRepo,
+        private organisationRepo: OrganisationRepository,
         private rolleRepo: RolleRepo,
         person: Person<true>,
     ) {
@@ -88,6 +89,44 @@ export class PersonPermissions {
         }
 
         return Array.from(organisationIDs);
+    }
+
+    public async hasSystemrechtAtOrganisation(
+        organisationId: OrganisationID,
+        systemrechte: RollenSystemRecht[],
+    ): Promise<boolean> {
+        const orgsWithRecht: OrganisationID[] = await this.getOrgIdsWithSystemrecht(systemrechte, true);
+
+        return orgsWithRecht.includes(organisationId);
+    }
+
+    public async hasSystemrechtAtRootOrganisation(systemrechte: RollenSystemRecht[]): Promise<boolean> {
+        const orgsWithRecht: OrganisationID[] = await this.getOrgIdsWithSystemrecht(systemrechte, true);
+
+        return orgsWithRecht.includes(this.organisationRepo.ROOT_ORGANISATION_ID);
+    }
+
+    public async canModifyPerson(personId: PersonID): Promise<boolean> {
+        {
+            const hasModifyRechtAtRoot: boolean = await this.hasSystemrechtAtRootOrganisation([
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ]);
+
+            if (hasModifyRechtAtRoot) {
+                return true;
+            }
+        }
+
+        {
+            const result: Result<Personenkontext<true>[], DomainError> =
+                await this.personenkontextRepo.findByPersonAuthorized(personId, this);
+
+            if (!result.ok) {
+                return false;
+            }
+
+            return result.value.length > 0;
+        }
     }
 
     private async getPersonenkontextsFields(): Promise<PersonKontextFields[]> {
