@@ -33,6 +33,7 @@ import { DbiamPersonenkontextFactory } from '../domain/dbiam-personenkontext.fac
 import { PersonenkontexteUpdate } from '../domain/personenkontexte-update.js';
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
 import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-update.error.js';
+import { PersonenkontexteUpdatedEvent } from '../../../shared/events/personenkontexte-updated.event.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -151,5 +152,6 @@ export class DBiamPersonenkontextController {
         if (updateError) {
             throw updateError;
         }
+        this.eventService.publish(new PersonenkontexteUpdatedEvent(params.personId));
     }
 }
