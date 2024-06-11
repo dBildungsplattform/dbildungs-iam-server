@@ -5,13 +5,15 @@ import { DBiamCreatePersonenkontextBodyParams } from '../api/param/dbiam-create-
 import { PersonID } from '../../../shared/types/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
+import { EventService } from '../../../core/eventbus/index.js';
 
 @Injectable()
 export class DbiamPersonenkontextFactory {
     public constructor(
-        private logger: ClassLogger,
-        private dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private personenkontextFactory: PersonenkontextFactory,
+        private readonly eventService: EventService,
+        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly logger: ClassLogger,
     ) {}
 
     public createNew(
@@ -21,6 +23,7 @@ export class DbiamPersonenkontextFactory {
         dBiamPersonenkontextBodyParams: DBiamCreatePersonenkontextBodyParams[],
     ): PersonenkontexteUpdate {
         return PersonenkontexteUpdate.createNew(
+            this.eventService,
             this.logger,
             this.dBiamPersonenkontextRepo,
             this.personenkontextFactory,

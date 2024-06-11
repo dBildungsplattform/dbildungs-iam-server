@@ -29,7 +29,7 @@ export class LdapEventHandler {
     ) {}
 
     @EventHandler(SchuleCreatedEvent)
-    public async asyncCreateSchuleEventHandler(event: SchuleCreatedEvent): Promise<void> {
+    public async asyncSchuleCreatedEventHandler(event: SchuleCreatedEvent): Promise<void> {
         this.logger.info(`Received CreateSchuleEvent, organisationId:${event.organisationId}`);
 
         const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
@@ -52,7 +52,7 @@ export class LdapEventHandler {
     }
 
     @EventHandler(SchuleDeletedEvent)
-    public async asyncDeleteSchuleEventHandler(event: SchuleDeletedEvent): Promise<void> {
+    public async asyncSchuleDeletedEventHandler(event: SchuleDeletedEvent): Promise<void> {
         this.logger.info(`Received DeleteSchuleEvent, organisationId:${event.organisationId}`);
         const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
             event.organisationId,
@@ -74,15 +74,21 @@ export class LdapEventHandler {
     }
 
     @EventHandler(PersonenkontextCreatedEvent)
-    public async asyncCreatePersonenkontextEventHandler(event: PersonenkontextCreatedEvent): Promise<void> {
-        this.logger.info(`Received CreatePersonenkontextEvent, personenKontextId is ${event.personenkontextId}`);
+    public async asyncPersonenkontextCreatedEventHandler(event: PersonenkontextCreatedEvent): Promise<void> {
+        this.logger.info(
+            `Received PersonenkontextCreatedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
+        );
 
-        const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findByID(
-            event.personenkontextId,
+        const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.find(
+            event.personId,
+            event.organisationId,
+            event.rolleId,
         );
 
         if (!personenkontext) {
-            this.logger.error(`Personenkontext with id ${event.personenkontextId} could not be found!`);
+            this.logger.error(
+                `PK personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId} could not be found!`,
+            );
             return;
         }
 
@@ -115,15 +121,21 @@ export class LdapEventHandler {
     }
 
     @EventHandler(PersonenkontextDeletedEvent)
-    public async asyncDeletePersonenkontextEventHandler(event: PersonenkontextDeletedEvent): Promise<void> {
-        this.logger.info(`Received DeletePersonenkontextEvent, personenKontextId is ${event.personenkontextId}`);
+    public async asyncPersonenkontextDeletedEventHandler(event: PersonenkontextDeletedEvent): Promise<void> {
+        this.logger.info(
+            `Received PersonenkontextDeletedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
+        );
 
-        const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findByID(
-            event.personenkontextId,
+        const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.find(
+            event.personId,
+            event.organisationId,
+            event.rolleId,
         );
 
         if (!personenkontext) {
-            this.logger.error(`Personenkontext with id ${event.personenkontextId} could not be found!`);
+            this.logger.error(
+                `PK personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId} could not be found!`,
+            );
             return;
         }
 
