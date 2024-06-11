@@ -4,7 +4,7 @@ import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DBiamCreatePersonenkontextBodyParams } from '../api/param/dbiam-create-personenkontext.body.params.js';
 import { PersonID } from '../../../shared/types/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import {EventService} from "../../../core/eventbus/index.js";
+import { EventService } from '../../../core/eventbus/index.js';
 
 @Injectable()
 export class DbiamPersonenkontextFactory {
