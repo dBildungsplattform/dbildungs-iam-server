@@ -7,6 +7,7 @@ import { KeycloakUserService } from '../keycloak-administration/index.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { KeycloakAdministrationService } from '../keycloak-administration/domain/keycloak-admin-client.service.js';
 import { CreateGroupAndRoleHandler } from './repo/service-provider-event-handler.js';
+import { EventService } from '../../core/eventbus/index.js';
 
 @Module({
     imports: [LoggerModule.register(ServiceProviderModule.name), KeycloakAdministrationModule],
@@ -16,6 +17,7 @@ import { CreateGroupAndRoleHandler } from './repo/service-provider-event-handler
         KeycloakUserService,
         KeycloakAdministrationService,
         CreateGroupAndRoleHandler,
+        EventService,
     ],
     exports: [ServiceProviderRepo, ServiceProviderFactory, KeycloakUserService, CreateGroupAndRoleHandler],
 })

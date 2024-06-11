@@ -5,10 +5,11 @@ import { ServiceProviderModule } from '../service-provider/service-provider.modu
 import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
 import { RolleFactory } from './domain/rolle.factory.js';
 import { EventModule } from '../../core/eventbus/event.module.js';
+import { EventService } from '../../core/eventbus/index.js';
 
 @Module({
     imports: [ServiceProviderModule, LoggerModule.register(RolleModule.name), EventModule],
-    providers: [RolleRepo, RolleFactory, ServiceProviderRepo],
+    providers: [RolleRepo, RolleFactory, ServiceProviderRepo, EventService],
     exports: [RolleRepo, RolleFactory],
 })
 export class RolleModule {}

@@ -9,17 +9,28 @@ import {
 } from '../../../../test/utils/index.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderRepo } from './service-provider.repo.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { ModuleLogger } from '../../../core/logging/module-logger.js';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
     let sut: ServiceProviderRepo;
     let orm: MikroORM;
     let em: EntityManager;
+    let moduleLogger: DeepMocked<ModuleLogger>;
 
     beforeAll(async () => {
+        moduleLogger = createMock<ModuleLogger>();
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
-            providers: [ServiceProviderRepo],
+            providers: [
+                ServiceProviderRepo,
+                EventService,
+                ClassLogger,
+                { provide: ModuleLogger, useValue: moduleLogger },
+            ],
         }).compile();
 
         sut = module.get(ServiceProviderRepo);
