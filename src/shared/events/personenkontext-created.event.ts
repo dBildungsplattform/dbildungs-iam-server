@@ -1,8 +1,12 @@
 import { BaseEvent } from './base-event.js';
-import { PersonenkontextID } from '../types/index.js';
+import { OrganisationID, PersonID, RolleID } from '../types/index.js';
 
 export class PersonenkontextCreatedEvent extends BaseEvent {
-    public constructor(public readonly personenkontextId: PersonenkontextID) {
+    public constructor(
+        public readonly personId: PersonID,
+        public readonly organisationId: OrganisationID,
+        public readonly rolleId: RolleID,
+    ) {
         super();
     }
 }

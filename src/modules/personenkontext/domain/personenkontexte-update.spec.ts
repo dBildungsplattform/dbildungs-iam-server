@@ -17,6 +17,7 @@ import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { EventService } from '../../../core/eventbus/index.js';
 
 function createPKBodyParams(personId: PersonID): DBiamCreatePersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DBiamCreatePersonenkontextBodyParams =
@@ -71,6 +72,7 @@ describe('PersonenkontexteUpdate', () => {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
                 },
+                EventService,
                 DbiamPersonenkontextFactory,
                 PersonenkontextFactory,
             ],
