@@ -48,7 +48,7 @@ describe('ItsLearningIMSESService', () => {
             await sut.send(mockAction);
 
             expect(httpServiceMock.post).toHaveBeenCalledWith(
-                'https://localhost',
+                'https://itslearning-test.example.com',
                 expect.stringContaining('username'),
                 {
                     headers: {
