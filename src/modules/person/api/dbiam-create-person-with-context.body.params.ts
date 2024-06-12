@@ -1,16 +1,23 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsNotEmpty, IsString, ValidateNested } from 'class-validator';
-import { PersonNameParams } from './person-name.params.js';
+import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { IsDIN91379A } from '../../../shared/util/din-91379-validation.js';
 
 export class DbiamCreatePersonWithContextBodyParams {
-    @AutoMap(() => PersonNameParams)
-    @ValidateNested()
-    @Type(() => PersonNameParams)
-    @ApiProperty({ type: PersonNameParams, required: true })
-    public readonly name!: PersonNameParams;
+    @AutoMap()
+    @IsDIN91379A()
+    @IsNotEmpty()
+    @MinLength(2)
+    @ApiProperty({ required: true })
+    public readonly familienname!: string;
+
+    @AutoMap()
+    @IsDIN91379A()
+    @IsNotEmpty()
+    @MinLength(2)
+    @ApiProperty({ required: true })
+    public readonly vorname!: string;
 
     @IsString()
     @IsNotEmpty()

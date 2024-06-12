@@ -64,8 +64,8 @@ export class DBiamPersonController {
         //Check all references & permissions then save person
         const savedPerson: DomainError | Person<true> = await this.personService.createPerson(
             permissions,
-            params.name.vorname,
-            params.name.familienname,
+            params.vorname,
+            params.familienname,
             params.organisationId,
             params.rolleId,
         );
