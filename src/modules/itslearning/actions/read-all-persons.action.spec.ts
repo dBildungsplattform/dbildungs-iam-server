@@ -14,14 +14,30 @@ describe('ReadAllPersonsAction', () => {
     });
 
     describe('isArrayOverride', () => {
-        it('should return true for specific tags', () => {
+        it('should return true for tag "personIdPair"', () => {
             const action: ReadAllPersonsAction = new ReadAllPersonsAction({
                 pageIndex: 1,
                 pageSize: 10,
             });
 
             expect(action.isArrayOverride('personIdPair')).toBe(true);
+        });
+
+        it('should return true for tag "partName"', () => {
+            const action: ReadAllPersonsAction = new ReadAllPersonsAction({
+                pageIndex: 1,
+                pageSize: 10,
+            });
+
             expect(action.isArrayOverride('partName')).toBe(true);
+        });
+
+        it('should return true for tag "tel"', () => {
+            const action: ReadAllPersonsAction = new ReadAllPersonsAction({
+                pageIndex: 1,
+                pageSize: 10,
+            });
+
             expect(action.isArrayOverride('tel')).toBe(true);
         });
     });

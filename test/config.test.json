@@ -45,7 +45,7 @@
     },
     "ITSLEARNING": {
         "ENABLED": false,
-        "ENDPOINT": "https://localhost",
+        "ENDPOINT": "https://itslearning-test.example.com",
         "USERNAME": "username",
         "PASSWORD": "password"
     }
