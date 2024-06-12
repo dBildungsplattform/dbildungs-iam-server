@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { MikroORM } from '@mikro-orm/core';
-import { INestApplication } from '@nestjs/common';
-import { APP_PIPE } from '@nestjs/core';
+import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
+import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
@@ -21,6 +21,11 @@ import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { Observable } from 'rxjs';
+import { PassportUser } from '../../authentication/types/user.js';
+import { Request } from 'express';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
     const rolle: Rolle<false> = rolleFactory.createNew(
@@ -42,6 +47,7 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
     let organisationRepo: OrganisationRepo;
     let rolleRepo: RolleRepo;
     let rolleFactory: RolleFactory;
+    let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -59,6 +65,24 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
                 },
+                {
+                    provide: PersonPermissionsRepo,
+                    useValue: createMock<PersonPermissionsRepo>(),
+                },
+                {
+                    provide: APP_INTERCEPTOR,
+                    useValue: {
+                        intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+                            const req: Request = context.switchToHttp().getRequest();
+                            req.passportUser = createMock<PassportUser>({
+                                async personPermissions() {
+                                    return personpermissionsRepoMock.loadPersonPermissions('');
+                                },
+                            });
+                            return next.handle();
+                        },
+                    },
+                },
             ],
         }).compile();
 
@@ -66,6 +90,7 @@ describe('DbiamPersonenkontextFilterController Integration Test', () => {
         organisationRepo = module.get(OrganisationRepo);
         rolleRepo = module.get(RolleRepo);
         rolleFactory = module.get(RolleFactory);
+        personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();

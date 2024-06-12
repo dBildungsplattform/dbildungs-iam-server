@@ -20,6 +20,8 @@ import { OrganisationResponseLegacy } from '../../organisation/api/organisation.
 import { PersonenkontextAnlageFactory } from '../domain/personenkontext-anlage.factory.js';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontext')
@@ -62,10 +64,12 @@ export class DbiamPersonenkontextFilterController {
     })
     public async findSchulstrukturknoten(
         @Query() params: FindPersonenkontextSchulstrukturknotenBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<FindSchulstrukturknotenResponse> {
         const anlage: PersonenkontextAnlage = this.personenkontextAnlageFactory.createNew();
         const sskName: string = params.sskName ?? '';
         const ssks: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(
+            permissions,
             params.rolleId,
             sskName,
             params.limit,
