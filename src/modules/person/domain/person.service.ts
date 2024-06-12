@@ -12,13 +12,13 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationMatchesRollenart } from '../../personenkontext/specification/organisation-matches-rollenart.js';
-import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { NurLehrUndLernAnKlasseError } from '../../personenkontext/specification/error/nur-lehr-und-lern-an-klasse.error.js';
 import { PersonRepository } from '../persistence/person.repository.js';
+import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
 
 @Injectable()
 export class PersonService {
@@ -77,10 +77,7 @@ export class PersonService {
             return person;
         }
         //Check references: ob der Admin berechtigt ist
-        const referenceError: Option<DomainError> = await this.checkReferencesForNonExistentUser(
-            organisationId,
-            rolleId,
-        );
+        const referenceError: Option<DomainError> = await this.checkReferences(organisationId, rolleId);
         if (referenceError) {
             return referenceError;
         }
@@ -89,7 +86,8 @@ export class PersonService {
         if (permissionsError) {
             return permissionsError;
         }
-        //CheckSpecifications (NurLehrUndLernAnKlasse), für GleicheRolleAnKlasseWieSchule ist die Prüfung nicht notwendig weil der User (Person) schon an der Schule gehängt sein musste bevor er/sie in eine Klasse hinzugefügt wird?
+        //CheckSpecifications (NurLehrUndLernAnKlasse)
+        // Für GleicheRolleAnKlasseWieSchule ist die Prüfung nicht notwendig weil der User (Person) an der Schule gehängt sein muss, bevor Person in eine Klasse hinzugefügt wird?
         if (!(await this.checkSpecificationNurLehrUndLernAnKlasse(organisationId, rolleId))) {
             return new NurLehrUndLernAnKlasseError();
         }
@@ -98,10 +96,7 @@ export class PersonService {
         return savedPerson;
     }
 
-    private async checkReferencesForNonExistentUser(
-        organisationId: string,
-        rolleId: string,
-    ): Promise<Option<DomainError>> {
+    private async checkReferences(organisationId: string, rolleId: string): Promise<Option<DomainError>> {
         const [orga, rolle]: [Option<Organisation<true>>, Option<Rolle<true>>] = await Promise.all([
             this.organisationRepo.findById(organisationId),
             this.rolleRepo.findById(rolleId),
@@ -124,9 +119,7 @@ export class PersonService {
         //The aimed organisation needs to match the type of role to be assigned
         const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
         if (!organisationMatchesRollenart.isSatisfiedBy(orga, rolle)) {
-            return new PersonenkontextAnlageError(
-                'PersonenkontextAnlage invalid: role type does not match organisation type',
-            );
+            return new RolleNurAnPassendeOrganisationError();
         }
 
         return undefined;

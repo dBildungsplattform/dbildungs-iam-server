@@ -24,8 +24,10 @@ import { DBiamPersonResponse } from './dbiam-person.response.js';
 import { DbiamPersonenkontextError } from '../../personenkontext/api/dbiam-personenkontext.error.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonenkontextExceptionFilter } from '../../personenkontext/api/personenkontext-exception-filter.js';
+import { PersonenkontextSpecificationError } from '../../personenkontext/specification/error/personenkontext-specification.error.js';
 
-@UseFilters(new SchulConnexValidationErrorFilter())
+@UseFilters(new SchulConnexValidationErrorFilter(), new PersonenkontextExceptionFilter())
 @ApiTags('dbiam-personen')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -50,6 +52,8 @@ export class DBiamPersonController {
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create person with personenkontext.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to create person with personenkontext.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person with personenkontext.' })
+    @ApiBadRequestResponse({ description: 'Request has wrong format.', type: DbiamPersonenkontextError })
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while creating person with personenkontext.',
     })
@@ -57,7 +61,7 @@ export class DBiamPersonController {
         @Body() params: DbiamCreatePersonWithContextBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonResponse> {
-        //Check all references & permissions then create person
+        //Check all references & permissions then save person
         const savedPerson: DomainError | Person<true> = await this.personService.createPerson(
             permissions,
             params.name.vorname,
@@ -65,6 +69,10 @@ export class DBiamPersonController {
             params.organisationId,
             params.rolleId,
         );
+
+        if (savedPerson instanceof PersonenkontextSpecificationError) {
+            throw savedPerson;
+        }
 
         if (savedPerson instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
