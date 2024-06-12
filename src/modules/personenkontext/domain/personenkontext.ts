@@ -123,6 +123,37 @@ export class Personenkontext<WasPersisted extends boolean> {
         return undefined;
     }
 
+    public async checkReferencesForNonExistentUser(): Promise<Option<DomainError>> {
+        const [orga, rolle]: [Option<Organisation<true>>, Option<Rolle<true>>] = await Promise.all([
+            this.organisationRepo.findById(this.organisationId),
+            this.rolleRepo.findById(this.rolleId),
+        ]);
+
+        if (!orga) {
+            return new EntityNotFoundError('Organisation', this.organisationId);
+        }
+
+        if (!rolle) {
+            return new EntityNotFoundError('Rolle', this.rolleId);
+        }
+
+        // Can rolle be assigned at target orga
+        const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(this.organisationId);
+        if (!canAssignRolle) {
+            return new EntityNotFoundError('rolle', this.rolleId); // Rolle does not exist for the chosen organisation
+        }
+
+        //The aimed organisation needs to match the type of role to be assigned
+        const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
+        if (!organisationMatchesRollenart.isSatisfiedBy(orga, rolle)) {
+            return new PersonenkontextAnlageError(
+                'PersonenkontextAnlage invalid: role type does not match organisation type',
+            );
+        }
+
+        return undefined;
+    }
+
     public async checkPermissions(permissions: PersonPermissions): Promise<Option<DomainError>> {
         // Check if logged in person has permission
         {

@@ -15,6 +15,7 @@ import { DBiamPersonenuebersichtController } from './api/personenuebersicht/dbia
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonInfoController } from './api/person-info.controller.js';
 import { PersonApiMapper } from './mapper/person-api.mapper.js';
+import { DBiamPersonController } from './api/dbiam-person.controller.js';
 
 @Module({
     imports: [
@@ -34,6 +35,12 @@ import { PersonApiMapper } from './mapper/person-api.mapper.js';
         DBiamPersonenkontextRepo,
         PersonApiMapper,
     ],
-    controllers: [PersonController, PersonFrontendController, DBiamPersonenuebersichtController, PersonInfoController],
+    controllers: [
+        PersonController,
+        PersonFrontendController,
+        DBiamPersonenuebersichtController,
+        PersonInfoController,
+        DBiamPersonController,
+    ],
 })
 export class PersonApiModule {}
