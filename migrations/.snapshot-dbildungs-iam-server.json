@@ -70,7 +70,148 @@
       ],
       "checks": [],
       "foreignKeys": {},
-      "nativeEnums": {}
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        }
+      }
     },
     {
       "columns": {
@@ -120,7 +261,148 @@
       ],
       "checks": [],
       "foreignKeys": {},
-      "nativeEnums": {}
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        }
+      }
     },
     {
       "columns": {
@@ -192,7 +474,148 @@
           "updateRule": "cascade"
         }
       },
-      "nativeEnums": {}
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        }
+      }
     },
     {
       "columns": {
@@ -207,11 +630,12 @@
         },
         "status": {
           "name": "status",
-          "type": "text",
+          "type": "db_seed_status_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "nativeEnumName": "db_seed_status_enum",
           "enumItems": [
             "STARTED",
             "DONE",
@@ -255,7 +679,148 @@
       ],
       "checks": [],
       "foreignKeys": {},
-      "nativeEnums": {}
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        }
+      }
     },
     {
       "columns": {
@@ -279,11 +844,12 @@
         },
         "referenced_entity_type": {
           "name": "referenced_entity_type",
-          "type": "text",
+          "type": "referenced_entity_type_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "nativeEnumName": "referenced_entity_type_enum",
           "enumItems": [
             "PERSON",
             "ORGANISATION",
@@ -310,75 +876,148 @@
       ],
       "checks": [],
       "foreignKeys": {},
-      "nativeEnums": {}
-    },
-    {
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "uuid"
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamptz",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 6,
-          "mappedType": "datetime"
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
         },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamptz",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 6,
-          "mappedType": "datetime"
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
         },
-        "source": {
-          "name": "source",
-          "type": "uuid",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "uuid"
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
         },
-        "target": {
-          "name": "target",
-          "type": "uuid",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "uuid"
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
         }
-      },
-      "name": "fake",
-      "schema": "public",
-      "indexes": [
-        {
-          "keyName": "fake_pkey",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "constraint": true,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {},
-      "nativeEnums": {}
+      }
     },
     {
       "columns": {
@@ -467,11 +1106,12 @@
         },
         "typ": {
           "name": "typ",
-          "type": "text",
+          "type": "organisations_typ_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
+          "nativeEnumName": "organisations_typ_enum",
           "enumItems": [
             "ROOT",
             "LAND",
@@ -486,11 +1126,12 @@
         },
         "traegerschaft": {
           "name": "traegerschaft",
-          "type": "text",
+          "type": "traegerschaft_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
+          "nativeEnumName": "traegerschaft_enum",
           "enumItems": [
             "01",
             "02",
@@ -518,7 +1159,148 @@
       ],
       "checks": [],
       "foreignKeys": {},
-      "nativeEnums": {}
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        }
+      }
     },
     {
       "columns": {
@@ -698,11 +1480,12 @@
         },
         "geschlecht": {
           "name": "geschlecht",
-          "type": "text",
+          "type": "geschlecht_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
+          "nativeEnumName": "geschlecht_enum",
           "enumItems": [
             "m",
             "w",
@@ -722,11 +1505,12 @@
         },
         "vertrauensstufe": {
           "name": "vertrauensstufe",
-          "type": "text",
+          "type": "vertrauensstufe_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
+          "nativeEnumName": "vertrauensstufe_enum",
           "enumItems": [
             "KEIN",
             "UNBE",
@@ -803,7 +1587,148 @@
           "updateRule": "cascade"
         }
       },
-      "nativeEnums": {}
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        }
+      }
     },
     {
       "columns": {
@@ -900,11 +1825,12 @@
         },
         "personenstatus": {
           "name": "personenstatus",
-          "type": "text",
+          "type": "personenstatus_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
+          "nativeEnumName": "personenstatus_enum",
           "enumItems": [
             "AKTIV"
           ],
@@ -912,11 +1838,12 @@
         },
         "jahrgangsstufe": {
           "name": "jahrgangsstufe",
-          "type": "text",
+          "type": "jahrgangsstufe_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
+          "nativeEnumName": "jahrgangsstufe_enum",
           "enumItems": [
             "01",
             "02",
@@ -999,10 +1926,152 @@
           "referencedColumnNames": [
             "id"
           ],
-          "referencedTableName": "public.person"
+          "referencedTableName": "public.person",
+          "deleteRule": "cascade"
         }
       },
-      "nativeEnums": {}
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        }
+      }
     },
     {
       "columns": {
@@ -1055,11 +2124,12 @@
         },
         "rollenart": {
           "name": "rollenart",
-          "type": "text",
+          "type": "rollen_art_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "nativeEnumName": "rollen_art_enum",
           "enumItems": [
             "LERN",
             "LEHR",
@@ -1087,7 +2157,148 @@
       ],
       "checks": [],
       "foreignKeys": {},
-      "nativeEnums": {}
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        }
+      }
     },
     {
       "columns": {
@@ -1102,11 +2313,12 @@
         },
         "merkmal": {
           "name": "merkmal",
-          "type": "text",
+          "type": "rollen_merkmal_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "nativeEnumName": "rollen_merkmal_enum",
           "enumItems": [
             "BEFRISTUNG_PFLICHT",
             "KOPERS_PFLICHT"
@@ -1144,7 +2356,148 @@
           "updateRule": "cascade"
         }
       },
-      "nativeEnums": {}
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        }
+      }
     },
     {
       "columns": {
@@ -1159,17 +2512,20 @@
         },
         "systemrecht": {
           "name": "systemrecht",
-          "type": "text",
+          "type": "rollen_system_recht_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "nativeEnumName": "rollen_system_recht_enum",
           "enumItems": [
             "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
-            "SCHULTRAEGER_VERWALTEN"
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
           ],
           "mappedType": "enum"
         }
@@ -1204,7 +2560,148 @@
           "updateRule": "cascade"
         }
       },
-      "nativeEnums": {}
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        }
+      }
     },
     {
       "columns": {
@@ -1350,7 +2847,148 @@
           "updateRule": "cascade"
         }
       },
-      "nativeEnums": {}
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        }
+      }
     },
     {
       "columns": {
@@ -1394,11 +3032,12 @@
         },
         "target": {
           "name": "target",
-          "type": "text",
+          "type": "service_provider_target_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "nativeEnumName": "service_provider_target_enum",
           "enumItems": [
             "URL",
             "SCHULPORTAL_ADMINISTRATION"
@@ -1425,11 +3064,12 @@
         },
         "kategorie": {
           "name": "kategorie",
-          "type": "text",
+          "type": "service_provider_kategorie_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "nativeEnumName": "service_provider_kategorie_enum",
           "enumItems": [
             "EMAIL",
             "UNTERRICHT",
@@ -1474,7 +3114,148 @@
       ],
       "checks": [],
       "foreignKeys": {},
-      "nativeEnums": {}
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        }
+      }
     },
     {
       "columns": {
@@ -1539,8 +3320,290 @@
           "updateRule": "cascade"
         }
       },
-      "nativeEnums": {}
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        }
+      }
     }
   ],
-  "nativeEnums": {}
+  "nativeEnums": {
+    "db_seed_status_enum": {
+      "name": "db_seed_status_enum",
+      "schema": "public",
+      "items": [
+        "STARTED",
+        "DONE",
+        "FAILED"
+      ]
+    },
+    "referenced_entity_type_enum": {
+      "name": "referenced_entity_type_enum",
+      "schema": "public",
+      "items": [
+        "PERSON",
+        "ORGANISATION",
+        "ROLLE",
+        "SERVICE_PROVIDER"
+      ]
+    },
+    "organisations_typ_enum": {
+      "name": "organisations_typ_enum",
+      "schema": "public",
+      "items": [
+        "ROOT",
+        "LAND",
+        "TRAEGER",
+        "SCHULE",
+        "KLASSE",
+        "ANBIETER",
+        "SONSTIGE ORGANISATION / EINRICHTUNG",
+        "UNBESTAETIGT"
+      ]
+    },
+    "traegerschaft_enum": {
+      "name": "traegerschaft_enum",
+      "schema": "public",
+      "items": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06"
+      ]
+    },
+    "geschlecht_enum": {
+      "name": "geschlecht_enum",
+      "schema": "public",
+      "items": [
+        "m",
+        "w",
+        "d",
+        "x"
+      ]
+    },
+    "vertrauensstufe_enum": {
+      "name": "vertrauensstufe_enum",
+      "schema": "public",
+      "items": [
+        "KEIN",
+        "UNBE",
+        "TEIL",
+        "VOLL"
+      ]
+    },
+    "personenstatus_enum": {
+      "name": "personenstatus_enum",
+      "schema": "public",
+      "items": [
+        "AKTIV"
+      ]
+    },
+    "jahrgangsstufe_enum": {
+      "name": "jahrgangsstufe_enum",
+      "schema": "public",
+      "items": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08",
+        "09",
+        "10"
+      ]
+    },
+    "rollen_art_enum": {
+      "name": "rollen_art_enum",
+      "schema": "public",
+      "items": [
+        "LERN",
+        "LEHR",
+        "EXTERN",
+        "ORGADMIN",
+        "LEIT",
+        "SYSADMIN"
+      ]
+    },
+    "rollen_merkmal_enum": {
+      "name": "rollen_merkmal_enum",
+      "schema": "public",
+      "items": [
+        "BEFRISTUNG_PFLICHT",
+        "KOPERS_PFLICHT"
+      ]
+    },
+    "rollen_system_recht_enum": {
+      "name": "rollen_system_recht_enum",
+      "schema": "public",
+      "items": [
+        "ROLLEN_VERWALTEN",
+        "PERSONEN_SOFORT_LOESCHEN",
+        "PERSONEN_VERWALTEN",
+        "SCHULEN_VERWALTEN",
+        "KLASSEN_VERWALTEN",
+        "SCHULTRAEGER_VERWALTEN",
+        "MIGRATION_DURCHFUEHREN"
+      ]
+    },
+    "service_provider_target_enum": {
+      "name": "service_provider_target_enum",
+      "schema": "public",
+      "items": [
+        "URL",
+        "SCHULPORTAL_ADMINISTRATION"
+      ]
+    },
+    "service_provider_kategorie_enum": {
+      "name": "service_provider_kategorie_enum",
+      "schema": "public",
+      "items": [
+        "EMAIL",
+        "UNTERRICHT",
+        "VERWALTUNG",
+        "HINWEISE",
+        "ANGEBOTE"
+      ]
+    }
+  }
 }
