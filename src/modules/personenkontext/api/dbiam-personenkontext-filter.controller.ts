@@ -42,9 +42,12 @@ export class DbiamPersonenkontextFilterController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available rolen for personenkontexte.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to get rollen for personenkontext.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rollen for personenkontexte.' })
-    public async findRollen(@Query() params: FindPersonenkontextRollenBodyParams): Promise<FindRollenResponse> {
+    public async findRollen(
+        @Query() params: FindPersonenkontextRollenBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<FindRollenResponse> {
         const anlage: PersonenkontextAnlage = this.personenkontextAnlageFactory.createNew();
-        const rollen: Rolle<true>[] = await anlage.findRollen(params.rolleName, params.limit);
+        const rollen: Rolle<true>[] = await anlage.findAuthorizedRollen(permissions, params.rolleName, params.limit);
         const response: FindRollenResponse = new FindRollenResponse(rollen, rollen.length);
 
         return response;
