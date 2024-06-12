@@ -44,7 +44,7 @@ spec:
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
+          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev" ]
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
