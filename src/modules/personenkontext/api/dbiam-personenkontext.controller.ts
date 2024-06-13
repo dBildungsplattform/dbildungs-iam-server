@@ -24,8 +24,6 @@ import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.r
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { DBiamCreatePersonenkontextBodyParams } from './param/dbiam-create-personenkontext.body.params.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
-import { EventService } from '../../../core/eventbus/index.js';
-import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
@@ -49,7 +47,6 @@ export class DBiamPersonenkontextController {
         private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
-        private readonly eventService: EventService,
         private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
@@ -123,9 +120,6 @@ export class DBiamPersonenkontextController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult.error),
             );
         }
-        this.eventService.publish(
-            new PersonenkontextCreatedEvent(params.personId, params.organisationId, params.rolleId),
-        );
 
         return new DBiamPersonenkontextResponse(saveResult.value);
     }

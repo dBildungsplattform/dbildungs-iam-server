@@ -30,7 +30,7 @@ export class LdapEventHandler {
 
     @EventHandler(SchuleCreatedEvent)
     public async asyncSchuleCreatedEventHandler(event: SchuleCreatedEvent): Promise<void> {
-        this.logger.info(`Received CreateSchuleEvent, organisationId:${event.organisationId}`);
+        this.logger.info(`Received SchuleCreatedEvent, organisationId:${event.organisationId}`);
 
         const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
             event.organisationId,
@@ -53,7 +53,7 @@ export class LdapEventHandler {
 
     @EventHandler(SchuleDeletedEvent)
     public async asyncSchuleDeletedEventHandler(event: SchuleDeletedEvent): Promise<void> {
-        this.logger.info(`Received DeleteSchuleEvent, organisationId:${event.organisationId}`);
+        this.logger.info(`Received SchuleDeletedEvent, organisationId:${event.organisationId}`);
         const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
             event.organisationId,
         );
