@@ -1,6 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { BatchSpanProcessor, WebTracerProvider } from '@opentelemetry/sdk-trace-web';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
@@ -8,11 +8,12 @@ import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core'
 import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
 import { ClassLogger } from '../../logging/class-logger.js';
 import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
 import { Counter, Meter } from '@opentelemetry/api';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { TelemetryConfig } from '../../../shared/config/telemtry.config.js';
+import {ExpressInstrumentation} from "@opentelemetry/instrumentation-express";
 
 @Injectable()
 export class TelemetryService implements OnModuleInit, OnModuleDestroy {
@@ -118,6 +119,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
                 new PgInstrumentation(),
                 new RedisInstrumentation(),
                 new NestInstrumentation(),
+                new ExpressInstrumentation(),
             ],
         });
     }
