@@ -6,7 +6,6 @@ import { ServiceProviderEntity } from './service-provider.entity.js';
 import { CreateGroupAndRoleEvent } from '../../../shared/events/kc-group-and-role-event.js';
 import { EventService } from '../../../core/eventbus/index.js';
 
-/* eslint-disable no-console */
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
  */
