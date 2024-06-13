@@ -19,11 +19,11 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { Personenkontext } from '../domain/personenkontext.js';
+import { DBiamPersonenkontextResponse } from './response/dbiam-personenkontext.response.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { DBiamCreatePersonenkontextBodyParams } from './param/dbiam-create-personenkontext.body.params.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
-import { DBiamPersonenkontextResponse } from './response/dbiam-personenkontext.response.js';
-import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
-import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
