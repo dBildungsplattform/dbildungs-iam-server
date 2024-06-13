@@ -17,6 +17,7 @@ import { OrganisationRepo } from '../organisation/persistence/organisation.repo.
 import { RolleFactory } from '../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
+import { EventService } from '../../core/eventbus/index.js';
 
 @Module({
     imports: [KeycloakAdministrationModule, LoggerModule.register(PersonModule.name)],
@@ -37,6 +38,7 @@ import { OrganisationRepository } from '../organisation/persistence/organisation
         OrganisationRepository,
         RolleFactory,
         ServiceProviderRepo,
+        EventService,
     ],
     exports: [PersonService, PersonFactory, PersonRepo, PersonRepository],
 })
