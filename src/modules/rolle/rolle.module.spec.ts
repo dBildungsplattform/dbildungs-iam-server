@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
 import { RolleRepo } from './repo/rolle.repo.js';
 import { RolleModule } from './rolle.module.js';
-import { MapperTestModule } from '../../../test/utils/index.js';
 
 describe('RolleModule', () => {
     let module: TestingModule;
@@ -10,7 +9,6 @@ describe('RolleModule', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, MapperTestModule, DatabaseTestModule.forRoot(), RolleModule],
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), RolleModule, MapperTestModule],
         }).compile();
     });
 
