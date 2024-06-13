@@ -2,15 +2,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TelemetryService } from './telemetry.service.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { WebTracerProvider } from '@opentelemetry/sdk-trace-web';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
 describe('TelemetryService', () => {
     let module: TestingModule;
     let service: TelemetryService;
     let logger: DeepMocked<ClassLogger>;
-    let provider: DeepMocked<WebTracerProvider>;
+    let provider: DeepMocked<NodeTracerProvider>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -27,7 +27,7 @@ describe('TelemetryService', () => {
     });
 
     beforeEach(() => {
-        provider = createMock<WebTracerProvider>();
+        provider = createMock<NodeTracerProvider>();
     });
 
     describe('Initialization', () => {
