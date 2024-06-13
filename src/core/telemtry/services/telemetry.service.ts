@@ -1,11 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { BatchSpanProcessor, WebTracerProvider } from '@opentelemetry/sdk-trace-web';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
-import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
-import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
 import { ClassLogger } from '../../logging/class-logger.js';
 import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
@@ -13,11 +8,14 @@ import { Counter, Meter } from '@opentelemetry/api';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { TelemetryConfig } from '../../../shared/config/telemtry.config.js';
-import {ExpressInstrumentation} from "@opentelemetry/instrumentation-express";
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { NodeTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
+import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
+import { Resource } from '@opentelemetry/resources';
 
 @Injectable()
 export class TelemetryService implements OnModuleInit, OnModuleDestroy {
-    private provider: WebTracerProvider;
+    private provider: NodeTracerProvider;
 
     private exporter: OTLPTraceExporter;
 
@@ -35,14 +33,6 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
 
     private export_interval: number;
 
-    private max_queue_size: number;
-
-    private max_export_batch_size: number;
-
-    private scheduled_delay_millis: number;
-
-    private export_timeout_millis: number;
-
     private unregister!: () => void;
 
     public constructor(
@@ -53,10 +43,6 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         this.metrics_url = TelemetryConfigSettings.METRICS_URL;
         this.traces_url = TelemetryConfigSettings.TRACES_URL;
         this.export_interval = TelemetryConfigSettings.EXPORT_INTERVAL;
-        this.max_queue_size = TelemetryConfigSettings.MAX_QUEUE_SIZE;
-        this.max_export_batch_size = TelemetryConfigSettings.MAX_EXPORT_BATCH_SIZE;
-        this.scheduled_delay_millis = TelemetryConfigSettings.SCHEDULED_DELAY_MILLIS;
-        this.export_timeout_millis = TelemetryConfigSettings.EXPORT_TIMEOUT_MILLIS;
         // traces setup
         const collectorOptions: {
             url: string;
@@ -68,16 +54,13 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
             concurrencyLimit: 10,
         };
 
-        this.provider = new WebTracerProvider();
-        this.exporter = new OTLPTraceExporter(collectorOptions);
-        this.provider.addSpanProcessor(
-            new BatchSpanProcessor(this.exporter, {
-                maxQueueSize: this.max_queue_size,
-                maxExportBatchSize: this.max_export_batch_size,
-                scheduledDelayMillis: this.scheduled_delay_millis,
-                exportTimeoutMillis: this.export_timeout_millis,
+        this.provider = new NodeTracerProvider({
+            resource: new Resource({
+                [SEMRESATTRS_SERVICE_NAME]: 'SPSH',
             }),
-        );
+        });
+        this.exporter = new OTLPTraceExporter(collectorOptions);
+        this.provider.addSpanProcessor(new SimpleSpanProcessor(this.exporter));
 
         this.provider.register();
 
@@ -114,13 +97,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         this.unregister = registerInstrumentations({
             tracerProvider: this.provider,
             meterProvider: this.meterProvider,
-            instrumentations: [
-                new HttpInstrumentation(),
-                new PgInstrumentation(),
-                new RedisInstrumentation(),
-                new NestInstrumentation(),
-                new ExpressInstrumentation(),
-            ],
+            instrumentations: getNodeAutoInstrumentations(),
         });
     }
 
@@ -132,7 +109,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         await this.flushTelemetry();
     }
 
-    public async shutdownTelemetry(provider: WebTracerProvider = this.provider): Promise<void> {
+    public async shutdownTelemetry(provider: NodeTracerProvider = this.provider): Promise<void> {
         try {
             await provider.shutdown();
 
@@ -142,7 +119,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
         }
     }
 
-    public async flushTelemetry(provider: WebTracerProvider = this.provider): Promise<void> {
+    public async flushTelemetry(provider: NodeTracerProvider = this.provider): Promise<void> {
         try {
             await provider.forceFlush();
 
