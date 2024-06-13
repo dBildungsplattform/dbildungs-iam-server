@@ -9,6 +9,7 @@ import { LoggingConfig } from './logging.config.js';
 import { RedisConfig } from './redis.config.js';
 import { LdapConfig } from './ldap.config.js';
 import { TelemetryConfig } from './telemtry.config.js';
+import { ItsLearningConfig } from './itslearning.config.js';
 
 export class JsonConfig {
     @ValidateNested()
@@ -46,4 +47,8 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => TelemetryConfig)
     public readonly TELEMETRY!: TelemetryConfig;
+
+    @ValidateNested()
+    @Type(() => ItsLearningConfig)
+    public readonly ITSLEARNING!: ItsLearningConfig;
 }

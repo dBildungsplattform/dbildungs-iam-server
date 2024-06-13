@@ -12,6 +12,7 @@ import { EntityAlreadyExistsError } from './entity-already-exists.error.js';
 import { InvalidCharacterSetError } from './invalid-character-set.error.js';
 import { InvalidAttributeLengthError } from './invalid-attribute-length.error.js';
 import { InvalidNameError } from './invalid-name.error.js';
+import { MissingPermissionsError } from './missing-permissions.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -113,6 +114,15 @@ export class SchulConnexErrorMapper {
                 subcode: '00',
                 titel: 'Fehlerhafte Anfrage',
                 beschreibung: 'Die Anfrage ist fehlerhaft: Es konnte kein Benutzername generiert werden',
+            }),
+        ],
+        [
+            MissingPermissionsError.name,
+            new SchulConnexError({
+                code: 404,
+                subcode: '01',
+                titel: 'Angefragte Entität existiert nicht',
+                beschreibung: 'Die angeforderte Entität existiert nicht',
             }),
         ],
     ]);

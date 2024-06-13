@@ -838,9 +838,13 @@
         "backchannel.logout.session.required": "true",
         "oauth2.device.authorization.grant.enabled": "false",
         "display.on.consent.screen": "false",
-        "backchannel.logout.revoke.offline.tokens": "false"
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "acr.loa.map": "{\"silver\":\"10\",\"gold\":\"20\"}",
+        "default.acr.values": "0"
       },
-      "authenticationFlowBindingOverrides": {},
+      "authenticationFlowBindingOverrides": {
+        "browser": "2e19a392-6bf3-4ea4-a599-ac39bcdfd827"
+      },
       "fullScopeAllowed": true,
       "nodeReRegistrationTimeout": -1,
       "protocolMappers": [
@@ -1713,6 +1717,86 @@
   "defaultLocale": "de",
   "authenticationFlows": [
     {
+      "id": "a56233ee-9c33-411a-896a-c7203a08bbff",
+      "alias": "1st Level ",
+      "description": "Silver",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+          {
+              "authenticatorConfig": "silver",
+              "authenticator": "conditional-level-of-authentication",
+              "authenticatorFlow": false,
+              "requirement": "REQUIRED",
+              "priority": 0,
+              "autheticatorFlow": false,
+              "userSetupAllowed": false
+          },
+          {
+              "authenticator": "auth-username-password-form",
+              "authenticatorFlow": false,
+              "requirement": "REQUIRED",
+              "priority": 1,
+              "autheticatorFlow": false,
+              "userSetupAllowed": false
+          }
+      ]
+    },
+    {
+          "id": "674b11bd-7493-46bd-bfcf-6881ee3d20a5",
+          "alias": "2nd Level",
+          "description": " Gold",
+          "providerId": "basic-flow",
+          "topLevel": false,
+          "builtIn": false,
+          "authenticationExecutions": [
+              {
+                  "authenticatorConfig": "gold",
+                  "authenticator": "conditional-level-of-authentication",
+                  "authenticatorFlow": false,
+                  "requirement": "REQUIRED",
+                  "priority": 0,
+                  "autheticatorFlow": false,
+                  "userSetupAllowed": false
+              },
+              {
+                  "authenticator": "auth-otp-form",
+                  "authenticatorFlow": false,
+                  "requirement": "REQUIRED",
+                  "priority": 1,
+                  "autheticatorFlow": false,
+                  "userSetupAllowed": false
+              }
+          ]
+      },
+      {
+          "id": "8c360c8b-bd10-49f0-80bd-b86ce6c4ed13",
+          "alias": "Stepup flow",
+          "description": "",
+          "providerId": "basic-flow",
+          "topLevel": false,
+          "builtIn": false,
+          "authenticationExecutions": [
+              {
+                  "authenticatorFlow": true,
+                  "requirement": "CONDITIONAL",
+                  "priority": 0,
+                  "autheticatorFlow": true,
+                  "flowAlias": "1st Level ",
+                  "userSetupAllowed": false
+              },
+              {
+                  "authenticatorFlow": true,
+                  "requirement": "CONDITIONAL",
+                  "priority": 1,
+                  "autheticatorFlow": true,
+                  "flowAlias": "2nd Level",
+                  "userSetupAllowed": false
+              }
+          ]
+      },
+        {
       "id": "15b32655-f28f-4f4c-a7f4-a777de972d99",
       "alias": "Account verification options",
       "description": "Method with which to verity the existing account",
@@ -1919,6 +2003,24 @@
           "flowAlias": "First broker login - Conditional OTP",
           "userSetupAllowed": false
         }
+      ]
+    },
+    {
+      "id": "2e19a392-6bf3-4ea4-a599-ac39bcdfd827",
+      "alias": "stepup",
+      "description": "",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+          {
+              "authenticatorFlow": true,
+              "requirement": "ALTERNATIVE",
+              "priority": 0,
+              "autheticatorFlow": true,
+              "flowAlias": "Stepup flow",
+              "userSetupAllowed": false
+          }
       ]
     },
     {
@@ -2245,6 +2347,22 @@
       "alias": "review profile config",
       "config": {
         "update.profile.on.first.login": "missing"
+      }
+    },
+    {
+      "id": "890cbe63-f29c-4c3b-a3b3-ee2d023abdbd",
+      "alias": "gold",
+      "config": {
+          "loa-condition-level": "20",
+          "loa-max-age": "10000"
+      }
+    },
+    {
+      "id": "aa2f6005-728b-4c0c-976c-04372e08c1fd",
+      "alias": "silver",
+      "config": {
+          "loa-condition-level": "10",
+          "loa-max-age": "36000"
       }
     }
   ],
