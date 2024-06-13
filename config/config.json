@@ -53,5 +53,11 @@
         "KEYCLOAK_ADMINISTRATION_MODULE_LOG_LEVEL": "debug",
         "HEALTH_MODULE_LOG_LEVEL": "debug",
         "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
+    },
+    "ITSLEARNING": {
+        "ENABLED": false,
+        "ENDPOINT": "https://itslearning-test.example.com",
+        "USERNAME": "username",
+        "PASSWORD": "password"
     }
 }
