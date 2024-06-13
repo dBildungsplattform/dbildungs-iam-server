@@ -175,6 +175,8 @@ export class DbSeedService {
                 referencedOrga.id,
                 file.logoBase64 ? Buffer.from(file.logoBase64, 'base64') : undefined,
                 file.logoMimeType,
+                file.gruppe,
+                file.rolle,
             );
 
             const persistedServiceProvider: ServiceProvider<true> =

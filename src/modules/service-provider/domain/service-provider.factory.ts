@@ -15,6 +15,8 @@ export class ServiceProviderFactory {
         providedOnSchulstrukturknoten: string,
         logo: Buffer | undefined,
         logoMimeType: string | undefined,
+        gruppe: string | undefined,
+        rolle: string | undefined,
     ): ServiceProvider<true> {
         return ServiceProvider.construct(
             id,
@@ -27,6 +29,8 @@ export class ServiceProviderFactory {
             providedOnSchulstrukturknoten,
             logo,
             logoMimeType,
+            gruppe,
+            rolle,
         );
     }
 
@@ -38,6 +42,8 @@ export class ServiceProviderFactory {
         providedOnSchulstrukturknoten: string,
         logo: Buffer | undefined,
         logoMimeType: string | undefined,
+        gruppe: string | undefined,
+        rolle: string | undefined,
     ): ServiceProvider<false> {
         return ServiceProvider.createNew(
             name,
@@ -47,6 +53,8 @@ export class ServiceProviderFactory {
             providedOnSchulstrukturknoten,
             logo,
             logoMimeType,
+            gruppe,
+            rolle,
         );
     }
 }

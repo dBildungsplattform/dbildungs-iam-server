@@ -186,7 +186,7 @@ export class KeycloakUserService {
         return { ok: true, value: this.mapper.map(userReprDto, UserRepresentationDto, UserDo) };
     }
 
-    public async createGroup(groupName: string): Promise<Result<string, DomainError>> {
+    public async createGroup(group: string): Promise<Result<string, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
 
@@ -194,23 +194,23 @@ export class KeycloakUserService {
             return kcAdminClientResult;
         }
 
-        const groupNameWithSuffix: string = groupName + '-Service';
+        const groupName: string = group;
         const [existingGroup]: GroupRepresentation[] = await kcAdminClientResult.value.groups.find({
-            search: groupNameWithSuffix,
+            search: groupName,
         });
 
         if (existingGroup) {
-            this.logger.info(`Group already exists: ${groupNameWithSuffix}`);
+            this.logger.info(`Group already exists: ${groupName}`);
             return { ok: false, error: new KeycloakClientError('Group name already exists') };
         }
 
         try {
             const groupRepresentation: GroupRepresentation = {
-                name: groupNameWithSuffix,
+                name: groupName,
             };
 
             const response: { id: string } = await kcAdminClientResult.value.groups.create(groupRepresentation);
-            this.logger.info(`keycloack group created:  ${groupNameWithSuffix}`);
+            this.logger.info(`keycloack group created:  ${groupName}`);
             return { ok: true, value: response.id };
         } catch (err) {
             this.logger.error(`Could not create group, message: ${JSON.stringify(err)} `);
@@ -218,7 +218,7 @@ export class KeycloakUserService {
         }
     }
 
-    public async createRole(roleName: string): Promise<Result<string, DomainError>> {
+    public async createRole(role: string): Promise<Result<string, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
 
@@ -227,22 +227,22 @@ export class KeycloakUserService {
         }
 
         try {
-            const roleNameWithSuffix: string = roleName + '-User';
+            const roleName: string = role;
             const existingRole: RoleRepresentation | undefined = await kcAdminClientResult.value.roles.findOneByName({
-                name: roleNameWithSuffix,
+                name: roleName,
             });
 
             if (existingRole) {
-                this.logger.info(`Role already exists: ${roleNameWithSuffix}`);
+                this.logger.info(`Role already exists: ${roleName}`);
                 return { ok: false, error: new KeycloakClientError('Role name already exists') };
             }
 
             const roleRepresentation: RoleRepresentation = {
-                name: roleNameWithSuffix,
+                name: roleName,
             };
 
             const response: { roleName: string } = await kcAdminClientResult.value.roles.create(roleRepresentation);
-            this.logger.info(`Keycloak role created: ${roleNameWithSuffix}`);
+            this.logger.info(`Keycloak role created: ${roleName}`);
             return { ok: true, value: response.roleName };
         } catch (err) {
             this.logger.error(`Could not create role, message: ${JSON.stringify(err)} `);
@@ -250,7 +250,7 @@ export class KeycloakUserService {
         }
     }
 
-    public async addRoleToGroup(groupId: string, roleName: string): Promise<Result<boolean, DomainError>> {
+    public async addRoleToGroup(groupId: string, createdRole: string): Promise<Result<boolean, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
 
@@ -259,13 +259,13 @@ export class KeycloakUserService {
         }
 
         try {
-            const roleNameWithSuffix: string = roleName;
+            const roleName: string = createdRole;
             const role: RoleRepresentation | undefined = await kcAdminClientResult.value.roles.findOneByName({
-                name: roleNameWithSuffix,
+                name: roleName,
             });
 
             if (!role || !role.id || !role.name) {
-                this.logger.error(`Role not found or id/name is undefined for: ${roleNameWithSuffix}`);
+                this.logger.error(`Role not found or id/name is undefined for: ${roleName}`);
                 return { ok: false, error: new KeycloakClientError('Role not found or id/name is undefined') };
             }
 
@@ -279,7 +279,7 @@ export class KeycloakUserService {
                 ],
             });
 
-            this.logger.info(`Role ${roleNameWithSuffix} added to group with ID: ${groupId}`);
+            this.logger.info(`Role ${roleName} added to group with ID: ${groupId}`);
             return { ok: true, value: true };
         } catch (err) {
             this.logger.error(`Could not add role to group, message: ${JSON.stringify(err)}`);

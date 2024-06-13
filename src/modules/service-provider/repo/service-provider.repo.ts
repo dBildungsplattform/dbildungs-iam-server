@@ -23,6 +23,8 @@ export function mapAggregateToData(
         providedOnSchulstrukturknoten: serviceProvider.providedOnSchulstrukturknoten,
         logo: serviceProvider.logo,
         logoMimeType: serviceProvider.logoMimeType,
+        gruppe: serviceProvider.gruppe,
+        rolle: serviceProvider.rolle,
     };
 }
 
@@ -38,6 +40,8 @@ function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<bo
         entity.providedOnSchulstrukturknoten,
         entity.logo,
         entity.logoMimeType,
+        entity.gruppe,
+        entity.rolle,
     );
 }
 
@@ -90,7 +94,11 @@ export class ServiceProviderRepo {
 
         await this.em.persistAndFlush(serviceProviderEntity);
 
-        this.eventService.publish(new CreateGroupAndRoleEvent(serviceProviderEntity.name, serviceProviderEntity.name));
+        if (serviceProviderEntity.gruppe && serviceProviderEntity.rolle) {
+            this.eventService.publish(
+                new CreateGroupAndRoleEvent(serviceProviderEntity.gruppe, serviceProviderEntity.rolle),
+            );
+        }
 
         return mapEntityToAggregate(serviceProviderEntity);
     }

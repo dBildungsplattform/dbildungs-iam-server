@@ -25,4 +25,10 @@ export class ServiceProviderEntity extends TimestampedEntity {
 
     @Property({ nullable: true })
     public logoMimeType?: string;
+
+    @Property({ nullable: true })
+    public gruppe?: string;
+
+    @Property({ nullable: true })
+    public rolle?: string;
 }
