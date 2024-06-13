@@ -1,7 +1,6 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -11,6 +10,7 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
+import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 
 export type PersonenkontextPartial = Pick<
     Personenkontext<boolean>,
@@ -115,9 +115,7 @@ export class Personenkontext<WasPersisted extends boolean> {
         //The aimed organisation needs to match the type of role to be assigned
         const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
         if (!organisationMatchesRollenart.isSatisfiedBy(orga, rolle)) {
-            return new PersonenkontextAnlageError(
-                'PersonenkontextAnlage invalid: role type does not match organisation type',
-            );
+            return new OrganisationMatchesRollenartError({});
         }
 
         return undefined;

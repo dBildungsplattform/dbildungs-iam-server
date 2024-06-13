@@ -417,6 +417,31 @@ describe('dbiam Personenkontext API', () => {
                 });
             });
         });
+
+        describe('when OrganisationMatchesRollenart is not satisfied', () => {
+            it('should return error and map to 400', async () => {
+                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                const organisation: OrganisationDo<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+                );
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisation.id,
+                        rollenart: RollenArt.SYSADMIN,
+                    }),
+                );
+
+                const personpermissions: DeepMocked<PersonPermissions> = createMock();
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+                personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .post('/dbiam/personenkontext')
+                    .send({ personId: person.id, organisationId: organisation.id, rolleId: rolle.id });
+
+                expect(response.status).toBe(400);
+            });
+        });
     });
 
     describe('/PUT update multiple personenkontexte', () => {

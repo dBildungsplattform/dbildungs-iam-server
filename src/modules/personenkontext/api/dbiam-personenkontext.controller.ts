@@ -33,6 +33,7 @@ import { DbiamPersonenkontextFactory } from '../domain/dbiam-personenkontext.fac
 import { PersonenkontexteUpdate } from '../domain/personenkontexte-update.js';
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
 import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-update.error.js';
+import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -114,6 +115,10 @@ export class DBiamPersonenkontextController {
         );
 
         if (!saveResult.ok) {
+            if (saveResult.error instanceof OrganisationMatchesRollenartError) {
+                throw saveResult.error;
+            }
+
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult.error),
             );
