@@ -3,12 +3,13 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class FindPersonenkontextRollenBodyParams {
     @IsString()
+    @IsOptional()
     @ApiProperty({
         description: 'Rolle name used to filter for rollen in personenkontext.',
-        required: true,
+        required: false,
         nullable: false,
     })
-    public readonly rolleName!: string;
+    public readonly rolleName?: string;
 
     @IsNotEmpty()
     @IsNumber()
