@@ -17,6 +17,7 @@ import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { PersonDo } from '../../person/domain/person.do.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
+import { faker } from '@faker-js/faker';
 
 describe('PersonenkontextScope', () => {
     let module: TestingModule;
@@ -68,6 +69,42 @@ describe('PersonenkontextScope', () => {
             it('should return found personenkontexte', async () => {
                 const scope: PersonenkontextScope = new PersonenkontextScope()
                     .findBy({ referrer: 'referrer' })
+                    .sortBy('id', ScopeOrder.ASC)
+                    .paged(10, 10);
+                const [personenkontext, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(em);
+
+                expect(total).toBe(30);
+                expect(personenkontext).toHaveLength(10);
+            });
+        });
+    });
+
+    describe('byOrganisations', () => {
+        describe('when filtering for personenkontexte', () => {
+            const orgaId: string = faker.string.uuid();
+
+            beforeEach(async () => {
+                const person: PersonDo<true> = DoFactory.createPerson(true);
+                await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
+
+                const dos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
+                    30,
+                    false,
+                    DoFactory.createPersonenkontext,
+                    { personId: person.id, organisationId: orgaId },
+                );
+
+                await em.persistAndFlush(
+                    // Don't use mapArray, because beforeMap does not get called
+                    dos.map((pkDo: PersonenkontextDo<false>) =>
+                        mapper.map(pkDo, PersonenkontextDo, PersonenkontextEntity),
+                    ),
+                );
+            });
+
+            it('should return found personenkontexte', async () => {
+                const scope: PersonenkontextScope = new PersonenkontextScope()
+                    .byOrganisations([orgaId])
                     .sortBy('id', ScopeOrder.ASC)
                     .paged(10, 10);
                 const [personenkontext, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(em);

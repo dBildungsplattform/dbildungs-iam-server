@@ -8,7 +8,7 @@ export class ServiceProviderEntity extends TimestampedEntity {
     @Property()
     public name!: string;
 
-    @Enum(() => ServiceProviderTarget)
+    @Enum({ items: () => ServiceProviderTarget, nativeEnumName: 'service_provider_target_enum' })
     public target!: ServiceProviderTarget;
 
     @Property({ nullable: true })
@@ -17,7 +17,7 @@ export class ServiceProviderEntity extends TimestampedEntity {
     @Property({ columnType: 'uuid' })
     public providedOnSchulstrukturknoten!: string;
 
-    @Enum(() => ServiceProviderKategorie)
+    @Enum({ items: () => ServiceProviderKategorie, nativeEnumName: 'service_provider_kategorie_enum' })
     public kategorie!: ServiceProviderKategorie;
 
     @Property({ type: BlobType, nullable: true })

@@ -169,170 +169,310 @@ describe('PersonRepository', () => {
     });
 
     describe('create', () => {
-        describe('when person has already keycloak user', () => {
-            it('should return Domain Error', async () => {
-                usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
-                const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-                    familienname: faker.person.lastName(),
-                    vorname: faker.person.firstName(),
-                });
-                expect(person).not.toBeInstanceOf(DomainError);
-                if (person instanceof DomainError) {
-                    return;
-                }
-                person.keycloakUserId = faker.string.uuid();
-                kcUserServiceMock.create.mockResolvedValueOnce({
-                    ok: true,
-                    value: '',
-                });
-                kcUserServiceMock.setPassword.mockResolvedValueOnce({
-                    ok: true,
-                    value: '',
-                });
-                kcUserServiceMock.delete.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                });
-                const result: Person<true> | DomainError = await sut.create(person);
-
-                expect(result).toBeInstanceOf(DomainError);
-                expect(kcUserServiceMock.create).not.toHaveBeenCalled();
-            });
-        });
-
-        describe('when parameters (username || password) is missing', () => {
-            it('should return Domain Error', async () => {
-                usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
-                const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-                    familienname: faker.person.lastName(),
-                    vorname: faker.person.firstName(),
-                });
-                expect(person).not.toBeInstanceOf(DomainError);
-                if (person instanceof DomainError) {
-                    return;
-                }
-                person.username = undefined;
-                kcUserServiceMock.create.mockResolvedValueOnce({
-                    ok: true,
-                    value: '',
-                });
-                kcUserServiceMock.setPassword.mockResolvedValueOnce({
-                    ok: true,
-                    value: '',
-                });
-                kcUserServiceMock.delete.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                });
-                const result: Person<true> | DomainError = await sut.create(person);
-
-                expect(result).toBeInstanceOf(DomainError);
-                expect(kcUserServiceMock.create).not.toHaveBeenCalled();
-            });
-        });
-
-        describe('when successful', () => {
-            it('should return Person', async () => {
-                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
-                const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-                    familienname: faker.person.lastName(),
-                    vorname: faker.person.firstName(),
-                });
-                const personWithKeycloak: Person<false> | DomainError = await Person.createNew(
-                    usernameGeneratorService,
-                    {
+        describe('When Normal Call Without Hashed Password', () => {
+            describe('when person has already keycloak user', () => {
+                it('should return Domain Error', async () => {
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                        ok: true,
+                        value: 'testusername',
+                    });
+                    const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
                         familienname: faker.person.lastName(),
                         vorname: faker.person.firstName(),
-                    },
-                );
-                expect(person).not.toBeInstanceOf(DomainError);
-                expect(personWithKeycloak).not.toBeInstanceOf(DomainError);
-                if (person instanceof DomainError || personWithKeycloak instanceof DomainError) {
-                    return;
-                }
+                    });
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError) {
+                        return;
+                    }
+                    person.keycloakUserId = faker.string.uuid();
+                    kcUserServiceMock.create.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.delete.mockResolvedValueOnce({
+                        ok: true,
+                        value: undefined,
+                    });
+                    const result: Person<true> | DomainError = await sut.create(person);
 
-                personWithKeycloak.keycloakUserId = faker.string.uuid();
-                kcUserServiceMock.create.mockResolvedValueOnce({
-                    ok: true,
-                    value: '',
+                    expect(result).toBeInstanceOf(DomainError);
+                    expect(kcUserServiceMock.create).not.toHaveBeenCalled();
                 });
-                kcUserServiceMock.setPassword.mockResolvedValueOnce({
-                    ok: true,
-                    value: '',
-                });
-                kcUserServiceMock.delete.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                });
-                const result: Person<true> | DomainError = await sut.create(person);
+            });
 
-                expect(result).toBeInstanceOf(Person);
+            describe('when parameters (username || password) is missing', () => {
+                it('should return Domain Error', async () => {
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                        ok: true,
+                        value: 'testusername',
+                    });
+                    const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    });
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError) {
+                        return;
+                    }
+                    person.username = undefined;
+                    kcUserServiceMock.create.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.delete.mockResolvedValueOnce({
+                        ok: true,
+                        value: undefined,
+                    });
+                    const result: Person<true> | DomainError = await sut.create(person);
+
+                    expect(result).toBeInstanceOf(DomainError);
+                    expect(kcUserServiceMock.create).not.toHaveBeenCalled();
+                });
+            });
+
+            describe('when successful', () => {
+                it('should return Person', async () => {
+                    usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
+                    const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    });
+                    const personWithKeycloak: Person<false> | DomainError = await Person.createNew(
+                        usernameGeneratorService,
+                        {
+                            familienname: faker.person.lastName(),
+                            vorname: faker.person.firstName(),
+                        },
+                    );
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    expect(personWithKeycloak).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError || personWithKeycloak instanceof DomainError) {
+                        return;
+                    }
+
+                    personWithKeycloak.keycloakUserId = faker.string.uuid();
+                    kcUserServiceMock.create.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.delete.mockResolvedValueOnce({
+                        ok: true,
+                        value: undefined,
+                    });
+                    const result: Person<true> | DomainError = await sut.create(person);
+
+                    expect(result).toBeInstanceOf(Person);
+                });
+            });
+
+            describe('when creation of keyCloakUser fails', () => {
+                it('should return Domain Error', async () => {
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                        ok: true,
+                        value: 'testusername',
+                    });
+                    const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    });
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError) {
+                        return;
+                    }
+                    kcUserServiceMock.create.mockResolvedValueOnce({
+                        ok: false,
+                        error: new KeycloakClientError(''),
+                    });
+                    kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.delete.mockResolvedValueOnce({
+                        ok: true,
+                        value: undefined,
+                    });
+                    const result: Person<true> | DomainError = await sut.create(person);
+
+                    expect(result).toBeInstanceOf(DomainError);
+                    if (result instanceof DomainError) {
+                        expect(kcUserServiceMock.setPassword).not.toHaveBeenCalled();
+                        expect(kcUserServiceMock.delete).not.toHaveBeenCalled();
+                    }
+                });
+            });
+
+            describe('when resetting password of keycloak user fails', () => {
+                it('should return Domain Error && delete keycloak user', async () => {
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                        ok: true,
+                        value: 'testusername',
+                    });
+                    const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    });
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError) {
+                        return;
+                    }
+                    kcUserServiceMock.create.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                        ok: false,
+                        error: new KeycloakClientError(''),
+                    });
+                    kcUserServiceMock.delete.mockResolvedValueOnce({
+                        ok: true,
+                        value: undefined,
+                    });
+                    const result: Person<true> | DomainError = await sut.create(person);
+
+                    expect(result).toBeInstanceOf(DomainError);
+                    if (result instanceof DomainError) {
+                        expect(kcUserServiceMock.setPassword).toHaveBeenCalled();
+                        expect(kcUserServiceMock.delete).toHaveBeenCalled();
+                    }
+                });
             });
         });
+        describe('When Migration Call With Hashed Password', () => {
+            describe('when successful', () => {
+                it('should return Person', async () => {
+                    usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
+                    const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    });
+                    const personWithKeycloak: Person<false> | DomainError = await Person.createNew(
+                        usernameGeneratorService,
+                        {
+                            familienname: faker.person.lastName(),
+                            vorname: faker.person.firstName(),
+                        },
+                    );
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    expect(personWithKeycloak).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError || personWithKeycloak instanceof DomainError) {
+                        return;
+                    }
 
-        describe('when creation of keyCloakUser fails', () => {
-            it('should return Domain Error', async () => {
-                usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
-                const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-                    familienname: faker.person.lastName(),
-                    vorname: faker.person.firstName(),
-                });
-                expect(person).not.toBeInstanceOf(DomainError);
-                if (person instanceof DomainError) {
-                    return;
-                }
-                kcUserServiceMock.create.mockResolvedValueOnce({
-                    ok: false,
-                    error: new KeycloakClientError(''),
-                });
-                kcUserServiceMock.setPassword.mockResolvedValueOnce({
-                    ok: true,
-                    value: '',
-                });
-                kcUserServiceMock.delete.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                });
-                const result: Person<true> | DomainError = await sut.create(person);
+                    personWithKeycloak.keycloakUserId = faker.string.uuid();
+                    kcUserServiceMock.createWithHashedPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.delete.mockResolvedValueOnce({
+                        ok: true,
+                        value: undefined,
+                    });
+                    const result: Person<true> | DomainError = await sut.create(
+                        person,
+                        '{BCRYPT}xxxxxhqG5T3$z8v0Ou8Lmmr2mhW.lNP0DQGO9M',
+                    );
 
-                expect(result).toBeInstanceOf(DomainError);
-                if (result instanceof DomainError) {
-                    expect(kcUserServiceMock.setPassword).not.toHaveBeenCalled();
-                    expect(kcUserServiceMock.delete).not.toHaveBeenCalled();
-                }
+                    expect(result).toBeInstanceOf(Person);
+                });
             });
-        });
+            describe('when username & keycloakUserId is missing', () => {
+                it('should return Error', async () => {
+                    usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
+                    const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    });
+                    const personWithKeycloak: Person<false> | DomainError = await Person.createNew(
+                        usernameGeneratorService,
+                        {
+                            familienname: faker.person.lastName(),
+                            vorname: faker.person.firstName(),
+                        },
+                    );
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    expect(personWithKeycloak).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError || personWithKeycloak instanceof DomainError) {
+                        return;
+                    }
 
-        describe('when resetting password of keycloak user fails', () => {
-            it('should return Domain Error && delete keycloak user', async () => {
-                usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
-                const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-                    familienname: faker.person.lastName(),
-                    vorname: faker.person.firstName(),
-                });
-                expect(person).not.toBeInstanceOf(DomainError);
-                if (person instanceof DomainError) {
-                    return;
-                }
-                kcUserServiceMock.create.mockResolvedValueOnce({
-                    ok: true,
-                    value: '',
-                });
-                kcUserServiceMock.setPassword.mockResolvedValueOnce({
-                    ok: false,
-                    error: new KeycloakClientError(''),
-                });
-                kcUserServiceMock.delete.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                });
-                const result: Person<true> | DomainError = await sut.create(person);
+                    person.keycloakUserId = undefined;
+                    person.username = undefined;
+                    kcUserServiceMock.createWithHashedPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.delete.mockResolvedValueOnce({
+                        ok: true,
+                        value: undefined,
+                    });
+                    const result: Person<true> | DomainError = await sut.create(
+                        person,
+                        '{BCRYPT}xxxxxhqG5T3$z8v0Ou8Lmmr2mhW.lNP0DQGO9M',
+                    );
 
-                expect(result).toBeInstanceOf(DomainError);
-                if (result instanceof DomainError) {
-                    expect(kcUserServiceMock.setPassword).toHaveBeenCalled();
-                    expect(kcUserServiceMock.delete).toHaveBeenCalled();
-                }
+                    expect(result).toBeInstanceOf(DomainError);
+                });
+            });
+            describe('when createWithHashedPassword Keycloak Userservice fails', () => {
+                it('should return Error', async () => {
+                    usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
+                    const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    });
+                    const personWithKeycloak: Person<false> | DomainError = await Person.createNew(
+                        usernameGeneratorService,
+                        {
+                            familienname: faker.person.lastName(),
+                            vorname: faker.person.firstName(),
+                        },
+                    );
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    expect(personWithKeycloak).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError || personWithKeycloak instanceof DomainError) {
+                        return;
+                    }
+
+                    personWithKeycloak.keycloakUserId = faker.string.uuid();
+                    kcUserServiceMock.createWithHashedPassword.mockResolvedValueOnce({
+                        ok: false,
+                        error: new KeycloakClientError(''),
+                    });
+                    kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.delete.mockResolvedValueOnce({
+                        ok: true,
+                        value: undefined,
+                    });
+                    const result: Person<true> | DomainError = await sut.create(
+                        person,
+                        '{BCRYPT}xxxxxhqG5T3$z8v0Ou8Lmmr2mhW.lNP0DQGO9M',
+                    );
+
+                    expect(result).toBeInstanceOf(DomainError);
+                });
             });
         });
     });

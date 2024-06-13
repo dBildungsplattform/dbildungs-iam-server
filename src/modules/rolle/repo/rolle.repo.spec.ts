@@ -17,6 +17,7 @@ import { EventService } from '../../../core/eventbus/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { ModuleLogger } from '../../../core/logging/module-logger.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
@@ -34,6 +35,7 @@ describe('RolleRepo', () => {
                 RolleRepo,
                 RolleFactory,
                 ServiceProviderRepo,
+                OrganisationRepository,
                 EventService,
                 ClassLogger,
                 { provide: ModuleLogger, useValue: moduleLogger },
