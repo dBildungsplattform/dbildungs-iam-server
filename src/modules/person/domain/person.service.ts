@@ -13,10 +13,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationMatchesRollenart } from '../../personenkontext/specification/organisation-matches-rollenart.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { NurLehrUndLernAnKlasseError } from '../../personenkontext/specification/error/nur-lehr-und-lern-an-klasse.error.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -95,10 +92,6 @@ export class PersonService {
         if (permissionsError) {
             return permissionsError;
         }
-        //CheckSpecifications (NurLehrUndLernAnKlasse)
-        if (!(await this.checkSpecifications(organisationId, rolleId))) {
-            return new NurLehrUndLernAnKlasseError();
-        }
         //Save Person
         const savedPerson: DomainError | Person<true> = await this.personRepository.create(person);
         if (savedPerson instanceof DomainError) {
@@ -162,17 +155,5 @@ export class PersonService {
         }
 
         return undefined;
-    }
-
-    private async checkSpecifications(organisationId: string, rolleId: string): Promise<boolean> {
-        // Für die GleicheRolleAnKlasseWieSchule ist die Prüfung nicht notwendig weil der User (Person) an der Schule gehängt sein muss, bevor Person in eine Klasse hinzugefügt wird?
-        //NurLehrUndLernAnKlasse
-        const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(organisationId);
-        if (!organisation) return false;
-        if (organisation.typ !== OrganisationsTyp.KLASSE) return true;
-
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(rolleId);
-        if (!rolle) return false;
-        return rolle.rollenart === RollenArt.LEHR || rolle.rollenart === RollenArt.LERN;
     }
 }

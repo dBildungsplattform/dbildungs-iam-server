@@ -6,6 +6,7 @@ import {
     DomainError,
     EntityNotFoundError,
     InvalidAttributeLengthError,
+    KeycloakClientError,
     MissingPermissionsError,
 } from '../../../shared/error/index.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
@@ -35,6 +36,7 @@ describe('sut', () => {
     let mapperMock: DeepMocked<Mapper>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
+    let personRepositoryMock: DeepMocked<PersonRepository>;
     let personpermissionsMock: DeepMocked<PersonPermissions>;
     let personFactoryMock: DeepMocked<PersonFactory>;
 
@@ -85,6 +87,7 @@ describe('sut', () => {
         mapperMock = module.get(getMapperToken());
         rolleRepoMock = module.get(RolleRepo);
         organisationRepositoryMock = module.get(OrganisationRepository);
+        personRepositoryMock = module.get(PersonRepository);
         personpermissionsMock = module.get(PersonPermissions);
         personFactoryMock = module.get(PersonFactory);
     });
@@ -257,6 +260,29 @@ describe('sut', () => {
                 faker.string.uuid(),
             );
             expect(result).toBeInstanceOf(MissingPermissionsError);
+        });
+
+        it('should return DomainError if Person can be saved in the DB', async () => {
+            personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
+            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>({ rollenart: RollenArt.SYSADMIN });
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
+            organisationRepositoryMock.findById.mockResolvedValueOnce(
+                createMock<Organisation<true>>({ typ: OrganisationsTyp.LAND }),
+            );
+            personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            personRepositoryMock.create.mockResolvedValueOnce(
+                new KeycloakClientError('Username or email already exists'),
+            );
+
+            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontext(
+                personpermissionsMock,
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+            );
+            expect(result).toBeInstanceOf(DomainError);
         });
     });
 });
