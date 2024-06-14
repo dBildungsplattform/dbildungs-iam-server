@@ -1,72 +1,68 @@
 {
-    "HOST": {
-        "PORT": 9090
-    },
-    "FRONTEND": {
-        "PORT": 9091,
-        "TRUST_PROXY": false,
-        "SECURE_COOKIE": false,
-        "SESSION_SECRET": "SessionSecretForDevelopment",
-        "SESSION_TTL_MS": 3600000,
-        "BACKEND_ADDRESS": "http://localhost:9090",
-        "OIDC_CALLBACK_URL": "https://localhost:8099/api/auth/login",
-        "DEFAULT_LOGIN_REDIRECT": "https://localhost:8099/",
-        "LOGOUT_REDIRECT": "https://localhost:8099/"
-    },
-    "DB": {
-        "CLIENT_URL": "postgres://admin:password@127.0.0.1:5432",
-        "DB_NAME": "dbildungs-iam-server",
-        "USE_SSL": false
-    },
-    "KEYCLOAK": {
-        "BASE_URL": "http://localhost:8080",
-        "ADMIN_REALM_NAME": "SPSH",
-        "ADMIN_CLIENT_ID": "spsh-admin",
-        "REALM_NAME": "SPSH",
-        "CLIENT_ID": "spsh",
-        "CLIENT_SECRET": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M",
-        "ADMIN_SECRET": "44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R"
-    },
-    "REDIS": {
-        "HOST": "localhost",
-        "PORT": 6379,
-        "USERNAME": "default",
-        "PASSWORD": "password",
-        "USE_TLS": false
-    },
-    "LDAP": {
-        "URL": "ldap://localhost",
-        "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
-        "PASSWORD": "admin"
-    },
-    "DATA": {
-        "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
-    },
-    "TELEMETRY": {
-        "METRICS_URL": "http://localhost:4317/v1/metrics",
-        "TRACES_URL": "http://localhost:4317/v1/traces",
-        "EXPORT_INTERVAL": 60000,
-        "MAX_QUEUE_SIZE": 1000,
-        "MAX_EXPORT_BATCH_SIZE": 10,
-        "SCHEDULED_DELAY_MILLIS": 500,
-        "EXPORT_TIMEOUT_MILLIS": 30000
-    },
-    "LOGGING": {
-        "DEFAULT_LOG_LEVEL": "info",
-        "PERSON_MODULE_LOG_LEVEL": "debug",
-        "PERSON_API_MODULE_LOG_LEVEL": "debug",
-        "ORGANISATION_MODULE_LOG_LEVEL": "debug",
-        "ORGANISATION_API_MODULE_LOG_LEVEL": "debug",
-        "ROLLE_MODULE_LOG_LEVEL": "debug",
-        "ROLLE_API_MODULE_LOG_LEVEL": "debug",
-        "KEYCLOAK_ADMINISTRATION_MODULE_LOG_LEVEL": "debug",
-        "HEALTH_MODULE_LOG_LEVEL": "debug",
-        "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
-    },
-    "ITSLEARNING": {
-        "ENABLED": false,
-        "ENDPOINT": "https://itslearning-test.example.com",
-        "USERNAME": "username",
-        "PASSWORD": "password"
-    }
+  "HOST": {
+    "PORT": 9090
+  },
+  "FRONTEND": {
+    "PORT": 9091,
+    "TRUST_PROXY": false,
+    "SECURE_COOKIE": false,
+    "SESSION_SECRET": "SessionSecretForDevelopment",
+    "SESSION_TTL_MS": 3600000,
+    "BACKEND_ADDRESS": "http://localhost:9090",
+    "OIDC_CALLBACK_URL": "https://localhost:8099/api/auth/login",
+    "DEFAULT_LOGIN_REDIRECT": "https://localhost:8099/",
+    "LOGOUT_REDIRECT": "https://localhost:8099/"
+  },
+  "DB": {
+    "CLIENT_URL": "postgres://admin:password@127.0.0.1:5432",
+    "DB_NAME": "dbildungs-iam-server",
+    "USE_SSL": false
+  },
+  "KEYCLOAK": {
+    "BASE_URL": "http://localhost:8080",
+    "ADMIN_REALM_NAME": "SPSH",
+    "ADMIN_CLIENT_ID": "spsh-admin",
+    "REALM_NAME": "SPSH",
+    "CLIENT_ID": "spsh",
+    "CLIENT_SECRET": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M",
+    "ADMIN_SECRET": "44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R"
+  },
+  "REDIS": {
+    "HOST": "localhost",
+    "PORT": 6379,
+    "USERNAME": "default",
+    "PASSWORD": "password",
+    "USE_TLS": false
+  },
+  "LDAP": {
+    "URL": "ldap://localhost",
+    "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
+    "PASSWORD": "admin"
+  },
+  "DATA": {
+    "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
+  },
+  "TELEMETRY": {
+    "METRICS_URL": "http://localhost:4317/v1/metrics",
+    "TRACES_URL": "http://localhost:4317/v1/traces",
+    "EXPORT_INTERVAL": 60000
+  },
+  "LOGGING": {
+    "DEFAULT_LOG_LEVEL": "info",
+    "PERSON_MODULE_LOG_LEVEL": "debug",
+    "PERSON_API_MODULE_LOG_LEVEL": "debug",
+    "ORGANISATION_MODULE_LOG_LEVEL": "debug",
+    "ORGANISATION_API_MODULE_LOG_LEVEL": "debug",
+    "ROLLE_MODULE_LOG_LEVEL": "debug",
+    "ROLLE_API_MODULE_LOG_LEVEL": "debug",
+    "KEYCLOAK_ADMINISTRATION_MODULE_LOG_LEVEL": "debug",
+    "HEALTH_MODULE_LOG_LEVEL": "debug",
+    "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
+  },
+  "ITSLEARNING": {
+    "ENABLED": false,
+    "ENDPOINT": "https://itslearning-test.example.com",
+    "USERNAME": "username",
+    "PASSWORD": "password"
+  }
 }

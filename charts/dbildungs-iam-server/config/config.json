@@ -36,7 +36,8 @@
   },
   "TELEMETRY": {
     "METRICS_URL": "http://localhost:4317/v1/metrics",
-    "TRACES_URL": "http://localhost:4317/v1/traces"
+    "TRACES_URL": "http://localhost:4317/v1/traces",
+    "EXPORT_INTERVAL": 60000
   },
   "LOGGING": {
     "DEFAULT_LOG_LEVEL": "info",
