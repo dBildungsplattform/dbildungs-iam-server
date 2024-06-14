@@ -1,4 +1,4 @@
-import { DBiamCreatePersonenkontextBodyParams } from '../api/param/dbiam-create-personenkontext.body.params.js';
+import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
 import { UpdateCountError } from './error/update-count.error.js';
@@ -20,7 +20,7 @@ export class PersonenkontexteUpdate {
         private readonly personId: PersonID,
         private readonly lastModified: Date,
         private readonly count: number,
-        private readonly dBiamPersonenkontextBodyParams: DBiamCreatePersonenkontextBodyParams[],
+        private readonly dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
     ) {}
 
     public static createNew(
@@ -30,7 +30,7 @@ export class PersonenkontexteUpdate {
         personId: PersonID,
         lastModified: Date,
         count: number,
-        dBiamPersonenkontextBodyParams: DBiamCreatePersonenkontextBodyParams[],
+        dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
     ): PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
             eventService,
@@ -83,7 +83,7 @@ export class PersonenkontexteUpdate {
         return null;
     }
 
-    public async update(): Promise<Option<PersonenkontexteUpdateError>> {
+    public async update(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
         const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
         if (sentPKs instanceof PersonenkontexteUpdateError) {
             return sentPKs;
@@ -111,7 +111,10 @@ export class PersonenkontexteUpdate {
                 );
             }
         }
+        const existingPKsAfterUpdate: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(
+            this.personId,
+        );
 
-        return null;
+        return existingPKsAfterUpdate;
     }
 }
