@@ -13,6 +13,7 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
+    KeycloakConfigTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
@@ -26,6 +27,7 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonApiModule } from '../person-api.module.js';
+import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 
 describe('dbiam Person API', () => {
     let app: INestApplication;
@@ -67,7 +69,10 @@ describe('dbiam Person API', () => {
                     },
                 },
             ],
-        }).compile();
+        })
+            .overrideModule(KeycloakConfigModule)
+            .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .compile();
 
         orm = module.get(MikroORM);
         organisationRepo = module.get(OrganisationRepo);
