@@ -2,7 +2,12 @@ import { Dictionary, Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DomainError, EntityNotFoundError, InvalidAttributeLengthError, MissingPermissionsError } from '../../../shared/error/index.js';
+import {
+    DomainError,
+    EntityNotFoundError,
+    InvalidAttributeLengthError,
+    MissingPermissionsError,
+} from '../../../shared/error/index.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonDo } from './person.do.js';
