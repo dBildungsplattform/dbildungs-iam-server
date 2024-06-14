@@ -85,7 +85,7 @@ export class PersonService {
         if (person instanceof DomainError) {
             return person;
         }
-        //Check references: ob der Admin berechtigt ist
+        //Check references & ob der Admin berechtigt ist
         const referenceError: Option<DomainError> = await this.checkReferences(organisationId, rolleId);
         if (referenceError) {
             return referenceError;
@@ -165,7 +165,7 @@ export class PersonService {
     }
 
     private async checkSpecifications(organisationId: string, rolleId: string): Promise<boolean> {
-        // Für GleicheRolleAnKlasseWieSchule ist die Prüfung nicht notwendig weil der User (Person) an der Schule gehängt sein muss, bevor Person in eine Klasse hinzugefügt wird?
+        // Für die GleicheRolleAnKlasseWieSchule ist die Prüfung nicht notwendig weil der User (Person) an der Schule gehängt sein muss, bevor Person in eine Klasse hinzugefügt wird?
         //NurLehrUndLernAnKlasse
         const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(organisationId);
         if (!organisation) return false;
