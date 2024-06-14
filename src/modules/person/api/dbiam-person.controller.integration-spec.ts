@@ -10,7 +10,6 @@ import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
@@ -28,6 +27,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonApiModule } from '../person-api.module.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
+import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
 
 describe('dbiam Person API', () => {
     let app: INestApplication;
@@ -43,6 +43,7 @@ describe('dbiam Person API', () => {
                 MapperTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                KeycloakAdministrationModule,
                 PersonApiModule,
             ],
             providers: [
@@ -82,7 +83,7 @@ describe('dbiam Person API', () => {
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
         await app.init();
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+    }, 10000000);
 
     afterAll(async () => {
         await orm.close();
