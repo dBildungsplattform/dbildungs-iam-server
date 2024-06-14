@@ -1,5 +1,5 @@
 import { PersonID } from '../../../shared/types/index.js';
-import {EmailGeneratorService} from "./email-generator.service";
+import { EmailGeneratorService } from './email-generator.service.js';
 
 export class Email<WasPersisted extends boolean> {
     private constructor(
@@ -12,7 +12,12 @@ export class Email<WasPersisted extends boolean> {
         public readonly personId: PersonID,
     ) {}
 
-    public static createNew(emailGeneratorService: EmailGeneratorService, name: string, enabled: boolean, personId: PersonID): Email<false> {
+    public static createNew(
+        emailGeneratorService: EmailGeneratorService,
+        name: string,
+        enabled: boolean,
+        personId: PersonID,
+    ): Email<false> {
         return new Email(emailGeneratorService, undefined, undefined, undefined, name, enabled, personId);
     }
 

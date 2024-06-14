@@ -13,6 +13,7 @@ import { Email } from './email.js';
 export class EmailGeneratorService {
     public constructor(private emailRepo: EmailRepo) {}
 
+    //private emailRepo: EmailRepo
     public async generateName(firstname: string, lastname: string): Promise<Result<string, DomainError>> {
         // Check for minimum length
         if (firstname.length < 2) {

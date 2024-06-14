@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { Email } from './email.js';
-import {EmailGeneratorService} from "./email-generator.service.js";
+import { EmailGeneratorService } from './email-generator.service.js';
 
 @Injectable()
 export class EmailFactory {

@@ -4,7 +4,7 @@ import { EmailEntity } from './email.entity.js';
 import { Email } from '../domain/email.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { EmailFactory } from '../domain/email.factory.js';
-import {PersonID} from "../../../shared/types/index.js";
+import { PersonID } from '../../../shared/types/index.js';
 
 export function mapAggregateToData(email: Email<boolean>): RequiredEntityData<EmailEntity> {
     return {
@@ -27,7 +27,6 @@ export function mapEntityToAggregate(entity: EmailEntity, emailFactory: EmailFac
 }
 @Injectable()
 export class EmailRepo {
-
     public constructor(
         protected readonly emailFactory: EmailFactory,
         protected readonly em: EntityManager,
@@ -64,9 +63,7 @@ export class EmailRepo {
     public async findByPersonId(personId: PersonID): Promise<Email<true>[]> {
         const emailEntities: EmailEntity[] = await this.em.find(this.entityName, { personId }, {});
 
-        return emailEntities.map((entity: EmailEntity) =>
-            mapEntityToAggregate(entity, this.emailFactory),
-        );
+        return emailEntities.map((entity: EmailEntity) => mapEntityToAggregate(entity, this.emailFactory));
     }
 
     public async save(email: Email<boolean>): Promise<Email<true>> {

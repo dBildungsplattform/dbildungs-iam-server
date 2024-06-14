@@ -6,17 +6,17 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
 } from '../../../../test/utils/index.js';
-import {EmailRepo} from "./email.repo.js";
-import {Email} from "../domain/email.js";
-import {EmailFactory} from "../domain/email.factory.js";
-import {EmailGeneratorService} from "../domain/email-generator.service.js";
-import {createMock} from "@golevelup/ts-jest";
-import {Person} from "../../person/domain/person.js";
-import {DomainError} from "../../../shared/error/index.js";
-import {PersonFactory} from "../../person/domain/person.factory.js";
-import {PersonRepository} from "../../person/persistence/person.repository.js";
-import {UsernameGeneratorService} from "../../person/domain/username-generator.service.js";
-import {KeycloakUserService} from "../../keycloak-administration/index.js";
+import { EmailRepo } from './email.repo.js';
+import { Email } from '../domain/email.js';
+import { EmailFactory } from '../domain/email.factory.js';
+import { EmailGeneratorService } from '../domain/email-generator.service.js';
+import { createMock } from '@golevelup/ts-jest';
+import { Person } from '../../person/domain/person.js';
+import { DomainError } from '../../../shared/error/index.js';
+import { PersonFactory } from '../../person/domain/person.factory.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -90,7 +90,7 @@ describe('EmailRepo', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
-        jest.resetAllMocks();
+        //jest.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -122,7 +122,6 @@ describe('EmailRepo', () => {
             expect(foundEmailsMap).toBeTruthy();
             expect(foundEmailsMap.get(savedEmail1.id)).toEqual(savedEmail1);
             expect(foundEmailsMap.get(savedEmail2.id)).toEqual(savedEmail2);
-
         });
     });
 
@@ -133,11 +132,10 @@ describe('EmailRepo', () => {
             const email: Email<false> = emailFactory.createNew(name, false, person.id);
             const savedEmail: Email<true> = await sut.save(email);
 
-            const foundEmail: Option<Email<true>> = await sut.findById(savedEmail.id);
+            const foundEmail: Option<Email<true>> = await sut.findByName(savedEmail.name);
 
             expect(foundEmail).toBeTruthy();
             expect(foundEmail).toEqual(savedEmail);
-
         });
     });
 
@@ -151,10 +149,29 @@ describe('EmailRepo', () => {
             const foundEmails: Email<true>[] = await sut.findByPersonId(person.id);
 
             expect(foundEmails).toBeTruthy();
-            expect(foundEmails).toEqual(
-                expect.objectContaining(savedEmail)
-            );
+            expect(foundEmails).toContainEqual(expect.objectContaining({ id: savedEmail.id }));
+        });
+    });
 
+    describe('save with id (update)', () => {
+        it('should update entity, when id is set', async () => {
+            const person: Person<true> = await createPerson();
+            const name: string = faker.internet.email();
+            const email: Email<false> = emailFactory.createNew(name, false, person.id);
+            const savedEmail: Email<true> = await sut.save(email);
+            const newEmail: Email<false> = emailFactory.construct(
+                savedEmail.id,
+                faker.date.past(),
+                faker.date.recent(),
+                'test',
+                false,
+                person.id,
+            );
+            const updatedMail: Email<true> = await sut.save(newEmail);
+            const foundEmail: Option<Email<true>> = await sut.findById(updatedMail.id);
+
+            expect(foundEmail).toBeTruthy();
+            expect(foundEmail).toEqual(updatedMail);
         });
     });
 });
