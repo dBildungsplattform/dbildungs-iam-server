@@ -8,7 +8,7 @@ import { KeycloakConfig } from './keycloak.config.js';
 import { LoggingConfig } from './logging.config.js';
 import { RedisConfig } from './redis.config.js';
 import { LdapConfig } from './ldap.config.js';
-import { TelemetryConfig } from './telemtry.config.js';
+import { TelemetryConfig } from './telemetry.config.js';
 import { ItsLearningConfig } from './itslearning.config.js';
 
 export class JsonConfig {
