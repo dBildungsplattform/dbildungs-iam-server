@@ -42,5 +42,11 @@
     },
     "LOGGING": {
         "DEFAULT_LOG_LEVEL": "info"
+    },
+    "ITSLEARNING": {
+        "ENABLED": false,
+        "ENDPOINT": "https://itslearning-test.example.com",
+        "USERNAME": "username",
+        "PASSWORD": "password"
     }
 }

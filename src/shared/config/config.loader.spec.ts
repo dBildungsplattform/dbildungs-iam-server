@@ -45,6 +45,11 @@ describe('configloader', () => {
                 LOGGING: {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
+                ITSLEARNING: {
+                    ENABLED: true,
+                    ENDPOINT: 'http://itslearning',
+                    USERNAME: 'username',
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -52,6 +57,9 @@ describe('configloader', () => {
                 KEYCLOAK: { ADMIN_SECRET: 'AdminClientSecret', CLIENT_SECRET: 'ClientSecret' },
                 FRONTEND: { SESSION_SECRET: 'SessionSecret' },
                 REDIS: { PASSWORD: 'password' },
+                ITSLEARNING: {
+                    PASSWORD: 'password',
+                },
             };
 
             beforeEach(() => {
@@ -110,6 +118,12 @@ describe('configloader', () => {
                 },
                 LOGGING: {
                     DEFAULT_LOG_LEVEL: 'debug',
+                },
+                ITSLEARNING: {
+                    ENABLED: true,
+                    ENDPOINT: 'http://itslearning',
+                    USERNAME: 'username',
+                    PASSWORD: 'password',
                 },
             };
 

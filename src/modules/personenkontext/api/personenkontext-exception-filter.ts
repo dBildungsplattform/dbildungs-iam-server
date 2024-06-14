@@ -8,6 +8,7 @@ import {
 import { NurLehrUndLernAnKlasseError } from '../specification/error/nur-lehr-und-lern-an-klasse.error.js';
 import { GleicheRolleAnKlasseWieSchuleError } from '../specification/error/gleiche-rolle-an-klasse-wie-schule.error.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
+import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 import { RolleNurAnPassendeOrganisationError } from '../specification/error/rolle-nur-an-passende-organisation.js';
 
 @Catch(PersonenkontextSpecificationError)
@@ -25,6 +26,13 @@ export class PersonenkontextExceptionFilter implements ExceptionFilter<Personenk
             new DbiamPersonenkontextError({
                 code: 400,
                 i18nKey: PersonenkontextSpecificationErrorI18nTypes.GLEICHE_ROLLE_AN_KLASSE_WIE_SCHULE,
+            }),
+        ],
+        [
+            OrganisationMatchesRollenartError.name,
+            new DbiamPersonenkontextError({
+                code: 400,
+                i18nKey: PersonenkontextSpecificationErrorI18nTypes.ORGANISATION_MATCHES_ROLLENART,
             }),
         ],
         [
