@@ -16,14 +16,10 @@ import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
-import { PersonService } from '../domain/person.service.js';
+import { PersonPersonenkontext, PersonService } from '../domain/person.service.js';
 import { DbiamCreatePersonWithContextBodyParams } from './dbiam-create-person-with-context.body.params.js';
-import { Person } from '../domain/person.js';
-import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { DBiamPersonResponse } from './dbiam-person.response.js';
 import { DbiamPersonenkontextError } from '../../personenkontext/api/dbiam-personenkontext.error.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextExceptionFilter } from '../../personenkontext/api/personenkontext-exception-filter.js';
 import { PersonenkontextSpecificationError } from '../../personenkontext/specification/error/personenkontext-specification.error.js';
 
@@ -36,8 +32,6 @@ export class DBiamPersonController {
     public constructor(
         private readonly personService: PersonService,
         private readonly eventService: EventService,
-        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
-        private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
     @Post()
@@ -62,33 +56,30 @@ export class DBiamPersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonResponse> {
         //Check all references & permissions then save person
-        const savedPerson: DomainError | Person<true> = await this.personService.createPerson(
-            permissions,
-            params.vorname,
-            params.familienname,
-            params.organisationId,
-            params.rolleId,
-        );
+        const savedPersonWithPersonenkontext: DomainError | PersonPersonenkontext =
+            await this.personService.createPersonWithPersonenkontext(
+                permissions,
+                params.vorname,
+                params.familienname,
+                params.organisationId,
+                params.rolleId,
+            );
 
-        if (savedPerson instanceof PersonenkontextSpecificationError) {
-            throw savedPerson;
+        if (savedPersonWithPersonenkontext instanceof PersonenkontextSpecificationError) {
+            throw savedPersonWithPersonenkontext;
         }
 
-        if (savedPerson instanceof DomainError) {
+        if (savedPersonWithPersonenkontext instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(savedPerson),
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(savedPersonWithPersonenkontext),
             );
         }
 
-        const personenkontext: Personenkontext<false> = this.personenkontextFactory.createNew(
-            savedPerson.id,
-            params.organisationId,
-            params.rolleId,
-        );
-        //Save Personenkontext
-        const savedPersonenkontext: Personenkontext<true> = await this.personenkontextRepo.save(personenkontext);
-        this.eventService.publish(new PersonenkontextCreatedEvent(savedPersonenkontext.id));
+        this.eventService.publish(new PersonenkontextCreatedEvent(savedPersonWithPersonenkontext.personenkontext.id));
 
-        return new DBiamPersonResponse(savedPerson, savedPersonenkontext);
+        return new DBiamPersonResponse(
+            savedPersonWithPersonenkontext.person,
+            savedPersonWithPersonenkontext.personenkontext,
+        );
     }
 }

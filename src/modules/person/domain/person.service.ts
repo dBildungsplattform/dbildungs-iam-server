@@ -19,6 +19,14 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { NurLehrUndLernAnKlasseError } from '../../personenkontext/specification/error/nur-lehr-und-lern-an-klasse.error.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+
+export type PersonPersonenkontext = {
+    person: Person<true>;
+    personenkontext: Personenkontext<true>;
+};
 
 @Injectable()
 export class PersonService {
@@ -27,7 +35,9 @@ export class PersonService {
         private readonly organisationRepo: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
         private readonly personRepository: PersonRepository,
+        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personFactory: PersonFactory,
+        private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
     public async findPersonById(id: string): Promise<Result<PersonDo<true>, DomainError>> {
@@ -61,14 +71,13 @@ export class PersonService {
         };
     }
 
-    public async createPerson(
+    public async createPersonWithPersonenkontext(
         permissions: PersonPermissions,
         vorname: string,
         familienname: string,
         organisationId: string,
         rolleId: string,
-    ): Promise<Person<true> | DomainError> {
-        //Person.createNew()
+    ): Promise<PersonPersonenkontext | DomainError> {
         const person: Person<false> | DomainError = await this.personFactory.createNew({
             vorname: vorname,
             familienname: familienname,
@@ -87,13 +96,26 @@ export class PersonService {
             return permissionsError;
         }
         //CheckSpecifications (NurLehrUndLernAnKlasse)
-        // Für GleicheRolleAnKlasseWieSchule ist die Prüfung nicht notwendig weil der User (Person) an der Schule gehängt sein muss, bevor Person in eine Klasse hinzugefügt wird?
-        if (!(await this.checkSpecificationNurLehrUndLernAnKlasse(organisationId, rolleId))) {
+        if (!(await this.checkSpecifications(organisationId, rolleId))) {
             return new NurLehrUndLernAnKlasseError();
         }
         //Save Person
         const savedPerson: DomainError | Person<true> = await this.personRepository.create(person);
-        return savedPerson;
+        if (savedPerson instanceof DomainError) {
+            return savedPerson;
+        }
+
+        const personenkontext: Personenkontext<false> = this.personenkontextFactory.createNew(
+            savedPerson.id,
+            organisationId,
+            rolleId,
+        );
+        //Save Personenkontext
+        const savedPersonenkontext: Personenkontext<true> = await this.personenkontextRepo.save(personenkontext);
+        return {
+            person: savedPerson,
+            personenkontext: savedPersonenkontext,
+        };
     }
 
     private async checkReferences(organisationId: string, rolleId: string): Promise<Option<DomainError>> {
@@ -142,7 +164,8 @@ export class PersonService {
         return undefined;
     }
 
-    private async checkSpecificationNurLehrUndLernAnKlasse(organisationId: string, rolleId: string): Promise<boolean> {
+    private async checkSpecifications(organisationId: string, rolleId: string): Promise<boolean> {
+        // Für GleicheRolleAnKlasseWieSchule ist die Prüfung nicht notwendig weil der User (Person) an der Schule gehängt sein muss, bevor Person in eine Klasse hinzugefügt wird?
         //NurLehrUndLernAnKlasse
         const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(organisationId);
         if (!organisation) return false;
