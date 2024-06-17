@@ -26,4 +26,19 @@
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: frontend-sessionSecret
+          - name: ITSLEARNING_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: itslearning-endpoint
+          - name: ITSLEARNING_USERNAME
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: itslearning-username
+          - name: ITSLEARNING_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: itslearning-password
 {{- end}}

@@ -18,15 +18,16 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { Personenkontext } from '../domain/personenkontext.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkontext.body.params.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './dbiam-find-personenkontext-by-personid.params.js';
-import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
 import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
+import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new PersonenkontextExceptionFilter())
 @ApiTags('dbiam-personenkontexte')
@@ -103,6 +104,10 @@ export class DBiamPersonenkontextController {
         );
 
         if (!saveResult.ok) {
+            if (saveResult.error instanceof OrganisationMatchesRollenartError) {
+                throw saveResult.error;
+            }
+
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult.error),
             );
