@@ -446,7 +446,7 @@ describe('dbiam Personenkontext API', () => {
 
     describe('/PUT update multiple personenkontexte', () => {
         describe('when sending no PKs', () => {
-            it('should delete and therefore return 201', async () => {
+            it('should delete and therefore return 200', async () => {
                 const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
                 const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                 const savedPK: Personenkontext<true> = await personenkontextRepo.save(
@@ -463,7 +463,7 @@ describe('dbiam Personenkontext API', () => {
                     .put(`/dbiam/personenkontext/${person.id}`)
                     .send(updatePKsRequest);
 
-                expect(response.status).toBe(201);
+                expect(response.status).toBe(200);
             });
         });
 

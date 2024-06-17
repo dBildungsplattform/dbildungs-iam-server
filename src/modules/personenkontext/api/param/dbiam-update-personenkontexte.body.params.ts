@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { DBiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkontext.body.params.js';
+import { DbiamPersonenkontextBodyParams } from './dbiam-personenkontext.body.params.js';
 import { IsDate, IsNumber, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -20,8 +20,8 @@ export class DbiamUpdatePersonenkontexteBodyParams {
     })
     public readonly count!: number;
 
-    @ApiProperty({ type: [DBiamCreatePersonenkontextBodyParams], required: true, nullable: false })
-    @Type(() => DBiamCreatePersonenkontextBodyParams)
+    @ApiProperty({ type: [DbiamPersonenkontextBodyParams], required: true, nullable: false })
+    @Type(() => DbiamPersonenkontextBodyParams)
     @ValidateNested({ each: true })
-    public readonly personenkontexte!: DBiamCreatePersonenkontextBodyParams[];
+    public readonly personenkontexte!: DbiamPersonenkontextBodyParams[];
 }
