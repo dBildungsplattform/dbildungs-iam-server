@@ -204,7 +204,7 @@ describe('PersonenkontexteUpdate', () => {
             beforeAll(() => {
                 const wrongLastModified: Date = faker.date.future();
                 const count: number = 2;
-                sut = dbiamPersonenkontextFactory.createNew(personId, wrongLastModified, count, [
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(personId, wrongLastModified, count, [
                     bodyParam1,
                     bodyParam2,
                 ]);
@@ -214,10 +214,10 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: both PKs are found
-                const updateError: Option<PersonenkontexteUpdateError> = await sut.update();
+                const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
-                expect(updateError).toBeTruthy();
-                expect(updateError).toBeInstanceOf(UpdateInvalidLastModifiedError);
+                expect(updateResult).toBeTruthy();
+                expect(updateResult).toBeInstanceOf(UpdateInvalidLastModifiedError);
             });
         });
 
