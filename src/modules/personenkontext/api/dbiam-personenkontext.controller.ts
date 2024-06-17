@@ -22,7 +22,7 @@ import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextResponse } from './response/dbiam-personenkontext.response.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
-import { DBiamCreatePersonenkontextBodyParams } from './param/dbiam-create-personenkontext.body.params.js';
+import { DbiamPersonenkontextBodyParams } from './param/dbiam-personenkontext.body.params.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
@@ -32,6 +32,8 @@ import { PersonenkontexteUpdate } from '../domain/personenkontexte-update.js';
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
 import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-update.error.js';
 import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
+import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
+import { PersonenkontexteUpdateResponse } from './response/personenkontexte-update.response.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -88,7 +90,7 @@ export class DBiamPersonenkontextController {
     @ApiForbiddenResponse({ description: 'Insufficient permission to create personenkontext.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating personenkontext.' })
     public async createPersonenkontext(
-        @Body() params: DBiamCreatePersonenkontextBodyParams,
+        @Body() params: DbiamPersonenkontextBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonenkontextResponse> {
         // Construct new personenkontext
@@ -125,10 +127,11 @@ export class DBiamPersonenkontextController {
     }
 
     @Put(':personId')
-    @HttpCode(HttpStatus.CREATED)
-    @ApiCreatedResponse({
-        description: 'Add or remove personenkontexte as one operation.',
-        type: DBiamPersonenkontextResponse,
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({
+        description:
+            'Add or remove personenkontexte as one operation. Returns the Personenkontexte existing after update.',
+        type: PersonenkontexteUpdateResponse,
     })
     @ApiBadRequestResponse({
         description: 'The personenkontexte could not be updated, may due to unsatisfied specifications.',
@@ -141,16 +144,18 @@ export class DBiamPersonenkontextController {
     public async updatePersonenkontexte(
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
         @Body() bodyParams: DbiamUpdatePersonenkontexteBodyParams,
-    ): Promise<void> {
-        const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNew(
+    ): Promise<PersonenkontexteUpdateResponse> {
+        const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
             params.personId,
             bodyParams.lastModified,
             bodyParams.count,
             bodyParams.personenkontexte,
         );
-        const updateError: Option<PersonenkontextSpecificationError> = await pkUpdate.update();
-        if (updateError) {
-            throw updateError;
+        const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
+        if (updateResult instanceof PersonenkontexteUpdateError) {
+            throw updateResult;
         }
+
+        return new PersonenkontexteUpdateResponse(updateResult);
     }
 }

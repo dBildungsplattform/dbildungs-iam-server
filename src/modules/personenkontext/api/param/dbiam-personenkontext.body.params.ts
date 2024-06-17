@@ -3,7 +3,7 @@ import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 import { OrganisationID, PersonID, RolleID } from '../../../../shared/types/index.js';
 
-export class DBiamCreatePersonenkontextBodyParams {
+export class DbiamPersonenkontextBodyParams {
     @IsString()
     @IsNotEmpty()
     @IsUUID()
