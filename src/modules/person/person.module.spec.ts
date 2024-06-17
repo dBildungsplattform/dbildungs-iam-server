@@ -4,13 +4,14 @@ import { PersonService } from './domain/person.service.js';
 import { PersonRepo } from './persistence/person.repo.js';
 import { PersonModule } from './person.module.js';
 import { PersonPersistenceMapperProfile } from './persistence/person-persistence.mapper.profile.js';
+import { EventModule } from '../../core/eventbus/index.js';
 
 describe('PersonModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, PersonModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, PersonModule, EventModule],
         }).compile();
     });
 

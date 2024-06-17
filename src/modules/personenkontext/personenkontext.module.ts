@@ -8,7 +8,9 @@ import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.re
 import { RolleModule } from '../rolle/rolle.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { DBiamPersonenkontextService } from './domain/dbiam-personenkontext.service.js';
+import { DbiamPersonenkontextFactory } from './domain/dbiam-personenkontext.factory.js';
 import { PersonenkontextFactory } from './domain/personenkontext.factory.js';
+import { EventService } from '../../core/eventbus/index.js';
 
 @Module({
     imports: [PersonModule, RolleModule, OrganisationModule, LoggerModule.register(PersonenKontextModule.name)],
@@ -18,13 +20,16 @@ import { PersonenkontextFactory } from './domain/personenkontext.factory.js';
         PersonRepo,
         DBiamPersonenkontextService,
         DBiamPersonenkontextRepo,
+        DbiamPersonenkontextFactory,
         PersonenkontextFactory,
+        EventService,
     ],
     exports: [
         PersonenkontextService,
         PersonenkontextRepo,
         DBiamPersonenkontextService,
         DBiamPersonenkontextRepo,
+        DbiamPersonenkontextFactory,
         PersonenkontextFactory,
     ],
 })

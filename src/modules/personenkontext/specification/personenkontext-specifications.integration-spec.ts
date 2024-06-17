@@ -50,7 +50,7 @@ describe('PersonenkontextSpecificationsTest', () => {
     let orm: MikroORM;
     let organisationRepoMock: DeepMocked<OrganisationRepo>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
-    let personenkontextRepo: DBiamPersonenkontextRepo;
+    let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
 
     let personFactory: PersonFactory;
     let personRepo: PersonRepository;
@@ -66,11 +66,14 @@ describe('PersonenkontextSpecificationsTest', () => {
                 MapperTestModule,
             ],
             providers: [
-                DBiamPersonenkontextRepo,
                 PersonRepository,
                 PersonFactory,
                 UsernameGeneratorService,
                 PersonenkontextFactory,
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                },
                 {
                     provide: OrganisationRepo,
                     useValue: createMock<OrganisationRepo>(),
@@ -90,7 +93,7 @@ describe('PersonenkontextSpecificationsTest', () => {
             .compile();
         organisationRepoMock = module.get(OrganisationRepo);
         rolleRepoMock = module.get(RolleRepo);
-        personenkontextRepo = module.get(DBiamPersonenkontextRepo);
+        personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personFactory = module.get(PersonFactory);
         personenkontextFactory = module.get(PersonenkontextFactory);
         personRepo = module.get(PersonRepository);
@@ -124,7 +127,7 @@ describe('PersonenkontextSpecificationsTest', () => {
             klasse.administriertVon = schule.id;
             const specification: GleicheRolleAnKlasseWieSchule = new GleicheRolleAnKlasseWieSchule(
                 organisationRepoMock,
-                personenkontextRepo,
+                personenkontextRepoMock,
                 rolleRepoMock,
             );
             const personResult: Person<false> | DomainError = await personFactory.createNew({
@@ -149,7 +152,7 @@ describe('PersonenkontextSpecificationsTest', () => {
                     personId: person.id,
                 },
             );
-            await personenkontextRepo.save(foundPersonenkontextDummy);
+            await personenkontextRepoMock.save(foundPersonenkontextDummy);
 
             organisationRepoMock.findById.mockResolvedValueOnce(klasse); //mock Klasse
             organisationRepoMock.findById.mockResolvedValueOnce(schule); //mock Schule

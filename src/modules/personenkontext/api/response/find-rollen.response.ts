@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { RolleResponse } from '../../rolle/api/rolle.response.js';
+import { Rolle } from '../../../rolle/domain/rolle.js';
+import { RolleResponse } from '../../../rolle/api/rolle.response.js';
 
 export class FindRollenResponse {
     public constructor(moeglicheRollen: Rolle<true>[], total: number) {

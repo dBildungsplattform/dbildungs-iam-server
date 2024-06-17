@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file */
 import { ApiProperty } from '@nestjs/swagger';
 import { Vertrauensstufe, VertrauensstufeTypName } from '../domain/person.enums.js';
-import { PersonenkontextResponse } from '../../personenkontext/api/personenkontext.response.js';
+import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
 import { PersonNameResponse } from './person-name.response.js';
 import { PersonBirthResponse } from './person-birth.response.js';
 

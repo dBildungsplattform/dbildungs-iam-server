@@ -7,12 +7,12 @@ import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonDto } from './create-person.dto.js';
-import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/create-personenkontext.body.params.js';
+import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/param/create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from '../../personenkontext/api/create-personenkontext.dto.js';
 import { CreatedPersonenkontextOrganisationDto } from '../../personenkontext/api/created-personenkontext-organisation.dto.js';
 import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
 import { FindPersonenkontextByIdDto } from '../../personenkontext/api/find-personenkontext-by-id.dto.js';
-import { FindPersonenkontextByIdParams } from '../../personenkontext/api/find-personenkontext-by-id.params.js';
+import { FindPersonenkontextByIdParams } from '../../personenkontext/api/param/find-personenkontext-by-id.params.js';
 import { FindPersonenkontextDto } from '../../personenkontext/api/find-personenkontext.dto.js';
 import { LoeschungDto } from './loeschung.dto.js';
 import { LoeschungResponse } from './loeschung.response.js';
@@ -25,11 +25,11 @@ import { PersonDto } from './person.dto.js';
 import { PersonResponseAutomapper } from './person.response-automapper.js';
 import { PersonendatensatzDto } from './personendatensatz.dto.js';
 import { PersonendatensatzResponseAutomapper } from './personendatensatz.response-automapper.js';
-import { PersonenkontextQueryParams } from '../../personenkontext/api/personenkontext-query.params.js';
+import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
 import { PersonenkontextDto } from '../../personenkontext/api/personenkontext.dto.js';
-import { PersonenkontextResponse } from '../../personenkontext/api/personenkontext.response.js';
-import { PersonenkontextdatensatzResponse } from '../../personenkontext/api/personenkontextdatensatz.response.js';
-import { UpdatePersonenkontextBodyParams } from '../../personenkontext/api/update-personenkontext.body.params.js';
+import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
+import { PersonenkontextdatensatzResponse } from '../../personenkontext/api/response/personenkontextdatensatz.response.js';
+import { UpdatePersonenkontextBodyParams } from '../../personenkontext/api/param/update-personenkontext.body.params.js';
 import { UpdatePersonenkontextDto } from '../../personenkontext/api/update-personenkontext.dto.js';
 import { DeleteRevisionBodyParams } from './delete-revision.body.params.js';
 import { DeletePersonenkontextDto } from '../../personenkontext/api/delete-personkontext.dto.js';
@@ -378,6 +378,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonenkontextDo<boolean>) => dest.mandant, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.organisationId, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.rolle, ignore()),
+                forMember((dest: PersonenkontextDo<boolean>) => dest.rolleId, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.loeschungZeitpunkt, ignore()),
                 forMember((dest: PersonenkontextDo<boolean>) => dest.sichtfreigabe, ignore()),
             );

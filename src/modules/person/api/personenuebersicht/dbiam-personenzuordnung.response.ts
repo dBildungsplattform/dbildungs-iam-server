@@ -27,7 +27,15 @@ export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ enum: OrganisationsTyp, enumName: OrganisationsTypName, nullable: true })
     public readonly typ?: OrganisationsTyp;
 
-    public constructor(personenkontext: Personenkontext<true>, organisation: OrganisationDo<true>, rolle: Rolle<true>) {
+    @ApiProperty({ type: Boolean })
+    public readonly editable: boolean;
+
+    public constructor(
+        personenkontext: Personenkontext<true>,
+        organisation: OrganisationDo<true>,
+        rolle: Rolle<true>,
+        editable: boolean,
+    ) {
         //use Organisation Aggregate as soon as there is one
         this.sskId = personenkontext.organisationId;
         this.rolleId = personenkontext.rolleId;
@@ -36,5 +44,6 @@ export class DBiamPersonenzuordnungResponse {
         this.rolle = rolle.name;
         this.administriertVon = organisation.administriertVon;
         this.typ = organisation.typ;
+        this.editable = editable;
     }
 }

@@ -15,6 +15,7 @@ import { OrganisationRepo } from './organisation.repo.js';
 import { OrganisationScope } from './organisation.scope.js';
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
+import { EventModule } from '../../../core/eventbus/index.js';
 
 describe('OrganisationRepo', () => {
     let module: TestingModule;
@@ -25,7 +26,12 @@ describe('OrganisationRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
+            imports: [
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                MapperTestModule,
+                EventModule,
+            ],
             providers: [OrganisationPersistenceMapperProfile, OrganisationRepo],
         }).compile();
         sut = module.get(OrganisationRepo);

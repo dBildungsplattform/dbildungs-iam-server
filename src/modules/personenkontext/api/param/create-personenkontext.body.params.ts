@@ -8,7 +8,7 @@ import {
     PersonenstatusTypName,
     Rolle,
     RolleTypName,
-} from '../domain/personenkontext.enums.js';
+} from '../../domain/personenkontext.enums.js';
 
 export class CreatePersonenkontextBodyParams {
     @AutoMap()

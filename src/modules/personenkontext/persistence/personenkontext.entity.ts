@@ -3,12 +3,14 @@ import { Cascade, DateTimeType, Entity, Enum, ManyToOne, Opt, Property, Ref, Uni
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
+import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 
 @Entity({ tableName: 'personenkontext' })
 @Unique({ properties: ['personId', 'organisationId', 'rolleId'] })
 export class PersonenkontextEntity extends TimestampedEntity {
     @AutoMap()
     @ManyToOne({
+        fieldName: 'person_id',
         columnType: 'uuid',
         cascade: [Cascade.REMOVE],
         ref: true,
@@ -22,9 +24,14 @@ export class PersonenkontextEntity extends TimestampedEntity {
     @Property({ columnType: 'uuid', nullable: true })
     public organisationId!: string;
 
-    // Will be mandatory soon. PersonenkontextAggregate will always set ID.
-    @Property({ columnType: 'uuid', nullable: true })
-    public rolleId!: string;
+    @ManyToOne({
+        fieldName: 'rolle_id',
+        columnType: 'uuid',
+        ref: true,
+        nullable: false,
+        entity: () => RolleEntity,
+    })
+    public rolleId!: Ref<RolleEntity>;
 
     @AutoMap()
     @Property({ nullable: true })

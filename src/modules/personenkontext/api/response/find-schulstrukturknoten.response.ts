@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
+import { OrganisationResponseLegacy } from '../../../organisation/api/organisation.response.legacy.js';
 
 export class FindSchulstrukturknotenResponse {
     public constructor(moeglicheSsks: OrganisationResponseLegacy[], total: number) {

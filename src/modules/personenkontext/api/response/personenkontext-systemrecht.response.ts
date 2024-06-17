@@ -1,8 +1,8 @@
 /* eslint-disable max-classes-per-file */
 
 import { ApiProperty } from '@nestjs/swagger';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
+import { RollenSystemRecht } from '../../../rolle/domain/rolle.enums.js';
+import { OrganisationResponseLegacy } from '../../../organisation/api/organisation.response.legacy.js';
 
 export class SystemrechtResponse {
     @ApiProperty({ type: [OrganisationResponseLegacy] })

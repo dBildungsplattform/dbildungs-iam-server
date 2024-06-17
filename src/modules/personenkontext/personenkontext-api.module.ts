@@ -13,6 +13,7 @@ import { DBiamPersonenkontextController } from './api/dbiam-personenkontext.cont
 import { DbiamPersonenkontextFilterController } from './api/dbiam-personenkontext-filter.controller.js';
 import { PersonenkontextAnlageFactory } from './domain/personenkontext-anlage.factory.js';
 import { DBiamPersonenkontextService } from './domain/dbiam-personenkontext.service.js';
+import { DbiamPersonenkontextFactory } from './domain/dbiam-personenkontext.factory.js';
 import { EventModule } from '../../core/eventbus/index.js';
 import { PersonenkontextFactory } from './domain/personenkontext.factory.js';
 
@@ -32,6 +33,7 @@ import { PersonenkontextFactory } from './domain/personenkontext.factory.js';
         PersonRepo,
         DBiamPersonenkontextRepo,
         PersonenkontextAnlageFactory,
+        DbiamPersonenkontextFactory,
         PersonenkontextFactory,
     ],
     controllers: [PersonenkontextController, DBiamPersonenkontextController, DbiamPersonenkontextFilterController],
