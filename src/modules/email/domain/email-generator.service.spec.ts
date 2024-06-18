@@ -7,27 +7,27 @@ import {
     InvalidCharacterSetError,
     InvalidNameError,
 } from '../../../shared/error/index.js';
-import { EmailRepo } from '../persistence/email.repo.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Email } from './email.js';
+import { EmailServiceRepo } from '../persistence/email-service.repo.js';
 
 describe('EmailGeneratorService', () => {
     let module: TestingModule;
     let sut: EmailGeneratorService;
-    let emailRepoMock: DeepMocked<EmailRepo>;
+    let emailServiceRepoMock: DeepMocked<EmailServiceRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             providers: [
                 EmailGeneratorService,
                 {
-                    provide: EmailRepo,
-                    useValue: createMock<EmailRepo>(),
+                    provide: EmailServiceRepo,
+                    useValue: createMock<EmailServiceRepo>(),
                 },
             ],
         }).compile();
         sut = module.get(EmailGeneratorService);
-        emailRepoMock = module.get(EmailRepo);
+        emailServiceRepoMock = module.get(EmailServiceRepo);
     });
 
     afterAll(async () => {
@@ -77,7 +77,7 @@ describe('EmailGeneratorService', () => {
 
         describe('when contains special characters', () => {
             it('should normalize german, danish and french special characters', async () => {
-                emailRepoMock.findByName.mockResolvedValueOnce(undefined);
+                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
                 await expect(sut.generateName('Åron', 'åàâçèéêëîïôùûÿäæöøœüß')).resolves.toStrictEqual({
                     ok: true,
                     value: 'aaaaaceeeeiiouuyaeaeoeoeoeuess',
@@ -87,7 +87,7 @@ describe('EmailGeneratorService', () => {
 
         describe('when contains diacritics', () => {
             it('should remove diacritics', async () => {
-                emailRepoMock.findByName.mockResolvedValueOnce(undefined);
+                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
                 await expect(sut.generateName('Èlène', 'Lunâtiz')).resolves.toStrictEqual({
                     ok: true,
                     value: 'elunatiz',
@@ -97,7 +97,7 @@ describe('EmailGeneratorService', () => {
 
         describe('when firstname contains invalid character set', () => {
             it('should not accept invalid character set in firstname', async () => {
-                emailRepoMock.findByName.mockResolvedValueOnce(undefined);
+                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
 
                 await expect(sut.generateName('Èlène?', 'L.,unâtiz')).resolves.toStrictEqual({
                     ok: false,
@@ -108,7 +108,7 @@ describe('EmailGeneratorService', () => {
 
         describe('when lastname contains invalid character set', () => {
             it('should not accept invalid character set in lastname', async () => {
-                emailRepoMock.findByName.mockResolvedValueOnce(undefined);
+                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
 
                 await expect(sut.generateName('Èlène', 'L.,unâtiz?')).resolves.toStrictEqual({
                     ok: false,
@@ -119,13 +119,13 @@ describe('EmailGeneratorService', () => {
 
         describe('when contains non-letters N1 (bnlreq)', () => {
             it('should remove non-letters N1 (bnlreq) chars', async () => {
-                emailRepoMock.findByName.mockResolvedValueOnce(undefined);
+                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
 
                 await expect(sut.generateName('Ebru', 'Alt‡nova')).resolves.toStrictEqual({
                     ok: true,
                     value: 'ealtnova',
                 });
-                emailRepoMock.findByName.mockResolvedValueOnce(undefined);
+                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
 
                 await expect(sut.generateName('‡re', 'Olsen')).resolves.toStrictEqual({
                     ok: true,
@@ -136,14 +136,14 @@ describe('EmailGeneratorService', () => {
 
         describe('when username cannot be generated (cleaned names are of length 0)', () => {
             it('should return error', async () => {
-                emailRepoMock.findByName.mockResolvedValueOnce(undefined);
+                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
 
                 await expect(sut.generateName('‡‡', 'Mustermann')).resolves.toStrictEqual({
                     ok: false,
                     error: new InvalidNameError('Could not generate valid username'),
                 });
 
-                emailRepoMock.findByName.mockResolvedValueOnce(undefined);
+                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
 
                 await expect(sut.generateName('Alex', '‡‡')).resolves.toStrictEqual({
                     ok: false,
@@ -154,9 +154,9 @@ describe('EmailGeneratorService', () => {
 
         describe('when username exists', () => {
             it('should append and increase counter and return name', async () => {
-                emailRepoMock.findByName.mockResolvedValueOnce(createMock<Email<true>>()); //mock first attempt => maxmustermann already exists
-                emailRepoMock.findByName.mockResolvedValueOnce(createMock<Email<true>>()); //mock second attempt => maxmustermann1 already exists
-                emailRepoMock.findByName.mockResolvedValueOnce(undefined); //mock third attempt => maxmustermann2 not exists
+                emailServiceRepoMock.findByName.mockResolvedValueOnce(createMock<Email<true>>()); //mock first attempt => maxmustermann already exists
+                emailServiceRepoMock.findByName.mockResolvedValueOnce(createMock<Email<true>>()); //mock second attempt => maxmustermann1 already exists
+                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined); //mock third attempt => maxmustermann2 not exists
 
                 await expect(sut.generateName('Max', 'Mustermann')).resolves.toStrictEqual({
                     ok: true,

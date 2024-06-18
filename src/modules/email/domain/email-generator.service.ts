@@ -6,14 +6,13 @@ import {
     InvalidAttributeLengthError,
 } from '../../../shared/error/index.js';
 import { isDIN91379A, toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
-import { EmailRepo } from '../persistence/email.repo.js';
 import { Email } from './email.js';
+import { EmailServiceRepo } from '../persistence/email-service.repo.js';
 
 @Injectable()
 export class EmailGeneratorService {
-    public constructor(private emailRepo: EmailRepo) {}
+    public constructor(private emailServiceRepo: EmailServiceRepo) {}
 
-    //private emailRepo: EmailRepo
     public async generateName(firstname: string, lastname: string): Promise<Result<string, DomainError>> {
         // Check for minimum length
         if (firstname.length < 2) {
@@ -79,7 +78,7 @@ export class EmailGeneratorService {
     }
 
     public async nameExists(name: string): Promise<boolean> {
-        const email: Option<Email<true>> = await this.emailRepo.findByName(name);
+        const email: Option<Email<true>> = await this.emailServiceRepo.findByName(name);
         return !!email;
     }
 }
