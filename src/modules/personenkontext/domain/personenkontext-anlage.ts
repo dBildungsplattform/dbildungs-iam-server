@@ -9,10 +9,6 @@ import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 
 export class PersonenkontextAnlage {
-    public organisationId?: string;
-
-    public rolleId?: string;
-
     private constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepo,
@@ -23,14 +19,23 @@ export class PersonenkontextAnlage {
     }
 
     public async findSchulstrukturknoten(
+        personPermissions: PersonPermissions,
         rolleId: string,
         sskName: string,
         limit?: number,
         excludeKlassen: boolean = false,
     ): Promise<OrganisationDo<true>[]> {
-        this.rolleId = rolleId;
+        const orgsWithRecht: string[] = await personPermissions.getOrgIdsWithSystemrecht([
+            RollenSystemRecht.PERSONEN_VERWALTEN,
+        ]);
 
-        const ssks: Option<OrganisationDo<true>[]> = await this.organisationRepo.findByNameOrKennung(sskName);
+        let ssks: Option<OrganisationDo<true>[]> = await this.organisationRepo.findByNameOrKennung(sskName);
+
+        //Landesadmin can view all roles, if not orgsWithRecht includes ROOT, filter the ssks
+        if (!orgsWithRecht.includes(this.organisationRepo.ROOT_ORGANISATION_ID)) {
+            ssks = ssks.filter((ssk: OrganisationDo<true>) => orgsWithRecht.some((orgId: string) => ssk.id === orgId));
+        }
+
         if (ssks.length === 0) return [];
 
         const rolleResult: Option<Rolle<true>> = await this.rolleRepo.findById(rolleId);
