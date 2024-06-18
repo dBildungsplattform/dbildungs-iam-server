@@ -217,6 +217,7 @@ describe('ItsLearning Event Handler', () => {
                 createMock<Organisation<true>>({
                     typ: OrganisationsTyp.SCHULE,
                     administriertVon: configRootOeffentlich,
+                    name: undefined,
                 }),
             );
             orgaRepoMock.findById.mockResolvedValueOnce(
