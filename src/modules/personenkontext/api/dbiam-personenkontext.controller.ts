@@ -112,7 +112,9 @@ export class DBiamPersonenkontextController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult.error),
             );
         }
-        this.eventService.publish(new PersonenkontextCreatedEvent(saveResult.value.id));
+        this.eventService.publish(
+            new PersonenkontextCreatedEvent(params.personId, params.organisationId, params.rolleId),
+        );
 
         return new DBiamPersonenkontextResponse(saveResult.value);
     }

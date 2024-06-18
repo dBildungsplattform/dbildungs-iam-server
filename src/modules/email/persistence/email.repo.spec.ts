@@ -9,7 +9,6 @@ import {
 import { EmailRepo } from './email.repo.js';
 import { Email } from '../domain/email.js';
 import { EmailFactory } from '../domain/email.factory.js';
-import { EmailGeneratorService } from '../domain/email-generator.service.js';
 import { createMock } from '@golevelup/ts-jest';
 import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/index.js';
@@ -17,6 +16,7 @@ import { PersonFactory } from '../../person/domain/person.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { EmailGeneratorService } from '../domain/email-generator.service.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -33,10 +33,7 @@ describe('EmailRepo', () => {
                 UsernameGeneratorService,
                 EmailRepo,
                 EmailFactory,
-                {
-                    provide: EmailGeneratorService,
-                    useValue: createMock<EmailGeneratorService>(),
-                },
+                EmailGeneratorService,
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>({

@@ -3,26 +3,25 @@ import { EmailGeneratorService } from './email-generator.service.js';
 
 export class Email<WasPersisted extends boolean> {
     private constructor(
-        public readonly emailGeneratorService: EmailGeneratorService,
         public readonly id: Persisted<string, WasPersisted>,
         public readonly createdAt: Persisted<Date, WasPersisted>,
         public readonly updatedAt: Persisted<Date, WasPersisted>,
         public readonly name: string,
         public readonly enabled: boolean,
         public readonly personId: PersonID,
+        public readonly emailGeneratorService?: EmailGeneratorService,
     ) {}
 
     public static createNew(
-        emailGeneratorService: EmailGeneratorService,
         name: string,
         enabled: boolean,
         personId: PersonID,
+        emailGeneratorService: EmailGeneratorService,
     ): Email<false> {
-        return new Email(emailGeneratorService, undefined, undefined, undefined, name, enabled, personId);
+        return new Email(undefined, undefined, undefined, name, enabled, personId, emailGeneratorService);
     }
 
     public static construct<WasPersisted extends boolean = false>(
-        emailGeneratorService: EmailGeneratorService,
         id: Persisted<string, WasPersisted>,
         createdAt: Persisted<Date, WasPersisted>,
         updatedAt: Persisted<Date, WasPersisted>,
@@ -30,7 +29,7 @@ export class Email<WasPersisted extends boolean> {
         enabled: boolean,
         personId: PersonID,
     ): Email<WasPersisted> {
-        return new Email(emailGeneratorService, id, createdAt, updatedAt, name, enabled, personId);
+        return new Email(id, createdAt, updatedAt, name, enabled, personId);
     }
 
     /*public async activate(): Promise<Result<void>> {

@@ -15,10 +15,10 @@ export class EmailFactory {
         enabled: boolean,
         personId: PersonID,
     ): Email<WasPersisted> {
-        return Email.construct(this.emailGeneratorService, id, createdAt, updatedAt, name, enabled, personId);
+        return Email.construct(id, createdAt, updatedAt, name, enabled, personId);
     }
 
     public createNew(name: string, enabled: boolean, personId: PersonID): Email<false> {
-        return Email.createNew(this.emailGeneratorService, name, enabled, personId);
+        return Email.createNew(name, enabled, personId, this.emailGeneratorService);
     }
 }

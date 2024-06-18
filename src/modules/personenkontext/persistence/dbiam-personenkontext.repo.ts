@@ -173,6 +173,27 @@ export class DBiamPersonenkontextRepo {
         );
     }
 
+    public async find(
+        personId: PersonID,
+        organisationId: OrganisationID,
+        rolleId: RolleID,
+    ): Promise<Option<Personenkontext<true>>> {
+        const personenKontext: Option<PersonenkontextEntity> = await this.em.findOne(
+            PersonenkontextEntity,
+            {
+                personId,
+                rolleId,
+                organisationId,
+            },
+            {},
+        );
+        if (personenKontext) {
+            return mapEntityToAggregate(personenKontext, this.personenkontextFactory);
+        }
+
+        return null;
+    }
+
     public async exists(personId: PersonID, organisationId: OrganisationID, rolleId: RolleID): Promise<boolean> {
         const personenKontext: Option<Loaded<PersonenkontextEntity, never, 'id', never>> = await this.em.findOne(
             PersonenkontextEntity,

@@ -266,6 +266,46 @@ describe('dbiam Personenkontext Repo', () => {
         });
     });
 
+    describe('find', () => {
+        describe('when personenkontext exists', () => {
+            it('should return a personenkontext by personId, organisationId, rolleId', async () => {
+                const person: Person<true> = await createPerson();
+                const organisationUUID: string = faker.string.uuid();
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
+                await sut.save(
+                    createPersonenkontext(false, {
+                        rolleId: rolle.id,
+                        organisationId: organisationUUID,
+                        personId: person.id,
+                    }),
+                );
+                const personenkontext: Option<Personenkontext<true>> = await sut.find(
+                    person.id,
+                    organisationUUID,
+                    rolle.id,
+                );
+
+                expect(personenkontext).toBeTruthy();
+            });
+        });
+
+        describe('when personenkontext does NOT exist', () => {
+            it('should return null', async () => {
+                const personUUID: string = faker.string.uuid();
+                const organisationUUID: string = faker.string.uuid();
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const personenkontext: Option<Personenkontext<true>> = await sut.find(
+                    personUUID,
+                    organisationUUID,
+                    rolle.id,
+                );
+
+                expect(personenkontext).toBeNull();
+            });
+        });
+    });
+
     describe('exists', () => {
         it('should return true, if the triplet exists', async () => {
             const person: Person<true> = await createPerson();
