@@ -23,6 +23,7 @@ import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { faker } from '@faker-js/faker';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { EventModule } from '../../../core/eventbus/event.module.js';
 
 describe('PersonenkontextScope', () => {
     let module: TestingModule;
@@ -33,7 +34,12 @@ describe('PersonenkontextScope', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
+            imports: [
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                MapperTestModule,
+                EventModule,
+            ],
             providers: [
                 PersonPersistenceMapperProfile,
                 RolleFactory,
