@@ -10,8 +10,10 @@ import { KeycloakAdministrationModule } from './keycloak-administration.module.j
 import { UserMapperProfile } from './domain/keycloak-client/user.mapper.profile.js';
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 import { KeycloakAdministrationService } from './domain/keycloak-admin-client.service.js';
-import { PersonService } from '../person/domain/person.service.js';
-import { PersonRepo } from '../person/persistence/person.repo.js';
+import { PersonenkontextFactory } from '../personenkontext/domain/personenkontext.factory.js';
+import { RolleModule } from '../rolle/rolle.module.js';
+import { PersonModule } from '../person/person.module.js';
+import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
 
 describe('KeycloakAdministrationModule', () => {
     let module: TestingModule;
@@ -24,8 +26,10 @@ describe('KeycloakAdministrationModule', () => {
                 KeycloakAdministrationModule,
                 DatabaseTestModule.forRoot(),
                 KeycloakConfigTestModule.forRoot(),
+                RolleModule,
+                PersonModule,
             ],
-            providers: [PersonService, PersonRepo],
+            providers: [PersonenkontextFactory, OrganisationRepository],
         }).compile();
     });
 
