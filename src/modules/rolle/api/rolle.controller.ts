@@ -51,6 +51,7 @@ import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PartialUpdateRolleBodyParams } from './update-rolle.body.params.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -295,5 +296,48 @@ export class RolleController {
             );
         }
         await this.rolleRepo.save(rolle);
+    }
+
+    @Patch(':rolleId')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ description: 'Update rolle.' })
+    @ApiOkResponse({ description: 'The rolle was successfully updated.' })
+    @ApiBadRequestResponse({ description: 'The input was not valid.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update the rolle.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to update the rolle.' })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while updating the rolle.',
+    })
+    public async updateRolle(
+        @Param() findRolleByIdParams: FindRolleByIdParams,
+        @Body() params: PartialUpdateRolleBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
+        if (!rolle) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId),
+                ),
+            );
+        }
+        const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(
+            findRolleByIdParams.rolleId,
+            rolle.createdAt,
+            rolle.updatedAt,
+            params.name,
+            rolle.administeredBySchulstrukturknoten,
+            rolle.rollenart,
+            params.merkmale,
+            params.systemrechte,
+            params.serviceProviderIds,
+        );
+
+        if (updatedRolle instanceof DomainError) {
+            throw updatedRolle;
+        }
+
+        await this.rolleRepo.saveAuthorized(updatedRolle, permissions);
+        // throw new AddSystemrechtError(); //hide that rolle is not found
     }
 }

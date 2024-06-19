@@ -180,6 +180,19 @@ export class RolleRepo {
         }
     }
 
+    public async saveAuthorized(
+        rolle: Rolle<true>,
+        permissions: PersonPermissions,
+    ): Promise<Rolle<true> | DomainError> {
+        //Permissions
+        const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(rolle.id, permissions);
+        if (!authorizedRole.ok) {
+            return authorizedRole.error;
+        }
+        const result: Rolle<true> = await this.update(rolle);
+        return result;
+    }
+
     private async create(rolle: Rolle<false>): Promise<Rolle<true>> {
         const rolleEntity: RolleEntity = this.em.create(RolleEntity, mapAggregateToData(rolle));
 

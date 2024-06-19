@@ -1,14 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Rolle } from './rolle.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 @Injectable()
 export class RolleFactory {
     public constructor(
         private organisationRepo: OrganisationRepository,
         private serviceProviderRepo: ServiceProviderRepo,
+        private dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
     ) {}
 
     public construct(
@@ -25,6 +28,7 @@ export class RolleFactory {
         return Rolle.construct(
             this.organisationRepo,
             this.serviceProviderRepo,
+            this.dBiamPersonenkontextRepo,
             id,
             createdAt,
             updatedAt,
@@ -48,12 +52,40 @@ export class RolleFactory {
         return Rolle.createNew(
             this.organisationRepo,
             this.serviceProviderRepo,
+            this.dBiamPersonenkontextRepo,
             name,
             administeredBySchulstrukturknoten,
             rollenart,
             merkmale,
             systemrechte,
             serviceProviderIds ?? [],
+        );
+    }
+
+    public async update(
+        id: string,
+        createdAt: Date,
+        updatedAt: Date,
+        name: string,
+        administeredBySchulstrukturknoten: string,
+        rollenart: RollenArt,
+        merkmale: RollenMerkmal[],
+        systemrechte: RollenSystemRecht[],
+        serviceProviderIds: string[],
+    ): Promise<Rolle<true> | DomainError> {
+        return Rolle.update(
+            this.organisationRepo,
+            this.serviceProviderRepo,
+            this.dBiamPersonenkontextRepo,
+            id,
+            createdAt,
+            updatedAt,
+            name,
+            administeredBySchulstrukturknoten,
+            rollenart,
+            merkmale,
+            systemrechte,
+            serviceProviderIds,
         );
     }
 }
