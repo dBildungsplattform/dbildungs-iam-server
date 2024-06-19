@@ -9,7 +9,6 @@ import { LdapClient } from './ldap-client.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
 import { Mutex } from 'async-mutex';
-import { SchuleNotFoundErrror } from '../error/schule-not-found.errror.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 
 @Injectable()
@@ -69,22 +68,6 @@ export class LdapClientService {
         });
     }
 
-    private async existsSchule(kennung: string): Promise<Result<boolean>> {
-        return this.mutex.runExclusive(async () => {
-            const client: Client = this.ldapClient.getClient();
-            const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
-            const searchResult: SearchResult = await client.search(`ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, {
-                filter: `(ou=${kennung})`,
-            });
-
-            return {
-                ok: true,
-                value: searchResult.searchEntries.length > 0,
-            };
-        });
-    }
-
     public async deleteOrganisation(organisation: Organisation<true>): Promise<Result<Organisation<true>>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteOrganisation');
@@ -116,30 +99,35 @@ export class LdapClientService {
             };
         }
         const lehrerUid: string = this.getLehrerUid(person, organisation);
-        const existsSchule: Result<boolean> = await this.existsSchule(organisation.kennung);
-        if (!existsSchule.ok || !existsSchule.value) {
-            return {
-                ok: false,
-                error: new SchuleNotFoundErrror(organisation.kennung),
-            };
-        }
-        const existsLehrer: Result<boolean> = await this.existsLehrer(person.referrer, organisation.kennung);
-        if (!existsLehrer.ok) {
-            return {
-                ok: false,
-                error: new LdapSearchError(LdapEntityType.LEHRER),
-            };
-        } else if (existsLehrer.value) {
-            return {
-                ok: true,
-                value: person,
-            };
-        }
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: createLehrer');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
+
+            const searchResultSchule: SearchResult = await client.search(`ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, {
+                filter: `(ou=${organisation.kennung})`,
+            });
+
+            if (searchResultSchule.searchEntries.length <= 0) {
+                return {
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.SCHULE),
+                };
+            }
+
+            const searchResultLehrer: SearchResult = await client.search(
+                `cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
+                {
+                    filter: `(uid=${person.referrer})`,
+                },
+            );
+            if (searchResultLehrer.searchEntries.length > 0) {
+                return {
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                };
+            }
             const entry: LdapPersonEntry = {
                 cn: person.vorname,
                 sn: person.familienname,
@@ -150,31 +138,6 @@ export class LdapClientService {
             this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
 
             return { ok: true, value: person };
-        });
-    }
-
-    private async existsLehrer(referrer: string, kennung: string): Promise<Result<boolean>> {
-        return this.mutex.runExclusive(async () => {
-            const client: Client = this.ldapClient.getClient();
-            const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
-            try {
-                const searchResult: SearchResult = await client.search(
-                    `cn=lehrer,ou=${kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
-                    {
-                        filter: `(uid=${referrer})`,
-                    },
-                );
-                return {
-                    ok: true,
-                    value: searchResult.searchEntries.length > 0,
-                };
-            } catch (err) {
-                return {
-                    ok: false,
-                    error: new LdapSearchError(LdapEntityType.LEHRER),
-                };
-            }
         });
     }
 
