@@ -18,6 +18,7 @@ import { KlasseNurVonSchuleAdministriertError } from '../specification/error/kla
 import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { faker } from '@faker-js/faker';
+import { EventModule } from '../../../core/eventbus/index.js';
 
 describe('OrganisationServiceSpecificationTest', () => {
     let module: TestingModule;
@@ -29,7 +30,12 @@ describe('OrganisationServiceSpecificationTest', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
+            imports: [
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                MapperTestModule,
+                EventModule,
+            ],
             providers: [OrganisationService, OrganisationRepo, OrganisationPersistenceMapperProfile],
         }).compile();
         organisationService = module.get(OrganisationService);

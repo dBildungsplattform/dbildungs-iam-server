@@ -6,7 +6,7 @@ import {
     JahrgangsstufeTypName,
     Personenstatus,
     PersonenstatusTypName,
-} from '../domain/personenkontext.enums.js';
+} from '../../domain/personenkontext.enums.js';
 
 export class UpdatePersonenkontextBodyParams {
     @AutoMap()

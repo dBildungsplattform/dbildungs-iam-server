@@ -17,6 +17,7 @@ import { TraegerInTraeger } from './traeger-in-traeger.js';
 import { ZyklusInOrganisationen } from './zyklus-in-organisationen.js';
 import { KlasseNurVonSchuleAdministriert } from './klasse-nur-von-schule-administriert.js';
 import { KlassenNameAnSchuleEindeutig } from './klassen-name-an-schule-eindeutig.js';
+import { EventModule } from '../../../core/eventbus/index.js';
 
 describe('OrganisationSpecificationTests', () => {
     let module: TestingModule;
@@ -31,7 +32,12 @@ describe('OrganisationSpecificationTests', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
+            imports: [
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                MapperTestModule,
+                EventModule,
+            ],
             providers: [OrganisationPersistenceMapperProfile, OrganisationRepo],
         }).compile();
         repo = module.get(OrganisationRepo);
