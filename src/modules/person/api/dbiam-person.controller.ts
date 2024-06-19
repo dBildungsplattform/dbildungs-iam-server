@@ -75,7 +75,13 @@ export class DBiamPersonController {
             );
         }
 
-        this.eventService.publish(new PersonenkontextCreatedEvent(savedPersonWithPersonenkontext.personenkontext.id));
+        this.eventService.publish(
+            new PersonenkontextCreatedEvent(
+                savedPersonWithPersonenkontext.person.id,
+                savedPersonWithPersonenkontext.personenkontext.organisationId,
+                savedPersonWithPersonenkontext.personenkontext.rolleId,
+            ),
+        );
 
         return new DBiamPersonResponse(
             savedPersonWithPersonenkontext.person,
