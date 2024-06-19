@@ -1,20 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule } from '../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
 import { EmailModule } from './email.module.js';
 import { EmailRepo } from './persistence/email.repo.js';
 import { EmailFactory } from './domain/email.factory.js';
 import { EmailGeneratorService } from './domain/email-generator.service.js';
 import { createMock } from '@golevelup/ts-jest';
+import { PersonRepository } from '../person/persistence/person.repository.js';
 
 describe('EmailModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), EmailModule],
+            imports: [ConfigTestModule, MapperTestModule, DatabaseTestModule.forRoot(), EmailModule],
             providers: [
                 EmailRepo,
                 EmailFactory,
+                PersonRepository,
                 {
                     provide: EmailGeneratorService,
                     useValue: createMock<EmailGeneratorService>(),
@@ -23,6 +25,8 @@ describe('EmailModule', () => {
         })
             .overrideProvider(EmailGeneratorService)
             .useValue(createMock<EmailGeneratorService>())
+            .overrideProvider(PersonRepository)
+            .useValue(createMock<PersonRepository>())
             .compile();
     });
 

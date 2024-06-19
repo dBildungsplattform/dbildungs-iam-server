@@ -8,7 +8,6 @@ import {
     InvalidNameError,
 } from '../../../shared/error/index.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { Email } from './email.js';
 import { EmailServiceRepo } from '../persistence/email-service.repo.js';
 
 describe('EmailGeneratorService', () => {
@@ -41,7 +40,7 @@ describe('EmailGeneratorService', () => {
     describe('generateName', () => {
         describe('when firstname has less than 2 characters', () => {
             it('should return error', async () => {
-                await expect(sut.generateName('', faker.string.alpha({ length: 2 }))).resolves.toStrictEqual({
+                await expect(sut.generateAddress('', faker.string.alpha({ length: 2 }))).resolves.toStrictEqual({
                     ok: false,
                     error: new InvalidAttributeLengthError('name.vorname'),
                 });
@@ -50,7 +49,7 @@ describe('EmailGeneratorService', () => {
 
         describe('when lastname has less than 2 characters', () => {
             it('should return error', async () => {
-                await expect(sut.generateName(faker.string.alpha({ length: 2 }), '')).resolves.toStrictEqual({
+                await expect(sut.generateAddress(faker.string.alpha({ length: 2 }), '')).resolves.toStrictEqual({
                     ok: false,
                     error: new InvalidAttributeLengthError('name.familienname'),
                 });
@@ -59,7 +58,7 @@ describe('EmailGeneratorService', () => {
 
         describe('when firstname is not isDIN91379A', () => {
             it('should return error', async () => {
-                await expect(sut.generateName('123^^$/()', 'Rottelburg')).resolves.toStrictEqual({
+                await expect(sut.generateAddress('123^^$/()', 'Rottelburg')).resolves.toStrictEqual({
                     ok: false,
                     error: new InvalidCharacterSetError('name.vorname', 'DIN-91379A'),
                 });
@@ -68,7 +67,7 @@ describe('EmailGeneratorService', () => {
 
         describe('when lastname is not isDIN91379A', () => {
             it('should return error', async () => {
-                await expect(sut.generateName('Torsten', '123^^$/()')).resolves.toStrictEqual({
+                await expect(sut.generateAddress('Torsten', '123^^$/()')).resolves.toStrictEqual({
                     ok: false,
                     error: new InvalidCharacterSetError('name.familienname', 'DIN-91379A'),
                 });
@@ -77,29 +76,29 @@ describe('EmailGeneratorService', () => {
 
         describe('when contains special characters', () => {
             it('should normalize german, danish and french special characters', async () => {
-                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
-                await expect(sut.generateName('Åron', 'åàâçèéêëîïôùûÿäæöøœüß')).resolves.toStrictEqual({
+                emailServiceRepoMock.exists.mockResolvedValueOnce(false);
+                await expect(sut.generateAddress('Åron', 'åàâçèéêëîïôùûÿäæöøœüß')).resolves.toStrictEqual({
                     ok: true,
-                    value: 'aaaaaceeeeiiouuyaeaeoeoeoeuess',
+                    value: 'aaaaaceeeeiiouuyaeaeoeoeoeuess@schule-sh.de',
                 });
             });
         });
 
         describe('when contains diacritics', () => {
             it('should remove diacritics', async () => {
-                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
-                await expect(sut.generateName('Èlène', 'Lunâtiz')).resolves.toStrictEqual({
+                emailServiceRepoMock.exists.mockResolvedValueOnce(false);
+                await expect(sut.generateAddress('Èlène', 'Lunâtiz')).resolves.toStrictEqual({
                     ok: true,
-                    value: 'elunatiz',
+                    value: 'elunatiz@schule-sh.de',
                 });
             });
         });
 
         describe('when firstname contains invalid character set', () => {
             it('should not accept invalid character set in firstname', async () => {
-                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
+                emailServiceRepoMock.exists.mockResolvedValueOnce(false);
 
-                await expect(sut.generateName('Èlène?', 'L.,unâtiz')).resolves.toStrictEqual({
+                await expect(sut.generateAddress('Èlène?', 'L.,unâtiz')).resolves.toStrictEqual({
                     ok: false,
                     error: new InvalidCharacterSetError('name.vorname', 'DIN-91379A'),
                 });
@@ -108,9 +107,9 @@ describe('EmailGeneratorService', () => {
 
         describe('when lastname contains invalid character set', () => {
             it('should not accept invalid character set in lastname', async () => {
-                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
+                emailServiceRepoMock.exists.mockResolvedValueOnce(false);
 
-                await expect(sut.generateName('Èlène', 'L.,unâtiz?')).resolves.toStrictEqual({
+                await expect(sut.generateAddress('Èlène', 'L.,unâtiz?')).resolves.toStrictEqual({
                     ok: false,
                     error: new InvalidCharacterSetError('name.familienname', 'DIN-91379A'),
                 });
@@ -119,33 +118,33 @@ describe('EmailGeneratorService', () => {
 
         describe('when contains non-letters N1 (bnlreq)', () => {
             it('should remove non-letters N1 (bnlreq) chars', async () => {
-                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
+                emailServiceRepoMock.exists.mockResolvedValueOnce(false);
 
-                await expect(sut.generateName('Ebru', 'Alt‡nova')).resolves.toStrictEqual({
+                await expect(sut.generateAddress('Ebru', 'Alt‡nova')).resolves.toStrictEqual({
                     ok: true,
-                    value: 'ealtnova',
+                    value: 'ealtnova@schule-sh.de',
                 });
-                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
+                emailServiceRepoMock.exists.mockResolvedValueOnce(false);
 
-                await expect(sut.generateName('‡re', 'Olsen')).resolves.toStrictEqual({
+                await expect(sut.generateAddress('‡re', 'Olsen')).resolves.toStrictEqual({
                     ok: true,
-                    value: 'rolsen',
+                    value: 'rolsen@schule-sh.de',
                 });
             });
         });
 
         describe('when username cannot be generated (cleaned names are of length 0)', () => {
             it('should return error', async () => {
-                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
+                emailServiceRepoMock.exists.mockResolvedValueOnce(false);
 
-                await expect(sut.generateName('‡‡', 'Mustermann')).resolves.toStrictEqual({
+                await expect(sut.generateAddress('‡‡', 'Mustermann')).resolves.toStrictEqual({
                     ok: false,
                     error: new InvalidNameError('Could not generate valid username'),
                 });
 
-                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined);
+                emailServiceRepoMock.exists.mockResolvedValueOnce(false);
 
-                await expect(sut.generateName('Alex', '‡‡')).resolves.toStrictEqual({
+                await expect(sut.generateAddress('Alex', '‡‡')).resolves.toStrictEqual({
                     ok: false,
                     error: new InvalidNameError('Could not generate valid username'),
                 });
@@ -154,13 +153,13 @@ describe('EmailGeneratorService', () => {
 
         describe('when username exists', () => {
             it('should append and increase counter and return name', async () => {
-                emailServiceRepoMock.findByName.mockResolvedValueOnce(createMock<Email<true>>()); //mock first attempt => maxmustermann already exists
-                emailServiceRepoMock.findByName.mockResolvedValueOnce(createMock<Email<true>>()); //mock second attempt => maxmustermann1 already exists
-                emailServiceRepoMock.findByName.mockResolvedValueOnce(undefined); //mock third attempt => maxmustermann2 not exists
+                emailServiceRepoMock.exists.mockResolvedValueOnce(true); //mock first attempt => maxmustermann already exists
+                emailServiceRepoMock.exists.mockResolvedValueOnce(true); //mock second attempt => maxmustermann1 already exists
+                emailServiceRepoMock.exists.mockResolvedValueOnce(false); //mock third attempt => maxmustermann2 not exists
 
-                await expect(sut.generateName('Max', 'Mustermann')).resolves.toStrictEqual({
+                await expect(sut.generateAddress('Max', 'Mustermann')).resolves.toStrictEqual({
                     ok: true,
-                    value: 'mmustermann2',
+                    value: 'mmustermann2@schule-sh.de',
                 });
             });
         });

@@ -5,7 +5,7 @@ import { PersonEntity } from '../../person/persistence/person.entity.js';
 @Entity({ tableName: 'email' })
 export class EmailEntity extends TimestampedEntity {
     @Property()
-    public name!: string;
+    public address!: string;
 
     @Property()
     public enabled!: boolean;

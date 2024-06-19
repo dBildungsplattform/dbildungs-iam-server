@@ -43,6 +43,7 @@ export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<
         dataProvider: undefined,
         revision: person.revision,
         personalnummer: person.personalnummer,
+        email: person.email,
     };
 }
 
@@ -73,6 +74,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.vertrauensstufe,
         entity.auskunftssperre,
         entity.personalnummer,
+        entity.email,
     );
 }
 

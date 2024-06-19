@@ -2,23 +2,36 @@ import { Injectable } from '@nestjs/common';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { Email } from './email.js';
 import { EmailGeneratorService } from './email-generator.service.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 
 @Injectable()
 export class EmailFactory {
-    public constructor(private readonly emailGeneratorService: EmailGeneratorService) {}
+    public constructor(
+        private readonly emailGeneratorService: EmailGeneratorService,
+        private readonly personRepository: PersonRepository,
+    ) {}
 
     public construct<WasPersisted extends boolean = false>(
         id: Persisted<string, WasPersisted>,
         createdAt: Persisted<Date, WasPersisted>,
         updatedAt: Persisted<Date, WasPersisted>,
-        name: string,
         enabled: boolean,
         personId: PersonID,
+        address: string,
     ): Email<WasPersisted> {
-        return Email.construct(id, createdAt, updatedAt, name, enabled, personId);
+        return Email.construct(
+            id,
+            createdAt,
+            updatedAt,
+            enabled,
+            personId,
+            address,
+            this.emailGeneratorService,
+            this.personRepository,
+        );
     }
 
-    public createNew(name: string, enabled: boolean, personId: PersonID): Email<false> {
-        return Email.createNew(name, enabled, personId, this.emailGeneratorService);
+    public createNew(enabled: boolean, personId: PersonID): Email<false> {
+        return Email.createNew(enabled, personId, this.emailGeneratorService, this.personRepository);
     }
 }

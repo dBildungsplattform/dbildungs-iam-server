@@ -37,6 +37,8 @@ describe('EmailServiceRepo', () => {
                 EmailFactory,
                 EmailGeneratorService,
                 EmailServiceRepo,
+                PersonFactory,
+                PersonRepository,
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>({
@@ -52,8 +54,6 @@ describe('EmailServiceRepo', () => {
                             }),
                     }),
                 },
-                PersonFactory,
-                PersonRepository,
             ],
         }).compile();
         sut = module.get(EmailServiceRepo);
@@ -100,14 +100,15 @@ describe('EmailServiceRepo', () => {
     describe('findByName', () => {
         it('should return email by name', async () => {
             const person: Person<true> = await createPerson();
-            const name: string = faker.internet.email();
-            const email: Email<false> = emailFactory.createNew(name, false, person.id);
+            const email: Email<false> = emailFactory.createNew(false, person.id);
+            email.address = faker.internet.email();
             const savedEmail: Email<true> = await emailRepo.save(email);
 
-            const foundEmail: Option<Email<true>> = await sut.findByName(savedEmail.name);
+            if (!savedEmail.address) throw Error();
 
-            expect(foundEmail).toBeTruthy();
-            expect(foundEmail).toEqual(savedEmail);
+            const exists: boolean = await sut.exists(savedEmail.address);
+
+            expect(exists).toBeTruthy();
         });
     });
 });

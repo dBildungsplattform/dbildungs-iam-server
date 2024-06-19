@@ -8,15 +8,18 @@ import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
 import { RolleFactory } from '../rolle/domain/rolle.factory.js';
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
+import { PersonModule } from '../person/person.module.js';
+import { EmailServiceRepo } from './persistence/email-service.repo.js';
 
 @Module({
-    imports: [LoggerModule.register(EmailModule.name)],
+    imports: [PersonModule, LoggerModule.register(EmailModule.name)],
     providers: [
         RolleRepo,
         RolleFactory,
         ServiceProviderRepo,
         OrganisationRepository,
         EmailRepo,
+        EmailServiceRepo,
         EmailFactory,
         EmailGeneratorService,
         EmailEventHandler,

@@ -5,6 +5,7 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { EmailEventHandler } from './email-event-handler.js';
@@ -20,6 +21,7 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 
 describe('Email Event Handler', () => {
     let app: INestApplication;
@@ -30,7 +32,12 @@ describe('Email Event Handler', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [ConfigTestModule, EmailModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
+            imports: [
+                ConfigTestModule,
+                MapperTestModule,
+                EmailModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
+            ],
             providers: [
                 {
                     provide: APP_PIPE,
@@ -48,6 +55,8 @@ describe('Email Event Handler', () => {
             .useValue(createMock<RolleRepo>())
             .overrideProvider(EmailEventHandler)
             .useClass(EmailEventHandler)
+            .overrideProvider(PersonRepository)
+            .useValue(createMock<PersonRepository>())
             .compile();
 
         emailEventHandler = module.get(EmailEventHandler);
@@ -91,7 +100,22 @@ describe('Email Event Handler', () => {
         });
 
         describe('when rolle does NOT exists', () => {
-            it('should execute without errors', async () => {
+            it('should log error', async () => {
+                const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                );
+
+                rolleRepoMock.findById.mockResolvedValueOnce(undefined);
+                const result: void = await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
+
+                expect(result).toBeUndefined();
+            });
+        });
+
+        describe('when generated address is NOT ok', () => {
+            it('should log error', async () => {
                 const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(
                     faker.string.uuid(),
                     faker.string.uuid(),

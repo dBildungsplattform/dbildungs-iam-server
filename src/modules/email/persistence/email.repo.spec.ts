@@ -99,7 +99,8 @@ describe('EmailRepo', () => {
     describe('findById', () => {
         it('should return one email by id', async () => {
             const person: Person<true> = await createPerson();
-            const email: Email<false> = emailFactory.createNew(faker.internet.email(), false, person.id);
+            const email: Email<false> = emailFactory.createNew(false, person.id);
+            email.address = faker.internet.email();
             const savedEmail: Email<true> = await sut.save(email);
             const foundEmail: Option<Email<true>> = await sut.findById(savedEmail.id);
 
@@ -111,8 +112,10 @@ describe('EmailRepo', () => {
     describe('findByIds', () => {
         it('should return several emails by id', async () => {
             const person: Person<true> = await createPerson();
-            const email1: Email<false> = emailFactory.createNew(faker.internet.email(), false, person.id);
-            const email2: Email<false> = emailFactory.createNew(faker.internet.email(), false, person.id);
+            const email1: Email<false> = emailFactory.createNew(false, person.id);
+            const email2: Email<false> = emailFactory.createNew(false, person.id);
+            email1.address = faker.internet.email();
+            email2.address = faker.internet.email();
             const savedEmail1: Email<true> = await sut.save(email1);
             const savedEmail2: Email<true> = await sut.save(email2);
 
@@ -127,11 +130,11 @@ describe('EmailRepo', () => {
     describe('findByName', () => {
         it('should return email by name', async () => {
             const person: Person<true> = await createPerson();
-            const name: string = faker.internet.email();
-            const email: Email<false> = emailFactory.createNew(name, false, person.id);
+            const email: Email<false> = emailFactory.createNew(false, person.id);
+            email.address = faker.internet.email();
             const savedEmail: Email<true> = await sut.save(email);
-
-            const foundEmail: Option<Email<true>> = await sut.findByName(savedEmail.name);
+            if (!savedEmail.address) throw Error();
+            const foundEmail: Option<Email<true>> = await sut.findByAddress(savedEmail.address);
 
             expect(foundEmail).toBeTruthy();
             expect(foundEmail).toEqual(savedEmail);
@@ -141,8 +144,9 @@ describe('EmailRepo', () => {
     describe('findByPersonId', () => {
         it('should return email by personId', async () => {
             const person: Person<true> = await createPerson();
-            const name: string = faker.internet.email();
-            const email: Email<false> = emailFactory.createNew(name, false, person.id);
+            const email: Email<false> = emailFactory.createNew(false, person.id);
+            email.address = faker.internet.email();
+
             const savedEmail: Email<true> = await sut.save(email);
 
             const foundEmails: Email<true>[] = await sut.findByPersonId(person.id);
@@ -155,16 +159,17 @@ describe('EmailRepo', () => {
     describe('save with id (update)', () => {
         it('should update entity, when id is set', async () => {
             const person: Person<true> = await createPerson();
-            const name: string = faker.internet.email();
-            const email: Email<false> = emailFactory.createNew(name, false, person.id);
+            const email: Email<false> = emailFactory.createNew(false, person.id);
+            email.address = faker.internet.email();
+
             const savedEmail: Email<true> = await sut.save(email);
             const newEmail: Email<false> = emailFactory.construct(
                 savedEmail.id,
                 faker.date.past(),
                 faker.date.recent(),
-                'test',
                 false,
                 person.id,
+                faker.internet.email(),
             );
             const updatedMail: Email<true> = await sut.save(newEmail);
             const foundEmail: Option<Email<true>> = await sut.findById(updatedMail.id);

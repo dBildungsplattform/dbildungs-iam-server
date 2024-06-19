@@ -6,14 +6,13 @@ import {
     InvalidAttributeLengthError,
 } from '../../../shared/error/index.js';
 import { isDIN91379A, toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
-import { Email } from './email.js';
 import { EmailServiceRepo } from '../persistence/email-service.repo.js';
 
 @Injectable()
 export class EmailGeneratorService {
     public constructor(private emailServiceRepo: EmailServiceRepo) {}
 
-    public async generateName(firstname: string, lastname: string): Promise<Result<string, DomainError>> {
+    public async generateAddress(firstname: string, lastname: string): Promise<Result<string, DomainError>> {
         // Check for minimum length
         if (firstname.length < 2) {
             return { ok: false, error: new InvalidAttributeLengthError('name.vorname') };
@@ -47,13 +46,13 @@ export class EmailGeneratorService {
             return { ok: false, error: new InvalidNameError('Could not generate valid username') };
         }
 
-        const calculatedUsername: string = cleanedFirstname[0] + cleanedLastname;
+        const calculatedAddress: string = cleanedFirstname[0] + cleanedLastname;
 
-        const nextAvailableUsername: string = await this.getNextAvailableName(calculatedUsername);
+        const nextAddressName: string = await this.getNextAvailableAddress(calculatedAddress);
 
         return {
             ok: true,
-            value: nextAvailableUsername,
+            value: nextAddressName + '@schule-sh.de',
         };
     }
 
@@ -66,19 +65,14 @@ export class EmailGeneratorService {
         return removedDiacritics;
     }
 
-    private async getNextAvailableName(calculatedUsername: string): Promise<string> {
-        if (!(await this.nameExists(calculatedUsername))) {
-            return calculatedUsername;
+    private async getNextAvailableAddress(calculatedAddress: string): Promise<string> {
+        if (!(await this.emailServiceRepo.exists(calculatedAddress))) {
+            return calculatedAddress;
         }
         let counter: number = 1;
-        while (await this.nameExists(calculatedUsername + counter)) {
+        while (await this.emailServiceRepo.exists(calculatedAddress + counter)) {
             counter = counter + 1;
         }
-        return calculatedUsername + counter;
-    }
-
-    public async nameExists(name: string): Promise<boolean> {
-        const email: Option<Email<true>> = await this.emailServiceRepo.findByName(name);
-        return !!email;
+        return calculatedAddress + counter;
     }
 }

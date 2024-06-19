@@ -8,11 +8,14 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
+import { EmailFactory } from './email.factory.js';
+import { Email } from './email.js';
 
 @Injectable()
 export class EmailEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
+        private readonly emailFactory: EmailFactory,
         private readonly rolleRepo: RolleRepo,
         private readonly serviceProviderRepo: ServiceProviderRepo,
     ) {}
@@ -27,6 +30,13 @@ export class EmailEventHandler {
 
         if (await this.rolleReferencesEmailServiceProvider(rolle)) {
             this.logger.info(`Created PK with rolle that references email SP!`);
+            const email: Email<false> = this.emailFactory.createNew(false, event.personId);
+            const address: Result<string> = await email.activate();
+            if (address.ok) {
+                this.logger.info(`Created address ${address.value}`);
+            } else {
+                this.logger.error(`Could not create address, error is ${address.error.message}`);
+            }
         }
     }
 
