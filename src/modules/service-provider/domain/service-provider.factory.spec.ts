@@ -35,8 +35,8 @@ describe('ServiceProviderFactory', () => {
                 const created: Date = faker.date.past();
                 const updated: Date = faker.date.recent();
                 const id: string = faker.string.uuid();
-                const gruppe: string = faker.string.alpha();
-                const rolle: string = faker.string.alpha();
+                const keycloakGroup: string = faker.string.alpha();
+                const keycloakRole: string = faker.string.alpha();
                 const example: ServiceProvider<true> = {
                     id: id,
                     createdAt: created,
@@ -48,8 +48,8 @@ describe('ServiceProviderFactory', () => {
                     providedOnSchulstrukturknoten: ssk,
                     logo: undefined,
                     logoMimeType: undefined,
-                    gruppe: gruppe,
-                    rolle: rolle,
+                    keycloakGroup: keycloakGroup,
+                    keycloakRole: keycloakRole,
                 };
                 const serviceProvider: ServiceProvider<true> = sut.construct(
                     id,
@@ -62,8 +62,8 @@ describe('ServiceProviderFactory', () => {
                     ssk,
                     undefined,
                     undefined,
-                    gruppe,
-                    rolle,
+                    keycloakGroup,
+                    keycloakRole,
                 );
 
                 expect(serviceProvider).toEqual(example);

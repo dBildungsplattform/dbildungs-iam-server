@@ -74,8 +74,8 @@ describe('ServiceProviderRepo', () => {
         it('should publish an event when a new service-provider is saved', async () => {
             const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
 
-            serviceProvider.gruppe = 'someGroup';
-            serviceProvider.rolle = 'someRole';
+            serviceProvider.keycloakGroup = 'someGroup';
+            serviceProvider.keycloakRole = 'someRole';
 
             const mockEventService: EventService = module.get<EventService>(EventService);
 

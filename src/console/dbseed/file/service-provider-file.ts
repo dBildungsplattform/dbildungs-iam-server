@@ -20,7 +20,7 @@ export class ServiceProviderFile {
 
     public logoMimeType?: string;
 
-    public gruppe?: string;
+    public keycloakGroup?: string;
 
-    public rolle?: string;
+    public keycloakRole?: string;
 }

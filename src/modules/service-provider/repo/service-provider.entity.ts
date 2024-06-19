@@ -27,8 +27,8 @@ export class ServiceProviderEntity extends TimestampedEntity {
     public logoMimeType?: string;
 
     @Property({ nullable: true })
-    public gruppe?: string;
+    public keycloakGroup?: string;
 
     @Property({ nullable: true })
-    public rolle?: string;
+    public keycloakRole?: string;
 }
