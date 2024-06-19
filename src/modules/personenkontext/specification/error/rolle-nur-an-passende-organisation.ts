@@ -4,7 +4,7 @@ import { PersonenkontextSpecificationErrorI18nTypes } from '../../api/dbiam-pers
 export class RolleNurAnPassendeOrganisationError extends PersonenkontextSpecificationError {
     public constructor(details?: unknown[] | Record<string, undefined>) {
         super(
-            `Personenkontext could not be created/updates because it violates ${PersonenkontextSpecificationErrorI18nTypes.NUR_LEHR_UND_LERN_AN_KLASSE} specification`,
+            `Personenkontext could not be created/updated because it violates ${PersonenkontextSpecificationErrorI18nTypes.ROLLE_NUR_AN_PASSENDE_ORGANISATION} specification`,
             details,
         );
     }
