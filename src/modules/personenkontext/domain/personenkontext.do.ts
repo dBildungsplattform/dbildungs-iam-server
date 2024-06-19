@@ -22,6 +22,9 @@ export class PersonenkontextDo<WasPersisted extends boolean> implements DoBase<W
     public personId!: string;
 
     @AutoMap()
+    public rolleId!: string;
+
+    @AutoMap()
     public referrer?: string;
 
     @AutoMap()
