@@ -206,9 +206,7 @@ describe('LDAP Client Service', () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [] }),
-                    ); //mock existsSchule: schule is NOT present
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] })); //mock existsSchule: schule is NOT present
 
                     return clientMock;
                 });

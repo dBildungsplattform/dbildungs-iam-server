@@ -36,9 +36,8 @@ export class LdapClientService {
         } catch (err) {
             const errMsg: string = `Could not connect to LDAP, message: ${JSON.stringify(err)}`;
             this.logger.error(errMsg);
-            return {ok: false, error: new Error(errMsg)};
+            return { ok: false, error: new Error(errMsg) };
         }
-
     }
 
     public async createOrganisation(organisation: Organisation<true>): Promise<Result<Organisation<true>>> {
@@ -137,7 +136,6 @@ export class LdapClientService {
             };
         }
         return this.mutex.runExclusive(async () => {
-
             this.logger.info('LDAP: createLehrer');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
