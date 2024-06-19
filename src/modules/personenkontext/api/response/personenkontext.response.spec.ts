@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { PersonenkontextResponse } from './personenkontext.response.js';
-import { LoeschungResponse } from '../../person/api/loeschung.response.js';
-import { Rolle } from '../domain/personenkontext.enums.js';
+import { LoeschungResponse } from '../../../person/api/loeschung.response.js';
+import { Rolle } from '../../domain/personenkontext.enums.js';
 
 describe('PersonenkontextResponse', () => {
     describe('constructor', () => {

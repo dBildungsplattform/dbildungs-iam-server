@@ -27,7 +27,7 @@ import { Observable } from 'rxjs';
 import { PassportUser } from '../../authentication/types/user.js';
 import { Request } from 'express';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { FindRollenResponse } from './find-rollen.response.js';
+import { FindRollenResponse } from './response/find-rollen.response.js';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
     const rolle: Rolle<false> = rolleFactory.createNew(

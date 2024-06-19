@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PersonInfoResponse } from '../api/person-info.response.js';
-import { PersonenkontextResponse } from '../../personenkontext/api/personenkontext.response.js';
+import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
 
