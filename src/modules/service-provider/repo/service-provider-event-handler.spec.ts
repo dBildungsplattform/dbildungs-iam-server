@@ -1,19 +1,19 @@
-import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { CreateGroupAndRoleHandler } from './service-provider-event-handler.js';
-import { CreateGroupAndRoleEvent } from '../../../shared/events/kc-group-and-role-event.js';
-import { KeycloakClientError } from '../../../shared/error/index.js';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { KeycloakClientError } from '../../../shared/error/index.js';
+import { CreateGroupAndRoleEvent } from '../../../shared/events/kc-group-and-role-event.js';
+import { KeycloakGroupRoleService } from '../../keycloak-administration/domain/keycloak-group-role.service.js';
+import { CreateGroupAndRoleHandler } from './service-provider-event-handler.js';
 
 describe('CreateGroupAndRoleHandler', () => {
-    let keycloakUserServiceMock: DeepMocked<KeycloakUserService>;
+    let keycloakGroupRoleServiceMock: DeepMocked<KeycloakGroupRoleService>;
     let loggerMock: DeepMocked<ClassLogger>;
     let createGroupAndRoleHandler: CreateGroupAndRoleHandler;
 
     beforeEach(() => {
-        keycloakUserServiceMock = createMock<KeycloakUserService>();
+        keycloakGroupRoleServiceMock = createMock<KeycloakGroupRoleService>();
         loggerMock = createMock<ClassLogger>();
-        createGroupAndRoleHandler = new CreateGroupAndRoleHandler(keycloakUserServiceMock, loggerMock);
+        createGroupAndRoleHandler = new CreateGroupAndRoleHandler(keycloakGroupRoleServiceMock, loggerMock);
     });
 
     describe('handleCreateGroupAndRoleEvent', () => {
@@ -24,20 +24,20 @@ describe('CreateGroupAndRoleHandler', () => {
         const event: CreateGroupAndRoleEvent = new CreateGroupAndRoleEvent(groupName, roleName);
 
         it('should successfully create group, role, and add role to group', async () => {
-            keycloakUserServiceMock.createGroup.mockResolvedValue({ ok: true, value: groupId });
-            keycloakUserServiceMock.createRole.mockResolvedValue({ ok: true, value: encodedRoleName });
-            keycloakUserServiceMock.addRoleToGroup.mockResolvedValue({ ok: true, value: true });
+            keycloakGroupRoleServiceMock.createGroup.mockResolvedValue({ ok: true, value: groupId });
+            keycloakGroupRoleServiceMock.createRole.mockResolvedValue({ ok: true, value: encodedRoleName });
+            keycloakGroupRoleServiceMock.addRoleToGroup.mockResolvedValue({ ok: true, value: true });
 
             await createGroupAndRoleHandler.handleCreateGroupAndRoleEvent(event);
 
-            expect(keycloakUserServiceMock.createGroup).toHaveBeenCalledWith(groupName);
-            expect(keycloakUserServiceMock.createRole).toHaveBeenCalledWith(roleName);
-            expect(keycloakUserServiceMock.addRoleToGroup).toHaveBeenCalledWith(groupId, roleName);
+            expect(keycloakGroupRoleServiceMock.createGroup).toHaveBeenCalledWith(groupName);
+            expect(keycloakGroupRoleServiceMock.createRole).toHaveBeenCalledWith(roleName);
+            expect(keycloakGroupRoleServiceMock.addRoleToGroup).toHaveBeenCalledWith(groupId, roleName);
             expect(loggerMock.error).not.toHaveBeenCalled();
         });
 
         it('should log an error if creating the group fails', async () => {
-            keycloakUserServiceMock.createGroup.mockResolvedValue({
+            keycloakGroupRoleServiceMock.createGroup.mockResolvedValue({
                 ok: false,
                 error: new KeycloakClientError('Group creation failed'),
             });
@@ -48,8 +48,8 @@ describe('CreateGroupAndRoleHandler', () => {
         });
 
         it('should log an error if creating the role fails', async () => {
-            keycloakUserServiceMock.createGroup.mockResolvedValue({ ok: true, value: groupId });
-            keycloakUserServiceMock.createRole.mockResolvedValue({
+            keycloakGroupRoleServiceMock.createGroup.mockResolvedValue({ ok: true, value: groupId });
+            keycloakGroupRoleServiceMock.createRole.mockResolvedValue({
                 ok: false,
                 error: new KeycloakClientError('Role creation failed'),
             });
@@ -60,9 +60,9 @@ describe('CreateGroupAndRoleHandler', () => {
         });
 
         it('should log an error if adding role to group fails', async () => {
-            keycloakUserServiceMock.createGroup.mockResolvedValue({ ok: true, value: groupId });
-            keycloakUserServiceMock.createRole.mockResolvedValue({ ok: true, value: encodedRoleName });
-            keycloakUserServiceMock.addRoleToGroup.mockResolvedValue({
+            keycloakGroupRoleServiceMock.createGroup.mockResolvedValue({ ok: true, value: groupId });
+            keycloakGroupRoleServiceMock.createRole.mockResolvedValue({ ok: true, value: encodedRoleName });
+            keycloakGroupRoleServiceMock.addRoleToGroup.mockResolvedValue({
                 ok: false,
                 error: new KeycloakClientError('Add role to group failed'),
             });
