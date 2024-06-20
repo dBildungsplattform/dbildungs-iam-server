@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonScope } from '../persistence/person.scope.js';
@@ -14,6 +14,7 @@ import { PersonenkontextFactory } from '../../personenkontext/domain/personenkon
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextAnlageFactory } from '../../personenkontext/domain/personenkontext-anlage.factory.js';
 import { PersonenkontextWorkflowAggregate } from '../../personenkontext/domain/personenkontext-workflow-anlage.js';
+import { PersonenkontextCommitError } from '../../personenkontext/domain/error/personenkontext-commit.error.js';
 
 export type PersonPersonenkontext = {
     person: Person<true>;
@@ -80,11 +81,11 @@ export class PersonService {
 
         anlage.initialize(organisationId, rolleId);
 
-        // Check if permissions are enough to create the context
+        // Check if permissions are enough to create the kontext
         const canCommit: boolean = await anlage.canCommit(permissions, organisationId, rolleId);
 
         if (!canCommit) {
-            return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
+            return new PersonenkontextCommitError('Unsufficient rights to commit the Personenkontext');
         }
         //Save Person
         const savedPerson: DomainError | Person<true> = await this.personRepository.create(person);
