@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { PersonenkontextAnlage } from './personenkontext-anlage.js';
+import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow-anlage.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
@@ -39,7 +39,7 @@ function createPersonenkontext<WasPersisted extends boolean>(
 
 function createRolleOrganisationsPersonKontext(
     factory: PersonenkontextFactory,
-    anlage: PersonenkontextAnlage,
+    anlage: PersonenkontextWorkflowAggregate,
 ): [Rolle<true>, OrganisationDo<true>, OrganisationDo<true>, OrganisationDo<true>, Personenkontext<true>] {
     const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEHR });
     const parentOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true, {
@@ -53,8 +53,8 @@ function createRolleOrganisationsPersonKontext(
     });
     childsChildOrganisation.administriertVon = childOrganisation.id;
     childOrganisation.administriertVon = parentOrganisation.id;
-    anlage.organisationId = childOrganisation.id;
-    anlage.rolleId = rolle.id;
+    anlage.selectedOrganisationId = childOrganisation.id;
+    anlage.selectedRolleId = rolle.id;
     const personenkontext: Personenkontext<true> = createPersonenkontext(factory, true, {
         rolleId: rolle.id,
         organisationId: parentOrganisation.id,
@@ -68,7 +68,7 @@ describe('PersonenkontextAnlage', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let organisationRepoMock: DeepMocked<OrganisationRepo>;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
-    let anlage: PersonenkontextAnlage;
+    let anlage: PersonenkontextWorkflowAggregate;
     let personenkontextAnlageFactory: PersonenkontextAnlageFactory;
     let personenkontextFactory: PersonenkontextFactory;
     let personpermissionsMock: DeepMocked<PersonPermissions>;

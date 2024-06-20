@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { PersonenkontextAnlage } from './personenkontext-anlage.js';
+import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow-anlage.js';
 
 @Injectable()
 export class PersonenkontextAnlageFactory {
@@ -10,7 +10,7 @@ export class PersonenkontextAnlageFactory {
         private readonly organisationRepo: OrganisationRepo,
     ) {}
 
-    public createNew(): PersonenkontextAnlage {
-        return PersonenkontextAnlage.createNew(this.rolleRepo, this.organisationRepo);
+    public createNew(): PersonenkontextWorkflowAggregate {
+        return PersonenkontextWorkflowAggregate.createNew(this.rolleRepo, this.organisationRepo);
     }
 }
