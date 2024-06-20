@@ -18,6 +18,7 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { OrganisationID } from '../../../shared/types/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
@@ -198,8 +199,8 @@ describe('RolleRepo', () => {
                 sut,
                 rolle.id,
                 newName,
-                [],
-                [],
+                [RollenMerkmal.KOPERS_PFLICHT],
+                [RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN],
                 [],
             );
 
@@ -212,6 +213,9 @@ describe('RolleRepo', () => {
             }
             expect(rolleResult.id).toBe(updatedRolle.id);
             expect(rolleResult.name).toBe(newName);
+            expect(rolleResult.merkmale).toMatchObject(updatedRolle.merkmale);
+            expect(rolleResult.systemrechte).toMatchObject(updatedRolle.systemrechte);
+            expect(rolleResult.serviceProviderIds).toMatchObject(updatedRolle.serviceProviderIds);
         });
 
         it('should return error when permissions are insufficient', async () => {

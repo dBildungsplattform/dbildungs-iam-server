@@ -21,6 +21,7 @@ describe('Rolle Aggregate', () => {
     let rolleFactory: RolleFactory;
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
     let organisationRepo: DeepMocked<OrganisationRepository>;
+    let rolleRepoMock: DeepMocked<RolleRepo>;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let personenkontextFactory: PersonenkontextFactory;
 
@@ -73,6 +74,7 @@ describe('Rolle Aggregate', () => {
         rolleFactory = module.get(RolleFactory);
         serviceProviderRepo = module.get(ServiceProviderRepo);
         organisationRepo = module.get(OrganisationRepository);
+        rolleRepoMock = module.get(RolleRepo);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
     });
@@ -330,6 +332,21 @@ describe('Rolle Aggregate', () => {
             dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValueOnce([personenkontext]);
             const result: boolean = await rolle.isAlreadyAssigned(dBiamPersonenkontextRepoMock);
             expect(result).toBeTruthy();
+        });
+    });
+
+    describe('update', () => {
+        it('should return domain error if rolle is does not exist', async () => {
+            rolleRepoMock.findById.mockResolvedValueOnce(undefined);
+            const result: Rolle<true> | DomainError = await rolleFactory.update(
+                rolleRepoMock,
+                faker.string.uuid(),
+                'newName',
+                [],
+                [],
+                [],
+            );
+            expect(result).toBeInstanceOf(DomainError);
         });
     });
 });
