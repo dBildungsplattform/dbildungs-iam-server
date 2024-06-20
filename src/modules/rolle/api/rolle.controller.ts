@@ -300,7 +300,10 @@ export class RolleController {
     @Put(':rolleId')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ description: 'Update rolle.' })
-    @ApiOkResponse({ description: 'The rolle was successfully updated.' })
+    @ApiOkResponse({
+        description: 'The rolle was successfully updated.',
+        type: RolleWithServiceProvidersResponse,
+    })
     @ApiBadRequestResponse({ description: 'The input was not valid.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to update the rolle.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to update the rolle.' })

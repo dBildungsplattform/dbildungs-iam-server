@@ -11,17 +11,43 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { RolleFactory } from './rolle.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 
 describe('Rolle Aggregate', () => {
     let module: TestingModule;
     let rolleFactory: RolleFactory;
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
     let organisationRepo: DeepMocked<OrganisationRepository>;
+    let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
+    let personenkontextFactory: PersonenkontextFactory;
+
+    function createPersonenkontext<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        params: Partial<Personenkontext<boolean>> = {},
+    ): Personenkontext<WasPersisted> {
+        const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
+            withId ? faker.string.uuid() : undefined,
+            withId ? faker.date.past() : undefined,
+            withId ? faker.date.recent() : undefined,
+            faker.string.uuid(),
+            faker.string.uuid(),
+            faker.string.uuid(),
+        );
+
+        Object.assign(personenkontext, params);
+
+        return personenkontext;
+    }
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             providers: [
                 RolleFactory,
+                PersonenkontextFactory,
                 {
                     provide: ServiceProviderRepo,
                     useValue: createMock<ServiceProviderRepo>(),
@@ -34,11 +60,21 @@ describe('Rolle Aggregate', () => {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
                 },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                },
+                {
+                    provide: PersonRepository,
+                    useValue: createMock<PersonRepository>(),
+                },
             ],
         }).compile();
         rolleFactory = module.get(RolleFactory);
         serviceProviderRepo = module.get(ServiceProviderRepo);
         organisationRepo = module.get(OrganisationRepository);
+        dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        personenkontextFactory = module.get(PersonenkontextFactory);
     });
 
     afterAll(async () => {
@@ -270,6 +306,30 @@ describe('Rolle Aggregate', () => {
             const savedRolle: Rolle<true> = DoFactory.createRolle(true, { systemrechte: [] });
 
             expect(savedRolle.hasSystemRecht(RollenSystemRecht.ROLLEN_VERWALTEN)).toBeFalsy();
+        });
+    });
+
+    describe('IsAlreadyAssigned', () => {
+        it('should return true if rolleId does not exist', async () => {
+            const rolle: Rolle<false> = DoFactory.createRolle(false);
+            dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValueOnce([]);
+            const result: boolean = await rolle.isAlreadyAssigned(dBiamPersonenkontextRepoMock);
+            expect(result).toBeTruthy();
+        });
+
+        it('should return false if rolle is not assigned yet', async () => {
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValueOnce([]);
+            const result: boolean = await rolle.isAlreadyAssigned(dBiamPersonenkontextRepoMock);
+            expect(result).toBeFalsy();
+        });
+
+        it('should return true if rolle is already assigned', async () => {
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const personenkontext: Personenkontext<true> = createPersonenkontext(true);
+            dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValueOnce([personenkontext]);
+            const result: boolean = await rolle.isAlreadyAssigned(dBiamPersonenkontextRepoMock);
+            expect(result).toBeTruthy();
         });
     });
 });
