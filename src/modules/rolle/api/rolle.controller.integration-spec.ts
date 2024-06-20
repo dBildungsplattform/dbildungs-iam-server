@@ -36,6 +36,7 @@ import { PersonPermissionsRepo } from '../../authentication/domain/person-permis
 import { Observable } from 'rxjs';
 import { Request } from 'express';
 import { PassportUser } from '../../authentication/types/user.js';
+import { PartialUpdateRolleBodyParams } from './update-rolle.body.params.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -520,6 +521,43 @@ describe('Rolle API', () => {
                     .send();
 
                 expect(response.status).toBe(404);
+            });
+        });
+    });
+
+    describe('/PUT rolle', () => {
+        it('should return updated rolle', async () => {
+            const organisation: OrganisationEntity = new OrganisationEntity();
+            await em.persistAndFlush(organisation);
+
+            await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            const params: PartialUpdateRolleBodyParams = {
+                name: faker.person.jobTitle(),
+                merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                serviceProviderIds: [],
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .put(`/rolle/${rolle.id}`)
+                .send(params);
+
+            expect(response.status).toBe(200);
+            expect(response.body).toMatchObject({
+                id: rolle.id,
+                name: params.name,
+                administeredBySchulstrukturknoten: organisation.id,
+                rollenart: rolle.rollenart,
+                merkmale: params.merkmale,
+                systemrechte: params.systemrechte,
             });
         });
     });
