@@ -58,7 +58,9 @@ describe('EmailGeneratorService', () => {
 
         describe('when calculated address has more than 64 characters', () => {
             it('should return error', async () => {
-                await expect(sut.generateAddress(faker.string.alpha({ length: 32 }), faker.string.alpha({ length: 32 }))).resolves.toStrictEqual({
+                await expect(
+                    sut.generateAddress(faker.string.alpha({ length: 32 }), faker.string.alpha({ length: 32 })),
+                ).resolves.toStrictEqual({
                     ok: false,
                     error: new InvalidNameError('Could not generate valid username'),
                 });

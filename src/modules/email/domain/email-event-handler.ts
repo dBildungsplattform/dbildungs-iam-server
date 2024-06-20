@@ -26,10 +26,13 @@ export class EmailEventHandler {
             `Received PersonenkontextCreatedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
         );
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(event.rolleId);
-        if (!rolle) return;
+        if (!rolle) {
+            this.logger.error(`Rolle id:${event.rolleId} does NOT exist!`);
+            return;
+        }
 
         if (await this.rolleReferencesEmailServiceProvider(rolle)) {
-            this.logger.info(`Created PK with rolle that references email SP!`);
+            this.logger.info(`Received event for creation of PK with rolle that references email SP!`);
             const email: Email<false, false> = this.emailFactory.createNew(false, event.personId);
             const validEmail: Result<Email<false, true>> = await email.activate();
             if (validEmail.ok) {
@@ -46,8 +49,10 @@ export class EmailEventHandler {
             `Received PersonenkontextDeletedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
         );
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(event.rolleId);
-        if (!rolle) return;
-
+        if (!rolle) {
+            this.logger.error(`Rolle id:${event.rolleId} does NOT exist!`);
+            return;
+        }
         if (await this.rolleReferencesEmailServiceProvider(rolle)) {
             this.logger.info(`Deleted PK with rolle that references email SP!`);
         }

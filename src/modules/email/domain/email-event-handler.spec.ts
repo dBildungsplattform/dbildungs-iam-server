@@ -25,8 +25,9 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { EventModule, EventService } from '../../../core/eventbus/index.js';
 import { EmailFactory } from './email.factory.js';
 import { Email } from './email.js';
-import { PersonID } from '../../../shared/types/index.js';
+import { PersonID, RolleID } from '../../../shared/types/index.js';
 import { EmailInvalidError } from '../error/email-invalid.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 describe('Email Event Handler', () => {
     let app: INestApplication;
@@ -35,6 +36,7 @@ describe('Email Event Handler', () => {
     let emailFactoryMock: DeepMocked<EmailFactory>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -46,6 +48,10 @@ describe('Email Event Handler', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
             ],
             providers: [
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
+                },
                 {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
@@ -64,6 +70,8 @@ describe('Email Event Handler', () => {
             .useValue(createMock<RolleRepo>())
             .overrideProvider(PersonRepository)
             .useValue(createMock<PersonRepository>())
+            .overrideProvider(ClassLogger)
+            .useValue(createMock<ClassLogger>())
             .overrideProvider(EmailEventHandler)
             .useClass(EmailEventHandler)
             .overrideProvider(EventService)
@@ -74,6 +82,7 @@ describe('Email Event Handler', () => {
         emailFactoryMock = module.get(EmailFactory);
         rolleRepoMock = module.get(RolleRepo);
         serviceProviderRepoMock = module.get(ServiceProviderRepo);
+        loggerMock = module.get(ClassLogger);
 
         app = module.createNestApplication();
         await app.init();
@@ -105,24 +114,41 @@ describe('Email Event Handler', () => {
 
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
-                const result: void = await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
 
-                expect(result).toBeUndefined();
+                emailFactoryMock.createNew.mockImplementationOnce((enabled: boolean, personId: PersonID) => {
+                    const emailMock: DeepMocked<Email<false, false>> = createMock<Email<false, false>>({
+                        enabled: enabled,
+                        personId: personId,
+                    });
+                    // eslint-disable-next-line @typescript-eslint/require-await
+                    emailMock.activate.mockImplementationOnce(async () => {
+                        return {
+                            ok: true,
+                            value: createMock<Email<false, true>>({ address: 'test@schule-sh.de' }),
+                        };
+                    });
+
+                    return emailMock;
+                });
+
+                await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(`Created email, address:test@schule-sh.de`);
             });
         });
 
         describe('when rolle does NOT exists', () => {
             it('should log error', async () => {
+                const rolleId: RolleID = faker.string.uuid();
                 const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(
                     faker.string.uuid(),
                     faker.string.uuid(),
-                    faker.string.uuid(),
+                    rolleId,
                 );
 
                 rolleRepoMock.findById.mockResolvedValueOnce(undefined);
-                const result: void = await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
-
-                expect(result).toBeUndefined();
+                await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
+                expect(loggerMock.error).toHaveBeenCalledWith(`Rolle id:${rolleId} does NOT exist!`);
             });
         });
 
@@ -143,7 +169,10 @@ describe('Email Event Handler', () => {
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
 
                 emailFactoryMock.createNew.mockImplementationOnce((enabled: boolean, personId: PersonID) => {
-                    const emailMock: DeepMocked<Email<false, false>> = createMock<Email<false, false>>({ enabled: enabled, personId: personId });
+                    const emailMock: DeepMocked<Email<false, false>> = createMock<Email<false, false>>({
+                        enabled: enabled,
+                        personId: personId,
+                    });
                     // eslint-disable-next-line @typescript-eslint/require-await
                     emailMock.activate.mockImplementationOnce(async () => {
                         return {
@@ -155,9 +184,9 @@ describe('Email Event Handler', () => {
                     return emailMock;
                 });
 
-                const result: void = await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
+                await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
 
-                expect(result).toBeUndefined();
+                expect(loggerMock.error).toHaveBeenCalledWith(`Could not create email, error is Email is invalid`);
             });
         });
     });
