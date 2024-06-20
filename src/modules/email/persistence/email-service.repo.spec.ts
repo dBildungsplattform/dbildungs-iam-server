@@ -18,6 +18,7 @@ import { UsernameGeneratorService } from '../../person/domain/username-generator
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { EmailGeneratorService } from '../domain/email-generator.service.js';
 import { EmailServiceRepo } from './email-service.repo.js';
+import { EmailAddress } from '../domain/email-address.js';
 
 describe('EmailServiceRepo', () => {
     let module: TestingModule;
@@ -100,15 +101,17 @@ describe('EmailServiceRepo', () => {
     describe('findByName', () => {
         it('should return email by name', async () => {
             const person: Person<true> = await createPerson();
-            const email: Email<false, false> = emailFactory.createNew(false, person.id);
-            const validEmail: Result<Email<false, true>> = await email.activate();
+            const email: Email<false, false> = emailFactory.createNew(person.id);
+            const validEmail: Result<Email<false, true>> = await email.enable();
 
             if (!validEmail.ok) throw Error();
 
             const savedEmail: Email<true, true> = await emailRepo.save(validEmail.value);
 
-            const exists: boolean = await sut.exists(savedEmail.address);
-
+            const emailAddress: EmailAddress | undefined = savedEmail.emailAddresses[0];
+            expect(emailAddress).toBeDefined();
+            if (!emailAddress) throw new Error();
+            const exists: boolean = await sut.existsEmailAddress(emailAddress.address);
             expect(exists).toBeTruthy();
         });
     });

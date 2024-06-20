@@ -44,10 +44,10 @@ describe('Email Aggregate', () => {
     describe('activate', () => {
         describe('when person cannot be found', () => {
             it('should return EmailInvalidError', async () => {
-                const email: Email<false, false> = emailFactory.createNew(false, faker.string.uuid());
+                const email: Email<false, false> = emailFactory.createNew(faker.string.uuid());
                 personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
-                const result: Result<Email<false, true>> = await email.activate();
+                const result: Result<Email<false, true>> = await email.enable();
 
                 expect(result.ok).toBeFalsy();
             });
@@ -55,13 +55,13 @@ describe('Email Aggregate', () => {
 
         describe('when generation of address fails', () => {
             it('should return EmailInvalidError', async () => {
-                const email: Email<false, false> = emailFactory.createNew(false, faker.string.uuid());
+                const email: Email<false, false> = emailFactory.createNew(faker.string.uuid());
                 personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>());
                 emailGeneratorServiceMock.generateAddress.mockResolvedValueOnce({
                     ok: false,
                     error: new EmailInvalidError(),
                 });
-                const result: Result<Email<false, true>> = await email.activate();
+                const result: Result<Email<false, true>> = await email.enable();
 
                 expect(result.ok).toBeFalsy();
             });

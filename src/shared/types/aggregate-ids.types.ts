@@ -14,3 +14,6 @@ export type PersonenkontextID = Flavor<string, typeof personenkontextSymbol>;
 
 declare const serviceProviderSymbol: unique symbol;
 export type ServiceProviderID = Flavor<string, typeof serviceProviderSymbol>;
+
+declare const emailSymbol: unique symbol;
+export type EmailID = Flavor<string, typeof emailSymbol>;

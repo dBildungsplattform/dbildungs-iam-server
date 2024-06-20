@@ -28,6 +28,7 @@ import { Email } from './email.js';
 import { PersonID, RolleID } from '../../../shared/types/index.js';
 import { EmailInvalidError } from '../error/email-invalid.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { EmailAddress } from './email-address.js';
 
 describe('Email Event Handler', () => {
     let app: INestApplication;
@@ -115,16 +116,16 @@ describe('Email Event Handler', () => {
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
 
-                emailFactoryMock.createNew.mockImplementationOnce((enabled: boolean, personId: PersonID) => {
+                emailFactoryMock.createNew.mockImplementationOnce((personId: PersonID) => {
+                    const emailAddress: EmailAddress = createMock<EmailAddress>({ address: 'test@schule-sh.de' });
                     const emailMock: DeepMocked<Email<false, false>> = createMock<Email<false, false>>({
-                        enabled: enabled,
                         personId: personId,
                     });
                     // eslint-disable-next-line @typescript-eslint/require-await
-                    emailMock.activate.mockImplementationOnce(async () => {
+                    emailMock.enable.mockImplementationOnce(async () => {
                         return {
                             ok: true,
-                            value: createMock<Email<false, true>>({ address: 'test@schule-sh.de' }),
+                            value: createMock<Email<false, true>>({ emailAddresses: [emailAddress] }),
                         };
                     });
 
@@ -168,13 +169,12 @@ describe('Email Event Handler', () => {
                 rolleRepoMock.findById.mockResolvedValueOnce(createMock<Rolle<true>>());
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
 
-                emailFactoryMock.createNew.mockImplementationOnce((enabled: boolean, personId: PersonID) => {
+                emailFactoryMock.createNew.mockImplementationOnce((personId: PersonID) => {
                     const emailMock: DeepMocked<Email<false, false>> = createMock<Email<false, false>>({
-                        enabled: enabled,
                         personId: personId,
                     });
                     // eslint-disable-next-line @typescript-eslint/require-await
-                    emailMock.activate.mockImplementationOnce(async () => {
+                    emailMock.enable.mockImplementationOnce(async () => {
                         return {
                             ok: false,
                             error: new EmailInvalidError(),

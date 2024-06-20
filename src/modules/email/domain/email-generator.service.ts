@@ -71,11 +71,11 @@ export class EmailGeneratorService {
     }
 
     private async getNextAvailableAddress(calculatedAddress: string): Promise<string> {
-        if (!(await this.emailServiceRepo.exists(calculatedAddress))) {
+        if (!(await this.emailServiceRepo.existsEmailAddress(calculatedAddress))) {
             return calculatedAddress;
         }
         let counter: number = 1;
-        while (await this.emailServiceRepo.exists(calculatedAddress + counter)) {
+        while (await this.emailServiceRepo.existsEmailAddress(calculatedAddress + counter)) {
             counter = counter + 1;
         }
         return calculatedAddress + counter;
