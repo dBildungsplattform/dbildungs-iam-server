@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { OrganisationResponseLegacy } from '../../../organisation/api/organisation.response.legacy.js';
 import { RolleResponse } from '../../../rolle/api/rolle.response.js';
 
-
 export class PersonenkontextWorkflowResponse {
     @ApiProperty({
         description: 'List of available organisations.',
