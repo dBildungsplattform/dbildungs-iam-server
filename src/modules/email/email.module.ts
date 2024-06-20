@@ -15,7 +15,6 @@ import { KeycloakUserService } from '../keycloak-administration/index.js';
 import { KeycloakAdministrationService } from '../keycloak-administration/domain/keycloak-admin-client.service.js';
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
-import { EmailAddressRepo } from './persistence/email-address.repo.js';
 
 @Module({
     imports: [KeycloakAdministrationModule, LoggerModule.register(EmailModule.name)],
@@ -29,7 +28,6 @@ import { EmailAddressRepo } from './persistence/email-address.repo.js';
         ServiceProviderRepo,
         OrganisationRepository,
         EmailRepo,
-        EmailAddressRepo,
         EmailServiceRepo,
         EmailFactory,
         EmailGeneratorService,

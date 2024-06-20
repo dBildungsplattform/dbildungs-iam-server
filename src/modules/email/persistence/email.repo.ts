@@ -8,13 +8,13 @@ import { EmailGeneratorService } from '../domain/email-generator.service.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailAddressEntity } from './email-address.entity.js';
 import { EmailAddress } from '../domain/email-address.js';
-import { EmailAddressRepo } from './email-address.repo.js';
 
 export function mapAggregateToData(email: Email<boolean, true>): RequiredEntityData<EmailEntity> {
     const emailAddresses: EntityData<EmailAddressEntity>[] = email.emailAddresses.map((emailAddress: EmailAddress) => {
         return {
             email: email.id,
-            emailAddress,
+            address: emailAddress.address,
+            enabled: emailAddress.enabled,
         };
     });
 
@@ -28,7 +28,6 @@ export function mapEntityToAggregate(
     entity: EmailEntity,
     emailGeneratorService: EmailGeneratorService,
     personRepository: PersonRepository,
-    emailAddressRepo: EmailAddressRepo,
 ): Email<true, true> {
     const emailAddresses: EmailAddress[] = entity.emailAddresses.map((emailAddressEntity: EmailAddressEntity) => {
         return new EmailAddress(entity.id, emailAddressEntity.address, emailAddressEntity.enabled);
@@ -42,7 +41,6 @@ export function mapEntityToAggregate(
         emailAddresses,
         emailGeneratorService,
         personRepository,
-        emailAddressRepo,
     );
 }
 @Injectable()
@@ -51,7 +49,6 @@ export class EmailRepo {
         private readonly em: EntityManager,
         private readonly emailGeneratorService: EmailGeneratorService,
         private readonly personRepository: PersonRepository,
-        private readonly emailAddressRepo: EmailAddressRepo,
     ) {}
 
     public get entityName(): EntityName<EmailEntity> {
@@ -61,10 +58,7 @@ export class EmailRepo {
     public async findById(id: EmailID): Promise<Option<Email<true, true>>> {
         const emailEntity: Option<EmailEntity> = await this.em.findOne(this.entityName, { id }, {});
 
-        return (
-            emailEntity &&
-            mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository, this.emailAddressRepo)
-        );
+        return emailEntity && mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository);
     }
 
     public async findByPersonId(personId: PersonID): Promise<Email<true, true>[]> {
@@ -75,7 +69,7 @@ export class EmailRepo {
         );
 
         return emailEntities.map((entity: EmailEntity) =>
-            mapEntityToAggregate(entity, this.emailGeneratorService, this.personRepository, this.emailAddressRepo),
+            mapEntityToAggregate(entity, this.emailGeneratorService, this.personRepository),
         );
     }
 
@@ -91,26 +85,18 @@ export class EmailRepo {
         const emailEntity: EmailEntity = this.em.create(EmailEntity, mapAggregateToData(email));
         await this.em.persistAndFlush(emailEntity);
 
-        return mapEntityToAggregate(
-            emailEntity,
-            this.emailGeneratorService,
-            this.personRepository,
-            this.emailAddressRepo,
-        );
+        return mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository);
     }
 
     private async update(email: Email<true, true>): Promise<Email<true, true>> {
-        const emailEntity: Loaded<EmailEntity> = await this.em.findOneOrFail(EmailEntity, email.id, {});
+        const emailEntity: Loaded<EmailEntity> = await this.em.findOneOrFail(EmailEntity, email.id, {
+            populate: ['emailAddresses'] as const,
+        });
 
         emailEntity.assign(mapAggregateToData(email), { updateNestedEntities: true });
 
         await this.em.persistAndFlush(emailEntity);
 
-        return mapEntityToAggregate(
-            emailEntity,
-            this.emailGeneratorService,
-            this.personRepository,
-            this.emailAddressRepo,
-        );
+        return mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository);
     }
 }

@@ -134,7 +134,7 @@ describe('Email Event Handler', () => {
 
                 await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
 
-                expect(loggerMock.info).toHaveBeenCalledWith(`Created email, address:test@schule-sh.de`);
+                expect(loggerMock.info).toHaveBeenCalledWith(`Created email with new address`);
             });
         });
 

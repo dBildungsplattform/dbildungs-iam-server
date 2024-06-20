@@ -3,7 +3,7 @@ import { EmailEntity } from './email.entity.js';
 
 @Entity({ tableName: 'email_address' })
 export class EmailAddressEntity extends BaseEntity {
-    @ManyToOne({ primary: true, entity: () => EmailEntity })
+    @ManyToOne({ entity: () => EmailEntity })
     public email!: Rel<EmailEntity>;
 
     @Property({ primary: true, nullable: false, unique: true })
@@ -12,5 +12,5 @@ export class EmailAddressEntity extends BaseEntity {
     @Property({ nullable: false })
     public enabled!: boolean;
 
-    public [PrimaryKeyProp]?: ['email', 'address'];
+    public [PrimaryKeyProp]?: ['address'];
 }
