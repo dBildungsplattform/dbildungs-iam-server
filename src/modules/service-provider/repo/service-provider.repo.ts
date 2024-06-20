@@ -3,6 +3,8 @@ import { Injectable } from '@nestjs/common';
 
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
+import { CreateGroupAndRoleEvent } from '../../../shared/events/kc-group-and-role-event.js';
+import { EventService } from '../../../core/eventbus/index.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
@@ -20,6 +22,8 @@ export function mapAggregateToData(
         providedOnSchulstrukturknoten: serviceProvider.providedOnSchulstrukturknoten,
         logo: serviceProvider.logo,
         logoMimeType: serviceProvider.logoMimeType,
+        keycloakGroup: serviceProvider.keycloakGroup,
+        keycloakRole: serviceProvider.keycloakRole,
     };
 }
 
@@ -35,6 +39,8 @@ function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<bo
         entity.providedOnSchulstrukturknoten,
         entity.logo,
         entity.logoMimeType,
+        entity.keycloakGroup,
+        entity.keycloakRole,
     );
 }
 
@@ -44,7 +50,10 @@ type ServiceProviderFindOptions = {
 
 @Injectable()
 export class ServiceProviderRepo {
-    public constructor(private readonly em: EntityManager) {}
+    public constructor(
+        private readonly em: EntityManager,
+        private readonly eventService: EventService,
+    ) {}
 
     public async findById(id: string, options?: ServiceProviderFindOptions): Promise<Option<ServiceProvider<true>>> {
         const exclude: readonly ['logo'] | undefined = options?.withLogo ? undefined : ['logo'];
@@ -83,6 +92,12 @@ export class ServiceProviderRepo {
         );
 
         await this.em.persistAndFlush(serviceProviderEntity);
+
+        if (serviceProviderEntity.keycloakGroup && serviceProviderEntity.keycloakRole) {
+            this.eventService.publish(
+                new CreateGroupAndRoleEvent(serviceProviderEntity.keycloakGroup, serviceProviderEntity.keycloakRole),
+            );
+        }
 
         return mapEntityToAggregate(serviceProviderEntity);
     }

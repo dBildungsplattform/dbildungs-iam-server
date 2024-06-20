@@ -125,4 +125,16 @@ export class OrganisationRepository {
         }
         return null;
     }
+
+    public async findByIds(ids: string[]): Promise<Map<string, Organisation<true>>> {
+        const organisationEntities: OrganisationEntity[] = await this.em.find(OrganisationEntity, { id: { $in: ids } });
+
+        const organisationMap: Map<string, Organisation<true>> = new Map();
+        organisationEntities.forEach((organisationEntity: OrganisationEntity) => {
+            const organisation: Organisation<true> = mapEntityToAggregate(organisationEntity);
+            organisationMap.set(organisationEntity.id, organisation);
+        });
+
+        return organisationMap;
+    }
 }
