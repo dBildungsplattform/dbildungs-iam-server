@@ -56,6 +56,15 @@ describe('EmailGeneratorService', () => {
             });
         });
 
+        describe('when calculated address has more than 64 characters', () => {
+            it('should return error', async () => {
+                await expect(sut.generateAddress(faker.string.alpha({ length: 32 }), faker.string.alpha({ length: 32 }))).resolves.toStrictEqual({
+                    ok: false,
+                    error: new InvalidNameError('Could not generate valid username'),
+                });
+            });
+        });
+
         describe('when firstname is not isDIN91379A', () => {
             it('should return error', async () => {
                 await expect(sut.generateAddress('123^^$/()', 'Rottelburg')).resolves.toStrictEqual({
@@ -79,7 +88,7 @@ describe('EmailGeneratorService', () => {
                 emailServiceRepoMock.exists.mockResolvedValueOnce(false);
                 await expect(sut.generateAddress('Åron', 'åàâçèéêëîïôùûÿäæöøœüß')).resolves.toStrictEqual({
                     ok: true,
-                    value: 'aaaaaceeeeiiouuyaeaeoeoeoeuess@schule-sh.de',
+                    value: 'aaron.aaaaceeeeiiouuyaeaeoeoeoeuess@schule-sh.de',
                 });
             });
         });
@@ -89,7 +98,7 @@ describe('EmailGeneratorService', () => {
                 emailServiceRepoMock.exists.mockResolvedValueOnce(false);
                 await expect(sut.generateAddress('Èlène', 'Lunâtiz')).resolves.toStrictEqual({
                     ok: true,
-                    value: 'elunatiz@schule-sh.de',
+                    value: 'elene.lunatiz@schule-sh.de',
                 });
             });
         });
@@ -122,13 +131,13 @@ describe('EmailGeneratorService', () => {
 
                 await expect(sut.generateAddress('Ebru', 'Alt‡nova')).resolves.toStrictEqual({
                     ok: true,
-                    value: 'ealtnova@schule-sh.de',
+                    value: 'ebru.altnova@schule-sh.de',
                 });
                 emailServiceRepoMock.exists.mockResolvedValueOnce(false);
 
                 await expect(sut.generateAddress('‡re', 'Olsen')).resolves.toStrictEqual({
                     ok: true,
-                    value: 'rolsen@schule-sh.de',
+                    value: 're.olsen@schule-sh.de',
                 });
             });
         });
@@ -159,7 +168,7 @@ describe('EmailGeneratorService', () => {
 
                 await expect(sut.generateAddress('Max', 'Mustermann')).resolves.toStrictEqual({
                     ok: true,
-                    value: 'mmustermann2@schule-sh.de',
+                    value: 'max.mustermann2@schule-sh.de',
                 });
             });
         });

@@ -46,7 +46,12 @@ export class EmailGeneratorService {
             return { ok: false, error: new InvalidNameError('Could not generate valid username') };
         }
 
-        const calculatedAddress: string = cleanedFirstname[0] + cleanedLastname;
+        const calculatedAddress: string = cleanedFirstname + '.' + cleanedLastname;
+
+        // Check resulting address
+        if (calculatedAddress.length > 64) {
+            return { ok: false, error: new InvalidNameError('Could not generate valid username') };
+        }
 
         const nextAddressName: string = await this.getNextAvailableAddress(calculatedAddress);
 
