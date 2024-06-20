@@ -6,9 +6,12 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
+    LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderRepo } from './service-provider.repo.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { createMock } from '@golevelup/ts-jest';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
@@ -18,14 +21,19 @@ describe('ServiceProviderRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
-            providers: [ServiceProviderRepo],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), LoggingTestModule],
+            providers: [
+                ServiceProviderRepo,
+                {
+                    provide: EventService,
+                    useValue: createMock<EventService>(),
+                },
+            ],
         }).compile();
 
         sut = module.get(ServiceProviderRepo);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
-
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
@@ -62,6 +70,18 @@ describe('ServiceProviderRepo', () => {
             const savedServiceProvider: ServiceProvider<true> = await sut.save(existingServiceProvider);
 
             expect(savedServiceProvider).toEqual(existingServiceProvider);
+        });
+        it('should publish an event when a new service-provider is saved', async () => {
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+
+            serviceProvider.keycloakGroup = 'someGroup';
+            serviceProvider.keycloakRole = 'someRole';
+
+            const mockEventService: EventService = module.get<EventService>(EventService);
+
+            await sut.save(serviceProvider);
+
+            expect(mockEventService.publish).toHaveBeenCalledTimes(1);
         });
     });
 

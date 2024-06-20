@@ -19,7 +19,7 @@ import { Organisation } from '../../../modules/organisation/domain/organisation.
 import { Person } from '../../../modules/person/domain/person.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClient } from './ldap-client.js';
-import { Client } from 'ldapts';
+import { Client, Entry, SearchResult } from 'ldapts';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -175,8 +175,13 @@ describe('LDAP Client Service', () => {
         describe('lehrer', () => {
             it('when called with valid person and organisation should return truthy result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }),
+                    ); //mock existsSchule
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>()); //mock existsLehrer
+
                     return clientMock;
                 });
                 const result: Result<Person<true>> = await ldapClientService.createLehrer(person, organisation);
@@ -186,7 +191,7 @@ describe('LDAP Client Service', () => {
 
             it('when called with valid person and an organisation without kennung should return error result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
@@ -195,10 +200,46 @@ describe('LDAP Client Service', () => {
                 expect(result.ok).toBeFalsy();
             });
 
+            it('when schule is not found for lehrer', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValue();
+                    clientMock.add.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] })); //mock: schule is NOT present
+
+                    return clientMock;
+                });
+                const result: Result<Person<true>> = await ldapClientService.createLehrer(person, organisation);
+
+                expect(result.ok).toBeFalsy();
+            });
+
+            it('when lehrer already exists', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValue();
+                    clientMock.add.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }),
+                    ); //mock: schule is present
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }),
+                    ); //mock: lehrer already exists
+
+                    return clientMock;
+                });
+                const result: Result<Person<true>> = await ldapClientService.createLehrer(person, organisation);
+
+                expect(result.ok).toBeFalsy();
+            });
+
             it('when called with person without referrer should return error result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }),
+                    ); //mock existsSchule: schule present
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] })); //mock: lehrer not present
+
                     return clientMock;
                 });
                 const result: Result<Person<true>> = await ldapClientService.createLehrer(
