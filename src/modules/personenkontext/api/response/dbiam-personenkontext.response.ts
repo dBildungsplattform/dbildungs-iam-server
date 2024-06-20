@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
-import { Personenkontext } from '../domain/personenkontext.js';
+import { OrganisationID, PersonID, RolleID } from '../../../../shared/types/index.js';
+import { Personenkontext } from '../../domain/personenkontext.js';
 
 export class DBiamPersonenkontextResponse {
     @ApiProperty({ type: String })

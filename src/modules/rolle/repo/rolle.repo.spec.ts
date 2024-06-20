@@ -7,12 +7,14 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
+    LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleRepo } from './rolle.repo.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { EventService } from '../../../core/eventbus/index.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
@@ -30,8 +32,8 @@ describe('RolleRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
-            providers: [RolleRepo, RolleFactory, ServiceProviderRepo, OrganisationRepository],
+            imports: [ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
+            providers: [RolleRepo, RolleFactory, ServiceProviderRepo, OrganisationRepository, EventService],
         }).compile();
 
         sut = module.get(RolleRepo);
