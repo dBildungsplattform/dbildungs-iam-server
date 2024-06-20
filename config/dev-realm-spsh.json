@@ -74,7 +74,8 @@
         "composites": {
           "client": {
             "realm-management": [
-              "manage-users"
+              "manage-users",
+              "manage-realm"
             ]
           }
         },

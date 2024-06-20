@@ -6,6 +6,7 @@ import { Rolle } from '../domain/personenkontext.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
+import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -15,6 +16,8 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { EntityAlreadyExistsError } from '../../../shared/error/entity-already-exists.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
+import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
+import { EventService } from '../../../core/eventbus/index.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
@@ -24,7 +27,7 @@ export function mapAggregateToData(
         id: personenKontext.id,
         personId: rel(PersonEntity, personenKontext.personId),
         organisationId: personenKontext.organisationId,
-        rolleId: personenKontext.rolleId,
+        rolleId: rel(RolleEntity, personenKontext.rolleId),
         rolle: Rolle.LERNENDER, // Placeholder, until rolle is removed from entity
     };
 }
@@ -39,7 +42,7 @@ function mapEntityToAggregate(
         entity.updatedAt,
         entity.personId.id,
         entity.organisationId,
-        entity.rolleId,
+        entity.rolleId.id,
     );
 }
 
@@ -47,6 +50,7 @@ function mapEntityToAggregate(
 export class DBiamPersonenkontextRepo {
     public constructor(
         private readonly em: EntityManager,
+        private readonly eventService: EventService,
         private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
@@ -173,6 +177,27 @@ export class DBiamPersonenkontextRepo {
         );
     }
 
+    public async find(
+        personId: PersonID,
+        organisationId: OrganisationID,
+        rolleId: RolleID,
+    ): Promise<Option<Personenkontext<true>>> {
+        const personenKontext: Option<PersonenkontextEntity> = await this.em.findOne(
+            PersonenkontextEntity,
+            {
+                personId,
+                rolleId,
+                organisationId,
+            },
+            {},
+        );
+        if (personenKontext) {
+            return mapEntityToAggregate(personenKontext, this.personenkontextFactory);
+        }
+
+        return null;
+    }
+
     public async exists(personId: PersonID, organisationId: OrganisationID, rolleId: RolleID): Promise<boolean> {
         const personenKontext: Option<Loaded<PersonenkontextEntity, never, 'id', never>> = await this.em.findOne(
             PersonenkontextEntity,
@@ -240,7 +265,13 @@ export class DBiamPersonenkontextRepo {
         );
 
         await this.em.persistAndFlush(personenKontextEntity);
-
+        this.eventService.publish(
+            new PersonenkontextCreatedEvent(
+                personenkontext.personId,
+                personenkontext.organisationId,
+                personenkontext.rolleId,
+            ),
+        );
         return {
             ok: true,
             value: mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory),
@@ -279,7 +310,13 @@ export class DBiamPersonenkontextRepo {
             mapAggregateToData(personenKontext),
         );
         await this.em.persistAndFlush(personenKontextEntity);
-
+        this.eventService.publish(
+            new PersonenkontextCreatedEvent(
+                personenKontext.personId,
+                personenKontext.organisationId,
+                personenKontext.rolleId,
+            ),
+        );
         return mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory);
     }
 
@@ -305,5 +342,17 @@ export class DBiamPersonenkontextRepo {
         );
 
         return organisationIDs.includes(entity.organisationId);
+    }
+
+    public async delete(personenKontext: Personenkontext<true>): Promise<void> {
+        const personId: PersonID = personenKontext.personId;
+        const organisationId: OrganisationID = personenKontext.organisationId;
+        const rolleId: RolleID = personenKontext.rolleId;
+
+        await this.em.nativeDelete(PersonenkontextEntity, {
+            personId: personId,
+            organisationId: organisationId,
+            rolleId: rolleId,
+        });
     }
 }

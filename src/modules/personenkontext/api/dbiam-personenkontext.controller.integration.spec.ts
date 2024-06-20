@@ -24,12 +24,13 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { PersonDo } from '../../person/domain/person.do.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
@@ -55,14 +56,12 @@ function createPersonenkontext<WasPersisted extends boolean>(
 describe('dbiam Personenkontext API', () => {
     let app: INestApplication;
     let orm: MikroORM;
-    let personenkontextRepo: DBiamPersonenkontextRepo;
 
+    let personenkontextRepo: DBiamPersonenkontextRepo;
     let personRepo: PersonRepo;
     let organisationRepo: OrganisationRepo;
     let rolleRepo: RolleRepo;
-
     let personenkontextFactory: PersonenkontextFactory;
-
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
 
     beforeAll(async () => {
@@ -123,18 +122,32 @@ describe('dbiam Personenkontext API', () => {
 
     describe('/GET personenkontexte for person', () => {
         it('should return all personenkontexte for the person', async () => {
+            const rolleA: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+            const rolleB: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+            const rolleC: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
             const personA: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
             const personB: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+
             const [pk1, pk2]: [Personenkontext<true>, Personenkontext<true>, Personenkontext<true>] = await Promise.all(
                 [
                     personenkontextRepo.save(
-                        createPersonenkontext(personenkontextFactory, false, { personId: personA.id }),
+                        createPersonenkontext(personenkontextFactory, false, {
+                            personId: personA.id,
+                            rolleId: rolleA.id,
+                        }),
                     ),
                     personenkontextRepo.save(
-                        createPersonenkontext(personenkontextFactory, false, { personId: personA.id }),
+                        createPersonenkontext(personenkontextFactory, false, {
+                            personId: personA.id,
+                            rolleId: rolleB.id,
+                        }),
                     ),
                     personenkontextRepo.save(
-                        createPersonenkontext(personenkontextFactory, false, { personId: personB.id }),
+                        createPersonenkontext(personenkontextFactory, false, {
+                            personId: personB.id,
+                            rolleId: rolleC.id,
+                        }),
                     ),
                 ],
             );
@@ -425,6 +438,52 @@ describe('dbiam Personenkontext API', () => {
                 const response: Response = await request(app.getHttpServer() as App)
                     .post('/dbiam/personenkontext')
                     .send({ personId: person.id, organisationId: organisation.id, rolleId: rolle.id });
+
+                expect(response.status).toBe(400);
+            });
+        });
+    });
+
+    describe('/PUT update multiple personenkontexte', () => {
+        describe('when sending no PKs', () => {
+            it('should delete and therefore return 200', async () => {
+                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const savedPK: Personenkontext<true> = await personenkontextRepo.save(
+                    createPersonenkontext(personenkontextFactory, false, { personId: person.id, rolleId: rolle.id }),
+                );
+                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
+                    createMock<DbiamUpdatePersonenkontexteBodyParams>({
+                        count: 1,
+                        lastModified: savedPK.updatedAt,
+                        personenkontexte: [],
+                    });
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .put(`/dbiam/personenkontext/${person.id}`)
+                    .send(updatePKsRequest);
+
+                expect(response.status).toBe(200);
+            });
+        });
+
+        describe('when errors occur (e.g. because count is wrong)', () => {
+            it('should return error', async () => {
+                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const savedPK: Personenkontext<true> = await personenkontextRepo.save(
+                    createPersonenkontext(personenkontextFactory, false, { personId: person.id, rolleId: rolle.id }),
+                );
+                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
+                    createMock<DbiamUpdatePersonenkontexteBodyParams>({
+                        count: 0,
+                        lastModified: savedPK.updatedAt,
+                        personenkontexte: [],
+                    });
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .put(`/dbiam/personenkontext/${person.id}`)
+                    .send(updatePKsRequest);
 
                 expect(response.status).toBe(400);
             });

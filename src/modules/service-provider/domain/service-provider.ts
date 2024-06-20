@@ -12,6 +12,8 @@ export class ServiceProvider<WasPersisted extends boolean> {
         public providedOnSchulstrukturknoten: string,
         public logo: Buffer | undefined,
         public logoMimeType: string | undefined,
+        public keycloakGroup: string | undefined,
+        public keycloakRole: string | undefined,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
@@ -25,6 +27,8 @@ export class ServiceProvider<WasPersisted extends boolean> {
         providedOnSchulstrukturknoten: string,
         logo: Buffer | undefined,
         logoMimeType: string | undefined,
+        keycloakGroup: string | undefined,
+        keycloakRole: string | undefined,
     ): ServiceProvider<WasPersisted> {
         return new ServiceProvider(
             id,
@@ -37,6 +41,8 @@ export class ServiceProvider<WasPersisted extends boolean> {
             providedOnSchulstrukturknoten,
             logo,
             logoMimeType,
+            keycloakGroup,
+            keycloakRole,
         );
     }
 
@@ -48,6 +54,8 @@ export class ServiceProvider<WasPersisted extends boolean> {
         providedOnSchulstrukturknoten: string,
         logo: Buffer | undefined,
         logoMimeType: string | undefined,
+        keycloakGroup: string | undefined,
+        keycloakRole: string | undefined,
     ): ServiceProvider<false> {
         return new ServiceProvider(
             undefined,
@@ -60,6 +68,8 @@ export class ServiceProvider<WasPersisted extends boolean> {
             providedOnSchulstrukturknoten,
             logo,
             logoMimeType,
+            keycloakGroup,
+            keycloakRole,
         );
     }
 }
