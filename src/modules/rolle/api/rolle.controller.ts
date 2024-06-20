@@ -8,6 +8,7 @@ import {
     Param,
     Patch,
     Post,
+    Put,
     Query,
     UseFilters,
 } from '@nestjs/common';
@@ -52,6 +53,8 @@ import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/pagin
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { PartialUpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -64,6 +67,7 @@ export class RolleController {
         private readonly rolleFactory: RolleFactory,
         private readonly orgService: OrganisationService,
         private readonly serviceProviderRepo: ServiceProviderRepo,
+        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
     ) {}
 
     @Get()
@@ -142,13 +146,8 @@ export class RolleController {
                 ),
             );
         }
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
 
-        const rolleServiceProviders: ServiceProvider<true>[] = rolleResult.value.serviceProviderIds
-            .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
-            .filter(Boolean) as ServiceProvider<true>[];
-
-        return new RolleWithServiceProvidersResponse(rolleResult.value, rolleServiceProviders);
+        return this.returnRolleWithServiceProvidersResponse(rolleResult.value);
     }
 
     @Post()
@@ -298,7 +297,7 @@ export class RolleController {
         await this.rolleRepo.save(rolle);
     }
 
-    @Patch(':rolleId')
+    @Put(':rolleId')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ description: 'Update rolle.' })
     @ApiOkResponse({ description: 'The rolle was successfully updated.' })
@@ -312,32 +311,47 @@ export class RolleController {
         @Param() findRolleByIdParams: FindRolleByIdParams,
         @Body() params: PartialUpdateRolleBodyParams,
         @Permissions() permissions: PersonPermissions,
-    ): Promise<void> {
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
-        if (!rolle) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId),
-                ),
-            );
-        }
+    ): Promise<RolleWithServiceProvidersResponse> {
+        //Due to circular reference error, the rolleRepo needs to be passed into the aggregate.
         const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(
+            this.rolleRepo,
             findRolleByIdParams.rolleId,
-            rolle.createdAt,
-            rolle.updatedAt,
             params.name,
-            rolle.administeredBySchulstrukturknoten,
-            rolle.rollenart,
             params.merkmale,
             params.systemrechte,
             params.serviceProviderIds,
         );
 
         if (updatedRolle instanceof DomainError) {
-            throw updatedRolle;
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updatedRolle),
+            );
+        }
+        //The check is here because it cannot be implemented in the aggregate itself in the method update
+        //using DBiamPersonenkontextRepo causes circular reference error.
+        if (params.merkmale.length > 0 && (await updatedRolle.isAlreadyAssigned(this.dBiamPersonenkontextRepo))) {
+            throw new UpdateMerkmaleError();
         }
 
-        await this.rolleRepo.saveAuthorized(updatedRolle, permissions);
-        // throw new AddSystemrechtError(); //hide that rolle is not found
+        const result: Rolle<true> | DomainError = await this.rolleRepo.saveAuthorized(updatedRolle, permissions);
+        if (result instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
+
+        return this.returnRolleWithServiceProvidersResponse(result);
+    }
+
+    private async returnRolleWithServiceProvidersResponse(
+        rolle: Rolle<true>,
+    ): Promise<RolleWithServiceProvidersResponse> {
+        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
+
+        const rolleServiceProviders: ServiceProvider<true>[] = rolle.serviceProviderIds
+            .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
+            .filter(Boolean) as ServiceProvider<true>[];
+
+        return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
     }
 }

@@ -7,13 +7,12 @@ import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { UpdateMerkmaleError } from './update-merkmale.error.js';
+import { RolleRepo } from '../repo/rolle.repo.js';
 
 export class Rolle<WasPersisted extends boolean> {
     private constructor(
         public organisationRepo: OrganisationRepository,
         public serviceProviderRepo: ServiceProviderRepo,
-        public dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         public id: Persisted<string, WasPersisted>,
         public createdAt: Persisted<Date, WasPersisted>,
         public updatedAt: Persisted<Date, WasPersisted>,
@@ -28,7 +27,6 @@ export class Rolle<WasPersisted extends boolean> {
     public static createNew(
         organisationRepo: OrganisationRepository,
         serviceProviderRepo: ServiceProviderRepo,
-        dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         name: string,
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
@@ -39,7 +37,6 @@ export class Rolle<WasPersisted extends boolean> {
         return new Rolle(
             organisationRepo,
             serviceProviderRepo,
-            dBiamPersonenkontextRepo,
             undefined,
             undefined,
             undefined,
@@ -55,35 +52,32 @@ export class Rolle<WasPersisted extends boolean> {
     public static async update(
         organisationRepo: OrganisationRepository,
         serviceProviderRepo: ServiceProviderRepo,
-        dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        rolleRepo: RolleRepo,
         id: string,
-        createdAt: Date,
-        updatedAt: Date,
         name: string,
-        administeredBySchulstrukturknoten: string,
-        rollenart: RollenArt,
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
     ): Promise<Rolle<true> | DomainError> {
+        //Check references
+        const rolle: Option<Rolle<true>> = await rolleRepo.findById(id);
+        if (!rolle) {
+            return new EntityNotFoundError('Rolle', id);
+        }
+
         const rolleToUpdate: Rolle<true> = new Rolle(
             organisationRepo,
             serviceProviderRepo,
-            dBiamPersonenkontextRepo,
             id,
-            createdAt,
-            updatedAt,
+            rolle.createdAt,
+            rolle.updatedAt,
             name,
-            administeredBySchulstrukturknoten,
-            rollenart,
+            rolle.administeredBySchulstrukturknoten,
+            rolle.rollenart,
             merkmale,
             systemrechte,
             serviceProviderIds,
         );
-
-        if (merkmale.length > 0 && (await rolleToUpdate.isAlreadyAssigned(id))) {
-            return new UpdateMerkmaleError();
-        }
 
         return rolleToUpdate;
     }
@@ -91,7 +85,6 @@ export class Rolle<WasPersisted extends boolean> {
     public static construct<WasPersisted extends boolean = false>(
         organisationRepo: OrganisationRepository,
         serviceProviderRepo: ServiceProviderRepo,
-        dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         id: string,
         createdAt: Date,
         updatedAt: Date,
@@ -105,7 +98,6 @@ export class Rolle<WasPersisted extends boolean> {
         return new Rolle(
             organisationRepo,
             serviceProviderRepo,
-            dBiamPersonenkontextRepo,
             id,
             createdAt,
             updatedAt,
@@ -128,8 +120,11 @@ export class Rolle<WasPersisted extends boolean> {
         return !!childOrgas.find((orga: Organisation<true>) => orga.id === orgaId);
     }
 
-    public async isAlreadyAssigned(rolleId: string): Promise<boolean> {
-        return (await this.dBiamPersonenkontextRepo.findByRolle(rolleId)).length > 0;
+    public async isAlreadyAssigned(dBiamPersonenkontextRepo: DBiamPersonenkontextRepo): Promise<boolean> {
+        if (!this.id) {
+            return true;
+        }
+        return (await dBiamPersonenkontextRepo.findByRolle(this.id)).length > 0;
     }
 
     public addMerkmal(merkmal: RollenMerkmal): void {
