@@ -23,6 +23,7 @@ import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { EventModule } from '../../../core/eventbus/event.module.js';
 
 describe('PersonenkontextRepo', () => {
     let module: TestingModule;
@@ -34,7 +35,12 @@ describe('PersonenkontextRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
+            imports: [
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                MapperTestModule,
+                EventModule,
+            ],
             providers: [
                 PersonPersistenceMapperProfile,
                 PersonenkontextRepo,
