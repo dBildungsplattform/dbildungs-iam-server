@@ -7,8 +7,11 @@ import { OrganisationDo } from '../domain/organisation.do.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { Loaded } from '@mikro-orm/core';
 import { OrganisationScope } from './organisation.scope.js';
-import { ServerConfig, DataConfig } from '../../../shared/config/index.js';
+import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { OrganisationsTyp } from '../domain/organisation.enums.js';
 
 @Injectable()
 export class OrganisationRepo {
@@ -16,6 +19,7 @@ export class OrganisationRepo {
 
     public constructor(
         private readonly em: EntityManager,
+        private readonly eventService: EventService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
     ) {
@@ -25,6 +29,10 @@ export class OrganisationRepo {
     private async create(organisationDo: OrganisationDo<false>): Promise<OrganisationDo<true>> {
         const organisation: OrganisationEntity = this.mapper.map(organisationDo, OrganisationDo, OrganisationEntity);
         await this.em.persistAndFlush(organisation);
+        if (organisationDo.typ === OrganisationsTyp.SCHULE) {
+            this.eventService.publish(new SchuleCreatedEvent(organisation.id));
+        }
+
         return this.mapper.map(organisation, OrganisationEntity, OrganisationDo);
     }
 
