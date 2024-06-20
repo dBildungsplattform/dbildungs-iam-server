@@ -14,7 +14,7 @@ export class PersonenkontextWorkflowResponse {
         description: 'List of available roles.',
         type: [RolleResponse],
     })
-    public readonly roles: RolleResponse[];
+    public readonly rollen: RolleResponse[];
 
     @ApiProperty({
         description: 'Selected organisation.',
@@ -38,13 +38,13 @@ export class PersonenkontextWorkflowResponse {
 
     public constructor(
         organisations: OrganisationResponseLegacy[],
-        roles: RolleResponse[],
+        rollen: RolleResponse[],
         canCommit: boolean,
         selectedOrganisation?: string,
         selectedRole?: string,
     ) {
         this.organisations = organisations;
-        this.roles = roles;
+        this.rollen = rollen;
         this.selectedOrganisation = selectedOrganisation;
         this.selectedRole = selectedRole;
         this.canCommit = canCommit;

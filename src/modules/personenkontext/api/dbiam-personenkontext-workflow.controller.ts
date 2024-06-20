@@ -19,7 +19,7 @@ import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-work
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
-import { PersonenkontextAnlageFactory } from '../domain/personenkontext-anlage.factory.js';
+import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow-anlage.factory.js';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
@@ -39,7 +39,7 @@ import { PersonenkontexteUpdateResponse } from './response/personenkontexte-upda
 @Controller({ path: 'personenkontext' })
 export class DbiamPersonenkontextFilterController {
     public constructor(
-        private readonly personenkontextAnlageFactory: PersonenkontextAnlageFactory,
+        private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -56,7 +56,7 @@ export class DbiamPersonenkontextFilterController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonenkontextWorkflowResponse> {
         // Creates a new instance of the workflow aggregate
-        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextAnlageFactory.createNew();
+        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
 
         // Initializes the aggregate with the values of the selected organisation and rolle through the UI
         // (Both values could be undefined when nothing was done yet)
@@ -113,7 +113,7 @@ export class DbiamPersonenkontextFilterController {
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
         @Body() bodyParams: DbiamUpdatePersonenkontexteBodyParams,
     ): Promise<PersonenkontexteUpdateResponse> {
-        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextAnlageFactory.createNew();
+        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
 
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await anlage.commit(
             params.personId,
@@ -141,7 +141,7 @@ export class DbiamPersonenkontextFilterController {
         @Query() params: FindPersonenkontextRollenBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<FindRollenResponse> {
-        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextAnlageFactory.createNew();
+        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
         const rollen: Rolle<true>[] = await anlage.findAuthorizedRollen(permissions, params.rolleName, params.limit);
         const response: FindRollenResponse = new FindRollenResponse(rollen, rollen.length);
 
@@ -163,7 +163,7 @@ export class DbiamPersonenkontextFilterController {
     public async findSchulstrukturknoten(
         @Query() params: FindPersonenkontextSchulstrukturknotenBodyParams,
     ): Promise<FindSchulstrukturknotenResponse> {
-        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextAnlageFactory.createNew();
+        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
         const sskName: string = params.sskName ?? '';
         const ssks: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(
             params.rolleId,

@@ -9,7 +9,7 @@ import { Personenkontext } from './personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { faker } from '@faker-js/faker';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { PersonenkontextAnlageFactory } from './personenkontext-anlage.factory.js';
+import { PersonenkontextWorkflowFactory } from './personenkontext-workflow-anlage.factory.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
@@ -69,14 +69,14 @@ describe('PersonenkontextAnlage', () => {
     let organisationRepoMock: DeepMocked<OrganisationRepo>;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let anlage: PersonenkontextWorkflowAggregate;
-    let personenkontextAnlageFactory: PersonenkontextAnlageFactory;
+    let personenkontextAnlageFactory: PersonenkontextWorkflowFactory;
     let personenkontextFactory: PersonenkontextFactory;
     let personpermissionsMock: DeepMocked<PersonPermissions>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             providers: [
-                PersonenkontextAnlageFactory,
+                PersonenkontextWorkflowFactory,
                 PersonenkontextFactory,
                 {
                     provide: RolleRepo,
@@ -108,7 +108,7 @@ describe('PersonenkontextAnlage', () => {
         organisationRepoMock = module.get(OrganisationRepo);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
-        personenkontextAnlageFactory = module.get(PersonenkontextAnlageFactory);
+        personenkontextAnlageFactory = module.get(PersonenkontextWorkflowFactory);
         personenkontextFactory = module.get(PersonenkontextFactory);
         anlage = personenkontextAnlageFactory.createNew();
         personpermissionsMock = module.get(PersonPermissions);

@@ -12,7 +12,7 @@ import { PersonRepository } from '../persistence/person.repository.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { PersonenkontextAnlageFactory } from '../../personenkontext/domain/personenkontext-anlage.factory.js';
+import { PersonenkontextWorkflowFactory } from '../../personenkontext/domain/personenkontext-workflow-anlage.factory.js';
 import { PersonenkontextWorkflowAggregate } from '../../personenkontext/domain/personenkontext-workflow-anlage.js';
 import { PersonenkontextCommitError } from '../../personenkontext/domain/error/personenkontext-commit.error.js';
 
@@ -29,7 +29,7 @@ export class PersonService {
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personFactory: PersonFactory,
         private readonly personenkontextFactory: PersonenkontextFactory,
-        private readonly personenkontextAnlageFactory: PersonenkontextAnlageFactory,
+        private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
     ) {}
 
     public async findPersonById(id: string): Promise<Result<PersonDo<true>, DomainError>> {
@@ -77,7 +77,7 @@ export class PersonService {
         if (person instanceof DomainError) {
             return person;
         }
-        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextAnlageFactory.createNew();
+        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
 
         anlage.initialize(organisationId, rolleId);
 
