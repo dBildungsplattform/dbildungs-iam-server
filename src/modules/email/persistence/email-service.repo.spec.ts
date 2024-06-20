@@ -100,11 +100,12 @@ describe('EmailServiceRepo', () => {
     describe('findByName', () => {
         it('should return email by name', async () => {
             const person: Person<true> = await createPerson();
-            const email: Email<false> = emailFactory.createNew(false, person.id);
-            email.address = faker.internet.email();
-            const savedEmail: Email<true> = await emailRepo.save(email);
+            const email: Email<false, false> = emailFactory.createNew(false, person.id);
+            const validEmail: Result<Email<false, true>> = await email.activate();
 
-            if (!savedEmail.address) throw Error();
+            if (!validEmail.ok) throw Error();
+
+            const savedEmail: Email<true, true> = await emailRepo.save(validEmail.value);
 
             const exists: boolean = await sut.exists(savedEmail.address);
 

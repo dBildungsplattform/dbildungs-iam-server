@@ -4,10 +4,10 @@ import { PersonEntity } from '../../person/persistence/person.entity.js';
 
 @Entity({ tableName: 'email' })
 export class EmailEntity extends TimestampedEntity {
-    @Property()
+    @Property({ nullable: false })
     public address!: string;
 
-    @Property()
+    @Property({ nullable: false })
     public enabled!: boolean;
 
     @ManyToOne({

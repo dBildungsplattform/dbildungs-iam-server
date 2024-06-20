@@ -2,16 +2,18 @@ import { PersonID } from '../../../shared/types/index.js';
 import { EmailGeneratorService } from './email-generator.service.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { EmailInvalidError } from '../error/email-invalid.error.js';
 
-export class Email<WasPersisted extends boolean> {
+export declare type IsEmailValid<T, IsValid extends boolean> = IsValid extends true ? T : Option<T>;
+
+export class Email<WasPersisted extends boolean, IsValid extends boolean> {
     private constructor(
         public readonly id: Persisted<string, WasPersisted>,
         public readonly createdAt: Persisted<Date, WasPersisted>,
         public readonly updatedAt: Persisted<Date, WasPersisted>,
         public readonly enabled: boolean,
         public readonly personId: PersonID,
-        public address: string,
+        public address: IsEmailValid<string, IsValid>,
         public readonly emailGeneratorService: EmailGeneratorService,
         public readonly personRepository: PersonRepository,
     ) {}
@@ -21,38 +23,38 @@ export class Email<WasPersisted extends boolean> {
         personId: PersonID,
         emailGeneratorService: EmailGeneratorService,
         personRepository: PersonRepository,
-    ): Email<false> {
-        return new Email(
+    ): Email<false, false> {
+        return new Email<false, false>(
             undefined,
             undefined,
             undefined,
             enabled,
             personId,
-            'undefined',
+            undefined,
             emailGeneratorService,
             personRepository,
         );
     }
 
-    public static construct<WasPersisted extends boolean = false>(
-        id: Persisted<string, WasPersisted>,
-        createdAt: Persisted<Date, WasPersisted>,
-        updatedAt: Persisted<Date, WasPersisted>,
+    public static construct<WasPersisted extends boolean = true, IsValid extends boolean = false>(
+        id: string,
+        createdAt: Date,
+        updatedAt: Date,
         enabled: boolean,
         personId: PersonID,
-        address: string,
+        address: IsEmailValid<string, IsValid>,
         emailGeneratorService: EmailGeneratorService,
         personRepository: PersonRepository,
-    ): Email<WasPersisted> {
+    ): Email<WasPersisted, IsValid> {
         return new Email(id, createdAt, updatedAt, enabled, personId, address, emailGeneratorService, personRepository);
     }
 
-    public async activate(): Promise<Result<string>> {
+    public async activate(): Promise<Result<Email<WasPersisted, true>>> {
         const person: Option<Person<true>> = await this.personRepository.findById(this.personId);
         if (!person) {
             return {
                 ok: false,
-                error: new EntityNotFoundError(),
+                error: new EmailInvalidError(),
             };
         }
         const generatedName: Result<string> = await this.emailGeneratorService.generateAddress(
@@ -60,12 +62,23 @@ export class Email<WasPersisted extends boolean> {
             person.familienname,
         );
         if (!generatedName.ok) {
-            return generatedName;
+            return {
+                ok: false,
+                error: new EmailInvalidError(),
+            };
         }
-        this.address = generatedName.value;
         return {
             ok: true,
-            value: generatedName.value,
+            value: new Email(
+                this.id,
+                this.createdAt,
+                this.updatedAt,
+                this.enabled,
+                this.personId,
+                generatedName.value,
+                this.emailGeneratorService,
+                this.personRepository,
+            ),
         };
     }
 }

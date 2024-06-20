@@ -30,12 +30,12 @@ export class EmailEventHandler {
 
         if (await this.rolleReferencesEmailServiceProvider(rolle)) {
             this.logger.info(`Created PK with rolle that references email SP!`);
-            const email: Email<false> = this.emailFactory.createNew(false, event.personId);
-            const address: Result<string> = await email.activate();
-            if (address.ok) {
-                this.logger.info(`Created address ${address.value}`);
+            const email: Email<false, false> = this.emailFactory.createNew(false, event.personId);
+            const validEmail: Result<Email<false, true>> = await email.activate();
+            if (validEmail.ok) {
+                this.logger.info(`Created email, address:${validEmail.value.address}`);
             } else {
-                this.logger.error(`Could not create address, error is ${address.error.message}`);
+                this.logger.error(`Could not create email, error is ${validEmail.error.message}`);
             }
         }
     }

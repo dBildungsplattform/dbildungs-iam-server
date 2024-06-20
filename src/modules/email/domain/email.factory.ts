@@ -11,14 +11,14 @@ export class EmailFactory {
         private readonly personRepository: PersonRepository,
     ) {}
 
-    public construct<WasPersisted extends boolean = false>(
-        id: Persisted<string, WasPersisted>,
-        createdAt: Persisted<Date, WasPersisted>,
-        updatedAt: Persisted<Date, WasPersisted>,
+    public construct(
+        id: string,
+        createdAt: Date,
+        updatedAt: Date,
         enabled: boolean,
         personId: PersonID,
         address: string,
-    ): Email<WasPersisted> {
+    ): Email<true, true> {
         return Email.construct(
             id,
             createdAt,
@@ -31,7 +31,7 @@ export class EmailFactory {
         );
     }
 
-    public createNew(enabled: boolean, personId: PersonID): Email<false> {
+    public createNew(enabled: boolean, personId: PersonID): Email<false, false> {
         return Email.createNew(enabled, personId, this.emailGeneratorService, this.personRepository);
     }
 }

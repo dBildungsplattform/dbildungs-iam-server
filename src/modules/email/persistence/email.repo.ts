@@ -7,7 +7,7 @@ import { PersonID } from '../../../shared/types/index.js';
 import { EmailGeneratorService } from '../domain/email-generator.service.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 
-export function mapAggregateToData(email: Email<boolean>): RequiredEntityData<EmailEntity> {
+export function mapAggregateToData(email: Email<boolean, true>): RequiredEntityData<EmailEntity> {
     return {
         id: email.id,
         enabled: email.enabled,
@@ -20,7 +20,7 @@ export function mapEntityToAggregate(
     entity: EmailEntity,
     emailGeneratorService: EmailGeneratorService,
     personRepository: PersonRepository,
-): Email<true> {
+): Email<true, true> {
     return Email.construct(
         entity.id,
         entity.createdAt,
@@ -44,18 +44,18 @@ export class EmailRepo {
         return EmailEntity;
     }
 
-    public async findById(id: string): Promise<Option<Email<true>>> {
+    public async findById(id: string): Promise<Option<Email<true, true>>> {
         const emailEntity: Option<EmailEntity> = await this.em.findOne(this.entityName, { id }, {});
 
         return emailEntity && mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository);
     }
 
-    public async findByIds(ids: string[]): Promise<Map<string, Email<true>>> {
+    public async findByIds(ids: string[]): Promise<Map<string, Email<true, true>>> {
         const emailEntities: EmailEntity[] = await this.em.find(EmailEntity, { id: { $in: ids } }, {});
 
-        const emailMap: Map<string, Email<true>> = new Map();
+        const emailMap: Map<string, Email<true, true>> = new Map();
         emailEntities.forEach((emailEntity: EmailEntity) => {
-            const email: Email<true> = mapEntityToAggregate(
+            const email: Email<true, true> = mapEntityToAggregate(
                 emailEntity,
                 this.emailGeneratorService,
                 this.personRepository,
@@ -66,13 +66,13 @@ export class EmailRepo {
         return emailMap;
     }
 
-    public async findByAddress(address: string): Promise<Option<Email<true>>> {
+    public async findByAddress(address: string): Promise<Option<Email<true, true>>> {
         const emailEntity: Option<EmailEntity> = await this.em.findOne(this.entityName, { address }, {});
 
         return emailEntity && mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository);
     }
 
-    public async findByPersonId(personId: PersonID): Promise<Email<true>[]> {
+    public async findByPersonId(personId: PersonID): Promise<Email<true, true>[]> {
         const emailEntities: EmailEntity[] = await this.em.find(this.entityName, { personId }, {});
 
         return emailEntities.map((entity: EmailEntity) =>
@@ -80,7 +80,7 @@ export class EmailRepo {
         );
     }
 
-    public async save(email: Email<boolean>): Promise<Email<true>> {
+    public async save(email: Email<boolean, true>): Promise<Email<true, true>> {
         if (email.id) {
             return this.update(email);
         } else {
@@ -88,14 +88,14 @@ export class EmailRepo {
         }
     }
 
-    private async create(email: Email<false>): Promise<Email<true>> {
+    private async create(email: Email<false, true>): Promise<Email<true, true>> {
         const emailEntity: EmailEntity = this.em.create(EmailEntity, mapAggregateToData(email));
         await this.em.persistAndFlush(emailEntity);
 
         return mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository);
     }
 
-    private async update(email: Email<true>): Promise<Email<true>> {
+    private async update(email: Email<true, true>): Promise<Email<true, true>> {
         const emailEntity: Loaded<EmailEntity> = await this.em.findOneOrFail(EmailEntity, email.id, {});
 
         emailEntity.assign(mapAggregateToData(email), { updateNestedEntities: true });

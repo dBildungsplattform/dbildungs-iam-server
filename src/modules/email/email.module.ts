@@ -8,12 +8,21 @@ import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
 import { RolleFactory } from '../rolle/domain/rolle.factory.js';
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
-import { PersonModule } from '../person/person.module.js';
 import { EmailServiceRepo } from './persistence/email-service.repo.js';
+import { EventService } from '../../core/eventbus/index.js';
+import { PersonRepository } from '../person/persistence/person.repository.js';
+import { KeycloakUserService } from '../keycloak-administration/index.js';
+import { KeycloakAdministrationService } from '../keycloak-administration/domain/keycloak-admin-client.service.js';
+import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
+import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 
 @Module({
-    imports: [PersonModule, LoggerModule.register(EmailModule.name)],
+    imports: [KeycloakAdministrationModule, LoggerModule.register(EmailModule.name)],
     providers: [
+        KeycloakUserService,
+        KeycloakAdministrationService,
+        KeycloakAdminClient,
+        PersonRepository,
         RolleRepo,
         RolleFactory,
         ServiceProviderRepo,
@@ -23,6 +32,7 @@ import { EmailServiceRepo } from './persistence/email-service.repo.js';
         EmailFactory,
         EmailGeneratorService,
         EmailEventHandler,
+        EventService,
     ],
     exports: [EmailRepo, EmailFactory, EmailGeneratorService, EmailEventHandler],
 })
