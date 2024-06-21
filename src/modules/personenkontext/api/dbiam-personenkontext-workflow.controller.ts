@@ -1,4 +1,16 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Param, Put, Query, UseFilters } from '@nestjs/common';
+import {
+    BadRequestException,
+    Body,
+    Controller,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Inject,
+    Param,
+    Put,
+    Query,
+    UseFilters,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -32,6 +44,7 @@ import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-pe
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
 import { PersonenkontexteUpdateResponse } from './response/personenkontexte-update.response.js';
 import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-update.error.js';
+import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontext')
@@ -115,20 +128,23 @@ export class DbiamPersonenkontextFilterController {
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
         @Body() bodyParams: DbiamUpdatePersonenkontexteBodyParams,
     ): Promise<PersonenkontexteUpdateResponse> {
-        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
+        try {
+            const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError =
+                await this.personenkontextWorkflowFactory
+                    .createNew()
+                    .commit(params.personId, bodyParams.lastModified, bodyParams.count, bodyParams.personenkontexte);
 
-        const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await anlage.commit(
-            params.personId,
-            bodyParams.lastModified,
-            bodyParams.count,
-            bodyParams.personenkontexte,
-        );
+            if (updateResult instanceof PersonenkontexteUpdateError) {
+                throw new BadRequestException(updateResult.message);
+            }
 
-        if (updateResult instanceof PersonenkontexteUpdateError) {
-            throw updateResult;
+            return new PersonenkontexteUpdateResponse(updateResult);
+        } catch (error) {
+            if (error instanceof PersonenkontextCommitError || error instanceof PersonenkontexteUpdateError) {
+                throw new BadRequestException(error.message);
+            }
+            throw error;
         }
-
-        return new PersonenkontexteUpdateResponse(updateResult);
     }
 
     @Get('rollen')
