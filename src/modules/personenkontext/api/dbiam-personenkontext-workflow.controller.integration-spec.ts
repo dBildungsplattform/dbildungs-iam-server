@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { MikroORM } from '@mikro-orm/core';
-import { BadRequestException, CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
+import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
@@ -43,7 +43,6 @@ import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-up
 import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
 import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
 import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
-import { DbiamPersonenkontextWorkflowController } from './dbiam-personenkontext-workflow.controller.js';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
     const rolle: Rolle<false> = rolleFactory.createNew(
@@ -90,7 +89,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let personenkontextRepo: DBiamPersonenkontextRepo;
     let personenkontextFactory: PersonenkontextFactory;
     let personenkontextWorkflowMock: DeepMocked<PersonenkontextWorkflowAggregate>;
-    let controller: DbiamPersonenkontextWorkflowController;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -110,6 +108,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 DBiamPersonenkontextRepo,
                 PersonRepository,
                 RolleRepo,
+                OrganisationRepo,
                 {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
@@ -125,6 +124,18 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 {
                     provide: PersonenkontextWorkflowFactory,
                     useValue: createMock<PersonenkontextWorkflowFactory>(),
+                },
+                {
+                    provide: PersonenkontextWorkflowAggregate,
+                    useValue: createMock<PersonenkontextWorkflowAggregate>(),
+                },
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
+                {
+                    provide: OrganisationRepo,
+                    useValue: createMock<OrganisationRepo>(),
                 },
                 {
                     provide: APP_INTERCEPTOR,
@@ -151,8 +162,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         personRepo = module.get(PersonRepo);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
-        personenkontextWorkflowMock = createMock<PersonenkontextWorkflowAggregate>();
-        controller = module.get<DbiamPersonenkontextWorkflowController>(DbiamPersonenkontextWorkflowController);
+        personenkontextWorkflowMock = module.get(PersonenkontextWorkflowAggregate);
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
@@ -166,10 +176,9 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
-        personenkontextWorkflowMock = createMock<PersonenkontextWorkflowAggregate>();
     });
 
-    describe('/GET step for personenkontext', () => {
+    describe('/GET processStep for personenkontext', () => {
         it('should return selected organisation and all rollen', async () => {
             const organisationName: string = faker.company.name();
             const organisation: OrganisationDo<true> = await organisationRepo.save(
@@ -221,6 +230,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         createPersonenkontext(personenkontextFactory, false, {
                             personId: person.id,
                             rolleId: rolle.id,
+                            updatedAt: new Date(),
                         }),
                     );
                     const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
@@ -246,6 +256,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         createPersonenkontext(personenkontextFactory, false, {
                             personId: person.id,
                             rolleId: rolle.id,
+                            updatedAt: new Date(),
                         }),
                     );
                     const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
@@ -273,22 +284,27 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     );
                     personenkontextWorkflowMock.commit.mockResolvedValue(updateError);
 
-                    await expect(controller.commit(params, bodyParams)).rejects.toThrow(BadRequestException);
-                    await expect(controller.commit(params, bodyParams)).rejects.toThrow(
-                        'Personenkontexte could not be updated because current count and count of the request are not matching',
-                    );
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .put(`/personenkontext/${params.personId}`)
+                        .send(bodyParams);
+
+                    expect(response.status).toBe(400);
                 });
                 it('should rethrow generic errors', async () => {
                     const params: DBiamFindPersonenkontexteByPersonIdParams = { personId: faker.string.uuid() };
                     const bodyParams: DbiamUpdatePersonenkontexteBodyParams = {
-                        count: 1,
+                        count: 0,
                         lastModified: new Date(),
                         personenkontexte: [],
                     };
                     const genericError: Error = new Error('Generic error message');
                     personenkontextWorkflowMock.commit.mockRejectedValue(genericError);
 
-                    await expect(controller.commit(params, bodyParams)).rejects.toThrow(Error);
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .put(`/personenkontext/${params.personId}`)
+                        .send(bodyParams);
+
+                    expect(response.status).toBe(500);
                 });
             });
         });

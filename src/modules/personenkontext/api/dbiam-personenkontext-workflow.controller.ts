@@ -96,12 +96,15 @@ export class DbiamPersonenkontextWorkflowController {
         // Determine canCommit status, by default it's always false unless both the rolle and orga are selected
         let canCommit: boolean = false;
         if (params.organisationId && params.rolleId) {
-            const commitResult: DomainError | undefined = await anlage.canCommit(
+            const commitResult: DomainError | boolean = await anlage.canCommit(
                 permissions,
                 params.organisationId,
                 params.rolleId,
             );
-            canCommit = !commitResult;
+            console.log("commitResult: ", commitResult)
+            if (commitResult === true) {
+                canCommit = true;
+            }
         }
 
         const response: PersonenkontextWorkflowResponse = new PersonenkontextWorkflowResponse(

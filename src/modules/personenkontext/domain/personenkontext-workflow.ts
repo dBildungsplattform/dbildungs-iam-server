@@ -132,7 +132,7 @@ export class PersonenkontextWorkflowAggregate {
         permissions: PersonPermissions,
         organisationId: string,
         rolleId: string,
-    ): Promise<DomainError | undefined> {
+    ): Promise<DomainError | boolean> {
         const referenceCheckError: Option<DomainError> = await this.checkReferences(organisationId, rolleId);
         if (referenceCheckError) {
             return referenceCheckError;
@@ -143,7 +143,7 @@ export class PersonenkontextWorkflowAggregate {
             return permissionCheckError;
         }
 
-        return undefined;
+        return true;
     }
 
     // Takes in the list of personenkontexte and decides whether to add or delete the personenkontexte for a specific PersonId
