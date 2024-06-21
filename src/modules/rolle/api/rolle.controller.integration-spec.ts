@@ -592,11 +592,15 @@ describe('Rolle API', () => {
                 }),
             );
 
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+
             const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                 systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
-                serviceProviderIds: [],
+                serviceProviderIds: [serviceProvider.id],
             };
 
             const response: Response = await request(app.getHttpServer() as App)

@@ -76,9 +76,15 @@ export class Rolle<WasPersisted extends boolean> {
             rolle.rollenart,
             merkmale,
             systemrechte,
-            serviceProviderIds,
+            [],
         );
 
+        for (const serviceProviderId of serviceProviderIds) {
+            const result: void | DomainError = await rolleToUpdate.attachServiceProvider(serviceProviderId);
+            if (result instanceof DomainError) {
+                return result;
+            }
+        }
         return rolleToUpdate;
     }
 

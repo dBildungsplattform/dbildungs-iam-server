@@ -19,7 +19,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 describe('Rolle Aggregate', () => {
     let module: TestingModule;
     let rolleFactory: RolleFactory;
-    let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
+    let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let organisationRepo: DeepMocked<OrganisationRepository>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
@@ -72,7 +72,7 @@ describe('Rolle Aggregate', () => {
             ],
         }).compile();
         rolleFactory = module.get(RolleFactory);
-        serviceProviderRepo = module.get(ServiceProviderRepo);
+        serviceProviderRepoMock = module.get(ServiceProviderRepo);
         organisationRepo = module.get(OrganisationRepository);
         rolleRepoMock = module.get(RolleRepo);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
@@ -168,7 +168,7 @@ describe('Rolle Aggregate', () => {
                 );
                 const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
                 serviceProvider.id = serviceProviderIdToAttach;
-                serviceProviderRepo.findById.mockResolvedValue(serviceProvider);
+                serviceProviderRepoMock.findById.mockResolvedValue(serviceProvider);
 
                 const result: void | DomainError = await rolle.attachServiceProvider(serviceProviderIdToAttach);
 
@@ -194,7 +194,7 @@ describe('Rolle Aggregate', () => {
                     [],
                     [],
                 );
-                serviceProviderRepo.findById.mockResolvedValue(undefined);
+                serviceProviderRepoMock.findById.mockResolvedValue(undefined);
 
                 const result: void | DomainError = await rolle.attachServiceProvider(serviceProviderIdToAttach);
 
@@ -220,7 +220,7 @@ describe('Rolle Aggregate', () => {
 
                 const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
                 serviceProvider.id = serviceProviderIdToAttach;
-                serviceProviderRepo.findById.mockResolvedValue(serviceProvider);
+                serviceProviderRepoMock.findById.mockResolvedValue(serviceProvider);
 
                 const result: void | DomainError = await rolle.attachServiceProvider(serviceProviderIdToAttach);
 
@@ -345,6 +345,20 @@ describe('Rolle Aggregate', () => {
                 [],
                 [],
                 [],
+            );
+            expect(result).toBeInstanceOf(DomainError);
+        });
+
+        it('should return domain error if service provider is does not exist', async () => {
+            rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
+            serviceProviderRepoMock.findById.mockResolvedValue(undefined);
+            const result: Rolle<true> | DomainError = await rolleFactory.update(
+                rolleRepoMock,
+                faker.string.uuid(),
+                'newName',
+                [faker.helpers.enumValue(RollenMerkmal)],
+                [faker.helpers.enumValue(RollenSystemRecht)],
+                [faker.string.uuid()],
             );
             expect(result).toBeInstanceOf(DomainError);
         });
