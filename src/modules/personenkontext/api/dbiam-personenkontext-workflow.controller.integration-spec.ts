@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { MikroORM } from '@mikro-orm/core';
-import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
+import { BadRequestException, CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
@@ -39,6 +39,11 @@ import { PersonDo } from '../../person/domain/person.do.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
 import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
+import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
+import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
+import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
+import { DbiamPersonenkontextWorkflowController } from './dbiam-personenkontext-workflow.controller.js';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
     const rolle: Rolle<false> = rolleFactory.createNew(
@@ -84,6 +89,9 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let personRepo: PersonRepo;
     let personenkontextRepo: DBiamPersonenkontextRepo;
     let personenkontextFactory: PersonenkontextFactory;
+    let personenkontextWorkflowMock: DeepMocked<PersonenkontextWorkflowAggregate>;
+    let controller: DbiamPersonenkontextWorkflowController;
+    let personenkontextWorkflowFactoryMock: DeepMocked<PersonenkontextWorkflowFactory>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -116,6 +124,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     useValue: createMock<KeycloakUserService>(),
                 },
                 {
+                    provide: PersonenkontextWorkflowFactory,
+                    useValue: createMock<PersonenkontextWorkflowFactory>(),
+                },
+                {
                     provide: APP_INTERCEPTOR,
                     useValue: {
                         intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
@@ -140,6 +152,9 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         personRepo = module.get(PersonRepo);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
+        personenkontextWorkflowMock = createMock<PersonenkontextWorkflowAggregate>();
+        controller = module.get<DbiamPersonenkontextWorkflowController>(DbiamPersonenkontextWorkflowController);
+        personenkontextWorkflowFactoryMock.createNew.mockReturnValue(personenkontextWorkflowMock);
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
@@ -153,6 +168,8 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
+        personenkontextWorkflowMock = createMock<PersonenkontextWorkflowAggregate>();
+        personenkontextWorkflowFactoryMock.createNew.mockReturnValue(personenkontextWorkflowMock);
     });
 
     describe('/GET step for personenkontext', () => {
@@ -198,147 +215,186 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Object);
         });
-    });
-    describe('/PUT commit', () => {
-        describe('when sending no PKs', () => {
-            it('should delete and therefore return 200', async () => {
-                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
-                const savedPK: Personenkontext<true> = await personenkontextRepo.save(
-                    createPersonenkontext(personenkontextFactory, false, { personId: person.id, rolleId: rolle.id }),
-                );
-                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
-                    createMock<DbiamUpdatePersonenkontexteBodyParams>({
+        describe('/PUT commit', () => {
+            describe('when sending no PKs', () => {
+                it('should delete and therefore return 200', async () => {
+                    const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                    const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                    const savedPK: Personenkontext<true> = await personenkontextRepo.save(
+                        createPersonenkontext(personenkontextFactory, false, {
+                            personId: person.id,
+                            rolleId: rolle.id,
+                        }),
+                    );
+                    const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
+                        createMock<DbiamUpdatePersonenkontexteBodyParams>({
+                            count: 1,
+                            lastModified: savedPK.updatedAt,
+                            personenkontexte: [],
+                        });
+
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .put(`/personenkontext/${person.id}`)
+                        .send(updatePKsRequest);
+
+                    expect(response.status).toBe(200);
+                });
+            });
+
+            describe('when errors occur (e.g. because count is wrong)', () => {
+                it('should return error', async () => {
+                    const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                    const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                    const savedPK: Personenkontext<true> = await personenkontextRepo.save(
+                        createPersonenkontext(personenkontextFactory, false, {
+                            personId: person.id,
+                            rolleId: rolle.id,
+                        }),
+                    );
+                    const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
+                        createMock<DbiamUpdatePersonenkontexteBodyParams>({
+                            count: 0,
+                            lastModified: savedPK.updatedAt,
+                            personenkontexte: [],
+                        });
+
+                    const response: Response = await request(app.getHttpServer() as App)
+                        .put(`/personenkontext/${person.id}`)
+                        .send(updatePKsRequest);
+
+                    expect(response.status).toBe(400);
+                });
+                it('should throw BadRequestException if updateResult is an instance of PersonenkontexteUpdateError', async () => {
+                    const params: DBiamFindPersonenkontexteByPersonIdParams = { personId: faker.string.uuid() };
+                    const bodyParams: DbiamUpdatePersonenkontexteBodyParams = {
                         count: 1,
-                        lastModified: savedPK.updatedAt,
+                        lastModified: new Date(),
                         personenkontexte: [],
-                    });
+                    };
+                    const updateError: PersonenkontexteUpdateError = new PersonenkontexteUpdateError(
+                        'Update error message',
+                    );
+                    personenkontextWorkflowMock.commit.mockResolvedValue(updateError);
+
+                    await expect(controller.commit(params, bodyParams)).rejects.toThrow(BadRequestException);
+                    await expect(controller.commit(params, bodyParams)).rejects.toThrow(
+                        'Personenkontexte could not be updated because current count and count of the request are not matching',
+                    );
+                });
+                it('should rethrow generic errors', async () => {
+                    const params: DBiamFindPersonenkontexteByPersonIdParams = { personId: faker.string.uuid() };
+                    const bodyParams: DbiamUpdatePersonenkontexteBodyParams = {
+                        count: 1,
+                        lastModified: new Date(),
+                        personenkontexte: [],
+                    };
+                    const genericError: Error = new Error('Generic error message');
+                    personenkontextWorkflowMock.commit.mockRejectedValue(genericError);
+
+                    await expect(controller.commit(params, bodyParams)).rejects.toThrow(Error);
+                });
+            });
+        });
+
+        describe('/GET rollen for personenkontext', () => {
+            it('should return all rollen for a personenkontext without filter, if the user is Landesadmin', async () => {
+                const rolleName: string = faker.string.alpha({ length: 10 });
+                await rolleRepo.save(createRolle(rolleFactory, { name: rolleName, rollenart: RollenArt.SYSADMIN }));
+                const schuladminRolleName: string = faker.string.alpha({ length: 10 });
+                await rolleRepo.save(
+                    createRolle(rolleFactory, { name: schuladminRolleName, rollenart: RollenArt.LEIT }),
+                );
+
+                const personpermissions: DeepMocked<PersonPermissions> = createMock();
+                personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
+                    organisationRepo.ROOT_ORGANISATION_ID,
+                ]);
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .put(`/personenkontext/${person.id}`)
-                    .send(updatePKsRequest);
+                    .get('/personenkontext/rollen')
+                    .send();
 
                 expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        total: 2,
+                    }) as FindRollenResponse,
+                );
+            });
+
+            it('should return all rollen for a personenkontext based on PersonenkontextAnlage', async () => {
+                const rolleName: string = faker.string.alpha({ length: 10 });
+                await rolleRepo.save(createRolle(rolleFactory, { name: rolleName }));
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(`/personenkontext/rollen?rolleName=${rolleName}&limit=25`)
+                    .send();
+
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
+            });
+
+            it('should return empty list', async () => {
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(`/personenkontext/rollen?rolleName=${faker.string.alpha()}&limit=25`)
+                    .send();
+
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
             });
         });
 
-        describe('when errors occur (e.g. because count is wrong)', () => {
-            it('should return error', async () => {
-                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
-                const savedPK: Personenkontext<true> = await personenkontextRepo.save(
-                    createPersonenkontext(personenkontextFactory, false, { personId: person.id, rolleId: rolle.id }),
-                );
-                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
-                    createMock<DbiamUpdatePersonenkontexteBodyParams>({
-                        count: 0,
-                        lastModified: savedPK.updatedAt,
-                        personenkontexte: [],
-                    });
+        describe('/GET schulstrukturknoten for personenkontext', () => {
+            it('should return all schulstrukturknoten for a personenkontext based on PersonenkontextAnlage', async () => {
+                const rolleName: string = faker.string.alpha({ length: 10 });
+                const sskName: string = faker.company.name();
+                const rolle: Rolle<true> = await rolleRepo.save(createRolle(rolleFactory, { name: rolleName }));
+                const rolleId: string = rolle.id;
+                await organisationRepo.save(DoFactory.createOrganisation(false, { name: sskName }));
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .put(`/personenkontext/${person.id}`)
-                    .send(updatePKsRequest);
+                    .get(`/personenkontext/schulstrukturknoten?rolleId=${rolleId}&sskName=${sskName}&limit=25`)
+                    .send();
 
-                expect(response.status).toBe(400);
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
             });
-        });
-    });
 
-    describe('/GET rollen for personenkontext', () => {
-        it('should return all rollen for a personenkontext without filter, if the user is Landesadmin', async () => {
-            const rolleName: string = faker.string.alpha({ length: 10 });
-            await rolleRepo.save(createRolle(rolleFactory, { name: rolleName, rollenart: RollenArt.SYSADMIN }));
-            const schuladminRolleName: string = faker.string.alpha({ length: 10 });
-            await rolleRepo.save(createRolle(rolleFactory, { name: schuladminRolleName, rollenart: RollenArt.LEIT }));
+            it('should return all schulstrukturknoten for a personenkontext based on PersonenkontextAnlage even when no sskName is provided', async () => {
+                const rolleName: string = faker.string.alpha({ length: 10 });
+                const sskName: string = faker.company.name();
+                const rolle: Rolle<true> = await rolleRepo.save(createRolle(rolleFactory, { name: rolleName }));
+                const rolleId: string = rolle.id;
+                await organisationRepo.save(DoFactory.createOrganisation(false, { name: sskName }));
 
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationRepo.ROOT_ORGANISATION_ID]);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(`/personenkontext/schulstrukturknoten?rolleId=${rolleId}&limit=25`)
+                    .send();
 
-            const response: Response = await request(app.getHttpServer() as App)
-                .get('/personenkontext/rollen')
-                .send();
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
+            });
 
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
-            expect(response.body).toEqual(
-                expect.objectContaining({
-                    total: 2,
-                }) as FindRollenResponse,
-            );
-        });
+            it('should return empty list', async () => {
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(
+                        `/personenkontext/schulstrukturknoten?rolleId=${faker.string.uuid()}&sskName=${faker.string.alpha()}&limit=25`,
+                    )
+                    .send();
 
-        it('should return all rollen for a personenkontext based on PersonenkontextAnlage', async () => {
-            const rolleName: string = faker.string.alpha({ length: 10 });
-            await rolleRepo.save(createRolle(rolleFactory, { name: rolleName }));
-            const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext/rollen?rolleName=${rolleName}&limit=25`)
-                .send();
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
+            });
 
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
-        });
+            it('should return empty list even when no sskName is provided', async () => {
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(`/personenkontext/schulstrukturknoten?rolleId=${faker.string.uuid()}&limit=25`)
+                    .send();
 
-        it('should return empty list', async () => {
-            const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext/rollen?rolleName=${faker.string.alpha()}&limit=25`)
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
-        });
-    });
-
-    describe('/GET schulstrukturknoten for personenkontext', () => {
-        it('should return all schulstrukturknoten for a personenkontext based on PersonenkontextAnlage', async () => {
-            const rolleName: string = faker.string.alpha({ length: 10 });
-            const sskName: string = faker.company.name();
-            const rolle: Rolle<true> = await rolleRepo.save(createRolle(rolleFactory, { name: rolleName }));
-            const rolleId: string = rolle.id;
-            await organisationRepo.save(DoFactory.createOrganisation(false, { name: sskName }));
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext/schulstrukturknoten?rolleId=${rolleId}&sskName=${sskName}&limit=25`)
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
-        });
-
-        it('should return all schulstrukturknoten for a personenkontext based on PersonenkontextAnlage even when no sskName is provided', async () => {
-            const rolleName: string = faker.string.alpha({ length: 10 });
-            const sskName: string = faker.company.name();
-            const rolle: Rolle<true> = await rolleRepo.save(createRolle(rolleFactory, { name: rolleName }));
-            const rolleId: string = rolle.id;
-            await organisationRepo.save(DoFactory.createOrganisation(false, { name: sskName }));
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext/schulstrukturknoten?rolleId=${rolleId}&limit=25`)
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
-        });
-
-        it('should return empty list', async () => {
-            const response: Response = await request(app.getHttpServer() as App)
-                .get(
-                    `/personenkontext/schulstrukturknoten?rolleId=${faker.string.uuid()}&sskName=${faker.string.alpha()}&limit=25`,
-                )
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
-        });
-
-        it('should return empty list even when no sskName is provided', async () => {
-            const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext/schulstrukturknoten?rolleId=${faker.string.uuid()}&limit=25`)
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
+            });
         });
     });
 });

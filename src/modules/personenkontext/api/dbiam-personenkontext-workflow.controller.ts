@@ -45,13 +45,14 @@ import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-pers
 import { PersonenkontexteUpdateResponse } from './response/personenkontexte-update.response.js';
 import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-update.error.js';
 import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontext')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
 @Controller({ path: 'personenkontext' })
-export class DbiamPersonenkontextFilterController {
+export class DbiamPersonenkontextWorkflowController {
     public constructor(
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
@@ -86,6 +87,7 @@ export class DbiamPersonenkontextFilterController {
             ? await anlage.findRollenForOrganisation(permissions, params.organisationId, params.rolleName, params.limit)
             : [];
 
+        console.log(rollen)
         const organisationsResponse: OrganisationResponseLegacy[] = this.mapper.mapArray(
             organisations,
             OrganisationDo,
@@ -95,7 +97,12 @@ export class DbiamPersonenkontextFilterController {
         // Determine canCommit status, by default it's always false unless both the rolle and orga are selected
         let canCommit: boolean = false;
         if (params.organisationId && params.rolleId) {
-            canCommit = (await anlage.canCommit(permissions, params.organisationId, params.rolleId)) ? false : true;
+            const commitResult: DomainError | undefined = await anlage.canCommit(
+                permissions,
+                params.organisationId,
+                params.rolleId,
+            );
+            canCommit = !commitResult;
         }
 
         const response: PersonenkontextWorkflowResponse = new PersonenkontextWorkflowResponse(
