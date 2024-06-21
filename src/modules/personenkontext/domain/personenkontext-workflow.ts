@@ -174,7 +174,6 @@ export class PersonenkontextWorkflowAggregate {
         if (!rolle) {
             return new EntityNotFoundError('Rolle', rolleId);
         }
-        console.log('orga: ', orga);
         // Can rolle be assigned at target orga
         const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(organisationId);
         if (!canAssignRolle) {
