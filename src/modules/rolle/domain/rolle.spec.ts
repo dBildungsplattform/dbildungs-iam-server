@@ -312,17 +312,10 @@ describe('Rolle Aggregate', () => {
     });
 
     describe('IsAlreadyAssigned', () => {
-        it('should return true if rolleId does not exist', async () => {
-            const rolle: Rolle<false> = DoFactory.createRolle(false);
-            dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValueOnce([]);
-            const result: boolean = await rolle.isAlreadyAssigned(dBiamPersonenkontextRepoMock);
-            expect(result).toBeTruthy();
-        });
-
         it('should return false if rolle is not assigned yet', async () => {
             const rolle: Rolle<true> = DoFactory.createRolle(true);
             dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValueOnce([]);
-            const result: boolean = await rolle.isAlreadyAssigned(dBiamPersonenkontextRepoMock);
+            const result: boolean = await rolle.isAlreadyAssigned(dBiamPersonenkontextRepoMock, rolle.id);
             expect(result).toBeFalsy();
         });
 
@@ -330,7 +323,7 @@ describe('Rolle Aggregate', () => {
             const rolle: Rolle<true> = DoFactory.createRolle(true);
             const personenkontext: Personenkontext<true> = createPersonenkontext(true);
             dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValueOnce([personenkontext]);
-            const result: boolean = await rolle.isAlreadyAssigned(dBiamPersonenkontextRepoMock);
+            const result: boolean = await rolle.isAlreadyAssigned(dBiamPersonenkontextRepoMock, rolle.id);
             expect(result).toBeTruthy();
         });
     });

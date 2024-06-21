@@ -332,7 +332,10 @@ export class RolleController {
         }
         //The check is here because it cannot be implemented in the aggregate itself in the method update
         //using DBiamPersonenkontextRepo causes circular reference error.
-        if (params.merkmale.length > 0 && (await updatedRolle.isAlreadyAssigned(this.dBiamPersonenkontextRepo))) {
+        if (
+            params.merkmale.length > 0 &&
+            (await updatedRolle.isAlreadyAssigned(this.dBiamPersonenkontextRepo, updatedRolle.id))
+        ) {
             throw new UpdateMerkmaleError();
         }
 

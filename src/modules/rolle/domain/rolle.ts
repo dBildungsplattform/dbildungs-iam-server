@@ -126,11 +126,11 @@ export class Rolle<WasPersisted extends boolean> {
         return !!childOrgas.find((orga: Organisation<true>) => orga.id === orgaId);
     }
 
-    public async isAlreadyAssigned(dBiamPersonenkontextRepo: DBiamPersonenkontextRepo): Promise<boolean> {
-        if (!this.id) {
-            return true;
-        }
-        return (await dBiamPersonenkontextRepo.findByRolle(this.id)).length > 0;
+    public async isAlreadyAssigned(
+        dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        rolleId: string,
+    ): Promise<boolean> {
+        return (await dBiamPersonenkontextRepo.findByRolle(rolleId)).length > 0;
     }
 
     public addMerkmal(merkmal: RollenMerkmal): void {
