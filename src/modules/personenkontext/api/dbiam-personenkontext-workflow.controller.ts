@@ -101,7 +101,6 @@ export class DbiamPersonenkontextWorkflowController {
                 params.organisationId,
                 params.rolleId,
             );
-            console.log("commitResult: ", commitResult)
             if (commitResult === true) {
                 canCommit = true;
             }
@@ -146,7 +145,6 @@ export class DbiamPersonenkontextWorkflowController {
             if (updateResult instanceof PersonenkontexteUpdateError) {
                 throw new BadRequestException(updateResult.message);
             }
-
             return new PersonenkontexteUpdateResponse(updateResult);
         } catch (error) {
             if (error instanceof PersonenkontextCommitError || error instanceof PersonenkontexteUpdateError) {
