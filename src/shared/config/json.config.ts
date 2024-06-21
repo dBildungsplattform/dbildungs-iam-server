@@ -8,6 +8,7 @@ import { KeycloakConfig } from './keycloak.config.js';
 import { LoggingConfig } from './logging.config.js';
 import { RedisConfig } from './redis.config.js';
 import { LdapConfig } from './ldap.config.js';
+import { TelemetryConfig } from './telemetry.config.js';
 import { ItsLearningConfig } from './itslearning.config.js';
 
 export class JsonConfig {
@@ -42,6 +43,10 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => DataConfig)
     public readonly DATA!: DataConfig;
+
+    @ValidateNested()
+    @Type(() => TelemetryConfig)
+    public readonly TELEMETRY!: TelemetryConfig;
 
     @ValidateNested()
     @Type(() => ItsLearningConfig)

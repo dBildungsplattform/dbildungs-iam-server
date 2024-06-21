@@ -29,6 +29,7 @@ import { AccessGuard } from '../modules/authentication/api/access.guard.js';
 import { PermissionsInterceptor } from '../modules/authentication/services/permissions.interceptor.js';
 import { PassportModule } from '@nestjs/passport';
 import { EventModule } from '../core/eventbus/index.js';
+import { TelemetryModule } from '../core/telemtry/telemetry.module.js';
 import { ItsLearningModule } from '../modules/itslearning/itslearning.module.js';
 import { LdapModule } from '../core/ldap/ldap.module.js';
 
@@ -81,6 +82,7 @@ import { LdapModule } from '../core/ldap/ldap.module.js';
         PersonenKontextApiModule,
         ErrorModule,
         KeycloakConfigModule,
+        TelemetryModule,
         ItsLearningModule,
         LdapModule,
     ],

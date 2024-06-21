@@ -175,3 +175,21 @@ ldap:
     type: ClusterIP
     ports:
       ldap: 389
+
+telemetry:
+  image:
+    repository: otel/opentelemetry-collector
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 2
+      memory: 4G
+      ephemeral-storage: 2Gi
+    requests:
+      cpu: 200m
+      memory: 200Mi
+  service:
+    type: ClusterIP
+    ports:
+      telemetry: 4317

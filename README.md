@@ -15,6 +15,8 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
    * db
    * keycloak
    * redis
+   * LDAP
+   * Jaeger
 3. Create a `.env` file and set the required environment variables from `env.config.ts`
 4. run `npm run setup` to initialize the DB and seed data
 5. Run `npm run start:debug` to start the server
@@ -70,6 +72,10 @@ You can also use another profile, if you want to initialize the db while startin
 
 ## Testing Guides
 * Help on how to test API with Insomnia can be found at [API manuell lokal testen mit Insomnia](./docs/test-api-with-insomnia.md)
+
+## Performance management
+If you start the docker compose setup you'll also get a simple Jaeger-Setup on http://localhost:16686.
+This can be used to trace calls through the application and get metrics for it.
 
 ## Package (Create Docker Image )
 

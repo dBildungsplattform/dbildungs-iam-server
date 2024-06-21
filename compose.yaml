@@ -106,3 +106,19 @@ services:
     ports:
       - 9007:80
       - 4443:443
+
+  collector:
+    image: jaegertracing/all-in-one:1.57
+    ports:
+      - '4317:4317'
+      - '4318:4318'
+      - '6831:6831/udp'
+      - '6832:6832/udp'
+      - '5778:5778'
+      - '16686:16686'
+      - '14250:14250'
+      - '14268:14268'
+      - '14269:14269'
+      - '9411:9411'
+    environment:
+      - 'COLLECTOR_ZIPKIN_HOST_PORT=:9411'

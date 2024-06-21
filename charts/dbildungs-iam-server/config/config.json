@@ -26,13 +26,18 @@
     "USERNAME": "default",
     "USE_TLS": false
   },
-  "LDAP": {
-    "URL": "ldap://dbildungs-iam-server-ldap",
-    "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
-    "PASSWORD": "admin"
-  },
+    "LDAP": {
+        "URL": "ldap://dbildungs-iam-server-ldap",
+        "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
+        "PASSWORD": "admin"
+    },
   "DATA": {
     "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
+  },
+  "TELEMETRY": {
+    "METRICS_URL": "http://localhost:4317/v1/metrics",
+    "TRACES_URL": "http://localhost:4317/v1/traces",
+    "EXPORT_INTERVAL": 60000
   },
   "LOGGING": {
     "DEFAULT_LOG_LEVEL": "info",
