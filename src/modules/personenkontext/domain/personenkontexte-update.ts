@@ -5,7 +5,6 @@ import { UpdateCountError } from './error/update-count.error.js';
 import { UpdateOutdatedError } from './error/update-outdated.error.js';
 import { PersonID } from '../../../shared/types/index.js';
 import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.error.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { EventService } from '../../../core/eventbus/index.js';
@@ -15,7 +14,6 @@ import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkont
 export class PersonenkontexteUpdate {
     private constructor(
         private readonly eventService: EventService,
-        private readonly logger: ClassLogger,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personenkontextFactory: PersonenkontextFactory,
         private readonly personId: PersonID,
@@ -26,7 +24,6 @@ export class PersonenkontexteUpdate {
 
     public static createNew(
         eventService: EventService,
-        logger: ClassLogger,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         personenkontextFactory: PersonenkontextFactory,
         personId: PersonID,
@@ -36,7 +33,6 @@ export class PersonenkontexteUpdate {
     ): PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
             eventService,
-            logger,
             dBiamPersonenkontextRepo,
             personenkontextFactory,
             personId,
@@ -99,9 +95,6 @@ export class PersonenkontexteUpdate {
                         pk.rolleId == existingPK.rolleId,
                 )
             ) {
-                this.logger.info(
-                    `DELETE PK with ${existingPK.personId}, ${existingPK.organisationId}, ${existingPK.rolleId}`,
-                );
                 await this.dBiamPersonenkontextRepo.delete(existingPK);
                 this.eventService.publish(
                     new PersonenkontextDeletedEvent(existingPK.personId, existingPK.organisationId, existingPK.rolleId),
@@ -120,7 +113,6 @@ export class PersonenkontexteUpdate {
                         existingPK.rolleId == sentPK.rolleId,
                 )
             ) {
-                this.logger.info(`ADD PK with ${sentPK.personId}, ${sentPK.organisationId}, ${sentPK.rolleId}`);
                 await this.dBiamPersonenkontextRepo.save(sentPK);
                 this.eventService.publish(
                     new PersonenkontextCreatedEvent(sentPK.personId, sentPK.organisationId, sentPK.rolleId),

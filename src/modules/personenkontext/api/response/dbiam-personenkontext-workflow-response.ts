@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { OrganisationResponseLegacy } from '../../../organisation/api/organisation.response.legacy.js';
 import { RolleResponse } from '../../../rolle/api/rolle.response.js';
+import { Rolle } from '../../../rolle/domain/rolle.js';
 
 export class PersonenkontextWorkflowResponse {
     @ApiProperty({
@@ -37,15 +38,28 @@ export class PersonenkontextWorkflowResponse {
 
     public constructor(
         organisations: OrganisationResponseLegacy[],
-        rollen: RolleResponse[],
+        rollen: Rolle<true>[],
         canCommit: boolean,
         selectedOrganisation?: string,
         selectedRole?: string,
     ) {
         this.organisations = organisations;
-        this.rollen = rollen;
+        this.rollen = rollen.map((rolle: Rolle<true>) => this.createRolleResponse(rolle));
         this.selectedOrganisation = selectedOrganisation;
         this.selectedRole = selectedRole;
         this.canCommit = canCommit;
+    }
+
+    private createRolleResponse(rolle: Rolle<true>): RolleResponse {
+        return {
+            createdAt: rolle.createdAt,
+            updatedAt: rolle.updatedAt,
+            name: rolle.name,
+            id: rolle.id,
+            administeredBySchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
+            rollenart: rolle.rollenart,
+            merkmale: rolle.merkmale,
+            systemrechte: rolle.systemrechte,
+        };
     }
 }

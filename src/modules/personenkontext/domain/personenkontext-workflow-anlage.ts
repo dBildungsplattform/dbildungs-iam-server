@@ -58,7 +58,6 @@ export class PersonenkontextWorkflowAggregate {
         );
     }
 
-    // Finds the roles that the admin can see using the selected Organisation
     public async findRollenForOrganisation(
         permissions: PersonPermissions,
         organisationId: string,
@@ -73,16 +72,25 @@ export class PersonenkontextWorkflowAggregate {
             rollen = await this.rolleRepo.find(limit);
         }
 
-        if (!rollen) return [];
+        if (!rollen) {
+            return [];
+        }
 
+        // Retrieve all organisations that the admin has access to
         const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );
 
-        // The organisation that will be the base for the returned roles
+        if (!orgsWithRecht || orgsWithRecht.length === 0) {
+            return [];
+        }
+
+        // The organisation that was selected and that will be the base for the returned roles
         const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(organisationId);
-        if (!organisation) return [];
+        if (!organisation) {
+            return [];
+        }
 
         // Filter roles based on the organization's administeredBySchulstrukturKnoten
         const allowedRollen: Rolle<true>[] = rollen.filter(
