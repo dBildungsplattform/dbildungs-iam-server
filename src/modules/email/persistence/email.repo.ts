@@ -76,16 +76,14 @@ export class EmailRepo {
         return emailEntity && mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository);
     }
 
-    public async findByPersonId(personId: PersonID): Promise<Email<true, true>[]> {
-        const emailEntities: EmailEntity[] = await this.em.find(
-            this.entityName,
+    public async findByPerson(personId: PersonID): Promise<Email<true, true>> {
+        const emailEntity: Loaded<EmailEntity> = await this.em.findOneOrFail(
+            EmailEntity,
             { personId },
-            { populate: ['emailAddresses'] },
+            { populate: ['emailAddresses'] as const },
         );
 
-        return emailEntities.map((entity: EmailEntity) =>
-            mapEntityToAggregate(entity, this.emailGeneratorService, this.personRepository),
-        );
+        return emailEntity && mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository);
     }
 
     public async save(email: Email<boolean, true>): Promise<Email<true, true>> {
@@ -122,5 +120,14 @@ export class EmailRepo {
         await this.em.persistAndFlush(emailEntity);
 
         return mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository);
+    }
+
+    public async deleteById(id: EmailID): Promise<boolean> {
+        const emailEntity: Option<EmailEntity> = await this.em.findOne(EmailEntity, { id });
+        if (emailEntity) {
+            await this.em.removeAndFlush(emailEntity);
+            return true;
+        }
+        return false;
     }
 }

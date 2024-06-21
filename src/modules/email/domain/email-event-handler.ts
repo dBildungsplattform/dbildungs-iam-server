@@ -11,6 +11,7 @@ import { ServiceProviderKategorie } from '../../service-provider/domain/service-
 import { EmailFactory } from './email.factory.js';
 import { Email } from './email.js';
 import { EmailRepo } from '../persistence/email.repo.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 
 @Injectable()
 export class EmailEventHandler {
@@ -29,12 +30,12 @@ export class EmailEventHandler {
         );
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(event.rolleId);
         if (!rolle) {
-            this.logger.error(`Rolle id:${event.rolleId} does NOT exist!`);
+            this.logger.error(`Rolle id:${event.rolleId} does NOT exist`);
             return;
         }
 
         if (await this.rolleReferencesEmailServiceProvider(rolle)) {
-            this.logger.info(`Received event for creation of PK with rolle that references email SP!`);
+            this.logger.info(`Received event for creation of PK with rolle that references email SP`);
             const email: Email<false, false> = this.emailFactory.createNew(event.personId);
             const validEmail: Result<Email<false, true>> = await email.enable();
             if (validEmail.ok) {
@@ -48,17 +49,23 @@ export class EmailEventHandler {
     }
 
     @EventHandler(PersonenkontextDeletedEvent)
+    // eslint-disable-next-line @typescript-eslint/require-await
     public async asyncPersonenkontextDeletedEventHandler(event: PersonenkontextDeletedEvent): Promise<void> {
         this.logger.info(
             `Received PersonenkontextDeletedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
         );
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(event.rolleId);
-        if (!rolle) {
-            this.logger.error(`Rolle id:${event.rolleId} does NOT exist!`);
-            return;
-        }
-        if (await this.rolleReferencesEmailServiceProvider(rolle)) {
-            this.logger.info(`Deleted PK with rolle that references email SP!`);
+        // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
+    }
+
+    @EventHandler(PersonDeletedEvent)
+    public async asyncPersonDeletedEventHandler(event: PersonDeletedEvent): Promise<void> {
+        this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
+        const email: Email<true, true> = await this.emailRepo.findByPerson(event.personId);
+        const result: boolean = await this.emailRepo.deleteById(email.id);
+        if (result) {
+            this.logger.info(`Deleted email for personId: ${event.personId}`);
+        } else {
+            this.logger.error(`Deleting email-account(s) for personId: ${event.personId}`);
         }
     }
 

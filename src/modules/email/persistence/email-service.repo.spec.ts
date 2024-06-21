@@ -19,6 +19,7 @@ import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { EmailGeneratorService } from '../domain/email-generator.service.js';
 import { EmailServiceRepo } from './email-service.repo.js';
 import { EmailAddress } from '../domain/email-address.js';
+import { EventService } from '../../../core/eventbus/index.js';
 
 describe('EmailServiceRepo', () => {
     let module: TestingModule;
@@ -40,6 +41,10 @@ describe('EmailServiceRepo', () => {
                 EmailServiceRepo,
                 PersonFactory,
                 PersonRepository,
+                {
+                    provide: EventService,
+                    useValue: createMock<EventService>(),
+                },
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>({

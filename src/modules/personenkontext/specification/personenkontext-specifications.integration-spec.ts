@@ -24,6 +24,7 @@ import { UsernameGeneratorService } from '../../person/domain/username-generator
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { EventService } from '../../../core/eventbus/index.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -45,7 +46,7 @@ function createPersonenkontext<WasPersisted extends boolean>(
     return personenkontext;
 }
 
-describe('PersonenkontextSpecificationsTest', () => {
+describe('PersonenkontextSpecifications Integration', () => {
     let module: TestingModule;
     let orm: MikroORM;
     let organisationRepoMock: DeepMocked<OrganisationRepo>;
@@ -70,6 +71,10 @@ describe('PersonenkontextSpecificationsTest', () => {
                 PersonFactory,
                 UsernameGeneratorService,
                 PersonenkontextFactory,
+                {
+                    provide: EventService,
+                    useValue: createMock<EventService>(),
+                },
                 {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock<DBiamPersonenkontextRepo>(),

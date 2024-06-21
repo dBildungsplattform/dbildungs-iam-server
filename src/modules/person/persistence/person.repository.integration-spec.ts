@@ -36,8 +36,9 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { EventService } from '../../../core/eventbus/index.js';
 
-describe('PersonRepository', () => {
+describe('PersonRepository Integration', () => {
     let module: TestingModule;
     let sutLegacy: PersonRepo;
     let sut: PersonRepository;
@@ -57,6 +58,10 @@ describe('PersonRepository', () => {
                 PersonRepo,
                 PersonRepository,
                 ConfigService,
+                {
+                    provide: EventService,
+                    useValue: createMock<EventService>(),
+                },
                 {
                     provide: UsernameGeneratorService,
                     useValue: createMock<UsernameGeneratorService>(),

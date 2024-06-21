@@ -18,6 +18,7 @@ import { UsernameGeneratorService } from '../../person/domain/username-generator
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { EmailGeneratorService } from '../domain/email-generator.service.js';
 import { EmailServiceRepo } from './email-service.repo.js';
+import { EventService } from '../../../core/eventbus/index.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -36,6 +37,10 @@ describe('EmailRepo', () => {
                 EmailFactory,
                 EmailGeneratorService,
                 EmailServiceRepo,
+                {
+                    provide: EventService,
+                    useValue: createMock<EventService>(),
+                },
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>({
@@ -104,10 +109,10 @@ describe('EmailRepo', () => {
             if (!validEmail.ok) throw Error();
             const savedEmail: Email<true, true> = await sut.save(validEmail.value);
 
-            const foundEmails: Email<true, true>[] = await sut.findByPersonId(person.id);
+            const foundEmail: Email<true, true> = await sut.findByPerson(person.id);
 
-            expect(foundEmails).toBeTruthy();
-            expect(foundEmails).toContainEqual(expect.objectContaining({ id: savedEmail.id }));
+            expect(foundEmail).toBeTruthy();
+            expect(foundEmail.id).toStrictEqual(savedEmail.id);
         });
     });
 
@@ -130,6 +135,30 @@ describe('EmailRepo', () => {
 
             expect(foundEmail).toBeTruthy();
             expect(foundEmail).toEqual(updatedMail);
+        });
+    });
+
+    describe('deleteById', () => {
+        describe('when email exists', () => {
+            it('should return true', async () => {
+                const person: Person<true> = await createPerson();
+                const email: Email<false, false> = emailFactory.createNew(person.id);
+                const validEmail: Result<Email<false, true>> = await email.enable();
+
+                if (!validEmail.ok) throw Error();
+                const savedEmail: Email<true, true> = await sut.save(validEmail.value);
+                const result: boolean = await sut.deleteById(savedEmail.id);
+
+                expect(result).toBeTruthy();
+            });
+        });
+
+        describe('when email does NOT exist', () => {
+            it('should return false', async () => {
+                const result: boolean = await sut.deleteById(faker.string.uuid());
+
+                expect(result).toBeFalsy();
+            });
         });
     });
 });

@@ -30,6 +30,7 @@ import { EmailInvalidError } from '../error/email-invalid.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailAddress } from './email-address.js';
 import { EmailRepo } from '../persistence/email.repo.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 
 describe('Email Event Handler', () => {
     let app: INestApplication;
@@ -171,7 +172,7 @@ describe('Email Event Handler', () => {
 
                 rolleRepoMock.findById.mockResolvedValueOnce(undefined);
                 await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
-                expect(loggerMock.error).toHaveBeenCalledWith(`Rolle id:${rolleId} does NOT exist!`);
+                expect(loggerMock.error).toHaveBeenCalledWith(`Rolle id:${rolleId} does NOT exist`);
             });
         });
 
@@ -249,6 +250,38 @@ describe('Email Event Handler', () => {
                 const result: void = await emailEventHandler.asyncPersonenkontextDeletedEventHandler(event);
 
                 expect(result).toBeUndefined();
+            });
+        });
+    });
+
+    describe('asyncPersonDeletedEventHandler', () => {
+        let personId: string;
+        let event: PersonDeletedEvent;
+
+        beforeEach(() => {
+            personId = faker.string.uuid();
+            event = new PersonDeletedEvent(personId);
+        });
+
+        describe('when deletion is successful', () => {
+            it('should log info', async () => {
+                emailRepoMock.findByPerson.mockResolvedValueOnce(createMock<Email<true, true>>());
+                emailRepoMock.deleteById.mockResolvedValueOnce(true);
+
+                await emailEventHandler.asyncPersonDeletedEventHandler(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(`Deleted email for personId: ${personId}`);
+            });
+        });
+
+        describe('when deletion fails', () => {
+            it('should log error', async () => {
+                emailRepoMock.findByPerson.mockResolvedValueOnce(createMock<Email<true, true>>());
+                emailRepoMock.deleteById.mockResolvedValueOnce(false);
+
+                await emailEventHandler.asyncPersonDeletedEventHandler(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(`Deleting email-account(s) for personId: ${personId}`);
             });
         });
     });

@@ -17,6 +17,8 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Person } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
     return {
@@ -93,6 +95,7 @@ export class PersonRepository {
     public constructor(
         private readonly kcUserService: KeycloakUserService,
         private readonly em: EntityManager,
+        private readonly eventService: EventService,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -192,6 +195,8 @@ export class PersonRepository {
 
         // Delete the person from the database with all their kontexte
         await this.em.nativeDelete(PersonEntity, person.id);
+
+        this.eventService.publish(new PersonDeletedEvent(personId));
 
         return { ok: true, value: undefined };
     }
