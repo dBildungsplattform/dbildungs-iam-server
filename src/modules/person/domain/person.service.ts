@@ -85,7 +85,7 @@ export class PersonService {
         const canCommit: boolean = await anlage.canCommit(permissions, organisationId, rolleId);
 
         if (!canCommit) {
-            return new PersonenkontextCommitError('Unsufficient rights to commit the Personenkontext');
+            return new PersonenkontextCommitError('The Personenkontext could not be commited');
         }
         //Save Person
         const savedPerson: DomainError | Person<true> = await this.personRepository.create(person);

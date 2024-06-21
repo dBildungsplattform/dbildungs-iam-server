@@ -7,7 +7,6 @@ import {
     EntityNotFoundError,
     InvalidAttributeLengthError,
     KeycloakClientError,
-    MissingPermissionsError,
 } from '../../../shared/error/index.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { PersonRepo } from '../persistence/person.repo.js';
@@ -27,7 +26,10 @@ import { Person } from './person.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
+import { PersonenkontextWorkflowFactory } from '../../personenkontext/domain/personenkontext-workflow.factory.js';
+import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
+import { DbiamPersonenkontextFactory } from '../../personenkontext/domain/dbiam-personenkontext.factory.js';
+import { PersonenkontextCommitError } from '../../personenkontext/domain/error/personenkontext-commit.error.js';
 
 describe('sut', () => {
     let module: TestingModule;
@@ -44,6 +46,7 @@ describe('sut', () => {
         module = await Test.createTestingModule({
             providers: [
                 PersonService,
+                PersonenkontextWorkflowFactory,
                 {
                     provide: PersonRepo,
                     useValue: createMock<PersonRepo>(),
@@ -79,6 +82,14 @@ describe('sut', () => {
                 {
                     provide: PersonPermissions,
                     useValue: createMock<PersonPermissions>(),
+                },
+                {
+                    provide: OrganisationRepo,
+                    useValue: createMock<OrganisationRepo>(),
+                },
+                {
+                    provide: DbiamPersonenkontextFactory,
+                    useValue: createMock<DbiamPersonenkontextFactory>(),
                 },
             ],
         }).compile();
@@ -188,10 +199,10 @@ describe('sut', () => {
                 faker.string.uuid(),
                 faker.string.uuid(),
             );
-            expect(result).toBeInstanceOf(EntityNotFoundError);
+            expect(result).toBeInstanceOf(PersonenkontextCommitError);
         });
 
-        it('should return EntityNotFoundError if Rolle is not found', async () => {
+        it('should return PersonenkontextCommitError if Rolle is not found', async () => {
             personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
             rolleRepoMock.findById.mockResolvedValueOnce(undefined);
             organisationRepositoryMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>());
@@ -203,10 +214,10 @@ describe('sut', () => {
                 faker.string.uuid(),
                 faker.string.uuid(),
             );
-            expect(result).toBeInstanceOf(EntityNotFoundError);
+            expect(result).toBeInstanceOf(PersonenkontextCommitError);
         });
 
-        it('should return EntityNotFoundError if Rolle can NOT be assigned to organisation', async () => {
+        it('should return PersonenkontextCommitError if Rolle can NOT be assigned to organisation', async () => {
             personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(false);
@@ -220,10 +231,10 @@ describe('sut', () => {
                 faker.string.uuid(),
                 faker.string.uuid(),
             );
-            expect(result).toBeInstanceOf(EntityNotFoundError);
+            expect(result).toBeInstanceOf(PersonenkontextCommitError);
         });
 
-        it('should return RolleNurAnPassendeOrganisationError if Rolle does NOT match organisation', async () => {
+        it('should return PersonenkontextCommitError if Rolle does NOT match organisation', async () => {
             personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>({ rollenart: RollenArt.SYSADMIN });
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
@@ -239,10 +250,10 @@ describe('sut', () => {
                 faker.string.uuid(),
                 faker.string.uuid(),
             );
-            expect(result).toBeInstanceOf(RolleNurAnPassendeOrganisationError);
+            expect(result).toBeInstanceOf(PersonenkontextCommitError);
         });
 
-        it('should return MissingPermissionsError if user does NOT have permissions', async () => {
+        it('should return PersonenkontextCommitError if user does NOT have permissions', async () => {
             personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>({ rollenart: RollenArt.SYSADMIN });
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
@@ -259,10 +270,10 @@ describe('sut', () => {
                 faker.string.uuid(),
                 faker.string.uuid(),
             );
-            expect(result).toBeInstanceOf(MissingPermissionsError);
+            expect(result).toBeInstanceOf(PersonenkontextCommitError);
         });
 
-        it('should return DomainError if Person can be saved in the DB', async () => {
+        it('should return DomainError if Person cannot be saved in the DB', async () => {
             personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>({ rollenart: RollenArt.SYSADMIN });
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);

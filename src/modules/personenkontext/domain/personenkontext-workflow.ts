@@ -16,6 +16,7 @@ import { Personenkontext } from './personenkontext.js';
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 export class PersonenkontextWorkflowAggregate {
     public selectedOrganisationId?: string;
@@ -27,15 +28,22 @@ export class PersonenkontextWorkflowAggregate {
     private constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepo,
+        private readonly organisationRepository: OrganisationRepository,
         private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
     ) {}
 
     public static createNew(
         rolleRepo: RolleRepo,
         organisationRepo: OrganisationRepo,
+        organisationRepository: OrganisationRepository,
         dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
     ): PersonenkontextWorkflowAggregate {
-        return new PersonenkontextWorkflowAggregate(rolleRepo, organisationRepo, dbiamPersonenkontextFactory);
+        return new PersonenkontextWorkflowAggregate(
+            rolleRepo,
+            organisationRepo,
+            organisationRepository,
+            dbiamPersonenkontextFactory,
+        );
     }
 
     // Initialize the aggregate with the selected Organisation and Rolle
@@ -155,7 +163,7 @@ export class PersonenkontextWorkflowAggregate {
     // Checks if the rolle can be assigned to the target organisation
     public async checkReferences(organisationId: string, rolleId: string): Promise<Option<DomainError>> {
         const [orga, rolle]: [Option<OrganisationDo<true>>, Option<Rolle<true>>] = await Promise.all([
-            this.organisationRepo.findById(organisationId),
+            this.organisationRepository.findById(organisationId),
             this.rolleRepo.findById(rolleId),
         ]);
 
@@ -166,7 +174,7 @@ export class PersonenkontextWorkflowAggregate {
         if (!rolle) {
             return new EntityNotFoundError('Rolle', rolleId);
         }
-
+        console.log('orga: ', orga);
         // Can rolle be assigned at target orga
         const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(organisationId);
         if (!canAssignRolle) {
