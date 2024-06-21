@@ -22,6 +22,7 @@ import { DBiamPersonResponse } from './dbiam-person.response.js';
 import { DbiamPersonenkontextError } from '../../personenkontext/api/dbiam-personenkontext.error.js';
 import { PersonenkontextExceptionFilter } from '../../personenkontext/api/personenkontext-exception-filter.js';
 import { PersonenkontextSpecificationError } from '../../personenkontext/specification/error/personenkontext-specification.error.js';
+import { PersonenkontextCommitError } from '../../personenkontext/domain/error/personenkontext-commit.error.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new PersonenkontextExceptionFilter())
 @ApiTags('dbiam-personen')
@@ -56,7 +57,7 @@ export class DBiamPersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonResponse> {
         //Check all references & permissions then save person
-        const savedPersonWithPersonenkontext: DomainError | PersonPersonenkontext =
+        const savedPersonWithPersonenkontext: PersonPersonenkontext | DomainError | PersonenkontextCommitError =
             await this.personService.createPersonWithPersonenkontext(
                 permissions,
                 params.vorname,

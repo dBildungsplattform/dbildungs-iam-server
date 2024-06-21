@@ -14,7 +14,6 @@ import { PersonenkontextFactory } from '../../personenkontext/domain/personenkon
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextWorkflowFactory } from '../../personenkontext/domain/personenkontext-workflow.factory.js';
 import { PersonenkontextWorkflowAggregate } from '../../personenkontext/domain/personenkontext-workflow.js';
-import { PersonenkontextCommitError } from '../../personenkontext/domain/error/personenkontext-commit.error.js';
 
 export type PersonPersonenkontext = {
     person: Person<true>;
@@ -82,10 +81,10 @@ export class PersonService {
         anlage.initialize(organisationId, rolleId);
 
         // Check if permissions are enough to create the kontext
-        const canCommit: boolean = await anlage.canCommit(permissions, organisationId, rolleId);
+        const canCommit: DomainError | undefined = await anlage.canCommit(permissions, organisationId, rolleId);
 
-        if (!canCommit) {
-            return new PersonenkontextCommitError('The Personenkontext could not be commited');
+        if (canCommit) {
+            return canCommit;
         }
         //Save Person
         const savedPerson: DomainError | Person<true> = await this.personRepository.create(person);

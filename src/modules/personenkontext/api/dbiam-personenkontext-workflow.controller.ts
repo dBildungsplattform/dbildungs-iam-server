@@ -95,7 +95,7 @@ export class DbiamPersonenkontextFilterController {
         // Determine canCommit status, by default it's always false unless both the rolle and orga are selected
         let canCommit: boolean = false;
         if (params.organisationId && params.rolleId) {
-            canCommit = await anlage.canCommit(permissions, params.organisationId, params.rolleId);
+            canCommit = (await anlage.canCommit(permissions, params.organisationId, params.rolleId)) ? false : true;
         }
 
         const response: PersonenkontextWorkflowResponse = new PersonenkontextWorkflowResponse(

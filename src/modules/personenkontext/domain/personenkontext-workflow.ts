@@ -127,18 +127,22 @@ export class PersonenkontextWorkflowAggregate {
 
     // Verifies if the selected rolle and organisation can together be assigned to a kontext
     // Also verifies again if the organisationId is allowed to be assigned by the admin
-    public async canCommit(permissions: PersonPermissions, organisationId: string, rolleId: string): Promise<boolean> {
+    public async canCommit(
+        permissions: PersonPermissions,
+        organisationId: string,
+        rolleId: string,
+    ): Promise<DomainError | undefined> {
         const referenceCheckError: Option<DomainError> = await this.checkReferences(organisationId, rolleId);
         if (referenceCheckError) {
-            return false;
+            return referenceCheckError;
         }
 
         const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions, organisationId);
         if (permissionCheckError) {
-            return false;
+            return permissionCheckError;
         }
 
-        return true;
+        return undefined;
     }
 
     // Takes in the list of personenkontexte and decides whether to add or delete the personenkontexte for a specific PersonId
