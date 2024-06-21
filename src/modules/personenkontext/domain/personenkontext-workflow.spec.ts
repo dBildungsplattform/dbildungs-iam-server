@@ -192,6 +192,56 @@ describe('PersonenkontextWorkflow', () => {
             expect(result).toEqual([]);
         });
     });
+    describe('findRollenForOrganisation', () => {
+        it('should return an empty array if no roles are found by name', async () => {
+            rolleRepoMock.findByName.mockResolvedValue(undefined);
+
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(
+                createMock<PersonPermissions>(),
+                'organisation-id',
+                'rolle-name',
+                10,
+            );
+
+            expect(result).toEqual([]);
+        });
+
+        it('should return an empty array if no organisations with system rights are found', async () => {
+            rolleRepoMock.find.mockResolvedValue([createMock<Rolle<true>>()]);
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue([]);
+
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, 'organisation-id');
+
+            expect(result).toEqual([]);
+        });
+
+        it('should return an empty array if the organisation is not found', async () => {
+            rolleRepoMock.find.mockResolvedValue([createMock<Rolle<true>>()]);
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue(['org-id']);
+
+            organisationRepoMock.findById.mockResolvedValue(undefined);
+
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, 'organisation-id');
+
+            expect(result).toEqual([]);
+        });
+
+        it('should return an empty array if user does not have permission to view roles for the organisation', async () => {
+            const rolle: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
+            const organisation: DeepMocked<OrganisationDo<true>> = createMock<OrganisationDo<true>>();
+            rolleRepoMock.find.mockResolvedValue([rolle]);
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue(['some-other-org-id']);
+
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, 'organisation-id');
+
+            expect(result).toEqual([]);
+        });
+    });
     describe('commit', () => {
         it('should successfully commit personenkontexte', async () => {
             const personId: string = faker.string.uuid();
