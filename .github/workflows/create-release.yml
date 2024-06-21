@@ -34,6 +34,7 @@ jobs:
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@5
     with:
       node_version: '18'
+      timeout_minutes: 20
     permissions:
       contents: read
     secrets: inherit
