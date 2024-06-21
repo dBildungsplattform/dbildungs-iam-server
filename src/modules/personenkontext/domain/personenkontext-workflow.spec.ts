@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow-anlage.js';
+import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
@@ -9,13 +9,14 @@ import { Personenkontext } from './personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { faker } from '@faker-js/faker';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { PersonenkontextWorkflowFactory } from './personenkontext-workflow-anlage.factory.js';
+import { PersonenkontextWorkflowFactory } from './personenkontext-workflow.factory.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -101,6 +102,10 @@ describe('PersonenkontextAnlage', () => {
                 {
                     provide: PersonPermissions,
                     useValue: createMock<PersonPermissions>(),
+                },
+                {
+                    provide: DbiamPersonenkontextFactory,
+                    useValue: createMock<DbiamPersonenkontextFactory>(),
                 },
             ],
         }).compile();

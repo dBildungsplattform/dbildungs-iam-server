@@ -22,7 +22,7 @@ import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow-anlage.js';
+import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
 import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { Personenkontext } from '../domain/personenkontext.js';

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow-anlage.js';
+import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 
 @Injectable()

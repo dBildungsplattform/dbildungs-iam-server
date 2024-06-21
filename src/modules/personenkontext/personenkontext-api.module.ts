@@ -11,7 +11,7 @@ import { OrganisationModule } from '../organisation/organisation.module.js';
 import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextController } from './api/dbiam-personenkontext.controller.js';
 import { DbiamPersonenkontextFilterController } from './api/dbiam-personenkontext-workflow.controller.js';
-import { PersonenkontextWorkflowFactory } from './domain/personenkontext-workflow-anlage.factory.js';
+import { PersonenkontextWorkflowFactory } from './domain/personenkontext-workflow.factory.js';
 import { DBiamPersonenkontextService } from './domain/dbiam-personenkontext.service.js';
 import { DbiamPersonenkontextFactory } from './domain/dbiam-personenkontext.factory.js';
 import { EventModule } from '../../core/eventbus/index.js';

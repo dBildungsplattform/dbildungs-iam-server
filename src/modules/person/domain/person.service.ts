@@ -12,8 +12,8 @@ import { PersonRepository } from '../persistence/person.repository.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { PersonenkontextWorkflowFactory } from '../../personenkontext/domain/personenkontext-workflow-anlage.factory.js';
-import { PersonenkontextWorkflowAggregate } from '../../personenkontext/domain/personenkontext-workflow-anlage.js';
+import { PersonenkontextWorkflowFactory } from '../../personenkontext/domain/personenkontext-workflow.factory.js';
+import { PersonenkontextWorkflowAggregate } from '../../personenkontext/domain/personenkontext-workflow.js';
 import { PersonenkontextCommitError } from '../../personenkontext/domain/error/personenkontext-commit.error.js';
 
 export type PersonPersonenkontext = {

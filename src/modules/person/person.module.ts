@@ -17,7 +17,7 @@ import { OrganisationRepo } from '../organisation/persistence/organisation.repo.
 import { RolleFactory } from '../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
-import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/personenkontext-workflow-anlage.factory.js';
+import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/personenkontext-workflow.factory.js';
 import { DbiamPersonenkontextFactory } from '../personenkontext/domain/dbiam-personenkontext.factory.js';
 
 @Module({

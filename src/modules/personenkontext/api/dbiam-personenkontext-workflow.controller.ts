@@ -15,11 +15,11 @@ import { FindPersonenkontextRollenBodyParams } from './param/find-personenkontex
 import { FindPersonenkontextSchulstrukturknotenBodyParams } from './param/find-personenkontext-schulstrukturknoten.body.params.js';
 import { FindRollenResponse } from './response/find-rollen.response.js';
 import { FindSchulstrukturknotenResponse } from './response/find-schulstrukturknoten.response.js';
-import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow-anlage.js';
+import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
-import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow-anlage.factory.js';
+import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
