@@ -63,9 +63,10 @@ export class PersonenkontextWorkflowAggregate {
         // If the search string for organisation is present then search for Name or Kennung
         if (organisationName) {
             allOrganisations = await this.organisationRepo.findByNameOrKennung(organisationName);
+        } else {
+            // Otherwise just retrieve all orgas
+            allOrganisations = await this.organisationRepo.find(limit);
         }
-        // Otherwise just retrieve all orgas
-        allOrganisations = await this.organisationRepo.find(limit);
         const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,

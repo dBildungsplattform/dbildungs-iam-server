@@ -17,6 +17,8 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
+import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
+import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -63,7 +65,7 @@ function createRolleOrganisationsPersonKontext(
     return [rolle, parentOrganisation, childOrganisation, childsChildOrganisation, personenkontext];
 }
 
-describe('PersonenkontextAnlage', () => {
+describe('PersonenkontextWorkflow', () => {
     const LIMIT: number = 25;
     let module: TestingModule;
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -73,6 +75,7 @@ describe('PersonenkontextAnlage', () => {
     let personenkontextAnlageFactory: PersonenkontextWorkflowFactory;
     let personenkontextFactory: PersonenkontextFactory;
     let personpermissionsMock: DeepMocked<PersonPermissions>;
+    let dbiamPersonenkontextFactoryMock: DeepMocked<DbiamPersonenkontextFactory>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -112,6 +115,7 @@ describe('PersonenkontextAnlage', () => {
         rolleRepoMock = module.get(RolleRepo);
         organisationRepoMock = module.get(OrganisationRepo);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        dbiamPersonenkontextFactoryMock = module.get(DbiamPersonenkontextFactory);
         personenkontextFactory = module.get(PersonenkontextFactory);
         personenkontextAnlageFactory = module.get(PersonenkontextWorkflowFactory);
         personenkontextFactory = module.get(PersonenkontextFactory);
@@ -129,6 +133,124 @@ describe('PersonenkontextAnlage', () => {
 
     it('should be defined', () => {
         expect(anlage).toBeDefined();
+    });
+
+    describe('initialize', () => {
+        it('should initialize the aggregate with the selected Organisation and Rolle', () => {
+            anlage.initialize('org-id', 'role-id', 'pk-id');
+            expect(anlage.selectedOrganisationId).toBe('org-id');
+            expect(anlage.selectedRolleId).toBe('role-id');
+            expect(anlage.personenkontextId).toBe('pk-id');
+        });
+
+        it('should initialize the aggregate with null personenkontextId if not provided', () => {
+            anlage.initialize('org-id', 'role-id');
+            expect(anlage.selectedOrganisationId).toBe('org-id');
+            expect(anlage.selectedRolleId).toBe('role-id');
+            expect(anlage.personenkontextId).toBeNull();
+        });
+    });
+
+    describe('findAllSchulstrukturknoten', () => {
+        it('should return only the organisations that the admin has rights on', async () => {
+            const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+            const organisations: OrganisationDo<true>[] = [organisation];
+            organisationRepoMock.find.mockResolvedValue(organisations);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+
+            const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                undefined,
+                LIMIT,
+            );
+            expect(result).toEqual(organisations);
+        });
+
+        it('should return organisations based on name or kennung if provided', async () => {
+            const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+            const organisations: OrganisationDo<true>[] = [organisation];
+            organisationRepoMock.findByNameOrKennung.mockResolvedValue(organisations);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+
+            const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                organisation.name,
+                LIMIT,
+            );
+            expect(result).toEqual(organisations);
+        });
+
+        it('should return an empty array if no organisations are found', async () => {
+            organisationRepoMock.find.mockResolvedValue([]);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+
+            const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                undefined,
+                LIMIT,
+            );
+            expect(result).toEqual([]);
+        });
+    });
+    describe('commit', () => {
+        it('should successfully commit personenkontexte', async () => {
+            const personId: string = faker.string.uuid();
+            const lastModified: Date = faker.date.recent();
+            const count: number = 1;
+            const personenkontexte: DbiamPersonenkontextBodyParams[] = [];
+
+            const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
+            const updateResult: Personenkontext<true>[] = [personenkontext];
+
+            dbiamPersonenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValue({
+                update: jest.fn().mockResolvedValue(updateResult),
+            } as never);
+
+            const result: Personenkontext<true>[] | PersonenkontexteUpdateError = await anlage.commit(
+                personId,
+                lastModified,
+                count,
+                personenkontexte,
+            );
+
+            expect(result).toEqual(updateResult);
+        });
+
+        it('should throw an error if PersonenkontexteUpdateError is returned', async () => {
+            const personId: string = faker.string.uuid();
+            const lastModified: Date = faker.date.recent();
+            const count: number = 1;
+            const personenkontexte: DbiamPersonenkontextBodyParams[] = [];
+
+            const updateError: PersonenkontexteUpdateError = new PersonenkontexteUpdateError('Error message');
+            dbiamPersonenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValue({
+                update: jest.fn().mockResolvedValue(updateError),
+            } as never);
+
+            await expect(anlage.commit(personId, lastModified, count, personenkontexte)).rejects.toThrow(
+                PersonenkontexteUpdateError,
+            );
+        });
+    });
+
+    it('should return an empty array if no personenkontexte are passed', async () => {
+        const personId: string = faker.string.uuid();
+        const lastModified: Date = faker.date.recent();
+        const count: number = 0;
+        const personenkontexte: DbiamPersonenkontextBodyParams[] = [];
+
+        dbiamPersonenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValue({
+            update: jest.fn().mockResolvedValue([]),
+        } as never);
+
+        const result: Personenkontext<true>[] | PersonenkontexteUpdateError = await anlage.commit(
+            personId,
+            lastModified,
+            count,
+            personenkontexte,
+        );
+
+        expect(result).toEqual([]);
     });
 
     describe('findSchulstrukturknoten', () => {
