@@ -247,6 +247,24 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     expect(response.status).toBe(200);
                 });
             });
+            it('should throw BadRequestException if updateResult is an instance of PersonenkontexteUpdateError', async () => {
+                const params: DBiamFindPersonenkontexteByPersonIdParams = { personId: faker.string.uuid() };
+                const bodyParams: DbiamUpdatePersonenkontexteBodyParams = {
+                    count: 1,
+                    lastModified: new Date(),
+                    personenkontexte: [],
+                };
+                const updateError: PersonenkontexteUpdateError = new PersonenkontexteUpdateError(
+                    'Update error message',
+                );
+                personenkontextWorkflowMock.commit.mockResolvedValue(updateError);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .put(`/personenkontext/${params.personId}`)
+                    .send(bodyParams);
+
+                expect(response.status).toBe(400);
+            });
 
             describe('when errors occur', () => {
                 it('should return error because the count is not matching', async () => {
