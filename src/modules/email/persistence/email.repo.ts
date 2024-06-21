@@ -76,8 +76,8 @@ export class EmailRepo {
         return emailEntity && mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository);
     }
 
-    public async findByPerson(personId: PersonID): Promise<Email<true, true>> {
-        const emailEntity: Loaded<EmailEntity> = await this.em.findOneOrFail(
+    public async findByPerson(personId: PersonID): Promise<Option<Email<true, true>>> {
+        const emailEntity: Option<EmailEntity> = await this.em.findOne(
             EmailEntity,
             { personId },
             { populate: ['emailAddresses'] as const },

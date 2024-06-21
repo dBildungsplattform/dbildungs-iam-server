@@ -109,8 +109,9 @@ describe('EmailRepo', () => {
             if (!validEmail.ok) throw Error();
             const savedEmail: Email<true, true> = await sut.save(validEmail.value);
 
-            const foundEmail: Email<true, true> = await sut.findByPerson(person.id);
+            const foundEmail: Option<Email<true, true>> = await sut.findByPerson(person.id);
 
+            if (!foundEmail) throw Error();
             expect(foundEmail).toBeTruthy();
             expect(foundEmail.id).toStrictEqual(savedEmail.id);
         });

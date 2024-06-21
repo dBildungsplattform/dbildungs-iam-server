@@ -47,6 +47,21 @@ export class Email<WasPersisted extends boolean, IsValid extends boolean> {
     }
 
     public async enable(): Promise<Result<Email<WasPersisted, true>>> {
+        if (this.emailAddresses && this.emailAddresses[0]) {
+            this.emailAddresses[0].enabled = true;
+            return {
+                ok: true,
+                value: new Email(
+                    this.id,
+                    this.createdAt,
+                    this.updatedAt,
+                    this.personId,
+                    this.emailAddresses,
+                    this.emailGeneratorService,
+                    this.personRepository,
+                ),
+            };
+        }
         const person: Option<Person<true>> = await this.personRepository.findById(this.personId);
         if (!person) {
             return {

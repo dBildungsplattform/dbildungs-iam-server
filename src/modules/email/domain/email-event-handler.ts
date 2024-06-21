@@ -36,14 +36,21 @@ export class EmailEventHandler {
 
         if (await this.rolleReferencesEmailServiceProvider(rolle)) {
             this.logger.info(`Received event for creation of PK with rolle that references email SP`);
-            const email: Email<false, false> = this.emailFactory.createNew(event.personId);
-            const validEmail: Result<Email<false, true>> = await email.enable();
-            if (validEmail.ok) {
-                this.logger.info(`Created email with new address:${validEmail.value.currentAddress}`);
-                const persistedEmail: Email<true, true> = await this.emailRepo.save(validEmail.value);
-                this.logger.info(`Successfully persisted email with new address:${persistedEmail.currentAddress}`);
+            const existingEmail: Option<Email<true, true>> = await this.emailRepo.findByPerson(event.personId);
+
+            if (existingEmail) {
+                await existingEmail.enable();
+                this.logger.info(`Enabling existing email for person:${event.personId}`);
             } else {
-                this.logger.error(`Could not create email, error is ${validEmail.error.message}`);
+                const email: Email<false, false> = this.emailFactory.createNew(event.personId);
+                const validEmail: Result<Email<false, true>> = await email.enable();
+                if (validEmail.ok) {
+                    this.logger.info(`Created email with new address:${validEmail.value.currentAddress}`);
+                    const persistedEmail: Email<true, true> = await this.emailRepo.save(validEmail.value);
+                    this.logger.info(`Successfully persisted email with new address:${persistedEmail.currentAddress}`);
+                } else {
+                    this.logger.error(`Could not create email, error is ${validEmail.error.message}`);
+                }
             }
         }
     }
@@ -60,12 +67,16 @@ export class EmailEventHandler {
     @EventHandler(PersonDeletedEvent)
     public async asyncPersonDeletedEventHandler(event: PersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
-        const email: Email<true, true> = await this.emailRepo.findByPerson(event.personId);
+        const email: Option<Email<true, true>> = await this.emailRepo.findByPerson(event.personId);
+        if (!email) {
+            this.logger.error(`Could not find email for personId:${event.personId}`);
+            return;
+        }
         const result: boolean = await this.emailRepo.deleteById(email.id);
         if (result) {
-            this.logger.info(`Deleted email for personId: ${event.personId}`);
+            this.logger.info(`Deleted email for personId:${event.personId}`);
         } else {
-            this.logger.error(`Deleting email-account(s) for personId: ${event.personId}`);
+            this.logger.error(`Deleting email-account(s) for personId:${event.personId}`);
         }
     }
 

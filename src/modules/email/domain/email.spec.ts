@@ -8,6 +8,7 @@ import { faker } from '@faker-js/faker';
 import { Person } from '../../person/domain/person.js';
 import { EmailInvalidError } from '../error/email-invalid.error.js';
 import { EmailAddress } from './email-address.js';
+import { EmailID } from '../../../shared/types/index.js';
 
 describe('Email Aggregate', () => {
     let module: TestingModule;
@@ -44,7 +45,27 @@ describe('Email Aggregate', () => {
         email = emailFactory.createNew(faker.string.uuid());
     });
 
-    describe('activate', () => {
+    describe('enable', () => {
+        describe('when emailAddresses are already present on aggregate', () => {
+            it('should return successfully', async () => {
+                const emailId: EmailID = faker.string.uuid();
+                const emailAddresses: EmailAddress<true>[] = [
+                    new EmailAddress<true>(emailId, faker.internet.email(), false),
+                ];
+                const existingEmail: Email<true, true> = emailFactory.construct(
+                    emailId,
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    emailAddresses,
+                );
+
+                const result: Result<Email<true, true>> = await existingEmail.enable();
+
+                expect(result.ok).toBeTruthy();
+            });
+        });
+
         describe('when person cannot be found', () => {
             it('should return EmailInvalidError', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(undefined);
