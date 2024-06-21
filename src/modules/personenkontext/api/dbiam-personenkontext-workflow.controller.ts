@@ -87,7 +87,6 @@ export class DbiamPersonenkontextWorkflowController {
             ? await anlage.findRollenForOrganisation(permissions, params.organisationId, params.rolleName, params.limit)
             : [];
 
-        console.log(rollen)
         const organisationsResponse: OrganisationResponseLegacy[] = this.mapper.mapArray(
             organisations,
             OrganisationDo,

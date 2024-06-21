@@ -91,7 +91,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let personenkontextFactory: PersonenkontextFactory;
     let personenkontextWorkflowMock: DeepMocked<PersonenkontextWorkflowAggregate>;
     let controller: DbiamPersonenkontextWorkflowController;
-    let personenkontextWorkflowFactoryMock: DeepMocked<PersonenkontextWorkflowFactory>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -154,7 +153,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         personenkontextFactory = module.get(PersonenkontextFactory);
         personenkontextWorkflowMock = createMock<PersonenkontextWorkflowAggregate>();
         controller = module.get<DbiamPersonenkontextWorkflowController>(DbiamPersonenkontextWorkflowController);
-        personenkontextWorkflowFactoryMock.createNew.mockReturnValue(personenkontextWorkflowMock);
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
@@ -169,7 +167,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
         personenkontextWorkflowMock = createMock<PersonenkontextWorkflowAggregate>();
-        personenkontextWorkflowFactoryMock.createNew.mockReturnValue(personenkontextWorkflowMock);
     });
 
     describe('/GET step for personenkontext', () => {
