@@ -64,12 +64,12 @@ export class DbiamPersonenkontextFilterController {
 
         // Find all possible SSKs
         const organisations: OrganisationDo<true>[] = !params.organisationId
-            ? await anlage.findAllSchulstrukturknoten(permissions)
+            ? await anlage.findAllSchulstrukturknoten(permissions, params.organisationName, params.limit)
             : [];
 
         // Find all possible roles under the selected Organisation
         const rollen: Rolle<true>[] = params.organisationId
-            ? await anlage.findRollenForOrganisation(permissions, params.organisationId)
+            ? await anlage.findRollenForOrganisation(permissions, params.organisationId, params.rolleName, params.limit)
             : [];
 
         const organisationsResponse: OrganisationResponseLegacy[] = this.mapper.mapArray(

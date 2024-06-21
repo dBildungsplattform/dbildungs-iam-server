@@ -46,13 +46,24 @@ export class PersonenkontextWorkflowAggregate {
     }
 
     // Finds all SSKs that the admin can see
-    public async findAllSchulstrukturknoten(permissions: PersonPermissions): Promise<OrganisationDo<true>[]> {
-        const allOrganisations: OrganisationDo<boolean>[] = await this.organisationRepo.find();
+    public async findAllSchulstrukturknoten(
+        permissions: PersonPermissions,
+        organisationName: string | undefined,
+        limit?: number,
+    ): Promise<OrganisationDo<true>[]> {
+        let allOrganisations: OrganisationDo<boolean>[] = [];
+        // If the search string for organisation is present then search for Name or Kennung
+        if (organisationName) {
+            allOrganisations = await this.organisationRepo.findByNameOrKennung(organisationName);
+        }
+        // Otherwise just retrieve all orgas
+        allOrganisations = await this.organisationRepo.find(limit);
         const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );
 
+        // Return only the orgas that the admin have rights on
         return allOrganisations.filter((orga: OrganisationDo<boolean>) =>
             orgsWithRecht.includes(orga.id as OrganisationID),
         );
