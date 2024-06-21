@@ -13,7 +13,7 @@ export class Email<WasPersisted extends boolean, IsValid extends boolean> {
         public readonly createdAt: Persisted<Date, WasPersisted>,
         public readonly updatedAt: Persisted<Date, WasPersisted>,
         public readonly personId: PersonID,
-        public readonly emailAddresses: IsEmailValid<EmailAddress[], IsValid>,
+        public readonly emailAddresses: IsEmailValid<EmailAddress<boolean>[], IsValid>,
         public readonly emailGeneratorService: EmailGeneratorService,
         public readonly personRepository: PersonRepository,
     ) {}
@@ -39,7 +39,7 @@ export class Email<WasPersisted extends boolean, IsValid extends boolean> {
         createdAt: Date,
         updatedAt: Date,
         personId: PersonID,
-        emailAddresses: EmailAddress[],
+        emailAddresses: EmailAddress<true>[],
         emailGeneratorService: EmailGeneratorService,
         personRepository: PersonRepository,
     ): Email<WasPersisted, IsValid> {
@@ -64,7 +64,7 @@ export class Email<WasPersisted extends boolean, IsValid extends boolean> {
                 error: new EmailInvalidError(),
             };
         }
-        const newEmailAddress: EmailAddress = new EmailAddress('123', generatedName.value, true);
+        const newEmailAddress: EmailAddress<false> = new EmailAddress<false>(undefined, generatedName.value, true);
         return {
             ok: true,
             value: new Email(
@@ -90,6 +90,16 @@ export class Email<WasPersisted extends boolean, IsValid extends boolean> {
 
     public isEnabled(): boolean {
         if (!this.emailAddresses) return false;
-        return this.emailAddresses.some((emailAddress: EmailAddress) => emailAddress.enabled);
+        return this.emailAddresses.some((emailAddress: EmailAddress<boolean>) => emailAddress.enabled);
+    }
+
+    public get currentAddress(): Option<string> {
+        if (!this.emailAddresses) return undefined;
+
+        for (const emailAddress of this.emailAddresses) {
+            if (emailAddress.enabled) return emailAddress.address;
+        }
+
+        return undefined;
     }
 }

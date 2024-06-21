@@ -3,7 +3,12 @@ import { EmailEntity } from './email.entity.js';
 
 @Entity({ tableName: 'email_address' })
 export class EmailAddressEntity extends BaseEntity {
-    @ManyToOne({ entity: () => EmailEntity })
+    @ManyToOne({
+        columnType: 'uuid',
+        fieldName: 'email_id',
+        ref: true,
+        entity: () => EmailEntity,
+    })
     public email!: Rel<EmailEntity>;
 
     @Property({ primary: true, nullable: false, unique: true })

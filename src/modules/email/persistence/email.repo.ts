@@ -9,14 +9,27 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { EmailAddressEntity } from './email-address.entity.js';
 import { EmailAddress } from '../domain/email-address.js';
 
+export function mapEmailAddressAggregateToData(
+    emailAddress: EmailAddress<boolean>,
+    emailId: EmailID,
+): RequiredEntityData<EmailAddressEntity> {
+    return {
+        email: emailId,
+        address: emailAddress.address,
+        enabled: emailAddress.enabled,
+    };
+}
+
 export function mapAggregateToData(email: Email<boolean, true>): RequiredEntityData<EmailEntity> {
-    const emailAddresses: EntityData<EmailAddressEntity>[] = email.emailAddresses.map((emailAddress: EmailAddress) => {
-        return {
-            email: email.id,
-            address: emailAddress.address,
-            enabled: emailAddress.enabled,
-        };
-    });
+    const emailAddresses: EntityData<EmailAddressEntity>[] = email.emailAddresses.map(
+        (emailAddress: EmailAddress<boolean>) => {
+            return {
+                email: email.id,
+                address: emailAddress.address,
+                enabled: emailAddress.enabled,
+            };
+        },
+    );
 
     return {
         personId: rel(PersonEntity, email.personId),
@@ -29,9 +42,11 @@ export function mapEntityToAggregate(
     emailGeneratorService: EmailGeneratorService,
     personRepository: PersonRepository,
 ): Email<true, true> {
-    const emailAddresses: EmailAddress[] = entity.emailAddresses.map((emailAddressEntity: EmailAddressEntity) => {
-        return new EmailAddress(entity.id, emailAddressEntity.address, emailAddressEntity.enabled);
-    });
+    const emailAddresses: EmailAddress<boolean>[] = entity.emailAddresses.map(
+        (emailAddressEntity: EmailAddressEntity) => {
+            return new EmailAddress(entity.id, emailAddressEntity.address, emailAddressEntity.enabled);
+        },
+    );
 
     return Email.construct(
         entity.id,
@@ -84,6 +99,15 @@ export class EmailRepo {
     private async create(email: Email<false, true>): Promise<Email<true, true>> {
         const emailEntity: EmailEntity = this.em.create(EmailEntity, mapAggregateToData(email));
         await this.em.persistAndFlush(emailEntity);
+
+        //persist the emailAddresses
+        for (const emailAddress of email.emailAddresses) {
+            const emailAddressEntity: EmailAddressEntity = this.em.create(
+                EmailAddressEntity,
+                mapEmailAddressAggregateToData(emailAddress, emailEntity.id),
+            );
+            await this.em.persistAndFlush(emailAddressEntity);
+        }
 
         return mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository);
     }

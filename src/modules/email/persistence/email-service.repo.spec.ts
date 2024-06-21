@@ -108,7 +108,7 @@ describe('EmailServiceRepo', () => {
 
             const savedEmail: Email<true, true> = await emailRepo.save(validEmail.value);
 
-            const emailAddress: EmailAddress | undefined = savedEmail.emailAddresses[0];
+            const emailAddress: EmailAddress<false> | undefined = savedEmail.emailAddresses[0];
             expect(emailAddress).toBeDefined();
             if (!emailAddress) throw new Error();
             const exists: boolean = await sut.existsEmailAddress(emailAddress.address);

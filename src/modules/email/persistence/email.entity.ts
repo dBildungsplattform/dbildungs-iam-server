@@ -15,6 +15,7 @@ export class EmailEntity extends TimestampedEntity {
 
     @ManyToOne({
         columnType: 'uuid',
+        fieldName: 'person_id',
         ref: true,
         nullable: false,
         entity: () => PersonEntity,

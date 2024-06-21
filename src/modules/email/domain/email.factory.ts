@@ -17,7 +17,7 @@ export class EmailFactory {
         createdAt: Date,
         updatedAt: Date,
         personId: PersonID,
-        emailAddresses: EmailAddress[],
+        emailAddresses: EmailAddress<true>[],
     ): Email<true, true> {
         return Email.construct(
             id,

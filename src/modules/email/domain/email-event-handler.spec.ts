@@ -29,12 +29,14 @@ import { PersonID, RolleID } from '../../../shared/types/index.js';
 import { EmailInvalidError } from '../error/email-invalid.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailAddress } from './email-address.js';
+import { EmailRepo } from '../persistence/email.repo.js';
 
 describe('Email Event Handler', () => {
     let app: INestApplication;
 
     let emailEventHandler: EmailEventHandler;
     let emailFactoryMock: DeepMocked<EmailFactory>;
+    let emailRepoMock: DeepMocked<EmailRepo>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let loggerMock: DeepMocked<ClassLogger>;
@@ -65,6 +67,8 @@ describe('Email Event Handler', () => {
             .useValue(createMock<OrganisationRepository>())
             .overrideProvider(EmailFactory)
             .useValue(createMock<EmailFactory>())
+            .overrideProvider(EmailRepo)
+            .useValue(createMock<EmailRepo>())
             .overrideProvider(ServiceProviderRepo)
             .useValue(createMock<ServiceProviderRepo>())
             .overrideProvider(RolleRepo)
@@ -81,6 +85,7 @@ describe('Email Event Handler', () => {
 
         emailEventHandler = module.get(EmailEventHandler);
         emailFactoryMock = module.get(EmailFactory);
+        emailRepoMock = module.get(EmailRepo);
         rolleRepoMock = module.get(RolleRepo);
         serviceProviderRepoMock = module.get(ServiceProviderRepo);
         loggerMock = module.get(ClassLogger);
@@ -115,18 +120,35 @@ describe('Email Event Handler', () => {
 
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
-
                 emailFactoryMock.createNew.mockImplementationOnce((personId: PersonID) => {
-                    const emailAddress: EmailAddress = createMock<EmailAddress>({ address: 'test@schule-sh.de' });
                     const emailMock: DeepMocked<Email<false, false>> = createMock<Email<false, false>>({
+                        emailAddresses: [new EmailAddress<false>(undefined, faker.internet.email(), true)],
                         personId: personId,
+                    });
+                    const emailAddress: EmailAddress<false> = createMock<EmailAddress<false>>({
+                        address: 'test@schule-sh.de',
                     });
                     // eslint-disable-next-line @typescript-eslint/require-await
                     emailMock.enable.mockImplementationOnce(async () => {
                         return {
                             ok: true,
-                            value: createMock<Email<false, true>>({ emailAddresses: [emailAddress] }),
+                            value: createMock<Email<false, true>>({
+                                get currentAddress(): Option<string> {
+                                    return 'test@schule-sh.de';
+                                },
+                                emailAddresses: [emailAddress],
+                            }),
                         };
+                    });
+
+                    return emailMock;
+                });
+
+                // eslint-disable-next-line @typescript-eslint/require-await
+                emailRepoMock.save.mockImplementationOnce(async (email: Email<boolean, true>) => {
+                    const emailMock: DeepMocked<Email<true, true>> = createMock<Email<true, true>>({
+                        emailAddresses: [new EmailAddress<false>(undefined, faker.internet.email(), true)],
+                        personId: email.personId,
                     });
 
                     return emailMock;
@@ -134,11 +156,11 @@ describe('Email Event Handler', () => {
 
                 await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
 
-                expect(loggerMock.info).toHaveBeenCalledWith(`Created email with new address`);
+                expect(loggerMock.info).toHaveBeenCalledWith(`Created email with new address:test@schule-sh.de`);
             });
         });
 
-        describe('when rolle does NOT exists', () => {
+        describe('when rolle does NOT exist', () => {
             it('should log error', async () => {
                 const rolleId: RolleID = faker.string.uuid();
                 const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(

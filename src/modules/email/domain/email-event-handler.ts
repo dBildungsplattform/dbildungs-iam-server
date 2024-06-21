@@ -10,12 +10,14 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
 import { EmailFactory } from './email.factory.js';
 import { Email } from './email.js';
+import { EmailRepo } from '../persistence/email.repo.js';
 
 @Injectable()
 export class EmailEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly emailFactory: EmailFactory,
+        private readonly emailRepo: EmailRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly serviceProviderRepo: ServiceProviderRepo,
     ) {}
@@ -36,7 +38,9 @@ export class EmailEventHandler {
             const email: Email<false, false> = this.emailFactory.createNew(event.personId);
             const validEmail: Result<Email<false, true>> = await email.enable();
             if (validEmail.ok) {
-                this.logger.info(`Created email with new address`);
+                this.logger.info(`Created email with new address:${validEmail.value.currentAddress}`);
+                const persistedEmail: Email<true, true> = await this.emailRepo.save(validEmail.value);
+                this.logger.info(`Successfully persisted email with new address:${persistedEmail.currentAddress}`);
             } else {
                 this.logger.error(`Could not create email, error is ${validEmail.error.message}`);
             }
