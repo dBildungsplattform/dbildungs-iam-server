@@ -52,7 +52,7 @@ import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { PartialUpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
@@ -312,7 +312,7 @@ export class RolleController {
     })
     public async updateRolle(
         @Param() findRolleByIdParams: FindRolleByIdParams,
-        @Body() params: PartialUpdateRolleBodyParams,
+        @Body() params: UpdateRolleBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
         //Due to circular reference error, the rolleRepo needs to be passed into the aggregate.

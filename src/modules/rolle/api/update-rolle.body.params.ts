@@ -9,7 +9,7 @@ import {
 } from '../domain/rolle.enums.js';
 import { IsDIN91379AEXT } from '../../../shared/util/din-91379-validation.js';
 
-export class PartialUpdateRolleBodyParams {
+export class UpdateRolleBodyParams {
     @ApiProperty()
     @IsDIN91379AEXT()
     @IsNotEmpty()
@@ -26,8 +26,7 @@ export class PartialUpdateRolleBodyParams {
     @ApiProperty({ enum: RollenSystemRecht, enumName: RollenSystemRechtTypName, isArray: true, uniqueItems: true })
     public systemrechte!: RollenSystemRecht[];
 
-    @IsEnum(RollenSystemRecht, { each: true })
     @ArrayUnique()
-    @ApiProperty({ isArray: true, uniqueItems: true })
+    @ApiProperty({ type: [String], uniqueItems: true })
     public serviceProviderIds!: string[];
 }

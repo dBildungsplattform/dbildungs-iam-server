@@ -28,11 +28,10 @@ export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
     public catch(exception: RolleDomainError, host: ArgumentsHost): void {
         const ctx: HttpArgumentsHost = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
-        const status: number = 500; //all errors regarding organisation specifications are InternalServerErrors at the moment
 
         const dbiamRolleError: DbiamRolleError = this.mapDomainErrorToDbiamError(exception);
 
-        response.status(status);
+        response.status(dbiamRolleError.code);
         response.json(dbiamRolleError);
     }
 

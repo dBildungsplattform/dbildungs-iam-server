@@ -32,19 +32,49 @@ import { PagedResponse } from '../../../shared/paging/index.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
-//import {PersonPermissions} from "../../authentication/domain/person-permissions.js";
 import { Observable } from 'rxjs';
 import { Request } from 'express';
 import { PassportUser } from '../../authentication/types/user.js';
-import { PartialUpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { PersonDo } from '../../person/domain/person.do.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { KeycloakUserService } from '../../keycloak-administration/domain/keycloak-user.service.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let em: EntityManager;
     let rolleRepo: RolleRepo;
+    let personRepo: PersonRepo;
     let serviceProviderRepo: ServiceProviderRepo;
+    let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
+    let personenkontextFactory: PersonenkontextFactory;
+
+    function createPersonenkontext<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        params: Partial<Personenkontext<boolean>> = {},
+    ): Personenkontext<WasPersisted> {
+        const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
+            withId ? faker.string.uuid() : undefined,
+            withId ? faker.date.past() : undefined,
+            withId ? faker.date.recent() : undefined,
+            faker.string.uuid(),
+            faker.string.uuid(),
+            faker.string.uuid(),
+        );
+
+        Object.assign(personenkontext, params);
+
+        return personenkontext;
+    }
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -80,14 +110,37 @@ describe('Rolle API', () => {
                 OrganisationRepository,
                 RolleFactory,
                 ServiceProviderRepo,
+                PersonRepo,
+                DBiamPersonenkontextRepo,
+                PersonenkontextFactory,
+                PersonRepository,
+                RolleRepo,
+                {
+                    provide: KeycloakUserService,
+                    useValue: createMock<KeycloakUserService>({
+                        create: () =>
+                            Promise.resolve({
+                                ok: true,
+                                value: faker.string.uuid(),
+                            }),
+                        setPassword: () =>
+                            Promise.resolve({
+                                ok: true,
+                                value: faker.string.alphanumeric(16),
+                            }),
+                    }),
+                },
             ],
         }).compile();
 
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         rolleRepo = module.get(RolleRepo);
+        personRepo = module.get(PersonRepo);
         serviceProviderRepo = module.get(ServiceProviderRepo);
+        dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
+        personenkontextFactory = module.get(PersonenkontextFactory);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
@@ -539,7 +592,7 @@ describe('Rolle API', () => {
                 }),
             );
 
-            const params: PartialUpdateRolleBodyParams = {
+            const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                 systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
@@ -558,6 +611,101 @@ describe('Rolle API', () => {
                 rollenart: rolle.rollenart,
                 merkmale: params.merkmale,
                 systemrechte: params.systemrechte,
+            });
+        });
+
+        it('should fail if the rolle does not exist', async () => {
+            const params: UpdateRolleBodyParams = {
+                name: faker.person.jobTitle(),
+                merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                serviceProviderIds: [],
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .put(`/rolle/${faker.string.uuid()}`)
+                .send(params);
+
+            expect(response.status).toBe(404);
+        });
+
+        it('should return error with status-code 404 if user does NOT have permissions', async () => {
+            const organisation: OrganisationEntity = new OrganisationEntity();
+            await em.persistAndFlush(organisation);
+
+            await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+            const params: UpdateRolleBodyParams = {
+                name: faker.person.jobTitle(),
+                merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                serviceProviderIds: [],
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .put(`/rolle/${rolle.id}`)
+                .send(params);
+
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual({
+                code: 404,
+                subcode: '01',
+                titel: 'Angefragte Entität existiert nicht',
+                beschreibung: 'Die angeforderte Entität existiert nicht',
+            });
+        });
+
+        describe('Update Merkmale', () => {
+            it('should return 400 if rolle is already assigned', async () => {
+                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+
+                const organisation: OrganisationEntity = new OrganisationEntity();
+                organisation.typ = OrganisationsTyp.SCHULE;
+                await em.persistAndFlush(organisation);
+                await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisation.id,
+                        rollenart: RollenArt.LEHR,
+                    }),
+                );
+
+                await dBiamPersonenkontextRepo.save(
+                    createPersonenkontext(false, {
+                        personId: person.id,
+                        rolleId: rolle.id,
+                        organisationId: organisation.id,
+                    }),
+                );
+
+                const params: UpdateRolleBodyParams = {
+                    name: faker.person.jobTitle(),
+                    merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                    systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                    serviceProviderIds: [],
+                };
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .put(`/rolle/${rolle.id}`)
+                    .send(params);
+
+                expect(response.status).toBe(400);
+                expect(response.body).toEqual({
+                    code: 400,
+                    i18nKey: 'UPDATE_MERKMALE_ERROR',
+                });
             });
         });
     });
