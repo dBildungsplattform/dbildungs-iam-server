@@ -238,8 +238,8 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 });
             });
 
-            describe('when errors occur (e.g. because count is wrong)', () => {
-                it('should return error', async () => {
+            describe('when errors occur', () => {
+                it('should return error because the count is not matching', async () => {
                     const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
                     const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                     const savedPK: Personenkontext<true> = await personenkontextRepo.save(
