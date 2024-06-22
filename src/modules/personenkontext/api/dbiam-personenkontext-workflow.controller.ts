@@ -74,8 +74,8 @@ export class DbiamPersonenkontextWorkflowController {
 
         // Initializes the aggregate with the values of the selected organisation and rolle through the UI
         // (Both values could be undefined when nothing was done yet)
-        anlage.initialize(params.organisationId, params.rolleId);
 
+        anlage.initialize(params.organisationId, params.rolleId);
         // Find all possible SSKs
         const organisations: OrganisationDo<true>[] = !params.organisationId
             ? await anlage.findAllSchulstrukturknoten(permissions, params.organisationName, params.limit)

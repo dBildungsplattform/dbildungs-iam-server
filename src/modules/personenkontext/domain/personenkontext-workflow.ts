@@ -67,6 +67,8 @@ export class PersonenkontextWorkflowAggregate {
             // Otherwise just retrieve all orgas
             allOrganisations = await this.organisationRepo.find(limit);
         }
+        if (allOrganisations.length === 0) return [];
+
         const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,

@@ -239,6 +239,62 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
             expect(response.status).toEqual(404);
         });
+        it('should call findAllSchulstrukturknoten when no organisationId is provided', async () => {
+            const organisationName: string = faker.company.name();
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([faker.string.uuid()]);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+            const organisations: OrganisationDo<true>[] = [
+                await organisationRepo.save(DoFactory.createOrganisation(false, { name: organisationName })),
+            ];
+
+            const anlageMock: DeepMocked<PersonenkontextWorkflowAggregate> =
+                createMock<PersonenkontextWorkflowAggregate>({
+                    findAllSchulstrukturknoten: jest.fn().mockResolvedValue(organisations),
+                });
+
+            personenkontextWorkflowFactoryMock.createNew.mockReturnValue(anlageMock);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/personenkontext/step')
+                .send(); // No organisationId in query
+
+            expect(response.status).toEqual(200);
+        });
+
+        it('should call findRollenForOrganisation when organisationId is provided', async () => {
+            const organisation: OrganisationDo<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { name: faker.company.name() }),
+            );
+
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LERN,
+                }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+            const rollen: Rolle<true>[] = [rolle];
+
+            const anlageMock: DeepMocked<PersonenkontextWorkflowAggregate> =
+                createMock<PersonenkontextWorkflowAggregate>({
+                    findRollenForOrganisation: jest.fn().mockResolvedValue(rollen),
+                });
+
+            personenkontextWorkflowFactoryMock.createNew.mockReturnValue(anlageMock);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/personenkontext/step')
+                .query({ organisationId: organisation.id })
+                .send();
+
+            expect(response.status).toEqual(200);
+        });
 
         it('should return organisations and empty roles if organisationId is provided but no roles are found', async () => {
             const organisationName: string = faker.company.name();
