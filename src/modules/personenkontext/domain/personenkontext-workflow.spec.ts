@@ -266,7 +266,7 @@ describe('PersonenkontextWorkflow', () => {
             expect(result).toEqual(updateResult);
         });
 
-        it('should throw an error if PersonenkontexteUpdateError is returned', async () => {
+        it('should return an error if PersonenkontexteUpdateError is returned', async () => {
             const personId: string = faker.string.uuid();
             const lastModified: Date = faker.date.recent();
             const count: number = 1;
@@ -277,9 +277,14 @@ describe('PersonenkontextWorkflow', () => {
                 update: jest.fn().mockResolvedValue(updateError),
             } as never);
 
-            await expect(anlage.commit(personId, lastModified, count, personenkontexte)).rejects.toThrow(
-                PersonenkontexteUpdateError,
+            const result: PersonenkontexteUpdateError | Personenkontext<true>[] = await anlage.commit(
+                personId,
+                lastModified,
+                count,
+                personenkontexte,
             );
+
+            expect(result).toBeInstanceOf(PersonenkontexteUpdateError);
         });
     });
 
