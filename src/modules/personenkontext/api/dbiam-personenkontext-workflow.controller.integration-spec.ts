@@ -219,6 +219,27 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             expect(response.body).toBeInstanceOf(Object);
         });
 
+        it('should handle request with no organisationId', async () => {
+            const organisationName: string = faker.company.name();
+            const randomName: string = faker.company.name();
+
+            const organisation: OrganisationDo<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { name: organisationName }),
+            );
+            const organisations: OrganisationDo<true>[] = [organisation];
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValue(organisations);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/personenkontext/step/organisationName?organisationName=${randomName}`)
+                .send();
+
+            expect(response.status).toEqual(404);
+        });
+
         it('should return organisations and empty roles if organisationId is provided but no roles are found', async () => {
             const organisationName: string = faker.company.name();
             const organisation: OrganisationDo<true> = await organisationRepo.save(
