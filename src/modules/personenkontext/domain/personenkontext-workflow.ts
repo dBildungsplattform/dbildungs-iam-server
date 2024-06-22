@@ -163,7 +163,7 @@ export class PersonenkontextWorkflowAggregate {
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
 
         if (updateResult instanceof PersonenkontexteUpdateError) {
-            throw updateResult;
+            return updateResult;
         }
         return updateResult;
     }

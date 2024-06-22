@@ -44,7 +44,6 @@ import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-pe
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
 import { PersonenkontexteUpdateResponse } from './response/personenkontexte-update.response.js';
 import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-update.error.js';
-import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
@@ -136,22 +135,15 @@ export class DbiamPersonenkontextWorkflowController {
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
         @Body() bodyParams: DbiamUpdatePersonenkontexteBodyParams,
     ): Promise<PersonenkontexteUpdateResponse> {
-        try {
-            const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError =
-                await this.personenkontextWorkflowFactory
-                    .createNew()
-                    .commit(params.personId, bodyParams.lastModified, bodyParams.count, bodyParams.personenkontexte);
+        const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError =
+            await this.personenkontextWorkflowFactory
+                .createNew()
+                .commit(params.personId, bodyParams.lastModified, bodyParams.count, bodyParams.personenkontexte);
 
-            if (updateResult instanceof PersonenkontexteUpdateError) {
-                throw new BadRequestException(updateResult.message);
-            }
-            return new PersonenkontexteUpdateResponse(updateResult);
-        } catch (error) {
-            if (error instanceof PersonenkontextCommitError || error instanceof PersonenkontexteUpdateError) {
-                throw new BadRequestException(error.message);
-            }
-            throw error;
+        if (updateResult instanceof DomainError) {
+            throw new BadRequestException(updateResult.message);
         }
+        return new PersonenkontexteUpdateResponse(updateResult);
     }
 
     @Get('rollen')
