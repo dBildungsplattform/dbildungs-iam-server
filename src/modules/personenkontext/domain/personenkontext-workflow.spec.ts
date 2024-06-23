@@ -224,9 +224,9 @@ describe('PersonenkontextWorkflow', () => {
 
             organisationRepoMock.findById.mockResolvedValue(undefined);
 
-            anlage.initialize('organisation-id');
+            anlage.initialize('org-id');
 
-            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, 'organisation-id');
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, 'org-id');
 
             expect(result).toEqual([]);
         });
