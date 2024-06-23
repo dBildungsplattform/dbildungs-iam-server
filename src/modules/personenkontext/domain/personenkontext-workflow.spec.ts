@@ -210,7 +210,9 @@ describe('PersonenkontextWorkflow', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValue([]);
 
-            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, 'organisation-id');
+            anlage.initialize('organisation-id');
+
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
 
             expect(result).toEqual([]);
         });
@@ -221,6 +223,8 @@ describe('PersonenkontextWorkflow', () => {
             permissions.getOrgIdsWithSystemrecht.mockResolvedValue(['org-id']);
 
             organisationRepoMock.findById.mockResolvedValue(undefined);
+
+            anlage.initialize('organisation-id');
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, 'organisation-id');
 
@@ -236,7 +240,9 @@ describe('PersonenkontextWorkflow', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValue(['some-other-org-id']);
 
-            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, 'organisation-id');
+            anlage.initialize('organisation-id');
+
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
 
             expect(result).toEqual([]);
         });
