@@ -198,7 +198,6 @@ describe('PersonenkontextWorkflow', () => {
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(
                 createMock<PersonPermissions>(),
-                'organisation-id',
                 'rolle-name',
                 10,
             );

@@ -47,9 +47,9 @@ export class PersonenkontextWorkflowAggregate {
     }
 
     // Initialize the aggregate with the selected Organisation and Rolle
-    public initialize(ssk?: string, rolle?: string, pkId?: string): void {
-        this.selectedOrganisationId = ssk;
-        this.selectedRolleId = rolle;
+    public initialize(organisationId?: string, rolleId?: string, pkId?: string): void {
+        this.selectedOrganisationId = organisationId;
+        this.selectedRolleId = rolleId;
         this.personenkontextId = pkId ?? null;
     }
 
@@ -82,7 +82,6 @@ export class PersonenkontextWorkflowAggregate {
 
     public async findRollenForOrganisation(
         permissions: PersonPermissions,
-        organisationId: string,
         rolleName?: string,
         limit?: number,
     ): Promise<Rolle<true>[]> {
@@ -108,8 +107,12 @@ export class PersonenkontextWorkflowAggregate {
             return [];
         }
 
-        // The organisation that was selected and that will be the base for the returned roles
-        const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(organisationId);
+        let organisation: Option<OrganisationDo<true>>;
+        if (this.selectedOrganisationId) {
+            // The organisation that was selected and that will be the base for the returned roles
+            organisation = await this.organisationRepo.findById(this.selectedOrganisationId);
+        }
+        // If the organisation was not found with the provided selected Id then just return an array of empty orgas
         if (!organisation) {
             return [];
         }
@@ -130,19 +133,23 @@ export class PersonenkontextWorkflowAggregate {
 
     // Verifies if the selected rolle and organisation can together be assigned to a kontext
     // Also verifies again if the organisationId is allowed to be assigned by the admin
-    public async canCommit(
-        permissions: PersonPermissions,
-        organisationId: string,
-        rolleId: string,
-    ): Promise<DomainError | boolean> {
-        const referenceCheckError: Option<DomainError> = await this.checkReferences(organisationId, rolleId);
-        if (referenceCheckError) {
-            return referenceCheckError;
-        }
+    public async canCommit(permissions: PersonPermissions): Promise<DomainError | boolean> {
+        if (this.selectedOrganisationId && this.selectedRolleId) {
+            const referenceCheckError: Option<DomainError> = await this.checkReferences(
+                this.selectedOrganisationId,
+                this.selectedRolleId,
+            );
+            if (referenceCheckError) {
+                return referenceCheckError;
+            }
 
-        const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions, organisationId);
-        if (permissionCheckError) {
-            return permissionCheckError;
+            const permissionCheckError: Option<DomainError> = await this.checkPermissions(
+                permissions,
+                this.selectedOrganisationId,
+            );
+            if (permissionCheckError) {
+                return permissionCheckError;
+            }
         }
 
         return true;

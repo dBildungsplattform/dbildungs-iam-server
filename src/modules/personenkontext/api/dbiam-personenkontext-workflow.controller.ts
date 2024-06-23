@@ -74,8 +74,8 @@ export class DbiamPersonenkontextWorkflowController {
 
         // Initializes the aggregate with the values of the selected organisation and rolle through the UI
         // (Both values could be undefined when nothing was done yet)
-
         anlage.initialize(params.organisationId, params.rolleId);
+
         // Find all possible SSKs
         const organisations: OrganisationDo<true>[] = !params.organisationId
             ? await anlage.findAllSchulstrukturknoten(permissions, params.organisationName, params.limit)
@@ -83,7 +83,7 @@ export class DbiamPersonenkontextWorkflowController {
 
         // Find all possible roles under the selected Organisation
         const rollen: Rolle<true>[] = params.organisationId
-            ? await anlage.findRollenForOrganisation(permissions, params.organisationId, params.rolleName, params.limit)
+            ? await anlage.findRollenForOrganisation(permissions, params.rolleName, params.limit)
             : [];
 
         const organisationsResponse: OrganisationResponseLegacy[] = this.mapper.mapArray(
@@ -95,11 +95,7 @@ export class DbiamPersonenkontextWorkflowController {
         // Determine canCommit status, by default it's always false unless both the rolle and orga are selected
         let canCommit: boolean = false;
         if (params.organisationId && params.rolleId) {
-            const commitResult: DomainError | boolean = await anlage.canCommit(
-                permissions,
-                params.organisationId,
-                params.rolleId,
-            );
+            const commitResult: DomainError | boolean = await anlage.canCommit(permissions);
             if (commitResult === true) {
                 canCommit = true;
             }

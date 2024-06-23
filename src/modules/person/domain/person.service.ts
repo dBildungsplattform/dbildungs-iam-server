@@ -81,7 +81,7 @@ export class PersonService {
         anlage.initialize(organisationId, rolleId);
 
         // Check if permissions are enough to create the kontext
-        const canCommit: DomainError | boolean = await anlage.canCommit(permissions, organisationId, rolleId);
+        const canCommit: DomainError | boolean = await anlage.canCommit(permissions);
 
         if (canCommit instanceof DomainError) {
             return canCommit;
