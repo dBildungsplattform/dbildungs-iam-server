@@ -241,6 +241,38 @@ describe('PersonenkontextWorkflow', () => {
 
             expect(result).toEqual([]);
         });
+        describe('findRollenForOrganisation', () => {
+            it('should add roles to allowedRollen if user has permissions', async () => {
+                const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                    typ: OrganisationsTyp.SCHULE,
+                });
+                const childOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                    typ: OrganisationsTyp.KLASSE,
+                });
+                const rolle: Rolle<true> = DoFactory.createRolle(true, {
+                    rollenart: RollenArt.LEHR,
+                    administeredBySchulstrukturknoten: organisation.id,
+                });
+                const rollen: Rolle<true>[] = [rolle];
+                const orgsWithRecht: string[] = [organisation.id, childOrganisation.id];
+
+                organisationRepoMock.findById.mockResolvedValue(organisation);
+                organisationRepoMock.findChildOrgasForIds.mockResolvedValue([childOrganisation]);
+                organisationRepoMock.findByIds.mockResolvedValue(
+                    new Map(orgsWithRecht.map((id: string) => [id, DoFactory.createOrganisation(true, { id })])),
+                );
+                rolleRepoMock.find.mockResolvedValue(rollen);
+
+                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                permissions.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+
+                anlage.initialize(organisation.id);
+
+                const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
+
+                expect(result).toHaveLength(0);
+            });
+        });
     });
     describe('commit', () => {
         it('should successfully commit personenkontexte', async () => {
