@@ -250,7 +250,7 @@ describe('PersonenkontextWorkflow', () => {
                     typ: OrganisationsTyp.KLASSE,
                 });
                 const rolle: Rolle<true> = DoFactory.createRolle(true, {
-                    rollenart: RollenArt.ORGADMIN
+                    rollenart: RollenArt.ORGADMIN,
                 });
                 const rollen: Rolle<true>[] = [rolle];
                 const orgsWithRecht: string[] = [organisation.id, childOrganisation.id];
