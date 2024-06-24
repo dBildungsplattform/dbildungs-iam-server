@@ -1,13 +1,4 @@
-import {
-    Collection,
-    EntityData,
-    EntityManager,
-    EntityName,
-    Loaded,
-    rel,
-    RequiredEntityData,
-    wrap,
-} from '@mikro-orm/core';
+import { Collection, EntityData, EntityManager, EntityName, Loaded, rel, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { EmailEntity } from './email.entity.js';
 import { Email } from '../domain/email.js';
@@ -17,6 +8,9 @@ import { EmailGeneratorService } from '../domain/email-generator.service.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailAddressEntity } from './email-address.entity.js';
 import { EmailAddress } from '../domain/email-address.js';
+import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DomainError } from '../../../shared/error/index.js';
 
 export function mapEmailAddressAggregateToData(
     emailAddress: EmailAddress<boolean>,
@@ -70,6 +64,7 @@ export function mapEntityToAggregate(
 export class EmailRepo {
     public constructor(
         private readonly em: EntityManager,
+        private readonly logger: ClassLogger,
         private readonly emailGeneratorService: EmailGeneratorService,
         private readonly personRepository: PersonRepository,
     ) {}
@@ -94,7 +89,7 @@ export class EmailRepo {
         return emailEntity && mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository);
     }
 
-    public async save(email: Email<boolean, true>): Promise<Email<true, true>> {
+    public async save(email: Email<boolean, true>): Promise<Email<true, true> | DomainError> {
         if (email.id) {
             return this.update(email);
         } else {
@@ -118,15 +113,30 @@ export class EmailRepo {
         return mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository);
     }
 
-    private async update(email: Email<true, true>): Promise<Email<true, true>> {
+    private async update(email: Email<true, true>): Promise<Email<true, true> | DomainError> {
         const emailEntity: Loaded<EmailEntity> = await this.em.findOneOrFail(EmailEntity, email.id, {
             populate: ['emailAddresses'] as const,
         });
 
-        wrap(emailEntity).assign(mapAggregateToData(email), { updateNestedEntities: true });
-        //emailEntity.assign(mapAggregateToData(email), { updateNestedEntities: true });
+        //wrap(emailEntity).assign(mapAggregateToData(email), { updateNestedEntities: true });
+        emailEntity.assign(mapAggregateToData(email), {});
 
         await this.em.persistAndFlush(emailEntity);
+
+        //update the emailAddresses
+        for (const emailAddress of email.emailAddresses) {
+            const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(EmailAddressEntity, {
+                address: emailAddress.address,
+            });
+
+            if (emailAddressEntity) {
+                emailAddressEntity.assign(mapEmailAddressAggregateToData(emailAddress, emailEntity.id), {});
+                await this.em.persistAndFlush(emailAddressEntity);
+            } else {
+                this.logger.error(`Email-address:${emailAddress.address} could not be found`);
+                return new EmailAddressNotFoundError(emailAddress.address);
+            }
+        }
 
         return mapEntityToAggregate(emailEntity, this.emailGeneratorService, this.personRepository);
     }
