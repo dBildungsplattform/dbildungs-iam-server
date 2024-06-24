@@ -244,14 +244,13 @@ describe('PersonenkontextWorkflow', () => {
         describe('findRollenForOrganisation', () => {
             it('should add roles to allowedRollen if user has permissions', async () => {
                 const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.SCHULE,
+                    typ: OrganisationsTyp.LAND,
                 });
                 const childOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true, {
                     typ: OrganisationsTyp.KLASSE,
                 });
                 const rolle: Rolle<true> = DoFactory.createRolle(true, {
-                    rollenart: RollenArt.LEHR,
-                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.ORGADMIN
                 });
                 const rollen: Rolle<true>[] = [rolle];
                 const orgsWithRecht: string[] = [organisation.id, childOrganisation.id];
@@ -270,7 +269,7 @@ describe('PersonenkontextWorkflow', () => {
 
                 const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
 
-                expect(result).toHaveLength(0);
+                expect(result).toHaveLength(1);
             });
         });
     });
