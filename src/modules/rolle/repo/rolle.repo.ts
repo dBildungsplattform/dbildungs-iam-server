@@ -10,12 +10,7 @@ import { RolleServiceProviderEntity } from '../entity/rolle-service-provider.ent
 import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import {
-    DomainError,
-    EntityCouldNotBeDeleted,
-    EntityNotFoundError,
-    MissingPermissionsError,
-} from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -204,11 +199,12 @@ export class RolleRepo {
         if (!authorizedRole.ok) {
             return authorizedRole.error;
         }
-        const deletedRoles: number = await this.em.nativeDelete(RolleEntity, { id });
 
-        if (deletedRoles === 0) {
-            return new EntityCouldNotBeDeleted('Rolle', id);
-        }
+        const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, id, {
+            populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+        });
+        //Cascade removal
+        await this.em.removeAndFlush(rolleEntity);
 
         return;
     }
