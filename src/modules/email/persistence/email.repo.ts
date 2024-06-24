@@ -1,4 +1,13 @@
-import { Collection, EntityData, EntityManager, EntityName, Loaded, rel, RequiredEntityData } from '@mikro-orm/core';
+import {
+    Collection,
+    EntityData,
+    EntityManager,
+    EntityName,
+    Loaded,
+    rel,
+    RequiredEntityData,
+    wrap,
+} from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { EmailEntity } from './email.entity.js';
 import { Email } from '../domain/email.js';
@@ -30,7 +39,6 @@ export function mapAggregateToData(email: Email<boolean, true>): RequiredEntityD
             };
         },
     );
-
     return {
         personId: rel(PersonEntity, email.personId),
         emailAddresses: new Collection<EmailAddressEntity>(emailAddresses),
@@ -115,7 +123,8 @@ export class EmailRepo {
             populate: ['emailAddresses'] as const,
         });
 
-        emailEntity.assign(mapAggregateToData(email), { updateNestedEntities: true });
+        wrap(emailEntity).assign(mapAggregateToData(email), { updateNestedEntities: true });
+        //emailEntity.assign(mapAggregateToData(email), { updateNestedEntities: true });
 
         await this.em.persistAndFlush(emailEntity);
 

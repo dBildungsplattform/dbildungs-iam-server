@@ -28,7 +28,7 @@ export class Email<WasPersisted extends boolean, IsValid extends boolean> {
             undefined,
             undefined,
             personId,
-            undefined,
+            [],
             emailGeneratorService,
             personRepository,
         );
@@ -95,7 +95,7 @@ export class Email<WasPersisted extends boolean, IsValid extends boolean> {
     }
 
     public disable(): boolean {
-        if (!this.emailAddresses) return false;
+        if (!this.emailAddresses || this.emailAddresses.length <= 0) return false;
 
         for (const emailAddress of this.emailAddresses) {
             emailAddress.enabled = false;
@@ -104,12 +104,12 @@ export class Email<WasPersisted extends boolean, IsValid extends boolean> {
     }
 
     public isEnabled(): boolean {
-        if (!this.emailAddresses) return false;
+        if (!this.emailAddresses || this.emailAddresses.length <= 0) return false;
         return this.emailAddresses.some((emailAddress: EmailAddress<boolean>) => emailAddress.enabled);
     }
 
     public get currentAddress(): Option<string> {
-        if (!this.emailAddresses) return undefined;
+        if (!this.emailAddresses || this.emailAddresses.length <= 0) return undefined;
 
         for (const emailAddress of this.emailAddresses) {
             if (emailAddress.enabled) return emailAddress.address;

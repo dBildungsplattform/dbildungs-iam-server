@@ -1,4 +1,4 @@
-import { Cascade, Collection, Entity, ManyToOne, OneToMany, Ref } from '@mikro-orm/core';
+import { Collection, Entity, ManyToOne, OneToMany, Ref } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { EmailAddressEntity } from './email-address.entity.js';
@@ -9,7 +9,7 @@ export class EmailEntity extends TimestampedEntity {
         entity: () => EmailAddressEntity,
         mappedBy: 'email',
         orphanRemoval: true,
-        cascade: [Cascade.ALL],
+        cascade: [],
     })
     public emailAddresses: Collection<EmailAddressEntity> = new Collection<EmailAddressEntity>(this);
 

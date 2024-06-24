@@ -14,8 +14,6 @@ import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { EventService } from '../../../core/eventbus/index.js';
-import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { PersonPersonenkontext, PersonService } from '../domain/person.service.js';
 import { DbiamCreatePersonWithContextBodyParams } from './dbiam-create-person-with-context.body.params.js';
 import { DBiamPersonResponse } from './dbiam-person.response.js';
@@ -29,10 +27,7 @@ import { PersonenkontextSpecificationError } from '../../personenkontext/specifi
 @ApiOAuth2(['openid'])
 @Controller({ path: 'dbiam/personen' })
 export class DBiamPersonController {
-    public constructor(
-        private readonly personService: PersonService,
-        private readonly eventService: EventService,
-    ) {}
+    public constructor(private readonly personService: PersonService) {}
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
@@ -75,13 +70,14 @@ export class DBiamPersonController {
             );
         }
 
-        this.eventService.publish(
+        // this would publish PersonenkontextCreatedEvent for the 2nd time, after it is published in dbiam-personenkontext.repo
+        /*this.eventService.publish(
             new PersonenkontextCreatedEvent(
                 savedPersonWithPersonenkontext.personenkontext.personId,
                 savedPersonWithPersonenkontext.personenkontext.organisationId,
                 savedPersonWithPersonenkontext.personenkontext.rolleId,
             ),
-        );
+        );*/
 
         return new DBiamPersonResponse(
             savedPersonWithPersonenkontext.person,
