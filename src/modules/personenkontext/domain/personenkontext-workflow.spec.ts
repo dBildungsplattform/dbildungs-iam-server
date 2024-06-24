@@ -325,6 +325,8 @@ describe('PersonenkontextWorkflow', () => {
 
             organisationRepoMock.findById.mockResolvedValue(parentOrganisation);
 
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
+
             const counted2: Counted<OrganisationDo<true>> = [[], 1];
             organisationRepoMock.findBy.mockResolvedValueOnce(counted2); //mock call in findChildOrganisations, 2nd time (recursive)
 
