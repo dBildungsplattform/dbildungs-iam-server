@@ -10,7 +10,12 @@ import { RolleServiceProviderEntity } from '../entity/rolle-service-provider.ent
 import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import {
+    DomainError,
+    EntityCouldNotBeDeleted,
+    EntityNotFoundError,
+    MissingPermissionsError,
+} from '../../../shared/error/index.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -191,6 +196,21 @@ export class RolleRepo {
         }
         const result: Rolle<true> = await this.update(rolle);
         return result;
+    }
+
+    public async deleteAuthorized(id: RolleID, permissions: PersonPermissions): Promise<Option<DomainError>> {
+        //Permissions
+        const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
+        if (!authorizedRole.ok) {
+            return authorizedRole.error;
+        }
+        const deletedRoles: number = await this.em.nativeDelete(RolleEntity, { id });
+
+        if (deletedRoles === 0) {
+            return new EntityCouldNotBeDeleted('Rolle', id);
+        }
+
+        return;
     }
 
     private async create(rolle: Rolle<false>): Promise<Rolle<true>> {

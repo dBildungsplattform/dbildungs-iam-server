@@ -53,8 +53,8 @@ import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/pagin
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
-import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -336,7 +336,7 @@ export class RolleController {
             params.merkmale.length > 0 &&
             (await updatedRolle.isAlreadyAssigned(this.dBiamPersonenkontextRepo, updatedRolle.id))
         ) {
-            throw new UpdateMerkmaleError();
+            throw new RolleHatPersonenkontexteError(['The Merkmale for the Rolle cannot be updated.']);
         }
 
         const result: Rolle<true> | DomainError = await this.rolleRepo.saveAuthorized(updatedRolle, permissions);
@@ -347,6 +347,37 @@ export class RolleController {
         }
 
         return this.returnRolleWithServiceProvidersResponse(result);
+    }
+
+    @Delete(':rolleId')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ description: 'Delete a role by id.' })
+    @ApiOkResponse({ description: 'Role was deleted successfully.' })
+    @ApiNotFoundResponse({ description: 'The rolle that should be deleted does not exist.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to delete the role.' })
+    public async deleteRolle(
+        @Param() findRolleByIdParams: FindRolleByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
+        if (!rolle) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId),
+                ),
+            );
+        }
+
+        if (await rolle.isAlreadyAssigned(this.dBiamPersonenkontextRepo, rolle.id)) {
+            throw new RolleHatPersonenkontexteError();
+        }
+
+        const result: Option<DomainError> = await this.rolleRepo.deleteAuthorized(rolle.id, permissions);
+        if (result instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
     }
 
     private async returnRolleWithServiceProvidersResponse(
