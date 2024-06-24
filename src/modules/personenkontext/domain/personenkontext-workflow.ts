@@ -23,8 +23,6 @@ export class PersonenkontextWorkflowAggregate {
 
     public selectedRolleId?: string;
 
-    public personenkontextId?: string | null;
-
     private constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepo,
@@ -47,10 +45,9 @@ export class PersonenkontextWorkflowAggregate {
     }
 
     // Initialize the aggregate with the selected Organisation and Rolle
-    public initialize(organisationId?: string, rolleId?: string, pkId?: string): void {
+    public initialize(organisationId?: string, rolleId?: string): void {
         this.selectedOrganisationId = organisationId;
         this.selectedRolleId = rolleId;
-        this.personenkontextId = pkId ?? null;
     }
 
     // Finds all SSKs that the admin can see
@@ -75,9 +72,15 @@ export class PersonenkontextWorkflowAggregate {
         );
 
         // Return only the orgas that the admin have rights on
-        return allOrganisations.filter((orga: OrganisationDo<boolean>) =>
-            orgsWithRecht.includes(orga.id as OrganisationID),
+        let filteredOrganisations: OrganisationDo<boolean>[] = allOrganisations.filter(
+            (orga: OrganisationDo<boolean>) => orgsWithRecht.includes(orga.id as OrganisationID),
         );
+        // Exclude Klassen from the orgas as they are separately chosen through another EP
+        filteredOrganisations = filteredOrganisations.filter(
+            (orga: OrganisationDo<boolean>) => orga.typ !== OrganisationsTyp.KLASSE,
+        );
+        // Return only the orgas that the admin have rights on
+        return filteredOrganisations;
     }
 
     public async findRollenForOrganisation(
@@ -103,6 +106,9 @@ export class PersonenkontextWorkflowAggregate {
             true,
         );
 
+        //Landesadmin can view all roles.
+        if (orgsWithRecht.includes(this.organisationRepo.ROOT_ORGANISATION_ID)) return rollen;
+
         if (!orgsWithRecht || orgsWithRecht.length === 0) {
             return [];
         }
@@ -117,18 +123,27 @@ export class PersonenkontextWorkflowAggregate {
             return [];
         }
 
-        // Filter roles based on the organization's administeredBySchulstrukturKnoten
-        const allowedRollen: Rolle<true>[] = rollen.filter(
-            (rolle: Rolle<true>) => rolle.administeredBySchulstrukturknoten === organisation.id,
-        );
+        // Include child organisations
+        const childOrganisations: OrganisationDo<true>[] = await this.organisationRepo.findChildOrgasForIds([
+            organisation.id,
+        ]);
 
-        // If the user has rights for this specific organization, return the filtered roles
-        if (orgsWithRecht.includes(organisation.id)) {
-            return allowedRollen;
+        const allRelevantOrgas: OrganisationDo<true>[] = [organisation, ...childOrganisations];
+
+        const allowedRollen: Rolle<true>[] = [];
+        // If the user has rights for this specific organization or any of its children, return the filtered roles
+        if (allRelevantOrgas.some((orga: OrganisationDo<true>) => orgsWithRecht.includes(orga.id))) {
+            const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
+            (await this.organisationRepo.findByIds(orgsWithRecht)).forEach(function (orga: OrganisationDo<true>) {
+                rollen.forEach(function (rolle: Rolle<true>) {
+                    if (organisationMatchesRollenart.isSatisfiedBy(orga, rolle) && !allowedRollen.includes(rolle)) {
+                        allowedRollen.push(rolle);
+                    }
+                });
+            });
         }
-
         // Otherwise, return an empty array as the user doesn't have permission to view these roles
-        return [];
+        return allowedRollen;
     }
 
     // Verifies if the selected rolle and organisation can together be assigned to a kontext

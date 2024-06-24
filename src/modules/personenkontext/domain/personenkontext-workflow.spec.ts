@@ -137,17 +137,9 @@ describe('PersonenkontextWorkflow', () => {
 
     describe('initialize', () => {
         it('should initialize the aggregate with the selected Organisation and Rolle', () => {
-            anlage.initialize('org-id', 'role-id', 'pk-id');
-            expect(anlage.selectedOrganisationId).toBe('org-id');
-            expect(anlage.selectedRolleId).toBe('role-id');
-            expect(anlage.personenkontextId).toBe('pk-id');
-        });
-
-        it('should initialize the aggregate with null personenkontextId if not provided', () => {
             anlage.initialize('org-id', 'role-id');
             expect(anlage.selectedOrganisationId).toBe('org-id');
             expect(anlage.selectedRolleId).toBe('role-id');
-            expect(anlage.personenkontextId).toBeNull();
         });
     });
 
