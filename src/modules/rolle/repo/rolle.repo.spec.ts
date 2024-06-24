@@ -245,4 +245,36 @@ describe('RolleRepo', () => {
             expect(rolleResult).toBeInstanceOf(DomainError);
         });
     });
+
+    describe('deleteAuthorized', () => {
+        it('should succeed when rolle does NOT have any Merkmale, Systemrechte & Service Providers', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            const rolle: Rolle<true> = await sut.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisationId,
+                    merkmale: [],
+                    systemrechte: [],
+                }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
+
+            const rolleResult: Option<DomainError> = await sut.deleteAuthorized(rolle.id, permissions);
+            const exists: boolean = await sut.exists(rolle.id);
+
+            expect(rolleResult).not.toBeInstanceOf(DomainError);
+            expect(exists).toBe(false);
+        });
+
+        it('should return error when permissions are insufficient', async () => {
+            const rolle: Rolle<true> = await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: faker.string.uuid() }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+
+            const rolleResult: Option<DomainError> = await sut.deleteAuthorized(rolle.id, permissions);
+            expect(rolleResult).toBeInstanceOf(DomainError);
+        });
+    });
 });
