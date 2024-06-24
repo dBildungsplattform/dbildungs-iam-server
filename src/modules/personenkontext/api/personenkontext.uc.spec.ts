@@ -27,7 +27,7 @@ import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js'
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
-import { SystemrechtResponse } from './personenkontext-systemrecht.response.js';
+import { SystemrechtResponse } from './response/personenkontext-systemrecht.response.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationApiMapperProfile } from '../../organisation/api/organisation-api.mapper.profile.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
