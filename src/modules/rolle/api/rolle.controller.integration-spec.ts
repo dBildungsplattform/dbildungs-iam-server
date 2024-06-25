@@ -582,7 +582,6 @@ describe('Rolle API', () => {
         it('should return updated rolle', async () => {
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persistAndFlush(organisation);
-
             await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
             const rolle: Rolle<true> = await rolleRepo.save(
@@ -636,7 +635,6 @@ describe('Rolle API', () => {
         it('should return error with status-code 404 if user does NOT have permissions', async () => {
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persistAndFlush(organisation);
-
             await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
             const rolle: Rolle<true> = await rolleRepo.save(
@@ -708,8 +706,108 @@ describe('Rolle API', () => {
                 expect(response.status).toBe(400);
                 expect(response.body).toEqual({
                     code: 400,
-                    i18nKey: 'UPDATE_MERKMALE_ERROR',
+                    i18nKey: 'ROLLE_HAT_PERSONENKONTEXTE_ERROR',
                 });
+            });
+        });
+    });
+
+    describe('/DELETE rolleId', () => {
+        describe('should return error', () => {
+            it('if rolle does NOT exist', async () => {
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/rolle/${faker.string.uuid()}`)
+                    .send();
+
+                expect(response.status).toBe(404);
+            });
+
+            it('if rolle is already assigned to a Personenkontext', async () => {
+                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+
+                const organisation: OrganisationEntity = new OrganisationEntity();
+                organisation.typ = OrganisationsTyp.SCHULE;
+                await em.persistAndFlush(organisation);
+                await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisation.id,
+                        rollenart: RollenArt.LEHR,
+                    }),
+                );
+
+                await dBiamPersonenkontextRepo.save(
+                    createPersonenkontext(false, {
+                        personId: person.id,
+                        rolleId: rolle.id,
+                        organisationId: organisation.id,
+                    }),
+                );
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/rolle/${rolle.id}`)
+                    .send();
+
+                expect(response.status).toBe(400);
+                expect(response.body).toEqual({
+                    code: 400,
+                    i18nKey: 'ROLLE_HAT_PERSONENKONTEXTE_ERROR',
+                });
+            });
+
+            it('if user does NOT have permissions', async () => {
+                const organisation: OrganisationEntity = new OrganisationEntity();
+                await em.persistAndFlush(organisation);
+                await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisation.id,
+                        rollenart: RollenArt.LEHR,
+                    }),
+                );
+
+                const personpermissions: DeepMocked<PersonPermissions> = createMock();
+                personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/rolle/${rolle.id}`)
+                    .send();
+
+                expect(response.status).toBe(404);
+                expect(response.body).toEqual({
+                    code: 404,
+                    subcode: '01',
+                    titel: 'Angefragte Entität existiert nicht',
+                    beschreibung: 'Die angeforderte Entität existiert nicht',
+                });
+            });
+        });
+
+        describe('should succeed', () => {
+            it('if all conditions are passed', async () => {
+                const organisation: OrganisationEntity = new OrganisationEntity();
+                await em.persistAndFlush(organisation);
+                await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                    DoFactory.createServiceProvider(false),
+                );
+
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisation.id,
+                        rollenart: RollenArt.LEHR,
+                        serviceProviderIds: [serviceProvider.id],
+                    }),
+                );
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/rolle/${rolle.id}`)
+                    .send();
+
+                expect(response.status).toBe(200);
             });
         });
     });
