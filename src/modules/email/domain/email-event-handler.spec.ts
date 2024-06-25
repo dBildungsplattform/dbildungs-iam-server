@@ -122,6 +122,19 @@ describe('Email Event Handler', () => {
     });
 
     describe('asyncPersonenkontextCreatedEventHandler', () => {
+        let rolle: Rolle<true>;
+        let sp: ServiceProvider<true>;
+        let spMap: Map<string, ServiceProvider<true>>;
+
+        beforeEach(() => {
+            rolle = createMock<Rolle<true>>({ serviceProviderIds: [] });
+            sp = createMock<ServiceProvider<true>>({
+                kategorie: ServiceProviderKategorie.EMAIL,
+            });
+            spMap = new Map<string, ServiceProvider<true>>();
+            spMap.set(sp.id, sp);
+        });
+
         describe('when existing email is found', () => {
             it('should enable existing email', async () => {
                 const fakePersonId: PersonID = faker.string.uuid();
@@ -131,13 +144,6 @@ describe('Email Event Handler', () => {
                     faker.string.uuid(),
                     faker.string.uuid(),
                 );
-
-                const rolle: Rolle<true> = createMock<Rolle<true>>({ serviceProviderIds: [] });
-                const sp: ServiceProvider<true> = createMock<ServiceProvider<true>>({
-                    kategorie: ServiceProviderKategorie.EMAIL,
-                });
-                const spMap: Map<string, ServiceProvider<true>> = new Map<string, ServiceProvider<true>>();
-                spMap.set(sp.id, sp);
 
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
@@ -185,13 +191,6 @@ describe('Email Event Handler', () => {
                     faker.string.uuid(),
                 );
 
-                const rolle: Rolle<true> = createMock<Rolle<true>>({ serviceProviderIds: [] });
-                const sp: ServiceProvider<true> = createMock<ServiceProvider<true>>({
-                    kategorie: ServiceProviderKategorie.EMAIL,
-                });
-                const spMap: Map<string, ServiceProvider<true>> = new Map<string, ServiceProvider<true>>();
-                spMap.set(sp.id, sp);
-
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
 
@@ -231,13 +230,6 @@ describe('Email Event Handler', () => {
                     faker.string.uuid(),
                 );
 
-                const rolle: Rolle<true> = createMock<Rolle<true>>({ serviceProviderIds: [] });
-                const sp: ServiceProvider<true> = createMock<ServiceProvider<true>>({
-                    kategorie: ServiceProviderKategorie.EMAIL,
-                });
-                const spMap: Map<string, ServiceProvider<true>> = new Map<string, ServiceProvider<true>>();
-                spMap.set(sp.id, sp);
-
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
                 emailRepoMock.findByPerson.mockResolvedValueOnce(undefined); //mock: no existing email is found -> create a new address
@@ -266,21 +258,11 @@ describe('Email Event Handler', () => {
                     return emailMock;
                 });
 
-                /*  // eslint-disable-next-line @typescript-eslint/require-await
-                emailRepoMock.save.mockImplementationOnce(async (email: Email<boolean, true>) => {
-                    const emailMock: DeepMocked<Email<true, true>> = createMock<Email<true, true>>({
-                        emailAddresses: [new EmailAddress<false>(undefined, faker.internet.email(), true)],
-                        personId: email.personId,
-                    });
-
-                    return emailMock;
-                });*/
                 const fakePersistedEmail: Email<true, true> = getEmail(emailGeneratorServiceMock, personRepositoryMock);
                 emailRepoMock.save.mockResolvedValueOnce(fakePersistedEmail); //mock email was persisted successfully
 
                 await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
 
-                expect(loggerMock.info).toHaveBeenCalledWith(`Created email with new address:test@schule-sh.de`);
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Successfully persisted email with new address:${fakePersistedEmail.currentAddress}`,
                 );
@@ -309,11 +291,6 @@ describe('Email Event Handler', () => {
                     faker.string.uuid(),
                     faker.string.uuid(),
                 );
-                const sp: ServiceProvider<true> = createMock<ServiceProvider<true>>({
-                    kategorie: ServiceProviderKategorie.EMAIL,
-                });
-                const spMap: Map<string, ServiceProvider<true>> = new Map<string, ServiceProvider<true>>();
-                spMap.set(sp.id, sp);
 
                 rolleRepoMock.findById.mockResolvedValueOnce(createMock<Rolle<true>>());
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
@@ -418,7 +395,9 @@ describe('Email Event Handler', () => {
 
                 await emailEventHandler.asyncPersonDeletedEventHandler(event);
 
-                expect(loggerMock.error).toHaveBeenCalledWith(`Deleting email-account(s) for personId:${personId}`);
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Deleting email-account(s) for personId:${personId} failed`,
+                );
             });
         });
     });

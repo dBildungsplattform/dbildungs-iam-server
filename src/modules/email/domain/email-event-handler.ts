@@ -68,7 +68,6 @@ export class EmailEventHandler {
             this.logger.error(`Could not create email, error is ${validEmail.error.message}`);
             return;
         }
-        this.logger.info(`Created email with new address:${validEmail.value.currentAddress}`);
         const persistedEmail: Email<true, true> | DomainError = await this.emailRepo.save(validEmail.value);
         if (persistedEmail instanceof Email) {
             this.logger.info(`Successfully persisted email with new address:${persistedEmail.currentAddress}`);
@@ -96,7 +95,7 @@ export class EmailEventHandler {
         if (result) {
             this.logger.info(`Deleted email for personId:${event.personId}`);
         } else {
-            this.logger.error(`Deleting email-account(s) for personId:${event.personId}`);
+            this.logger.error(`Deleting email-account(s) for personId:${event.personId} failed`);
         }
     }
 

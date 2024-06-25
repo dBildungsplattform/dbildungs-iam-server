@@ -18,7 +18,6 @@ import { UsernameGeneratorService } from '../../person/domain/username-generator
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { EmailGeneratorService } from '../domain/email-generator.service.js';
 import { EmailServiceRepo } from './email-service.repo.js';
-import { EmailAddress } from '../domain/email-address.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 
@@ -108,22 +107,30 @@ describe('EmailServiceRepo', () => {
         expect(sut).toBeDefined();
     });
 
-    describe('findByName', () => {
-        it('should return email by name', async () => {
-            const person: Person<true> = await createPerson();
-            const email: Email<false, false> = emailFactory.createNew(person.id);
-            const validEmail: Result<Email<false, true>> = await email.enable();
+    describe('existsEmailAddress', () => {
+        describe('when email does exist in DB', () => {
+            it('should return true', async () => {
+                const person: Person<true> = await createPerson();
+                const email: Email<false, false> = emailFactory.createNew(person.id);
+                const validEmail: Result<Email<false, true>> = await email.enable();
 
-            if (!validEmail.ok) throw Error();
+                if (!validEmail.ok) throw Error();
+                if (!validEmail.value.emailAddresses[0]) throw Error();
+                const savedEmail: Email<true, true> | DomainError = await emailRepo.save(validEmail.value);
+                if (savedEmail instanceof DomainError) throw new Error();
 
-            const savedEmail: Email<true, true> | DomainError = await emailRepo.save(validEmail.value);
-            if (savedEmail instanceof DomainError) throw new Error();
-            const emailAddress: EmailAddress<false> | undefined = savedEmail.emailAddresses[0];
+                const exists: boolean = await sut.existsEmailAddress(validEmail.value.emailAddresses[0].address);
 
-            expect(emailAddress).toBeDefined();
-            if (!emailAddress) throw new Error();
-            const exists: boolean = await sut.existsEmailAddress(emailAddress.address);
-            expect(exists).toBeTruthy();
+                expect(exists).toBeTruthy();
+            });
+        });
+
+        describe('when email does NOT exist in DB', () => {
+            it('should return false', async () => {
+                const exists: boolean = await sut.existsEmailAddress(faker.internet.email());
+
+                expect(exists).toBeFalsy();
+            });
         });
     });
 });

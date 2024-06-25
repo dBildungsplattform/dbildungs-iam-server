@@ -10,6 +10,8 @@ import { EmailServiceRepo } from '../persistence/email-service.repo.js';
 
 @Injectable()
 export class EmailGeneratorService {
+    private static EMAIL_SUFFIX: string = '@schule-sh.de';
+
     public constructor(private emailServiceRepo: EmailServiceRepo) {}
 
     public async generateAddress(firstname: string, lastname: string): Promise<Result<string, DomainError>> {
@@ -57,7 +59,7 @@ export class EmailGeneratorService {
 
         return {
             ok: true,
-            value: nextAddressName + '@schule-sh.de',
+            value: nextAddressName + EmailGeneratorService.EMAIL_SUFFIX,
         };
     }
 
@@ -71,11 +73,15 @@ export class EmailGeneratorService {
     }
 
     private async getNextAvailableAddress(calculatedAddress: string): Promise<string> {
-        if (!(await this.emailServiceRepo.existsEmailAddress(calculatedAddress))) {
+        if (!(await this.emailServiceRepo.existsEmailAddress(calculatedAddress + EmailGeneratorService.EMAIL_SUFFIX))) {
             return calculatedAddress;
         }
         let counter: number = 1;
-        while (await this.emailServiceRepo.existsEmailAddress(calculatedAddress + counter)) {
+        while (
+            await this.emailServiceRepo.existsEmailAddress(
+                calculatedAddress + counter + EmailGeneratorService.EMAIL_SUFFIX,
+            )
+        ) {
             counter = counter + 1;
         }
         return calculatedAddress + counter;

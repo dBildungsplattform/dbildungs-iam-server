@@ -1,6 +1,5 @@
 import { EntityManager } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
-import { Loaded } from '@mikro-orm/postgresql';
 import { EmailAddressEntity } from './email-address.entity.js';
 
 /*
@@ -11,10 +10,10 @@ export class EmailServiceRepo {
     public constructor(protected readonly em: EntityManager) {}
 
     public async existsEmailAddress(address: string): Promise<boolean> {
-        const emailAddressEntity: Option<Loaded<EmailAddressEntity, never, 'id', never>> = await this.em.findOne(
+        const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
             EmailAddressEntity,
-            { address },
-            { fields: ['address'] as const },
+            { address: address },
+            {},
         );
 
         return !!emailAddressEntity;
