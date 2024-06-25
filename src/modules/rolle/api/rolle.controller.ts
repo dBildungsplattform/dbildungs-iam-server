@@ -350,7 +350,7 @@ export class RolleController {
     }
 
     @Delete(':rolleId')
-    @HttpCode(HttpStatus.OK)
+    @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ description: 'Delete a role by id.' })
     @ApiOkResponse({ description: 'Role was deleted successfully.' })
     @ApiNotFoundResponse({ description: 'The rolle that should be deleted does not exist.' })

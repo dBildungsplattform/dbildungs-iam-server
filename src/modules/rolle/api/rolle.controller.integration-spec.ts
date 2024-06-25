@@ -807,7 +807,7 @@ describe('Rolle API', () => {
                     .delete(`/rolle/${rolle.id}`)
                     .send();
 
-                expect(response.status).toBe(200);
+                expect(response.status).toBe(204);
             });
         });
     });
