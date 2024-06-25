@@ -77,8 +77,11 @@ export class DbiamPersonenkontextWorkflowController {
         anlage.initialize(params.organisationId, params.rolleId);
 
         // Find all possible SSKs (Possibly through name if the name was given)
-        const organisations: OrganisationDo<true>[] =
-            (await anlage.findAllSchulstrukturknoten(permissions, params.organisationName, params.limit)) ?? [];
+        const organisations: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
+            permissions,
+            params.organisationName,
+            params.limit,
+        );
 
         // Find all possible roles under the selected Organisation
         const rollen: Rolle<true>[] = params.organisationId

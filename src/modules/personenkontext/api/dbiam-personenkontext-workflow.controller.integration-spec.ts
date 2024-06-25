@@ -44,7 +44,6 @@ import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-pe
 import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
 import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
 import { FindDbiamPersonenkontextWorkflowBodyParams } from './param/dbiam-find-personenkontextworkflow-body.params.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
     const rolle: Rolle<false> = rolleFactory.createNew(
@@ -198,7 +197,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             );
 
             const rolleName: string = faker.string.alpha({ length: 10 });
-            await rolleRepo.save(
+            const rolle: Rolle<true> = await rolleRepo.save(
                 createRolle(rolleFactory, {
                     name: rolleName,
                     administeredBySchulstrukturknoten: organisation.id,
@@ -207,8 +206,16 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+            const anlageMock: DeepMocked<PersonenkontextWorkflowAggregate> =
+                createMock<PersonenkontextWorkflowAggregate>({
+                    findAllSchulstrukturknoten: jest.fn().mockResolvedValue([]),
+                    findRollenForOrganisation: jest.fn().mockResolvedValue(rolle),
+                });
+
+            personenkontextWorkflowFactoryMock.createNew.mockReturnValue(anlageMock);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/personenkontext/step')
@@ -240,25 +247,20 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             expect(response.status).toEqual(404);
         });
         it('should call findAllSchulstrukturknoten when no organisationId is provided', async () => {
-            const organisationName: string = faker.company.name();
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([faker.string.uuid()]);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
-            const organisations: OrganisationDo<true>[] = [
-                await organisationRepo.save(DoFactory.createOrganisation(false, { name: organisationName })),
-            ];
-
             const anlageMock: DeepMocked<PersonenkontextWorkflowAggregate> =
                 createMock<PersonenkontextWorkflowAggregate>({
-                    findAllSchulstrukturknoten: jest.fn().mockResolvedValue(organisations),
+                    findAllSchulstrukturknoten: jest.fn().mockResolvedValue('organisations'),
                 });
 
             personenkontextWorkflowFactoryMock.createNew.mockReturnValue(anlageMock);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/personenkontext/step')
-                .send(); // No organisationId in query
+                .send();
 
             expect(response.status).toEqual(200);
         });
@@ -276,7 +278,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const rollen: Rolle<true>[] = [rolle];
@@ -296,11 +298,15 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             expect(response.status).toEqual(200);
         });
 
-        it('should return organisations and empty roles if organisationId is provided but no roles are found', async () => {
+        it('should return empty organisations and empty roles if organisationId is provided but no roles nor orgas are found', async () => {
             const organisationName: string = faker.company.name();
             const organisation: OrganisationDo<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { name: organisationName }),
             );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/personenkontext/step')
@@ -310,13 +316,9 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Object);
         });
+
         it('should set canCommit to true if canCommit returns true', async () => {
             const organisationId: string = faker.string.uuid();
-
-            // Create and save an organisation and a role
-            const organisation: OrganisationDo<true> = await organisationRepo.save(
-                DoFactory.createOrganisation(false, { id: organisationId, typ: OrganisationsTyp.LAND }),
-            );
 
             const rolle: Rolle<true> = await rolleRepo.save(
                 DoFactory.createRolle(false, {
@@ -326,8 +328,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             );
             const rolleId: string = rolle.id;
 
-            // Mock the repository methods
-            organisationRepo.findById = jest.fn().mockResolvedValue(organisation);
             rolleRepo.findById = jest.fn().mockResolvedValue(rolle);
 
             const params: FindDbiamPersonenkontextWorkflowBodyParams = {
@@ -337,11 +337,8 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 rolleName: undefined,
                 limit: undefined,
             };
-            const organisations: OrganisationDo<true>[] = [organisation];
             const rollen: Rolle<true>[] = [rolle];
 
-            personenkontextWorkflowFactoryMock.createNew.mockReturnValue(personenkontextWorkflowMock);
-            personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValue(organisations);
             personenkontextWorkflowMock.findRollenForOrganisation.mockResolvedValue(rollen);
             personenkontextWorkflowMock.canCommit.mockResolvedValue(true);
 
