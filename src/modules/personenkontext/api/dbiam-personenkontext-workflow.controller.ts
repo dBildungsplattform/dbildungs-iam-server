@@ -50,7 +50,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 @ApiTags('personenkontext')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
-@Controller({ path: 'personenkontext' })
+@Controller({ path: 'personenkontext-workflow' })
 export class DbiamPersonenkontextWorkflowController {
     public constructor(
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
@@ -59,7 +59,12 @@ export class DbiamPersonenkontextWorkflowController {
 
     @Get('step')
     @ApiOkResponse({
-        description: 'Initialize or process data from the person creation form.',
+        description: `Initialize or process data from the person creation form. 
+                      Valid combinations:
+                      - Both organisationId and rolleId are undefined: Fetch all possible organisations.
+                      - organisationId is provided, but rolleId is undefined: Fetch Rollen for the given organisation.
+                      - Both organisationId and rolleId are provided: Check if the Rolle can be committed for the organisation.
+                      Note: Providing rolleId without organisationId is invalid.`,
         type: PersonenkontextWorkflowResponse,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available data for personenkontext.' })

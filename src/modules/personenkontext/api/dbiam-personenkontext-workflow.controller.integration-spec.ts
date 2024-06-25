@@ -219,7 +219,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personenkontextWorkflowFactoryMock.createNew.mockReturnValue(anlageMock);
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/personenkontext/step')
+                .get('/personenkontext-workflow/step')
                 .query({ organisationId: organisation.id })
                 .send();
 
@@ -260,7 +260,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personenkontextWorkflowFactoryMock.createNew.mockReturnValue(anlageMock);
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/personenkontext/step')
+                .get('/personenkontext-workflow/step')
                 .send();
 
             expect(response.status).toEqual(200);
@@ -292,7 +292,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personenkontextWorkflowFactoryMock.createNew.mockReturnValue(anlageMock);
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/personenkontext/step')
+                .get('/personenkontext-workflow/step')
                 .query({ organisationId: organisation.id })
                 .send();
 
@@ -310,7 +310,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/personenkontext/step')
+                .get('/personenkontext-workflow/step')
                 .query({ organisationId: organisation.id })
                 .send();
 
@@ -353,7 +353,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personenkontextWorkflowMock.canCommit.mockResolvedValue(true);
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/personenkontext/step')
+                .get('/personenkontext-workflow/step')
                 .query({ organisationId: params.organisationId, rolleId: params.rolleId })
                 .send();
 
@@ -380,7 +380,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     });
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .put(`/personenkontext/${person.id}`)
+                    .put(`/personenkontext-workflow/${person.id}`)
                     .send(updatePKsRequest);
 
                 expect(response.status).toBe(200);
@@ -397,7 +397,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personenkontextWorkflowMock.commit.mockResolvedValue(updateError);
 
             const response: Response = await request(app.getHttpServer() as App)
-                .put(`/personenkontext/${params.personId}`)
+                .put(`/personenkontext-workflow/${params.personId}`)
                 .send(bodyParams);
 
             expect(response.status).toBe(400);
@@ -422,7 +422,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     });
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .put(`/personenkontext/${person.id}`)
+                    .put(`/personenkontext-workflow/${person.id}`)
                     .send(updatePKsRequest);
 
                 expect(response.status).toBe(400);
@@ -440,7 +440,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 personenkontextWorkflowMock.commit.mockResolvedValue(updateError);
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .put(`/personenkontext/${params.personId}`)
+                    .put(`/personenkontext-workflow/${params.personId}`)
                     .send(bodyParams);
 
                 expect(response.status).toBe(400);
@@ -456,7 +456,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 personenkontextWorkflowMock.commit.mockRejectedValue(genericError);
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .put(`/personenkontext/${params.personId}`)
+                    .put(`/personenkontext-workflow/${params.personId}`)
                     .send(bodyParams);
 
                 expect(response.status).toBe(500);
@@ -476,7 +476,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get('/personenkontext/rollen')
+                .get('/personenkontext-workflow/rollen')
                 .send();
 
             expect(response.status).toBe(200);
@@ -492,7 +492,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             const rolleName: string = faker.string.alpha({ length: 10 });
             await rolleRepo.save(createRolle(rolleFactory, { name: rolleName }));
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext/rollen?rolleName=${rolleName}&limit=25`)
+                .get(`/personenkontext-workflow/rollen?rolleName=${rolleName}&limit=25`)
                 .send();
 
             expect(response.status).toBe(200);
@@ -501,7 +501,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
         it('should return empty list', async () => {
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext/rollen?rolleName=${faker.string.alpha()}&limit=25`)
+                .get(`/personenkontext-workflow/rollen?rolleName=${faker.string.alpha()}&limit=25`)
                 .send();
 
             expect(response.status).toBe(200);
@@ -518,7 +518,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             await organisationRepo.save(DoFactory.createOrganisation(false, { name: sskName }));
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext/schulstrukturknoten?rolleId=${rolleId}&sskName=${sskName}&limit=25`)
+                .get(`/personenkontext-workflow/schulstrukturknoten?rolleId=${rolleId}&sskName=${sskName}&limit=25`)
                 .send();
 
             expect(response.status).toBe(200);
@@ -533,7 +533,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             await organisationRepo.save(DoFactory.createOrganisation(false, { name: sskName }));
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext/schulstrukturknoten?rolleId=${rolleId}&limit=25`)
+                .get(`/personenkontext-workflow/schulstrukturknoten?rolleId=${rolleId}&limit=25`)
                 .send();
 
             expect(response.status).toBe(200);
@@ -543,7 +543,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         it('should return empty list', async () => {
             const response: Response = await request(app.getHttpServer() as App)
                 .get(
-                    `/personenkontext/schulstrukturknoten?rolleId=${faker.string.uuid()}&sskName=${faker.string.alpha()}&limit=25`,
+                    `/personenkontext-workflow/schulstrukturknoten?rolleId=${faker.string.uuid()}&sskName=${faker.string.alpha()}&limit=25`,
                 )
                 .send();
 
@@ -553,7 +553,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
         it('should return empty list even when no sskName is provided', async () => {
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext/schulstrukturknoten?rolleId=${faker.string.uuid()}&limit=25`)
+                .get(`/personenkontext-workflow/schulstrukturknoten?rolleId=${faker.string.uuid()}&limit=25`)
                 .send();
 
             expect(response.status).toBe(200);
