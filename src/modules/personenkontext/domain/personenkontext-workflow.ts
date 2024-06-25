@@ -106,9 +106,6 @@ export class PersonenkontextWorkflowAggregate {
             true,
         );
 
-        //Landesadmin can view all roles.
-        if (orgsWithRecht.includes(this.organisationRepo.ROOT_ORGANISATION_ID)) return rollen;
-
         if (!orgsWithRecht || orgsWithRecht.length === 0) {
             return [];
         }
@@ -123,18 +120,11 @@ export class PersonenkontextWorkflowAggregate {
             return [];
         }
 
-        // Include child organisations
-        const childOrganisations: OrganisationDo<true>[] = await this.organisationRepo.findChildOrgasForIds([
-            organisation.id,
-        ]);
-
-        const allRelevantOrgas: OrganisationDo<true>[] = [organisation, ...childOrganisations];
-
         const allowedRollen: Rolle<true>[] = [];
         // If the user has rights for this specific organization or any of its children, return the filtered roles
-        if (allRelevantOrgas.some((orga: OrganisationDo<true>) => orgsWithRecht.includes(orga.id))) {
+        if ([organisation].some((orga: OrganisationDo<true>) => orgsWithRecht.includes(orga.id))) {
             const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-            (await this.organisationRepo.findByIds(orgsWithRecht)).forEach(function (orga: OrganisationDo<true>) {
+            [organisation].forEach(function (orga: OrganisationDo<true>) {
                 rollen.forEach(function (rolle: Rolle<true>) {
                     if (organisationMatchesRollenart.isSatisfiedBy(orga, rolle) && !allowedRollen.includes(rolle)) {
                         allowedRollen.push(rolle);
