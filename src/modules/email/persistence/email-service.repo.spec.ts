@@ -20,6 +20,7 @@ import { EmailGeneratorService } from '../domain/email-generator.service.js';
 import { EmailServiceRepo } from './email-service.repo.js';
 import { EmailAddress } from '../domain/email-address.js';
 import { EventService } from '../../../core/eventbus/index.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 describe('EmailServiceRepo', () => {
     let module: TestingModule;
@@ -44,6 +45,10 @@ describe('EmailServiceRepo', () => {
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
+                },
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
                 },
                 {
                     provide: KeycloakUserService,
@@ -111,9 +116,10 @@ describe('EmailServiceRepo', () => {
 
             if (!validEmail.ok) throw Error();
 
-            const savedEmail: Email<true, true> = await emailRepo.save(validEmail.value);
-
+            const savedEmail: Email<true, true> | DomainError = await emailRepo.save(validEmail.value);
+            if (savedEmail instanceof DomainError) throw new Error();
             const emailAddress: EmailAddress<false> | undefined = savedEmail.emailAddresses[0];
+
             expect(emailAddress).toBeDefined();
             if (!emailAddress) throw new Error();
             const exists: boolean = await sut.existsEmailAddress(emailAddress.address);

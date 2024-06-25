@@ -13,6 +13,7 @@ import { Email } from './email.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { DomainError } from '../../../shared/error/index.js';
+import { PersonID } from '../../../shared/types/index.js';
 
 @Injectable()
 export class EmailEventHandler {
@@ -40,33 +41,37 @@ export class EmailEventHandler {
             const existingEmail: Option<Email<true, true>> = await this.emailRepo.findByPerson(event.personId);
 
             if (existingEmail) {
-                const validEmail: Result<Email<true, true>> = await existingEmail.enable();
-                this.logger.info(`Enabling existing email for person:${event.personId}`);
-                if (validEmail.ok) {
-                    const persistedEmail: Email<true, true> | DomainError = await this.emailRepo.save(validEmail.value);
-                    if (persistedEmail instanceof Email) {
-                        this.logger.info(
-                            `Successfully re-enabled email with new address:${persistedEmail.currentAddress}`,
-                        );
-                    }
-                } else {
-                    this.logger.error(`Could not re-enable email, error is ${validEmail.error.message}`);
-                }
+                await this.enableExistingEmail(existingEmail, event.personId);
             } else {
-                const email: Email<false, false> = this.emailFactory.createNew(event.personId);
-                const validEmail: Result<Email<false, true>> = await email.enable();
-                if (validEmail.ok) {
-                    this.logger.info(`Created email with new address:${validEmail.value.currentAddress}`);
-                    const persistedEmail: Email<true, true> | DomainError = await this.emailRepo.save(validEmail.value);
-                    if (persistedEmail instanceof Email) {
-                        this.logger.info(
-                            `Successfully persisted email with new address:${persistedEmail.currentAddress}`,
-                        );
-                    }
-                } else {
-                    this.logger.error(`Could not create email, error is ${validEmail.error.message}`);
-                }
+                await this.createNewEmail(event.personId);
             }
+        }
+    }
+
+    private async enableExistingEmail(existingEmail: Email<true, true>, personId: PersonID): Promise<void> {
+        const validEmail: Result<Email<true, true>> = await existingEmail.enable();
+        this.logger.info(`Enabling existing email for person:${personId}`);
+        if (!validEmail.ok) {
+            this.logger.error(`Could not re-enable email, error is ${validEmail.error.message}`);
+            return;
+        }
+        const persistedEmail: Email<true, true> | DomainError = await this.emailRepo.save(validEmail.value);
+        if (persistedEmail instanceof Email) {
+            this.logger.info(`Successfully re-enabled email with new address:${persistedEmail.currentAddress}`);
+        }
+    }
+
+    private async createNewEmail(personId: PersonID): Promise<void> {
+        const email: Email<false, false> = this.emailFactory.createNew(personId);
+        const validEmail: Result<Email<false, true>> = await email.enable();
+        if (!validEmail.ok) {
+            this.logger.error(`Could not create email, error is ${validEmail.error.message}`);
+            return;
+        }
+        this.logger.info(`Created email with new address:${validEmail.value.currentAddress}`);
+        const persistedEmail: Email<true, true> | DomainError = await this.emailRepo.save(validEmail.value);
+        if (persistedEmail instanceof Email) {
+            this.logger.info(`Successfully persisted email with new address:${persistedEmail.currentAddress}`);
         }
     }
 

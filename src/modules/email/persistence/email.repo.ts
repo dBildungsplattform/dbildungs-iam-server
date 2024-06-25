@@ -118,7 +118,6 @@ export class EmailRepo {
             populate: ['emailAddresses'] as const,
         });
 
-        //wrap(emailEntity).assign(mapAggregateToData(email), { updateNestedEntities: true });
         emailEntity.assign(mapAggregateToData(email), {});
 
         await this.em.persistAndFlush(emailEntity);

@@ -19,6 +19,9 @@ import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { EmailGeneratorService } from '../domain/email-generator.service.js';
 import { EmailServiceRepo } from './email-service.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
+import { EmailAddress } from '../domain/email-address.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -40,6 +43,10 @@ describe('EmailRepo', () => {
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
+                },
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
                 },
                 {
                     provide: KeycloakUserService,
@@ -106,36 +113,64 @@ describe('EmailRepo', () => {
             const person: Person<true> = await createPerson();
             const email: Email<false, false> = emailFactory.createNew(person.id);
             const validEmail: Result<Email<false, true>> = await email.enable();
+
             if (!validEmail.ok) throw Error();
-            const savedEmail: Email<true, true> = await sut.save(validEmail.value);
-
+            const savedEmail: Email<true, true> | DomainError = await sut.save(validEmail.value);
+            if (savedEmail instanceof DomainError) throw new Error();
             const foundEmail: Option<Email<true, true>> = await sut.findByPerson(person.id);
-
             if (!foundEmail) throw Error();
+
             expect(foundEmail).toBeTruthy();
             expect(foundEmail.id).toStrictEqual(savedEmail.id);
         });
     });
 
     describe('save with id (update)', () => {
-        it('should update entity, when id is set', async () => {
-            const person: Person<true> = await createPerson();
-            const email: Email<false, false> = emailFactory.createNew(person.id);
-            const validEmail: Result<Email<false, true>> = await email.enable();
-            if (!validEmail.ok) throw Error();
-            const savedEmail: Email<true, true> = await sut.save(validEmail.value);
-            const newEmail: Email<true, true> = emailFactory.construct(
-                savedEmail.id,
-                faker.date.past(),
-                faker.date.recent(),
-                person.id,
-                [],
-            );
-            const updatedMail: Email<true, true> = await sut.save(newEmail);
-            const foundEmail: Option<Email<true, true>> = await sut.findById(updatedMail.id);
+        describe('when emailAddressEntities can be found in DB', () => {
+            it('should update entity, when id is set', async () => {
+                const person: Person<true> = await createPerson();
+                const email: Email<false, false> = emailFactory.createNew(person.id);
+                const validEmail: Result<Email<false, true>> = await email.enable();
 
-            expect(foundEmail).toBeTruthy();
-            expect(foundEmail).toEqual(updatedMail);
+                if (!validEmail.ok) throw Error();
+                if (!validEmail.value.emailAddresses[0]) throw Error();
+                const savedEmail: Email<true, true> | DomainError = await sut.save(validEmail.value);
+                if (savedEmail instanceof DomainError) throw new Error();
+                const newEmail: Email<true, true> = emailFactory.construct(
+                    savedEmail.id,
+                    faker.date.past(),
+                    faker.date.recent(),
+                    person.id,
+                    [validEmail.value.emailAddresses[0]],
+                );
+                const updatedMail: Email<true, true> | DomainError = await sut.save(newEmail);
+                if (updatedMail instanceof DomainError) throw new Error();
+                const foundEmail: Option<Email<true, true>> = await sut.findById(updatedMail.id);
+                expect(foundEmail).toBeTruthy();
+                expect(foundEmail).toEqual(updatedMail);
+            });
+        });
+
+        describe('when emailAddressEntities CANNOT be found in DB', () => {
+            it('should return EmailAddressNotFoundError', async () => {
+                const person: Person<true> = await createPerson();
+                const email: Email<false, false> = emailFactory.createNew(person.id);
+                const validEmail: Result<Email<false, true>> = await email.enable();
+
+                if (!validEmail.ok) throw Error();
+                if (!validEmail.value.emailAddresses[0]) throw Error();
+                const savedEmail: Email<true, true> | DomainError = await sut.save(validEmail.value);
+                if (savedEmail instanceof DomainError) throw new Error();
+                const newEmail: Email<true, true> = emailFactory.construct(
+                    savedEmail.id,
+                    faker.date.past(),
+                    faker.date.recent(),
+                    person.id,
+                    [new EmailAddress<true>(faker.string.uuid(), faker.internet.email(), true)], //results in em.findOne returns undefined
+                );
+                const updatedMail: Email<true, true> | DomainError = await sut.save(newEmail);
+                expect(updatedMail).toBeInstanceOf(EmailAddressNotFoundError);
+            });
         });
     });
 
@@ -147,7 +182,8 @@ describe('EmailRepo', () => {
                 const validEmail: Result<Email<false, true>> = await email.enable();
 
                 if (!validEmail.ok) throw Error();
-                const savedEmail: Email<true, true> = await sut.save(validEmail.value);
+                const savedEmail: Email<true, true> | DomainError = await sut.save(validEmail.value);
+                if (savedEmail instanceof DomainError) throw new Error();
                 const result: boolean = await sut.deleteById(savedEmail.id);
 
                 expect(result).toBeTruthy();
