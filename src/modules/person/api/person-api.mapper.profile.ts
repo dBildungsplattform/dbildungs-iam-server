@@ -181,7 +181,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 ),
                 forMember((dest: PersonendatensatzResponseAutomapper) => dest.personenkontexte, ignore()),
             );
-
+            // transformation from person to User
             createMap(mapper, CreatePersonDto, UserDo);
 
             createMap(

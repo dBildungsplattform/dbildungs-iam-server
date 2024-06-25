@@ -1,6 +1,4 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { KeycloakAdminClient, type UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
 import { plainToClass } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
@@ -20,7 +18,7 @@ export type FindUserFilter = {
 export class KeycloakUserService {
     public constructor(
         private readonly kcAdminService: KeycloakAdministrationService,
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
+
         private readonly logger: ClassLogger,
     ) {}
 
@@ -263,6 +261,13 @@ export class KeycloakUserService {
             return { ok: false, error: new KeycloakClientError('Response is invalid') };
         }
 
-        return { ok: true, value: this.mapper.map(userReprDto, UserRepresentationDto, UserDo) };
+        const userDo: UserDo<true> = UserDo.construct<true>(
+            userReprDto.id,
+            userReprDto.username,
+            userReprDto.email,
+            new Date(userReprDto.createdTimestamp),
+        );
+
+        return { ok: true, value: userDo };
     }
 }
