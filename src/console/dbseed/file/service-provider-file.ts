@@ -19,4 +19,8 @@ export class ServiceProviderFile {
     public logoBase64?: string;
 
     public logoMimeType?: string;
+
+    public keycloakGroup?: string;
+
+    public keycloakRole?: string;
 }
