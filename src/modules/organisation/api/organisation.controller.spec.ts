@@ -283,6 +283,46 @@ describe('OrganisationController', () => {
 
                 expect(result.items.length).toEqual(1);
             });
+            it('should find all organizations that match with Klasse Typ', async () => {
+                const queryParams: FindOrganisationQueryParams = {
+                    typ: OrganisationsTyp.KLASSE,
+                    searchString: faker.lorem.word(),
+                    systemrechte: [],
+                    administriertVon: [faker.string.uuid(), faker.string.uuid()],
+                };
+
+                const mockedRepoResponse: Counted<Organisation<true>> = [
+                    [
+                        {
+                            id: faker.string.uuid(),
+                            createdAt: faker.date.recent(),
+                            updatedAt: faker.date.recent(),
+                            administriertVon: faker.string.uuid(),
+                            zugehoerigZu: faker.string.uuid(),
+                            kennung: faker.lorem.word(),
+                            name: faker.lorem.word(),
+                            namensergaenzung: faker.lorem.word(),
+                            kuerzel: faker.lorem.word(),
+                            typ: OrganisationsTyp.KLASSE,
+                            traegerschaft: Traegerschaft.LAND,
+                        },
+                    ],
+                    1,
+                ];
+
+                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+
+                organisationRepositoryMock.findBy.mockResolvedValue(mockedRepoResponse);
+
+                const result: Paged<OrganisationResponse> = await organisationController.findOrganizations(
+                    queryParams,
+                    permissionsMock,
+                );
+
+                expect(organisationRepositoryMock.findBy).toHaveBeenCalledTimes(1);
+                expect(result.items.length).toEqual(1);
+            });
         });
     });
 

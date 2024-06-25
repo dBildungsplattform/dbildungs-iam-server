@@ -11,8 +11,8 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { Personenkontext } from './personenkontext.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { PersonenkontextAnlageError } from '../../../shared/error/personenkontext-anlage.error.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 
 describe('Personenkontext aggregate', () => {
     let module: TestingModule;
@@ -169,7 +169,7 @@ describe('Personenkontext aggregate', () => {
 
             const result: Option<DomainError> = await personenkontext.checkReferences();
 
-            expect(result).toBeInstanceOf(PersonenkontextAnlageError);
+            expect(result).toBeInstanceOf(OrganisationMatchesRollenartError);
         });
     });
 

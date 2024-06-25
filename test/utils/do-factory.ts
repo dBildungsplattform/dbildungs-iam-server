@@ -96,6 +96,7 @@ export class DoFactory {
             organisationId: faker.string.uuid(),
             revision: '1',
             rolle: Rolle.LEHRENDER,
+            rolleId: faker.string.uuid(),
             jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
             personenstatus: Personenstatus.AKTIV,
             referrer: 'referrer',

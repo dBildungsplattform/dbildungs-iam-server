@@ -9,10 +9,10 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { FindPersonenkontextRollenBodyParams } from './find-personenkontext-rollen.body.params.js';
-import { FindPersonenkontextSchulstrukturknotenBodyParams } from './find-personenkontext-schulstrukturknoten.body.params.js';
-import { FindRollenResponse } from './find-rollen.response.js';
-import { FindSchulstrukturknotenResponse } from './find-schulstrukturknoten.response.js';
+import { FindPersonenkontextRollenBodyParams } from './param/find-personenkontext-rollen.body.params.js';
+import { FindPersonenkontextSchulstrukturknotenBodyParams } from './param/find-personenkontext-schulstrukturknoten.body.params.js';
+import { FindRollenResponse } from './response/find-rollen.response.js';
+import { FindSchulstrukturknotenResponse } from './response/find-schulstrukturknoten.response.js';
 import { PersonenkontextAnlage } from '../domain/personenkontext-anlage.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
@@ -20,6 +20,8 @@ import { OrganisationResponseLegacy } from '../../organisation/api/organisation.
 import { PersonenkontextAnlageFactory } from '../domain/personenkontext-anlage.factory.js';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontext')
@@ -40,9 +42,12 @@ export class DbiamPersonenkontextFilterController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available rolen for personenkontexte.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to get rollen for personenkontext.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rollen for personenkontexte.' })
-    public async findRollen(@Query() params: FindPersonenkontextRollenBodyParams): Promise<FindRollenResponse> {
+    public async findRollen(
+        @Query() params: FindPersonenkontextRollenBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<FindRollenResponse> {
         const anlage: PersonenkontextAnlage = this.personenkontextAnlageFactory.createNew();
-        const rollen: Rolle<true>[] = await anlage.findRollen(params.rolleName, params.limit);
+        const rollen: Rolle<true>[] = await anlage.findAuthorizedRollen(permissions, params.rolleName, params.limit);
         const response: FindRollenResponse = new FindRollenResponse(rollen, rollen.length);
 
         return response;
@@ -62,10 +67,12 @@ export class DbiamPersonenkontextFilterController {
     })
     public async findSchulstrukturknoten(
         @Query() params: FindPersonenkontextSchulstrukturknotenBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<FindSchulstrukturknotenResponse> {
         const anlage: PersonenkontextAnlage = this.personenkontextAnlageFactory.createNew();
         const sskName: string = params.sskName ?? '';
         const ssks: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(
+            permissions,
             params.rolleId,
             sskName,
             params.limit,

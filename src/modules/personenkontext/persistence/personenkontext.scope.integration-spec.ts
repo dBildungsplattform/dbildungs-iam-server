@@ -17,22 +17,41 @@ import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { PersonDo } from '../../person/domain/person.do.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { faker } from '@faker-js/faker';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { EventModule } from '../../../core/eventbus/event.module.js';
 
 describe('PersonenkontextScope', () => {
     let module: TestingModule;
     let orm: MikroORM;
     let em: EntityManager;
     let mapper: Mapper;
+    let rolleRepo: RolleRepo;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [PersonPersistenceMapperProfile],
+            imports: [
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                MapperTestModule,
+                EventModule,
+            ],
+            providers: [
+                PersonPersistenceMapperProfile,
+                RolleFactory,
+                RolleRepo,
+                ServiceProviderRepo,
+                OrganisationRepository,
+            ],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
+        rolleRepo = module.get(RolleRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -45,10 +64,12 @@ describe('PersonenkontextScope', () => {
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
+
     describe('findBy', () => {
         describe('when filtering for personenkontexte', () => {
             beforeEach(async () => {
                 const person: PersonDo<true> = DoFactory.createPerson(true);
+
                 await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
 
                 const dos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
@@ -57,6 +78,10 @@ describe('PersonenkontextScope', () => {
                     DoFactory.createPersonenkontext,
                     { personId: person.id },
                 );
+                for (const doObj of dos) {
+                    const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                    doObj.rolleId = rolle.id;
+                }
 
                 await em.persistAndFlush(
                     // Don't use mapArray, because beforeMap does not get called
@@ -85,6 +110,7 @@ describe('PersonenkontextScope', () => {
 
             beforeEach(async () => {
                 const person: PersonDo<true> = DoFactory.createPerson(true);
+
                 await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
 
                 const dos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
@@ -93,6 +119,10 @@ describe('PersonenkontextScope', () => {
                     DoFactory.createPersonenkontext,
                     { personId: person.id, organisationId: orgaId },
                 );
+                for (const doObj of dos) {
+                    const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                    doObj.rolleId = rolle.id;
+                }
 
                 await em.persistAndFlush(
                     // Don't use mapArray, because beforeMap does not get called
