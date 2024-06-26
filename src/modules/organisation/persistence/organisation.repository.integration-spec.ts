@@ -457,7 +457,8 @@ describe('OrganisationRepository', () => {
 
         describe('When Called', () => {
             it('should return flaged oeffentlich & ersatz root nodes', async () => {
-                const result: Organisation<true>[] = await sut.findRootDirectChildren();
+                const result: [Organisation<true> | undefined, Organisation<true> | undefined] =
+                    await sut.findRootDirectChildren();
 
                 expect(result).toBeInstanceOf(Array);
                 expect(result).toHaveLength(2);

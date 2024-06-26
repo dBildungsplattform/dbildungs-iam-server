@@ -46,9 +46,11 @@ describe('configloader', () => {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
                 ITSLEARNING: {
-                    ENABLED: true,
+                    ENABLED: 'true',
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
+                    ROOT_OEFFENTLICH: 'oeffentlich',
+                    ROOT_ERSATZ: 'ersatz',
                 },
             };
 
@@ -120,10 +122,12 @@ describe('configloader', () => {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
                 ITSLEARNING: {
-                    ENABLED: true,
+                    ENABLED: 'true',
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                    ROOT_OEFFENTLICH: 'oeffentlich',
+                    ROOT_ERSATZ: 'ersatz',
                 },
             };
 

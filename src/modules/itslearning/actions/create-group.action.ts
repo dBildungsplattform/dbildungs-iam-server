@@ -7,7 +7,7 @@ export type CreateGroupParams = {
     id: string;
 
     name: string;
-    type: 'School' | 'Course' | 'CourseGroup';
+    type: 'Unspecified' | 'Site' | 'School' | 'Course' | 'CourseGroup';
 
     parentId: string;
     relationLabel?: string;
