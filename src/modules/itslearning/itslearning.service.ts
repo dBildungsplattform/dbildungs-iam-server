@@ -9,6 +9,7 @@ import { lastValueFrom } from 'rxjs';
 import { ItsLearningConfig, ServerConfig } from '../../shared/config/index.js';
 import { DomainError, ItsLearningError } from '../../shared/error/index.js';
 import { IMSESAction } from './actions/base-action.js';
+import { CreatePersonAction } from './actions/create-person.action.js';
 
 @Injectable()
 export class ItsLearningIMSESService {
@@ -29,6 +30,18 @@ export class ItsLearningIMSESService {
         this.endpoint = itsLearningConfig.ENDPOINT;
         this.username = itsLearningConfig.USERNAME;
         this.password = itsLearningConfig.PASSWORD;
+
+        this.send(
+            new CreatePersonAction({
+                id: 'MARVIN',
+                firstName: 'Marvin',
+                lastName: 'Test',
+                username: 'matest2',
+                institutionRoleType: 'Learner',
+            }),
+        )
+            .then(console.log)
+            .catch(console.error);
     }
 
     public async send<ResponseBody, ResultType>(
@@ -49,6 +62,8 @@ export class ItsLearningIMSESService {
 
             return action.parseResponse(response.data);
         } catch (err: unknown) {
+            console.error(err);
+
             return {
                 ok: false,
                 error: new ItsLearningError('Request failed', [err]),
