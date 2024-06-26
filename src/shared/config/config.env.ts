@@ -31,7 +31,7 @@ export default (): {
         HOSTNAME: process.env['BACKEND_HOSTNAME'],
     },
     ITSLEARNING: {
-        ENABLED: process.env['ITSLEARNING_ENABLED']?.toLowerCase() === 'true',
+        ENABLED: process.env['ITSLEARNING_ENABLED']?.toLowerCase() as 'true' | 'false',
         ENDPOINT: process.env['ITSLEARNING_ENDPOINT'],
         USERNAME: process.env['ITSLEARNING_USERNAME'],
         PASSWORD: process.env['ITSLEARNING_PASSWORD'],
