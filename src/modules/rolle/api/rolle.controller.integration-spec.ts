@@ -236,6 +236,18 @@ describe('Rolle API', () => {
             expect(pagedResponse.items).toHaveLength(3);
         });
 
+        it('should return no rollen', async () => {
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(0);
+        });
+
         it('should return rollen with the given queried name', async () => {
             const testRolle: { name: string } = await rolleRepo.save(DoFactory.createRolle(false));
 

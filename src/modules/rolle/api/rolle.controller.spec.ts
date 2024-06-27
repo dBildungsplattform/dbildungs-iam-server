@@ -85,7 +85,6 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                 const params: RolleNameQueryParams = {
                     searchStr: faker.string.alpha(),
                 };
-
                 const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
                 permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 

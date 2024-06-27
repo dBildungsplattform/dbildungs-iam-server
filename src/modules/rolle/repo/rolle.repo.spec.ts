@@ -122,6 +122,17 @@ describe('RolleRepo', () => {
         });
     });
     describe('findRollenAuthorized', () => {
+        it('should return no rollen because there are none', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
+
+            const rolleResult: Option<Rolle<true>[]> = await sut.findRollenAuthorized(permissions, undefined, 10, 0);
+
+            expect(rolleResult?.length).toBe(0);
+        });
+
         it('should return the rollen when permissions are sufficient', async () => {
             const organisationId: OrganisationID = faker.string.uuid();
             await sut.save(DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }));
