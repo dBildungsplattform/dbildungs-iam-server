@@ -84,7 +84,6 @@ export class PersonenkontextWorkflowAggregate {
         filteredOrganisations.sort((a: OrganisationDo<boolean>, b: OrganisationDo<boolean>) => {
             if (a.name && b.name) {
                 const aTitle: string = a.kennung ? `${a.kennung} (${a.name})` : a.name;
-                console.log(aTitle)
                 const bTitle: string = b.kennung ? `${b.kennung} (${b.name})` : b.name;
                 return aTitle.localeCompare(bTitle, 'de', { numeric: true });
             }
