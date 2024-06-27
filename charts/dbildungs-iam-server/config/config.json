@@ -47,9 +47,11 @@
     "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
   },
   "ITSLEARNING": {
-    "ENABLED": false,
+    "ENABLED": "false",
     "ENDPOINT": "https://itslearning.example.com",
     "USERNAME": "username",
-    "PASSWORD": "password"
+    "PASSWORD": "password",
+    "ROOT_OEFFENTLICH": "oeffentlich",
+    "ROOT_ERSATZ": "ersatz"
   }
 }
