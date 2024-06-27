@@ -192,11 +192,20 @@ export class OrganisationUc {
             OrganisationResponseLegacy,
         );
 
+        // Sort the organizations by name (or by both name and kennung)
+        const sortedOrganisations: OrganisationResponseLegacy[] = organisations.sort(
+            (a: OrganisationResponseLegacy, b: OrganisationResponseLegacy) => {
+                const aTitle: string = a.name || '';
+                const bTitle: string = b.name || '';
+                return aTitle.localeCompare(bTitle, 'de', { numeric: true });
+            },
+        );
+
         return {
             total: result.total,
             offset: result.offset,
             limit: result.limit,
-            items: organisations,
+            items: sortedOrganisations,
         };
     }
 

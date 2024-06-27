@@ -79,6 +79,13 @@ export class PersonenkontextWorkflowAggregate {
         filteredOrganisations = filteredOrganisations.filter(
             (orga: OrganisationDo<boolean>) => orga.typ !== OrganisationsTyp.KLASSE,
         );
+
+        // Sort the filtered organizations, handling undefined kennung and name
+        filteredOrganisations.sort((a: OrganisationDo<boolean>, b: OrganisationDo<boolean>) => {
+            const aTitle: string = a.kennung ? `${a.kennung} (${a.name || ''})` : a.name || '';
+            const bTitle: string = b.kennung ? `${b.kennung} (${b.name || ''})` : b.name || '';
+            return aTitle.localeCompare(bTitle, 'de', { numeric: true });
+        });
         // Return only the orgas that the admin have rights on
         return filteredOrganisations;
     }
@@ -133,7 +140,9 @@ export class PersonenkontextWorkflowAggregate {
             });
         }
         // Otherwise, return an empty array as the user doesn't have permission to view these roles
-        return allowedRollen;
+        return allowedRollen.sort((a: Rolle<true>, b: Rolle<true>) =>
+            a.name.localeCompare(b.name, 'de', { numeric: true }),
+        );
     }
 
     // Verifies if the selected rolle and organisation can together be assigned to a kontext
