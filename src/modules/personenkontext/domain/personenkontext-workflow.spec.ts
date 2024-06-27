@@ -425,6 +425,28 @@ describe('PersonenkontextWorkflow', () => {
 
             expect(result.length).toEqual(2);
         });
+        it('should handle organisations with name and kennung', async () => {
+            const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                name: 'Carl-Orff',
+                kennung: undefined,
+            });
+            const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                name: 'Amalie',
+                kennung: '321',
+            });
+            const orgsWithRecht: string[] = [org1.id, org2.id];
+
+            organisationRepoMock.find.mockResolvedValue([org1, org2]);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+
+            const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                undefined,
+                10,
+            );
+
+            expect(result.length).toEqual(2);
+        });
     });
 
     describe('findRollenForOrganisation', () => {
