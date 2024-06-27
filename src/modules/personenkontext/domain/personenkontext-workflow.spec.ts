@@ -183,6 +183,71 @@ describe('PersonenkontextWorkflow', () => {
             );
             expect(result).toEqual([]);
         });
+        it('should return sorted organisations by kennung and name', async () => {
+            const organisation1: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                kennung: 'A1',
+                name: 'Alpha',
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const organisation2: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                kennung: 'A2',
+                name: 'Beta',
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const organisation3: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                kennung: undefined,
+                name: 'Gamma',
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const organisation4: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                kennung: 'A4',
+                name: undefined,
+                typ: OrganisationsTyp.SCHULE,
+            });
+
+            const organisations: OrganisationDo<true>[] = [organisation4, organisation2, organisation1, organisation3];
+
+            organisationRepoMock.find.mockResolvedValue(organisations);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce(
+                organisations.map((org: OrganisationDo<true>) => org.id),
+            );
+
+            const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                undefined,
+                LIMIT,
+            );
+
+            expect(result).toHaveLength(4);
+        });
+
+        it('should handle organisations with undefined kennung and name', async () => {
+            const organisation1: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                kennung: undefined,
+                name: undefined,
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const organisation2: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                kennung: 'A2',
+                name: 'Alpha',
+                typ: OrganisationsTyp.SCHULE,
+            });
+
+            const organisations: OrganisationDo<true>[] = [organisation1, organisation2];
+
+            organisationRepoMock.find.mockResolvedValue(organisations);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce(
+                organisations.map((org: OrganisationDo<true>) => org.id),
+            );
+
+            const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                undefined,
+                LIMIT,
+            );
+
+            expect(result).toHaveLength(2);
+        });
     });
     describe('findRollenForOrganisation', () => {
         it('should return an empty array if no roles are found by name', async () => {
@@ -241,36 +306,70 @@ describe('PersonenkontextWorkflow', () => {
 
             expect(result).toEqual([]);
         });
-        describe('findRollenForOrganisation', () => {
-            it('should add roles to allowedRollen if user has permissions', async () => {
-                const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.LAND,
-                });
-                const childOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.KLASSE,
-                });
-                const rolle: Rolle<true> = DoFactory.createRolle(true, {
-                    rollenart: RollenArt.ORGADMIN,
-                });
-                const rollen: Rolle<true>[] = [rolle];
-                const orgsWithRecht: string[] = [organisation.id, childOrganisation.id];
-
-                organisationRepoMock.findById.mockResolvedValue(organisation);
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValue([childOrganisation]);
-                organisationRepoMock.findByIds.mockResolvedValue(
-                    new Map(orgsWithRecht.map((id: string) => [id, DoFactory.createOrganisation(true, { id })])),
-                );
-                rolleRepoMock.find.mockResolvedValue(rollen);
-
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-                permissions.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
-
-                anlage.initialize(organisation.id);
-
-                const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
-
-                expect(result).toHaveLength(1);
+        it('should add roles to allowedRollen if user has permissions', async () => {
+            const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.LAND,
             });
+            const childOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.KLASSE,
+            });
+            const rolle: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.ORGADMIN,
+            });
+            const rollen: Rolle<true>[] = [rolle];
+            const orgsWithRecht: string[] = [organisation.id, childOrganisation.id];
+
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValue([childOrganisation]);
+            organisationRepoMock.findByIds.mockResolvedValue(
+                new Map(orgsWithRecht.map((id: string) => [id, DoFactory.createOrganisation(true, { id })])),
+            );
+            rolleRepoMock.find.mockResolvedValue(rollen);
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+
+            anlage.initialize(organisation.id);
+
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
+
+            expect(result).toHaveLength(1);
+        });
+        it('should return sorted roles by name', async () => {
+            const rolle1: Rolle<true> = DoFactory.createRolle(true, { name: 'Alpha' });
+            const rolle2: Rolle<true> = DoFactory.createRolle(true, { name: 'Beta' });
+            const rolle3: Rolle<true> = DoFactory.createRolle(true, { name: 'Gamma' });
+
+            const rollen: Rolle<true>[] = [rolle3, rolle1, rolle2];
+            rolleRepoMock.find.mockResolvedValue(rollen);
+
+            const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+
+            anlage.initialize(organisation.id);
+
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
+
+            expect(result).toHaveLength(3);
+        });
+
+        it('should handle empty roles array', async () => {
+            rolleRepoMock.find.mockResolvedValue([]);
+
+            const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+
+            anlage.initialize(organisation.id);
+
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
+
+            expect(result).toHaveLength(0);
         });
     });
     describe('commit', () => {
