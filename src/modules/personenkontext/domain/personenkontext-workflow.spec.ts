@@ -244,6 +244,24 @@ describe('PersonenkontextWorkflow', () => {
             expect(result.length).toEqual(3);
         });
 
+        it('should handle organisations with undefined kennung and undefined name', async () => {
+            const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, { kennung: undefined });
+            const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: undefined });
+            const org3: OrganisationDo<true> = DoFactory.createOrganisation(true, {});
+            const orgsWithRecht: string[] = [org1.id, org2.id, org3.id];
+
+            organisationRepoMock.find.mockResolvedValue([org1, org2, org3]);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+
+            const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                undefined,
+                10,
+            );
+
+            expect(result.length).toEqual(2);
+        });
+
         it('should return an empty array if no organisations are found', async () => {
             organisationRepoMock.find.mockResolvedValue([]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([]);
