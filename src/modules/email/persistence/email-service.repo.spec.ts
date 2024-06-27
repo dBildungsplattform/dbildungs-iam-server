@@ -111,12 +111,12 @@ describe('EmailServiceRepo', () => {
         describe('when email does exist in DB', () => {
             it('should return true', async () => {
                 const person: Person<true> = await createPerson();
-                const email: Email<false, false> = emailFactory.createNew(person.id);
-                const validEmail: Result<Email<false, true>> = await email.enable();
+                const email: Email<false> = emailFactory.createNew(person.id);
+                const validEmail: Result<Email<false>> = await email.enable();
 
                 if (!validEmail.ok) throw Error();
-                if (!validEmail.value.emailAddresses[0]) throw Error();
-                const savedEmail: Email<true, true> | DomainError = await emailRepo.save(validEmail.value);
+                if (!validEmail.value.emailAddresses || !validEmail.value.emailAddresses[0]) throw Error();
+                const savedEmail: Email<true> | DomainError = await emailRepo.save(validEmail.value);
                 if (savedEmail instanceof DomainError) throw new Error();
 
                 const exists: boolean = await sut.existsEmailAddress(validEmail.value.emailAddresses[0].address);

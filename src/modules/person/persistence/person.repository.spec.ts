@@ -110,11 +110,11 @@ describe('PersonRepository', () => {
         describe('when email for personId is found', () => {
             it('should return current address', async () => {
                 const person: Person<true> = await createPerson();
-                const email: Email<false, false> = emailFactory.createNew(person.id);
-                const validEmail: Result<Email<false, true>> = await email.enable();
+                const email: Email<false> = emailFactory.createNew(person.id);
+                const validEmail: Result<Email<false>> = await email.enable();
 
                 if (!validEmail.ok) throw Error();
-                const savedEmail: Email<true, true> | DomainError = await emailRepo.save(validEmail.value);
+                const savedEmail: Email<true> | DomainError = await emailRepo.save(validEmail.value);
                 if (savedEmail instanceof DomainError) throw new Error();
                 const currentAddress: Option<string> = savedEmail.currentAddress;
                 if (!currentAddress) throw new Error();
@@ -126,11 +126,11 @@ describe('PersonRepository', () => {
         describe('when email for personId is NOT found', () => {
             it('should return undefined', async () => {
                 const person: Person<true> = await createPerson();
-                const email: Email<false, false> = emailFactory.createNew(person.id);
-                const validEmail: Result<Email<false, true>> = await email.enable();
+                const email: Email<false> = emailFactory.createNew(person.id);
+                const validEmail: Result<Email<false>> = await email.enable();
 
                 if (!validEmail.ok) throw Error();
-                const savedEmail: Email<true, true> | DomainError = await emailRepo.save(validEmail.value);
+                const savedEmail: Email<true> | DomainError = await emailRepo.save(validEmail.value);
                 if (savedEmail instanceof DomainError) throw new Error();
 
                 expect(await sut.findEmailAddressByPerson(faker.string.uuid())).toBeFalsy();
@@ -140,12 +140,12 @@ describe('PersonRepository', () => {
         describe('when email for personId is found, but email is disabled', () => {
             it('should return', async () => {
                 const person: Person<true> = await createPerson();
-                const email: Email<false, false> = emailFactory.createNew(person.id);
+                const email: Email<false> = emailFactory.createNew(person.id);
 
-                const validEmail: Result<Email<false, true>> = await email.enable();
+                const validEmail: Result<Email<false>> = await email.enable();
                 if (!validEmail.ok) throw Error();
                 validEmail.value.disable();
-                const savedEmail: Email<true, true> | DomainError = await emailRepo.save(validEmail.value);
+                const savedEmail: Email<true> | DomainError = await emailRepo.save(validEmail.value);
                 if (savedEmail instanceof DomainError) throw new Error();
 
                 expect(await sut.findEmailAddressByPerson(person.id)).toBeFalsy();

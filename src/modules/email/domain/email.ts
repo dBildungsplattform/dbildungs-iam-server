@@ -5,48 +5,46 @@ import { Person } from '../../person/domain/person.js';
 import { EmailInvalidError } from '../error/email-invalid.error.js';
 import { EmailAddress } from './email-address.js';
 
-export declare type IsEmailValid<T, IsValid extends boolean> = IsValid extends true ? T : Option<T>;
-
-export class Email<WasPersisted extends boolean, IsValid extends boolean> {
+export class Email<WasPersisted extends boolean> {
     private constructor(
         public readonly id: Persisted<EmailID, WasPersisted>,
         public readonly createdAt: Persisted<Date, WasPersisted>,
         public readonly updatedAt: Persisted<Date, WasPersisted>,
         public readonly personId: PersonID,
-        public readonly emailAddresses: IsEmailValid<EmailAddress<boolean>[], IsValid>,
         public readonly emailGeneratorService: EmailGeneratorService,
         public readonly personRepository: PersonRepository,
+        public readonly emailAddresses?: EmailAddress<boolean>[],
     ) {}
 
     public static createNew(
         personId: PersonID,
         emailGeneratorService: EmailGeneratorService,
         personRepository: PersonRepository,
-    ): Email<false, false> {
-        return new Email<false, false>(
+    ): Email<false> {
+        return new Email<false>(
             undefined,
             undefined,
             undefined,
             personId,
-            [],
             emailGeneratorService,
             personRepository,
+            undefined,
         );
     }
 
-    public static construct<WasPersisted extends boolean = true, IsValid extends boolean = true>(
+    public static construct<WasPersisted extends boolean = true>(
         id: string,
         createdAt: Date,
         updatedAt: Date,
         personId: PersonID,
-        emailAddresses: EmailAddress<true>[],
         emailGeneratorService: EmailGeneratorService,
         personRepository: PersonRepository,
-    ): Email<WasPersisted, IsValid> {
-        return new Email(id, createdAt, updatedAt, personId, emailAddresses, emailGeneratorService, personRepository);
+        emailAddresses: EmailAddress<true>[],
+    ): Email<WasPersisted> {
+        return new Email(id, createdAt, updatedAt, personId, emailGeneratorService, personRepository, emailAddresses);
     }
 
-    public async enable(): Promise<Result<Email<WasPersisted, true>>> {
+    public async enable(): Promise<Result<Email<WasPersisted>>> {
         if (this.emailAddresses && this.emailAddresses[0]) {
             this.emailAddresses[0].enabled = true;
             return {
@@ -56,9 +54,9 @@ export class Email<WasPersisted extends boolean, IsValid extends boolean> {
                     this.createdAt,
                     this.updatedAt,
                     this.personId,
-                    this.emailAddresses,
                     this.emailGeneratorService,
                     this.personRepository,
+                    this.emailAddresses,
                 ),
             };
         }
@@ -87,9 +85,9 @@ export class Email<WasPersisted extends boolean, IsValid extends boolean> {
                 this.createdAt,
                 this.updatedAt,
                 this.personId,
-                [newEmailAddress],
                 this.emailGeneratorService,
                 this.personRepository,
+                [newEmailAddress],
             ),
         };
     }

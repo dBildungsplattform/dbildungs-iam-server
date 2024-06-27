@@ -18,19 +18,19 @@ export class EmailFactory {
         updatedAt: Date,
         personId: PersonID,
         emailAddresses: EmailAddress<true>[],
-    ): Email<true, true> {
+    ): Email<true> {
         return Email.construct(
             id,
             createdAt,
             updatedAt,
             personId,
-            emailAddresses,
             this.emailGeneratorService,
             this.personRepository,
+            emailAddresses,
         );
     }
 
-    public createNew(personId: PersonID): Email<false, false> {
+    public createNew(personId: PersonID): Email<false> {
         return Email.createNew(personId, this.emailGeneratorService, this.personRepository);
     }
 }
