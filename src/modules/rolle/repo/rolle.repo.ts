@@ -150,8 +150,7 @@ export class RolleRepo {
                 offset: offset,
             });
         }
-
-        if (!rollen) {
+        if (rollen.length === 0) {
             return [];
         }
 
