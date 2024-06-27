@@ -6,6 +6,8 @@ import { EntityAlreadyExistsError, EntityNotFoundError } from '../../../shared/e
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleRepo } from '../repo/rolle.repo.js';
 
 export class Rolle<WasPersisted extends boolean> {
     private constructor(
@@ -47,6 +49,45 @@ export class Rolle<WasPersisted extends boolean> {
         );
     }
 
+    public static async update(
+        organisationRepo: OrganisationRepository,
+        serviceProviderRepo: ServiceProviderRepo,
+        rolleRepo: RolleRepo,
+        id: string,
+        name: string,
+        merkmale: RollenMerkmal[],
+        systemrechte: RollenSystemRecht[],
+        serviceProviderIds: string[],
+    ): Promise<Rolle<true> | DomainError> {
+        //Check references
+        const rolle: Option<Rolle<true>> = await rolleRepo.findById(id);
+        if (!rolle) {
+            return new EntityNotFoundError('Rolle', id);
+        }
+
+        const rolleToUpdate: Rolle<true> = new Rolle(
+            organisationRepo,
+            serviceProviderRepo,
+            id,
+            rolle.createdAt,
+            rolle.updatedAt,
+            name,
+            rolle.administeredBySchulstrukturknoten,
+            rolle.rollenart,
+            merkmale,
+            systemrechte,
+            [],
+        );
+
+        for (const serviceProviderId of serviceProviderIds) {
+            const result: void | DomainError = await rolleToUpdate.attachServiceProvider(serviceProviderId);
+            if (result instanceof DomainError) {
+                return result;
+            }
+        }
+        return rolleToUpdate;
+    }
+
     public static construct<WasPersisted extends boolean = false>(
         organisationRepo: OrganisationRepository,
         serviceProviderRepo: ServiceProviderRepo,
@@ -83,6 +124,13 @@ export class Rolle<WasPersisted extends boolean> {
         ]);
 
         return !!childOrgas.find((orga: Organisation<true>) => orga.id === orgaId);
+    }
+
+    public async isAlreadyAssigned(
+        dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        rolleId: string,
+    ): Promise<boolean> {
+        return (await dBiamPersonenkontextRepo.findByRolle(rolleId)).length > 0;
     }
 
     public addMerkmal(merkmal: RollenMerkmal): void {

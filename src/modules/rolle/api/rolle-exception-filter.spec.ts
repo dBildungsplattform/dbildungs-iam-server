@@ -4,7 +4,7 @@ import { Response } from 'express';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { DbiamRolleError, RolleErrorI18nTypes } from './dbiam-rolle.error.js';
-import { RolleApiError } from './rolle-api.error.js';
+import { RolleDomainError } from '../domain/rolle-domain.error.js';
 
 describe('RolleExceptionFilter', () => {
     let filter: RolleExceptionFilter;
@@ -31,7 +31,7 @@ describe('RolleExceptionFilter', () => {
     describe('catch', () => {
         describe('when filter catches undefined error', () => {
             it('should throw a general RolleError', () => {
-                const error: RolleApiError = new RolleApiError('error', undefined);
+                const error: RolleDomainError = new RolleDomainError('error', undefined);
 
                 filter.catch(error, argumentsHost);
 
