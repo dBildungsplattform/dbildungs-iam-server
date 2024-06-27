@@ -56,6 +56,39 @@ describe('EmailGeneratorService', () => {
             });
         });
 
+        describe('when lastname consists of multiple names separated by hyphen', () => {
+            it('should return valid email', async () => {
+                emailServiceRepoMock.existsEmailAddress.mockResolvedValueOnce(false);
+
+                await expect(sut.generateAddress('Paul', 'Müller-Meier')).resolves.toStrictEqual({
+                    ok: true,
+                    value: 'paul.mueller-meier@schule-sh.de',
+                });
+            });
+        });
+
+        describe('when first name consists of multiple names separated by hyphen', () => {
+            it('should return valid email', async () => {
+                emailServiceRepoMock.existsEmailAddress.mockResolvedValueOnce(false);
+
+                await expect(sut.generateAddress('Paul-Edgar', 'Müller')).resolves.toStrictEqual({
+                    ok: true,
+                    value: 'paul-edgar.mueller@schule-sh.de',
+                });
+            });
+        });
+
+        describe('when first name consists of multiple names separated by space', () => {
+            it('should return valid email', async () => {
+                emailServiceRepoMock.existsEmailAddress.mockResolvedValueOnce(false);
+
+                await expect(sut.generateAddress('Paul Edgar', 'Müller')).resolves.toStrictEqual({
+                    ok: true,
+                    value: 'pauledgar.mueller@schule-sh.de',
+                });
+            });
+        });
+
         describe('when calculated address has more than 64 characters', () => {
             it('should return error', async () => {
                 await expect(

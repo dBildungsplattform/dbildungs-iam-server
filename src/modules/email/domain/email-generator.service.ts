@@ -67,9 +67,11 @@ export class EmailGeneratorService {
         const lowerCaseSearchForm: string = toDIN91379SearchForm(name).toLowerCase();
 
         // Remove all other characters that are not a-z
-        const removedDiacritics: string = lowerCaseSearchForm.replace(/[^a-z]/g, '');
+        let lowerCaseStrings: string[] = lowerCaseSearchForm.split('-');
+        lowerCaseStrings = lowerCaseStrings.filter((s: string) => s.length > 0);
+        const removedDiacritics: string[] = lowerCaseStrings.map((s: string) => s.replace(/[^a-z\-]/g, ''));
 
-        return removedDiacritics;
+        return removedDiacritics.join('-');
     }
 
     private async getNextAvailableAddress(calculatedAddress: string): Promise<string> {
