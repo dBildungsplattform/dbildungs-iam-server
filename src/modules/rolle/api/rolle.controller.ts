@@ -86,7 +86,7 @@ export class RolleController {
 
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
 
-        if (!rollen) {
+        if (!rollen || rollen.length === 0) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
                 total: 0,
                 offset: 0,
@@ -95,7 +95,6 @@ export class RolleController {
             };
             return new PagedResponse(pagedRolleWithServiceProvidersResponse);
         }
-
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {
                 const sps: ServiceProvider<true>[] = r.serviceProviderIds
