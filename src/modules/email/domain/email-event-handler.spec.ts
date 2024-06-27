@@ -360,43 +360,43 @@ describe('Email Event Handler', () => {
 
     describe('asyncPersonDeletedEventHandler', () => {
         let personId: string;
+        let emailAddress: string;
         let event: PersonDeletedEvent;
 
         beforeEach(() => {
             personId = faker.string.uuid();
-            event = new PersonDeletedEvent(personId);
+            emailAddress = faker.internet.email();
+            event = new PersonDeletedEvent(personId, emailAddress);
         });
 
         describe('when deletion is successful', () => {
             it('should log info', async () => {
-                emailRepoMock.findByPerson.mockResolvedValueOnce(createMock<Email<true, true>>());
                 emailRepoMock.deleteById.mockResolvedValueOnce(true);
 
                 await emailEventHandler.asyncPersonDeletedEventHandler(event);
 
-                expect(loggerMock.info).toHaveBeenCalledWith(`Deleted email for personId:${personId}`);
+                expect(loggerMock.info).toHaveBeenCalledWith(`Successfully deactivated email-address:${emailAddress}`);
             });
         });
 
-        describe('when email for deletion cannot be found via person', () => {
-            it('should log error', async () => {
-                emailRepoMock.findByPerson.mockResolvedValueOnce(undefined);
-
+        describe('when event does not provide email-address', () => {
+            it('should log info about that', async () => {
+                event = new PersonDeletedEvent(personId, undefined);
                 await emailEventHandler.asyncPersonDeletedEventHandler(event);
 
-                expect(loggerMock.error).toHaveBeenCalledWith(`Could not find email for personId:${event.personId}`);
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Cannot deactivate email-address, person did not have an email-address`,
+                );
             });
         });
 
-        describe('when deletion fails', () => {
+        describe('when email-address for deletion cannot be found', () => {
             it('should log error', async () => {
-                emailRepoMock.findByPerson.mockResolvedValueOnce(createMock<Email<true, true>>());
-                emailRepoMock.deleteById.mockResolvedValueOnce(false);
-
+                emailRepoMock.deactivateEmailAddress.mockResolvedValueOnce(new EmailAddressNotFoundError());
                 await emailEventHandler.asyncPersonDeletedEventHandler(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Deleting email-account(s) for personId:${personId} failed`,
+                    `Deactivation of email-address:${event.emailAddress} failed`,
                 );
             });
         });

@@ -115,9 +115,6 @@ export class PersonEntity extends TimestampedEntity {
     @Property({ nullable: true })
     public personalnummer?: string;
 
-    @Property({ nullable: true })
-    public email?: string;
-
     @OneToMany({
         entity: () => PersonenkontextEntity,
         mappedBy: 'personId',

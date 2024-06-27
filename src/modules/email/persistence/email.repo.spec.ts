@@ -22,6 +22,7 @@ import { EventService } from '../../../core/eventbus/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { EmailAddress } from '../domain/email-address.js';
+import { EmailAddressEntity } from './email-address.entity.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -108,7 +109,7 @@ describe('EmailRepo', () => {
         expect(sut).toBeDefined();
     });
 
-    describe('findByPersonId', () => {
+    describe('findByPerson', () => {
         it('should return email by personId', async () => {
             const person: Person<true> = await createPerson();
             const email: Email<false, false> = emailFactory.createNew(person.id);
@@ -122,6 +123,42 @@ describe('EmailRepo', () => {
 
             expect(foundEmail).toBeTruthy();
             expect(foundEmail.id).toStrictEqual(savedEmail.id);
+        });
+    });
+
+    describe('deactivateEmailAddress', () => {
+        describe('when email-address exists', () => {
+            it('should disable it and return EmailAddressEntity', async () => {
+                const person: Person<true> = await createPerson();
+                const email: Email<false, false> = emailFactory.createNew(person.id);
+                const validEmail: Result<Email<false, true>> = await email.enable();
+
+                if (!validEmail.ok) throw Error();
+                const savedEmail: Email<true, true> | DomainError = await sut.save(validEmail.value);
+                if (savedEmail instanceof DomainError) throw new Error();
+                const currentAddress: Option<string> = savedEmail.currentAddress;
+                if (!currentAddress) throw new Error();
+                const deactivationResult: EmailAddressEntity | EmailAddressNotFoundError =
+                    await sut.deactivateEmailAddress(currentAddress);
+
+                expect(deactivationResult).toBeInstanceOf(EmailAddressEntity);
+            });
+        });
+
+        describe('when email-address does NOT exist', () => {
+            it('should return EmailAddressNotFoundError', async () => {
+                const person: Person<true> = await createPerson();
+                const email: Email<false, false> = emailFactory.createNew(person.id);
+                const validEmail: Result<Email<false, true>> = await email.enable();
+
+                if (!validEmail.ok) throw Error();
+                const savedEmail: Email<true, true> | DomainError = await sut.save(validEmail.value);
+                if (savedEmail instanceof DomainError) throw new Error();
+                const deactivationResult: EmailAddressEntity | EmailAddressNotFoundError =
+                    await sut.deactivateEmailAddress(faker.internet.email());
+
+                expect(deactivationResult).toBeInstanceOf(EmailAddressNotFoundError);
+            });
         });
     });
 

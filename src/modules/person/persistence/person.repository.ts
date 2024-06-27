@@ -19,6 +19,7 @@ import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
+import { EmailEntity } from '../../email/persistence/email.entity.js';
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
     return {
@@ -45,7 +46,6 @@ export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<
         dataProvider: undefined,
         revision: person.revision,
         personalnummer: person.personalnummer,
-        email: person.email,
     };
 }
 
@@ -76,7 +76,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.vertrauensstufe,
         entity.auskunftssperre,
         entity.personalnummer,
-        entity.email,
+        undefined,
     );
 }
 
@@ -123,6 +123,9 @@ export class PersonRepository {
         const [entities, total]: Counted<PersonEntity> = await scope.executeQuery(this.em);
         const persons: Person<true>[] = entities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
 
+        for (const person of persons) {
+            person.email = await this.findEmailAddressByPerson(person.id);
+        }
         return [persons, total];
     }
 
@@ -196,7 +199,7 @@ export class PersonRepository {
         // Delete the person from the database with all their kontexte
         await this.em.nativeDelete(PersonEntity, person.id);
 
-        this.eventService.publish(new PersonDeletedEvent(personId));
+        this.eventService.publish(new PersonDeletedEvent(personId, person.email));
 
         return { ok: true, value: undefined };
     }
@@ -317,5 +320,19 @@ export class PersonRepository {
         person.keycloakUserId = creationResult.value;
 
         return person;
+    }
+
+    public async findEmailAddressByPerson(personId: PersonID): Promise<string | undefined> {
+        const emailEntity: Option<EmailEntity> = await this.em.findOne(
+            EmailEntity,
+            { personId },
+            { populate: ['emailAddresses'] as const },
+        );
+        if (!emailEntity) return undefined;
+
+        for (const emailAddressEntity of emailEntity.emailAddresses) {
+            if (emailAddressEntity.enabled) return emailAddressEntity.address;
+        }
+        return undefined;
     }
 }

@@ -14,6 +14,8 @@ import { EmailRepo } from '../persistence/email.repo.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { PersonID } from '../../../shared/types/index.js';
+import { EmailAddressEntity } from '../persistence/email-address.entity.js';
+import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 
 @Injectable()
 export class EmailEventHandler {
@@ -86,17 +88,19 @@ export class EmailEventHandler {
     @EventHandler(PersonDeletedEvent)
     public async asyncPersonDeletedEventHandler(event: PersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
-        const email: Option<Email<true, true>> = await this.emailRepo.findByPerson(event.personId);
-        if (!email) {
-            this.logger.error(`Could not find email for personId:${event.personId}`);
+        //Setting person_id to null in Email table is done via deleteRule, not necessary here
+
+        if (!event.emailAddress) {
+            this.logger.info('Cannot deactivate email-address, person did not have an email-address');
             return;
         }
-        const result: boolean = await this.emailRepo.deleteById(email.id);
-        if (result) {
-            this.logger.info(`Deleted email for personId:${event.personId}`);
-        } else {
-            this.logger.error(`Deleting email-account(s) for personId:${event.personId} failed`);
+        const deactivationResult: EmailAddressEntity | EmailAddressNotFoundError =
+            await this.emailRepo.deactivateEmailAddress(event.emailAddress);
+        if (deactivationResult instanceof EmailAddressNotFoundError) {
+            this.logger.error(`Deactivation of email-address:${event.emailAddress} failed`);
+            return;
         }
+        this.logger.info(`Successfully deactivated email-address:${event.emailAddress}`);
     }
 
     private async rolleReferencesEmailServiceProvider(rolle: Rolle<true>): Promise<boolean> {
