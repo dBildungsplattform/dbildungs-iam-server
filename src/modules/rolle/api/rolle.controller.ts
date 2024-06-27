@@ -49,6 +49,8 @@ import { ServiceProviderResponse } from '../../service-provider/api/service-prov
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -75,16 +77,14 @@ export class RolleController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all rollen.' })
     public async findRollen(
         @Query() queryParams: RolleNameQueryParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
-        let rollen: Option<Rolle<true>[]>;
-
-        if (queryParams.searchStr) {
-            rollen = await this.rolleRepo.findByName(queryParams.searchStr, queryParams.limit, queryParams.offset);
-        } else {
-            rollen = await this.rolleRepo.find(queryParams.limit, queryParams.offset);
-        }
-
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
+        const rollen: Option<Rolle<true>[]> = await this.rolleRepo.findRollenAuthorized(
+            permissions,
+            queryParams.searchStr,
+            queryParams.limit,
+            queryParams.offset,
+        );
 
         if (!rollen) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
@@ -95,6 +95,7 @@ export class RolleController {
             };
             return new PagedResponse(pagedRolleWithServiceProvidersResponse);
         }
+        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
 
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {
