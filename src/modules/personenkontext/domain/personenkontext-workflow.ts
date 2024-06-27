@@ -82,9 +82,15 @@ export class PersonenkontextWorkflowAggregate {
 
         // Sort the filtered organizations, handling undefined kennung and name
         filteredOrganisations.sort((a: OrganisationDo<boolean>, b: OrganisationDo<boolean>) => {
-            const aTitle: string = a.kennung ? `${a.kennung} (${a.name || ''})` : a.name || '';
-            const bTitle: string = b.kennung ? `${b.kennung} (${b.name || ''})` : b.name || '';
-            return aTitle.localeCompare(bTitle, 'de', { numeric: true });
+            if (a.name && b.name) {
+                const aTitle: string = a.kennung ? `${a.kennung} (${a.name})` : a.name;
+                const bTitle: string = b.kennung ? `${b.kennung} (${b.name})` : b.name;
+                return aTitle.localeCompare(bTitle, 'de', { numeric: true });
+            }
+            // Ensure a return value for cases where name is not defined (Should never happen normally)
+            if (a.name) return -1;
+            if (b.name) return 1;
+            return 0;
         });
         // Return only the orgas that the admin have rights on
         return filteredOrganisations;
@@ -113,6 +119,7 @@ export class PersonenkontextWorkflowAggregate {
             true,
         );
 
+        // If the admin has no right on any orga then return an empty array
         if (!orgsWithRecht || orgsWithRecht.length === 0) {
             return [];
         }
@@ -133,13 +140,14 @@ export class PersonenkontextWorkflowAggregate {
             const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
             [organisation].forEach(function (orga: OrganisationDo<true>) {
                 rollen.forEach(function (rolle: Rolle<true>) {
+                    // Check here what kind of roles the admin can assign depending on the type of organisation
                     if (organisationMatchesRollenart.isSatisfiedBy(orga, rolle) && !allowedRollen.includes(rolle)) {
                         allowedRollen.push(rolle);
                     }
                 });
             });
         }
-        // Otherwise, return an empty array as the user doesn't have permission to view these roles
+        // Sort the Roles by name
         return allowedRollen.sort((a: Rolle<true>, b: Rolle<true>) =>
             a.name.localeCompare(b.name, 'de', { numeric: true }),
         );
