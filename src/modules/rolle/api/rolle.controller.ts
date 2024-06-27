@@ -86,7 +86,7 @@ export class RolleController {
             queryParams.offset,
         );
 
-        if (!rollen) {
+        if (!rollen || rollen.length === 0) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
                 total: 0,
                 offset: 0,
