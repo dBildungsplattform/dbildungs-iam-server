@@ -86,7 +86,7 @@ export class RolleController {
 
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
 
-        if (!rollen || rollen.length === 0) {
+        if (!rollen) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
                 total: 0,
                 offset: 0,
