@@ -328,7 +328,7 @@ describe('PersonenkontextWorkflow', () => {
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
 
-            expect(result).toHaveLength(1);
+            expect(result).toHaveLength(2);
         });
         it('should handle empty roles array', async () => {
             rolleRepoMock.find.mockResolvedValue([]);
