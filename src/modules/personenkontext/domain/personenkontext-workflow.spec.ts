@@ -143,7 +143,7 @@ describe('PersonenkontextWorkflow', () => {
         });
     });
 
-    describe.only('findAllSchulstrukturknoten', () => {
+    describe('findAllSchulstrukturknoten', () => {
         it('should return only the organisations that the admin has rights on', async () => {
             const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
             const organisations: OrganisationDo<true>[] = [organisation];
