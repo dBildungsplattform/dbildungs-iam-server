@@ -116,6 +116,15 @@
           "MIGRATION_DURCHFUEHREN"
         ],
         "serviceProviderIds": []
+      },
+      {
+        "id": 6,
+        "administeredBySchulstrukturknoten": 0,
+        "name": "Schulbegleitung",
+        "rollenart": "LERN",
+        "merkmale": [],
+        "systemrechte": [],
+        "serviceProviderIds": []
       }
   ]
 }
