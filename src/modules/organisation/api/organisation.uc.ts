@@ -16,6 +16,8 @@ import { UpdateOrganisationDto } from './update-organisation.dto.js';
 import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 import { ServerConfig, DataConfig } from '../../../shared/config/index.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
+import { Organisation } from '../domain/organisation.js';
+import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
 
 @Injectable()
 export class OrganisationUc {
@@ -30,23 +32,28 @@ export class OrganisationUc {
     }
 
     public async createOrganisation(
-        organisationDto: CreateOrganisationDto,
-    ): Promise<CreatedOrganisationDto | SchulConnexError | OrganisationSpecificationError> {
-        const organisationDo: OrganisationDo<false> = this.mapper.map(
-            organisationDto,
-            CreateOrganisationDto,
-            OrganisationDo,
+        organisationInput: CreateOrganisationBodyParams,
+    ): Promise<Organisation<true> | SchulConnexError | OrganisationSpecificationError> {
+        const organisation: Organisation<false> = Organisation.createNew(
+            organisationInput.administriertVon,
+            organisationInput.zugehoerigZu,
+            organisationInput.kennung,
+            organisationInput.name,
+            organisationInput.namensergaenzung,
+            organisationInput.kuerzel,
+            organisationInput.typ,
+            organisationInput.traegerschaft,
         );
 
-        organisationDo.administriertVon ??= this.ROOT_ORGANISATION_ID;
-        organisationDo.zugehoerigZu ??= this.ROOT_ORGANISATION_ID;
+        organisation.administriertVon ??= this.ROOT_ORGANISATION_ID;
+        organisation.zugehoerigZu ??= this.ROOT_ORGANISATION_ID;
 
-        const result: Result<OrganisationDo<true>, DomainError> = await this.organisationService.createOrganisation(
-            organisationDo,
+        const result: Result<Organisation<true>, DomainError> = await this.organisationService.createOrganisation(
+            organisation,
         );
 
         if (result.ok) {
-            return this.mapper.map(result.value, OrganisationDo, CreatedOrganisationDto);
+            return result.value;
         }
         //avoid passing OrganisationSpecificationError to SchulConnexErrorMapper
         if (result.error instanceof OrganisationSpecificationError) {

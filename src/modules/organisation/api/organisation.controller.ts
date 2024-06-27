@@ -58,22 +58,17 @@ export class OrganisationController {
     ) {}
 
     @Post()
-    @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponseLegacy })
+    @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponse })
     @ApiBadRequestResponse({ description: 'The organisation already exists.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
-    public async createOrganisation(@Body() params: CreateOrganisationBodyParams): Promise<OrganisationResponseLegacy> {
-        const organisationDto: CreateOrganisationDto = this.mapper.map(
-            params,
-            CreateOrganisationBodyParams,
-            CreateOrganisationDto,
-        );
-        const result: CreatedOrganisationDto | SchulConnexError | OrganisationSpecificationError =
-            await this.uc.createOrganisation(organisationDto);
+    public async createOrganisation(@Body() params: CreateOrganisationBodyParams): Promise<OrganisationResponse> {
+        const result: Organisation<true> | SchulConnexError | OrganisationSpecificationError =
+            await this.uc.createOrganisation(params);
 
-        if (result instanceof CreatedOrganisationDto) {
-            return this.mapper.map(result, CreatedOrganisationDto, OrganisationResponseLegacy);
+        if (result instanceof Organisation) {
+            return new OrganisationResponse(result);
         }
         if (result instanceof OrganisationSpecificationError) {
             throw result;

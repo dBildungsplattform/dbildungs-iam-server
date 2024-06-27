@@ -83,7 +83,8 @@ export class PersonenkontextController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponseAutomapper> {
         {
-            // Check permissions
+            //TODO Check permissions
+            // change the result here this is an aggregiate
             const result: Result<unknown, DomainError> = await this.personenkontextRepo.findByIDAuthorized(
                 params.personenkontextId,
                 permissions,
@@ -94,7 +95,7 @@ export class PersonenkontextController {
                 );
             }
         }
-
+        /// TODO  here we start with old code!!
         const request: FindPersonenkontextByIdDto = this.mapper.map(
             params,
             FindPersonenkontextByIdParams,
