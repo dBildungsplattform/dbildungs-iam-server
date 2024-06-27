@@ -259,7 +259,7 @@ describe('PersonenkontextWorkflow', () => {
                 10,
             );
 
-            expect(result.length).toEqual(2);
+            expect(result.length).toEqual(3);
         });
 
         it('should return an empty array if no organisations are found', async () => {
