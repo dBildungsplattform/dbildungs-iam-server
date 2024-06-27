@@ -305,9 +305,13 @@ describe('PersonenkontextWorkflow', () => {
             });
             const rolle: Rolle<true> = DoFactory.createRolle(true, {
                 rollenart: RollenArt.ORGADMIN,
-                name: 'Alpha' 
+                name: 'Alpha',
             });
-            const rollen: Rolle<true>[] = [rolle];
+            const rolle1: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.ORGADMIN,
+                name: 'Beta',
+            });
+            const rollen: Rolle<true>[] = [rolle, rolle1];
             const orgsWithRecht: string[] = [organisation.id, childOrganisation.id];
 
             organisationRepoMock.findById.mockResolvedValue(organisation);
