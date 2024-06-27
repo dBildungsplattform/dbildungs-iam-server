@@ -208,6 +208,23 @@ describe('PersonenkontextWorkflow', () => {
             expect(result.length).toEqual(4);
         });
 
+        it('should sort organisations with only kennung defined', async () => {
+            const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, { kennung: 'K2' });
+            const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, { kennung: 'K1' });
+            const orgsWithRecht: string[] = [org1.id, org2.id];
+
+            organisationRepoMock.find.mockResolvedValue([org1, org2]);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+
+            const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                undefined,
+                10,
+            );
+
+            expect(result.length).toEqual(2);
+        });
+
         it('should handle organisations with undefined kennung and name', async () => {
             const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, { kennung: 'K1' });
             const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: 'Alpha School' });
@@ -243,25 +260,6 @@ describe('PersonenkontextWorkflow', () => {
 
             expect(result.length).toEqual(3);
         });
-
-        it('should handle organisations with undefined kennung and undefined name', async () => {
-            const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, { kennung: undefined });
-            const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: undefined });
-            const org3: OrganisationDo<true> = DoFactory.createOrganisation(true, {});
-            const orgsWithRecht: string[] = [org1.id, org2.id, org3.id];
-
-            organisationRepoMock.find.mockResolvedValue([org1, org2, org3]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
-
-            const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
-                personpermissionsMock,
-                undefined,
-                10,
-            );
-
-            expect(result.length).toEqual(3);
-        });
-
         it('should sort organisations with neither kennung nor name defined', async () => {
             const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, {});
             const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, {});
@@ -275,10 +273,48 @@ describe('PersonenkontextWorkflow', () => {
                 undefined,
                 10,
             );
-
-            expect(result.length).toEqual(2); // Order doesn't matter as both are empty
+            expect(result.length).toEqual(2);
         });
 
+        it('should handle mixed cases of kennung and name', async () => {
+            const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                kennung: 'K2',
+                name: 'Beta School',
+            });
+            const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: 'Alpha School' });
+            const org3: OrganisationDo<true> = DoFactory.createOrganisation(true, { kennung: 'K1' });
+            const org4: OrganisationDo<true> = DoFactory.createOrganisation(true, {});
+            const orgsWithRecht: string[] = [org1.id, org2.id, org3.id, org4.id];
+
+            organisationRepoMock.find.mockResolvedValue([org1, org2, org3, org4]);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+
+            const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                undefined,
+                10,
+            );
+
+            // Expected order: by kennung ('K1', 'K2 (Beta School)') then by name ('Alpha School', '')
+            expect(result.length).toEqual(4);
+        });
+
+        it('should sort organisations with only name defined', async () => {
+            const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: 'Beta School' });
+            const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: 'Alpha School' });
+            const orgsWithRecht: string[] = [org1.id, org2.id];
+
+            organisationRepoMock.find.mockResolvedValue([org1, org2]);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+
+            const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                undefined,
+                10,
+            );
+
+            expect(result.length).toEqual(2); // Sorted by name
+        });
         it('should return an empty array if no organisations are found', async () => {
             organisationRepoMock.find.mockResolvedValue([]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([]);
