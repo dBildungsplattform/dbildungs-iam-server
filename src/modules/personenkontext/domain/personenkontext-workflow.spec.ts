@@ -245,7 +245,7 @@ describe('PersonenkontextWorkflow', () => {
         });
 
         it('should handle organisations with kennung but undefined name', async () => {
-            const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, { kennung: 'K1' });
+            const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, { kennung: 'K1', name: 'tootie' });
             const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: undefined });
             const org3: OrganisationDo<true> = DoFactory.createOrganisation(true, {});
             const orgsWithRecht: string[] = [org1.id, org2.id, org3.id];
@@ -263,7 +263,10 @@ describe('PersonenkontextWorkflow', () => {
         });
 
         it('should handle organisations with name but undefined kennung', async () => {
-            const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, { kennung: undefined });
+            const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                kennung: undefined,
+                name: 'rolle',
+            });
             const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: 'tootie' });
             const org3: OrganisationDo<true> = DoFactory.createOrganisation(true, {});
             const orgsWithRecht: string[] = [org1.id, org2.id, org3.id];
