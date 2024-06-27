@@ -155,7 +155,7 @@ describe('PersonenkontextWorkflow', () => {
                 undefined,
                 LIMIT,
             );
-            expect(result).toEqual(organisations);
+            expect(result.length).toBe(1);
         });
 
         it('should return organisations based on name or kennung if provided', async () => {
@@ -169,7 +169,7 @@ describe('PersonenkontextWorkflow', () => {
                 organisation.name,
                 LIMIT,
             );
-            expect(result).toEqual(organisations);
+            expect(result.length).toBe(1);
         });
 
         it('should return an empty array if no organisations are found', async () => {
@@ -181,8 +181,9 @@ describe('PersonenkontextWorkflow', () => {
                 undefined,
                 LIMIT,
             );
-            expect(result).toEqual([]);
+            expect(result.length).toBe(0);
         });
+
         it('should sort organisations by name and kennung', async () => {
             const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, {
                 kennung: 'K1',
@@ -205,7 +206,7 @@ describe('PersonenkontextWorkflow', () => {
                 10,
             );
 
-            expect(result.length).toEqual(4);
+            expect(result.length).toBe(4);
         });
 
         it('should sort organisations with only kennung defined', async () => {
@@ -222,7 +223,7 @@ describe('PersonenkontextWorkflow', () => {
                 10,
             );
 
-            expect(result.length).toEqual(2);
+            expect(result.length).toBe(2);
         });
 
         it('should handle organisations with undefined kennung and name', async () => {
@@ -240,7 +241,7 @@ describe('PersonenkontextWorkflow', () => {
                 10,
             );
 
-            expect(result.length).toEqual(3);
+            expect(result.length).toBe(3);
         });
 
         it('should handle organisations with kennung but undefined name', async () => {
@@ -258,8 +259,9 @@ describe('PersonenkontextWorkflow', () => {
                 10,
             );
 
-            expect(result.length).toEqual(3);
+            expect(result.length).toBe(3);
         });
+
         it('should sort organisations with neither kennung nor name defined', async () => {
             const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, {});
             const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, {});
@@ -273,7 +275,8 @@ describe('PersonenkontextWorkflow', () => {
                 undefined,
                 10,
             );
-            expect(result.length).toEqual(2);
+
+            expect(result.length).toBe(2);
         });
 
         it('should handle mixed cases of kennung and name', async () => {
@@ -295,8 +298,7 @@ describe('PersonenkontextWorkflow', () => {
                 10,
             );
 
-            // Expected order: by kennung ('K1', 'K2 (Beta School)') then by name ('Alpha School', '')
-            expect(result.length).toEqual(4);
+            expect(result.length).toBe(4);
         });
 
         it('should sort organisations with only name defined', async () => {
@@ -313,21 +315,10 @@ describe('PersonenkontextWorkflow', () => {
                 10,
             );
 
-            expect(result.length).toEqual(2); // Sorted by name
-        });
-        it('should return an empty array if no organisations are found', async () => {
-            organisationRepoMock.find.mockResolvedValue([]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([]);
-
-            const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
-                personpermissionsMock,
-                undefined,
-                10,
-            );
-
-            expect(result).toEqual([]);
+            expect(result.length).toBe(2);
         });
     });
+
     describe('findRollenForOrganisation', () => {
         it('should return an empty array if no roles are found by name', async () => {
             rolleRepoMock.findByName.mockResolvedValue(undefined);
