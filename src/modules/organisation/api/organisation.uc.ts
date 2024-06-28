@@ -18,6 +18,7 @@ import { ServerConfig, DataConfig } from '../../../shared/config/index.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { Organisation } from '../domain/organisation.js';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
+import { OrganisationResponse } from './organisation.response.js';
 
 @Injectable()
 export class OrganisationUc {
@@ -35,8 +36,8 @@ export class OrganisationUc {
         organisationInput: CreateOrganisationBodyParams,
     ): Promise<Organisation<true> | SchulConnexError | OrganisationSpecificationError> {
         const organisation: Organisation<false> = Organisation.createNew(
-            organisationInput.administriertVon,
-            organisationInput.zugehoerigZu,
+            organisationInput.administriertVon ?? this.ROOT_ORGANISATION_ID,
+            organisationInput.zugehoerigZu ?? this.ROOT_ORGANISATION_ID,
             organisationInput.kennung,
             organisationInput.name,
             organisationInput.namensergaenzung,
@@ -44,9 +45,6 @@ export class OrganisationUc {
             organisationInput.typ,
             organisationInput.traegerschaft,
         );
-
-        organisation.administriertVon ??= this.ROOT_ORGANISATION_ID;
-        organisation.zugehoerigZu ??= this.ROOT_ORGANISATION_ID;
 
         const result: Result<Organisation<true>, DomainError> = await this.organisationService.createOrganisation(
             organisation,
@@ -85,61 +83,24 @@ export class OrganisationUc {
         return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 
-    public async findOrganisationById(id: string): Promise<OrganisationResponseLegacy | SchulConnexError> {
-        const result: Result<OrganisationDo<true>, DomainError> = await this.organisationService.findOrganisationById(
-            id,
-        );
+    public async findOrganisationById(id: string): Promise<OrganisationResponse | SchulConnexError> {
+        const result: Result<Organisation<true>, DomainError> = await this.organisationService.findOrganisationById(id);
         if (result.ok) {
-            return this.mapper.map(result.value, OrganisationDo, OrganisationResponseLegacy);
+            return new OrganisationResponse(result.value);
         }
         return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
     }
 
-    public async findRootOrganisation(): Promise<OrganisationResponseLegacy | SchulConnexError> {
-        const result: Result<OrganisationDo<true>, DomainError> = await this.organisationService.findOrganisationById(
+    public async findRootOrganisation(): Promise<OrganisationResponse | SchulConnexError> {
+        const result: Result<Organisation<true>, DomainError> = await this.organisationService.findOrganisationById(
             this.ROOT_ORGANISATION_ID,
         );
 
         if (result.ok) {
-            return this.mapper.map(result.value, OrganisationDo, OrganisationResponseLegacy);
+            return new OrganisationResponse(result.value);
         }
 
         return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
-    }
-
-    public async findAll(organisationDto: FindOrganisationDto): Promise<Paged<OrganisationResponseLegacy>> {
-        const organisationDo: OrganisationDo<false> = this.mapper.map(
-            organisationDto,
-            FindOrganisationDto,
-            OrganisationDo,
-        );
-        const result: Paged<OrganisationDo<true>> = await this.organisationService.findAllOrganizations(
-            organisationDo,
-            organisationDto.offset,
-            organisationDto.limit,
-        );
-
-        if (result.total === 0) {
-            return {
-                total: result.total,
-                offset: result.offset,
-                limit: result.limit,
-                items: [],
-            };
-        }
-
-        const organisations: OrganisationResponseLegacy[] = this.mapper.mapArray(
-            result.items,
-            OrganisationDo,
-            OrganisationResponseLegacy,
-        );
-
-        return {
-            total: result.total,
-            offset: result.offset,
-            limit: result.limit,
-            items: organisations,
-        };
     }
 
     public async setAdministriertVon(

@@ -45,6 +45,7 @@ import { OrganisationSpecificationError } from '../specification/error/organisat
 import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 
+// DONE
 @UseFilters(new SchulConnexValidationErrorFilter(), new OrganisationExceptionFilter())
 @ApiTags('organisationen')
 @ApiBearerAuth()
@@ -105,22 +106,24 @@ export class OrganisationController {
         throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
     }
 
+    // Done
     @Get('root')
-    @ApiOkResponse({ description: 'The organization was successfully pulled.', type: OrganisationResponseLegacy })
+    @ApiOkResponse({ description: 'The organization was successfully pulled.', type: OrganisationResponse })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the organization.' })
     @ApiNotFoundResponse({ description: 'The organization does not exist.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
-    public async getRootOrganisation(): Promise<OrganisationResponseLegacy> {
-        const result: OrganisationResponseLegacy | SchulConnexError = await this.uc.findRootOrganisation();
+    public async getRootOrganisation(): Promise<OrganisationResponse> {
+        const result: OrganisationResponse | SchulConnexError = await this.uc.findRootOrganisation();
 
-        if (result instanceof OrganisationResponseLegacy) {
+        if (result instanceof OrganisationResponse) {
             return result;
         }
 
         throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
     }
 
+    // Done
     @Get('root/children')
     @ApiOkResponse({
         description: 'The root organizations were successfully pulled.',
@@ -144,19 +147,20 @@ export class OrganisationController {
         return new OrganisationRootChildrenResponse(oeffentlich, ersatz);
     }
 
+    // Done
     @Get(':organisationId')
-    @ApiOkResponse({ description: 'The organization was successfully pulled.', type: OrganisationResponseLegacy })
+    @ApiOkResponse({ description: 'The organization was successfully pulled.', type: OrganisationResponse })
     @ApiBadRequestResponse({ description: 'Organization ID is required' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the organization.' })
     @ApiNotFoundResponse({ description: 'The organization does not exist.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
-    public async findOrganisationById(@Param() params: OrganisationByIdParams): Promise<OrganisationResponseLegacy> {
-        const result: OrganisationResponseLegacy | SchulConnexError = await this.uc.findOrganisationById(
+    public async findOrganisationById(@Param() params: OrganisationByIdParams): Promise<OrganisationResponse> {
+        const result: OrganisationResponse | SchulConnexError = await this.uc.findOrganisationById(
             params.organisationId,
         );
 
-        if (result instanceof OrganisationResponseLegacy) {
+        if (result instanceof OrganisationResponse) {
             return result;
         }
         throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
@@ -224,6 +228,7 @@ export class OrganisationController {
         return new PagedResponse(pagedOrganisationResponse);
     }
 
+    // TODO starting here lots of mappers in the uc
     @Get(':organisationId/administriert')
     @ApiOkResponse({
         description: 'The organizations were successfully returned.',

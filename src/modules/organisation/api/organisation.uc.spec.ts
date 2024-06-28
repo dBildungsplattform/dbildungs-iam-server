@@ -150,61 +150,6 @@ describe('OrganisationUc', () => {
         });
     });
 
-    describe('findAll', () => {
-        const findOrganisationDto: FindOrganisationDto = {
-            kennung: 'kennung',
-            name: 'name',
-            typ: OrganisationsTyp.SCHULE,
-            offset: 0,
-            limit: 0,
-        };
-
-        describe('when matching organizations were found', () => {
-            it('should return all found organisations', async () => {
-                const organisationDos: OrganisationDo<true>[] = DoFactory.createMany(
-                    2,
-                    true,
-                    DoFactory.createOrganisation,
-                );
-
-                organisationServiceMock.findAllOrganizations.mockResolvedValue({
-                    total: 2,
-                    offset: 0,
-                    limit: 0,
-                    items: organisationDos,
-                });
-
-                const result: Paged<OrganisationResponseLegacy> = await organisationUc.findAll(findOrganisationDto);
-
-                expect(result.total).toBe(2);
-                expect(result.items).toHaveLength(2);
-                expect(result.items[0]?.name).toEqual(organisationDos[0]?.name);
-                expect(result.items[1]?.name).toEqual(organisationDos[1]?.name);
-                expect(result.items[0]?.kennung).toEqual(organisationDos[0]?.kennung);
-                expect(result.items[1]?.kennung).toEqual(organisationDos[1]?.kennung);
-                expect(result.items[0]?.typ).toEqual(organisationDos[0]?.typ);
-                expect(result.items[1]?.typ).toEqual(organisationDos[1]?.typ);
-            });
-        });
-
-        describe('when no matching organisations were found', () => {
-            it('should return an empty array', async () => {
-                organisationServiceMock.findAllOrganizations.mockResolvedValue({
-                    total: 0,
-                    offset: 0,
-                    limit: 0,
-                    items: [],
-                });
-
-                const emptyResult: Paged<OrganisationResponseLegacy> =
-                    await organisationUc.findAll(findOrganisationDto);
-
-                expect(emptyResult.total).toBe(0);
-                expect(emptyResult.items).toHaveLength(0);
-            });
-        });
-    });
-
     describe('findRootOrganisation', () => {
         it('should find the root organisation', async () => {
             const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
