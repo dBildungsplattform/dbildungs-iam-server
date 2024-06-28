@@ -109,7 +109,7 @@ describe('OpenIdConnectStrategy', () => {
             await expect(user.personPermissions()).rejects.toBeUndefined();
         });
 
-        it('should throw KeycloakUserNotFoundError if keycloak-use does not exist', async () => {
+        it('should throw KeycloakUserNotFoundError if keycloak-user does not exist', async () => {
             jest.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createMock<UserinfoResponse>());
             personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
 
