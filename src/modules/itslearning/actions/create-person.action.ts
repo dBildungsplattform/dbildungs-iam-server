@@ -1,21 +1,7 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { IMS_COMMON_SCHEMA, IMS_PERSON_MAN_DATA_SCHEMA, IMS_PERSON_MAN_MESS_SCHEMA } from '../schemas.js';
+import { ItsLearningRoleType } from '../types/role.enum.js';
 import { IMSESAction } from './base-action.js';
-
-type InstitutionRoleType =
-    | 'Student'
-    | 'Faculty'
-    | 'Member'
-    | 'Learner'
-    | 'Instructor'
-    | 'Mentor'
-    | 'Staff'
-    | 'Alumni'
-    | 'ProspectiveStudent'
-    | 'Guest'
-    | 'Other'
-    | 'Administrator'
-    | 'Observer';
 
 // Incomplete
 export type CreatePersonParams = {
@@ -26,7 +12,7 @@ export type CreatePersonParams = {
 
     username: string;
 
-    institutionRoleType: InstitutionRoleType;
+    institutionRoleType: ItsLearningRoleType;
 };
 
 type CreatePersonResponseBody = {
@@ -65,6 +51,13 @@ export class CreatePersonAction extends IMSESAction<CreatePersonResponseBody, vo
                     'ims2:institutionRole': {
                         'ims2:institutionRoleType': this.params.institutionRoleType,
                         'ims2:primaryRoleType': false, // ?
+                    },
+                    'ims2:extension': {
+                        'ims1:extensionField': {
+                            'ims1:fieldName': 'passwordchange',
+                            'ims1:fieldType': 'String',
+                            'ims1:fieldValue': 'NotAllowed',
+                        },
                     },
                 },
             },

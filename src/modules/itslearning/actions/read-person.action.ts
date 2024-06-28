@@ -1,25 +1,11 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { IMS_COMMON_SCHEMA, IMS_PERSON_MAN_MESS_SCHEMA } from '../schemas.js';
+import { ItsLearningRoleType } from '../types/role.enum.js';
 import { IMSESAction } from './base-action.js';
-
-type InstitutionRoleType =
-    | 'Student'
-    | 'Faculty'
-    | 'Member'
-    | 'Learner'
-    | 'Instructor'
-    | 'Mentor'
-    | 'Staff'
-    | 'Alumni'
-    | 'ProspectiveStudent'
-    | 'Guest'
-    | 'Other'
-    | 'Administrator'
-    | 'Observer';
 
 export type PersonResponse = {
     formatName?: string;
-    institutionRole: InstitutionRoleType;
+    institutionRole: ItsLearningRoleType;
     primaryRoleType: boolean;
     userId: string;
 };
@@ -40,7 +26,7 @@ type ReadPersonResponseBody = {
                 userIdValue: string;
             };
             institutionRole: {
-                institutionRoleType: InstitutionRoleType;
+                institutionRoleType: ItsLearningRoleType;
                 primaryRoleType: boolean;
             };
         };
