@@ -5,7 +5,7 @@ import { Person } from '../../person/domain/person.js';
 import { EmailInvalidError } from '../error/email-invalid.error.js';
 import { EmailAddress } from './email-address.js';
 
-type EmailAddressProperties = {
+export type EmailAddressProperties = {
     vorname: string;
     familienname: string;
 };
@@ -109,7 +109,10 @@ export class Email<WasPersisted extends boolean> {
             };
         }
         const newEmailAddress: EmailAddress<false> = new EmailAddress<false>(undefined, generatedAddress.value, true);
-        this.emailAddresses?.push(newEmailAddress);
+        let newAddresses: EmailAddress<boolean>[] = [newEmailAddress];
+        if (this.emailAddresses) {
+            newAddresses = newAddresses.concat(this.emailAddresses);
+        }
         return {
             ok: true,
             value: new Email(
@@ -119,13 +122,13 @@ export class Email<WasPersisted extends boolean> {
                 this.personId,
                 this.emailGeneratorService,
                 this.personRepository,
-                this.emailAddresses,
+                newAddresses,
             ),
         };
     }
 
     public disable(): boolean {
-        if (!this.emailAddresses || this.emailAddresses.length <= 0) return false;
+        if (!this.emailAddresses) return false;
 
         for (const emailAddress of this.emailAddresses) {
             emailAddress.enabled = false;
@@ -138,12 +141,12 @@ export class Email<WasPersisted extends boolean> {
     }
 
     public isEnabled(): boolean {
-        if (!this.emailAddresses || this.emailAddresses.length <= 0) return false;
+        if (!this.emailAddresses) return false;
         return this.emailAddresses.some((emailAddress: EmailAddress<boolean>) => emailAddress.enabled);
     }
 
     public get currentAddress(): Option<string> {
-        if (!this.emailAddresses || this.emailAddresses.length <= 0) return undefined;
+        if (!this.emailAddresses) return undefined;
 
         for (const emailAddress of this.emailAddresses) {
             if (emailAddress.enabled) return emailAddress.address;

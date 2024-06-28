@@ -37,6 +37,46 @@ describe('EmailGeneratorService', () => {
         jest.resetAllMocks();
     });
 
+    describe('isEqual', () => {
+        describe('when internal error occurred', () => {
+            it('should return false', async () => {
+                const res: boolean = await sut.isEqual(
+                    faker.string.alpha({ length: 10 }),
+                    faker.string.alpha({ length: 32 }),
+                    faker.string.alpha({ length: 32 }),
+                );
+
+                expect(res).toBeFalsy();
+            });
+        });
+
+        describe('when address is NOT equal generated address', () => {
+            it('should return false', async () => {
+                const vorname: string = 'theo';
+                const familienname: string = 'meier';
+                const address: string = faker.internet.email();
+                emailServiceRepoMock.existsEmailAddress.mockResolvedValueOnce(false);
+
+                const res: boolean = await sut.isEqual(address, vorname, familienname);
+
+                expect(res).toBeFalsy();
+            });
+        });
+
+        describe('when address is equal generated address', () => {
+            it('should return true', async () => {
+                const vorname: string = 'theo';
+                const familienname: string = 'meier';
+                const address: string = 'theo.meier@schule-sh.de';
+                emailServiceRepoMock.existsEmailAddress.mockResolvedValueOnce(false);
+
+                const res: boolean = await sut.isEqual(address, vorname, familienname);
+
+                expect(res).toBeTruthy();
+            });
+        });
+    });
+
     describe('generateName', () => {
         describe('when firstname has less than 2 characters', () => {
             it('should return error', async () => {

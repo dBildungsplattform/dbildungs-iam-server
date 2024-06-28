@@ -35,6 +35,8 @@ import { EmailAddress } from './email-address.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed.event.js';
+import { Person } from '../../person/domain/person.js';
 
 function getEmail(emaiGeneratorService: EmailGeneratorService, personRepository: PersonRepository): Email<true> {
     const fakeEmailId: EmailID = faker.string.uuid();
@@ -46,6 +48,20 @@ function getEmail(emaiGeneratorService: EmailGeneratorService, personRepository:
         emaiGeneratorService,
         personRepository,
         [new EmailAddress<true>(fakeEmailId, faker.internet.email(), true)],
+    );
+}
+
+function getPerson(): Person<true> {
+    return Person.construct(
+        faker.string.uuid(),
+        faker.date.past(),
+        faker.date.recent(),
+        faker.person.lastName(),
+        faker.person.firstName(),
+        '1',
+        faker.lorem.word(),
+        faker.lorem.word(),
+        faker.string.uuid(),
     );
 }
 
@@ -400,6 +416,107 @@ describe('Email Event Handler', () => {
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Deactivation of email-address:${event.emailAddress} failed`,
+                );
+            });
+        });
+    });
+
+    describe('asyncPersonRenamedEventHandler', () => {
+        let fakePersonId: string;
+        let emailAddress: string;
+        let event: PersonRenamedEvent;
+
+        beforeEach(() => {
+            fakePersonId = faker.string.uuid();
+            emailAddress = faker.internet.email();
+            event = new PersonRenamedEvent(fakePersonId, emailAddress);
+        });
+
+        describe('when no existing email-addresses are found for person', () => {
+            it('should log info', async () => {
+                emailRepoMock.findByPerson.mockResolvedValueOnce(undefined); //mock NO existing email-addresses found
+
+                await emailEventHandler.asyncPersonRenamedEventHandler(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `No existing email-addresses found for personId:${event.personId}, renaming has no effect`,
+                );
+            });
+        });
+
+        describe('when person cannot be found', () => {
+            it('should log error', async () => {
+                emailRepoMock.findByPerson.mockResolvedValueOnce(createMock<Email<true>>()); //mock existing email-addresses is found
+                personRepositoryMock.findById.mockResolvedValueOnce(undefined); //mock NO person could be found
+
+                await emailEventHandler.asyncPersonRenamedEventHandler(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `No person found for personId:${event.personId}, renaming email-address not possible`,
+                );
+            });
+        });
+
+        describe('when changing address returns error', () => {
+            it('should log error', async () => {
+                const person: Person<true> = getPerson();
+                // eslint-disable-next-line @typescript-eslint/require-await
+                emailRepoMock.findByPerson.mockImplementationOnce(async (personId: PersonID) => {
+                    const emailMock: DeepMocked<Email<true>> = createMock<Email<true>>({
+                        emailAddresses: [],
+                        personId: personId,
+                    });
+                    // eslint-disable-next-line @typescript-eslint/require-await
+                    emailMock.changeAddress.mockImplementationOnce(async () => {
+                        return {
+                            ok: false,
+                            error: new EmailInvalidError(),
+                        };
+                    });
+
+                    return emailMock;
+                });
+                personRepositoryMock.findById.mockResolvedValueOnce(person); //mock person could be found
+
+                await emailEventHandler.asyncPersonRenamedEventHandler(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Changing email-address for personId:${event.personId}, with vorname:${person.vorname}, familienname:${person.familienname} failed`,
+                );
+            });
+        });
+
+        describe('when changing address is successful', () => {
+            it('should execute without errors and log info', async () => {
+                const person: Person<true> = getPerson();
+                // eslint-disable-next-line @typescript-eslint/require-await
+                emailRepoMock.findByPerson.mockImplementationOnce(async (personId: PersonID) => {
+                    const emailMock: DeepMocked<Email<true>> = createMock<Email<true>>({
+                        emailAddresses: [],
+                        personId: personId,
+                    });
+                    // eslint-disable-next-line @typescript-eslint/require-await
+                    emailMock.changeAddress.mockImplementationOnce(async () => {
+                        return {
+                            ok: true,
+                            value: createMock<Email<true>>({
+                                get currentAddress(): Option<string> {
+                                    return 'test@schule-sh.de';
+                                },
+                                id: faker.string.uuid(),
+                                emailAddresses: [],
+                            }),
+                        };
+                    });
+
+                    return emailMock;
+                });
+                personRepositoryMock.findById.mockResolvedValueOnce(person); //mock person could be found
+
+                await emailEventHandler.asyncPersonRenamedEventHandler(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Added new address for personId:${event.personId}, renaming executed successfully`,
                 );
             });
         });

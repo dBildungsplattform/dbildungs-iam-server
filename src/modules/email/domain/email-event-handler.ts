@@ -136,6 +136,7 @@ export class EmailEventHandler {
             return;
         }
         await this.emailRepo.save(changedEmail.value);
+        this.logger.info(`Added new address for personId:${event.personId}, renaming executed successfully`);
     }
 
     private async rolleReferencesEmailServiceProvider(rolle: Rolle<true>): Promise<boolean> {
