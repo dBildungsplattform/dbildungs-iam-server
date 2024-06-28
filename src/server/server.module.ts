@@ -31,6 +31,7 @@ import { PassportModule } from '@nestjs/passport';
 import { EventModule } from '../core/eventbus/index.js';
 import { ItsLearningModule } from '../modules/itslearning/itslearning.module.js';
 import { LdapModule } from '../core/ldap/ldap.module.js';
+import { EmailModule } from '../modules/email/email.module.js';
 
 @Module({
     imports: [
@@ -83,6 +84,7 @@ import { LdapModule } from '../core/ldap/ldap.module.js';
         KeycloakConfigModule,
         ItsLearningModule,
         LdapModule,
+        EmailModule,
     ],
     providers: [
         {
