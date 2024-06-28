@@ -14,6 +14,14 @@ export class EmailGeneratorService {
 
     public constructor(private emailServiceRepo: EmailServiceRepo) {}
 
+    public async isEqual(address: string, firstname: string, lastname: string): Promise<boolean> {
+        const generatedAddress: Result<string, DomainError> = await this.generateAddress(firstname, lastname);
+
+        if (!generatedAddress.ok) return false;
+
+        return address === generatedAddress.value;
+    }
+
     public async generateAddress(firstname: string, lastname: string): Promise<Result<string, DomainError>> {
         // Check for minimum length
         if (firstname.length < 2) {

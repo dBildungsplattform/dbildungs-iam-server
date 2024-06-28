@@ -16,6 +16,9 @@ import { DomainError } from '../../../shared/error/index.js';
 import { PersonID } from '../../../shared/types/index.js';
 import { EmailAddressEntity } from '../persistence/email-address.entity.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed.event.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Person } from '../../person/domain/person.js';
 
 @Injectable()
 export class EmailEventHandler {
@@ -24,6 +27,7 @@ export class EmailEventHandler {
         private readonly emailFactory: EmailFactory,
         private readonly emailRepo: EmailRepo,
         private readonly rolleRepo: RolleRepo,
+        private readonly personRepository: PersonRepository,
         private readonly serviceProviderRepo: ServiceProviderRepo,
     ) {}
 
@@ -101,6 +105,37 @@ export class EmailEventHandler {
             return;
         }
         this.logger.info(`Successfully deactivated email-address:${event.emailAddress}`);
+    }
+
+    @EventHandler(PersonRenamedEvent)
+    public async asyncPersonRenamedEventHandler(event: PersonRenamedEvent): Promise<void> {
+        this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}`);
+
+        const email: Option<Email<true>> = await this.emailRepo.findByPerson(event.personId);
+        if (!email) {
+            this.logger.info(
+                `No existing email-addresses found for personId:${event.personId}, renaming has no effect`,
+            );
+            return;
+        }
+
+        const person: Option<Person<true>> = await this.personRepository.findById(event.personId);
+        if (!person) {
+            this.logger.error(`No person found for personId:${event.personId}, renaming email-address not possible`);
+            return;
+        }
+
+        const changedEmail: Result<Email<true>> = await email.changeAddress({
+            vorname: person.vorname,
+            familienname: person.familienname,
+        });
+        if (!changedEmail.ok) {
+            this.logger.error(
+                `Changing email-address for personId:${event.personId}, with vorname:${person.vorname}, familienname:${person.familienname} failed`,
+            );
+            return;
+        }
+        await this.emailRepo.save(changedEmail.value);
     }
 
     private async rolleReferencesEmailServiceProvider(rolle: Rolle<true>): Promise<boolean> {

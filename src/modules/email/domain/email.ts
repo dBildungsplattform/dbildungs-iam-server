@@ -5,6 +5,11 @@ import { Person } from '../../person/domain/person.js';
 import { EmailInvalidError } from '../error/email-invalid.error.js';
 import { EmailAddress } from './email-address.js';
 
+type EmailAddressProperties = {
+    vorname: string;
+    familienname: string;
+};
+
 export class Email<WasPersisted extends boolean> {
     private constructor(
         public readonly id: Persisted<EmailID, WasPersisted>,
@@ -45,21 +50,6 @@ export class Email<WasPersisted extends boolean> {
     }
 
     public async enable(): Promise<Result<Email<WasPersisted>>> {
-        if (this.emailAddresses && this.emailAddresses[0]) {
-            this.emailAddresses[0].enabled = true;
-            return {
-                ok: true,
-                value: new Email(
-                    this.id,
-                    this.createdAt,
-                    this.updatedAt,
-                    this.personId,
-                    this.emailGeneratorService,
-                    this.personRepository,
-                    this.emailAddresses,
-                ),
-            };
-        }
         const person: Option<Person<true>> = await this.personRepository.findById(this.personId);
         if (!person) {
             return {
@@ -67,17 +57,59 @@ export class Email<WasPersisted extends boolean> {
                 error: new EmailInvalidError(),
             };
         }
-        const generatedName: Result<string> = await this.emailGeneratorService.generateAddress(
-            person.vorname,
-            person.familienname,
-        );
-        if (!generatedName.ok) {
+
+        if (this.emailAddresses) {
+            for (const emailAddress of this.emailAddresses) {
+                //avoid enabling of email-addresses which are no longer matching current persons vorname and familienname
+                if (
+                    await this.emailGeneratorService.isEqual(emailAddress.address, person.vorname, person.familienname)
+                ) {
+                    emailAddress.enabled = true;
+                    return {
+                        ok: true,
+                        value: new Email(
+                            this.id,
+                            this.createdAt,
+                            this.updatedAt,
+                            this.personId,
+                            this.emailGeneratorService,
+                            this.personRepository,
+                            this.emailAddresses,
+                        ),
+                    };
+                }
+            }
+        }
+
+        return this.createNewAddress();
+    }
+
+    private async createNewAddress(names?: EmailAddressProperties): Promise<Result<Email<WasPersisted>>> {
+        const person: Option<Person<true>> = await this.personRepository.findById(this.personId);
+        if (!person) {
             return {
                 ok: false,
                 error: new EmailInvalidError(),
             };
         }
-        const newEmailAddress: EmailAddress<false> = new EmailAddress<false>(undefined, generatedName.value, true);
+        let vorname: string = person.vorname;
+        let familienName: string = person.familienname;
+        if (names) {
+            vorname = names.vorname;
+            familienName = names.familienname;
+        }
+        const generatedAddress: Result<string> = await this.emailGeneratorService.generateAddress(
+            vorname,
+            familienName,
+        );
+        if (!generatedAddress.ok) {
+            return {
+                ok: false,
+                error: new EmailInvalidError(),
+            };
+        }
+        const newEmailAddress: EmailAddress<false> = new EmailAddress<false>(undefined, generatedAddress.value, true);
+        this.emailAddresses?.push(newEmailAddress);
         return {
             ok: true,
             value: new Email(
@@ -87,7 +119,7 @@ export class Email<WasPersisted extends boolean> {
                 this.personId,
                 this.emailGeneratorService,
                 this.personRepository,
-                [newEmailAddress],
+                this.emailAddresses,
             ),
         };
     }
@@ -99,6 +131,10 @@ export class Email<WasPersisted extends boolean> {
             emailAddress.enabled = false;
         }
         return true;
+    }
+
+    public async changeAddress(newNames: EmailAddressProperties): Promise<Result<Email<WasPersisted>>> {
+        return this.createNewAddress(newNames);
     }
 
     public isEnabled(): boolean {
