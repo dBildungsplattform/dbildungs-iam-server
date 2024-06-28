@@ -115,6 +115,5 @@ describe('OpenIdConnectStrategy', () => {
 
             await expect(sut.validate(new TokenSet())).rejects.toThrow(KeycloakUserNotFoundError);
         });
-
     });
 });
