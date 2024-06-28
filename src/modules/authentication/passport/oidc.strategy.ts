@@ -6,12 +6,16 @@ import { AuthorizationParameters, Client, Strategy, StrategyOptions, TokenSet, U
 import { FrontendConfig, ServerConfig } from '../../../shared/config/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
 import { PassportUser } from '../types/user.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Person } from '../../person/domain/person.js';
+import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
 
 @Injectable()
 export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
     public constructor(
         @Inject(OIDC_CLIENT) private client: Client,
         configService: ConfigService<ServerConfig>,
+        private personRepo: PersonRepository,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
 
@@ -27,6 +31,12 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
         try {
             const userinfo: UserinfoResponse = await this.client.userinfo(tokenset);
 
+            const person: Option<Person<true>> = await this.personRepo.findByKeycloakUserId(userinfo.sub);
+            if (!person) {
+                //Revoke Access Token? => this.client.revoke(tokenset.access_token, tokenset.token_type)
+                throw new KeycloakUserNotFoundError();
+            }
+
             const idToken: string | undefined = tokenset.id_token;
             const accessToken: string | undefined = tokenset.access_token;
             const refreshToken: string | undefined = tokenset.refresh_token;
@@ -40,7 +50,11 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
             };
             return user;
         } catch (err: unknown) {
-            throw new UnauthorizedException();
+            if (err instanceof KeycloakUserNotFoundError) {
+                throw err;
+            } else {
+                throw new UnauthorizedException();
+            }
         }
     }
 }
