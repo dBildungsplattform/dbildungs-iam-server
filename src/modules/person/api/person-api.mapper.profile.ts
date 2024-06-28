@@ -33,7 +33,7 @@ import { UpdatePersonenkontextBodyParams } from '../../personenkontext/api/param
 import { UpdatePersonenkontextDto } from '../../personenkontext/api/update-personenkontext.dto.js';
 import { DeleteRevisionBodyParams } from './delete-revision.body.params.js';
 import { DeletePersonenkontextDto } from '../../personenkontext/api/delete-personkontext.dto.js';
-
+// maps between usecase and controller
 @Injectable()
 export class PersonApiMapperProfile extends AutomapperProfile {
     public constructor(@Inject(getMapperToken()) mapper: Mapper) {

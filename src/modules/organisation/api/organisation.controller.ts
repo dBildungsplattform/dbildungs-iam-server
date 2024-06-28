@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, Inject, NotFoundException, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -77,10 +77,14 @@ export class OrganisationController {
         throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
     }
 
+    /// !!!! warning: test this with partical and not!!!
+    /// Todo add the find by to the aggrigate
+    /// Todo update and save etc add to the repo
+    // done
     @Put(':organisationId')
     @ApiOkResponse({
         description: 'The organisation was successfully updated.',
-        type: OrganisationResponseLegacy,
+        type: OrganisationResponse,
     })
     @ApiBadRequestResponse({ description: 'Request has wrong format.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
@@ -90,15 +94,34 @@ export class OrganisationController {
     public async updateOrganisation(
         @Param() params: OrganisationByIdParams,
         @Body() body: UpdateOrganisationBodyParams,
-    ): Promise<OrganisationResponseLegacy> {
-        const dto: UpdateOrganisationDto = this.mapper.map(body, UpdateOrganisationBodyParams, UpdateOrganisationDto);
-        dto.id = params.organisationId;
+    ): Promise<OrganisationResponse> {
+        const existingOrganisation: Option<Organisation<true>> = await this.organisationRepository.findById(
+            params.organisationId,
+        );
 
-        const response: UpdatedOrganisationDto | SchulConnexError | OrganisationSpecificationError =
-            await this.uc.updateOrganisation(dto);
+        if (!existingOrganisation) {
+            throw new NotFoundException(`Organisation with ID ${params.organisationId} not found`);
+        }
 
-        if (response instanceof UpdatedOrganisationDto) {
-            return this.mapper.map(response, UpdatedOrganisationDto, OrganisationResponseLegacy);
+        const updatedOrganisation: Organisation<true> = Organisation.construct(
+            params.organisationId,
+            existingOrganisation.createdAt,
+            new Date(),
+            body.administriertVon,
+            body.zugehoerigZu,
+            body.kennung,
+            body.name,
+            body.namensergaenzung,
+            body.kuerzel,
+            body.typ,
+            body.traegerschaft,
+        );
+        ///!!! Note to self the find by id will be called twice here but no other way? unless created at is optional
+        const response: Organisation<true> | SchulConnexError | OrganisationSpecificationError =
+            await this.uc.updateOrganisation(updatedOrganisation);
+
+        if (response instanceof Organisation) {
+            return new OrganisationResponse(response);
         }
         if (response instanceof OrganisationSpecificationError) {
             throw response;
@@ -166,6 +189,7 @@ export class OrganisationController {
         throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
     }
 
+    // Done
     @Get()
     @ApiOkResponse({
         description: 'The organizations were successfully returned.',
@@ -229,6 +253,7 @@ export class OrganisationController {
     }
 
     // TODO starting here lots of mappers in the uc
+    // Done
     @Get(':organisationId/administriert')
     @ApiOkResponse({
         description: 'The organizations were successfully returned.',
@@ -255,6 +280,7 @@ export class OrganisationController {
         return response;
     }
 
+    // Done
     @Post(':organisationId/administriert')
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
     @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
@@ -278,10 +304,11 @@ export class OrganisationController {
         }
     }
 
+    // Done
     @Get(':organisationId/zugehoerig')
     @ApiOkResponse({
         description: 'The organizations were successfully returned.',
-        type: [OrganisationResponseLegacy],
+        type: [OrganisationResponse],
         headers: PagingHeadersObject,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get organizations.' })
@@ -289,19 +316,20 @@ export class OrganisationController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
     public async getZugehoerigeOrganisationen(
         @Param() params: OrganisationByIdParams,
-    ): Promise<PagedResponse<OrganisationResponseLegacy>> {
-        const result: Paged<OrganisationResponseLegacy> | SchulConnexError = await this.uc.findZugehoerigZu(
+    ): Promise<PagedResponse<OrganisationResponse>> {
+        const result: Paged<OrganisationResponse> | SchulConnexError = await this.uc.findZugehoerigZu(
             params.organisationId,
         );
 
         if (result instanceof SchulConnexError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
         }
-        const response: PagedResponse<OrganisationResponseLegacy> = new PagedResponse(result);
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse(result);
 
         return response;
     }
 
+    // Done
     @Post(':organisationId/zugehoerig')
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
     @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })

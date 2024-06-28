@@ -30,6 +30,7 @@ import { NameRequiredForSchuleError } from '../specification/error/name-required
 import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { SchuleKennungEindeutig } from '../specification/schule-kennung-eindeutig.js';
 import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
+import { Organisation } from './organisation.js';
 
 @Injectable()
 export class OrganisationService {
@@ -149,8 +150,8 @@ export class OrganisationService {
         return { ok: true, value: undefined };
     }
 
-    public async findOrganisationById(id: string): Promise<Result<OrganisationDo<true>, DomainError>> {
-        const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(id);
+    public async findOrganisationById(id: string): Promise<Result<Organisation<true>, DomainError>> {
+        const organisation: Option<Organisation<true>> = await this.organisationRepo.findById(id);
         if (organisation) {
             return { ok: true, value: organisation };
         }

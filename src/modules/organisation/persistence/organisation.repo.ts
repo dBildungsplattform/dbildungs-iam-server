@@ -66,6 +66,7 @@ export class OrganisationRepo {
         return !!organisation;
     }
 
+    // TODO here is another mapper
     public async findById(id: string): Promise<Option<OrganisationDo<true>>> {
         const organisation: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
         if (organisation) {
@@ -129,6 +130,7 @@ export class OrganisationRepo {
 
             rawResult = await this.em.execute(query, [ids]);
         }
+        ///!!!!! why would i want to map an enity to a ornisation construct????
 
         if (rawResult.length > 0) {
             return this.mapper.mapArray(rawResult, OrganisationEntity, OrganisationDo);
