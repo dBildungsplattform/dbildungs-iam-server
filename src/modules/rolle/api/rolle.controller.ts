@@ -8,6 +8,7 @@ import {
     Param,
     Patch,
     Post,
+    Put,
     Query,
     UseFilters,
 } from '@nestjs/common';
@@ -49,6 +50,11 @@ import { ServiceProviderResponse } from '../../service-provider/api/service-prov
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter())
 @ApiTags('rolle')
@@ -61,6 +67,7 @@ export class RolleController {
         private readonly rolleFactory: RolleFactory,
         private readonly orgService: OrganisationService,
         private readonly serviceProviderRepo: ServiceProviderRepo,
+        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
     ) {}
 
     @Get()
@@ -126,22 +133,21 @@ export class RolleController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rolle by id.' })
     public async findRolleByIdWithServiceProviders(
         @Param() findRolleByIdParams: FindRolleByIdParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
-        if (!rolle) {
+        const rolleResult: Result<Rolle<true>> = await this.rolleRepo.findByIdAuthorized(
+            findRolleByIdParams.rolleId,
+            permissions,
+        );
+        if (!rolleResult.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId),
                 ),
             );
         }
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
 
-        const rolleServiceProviders: ServiceProvider<true>[] = rolle.serviceProviderIds
-            .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
-            .filter(Boolean) as ServiceProvider<true>[];
-
-        return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
+        return this.returnRolleWithServiceProvidersResponse(rolleResult.value);
     }
 
     @Post()
@@ -289,5 +295,100 @@ export class RolleController {
             );
         }
         await this.rolleRepo.save(rolle);
+    }
+
+    @Put(':rolleId')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ description: 'Update rolle.' })
+    @ApiOkResponse({
+        description: 'The rolle was successfully updated.',
+        type: RolleWithServiceProvidersResponse,
+    })
+    @ApiBadRequestResponse({ description: 'The input was not valid.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update the rolle.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to update the rolle.' })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while updating the rolle.',
+    })
+    public async updateRolle(
+        @Param() findRolleByIdParams: FindRolleByIdParams,
+        @Body() params: UpdateRolleBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<RolleWithServiceProvidersResponse> {
+        //Due to circular reference error, the rolleRepo needs to be passed into the aggregate.
+        const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(
+            this.rolleRepo,
+            findRolleByIdParams.rolleId,
+            params.name,
+            params.merkmale,
+            params.systemrechte,
+            params.serviceProviderIds,
+        );
+
+        if (updatedRolle instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updatedRolle),
+            );
+        }
+        //The check is here because it cannot be implemented in the aggregate itself in the method update
+        //using DBiamPersonenkontextRepo causes circular reference error.
+        if (
+            params.merkmale.length > 0 &&
+            (await updatedRolle.isAlreadyAssigned(this.dBiamPersonenkontextRepo, updatedRolle.id))
+        ) {
+            throw new RolleHatPersonenkontexteError(['The Merkmale for the Rolle cannot be updated.']);
+        }
+
+        const result: Rolle<true> | DomainError = await this.rolleRepo.saveAuthorized(updatedRolle, permissions);
+        if (result instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
+
+        return this.returnRolleWithServiceProvidersResponse(result);
+    }
+
+    @Delete(':rolleId')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiOperation({ description: 'Delete a role by id.' })
+    @ApiOkResponse({ description: 'Role was deleted successfully.' })
+    @ApiNotFoundResponse({ description: 'The rolle that should be deleted does not exist.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to delete the role.' })
+    public async deleteRolle(
+        @Param() findRolleByIdParams: FindRolleByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
+        if (!rolle) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId),
+                ),
+            );
+        }
+
+        if (await rolle.isAlreadyAssigned(this.dBiamPersonenkontextRepo, rolle.id)) {
+            throw new RolleHatPersonenkontexteError();
+        }
+
+        const result: Option<DomainError> = await this.rolleRepo.deleteAuthorized(rolle.id, permissions);
+        if (result instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
+    }
+
+    private async returnRolleWithServiceProvidersResponse(
+        rolle: Rolle<true>,
+    ): Promise<RolleWithServiceProvidersResponse> {
+        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
+
+        const rolleServiceProviders: ServiceProvider<true>[] = rolle.serviceProviderIds
+            .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
+            .filter(Boolean) as ServiceProvider<true>[];
+
+        return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
     }
 }

@@ -16,7 +16,6 @@ import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-p
 import { PersonInfoController } from './api/person-info.controller.js';
 import { PersonApiMapper } from './mapper/person-api.mapper.js';
 import { DBiamPersonController } from './api/dbiam-person.controller.js';
-import { EventModule } from '../../core/eventbus/event.module.js';
 
 @Module({
     imports: [
@@ -27,7 +26,6 @@ import { EventModule } from '../../core/eventbus/event.module.js';
         OrganisationModule,
         KeycloakAdministrationModule,
         LoggerModule.register(PersonApiModule.name),
-        EventModule,
     ],
     providers: [
         PersonApiMapperProfile,

@@ -1,6 +1,6 @@
 import { DomainError } from '../../../shared/error/index.js';
 
-export class RolleApiError extends DomainError {
+export class RolleDomainError extends DomainError {
     public constructor(
         public override readonly message: string,
         public readonly entityId: string | undefined,

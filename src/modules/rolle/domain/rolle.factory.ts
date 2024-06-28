@@ -3,6 +3,8 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { Rolle } from './rolle.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { RolleRepo } from '../repo/rolle.repo.js';
 
 @Injectable()
 export class RolleFactory {
@@ -54,6 +56,26 @@ export class RolleFactory {
             merkmale,
             systemrechte,
             serviceProviderIds ?? [],
+        );
+    }
+
+    public async update(
+        rolleRepo: RolleRepo,
+        id: string,
+        name: string,
+        merkmale: RollenMerkmal[],
+        systemrechte: RollenSystemRecht[],
+        serviceProviderIds: string[],
+    ): Promise<Rolle<true> | DomainError> {
+        return Rolle.update(
+            this.organisationRepo,
+            this.serviceProviderRepo,
+            rolleRepo,
+            id,
+            name,
+            merkmale,
+            systemrechte,
+            serviceProviderIds,
         );
     }
 }

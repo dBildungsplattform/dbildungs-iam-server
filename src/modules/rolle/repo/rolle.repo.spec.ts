@@ -16,6 +16,11 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { OrganisationID } from '../../../shared/types/index.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
@@ -23,6 +28,7 @@ describe('RolleRepo', () => {
     let orm: MikroORM;
     let em: EntityManager;
     let serviceProviderRepo: ServiceProviderRepo;
+    let rolleFactory: RolleFactory;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -34,6 +40,7 @@ describe('RolleRepo', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         serviceProviderRepo = module.get(ServiceProviderRepo);
+        rolleFactory = module.get(RolleFactory);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -119,6 +126,35 @@ describe('RolleRepo', () => {
         });
     });
 
+    describe('findByIdAuthorized', () => {
+        it('should return the rolle', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            const rolle: Rolle<true> = await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
+
+            const rolleResult: Result<Rolle<true>> = await sut.findByIdAuthorized(rolle.id, permissions);
+
+            expect(rolleResult.ok).toBeTruthy();
+        });
+
+        it('should return error when permissions are insufficient', async () => {
+            const rolle: Rolle<true> = await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: faker.string.uuid() }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+
+            const rolleResult: Result<Rolle<true>> = await sut.findByIdAuthorized(rolle.id, permissions);
+
+            expect(rolleResult.ok).toBeFalsy();
+        });
+    });
+
     describe('findByName', () => {
         it('should return the rolle', async () => {
             const rolle: Rolle<true> = await sut.save(DoFactory.createRolle(false));
@@ -149,6 +185,101 @@ describe('RolleRepo', () => {
             const exists: boolean = await sut.exists(faker.string.uuid());
 
             expect(exists).toBe(false);
+        });
+    });
+
+    describe('saveAuthorized', () => {
+        it('should return the rolle', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            const rolle: Rolle<true> = await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const newName: string = 'updatedrolle';
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
+            const updatedRolle: Rolle<true> | DomainError = await rolleFactory.update(
+                sut,
+                rolle.id,
+                newName,
+                [RollenMerkmal.KOPERS_PFLICHT],
+                [RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN],
+                [],
+            );
+
+            if (updatedRolle instanceof DomainError) {
+                return;
+            }
+            const rolleResult: Rolle<true> | DomainError = await sut.saveAuthorized(updatedRolle, permissions);
+            if (rolleResult instanceof DomainError) {
+                return;
+            }
+            expect(rolleResult.id).toBe(updatedRolle.id);
+            expect(rolleResult.name).toBe(newName);
+            expect(rolleResult.merkmale).toMatchObject(updatedRolle.merkmale);
+            expect(rolleResult.systemrechte).toMatchObject(updatedRolle.systemrechte);
+            expect(rolleResult.serviceProviderIds).toMatchObject(updatedRolle.serviceProviderIds);
+        });
+
+        it('should return error when permissions are insufficient', async () => {
+            const rolle: Rolle<true> = await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: faker.string.uuid() }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+
+            const updatedRolle: Rolle<true> | DomainError = await rolleFactory.update(
+                sut,
+                rolle.id,
+                'newName',
+                [],
+                [],
+                [],
+            );
+
+            if (updatedRolle instanceof DomainError) {
+                return;
+            }
+            const rolleResult: Rolle<true> | DomainError = await sut.saveAuthorized(updatedRolle, permissions);
+
+            expect(rolleResult).toBeInstanceOf(DomainError);
+        });
+    });
+
+    describe('deleteAuthorized', () => {
+        describe('should succeed', () => {
+            it('if rolle HAS Merkmale, Systemrechte & Service Providers', async () => {
+                const organisationId: OrganisationID = faker.string.uuid();
+                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                    DoFactory.createServiceProvider(false),
+                );
+                const rolle: Rolle<true> = await sut.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisationId,
+                        serviceProviderIds: [serviceProvider.id],
+                    }),
+                );
+                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
+
+                await sut.deleteAuthorized(rolle.id, permissions);
+
+                const exists: boolean = await sut.exists(rolle.id);
+                expect(exists).toBe(false);
+            });
+        });
+
+        describe('should return error', () => {
+            it('when permissions are insufficient', async () => {
+                const rolle: Rolle<true> = await sut.save(
+                    DoFactory.createRolle(false, { administeredBySchulstrukturknoten: faker.string.uuid() }),
+                );
+                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+
+                const rolleResult: Option<DomainError> = await sut.deleteAuthorized(rolle.id, permissions);
+                expect(rolleResult).toBeInstanceOf(DomainError);
+            });
         });
     });
 });
