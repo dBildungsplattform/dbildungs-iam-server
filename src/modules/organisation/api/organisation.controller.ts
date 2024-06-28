@@ -44,8 +44,13 @@ import { OrganisationExceptionFilter } from './organisation-exception-filter.js'
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
-@UseFilters(new SchulConnexValidationErrorFilter(), new OrganisationExceptionFilter())
+@UseFilters(
+    new SchulConnexValidationErrorFilter(),
+    new OrganisationExceptionFilter(),
+    new AuthenticationExceptionFilter(),
+)
 @ApiTags('organisationen')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])

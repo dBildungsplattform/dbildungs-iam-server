@@ -22,8 +22,9 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter)
+@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personen-frontend')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
