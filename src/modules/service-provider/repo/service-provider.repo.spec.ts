@@ -153,4 +153,13 @@ describe('ServiceProviderRepo', () => {
             expect(serviceProvider).toBeNull();
         });
     });
+
+    describe('findByIds', () => {
+        it('should return the service-provider map', async () => {
+            const serviceProvider: ServiceProvider<true> = await sut.save(DoFactory.createServiceProvider(false));
+            const serviceProviderMap: Map<string, ServiceProvider<true>> = await sut.findByIds([serviceProvider.id]);
+
+            expect(serviceProviderMap).toBeDefined();
+        });
+    });
 });

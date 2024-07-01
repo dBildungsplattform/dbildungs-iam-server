@@ -4,7 +4,7 @@
         {
             "id": 0,
             "name": "E-Mail",
-            "target": "URL",
+            "target": "EMAIL",
             "url": "https://de.wikipedia.org/wiki/E-Mail",
             "kategorie": "EMAIL",
             "logoMimeType": "image/svg+xml",
