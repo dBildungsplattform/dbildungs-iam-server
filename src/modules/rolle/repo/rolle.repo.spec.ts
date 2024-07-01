@@ -162,6 +162,12 @@ describe('RolleRepo', () => {
             await sut.save(
                 DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId, name: 'Test' }),
             );
+            await sut.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisationId,
+                    name: 'AnotherName',
+                }),
+            );
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
