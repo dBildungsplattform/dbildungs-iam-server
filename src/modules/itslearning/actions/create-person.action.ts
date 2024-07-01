@@ -38,7 +38,6 @@ export class CreatePersonAction extends IMSESAction<CreatePersonResponseBody, vo
                 },
 
                 'ims:person': {
-                    //'ims2:formatName': 'TODO',
                     'ims2:name': {
                         'ims2:partName': [
                             { 'ims2:namePartType': 'First', 'ims2:namePartValue': this.params.firstName },
@@ -50,7 +49,7 @@ export class CreatePersonAction extends IMSESAction<CreatePersonResponseBody, vo
                     },
                     'ims2:institutionRole': {
                         'ims2:institutionRoleType': this.params.institutionRoleType,
-                        'ims2:primaryRoleType': false, // ?
+                        'ims2:primaryRoleType': true,
                     },
                     'ims2:extension': {
                         'ims1:extensionField': {
