@@ -1,24 +1,24 @@
 import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, LoggingTestModule } from '../../../test/utils/index.js';
-import { ClassLogger } from '../../core/logging/class-logger.js';
-import { SchuleCreatedEvent } from '../../shared/events/schule-created.event.js';
-import { OrganisationID } from '../../shared/types/index.js';
-import { OrganisationsTyp } from '../organisation/domain/organisation.enums.js';
-import { Organisation } from '../organisation/domain/organisation.js';
-import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
-import { ItsLearningEventHandler } from './itslearning-event-handler.js';
-import { ItsLearningIMSESService } from './itslearning.service.js';
+import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
+import { OrganisationID } from '../../../shared/types/index.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { ItsLearningOrganisationsEventHandler } from './itslearning-organisations.event-handler.js';
+import { ItsLearningIMSESService } from '../itslearning.service.js';
 import { ConfigService } from '@nestjs/config';
-import { ItsLearningConfig, ServerConfig } from '../../shared/config/index.js';
-import { CreateGroupAction } from './actions/create-group.action.js';
-import { DomainError } from '../../shared/error/domain.error.js';
+import { ItsLearningConfig, ServerConfig } from '../../../shared/config/index.js';
+import { CreateGroupAction } from '../actions/create-group.action.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
-describe('ItsLearning Event Handler', () => {
+describe('ItsLearning Organisations Event Handler', () => {
     let module: TestingModule;
 
-    let sut: ItsLearningEventHandler;
+    let sut: ItsLearningOrganisationsEventHandler;
     let orgaRepoMock: DeepMocked<OrganisationRepository>;
     let itsLearningServiceMock: DeepMocked<ItsLearningIMSESService>;
     let loggerMock: DeepMocked<ClassLogger>;
@@ -30,7 +30,7 @@ describe('ItsLearning Event Handler', () => {
         module = await Test.createTestingModule({
             imports: [LoggingTestModule, ConfigTestModule],
             providers: [
-                ItsLearningEventHandler,
+                ItsLearningOrganisationsEventHandler,
                 {
                     provide: ItsLearningIMSESService,
                     useValue: createMock<ItsLearningIMSESService>(),
@@ -42,7 +42,7 @@ describe('ItsLearning Event Handler', () => {
             ],
         }).compile();
 
-        sut = module.get(ItsLearningEventHandler);
+        sut = module.get(ItsLearningOrganisationsEventHandler);
         orgaRepoMock = module.get(OrganisationRepository);
         itsLearningServiceMock = module.get(ItsLearningIMSESService);
         loggerMock = module.get(ClassLogger);
