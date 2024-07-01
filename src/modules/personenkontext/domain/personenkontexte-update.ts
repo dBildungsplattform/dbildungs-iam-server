@@ -2,21 +2,20 @@ import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkonte
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
 import { UpdateCountError } from './error/update-count.error.js';
-import { UpdateNotFoundError } from './error/update-not-found.error.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { UpdateOutdatedError } from './error/update-outdated.error.js';
 import { PersonID } from '../../../shared/types/index.js';
 import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.error.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
+import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
+import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
         private readonly eventService: EventService,
-        private readonly logger: ClassLogger,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly personenkontextFactory: PersonenkontextFactory,
         private readonly personId: PersonID,
         private readonly lastModified: Date,
         private readonly count: number,
@@ -25,8 +24,8 @@ export class PersonenkontexteUpdate {
 
     public static createNew(
         eventService: EventService,
-        logger: ClassLogger,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        personenkontextFactory: PersonenkontextFactory,
         personId: PersonID,
         lastModified: Date,
         count: number,
@@ -34,8 +33,8 @@ export class PersonenkontexteUpdate {
     ): PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
             eventService,
-            logger,
             dBiamPersonenkontextRepo,
+            personenkontextFactory,
             personId,
             lastModified,
             count,
@@ -43,8 +42,8 @@ export class PersonenkontexteUpdate {
         );
     }
 
-    private async getSentPersonenkontexte(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
-        const personenKontexte: Personenkontext<true>[] = [];
+    private async getSentPersonenkontexte(): Promise<Personenkontext<boolean>[] | PersonenkontexteUpdateError> {
+        const personenKontexte: Personenkontext<boolean>[] = [];
         for (const pkBodyParam of this.dBiamPersonenkontextBodyParams) {
             if (pkBodyParam.personId != this.personId) {
                 return new UpdatePersonIdMismatchError();
@@ -55,18 +54,21 @@ export class PersonenkontexteUpdate {
                 pkBodyParam.rolleId,
             );
             if (!pk) {
-                return new UpdateNotFoundError(pkBodyParam.personId, pkBodyParam.organisationId, pkBodyParam.rolleId);
+                const newPK: Personenkontext<false> = this.personenkontextFactory.createNew(
+                    pkBodyParam.personId,
+                    pkBodyParam.organisationId,
+                    pkBodyParam.rolleId,
+                );
+                personenKontexte.push(newPK);
+            } else {
+                personenKontexte.push(pk);
             }
-            personenKontexte.push(pk);
         }
 
         return personenKontexte;
     }
 
     private validate(existingPKs: Personenkontext<true>[]): Option<PersonenkontexteUpdateError> {
-        if (existingPKs.length == 0) {
-            return new EntityNotFoundError();
-        }
         if (existingPKs.length != this.count) {
             return new UpdateCountError();
         }
@@ -83,6 +85,42 @@ export class PersonenkontexteUpdate {
         return null;
     }
 
+    private async delete(existingPKs: Personenkontext<true>[], sentPKs: Personenkontext<boolean>[]): Promise<void> {
+        for (const existingPK of existingPKs) {
+            if (
+                !sentPKs.some(
+                    (pk: Personenkontext<true>) =>
+                        pk.personId == existingPK.personId &&
+                        pk.organisationId == existingPK.organisationId &&
+                        pk.rolleId == existingPK.rolleId,
+                )
+            ) {
+                await this.dBiamPersonenkontextRepo.delete(existingPK);
+                this.eventService.publish(
+                    new PersonenkontextDeletedEvent(existingPK.personId, existingPK.organisationId, existingPK.rolleId),
+                );
+            }
+        }
+    }
+
+    private async add(existingPKs: Personenkontext<true>[], sentPKs: Personenkontext<boolean>[]): Promise<void> {
+        for (const sentPK of sentPKs) {
+            if (
+                !existingPKs.some(
+                    (existingPK: Personenkontext<true>) =>
+                        existingPK.personId == sentPK.personId &&
+                        existingPK.organisationId == sentPK.organisationId &&
+                        existingPK.rolleId == sentPK.rolleId,
+                )
+            ) {
+                await this.dBiamPersonenkontextRepo.save(sentPK);
+                this.eventService.publish(
+                    new PersonenkontextCreatedEvent(sentPK.personId, sentPK.organisationId, sentPK.rolleId),
+                );
+            }
+        }
+    }
+
     public async update(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
         const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
         if (sentPKs instanceof PersonenkontexteUpdateError) {
@@ -95,22 +133,9 @@ export class PersonenkontexteUpdate {
             return validationError;
         }
 
-        for (const existingPK of existingPKs) {
-            if (
-                !sentPKs.some(
-                    (pk: Personenkontext<true>) =>
-                        pk.personId == existingPK.personId &&
-                        pk.organisationId == existingPK.organisationId &&
-                        pk.rolleId == existingPK.rolleId,
-                )
-            ) {
-                this.logger.info(`DELETE ${existingPK.organisationId}`);
-                await this.dBiamPersonenkontextRepo.delete(existingPK);
-                this.eventService.publish(
-                    new PersonenkontextDeletedEvent(existingPK.personId, existingPK.organisationId, existingPK.rolleId),
-                );
-            }
-        }
+        await this.delete(existingPKs, sentPKs);
+        await this.add(existingPKs, sentPKs);
+
         const existingPKsAfterUpdate: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(
             this.personId,
         );

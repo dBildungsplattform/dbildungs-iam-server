@@ -1,10 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-
-import { PersonResponse } from './person.response.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { Person } from '../domain/person.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
-import { DBiamPersonenkontextResponse } from '../../personenkontext/api/response/dbiam-personenkontext.response.js';
+import { PersonResponse } from '../../../person/api/person.response.js';
+import { DBiamPersonenkontextResponse } from './dbiam-personenkontext.response.js';
+import { Person } from '../../../person/domain/person.js';
+import { Personenkontext } from '../../domain/personenkontext.js';
+import { PersonendatensatzResponse } from '../../../person/api/personendatensatz.response.js';
 
 export class DBiamPersonResponse {
     @ApiProperty()

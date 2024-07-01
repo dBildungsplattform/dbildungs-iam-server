@@ -10,9 +10,9 @@ import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
+    KeycloakConfigTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
@@ -32,6 +32,8 @@ import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.r
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
+import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
+import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -71,6 +73,7 @@ describe('dbiam Personenkontext API', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonenKontextApiModule,
+                KeycloakAdministrationModule,
             ],
             providers: [
                 {
@@ -96,7 +99,10 @@ describe('dbiam Personenkontext API', () => {
                     },
                 },
             ],
-        }).compile();
+        })
+            .overrideModule(KeycloakConfigModule)
+            .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .compile();
 
         orm = module.get(MikroORM);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
@@ -109,7 +115,7 @@ describe('dbiam Personenkontext API', () => {
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
         await app.init();
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+    }, 10000000);
 
     afterAll(async () => {
         await orm.close();
@@ -486,6 +492,124 @@ describe('dbiam Personenkontext API', () => {
                     .send(updatePKsRequest);
 
                 expect(response.status).toBe(400);
+            });
+        });
+    });
+
+    describe('/POST create person with personenkontext', () => {
+        it('should return created person and personenkontext', async () => {
+            const organisation: OrganisationDo<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/dbiam/personenkontext/person')
+                .send({
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                });
+
+            expect(response.status).toBe(201);
+        });
+
+        it('should return error with status-code=404 if organisation does NOT exist', async () => {
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: faker.string.uuid(),
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(permissions);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            permissions.canModifyPerson.mockResolvedValueOnce(true);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/dbiam/personenkontext/person')
+                .send({
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    organisationId: faker.string.uuid(),
+                    rolleId: rolle.id,
+                });
+
+            expect(response.status).toBe(404);
+        });
+
+        it('should return error with status-code 400 if specification ROLLE_NUR_AN_PASSENDE_ORGANISATION is NOT satisfied', async () => {
+            const organisation: OrganisationDo<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.SYSADMIN,
+                }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/dbiam/personenkontext/person')
+                .send({
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({
+                code: 400,
+                i18nKey: 'ROLLE_NUR_AN_PASSENDE_ORGANISATION',
+            });
+        });
+
+        it('should return error with status-code 404 if user does NOT have permissions', async () => {
+            const organisation: OrganisationDo<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/dbiam/personenkontext/person')
+                .send({
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                });
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual({
+                code: 404,
+                subcode: '01',
+                titel: 'Angefragte Entität existiert nicht',
+                beschreibung: 'Die angeforderte Entität existiert nicht',
             });
         });
     });

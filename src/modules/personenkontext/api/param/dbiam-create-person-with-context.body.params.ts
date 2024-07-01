@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, MinLength } from 'class-validator';
-import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
-import { IsDIN91379A } from '../../../shared/util/din-91379-validation.js';
+import { IsDIN91379A } from '../../../../shared/util/din-91379-validation.js';
+import { OrganisationID, RolleID } from '../../../../shared/types/aggregate-ids.types.js';
 
 export class DbiamCreatePersonWithContextBodyParams {
     @IsDIN91379A()

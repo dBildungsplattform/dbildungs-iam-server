@@ -104,6 +104,16 @@ describe('OrganisationRepo', () => {
         });
     });
 
+    describe('find', () => {
+        it('should find all organizations', async () => {
+            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
+            await sut.save(organisationDo);
+            const foundOrganisations: OrganisationDo<boolean>[] = await sut.find(25);
+
+            expect(foundOrganisations).toHaveLength(1);
+        });
+    });
+
     describe('findByIds', () => {
         it('should find organizations by IDs', async () => {
             const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false);
