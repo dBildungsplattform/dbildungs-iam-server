@@ -508,7 +508,7 @@ describe('dbiam Personenkontext API', () => {
             personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
             const response: Response = await request(app.getHttpServer() as App)
-                .post('/dbiam/personenkontext')
+                .post('/dbiam/personenkontext/person')
                 .send({
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
@@ -532,7 +532,7 @@ describe('dbiam Personenkontext API', () => {
             permissions.canModifyPerson.mockResolvedValueOnce(true);
 
             const response: Response = await request(app.getHttpServer() as App)
-                .post('/dbiam/personenkontext')
+                .post('/dbiam/personenkontext/person')
                 .send({
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
@@ -560,7 +560,7 @@ describe('dbiam Personenkontext API', () => {
             personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
 
             const response: Response = await request(app.getHttpServer() as App)
-                .post('/dbiam/personenkontext')
+                .post('/dbiam/personenkontext/person')
                 .send({
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
@@ -591,7 +591,7 @@ describe('dbiam Personenkontext API', () => {
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const response: Response = await request(app.getHttpServer() as App)
-                .post('/dbiam/personenkontext')
+                .post('/dbiam/personenkontext/person')
                 .send({
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),

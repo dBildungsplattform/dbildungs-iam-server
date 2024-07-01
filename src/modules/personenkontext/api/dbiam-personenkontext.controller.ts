@@ -164,7 +164,7 @@ export class DBiamPersonenkontextController {
         return new PersonenkontexteUpdateResponse(updateResult);
     }
 
-    @Post()
+    @Post('/person')
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({
         description: 'Person with Personenkontext was successfully created.',
