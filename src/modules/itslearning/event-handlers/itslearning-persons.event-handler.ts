@@ -87,7 +87,7 @@ export class ItsLearningPersonsEventHandler {
     /**
      * Updates the person based on the current personenkontexte
      */
-    private async updatePerson(personId: PersonID): Promise<void> {
+    public async updatePerson(personId: PersonID): Promise<void> {
         // Use mutex because multiple personenkontexte can be created at once
         return this.mutex.runExclusive(async () => {
             const personenkontexte: Personenkontext<true>[] =
@@ -124,7 +124,7 @@ export class ItsLearningPersonsEventHandler {
             const person: Option<Person<true>> = await this.personenRepository.findById(personId);
 
             if (!person) {
-                return this.logger.info(`Person with ID ${personId} not found.`);
+                return this.logger.error(`Person with ID ${personId} not found.`);
             }
 
             if (!person.referrer) {
