@@ -7,15 +7,18 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ItsLearningConfig, ServerConfig } from '../../../shared/config/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
-import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
+import { PersonID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { CreatePersonAction } from '../actions/create-person.action.js';
-import { ReadPersonAction } from '../actions/read-person.action.js';
+import { DeletePersonAction } from '../actions/delete-person.action.js';
+import { PersonResponse, ReadPersonAction } from '../actions/read-person.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
 import { ItsLearningRoleType } from '../types/role.enum.js';
 
@@ -67,36 +70,69 @@ export class ItsLearningPersonsEventHandler {
             return this.logger.info('Not enabled, ignoring event.');
         }
 
-        return this.mutex.runExclusive(async () => {
-            const personenkontexte: Personenkontext<true>[] = await this.personenkontextRepository.findByPerson(
-                event.personId,
-            );
+        await this.updatePerson(event.personId);
+    }
 
+    @EventHandler(PersonenkontextDeletedEvent)
+    public async deletePersonenkontextEventHandler(event: PersonenkontextDeletedEvent): Promise<void> {
+        this.logger.info(`Received PersonenkontextDeletedEvent, ${event.personId}`);
+
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event.');
+        }
+
+        await this.updatePerson(event.personId);
+    }
+
+    /**
+     * Updates the person based on the current personenkontexte
+     */
+    private async updatePerson(personId: PersonID): Promise<void> {
+        // Use mutex because multiple personenkontexte can be created at once
+        return this.mutex.runExclusive(async () => {
+            const personenkontexte: Personenkontext<true>[] =
+                await this.personenkontextRepository.findByPerson(personId);
+
+            // If no personenkontexte exist, delete the person from itsLearning
             if (personenkontexte.length === 0) {
-                // Delete person?
-                return this.logger.info(`No Personenkontexte found for Person ${event.personId}.`);
+                this.logger.info(`No Personenkontexte found for Person ${personId}, deleting from itsLearning.`);
+
+                const deleteResult: Result<void, DomainError> = await this.itsLearningService.send(
+                    new DeletePersonAction(personId),
+                );
+
+                if (deleteResult.ok) {
+                    this.logger.info(`Person deleted.`);
+                } else {
+                    this.logger.error(`Could not delete person from itsLearning.`);
+                }
+
+                return;
             }
 
             const targetRole: ItsLearningRoleType = await this.determineItsLearningRole(personenkontexte);
 
-            const personResult = await this.itsLearningService.send(new ReadPersonAction(event.personId));
+            const personResult: Result<PersonResponse, DomainError> = await this.itsLearningService.send(
+                new ReadPersonAction(personId),
+            );
 
+            // If user already exists in itsLearning and has the correct role, don't send update
             if (personResult.ok && personResult.value.institutionRole === targetRole) {
                 return this.logger.info('Person already exists with correct role');
             }
 
-            const person: Option<Person<true>> = await this.personenRepository.findById(event.personId);
+            const person: Option<Person<true>> = await this.personenRepository.findById(personId);
 
             if (!person) {
-                return this.logger.info(`Person with ID ${event.personId} not found.`);
+                return this.logger.info(`Person with ID ${personId} not found.`);
             }
 
             if (!person.referrer) {
-                return this.logger.error(`Person with ID ${event.personId} has no username!`);
+                return this.logger.error(`Person with ID ${personId} has no username!`);
             }
 
             const createAction: CreatePersonAction = new CreatePersonAction({
-                id: event.personId,
+                id: personId,
                 firstName: person.vorname,
                 lastName: person.familienname,
                 username: person.referrer,
@@ -106,10 +142,10 @@ export class ItsLearningPersonsEventHandler {
             const createResult: Result<void, DomainError> = await this.itsLearningService.send(createAction);
 
             if (!createResult.ok) {
-                return this.logger.error(`Person with ID ${event.personId} could not be sent to itsLearning!`);
+                return this.logger.error(`Person with ID ${personId} could not be sent to itsLearning!`);
             }
 
-            return this.logger.info(`Person with ID ${event.personId} created in itsLearning!`);
+            return this.logger.info(`Person with ID ${personId} created in itsLearning!`);
         });
     }
 
@@ -120,7 +156,7 @@ export class ItsLearningPersonsEventHandler {
      */
     private async determineItsLearningRole(personenkontexte: Personenkontext<true>[]): Promise<ItsLearningRoleType> {
         const rollenIDs: RolleID[] = personenkontexte.map((pk: Personenkontext<true>) => pk.rolleId);
-        const rollenMap = await this.rolleRepo.findByIds(rollenIDs);
+        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIDs);
 
         let highestRole: number = 0;
 

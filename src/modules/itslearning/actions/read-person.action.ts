@@ -4,7 +4,6 @@ import { ItsLearningRoleType } from '../types/role.enum.js';
 import { IMSESAction } from './base-action.js';
 
 export type PersonResponse = {
-    formatName?: string;
     institutionRole: ItsLearningRoleType;
     primaryRoleType: boolean;
     userId: string;
@@ -14,7 +13,6 @@ export type PersonResponse = {
 type ReadPersonResponseBody = {
     readPersonResponse: {
         person: {
-            formatName?: string;
             name: {
                 partName: {
                     namePartType: string;
@@ -61,7 +59,6 @@ export class ReadPersonAction extends IMSESAction<ReadPersonResponseBody, Person
         return {
             ok: true,
             value: {
-                formatName: body.readPersonResponse.person.formatName,
                 institutionRole: body.readPersonResponse.person.institutionRole.institutionRoleType,
                 primaryRoleType: body.readPersonResponse.person.institutionRole.primaryRoleType,
                 userId: body.readPersonResponse.person.userId.userIdValue,
