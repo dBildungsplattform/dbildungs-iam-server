@@ -103,22 +103,19 @@ export class OrganisationController {
             throw new NotFoundException(`Organisation with ID ${params.organisationId} not found`);
         }
 
-        const updatedOrganisation: Organisation<true> = Organisation.construct(
-            params.organisationId,
-            existingOrganisation.createdAt,
-            new Date(),
-            body.administriertVon,
-            body.zugehoerigZu,
-            body.kennung,
-            body.name,
-            body.namensergaenzung,
-            body.kuerzel,
-            body.typ,
-            body.traegerschaft,
-        );
-        ///!!! Note to self the find by id will be called twice here but no other way? unless created at is optional
+        existingOrganisation.id = params.organisationId;
+        existingOrganisation.administriertVon = body.administriertVon;
+        existingOrganisation.zugehoerigZu = body.zugehoerigZu;
+        existingOrganisation.kennung = body.kennung;
+        existingOrganisation.name = body.name;
+        existingOrganisation.namensergaenzung = body.namensergaenzung;
+        existingOrganisation.kuerzel = body.kuerzel;
+        existingOrganisation.typ = body.typ;
+        existingOrganisation.traegerschaft = body.traegerschaft;
+        existingOrganisation.updatedAt = new Date();
+
         const response: Organisation<true> | SchulConnexError | OrganisationSpecificationError =
-            await this.uc.updateOrganisation(updatedOrganisation);
+            await this.uc.updateOrganisation(existingOrganisation);
 
         if (response instanceof Organisation) {
             return new OrganisationResponse(response);
