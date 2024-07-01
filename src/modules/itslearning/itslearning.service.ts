@@ -49,8 +49,6 @@ export class ItsLearningIMSESService {
 
             return action.parseResponse(response.data);
         } catch (err: unknown) {
-            console.error(err);
-
             return {
                 ok: false,
                 error: new ItsLearningError('Request failed', [err]),
