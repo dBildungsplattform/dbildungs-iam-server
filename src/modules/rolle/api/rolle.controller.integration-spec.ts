@@ -31,11 +31,10 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { PagedResponse } from '../../../shared/paging/index.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
-//import {PersonPermissions} from "../../authentication/domain/person-permissions.js";
 import { Observable } from 'rxjs';
-import { Request } from 'express';
+import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { PassportUser } from '../../authentication/types/user.js';
+import { Request } from 'express';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -87,7 +86,6 @@ describe('Rolle API', () => {
         rolleRepo = module.get(RolleRepo);
         serviceProviderRepo = module.get(ServiceProviderRepo);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
-
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
@@ -236,6 +234,18 @@ describe('Rolle API', () => {
             const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
                 response.body as PagedResponse<RolleWithServiceProvidersResponse>;
             expect(pagedResponse.items).toHaveLength(3);
+        });
+
+        it('should return no rollen', async () => {
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(0);
         });
 
         it('should return rollen with the given queried name', async () => {

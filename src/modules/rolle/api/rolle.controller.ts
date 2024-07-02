@@ -77,18 +77,16 @@ export class RolleController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all rollen.' })
     public async findRollen(
         @Query() queryParams: RolleNameQueryParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
-        let rollen: Option<Rolle<true>[]>;
+        const rollen: Option<Rolle<true>[]> = await this.rolleRepo.findRollenAuthorized(
+            permissions,
+            queryParams.searchStr,
+            queryParams.limit,
+            queryParams.offset,
+        );
 
-        if (queryParams.searchStr) {
-            rollen = await this.rolleRepo.findByName(queryParams.searchStr, queryParams.limit, queryParams.offset);
-        } else {
-            rollen = await this.rolleRepo.find(queryParams.limit, queryParams.offset);
-        }
-
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
-
-        if (!rollen) {
+        if (!rollen || rollen.length === 0) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
                 total: 0,
                 offset: 0,
@@ -97,6 +95,7 @@ export class RolleController {
             };
             return new PagedResponse(pagedRolleWithServiceProvidersResponse);
         }
+        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
 
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {
