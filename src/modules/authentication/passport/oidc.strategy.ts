@@ -28,33 +28,32 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
     }
 
     public async validate(tokenset: TokenSet): Promise<AuthorizationParameters & PassportUser> {
+        let userinfo: UserinfoResponse;
+        let person: Option<Person<true>>;
+
         try {
-            const userinfo: UserinfoResponse = await this.client.userinfo(tokenset);
-
-            const person: Option<Person<true>> = await this.personRepo.findByKeycloakUserId(userinfo.sub);
-            if (!person) {
-                //Revoke Access Token? => this.client.revoke(tokenset.access_token, tokenset.token_type)
-                throw new KeycloakUserNotFoundError();
-            }
-
-            const idToken: string | undefined = tokenset.id_token;
-            const accessToken: string | undefined = tokenset.access_token;
-            const refreshToken: string | undefined = tokenset.refresh_token;
-
-            const user: AuthorizationParameters & PassportUser = {
-                id_token: idToken,
-                access_token: accessToken,
-                refresh_token: refreshToken,
-                userinfo: userinfo,
-                personPermissions: () => Promise.reject(),
-            };
-            return user;
+            userinfo = await this.client.userinfo(tokenset);
+            person = await this.personRepo.findByKeycloakUserId(userinfo.sub);
         } catch (err: unknown) {
-            if (err instanceof KeycloakUserNotFoundError) {
-                throw err;
-            } else {
-                throw new UnauthorizedException();
-            }
+            throw new UnauthorizedException();
         }
+
+        if (!person) {
+            //Revoke Access Token? => this.client.revoke(tokenset.access_token, tokenset.token_type)
+            throw new KeycloakUserNotFoundError();
+        }
+
+        const idToken: string | undefined = tokenset.id_token;
+        const accessToken: string | undefined = tokenset.access_token;
+        const refreshToken: string | undefined = tokenset.refresh_token;
+
+        const user: AuthorizationParameters & PassportUser = {
+            id_token: idToken,
+            access_token: accessToken,
+            refresh_token: refreshToken,
+            userinfo: userinfo,
+            personPermissions: () => Promise.reject(),
+        };
+        return user;
     }
 }
