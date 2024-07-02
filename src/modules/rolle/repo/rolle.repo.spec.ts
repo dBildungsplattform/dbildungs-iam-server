@@ -189,6 +189,35 @@ describe('RolleRepo', () => {
             expect(rolleResult?.length).toBe(1);
         });
     });
+    describe('findByIdAuthorized', () => {
+        it('should return the rolle', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            const rolle: Rolle<true> = await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
+
+            const rolleResult: Result<Rolle<true>> = await sut.findByIdAuthorized(rolle.id, permissions);
+
+            expect(rolleResult.ok).toBeTruthy();
+        });
+
+        it('should return error when permissions are insufficient', async () => {
+            const rolle: Rolle<true> = await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: faker.string.uuid() }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+
+            const rolleResult: Result<Rolle<true>> = await sut.findByIdAuthorized(rolle.id, permissions);
+
+            expect(rolleResult.ok).toBeFalsy();
+        });
+    });
+
     describe('findByName', () => {
         it('should return the rolle', async () => {
             const rolle: Rolle<true> = await sut.save(DoFactory.createRolle(false));

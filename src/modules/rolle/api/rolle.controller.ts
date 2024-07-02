@@ -127,9 +127,13 @@ export class RolleController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rolle by id.' })
     public async findRolleByIdWithServiceProviders(
         @Param() findRolleByIdParams: FindRolleByIdParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
-        if (!rolle) {
+        const rolleResult: Result<Rolle<true>> = await this.rolleRepo.findByIdAuthorized(
+            findRolleByIdParams.rolleId,
+            permissions,
+        );
+        if (!rolleResult.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId),
@@ -138,11 +142,11 @@ export class RolleController {
         }
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
 
-        const rolleServiceProviders: ServiceProvider<true>[] = rolle.serviceProviderIds
+        const rolleServiceProviders: ServiceProvider<true>[] = rolleResult.value.serviceProviderIds
             .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
             .filter(Boolean) as ServiceProvider<true>[];
 
-        return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
+        return new RolleWithServiceProvidersResponse(rolleResult.value, rolleServiceProviders);
     }
 
     @Post()

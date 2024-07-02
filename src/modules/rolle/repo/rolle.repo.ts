@@ -10,6 +10,7 @@ import { RolleServiceProviderEntity } from '../entity/rolle-service-provider.ent
 import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -83,7 +84,7 @@ export class RolleRepo {
         return RolleEntity;
     }
 
-    public async findById(id: string): Promise<Option<Rolle<true>>> {
+    public async findById(id: RolleID): Promise<Option<Rolle<true>>> {
         const rolle: Option<RolleEntity> = await this.em.findOne(
             this.entityName,
             { id },
@@ -93,7 +94,38 @@ export class RolleRepo {
         return rolle && mapEntityToAggregate(rolle, this.rolleFactory);
     }
 
-    public async findByIds(ids: string[]): Promise<Map<string, Rolle<true>>> {
+    public async findByIdAuthorized(
+        rolleId: RolleID,
+        permissions: PersonPermissions,
+    ): Promise<Result<Rolle<true>, DomainError>> {
+        const rolle: Option<Rolle<true>> = await this.findById(rolleId);
+        if (!rolle) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError(),
+            };
+        }
+        const rolleAdministeringOrganisationId: OrganisationID = rolle.administeredBySchulstrukturknoten;
+
+        const relevantSystemRechte: RollenSystemRecht[] = [RollenSystemRecht.ROLLEN_VERWALTEN];
+
+        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+            relevantSystemRechte,
+            true,
+        );
+        if (organisationIDs.includes(rolleAdministeringOrganisationId)) {
+            return {
+                ok: true,
+                value: rolle,
+            };
+        }
+        return {
+            ok: false,
+            error: new MissingPermissionsError('Not allowed to view the requested rolle.'),
+        };
+    }
+
+    public async findByIds(ids: RolleID[]): Promise<Map<string, Rolle<true>>> {
         const rollenEntities: RolleEntity[] = await this.em.find(
             RolleEntity,
             { id: { $in: ids } },
