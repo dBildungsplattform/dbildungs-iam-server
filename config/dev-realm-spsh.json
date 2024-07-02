@@ -320,6 +320,7 @@
       "admin-cli": [],
       "spsh-admin": [],
       "account-console": [],
+      "spsh-test": [],
       "broker": [
         {
           "id": "e3b83cee-0556-4164-b94b-723f60f85a8c",
@@ -1005,7 +1006,116 @@
         "offline_access",
         "microprofile-jwt"
       ]
-    }
+    },
+    {
+        "id": "4767cf23-bccc-4c71-b130-3d5a2aca2d08",
+        "clientId": "spsh-test",
+        "name": "Schulportal SH Test",
+        "description": "",
+        "rootUrl": "https://localhost:8099",
+        "adminUrl": "",
+        "baseUrl": "https://localhost:8099/",
+        "surrogateAuthRequired": false,
+        "enabled": true,
+        "alwaysDisplayInConsole": false,
+        "clientAuthenticatorType": "client-secret",
+        "secret": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M",
+        "redirectUris": [
+           "https://127.0,0.1:8099/*",
+			"http://127.0,0.1:9090/*",
+			"http://localhost:9090/*",
+			"/*"
+        ],
+        "webOrigins": [
+          "+"
+        ],
+        "notBefore": 0,
+        "bearerOnly": false,
+        "consentRequired": false,
+        "standardFlowEnabled": true,
+        "implicitFlowEnabled": false,
+        "directAccessGrantsEnabled": true,
+        "serviceAccountsEnabled": true,
+        "publicClient": false,
+        "frontchannelLogout": true,
+        "protocol": "openid-connect",
+        "attributes": {
+            "access.token.lifespan": "7200",
+		    "oidc.ciba.grant.enabled": "false",
+			"client.secret.creation.time": "1696586327",
+            "backchannel.logout.session.required": "true",
+			"oauth2.device.authorization.grant.enabled": "false",
+			"display.on.consent.screen": "false",
+			"backchannel.logout.revoke.offline.tokens": "false",
+			"acr.loa.map": "{\"silver\":\"10\",\"gold\":\"20\"}",
+			"default.acr.values": "0"
+        },
+        "authenticationFlowBindingOverrides": {
+            "browser": "2e19a392-6bf3-4ea4-a599-ac39bcdfd827"
+        },
+        "fullScopeAllowed": true,
+        "nodeReRegistrationTimeout": -1,
+        "protocolMappers": [
+          {
+            "id": "435d1bfd-af68-4c12-ae0a-5f1d921ab30f",
+            "name": "Client IP Address",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "clientAddress",
+              "userinfo.token.claim": "true",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "clientAddress",
+              "jsonType.label": "String"
+            }
+          },
+          {
+            "id": "c5e3b59b-a130-4942-83ce-cd65f1c4e1b0",
+            "name": "Client Host",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "clientHost",
+              "userinfo.token.claim": "true",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "clientHost",
+              "jsonType.label": "String"
+            }
+          },
+          {
+            "id": "b62e15e5-8399-4cea-9be8-dd783eda45dc",
+            "name": "Client ID",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "client_id",
+              "userinfo.token.claim": "true",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "client_id",
+              "jsonType.label": "String"
+            }
+          }
+        ],
+        "defaultClientScopes": [
+          "web-origins",
+          "acr",
+          "roles",
+          "profile",
+          "email"
+        ],
+        "optionalClientScopes": [
+          "address",
+          "phone",
+          "offline_access",
+          "microprofile-jwt"
+        ]
+      }
   ],
   "clientScopes": [
     {
