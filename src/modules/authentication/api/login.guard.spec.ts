@@ -7,6 +7,11 @@ import { Request } from 'express';
 
 import { LoginGuard } from './login.guard.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { ConfigService } from '@nestjs/config';
+import { ServerConfig } from '../../../shared/config/server.config.js';
+import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
+import { HttpFoundException } from '../../../shared/error/http.found.exception.js';
+import { AuthenticationErrorI18nTypes } from './dbiam-authentication.error.js';
 
 const canActivateSpy: jest.SpyInstance = jest.spyOn(AuthGuard(['jwt', 'oidc']).prototype as IAuthGuard, 'canActivate');
 const logInSpy: jest.SpyInstance = jest.spyOn(AuthGuard(['jwt', 'oidc']).prototype as IAuthGuard, 'logIn');
@@ -17,7 +22,17 @@ describe('LoginGuard', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            providers: [LoginGuard, { provide: ClassLogger, useValue: createMock<ClassLogger>() }],
+            providers: [
+                LoginGuard,
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
+                },
+                {
+                    provide: ConfigService<ServerConfig>,
+                    useValue: createMock<ConfigService<ServerConfig>>(),
+                },
+            ],
         }).compile();
 
         sut = module.get(LoginGuard);
@@ -26,6 +41,10 @@ describe('LoginGuard', () => {
     afterAll(async () => {
         await module.close();
     }, 30 * 1_000);
+
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
 
     it('should be defined', () => {
         expect(sut).toBeDefined();
@@ -99,6 +118,22 @@ describe('LoginGuard', () => {
             const contextMock: DeepMocked<ExecutionContext> = createMock();
 
             await expect(sut.canActivate(contextMock)).resolves.toBe(true);
+        });
+
+        it('should throw HttpFoundException exception if KeycloakUser does not exist', async () => {
+            canActivateSpy.mockRejectedValueOnce(new KeycloakUserNotFoundError());
+            logInSpy.mockResolvedValueOnce(undefined);
+
+            const contextMock: DeepMocked<ExecutionContext> = createMock();
+            contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
+            await expect(sut.canActivate(contextMock)).rejects.toThrow(
+                new HttpFoundException({
+                    DbiamAuthenticationError: {
+                        code: 403,
+                        i18nKey: AuthenticationErrorI18nTypes.KEYCLOAK_USER_NOT_FOUND,
+                    },
+                }),
+            );
         });
     });
 });

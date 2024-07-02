@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Req, Res, Session, UseGuards } from '@nestjs/common';
+import { Controller, Get, Inject, Req, Res, Session, UseFilters, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
     ApiBearerAuth,
@@ -28,6 +28,8 @@ import { PersonenkontextRolleFields } from '../domain/person-permissions.js';
 import { RolleID } from '../../../shared/types/index.js';
 import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
 import { RollenSystemRechtServiceProviderIDResponse } from './rolle-systemrechte-serviceproviderid.response.js';
+import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
+@UseFilters(new AuthenticationExceptionFilter())
 @ApiTags('auth')
 @Controller({ path: 'auth' })
 export class AuthenticationController {

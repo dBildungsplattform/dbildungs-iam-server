@@ -51,8 +51,9 @@ import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
-@UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter())
+@UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])

@@ -60,8 +60,9 @@ import { OrganisationID } from '../../../shared/types/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter)
+@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personen')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])

@@ -21,8 +21,9 @@ import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextRepo } from '../../personenkontext/persistence/personenkontext.repo.js';
 import { PersonenkontextScope } from '../../personenkontext/persistence/personenkontext.scope.js';
 import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter)
+@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
 @ApiTags('person-info')
