@@ -262,11 +262,8 @@ export class PersonRepository {
         }
 
         person.referrer = person.username;
-        const userDo: UserDo<false> = {
-            username: person.username,
-            id: undefined,
-            createdDate: undefined,
-        } satisfies UserDo<false>;
+        const userDo: UserDo<false> = UserDo.createNew(person.username, undefined);
+
         const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
         if (!creationResult.ok) {
             return creationResult.error;
@@ -295,11 +292,8 @@ export class PersonRepository {
             return new EntityCouldNotBeCreated('Person');
         }
         person.referrer = person.username;
-        const userDo: UserDo<false> = {
-            username: person.username,
-            id: undefined,
-            createdDate: undefined,
-        } satisfies UserDo<false>;
+        const userDo: UserDo<false> = UserDo.createNew(person.username, undefined);
+
         const creationResult: Result<string, DomainError> = await kcUserService.createWithHashedPassword(
             userDo,
             hashedPassword,
