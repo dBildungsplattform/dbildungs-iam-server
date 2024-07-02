@@ -9,7 +9,8 @@
     "SESSION_TTL_MS": 3600000,
     "BACKEND_ADDRESS": "http://dbildungs-iam-server-backend:80",
     "DEFAULT_AUTH_REDIRECT": "/",
-    "TRUST_PROXY": 1
+    "TRUST_PROXY": 1,
+    "ERROR_PAGE_REDIRECT": "https://localhost:8099/login-error"
   },
   "DB": {
     "USE_SSL": true
