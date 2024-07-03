@@ -1,4 +1,4 @@
-import { EmailID, PersonID } from '../../../shared/types/index.js';
+import { PersonID } from '../../../shared/types/index.js';
 import { EmailGeneratorService } from './email-generator.service.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
@@ -12,9 +12,6 @@ export type EmailAddressProperties = {
 
 export class Email<WasPersisted extends boolean> {
     private constructor(
-        public readonly id: Persisted<EmailID, WasPersisted>,
-        public readonly createdAt: Persisted<Date, WasPersisted>,
-        public readonly updatedAt: Persisted<Date, WasPersisted>,
         public readonly personId: PersonID,
         public readonly emailGeneratorService: EmailGeneratorService,
         public readonly personRepository: PersonRepository,
@@ -26,27 +23,16 @@ export class Email<WasPersisted extends boolean> {
         emailGeneratorService: EmailGeneratorService,
         personRepository: PersonRepository,
     ): Email<false> {
-        return new Email<false>(
-            undefined,
-            undefined,
-            undefined,
-            personId,
-            emailGeneratorService,
-            personRepository,
-            undefined,
-        );
+        return new Email<false>(personId, emailGeneratorService, personRepository, undefined);
     }
 
     public static construct<WasPersisted extends boolean = true>(
-        id: string,
-        createdAt: Date,
-        updatedAt: Date,
         personId: PersonID,
         emailGeneratorService: EmailGeneratorService,
         personRepository: PersonRepository,
-        emailAddresses: EmailAddress<true>[],
+        emailAddresses: EmailAddress<boolean>[],
     ): Email<WasPersisted> {
-        return new Email(id, createdAt, updatedAt, personId, emailGeneratorService, personRepository, emailAddresses);
+        return new Email(personId, emailGeneratorService, personRepository, emailAddresses);
     }
 
     public async enable(): Promise<Result<Email<WasPersisted>>> {
@@ -68,9 +54,6 @@ export class Email<WasPersisted extends boolean> {
                     return {
                         ok: true,
                         value: new Email(
-                            this.id,
-                            this.createdAt,
-                            this.updatedAt,
                             this.personId,
                             this.emailGeneratorService,
                             this.personRepository,
@@ -108,22 +91,21 @@ export class Email<WasPersisted extends boolean> {
                 error: new EmailInvalidError(),
             };
         }
-        const newEmailAddress: EmailAddress<false> = new EmailAddress<false>(undefined, generatedAddress.value, true);
+        const newEmailAddress: EmailAddress<false> = new EmailAddress<false>(
+            undefined,
+            undefined,
+            undefined,
+            this.personId,
+            generatedAddress.value,
+            true,
+        );
         let newAddresses: EmailAddress<boolean>[] = [newEmailAddress];
         if (this.emailAddresses) {
             newAddresses = newAddresses.concat(this.emailAddresses);
         }
         return {
             ok: true,
-            value: new Email(
-                this.id,
-                this.createdAt,
-                this.updatedAt,
-                this.personId,
-                this.emailGeneratorService,
-                this.personRepository,
-                newAddresses,
-            ),
+            value: new Email(this.personId, this.emailGeneratorService, this.personRepository, newAddresses),
         };
     }
 

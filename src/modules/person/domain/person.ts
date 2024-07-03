@@ -27,7 +27,6 @@ export type PersonCreationParams = {
     username?: string;
     password?: string;
     personalnummer?: string;
-    email?: string;
 };
 
 export class Person<WasPersisted extends boolean> {

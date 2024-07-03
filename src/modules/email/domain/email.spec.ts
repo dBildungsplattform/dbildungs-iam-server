@@ -46,15 +46,16 @@ describe('Email Aggregate', () => {
     beforeEach(() => {
         jest.resetAllMocks();
         newEmail = emailFactory.createNew(faker.string.uuid());
-        firstEmailAddress = new EmailAddress<true>(faker.string.uuid(), faker.internet.email(), false);
-        emailAddresses = [firstEmailAddress];
-        existingEmail = emailFactory.construct(
+        firstEmailAddress = new EmailAddress<true>(
             faker.string.uuid(),
             faker.date.past(),
             faker.date.recent(),
             faker.string.uuid(),
-            emailAddresses,
+            faker.internet.email(),
+            false,
         );
+        emailAddresses = [firstEmailAddress];
+        existingEmail = emailFactory.construct(faker.string.uuid(), emailAddresses);
         newNames = {
             vorname: faker.person.firstName(),
             familienname: faker.person.lastName(),
@@ -64,6 +65,19 @@ describe('Email Aggregate', () => {
     describe('enable', () => {
         describe('when emailAddresses are already present on aggregate', () => {
             it('should return successfully', async () => {
+                /* const emailAddressId: EmailAddressID = faker.string.uuid();
+                const emailAddresses: EmailAddress<true>[] = [
+                    new EmailAddress<true>(
+                        emailAddressId,
+                        faker.date.past(),
+                        faker.date.recent(),
+                        faker.string.uuid(),
+                        faker.internet.email(),
+                        false,
+                    ),
+                ];
+                const existingEmail: Email<true> = emailFactory.construct(faker.string.uuid(), emailAddresses);
+*/
                 const result: Result<Email<true>> = await existingEmail.enable();
 
                 expect(result.ok).toBeTruthy();
@@ -189,16 +203,13 @@ describe('Email Aggregate', () => {
             it('should return true ', () => {
                 const emailAddress: EmailAddress<true> = new EmailAddress<true>(
                     faker.string.uuid(),
-                    faker.internet.email(),
-                    true,
-                );
-                const email: Email<true> = emailFactory.construct(
-                    faker.string.uuid(),
                     faker.date.past(),
                     faker.date.recent(),
                     faker.string.uuid(),
-                    [emailAddress],
+                    faker.internet.email(),
+                    true,
                 );
+                const email: Email<true> = emailFactory.construct(faker.string.uuid(), [emailAddress]);
                 const result: boolean = email.isEnabled();
 
                 expect(result).toBeTruthy();
@@ -217,16 +228,13 @@ describe('Email Aggregate', () => {
             it('should return the emailAddress-address string', () => {
                 const emailAddress: EmailAddress<true> = new EmailAddress<true>(
                     faker.string.uuid(),
-                    faker.internet.email(),
-                    true,
-                );
-                const email: Email<true> = emailFactory.construct(
-                    faker.string.uuid(),
                     faker.date.past(),
                     faker.date.recent(),
                     faker.string.uuid(),
-                    [emailAddress],
+                    faker.internet.email(),
+                    true,
                 );
+                const email: Email<true> = emailFactory.construct(faker.string.uuid(), [emailAddress]);
                 const result: Option<string> = email.currentAddress;
 
                 expect(result).toBeDefined();
