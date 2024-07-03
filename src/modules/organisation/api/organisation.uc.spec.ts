@@ -317,34 +317,6 @@ describe('OrganisationUc', () => {
                     expect(result.items).toHaveLength(2);
                 }
             });
-            it('should sort organisations by name', async () => {
-                const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: 'Gamma' });
-                const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: 'Alpha' });
-                const org3: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: undefined });
-
-                organisationServiceMock.findOrganisationById.mockResolvedValueOnce({
-                    ok: true,
-                    value: DoFactory.createOrganisation(true),
-                });
-
-                organisationServiceMock.findAllAdministriertVon.mockResolvedValue({
-                    total: 3,
-                    offset: 0,
-                    limit: 3,
-                    items: [org1, org2, org3],
-                });
-
-                const result: Paged<OrganisationResponseLegacy> | SchulConnexError =
-                    await organisationUc.findAdministriertVon('parent-id');
-
-                if (!(result instanceof SchulConnexError)) {
-                    expect(result.items.map((o: OrganisationResponseLegacy) => o.name)).toEqual([
-                        undefined,
-                        'Alpha',
-                        'Gamma',
-                    ]);
-                }
-            });
 
             it('should handle undefined names during sorting', async () => {
                 const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: undefined });
