@@ -87,9 +87,10 @@ export class KeycloakUserService {
         }
         let algorithm: string;
         let hashIterations: number | undefined;
+        let passwordValue: string;
         if (hashedPassword.startsWith('{BCRYPT}')) {
             algorithm = 'bcrypt';
-            const parts: string[] = hashedPassword.split('$');
+            const parts: string[] = hashedPassword.split('$'); //Only Everything After and including the First $
             if (parts.length < 4 || !parts[2]) {
                 return {
                     ok: false,
@@ -97,6 +98,7 @@ export class KeycloakUserService {
                 };
             }
             hashIterations = parseInt(parts[2]);
+            passwordValue = hashedPassword.substring(hashedPassword.indexOf('$'));
         } else if (hashedPassword.startsWith('{crypt}')) {
             algorithm = 'crypt';
             const parts: string[] = hashedPassword.split('$');
@@ -107,6 +109,7 @@ export class KeycloakUserService {
                 };
             }
             hashIterations = undefined;
+            passwordValue = hashedPassword.substring(hashedPassword.indexOf('$'));
         } else {
             return {
                 ok: false,
@@ -144,7 +147,7 @@ export class KeycloakUserService {
                             algorithm: algorithm,
                         }),
                         secretData: JSON.stringify({
-                            value: hashedPassword,
+                            value: passwordValue,
                         }),
                         type: 'password',
                     },
