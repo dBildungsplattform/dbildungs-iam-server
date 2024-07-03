@@ -322,6 +322,7 @@ export class PersonRepository {
         return person;
     }
 
+    // This method in principle should be located in email.repo. It is here to avoid a circular reference.
     public async findEmailAddressByPerson(personId: PersonID): Promise<string | undefined> {
         const emailAddressEntities: EmailAddressEntity[] = await this.em.find(EmailAddressEntity, { personId }, {});
 
