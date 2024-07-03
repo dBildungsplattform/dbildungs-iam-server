@@ -70,7 +70,7 @@ export class PersonenkontextWorkflowAggregate {
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );
-
+        //TODO: Query the filtering of Organisations in the DB
         // Return only the orgas that the admin have rights on
         let filteredOrganisations: OrganisationDo<boolean>[] = allOrganisations.filter(
             (orga: OrganisationDo<boolean>) => orgsWithRecht.includes(orga.id as OrganisationID),
@@ -104,9 +104,9 @@ export class PersonenkontextWorkflowAggregate {
         let rollen: Option<Rolle<true>[]>;
 
         if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName, limit);
+            rollen = await this.rolleRepo.findByName(rolleName);
         } else {
-            rollen = await this.rolleRepo.find(limit);
+            rollen = await this.rolleRepo.find();
         }
 
         if (!rollen) {
@@ -134,19 +134,21 @@ export class PersonenkontextWorkflowAggregate {
             return [];
         }
 
-        const allowedRollen: Rolle<true>[] = [];
+        let allowedRollen: Rolle<true>[] = [];
         // If the user has rights for this specific organization or any of its children, return the filtered roles
-        if ([organisation].some((orga: OrganisationDo<true>) => orgsWithRecht.includes(orga.id))) {
+        if (orgsWithRecht.includes(organisation.id)) {
             const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-            [organisation].forEach(function (orga: OrganisationDo<true>) {
-                rollen.forEach(function (rolle: Rolle<true>) {
-                    // Check here what kind of roles the admin can assign depending on the type of organisation
-                    if (organisationMatchesRollenart.isSatisfiedBy(orga, rolle) && !allowedRollen.includes(rolle)) {
-                        allowedRollen.push(rolle);
-                    }
-                });
+            rollen.forEach(function (rolle: Rolle<true>) {
+                // Check here what kind of roles the admin can assign depending on the type of organisation
+                if (organisationMatchesRollenart.isSatisfiedBy(organisation, rolle) && !allowedRollen.includes(rolle)) {
+                    allowedRollen.push(rolle);
+                }
             });
         }
+        if (limit) {
+            allowedRollen = allowedRollen.slice(0, limit);
+        }
+
         // Sort the Roles by name
         return allowedRollen.sort((a: Rolle<true>, b: Rolle<true>) =>
             a.name.localeCompare(b.name, 'de', { numeric: true }),
@@ -253,29 +255,30 @@ export class PersonenkontextWorkflowAggregate {
     ): Promise<OrganisationDo<true>[]> {
         this.selectedRolleId = rolleId;
 
-        const ssks: Option<OrganisationDo<true>[]> = await this.organisationRepo.findByNameOrKennung(sskName);
-        if (ssks.length === 0) return [];
+        const organisationsFoundByName: Option<OrganisationDo<true>[]> =
+            await this.organisationRepo.findByNameOrKennung(sskName);
+        if (organisationsFoundByName.length === 0) return [];
 
         const rolleResult: Option<Rolle<true>> = await this.rolleRepo.findById(rolleId);
         if (!rolleResult) return [];
 
-        const allOrganisations: OrganisationDo<true>[] = [];
+        const organisationsRoleIsAvalableIn: OrganisationDo<true>[] = [];
 
         const parentOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(
             rolleResult.administeredBySchulstrukturknoten,
         );
         if (!parentOrganisation) return [];
-        allOrganisations.push(parentOrganisation);
+        organisationsRoleIsAvalableIn.push(parentOrganisation);
 
         const childOrganisations: OrganisationDo<true>[] = await this.organisationRepo.findChildOrgasForIds([
             rolleResult.administeredBySchulstrukturknoten,
         ]);
-        allOrganisations.push(...childOrganisations);
+        organisationsRoleIsAvalableIn.push(...childOrganisations);
 
-        let orgas: OrganisationDo<true>[] = ssks.filter((ssk: OrganisationDo<true>) =>
-            allOrganisations.some((organisation: OrganisationDo<true>) => ssk.id === organisation.id),
+        let orgas: OrganisationDo<true>[] = organisationsFoundByName.filter((ssk: OrganisationDo<true>) =>
+            organisationsRoleIsAvalableIn.some((organisation: OrganisationDo<true>) => ssk.id === organisation.id),
         );
-
+        //TODO: Please filter by OrganisationsTyp in the DB requests
         if (excludeKlassen) {
             orgas = orgas.filter((ssk: OrganisationDo<true>) => ssk.typ !== OrganisationsTyp.KLASSE);
         }
@@ -296,9 +299,9 @@ export class PersonenkontextWorkflowAggregate {
         let rollen: Option<Rolle<true>[]>;
 
         if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName, limit);
+            rollen = await this.rolleRepo.findByName(rolleName);
         } else {
-            rollen = await this.rolleRepo.find(limit);
+            rollen = await this.rolleRepo.find();
         }
 
         if (!rollen) return [];
@@ -311,7 +314,7 @@ export class PersonenkontextWorkflowAggregate {
         //Landesadmin can view all roles.
         if (orgsWithRecht.includes(this.organisationRepo.ROOT_ORGANISATION_ID)) return rollen;
 
-        const allowedRollen: Rolle<true>[] = [];
+        let allowedRollen: Rolle<true>[] = [];
         const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
         (await this.organisationRepo.findByIds(orgsWithRecht)).forEach(function (orga: OrganisationDo<true>) {
             rollen.forEach(function (rolle: Rolle<true>) {
@@ -320,6 +323,10 @@ export class PersonenkontextWorkflowAggregate {
                 }
             });
         });
+
+        if (limit) {
+            allowedRollen = allowedRollen.slice(0, limit);
+        }
 
         return allowedRollen;
     }

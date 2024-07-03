@@ -8,16 +8,6 @@ import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonDo } from './person.do.js';
 import { PersonService } from './person.service.js';
 import { Paged } from '../../../shared/paging/index.js';
-import { PersonFactory } from './person.factory.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { PersonRepository } from '../persistence/person.repository.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
-import { PersonenkontextWorkflowFactory } from '../../personenkontext/domain/personenkontext-workflow.factory.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { DbiamPersonenkontextFactory } from '../../personenkontext/domain/dbiam-personenkontext.factory.js';
 
 describe('PersonService', () => {
     let module: TestingModule;
@@ -29,7 +19,6 @@ describe('PersonService', () => {
         module = await Test.createTestingModule({
             providers: [
                 PersonService,
-                PersonenkontextWorkflowFactory,
                 {
                     provide: PersonRepo,
                     useValue: createMock<PersonRepo>(),
@@ -37,42 +26,6 @@ describe('PersonService', () => {
                 {
                     provide: getMapperToken(),
                     useValue: createMock<Mapper>(),
-                },
-                {
-                    provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
-                },
-                {
-                    provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
-                },
-                {
-                    provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
-                },
-                {
-                    provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
-                },
-                {
-                    provide: PersonFactory,
-                    useValue: createMock<PersonFactory>(),
-                },
-                {
-                    provide: PersonenkontextFactory,
-                    useValue: createMock<PersonenkontextFactory>(),
-                },
-                {
-                    provide: PersonPermissions,
-                    useValue: createMock<PersonPermissions>(),
-                },
-                {
-                    provide: OrganisationRepo,
-                    useValue: createMock<OrganisationRepo>(),
-                },
-                {
-                    provide: DbiamPersonenkontextFactory,
-                    useValue: createMock<DbiamPersonenkontextFactory>(),
                 },
             ],
         }).compile();

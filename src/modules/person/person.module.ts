@@ -7,15 +7,11 @@ import { UsernameGeneratorService } from './domain/username-generator.service.js
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { PersonRepository } from './persistence/person.repository.js';
 import { PersonFactory } from './domain/person.factory.js';
-import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonenkontextFactory } from '../personenkontext/domain/personenkontext.factory.js';
 import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { OrganisationRepo } from '../organisation/persistence/organisation.repo.js';
 import { RolleFactory } from '../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
-import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/personenkontext-workflow.factory.js';
-import { DbiamPersonenkontextFactory } from '../personenkontext/domain/dbiam-personenkontext.factory.js';
 import { EventModule } from '../../core/eventbus/event.module.js';
 
 @Module({
@@ -24,13 +20,9 @@ import { EventModule } from '../../core/eventbus/event.module.js';
         PersonPersistenceMapperProfile,
         PersonRepo,
         PersonRepository,
-        DBiamPersonenkontextRepo,
-        DbiamPersonenkontextFactory,
         PersonService,
         PersonFactory,
         UsernameGeneratorService,
-        PersonenkontextFactory,
-        PersonenkontextWorkflowFactory,
         RolleRepo,
         OrganisationRepo,
         OrganisationRepository,
