@@ -56,7 +56,10 @@ async function bootstrap(): Promise<void> {
         swaggerOptions: {
             persistAuthorization: false,
             initOAuth: {
-                clientId: keycloakConfig.CLIENT_ID,
+                clientId:
+                    process.env['DEPLOY_STAGE'] === 'dev' || process.env['NODE_ENV'] === 'dev'
+                        ? keycloakConfig.TEST_CLIENT_ID
+                        : keycloakConfig.CLIENT_ID,
                 clientSecret: keycloakConfig.CLIENT_SECRET,
                 realm: keycloakConfig.REALM_NAME,
                 usePkceWithAuthorizationCodeGrant: true,
