@@ -1,21 +1,22 @@
-import { BaseEntity, Entity, ManyToOne, PrimaryKeyProp, Property, Rel } from '@mikro-orm/core';
-import { EmailEntity } from './email.entity.js';
+import { Entity, ManyToOne, Property, Ref } from '@mikro-orm/core';
+import { PersonEntity } from '../../person/persistence/person.entity.js';
+import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 
 @Entity({ tableName: 'email_address' })
-export class EmailAddressEntity extends BaseEntity {
+export class EmailAddressEntity extends TimestampedEntity {
     @ManyToOne({
         columnType: 'uuid',
-        fieldName: 'email_id',
+        fieldName: 'person_id',
         ref: true,
-        entity: () => EmailEntity,
+        nullable: true,
+        deleteRule: 'set null',
+        entity: () => PersonEntity,
     })
-    public email!: Rel<EmailEntity>;
+    public personId!: Ref<PersonEntity>;
 
     @Property({ primary: true, nullable: false, unique: true })
     public address!: string;
 
     @Property({ nullable: false })
     public enabled!: boolean;
-
-    public [PrimaryKeyProp]?: ['address'];
 }

@@ -12,22 +12,8 @@ export class EmailFactory {
         private readonly personRepository: PersonRepository,
     ) {}
 
-    public construct(
-        id: string,
-        createdAt: Date,
-        updatedAt: Date,
-        personId: PersonID,
-        emailAddresses: EmailAddress<true>[],
-    ): Email<true> {
-        return Email.construct(
-            id,
-            createdAt,
-            updatedAt,
-            personId,
-            this.emailGeneratorService,
-            this.personRepository,
-            emailAddresses,
-        );
+    public construct(personId: PersonID, emailAddresses: EmailAddress<true>[]): Email<true> {
+        return Email.construct(personId, this.emailGeneratorService, this.personRepository, emailAddresses);
     }
 
     public createNew(personId: PersonID): Email<false> {

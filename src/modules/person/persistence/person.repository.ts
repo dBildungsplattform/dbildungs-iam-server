@@ -19,7 +19,7 @@ import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import { EmailEntity } from '../../email/persistence/email.entity.js';
+import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
     return {
@@ -323,14 +323,9 @@ export class PersonRepository {
     }
 
     public async findEmailAddressByPerson(personId: PersonID): Promise<string | undefined> {
-        const emailEntity: Option<EmailEntity> = await this.em.findOne(
-            EmailEntity,
-            { personId },
-            { populate: ['emailAddresses'] as const },
-        );
-        if (!emailEntity) return undefined;
+        const emailAddressEntities: EmailAddressEntity[] = await this.em.find(EmailAddressEntity, { personId }, {});
 
-        for (const emailAddressEntity of emailEntity.emailAddresses) {
+        for (const emailAddressEntity of emailAddressEntities) {
             if (emailAddressEntity.enabled) return emailAddressEntity.address;
         }
         return undefined;

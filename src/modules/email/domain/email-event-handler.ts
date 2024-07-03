@@ -10,12 +10,12 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { ServiceProviderTarget } from '../../service-provider/domain/service-provider.enum.js';
 import { EmailFactory } from './email.factory.js';
 import { Email } from './email.js';
-import { EmailRepo } from '../persistence/email.repo.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { PersonID } from '../../../shared/types/index.js';
 import { EmailAddressEntity } from '../persistence/email-address.entity.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
+import { EmailRepo } from '../persistence/email.repo.js';
 
 @Injectable()
 export class EmailEventHandler {
