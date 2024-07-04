@@ -3,7 +3,7 @@ import { KeycloakConfig } from './keycloak.config.js';
 import { FrontendConfig } from './frontend.config.js';
 import { HostConfig } from './host.config.js';
 import { ItsLearningConfig } from './itslearning.config.js';
-import {LdapConfig} from "./ldap.config.js";
+import { LdapConfig } from './ldap.config.js';
 
 export default (): {
     DB: Partial<DbConfig>;
