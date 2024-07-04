@@ -312,9 +312,11 @@ export class PersonenkontextWorkflowAggregate {
         );
 
         //Landesadmin can view all roles.
-        if (orgsWithRecht.includes(this.organisationRepo.ROOT_ORGANISATION_ID)) return rollen;
+        if (orgsWithRecht.includes(this.organisationRepo.ROOT_ORGANISATION_ID)) {
+            return limit ? rollen.slice(0, limit) : rollen;
+        }
 
-        let allowedRollen: Rolle<true>[] = [];
+        const allowedRollen: Rolle<true>[] = [];
         const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
         (await this.organisationRepo.findByIds(orgsWithRecht)).forEach(function (orga: OrganisationDo<true>) {
             rollen.forEach(function (rolle: Rolle<true>) {
@@ -324,10 +326,6 @@ export class PersonenkontextWorkflowAggregate {
             });
         });
 
-        if (limit) {
-            allowedRollen = allowedRollen.slice(0, limit);
-        }
-
-        return allowedRollen;
+        return limit ? allowedRollen.slice(0, limit) : allowedRollen;
     }
 }

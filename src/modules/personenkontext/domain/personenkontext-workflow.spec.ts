@@ -577,6 +577,48 @@ describe('PersonenkontextWorkflow', () => {
 
             expect(result).toHaveLength(0);
         });
+        it('should limit roles returned allowedRollen if limit is set', async () => {
+            const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+            const childOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.KLASSE,
+            });
+            const rolle1: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.ORGADMIN,
+                name: 'rolle1',
+            });
+            const rolle2: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.ORGADMIN,
+                name: 'rolle2',
+            });
+            const rolle3: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.ORGADMIN,
+                name: 'rolle3',
+            });
+            const rolle4: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.ORGADMIN,
+                name: 'rolle4',
+            });
+            const rollen: Rolle<true>[] = [rolle1, rolle2, rolle3, rolle4];
+            const orgsWithRecht: string[] = [organisation.id, childOrganisation.id];
+
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValue([childOrganisation]);
+            organisationRepoMock.findByIds.mockResolvedValue(
+                new Map(orgsWithRecht.map((id: string) => [id, DoFactory.createOrganisation(true, { id })])),
+            );
+            rolleRepoMock.find.mockResolvedValue(rollen);
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+
+            anlage.initialize(organisation.id);
+
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, undefined, 2);
+
+            expect(result).toHaveLength(2);
+        });
     });
     describe('commit', () => {
         it('should successfully commit personenkontexte', async () => {
@@ -1087,6 +1129,45 @@ describe('PersonenkontextWorkflow', () => {
                 LIMIT,
             );
             expect(result).toEqual([]);
+        });
+
+        it('should return list of limited rollen, if the user is Landesadmin and the limit is set', async () => {
+            const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN });
+            const leitRolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEIT });
+            const lehrRolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEHR });
+            const lernRolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LERN });
+
+            const rollen: Rolle<true>[] = [rolle, leitRolle, lehrRolle, lernRolle];
+            rolleRepoMock.find.mockResolvedValue(rollen);
+
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
+                organisationRepoMock.ROOT_ORGANISATION_ID,
+            ]);
+
+            const result: Rolle<true>[] = await anlage.findAuthorizedRollen(personpermissionsMock, undefined, 2);
+            expect(result).toHaveLength(2);
+        });
+
+        it('should return list of limited allowedRollen, if the user is NOT Landesadmin and the limit is set', async () => {
+            const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN });
+            const leitRolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEIT });
+            const lehrRolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEHR });
+            const lernRolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LERN });
+
+            const rollen: Rolle<true>[] = [rolle, leitRolle, lehrRolle, lernRolle];
+            rolleRepoMock.find.mockResolvedValue(rollen);
+
+            const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.SCHULE,
+            });
+            const organisationMap: Map<string, OrganisationDo<true>> = new Map();
+            organisationMap.set(organisationDo.id, organisationDo);
+            organisationRepoMock.findByIds.mockResolvedValueOnce(organisationMap);
+
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationDo.id]);
+
+            const result: Rolle<true>[] = await anlage.findAuthorizedRollen(personpermissionsMock, undefined, 2);
+            expect(result).toHaveLength(2);
         });
     });
 });
