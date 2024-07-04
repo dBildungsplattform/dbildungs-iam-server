@@ -6,6 +6,8 @@ metadata:
   labels:
     {{- include "common.labels" . | nindent 4 }}
 data:
+  LDAP_URL:  {{ .Values.ldap.url }},
+  LDAP_BIND_DN:  {{ .Values.ldap.bindDN }},
   LDAP_ORGANISATION: "spsh-de"
   LDAP_DOMAIN: "schule-sh.de"
   LDAP_RFC2307BIS_SCHEMA: "true"

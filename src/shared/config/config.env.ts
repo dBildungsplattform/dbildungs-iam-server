@@ -3,10 +3,12 @@ import { KeycloakConfig } from './keycloak.config.js';
 import { FrontendConfig } from './frontend.config.js';
 import { HostConfig } from './host.config.js';
 import { ItsLearningConfig } from './itslearning.config.js';
+import {LdapConfig} from "./ldap.config.js";
 
 export default (): {
     DB: Partial<DbConfig>;
     KEYCLOAK: Partial<KeycloakConfig>;
+    LDAP: Partial<LdapConfig>;
     FRONTEND: Partial<FrontendConfig>;
     HOST: Partial<HostConfig>;
     ITSLEARNING: Partial<ItsLearningConfig>;
@@ -20,6 +22,11 @@ export default (): {
         ADMIN_SECRET: process.env['KC_ADMIN_SECRET'],
         CLIENT_SECRET: process.env['KC_CLIENT_SECRET'],
         BASE_URL: process.env['KC_BASE_URL'],
+    },
+    LDAP: {
+        URL: process.env['LDAP_URL'],
+        BIND_DN: process.env['LDAP_BIND_DN'],
+        ADMIN_PASSWORD: process.env['LDAP_ADMIN_PASSWORD'],
     },
     FRONTEND: {
         SESSION_SECRET: process.env['FRONTEND_SESSION_SECRET'],

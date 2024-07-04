@@ -26,7 +26,7 @@ export class LdapClientService {
     private async bind(): Promise<Result<boolean>> {
         this.logger.info('LDAP: bind');
         try {
-            await this.ldapClient.getClient().bind(this.ldapInstanceConfig.BIND_DN, this.ldapInstanceConfig.PASSWORD);
+            await this.ldapClient.getClient().bind(this.ldapInstanceConfig.BIND_DN, this.ldapInstanceConfig.ADMIN_PASSWORD);
             this.logger.info('LDAP: Successfully connected');
             return {
                 ok: true,
