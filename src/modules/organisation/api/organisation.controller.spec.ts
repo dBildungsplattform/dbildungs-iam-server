@@ -44,6 +44,7 @@ describe('OrganisationController', () => {
     let organisationController: OrganisationController;
     let organisationUcMock: DeepMocked<OrganisationUc>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
+    let peronPermissionsMock: DeepMocked<PersonPermissions>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -63,11 +64,16 @@ describe('OrganisationController', () => {
                     provide: EventService,
                     useValue: createMock<EventService>(),
                 },
+                {
+                    provide: PersonPermissions,
+                    useValue: createMock<PersonPermissions>(),
+                },
             ],
         }).compile();
         organisationController = module.get(OrganisationController);
         organisationUcMock = module.get(OrganisationUc);
         organisationRepositoryMock = module.get(OrganisationRepository);
+        peronPermissionsMock = module.get(PersonPermissions);
     });
 
     afterAll(async () => {
@@ -207,7 +213,9 @@ describe('OrganisationController', () => {
         describe('when usecase returns an OrganisationResponse', () => {
             it('should not throw', async () => {
                 organisationUcMock.findOrganisationById.mockResolvedValue(response);
-                await expect(organisationController.findOrganisationById(params)).resolves.not.toThrow();
+                await expect(
+                    organisationController.findOrganisationById(params, peronPermissionsMock),
+                ).resolves.not.toThrow();
                 expect(organisationUcMock.findOrganisationById).toHaveBeenCalledTimes(1);
             });
         });
@@ -221,7 +229,9 @@ describe('OrganisationController', () => {
                     subcode: '0',
                 });
                 organisationUcMock.findOrganisationById.mockResolvedValue(mockError);
-                await expect(organisationController.findOrganisationById(params)).rejects.toThrow(HttpException);
+                await expect(organisationController.findOrganisationById(params, peronPermissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
                 expect(organisationUcMock.findOrganisationById).toHaveBeenCalledTimes(1);
             });
         });
@@ -362,7 +372,8 @@ describe('OrganisationController', () => {
 
                 organisationRepositoryMock.findRootDirectChildren.mockResolvedValue(mockedRepoResponse);
 
-                const result: OrganisationRootChildrenResponse = await organisationController.getRootChildren();
+                const result: OrganisationRootChildrenResponse =
+                    await organisationController.getRootChildren(peronPermissionsMock);
 
                 expect(organisationRepositoryMock.findRootDirectChildren).toHaveBeenCalledTimes(1);
                 expect(result).toBeInstanceOf(OrganisationRootChildrenResponse);
@@ -379,7 +390,9 @@ describe('OrganisationController', () => {
 
                 organisationRepositoryMock.findRootDirectChildren.mockResolvedValue(mockedRepoResponse);
 
-                await expect(organisationController.getRootChildren()).rejects.toThrow(HttpException);
+                await expect(organisationController.getRootChildren(peronPermissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
             });
         });
     });
@@ -397,7 +410,7 @@ describe('OrganisationController', () => {
 
         it('should return the root organisation if it exists', async () => {
             organisationUcMock.findRootOrganisation.mockResolvedValue(response);
-            await expect(organisationController.getRootOrganisation()).resolves.not.toThrow();
+            await expect(organisationController.getRootOrganisation(peronPermissionsMock)).resolves.not.toThrow();
             expect(organisationUcMock.findRootOrganisation).toHaveBeenCalledTimes(1);
         });
 
@@ -409,7 +422,9 @@ describe('OrganisationController', () => {
                 subcode: '0',
             });
             organisationUcMock.findRootOrganisation.mockResolvedValue(mockError);
-            await expect(organisationController.getRootOrganisation()).rejects.toThrow(HttpException);
+            await expect(organisationController.getRootOrganisation(peronPermissionsMock)).rejects.toThrow(
+                HttpException,
+            );
             expect(organisationUcMock.findRootOrganisation).toHaveBeenCalledTimes(1);
         });
     });
@@ -453,7 +468,11 @@ describe('OrganisationController', () => {
                 organisationUcMock.findAdministriertVon.mockResolvedValueOnce(mockedPagedResponse);
 
                 const result: Paged<OrganisationResponseLegacy> =
-                    await organisationController.getAdministrierteOrganisationen(routeParams, queryParams);
+                    await organisationController.getAdministrierteOrganisationen(
+                        routeParams,
+                        queryParams,
+                        peronPermissionsMock,
+                    );
 
                 expect(result).toEqual(mockedPagedResponse);
                 expect(organisationUcMock.findAdministriertVon).toHaveBeenCalledTimes(1);
@@ -467,7 +486,11 @@ describe('OrganisationController', () => {
                     new SchulConnexError({ code: 500, subcode: '', titel: '', beschreibung: '' }),
                 );
                 await expect(
-                    organisationController.getAdministrierteOrganisationen(routeParams, queryParams),
+                    organisationController.getAdministrierteOrganisationen(
+                        routeParams,
+                        queryParams,
+                        peronPermissionsMock,
+                    ),
                 ).rejects.toThrow(HttpException);
             });
         });
@@ -508,7 +531,7 @@ describe('OrganisationController', () => {
                 organisationUcMock.findZugehoerigZu.mockResolvedValue(mockedPagedResponse);
 
                 const result: Paged<OrganisationResponseLegacy> =
-                    await organisationController.getZugehoerigeOrganisationen(params);
+                    await organisationController.getZugehoerigeOrganisationen(params, peronPermissionsMock);
 
                 expect(result).toEqual(mockedPagedResponse);
                 expect(organisationUcMock.findZugehoerigZu).toHaveBeenCalledTimes(1);
@@ -521,9 +544,9 @@ describe('OrganisationController', () => {
                 organisationUcMock.findZugehoerigZu.mockResolvedValueOnce(
                     new SchulConnexError({ code: 500, subcode: '', titel: '', beschreibung: '' }),
                 );
-                await expect(organisationController.getZugehoerigeOrganisationen(params)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    organisationController.getZugehoerigeOrganisationen(params, peronPermissionsMock),
+                ).rejects.toThrow(HttpException);
             });
         });
     });

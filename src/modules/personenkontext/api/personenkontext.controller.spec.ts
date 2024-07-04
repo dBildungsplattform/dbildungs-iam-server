@@ -222,7 +222,8 @@ describe('PersonenkontextController', () => {
                     ROLLEN_VERWALTEN: organisationResponses,
                 };
                 personenkontextUcMock.hatSystemRecht.mockResolvedValue(systemrechtResponse);
-                const response: SystemrechtResponse = await sut.hatSystemRecht(idParams, bodyParams);
+                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const response: SystemrechtResponse = await sut.hatSystemRecht(idParams, bodyParams, permissionsMock);
                 expect(response.ROLLEN_VERWALTEN).toHaveLength(1);
                 expect(personenkontextUcMock.hatSystemRecht).toHaveBeenCalledTimes(1);
             });
@@ -237,7 +238,8 @@ describe('PersonenkontextController', () => {
                     systemRecht: 'FALSCHER_RECHTE_NAME',
                 };
                 personenkontextUcMock.hatSystemRecht.mockRejectedValue(new EntityNotFoundError());
-                await expect(sut.hatSystemRecht(idParams, bodyParams)).rejects.toThrow(HttpException);
+                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                await expect(sut.hatSystemRecht(idParams, bodyParams, permissionsMock)).rejects.toThrow(HttpException);
                 expect(personenkontextUcMock.hatSystemRecht).toHaveBeenCalledTimes(0);
             });
         });

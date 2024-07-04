@@ -1,6 +1,6 @@
 import { MikroORM } from '@mikro-orm/core';
-import { INestApplication } from '@nestjs/common';
-import { APP_PIPE } from '@nestjs/core';
+import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
+import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
@@ -14,14 +14,19 @@ import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
-import { createMock } from '@golevelup/ts-jest';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
 import { Client } from 'openid-client';
+import { Observable } from 'rxjs';
+import { PassportUser } from '../../authentication/types/user.js';
+import { Request } from 'express';
+import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let serviceProviderRepo: ServiceProviderRepo;
+    let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -40,11 +45,30 @@ describe('ServiceProvider API', () => {
                     provide: OIDC_CLIENT,
                     useValue: createMock<Client>(),
                 },
+                {
+                    provide: APP_INTERCEPTOR,
+                    useValue: {
+                        intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+                            const req: Request = context.switchToHttp().getRequest();
+                            req.passportUser = createMock<PassportUser>({
+                                async personPermissions() {
+                                    return personpermissionsRepoMock.loadPersonPermissions('');
+                                },
+                            });
+                            return next.handle();
+                        },
+                    },
+                },
+                {
+                    provide: PersonPermissionsRepo,
+                    useValue: createMock<PersonPermissionsRepo>(),
+                },
             ],
         }).compile();
 
         orm = module.get(MikroORM);
         serviceProviderRepo = module.get(ServiceProviderRepo);
+        personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
