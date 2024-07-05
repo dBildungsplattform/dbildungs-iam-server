@@ -19,4 +19,14 @@ export class LdapClient {
         }
         return this.client;
     }
+
+    public async disconnect(): Promise<boolean> {
+        if (this.client) {
+            await this.client.unbind();
+            this.client = undefined;
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
