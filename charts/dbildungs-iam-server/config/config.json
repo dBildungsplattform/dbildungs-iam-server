@@ -29,7 +29,7 @@
   "LDAP": {
     "URL": "ldap://spsh-xxx.svc.cluster.local",
     "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
-    "PASSWORD": "password"
+    "ADMIN_PASSWORD": "password"
   },
   "DATA": {
     "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
