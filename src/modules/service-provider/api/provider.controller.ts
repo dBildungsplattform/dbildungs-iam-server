@@ -47,9 +47,7 @@ export class ProviderController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
-    public async getAllServiceProviders(
-        @Permissions() _permissions: PersonPermissions,
-    ): Promise<ServiceProviderResponse[]> {
+    public async getAllServiceProviders(): Promise<ServiceProviderResponse[]> {
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find({ withLogo: false });
         const response: ServiceProviderResponse[] = serviceProviders.map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
@@ -103,10 +101,7 @@ export class ProviderController {
     @ApiNotFoundResponse({ description: 'The service-provider does not exist or has no logo.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the logo.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the logo.' })
-    public async getServiceProviderLogo(
-        @Param() params: AngebotByIdParams,
-        @Permissions() _permissions: PersonPermissions,
-    ): Promise<StreamableFile> {
+    public async getServiceProviderLogo(@Param() params: AngebotByIdParams): Promise<StreamableFile> {
         const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
             params.angebotId,
             { withLogo: true },

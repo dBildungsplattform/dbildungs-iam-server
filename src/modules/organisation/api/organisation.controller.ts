@@ -121,9 +121,7 @@ export class OrganisationController {
     @ApiNotFoundResponse({ description: 'The organization does not exist.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
-    public async getRootOrganisation(
-        @Permissions() _permissions: PersonPermissions,
-    ): Promise<OrganisationResponseLegacy> {
+    public async getRootOrganisation(): Promise<OrganisationResponseLegacy> {
         const result: OrganisationResponseLegacy | SchulConnexError = await this.uc.findRootOrganisation();
 
         if (result instanceof OrganisationResponseLegacy) {
@@ -141,9 +139,7 @@ export class OrganisationController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the organizations.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organizations.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
-    public async getRootChildren(
-        @Permissions() _permissions: PersonPermissions,
-    ): Promise<OrganisationRootChildrenResponse> {
+    public async getRootChildren(): Promise<OrganisationRootChildrenResponse> {
         const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
             await this.organisationRepository.findRootDirectChildren();
 
@@ -165,10 +161,7 @@ export class OrganisationController {
     @ApiNotFoundResponse({ description: 'The organization does not exist.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
-    public async findOrganisationById(
-        @Param() params: OrganisationByIdParams,
-        @Permissions() _permissions: PersonPermissions,
-    ): Promise<OrganisationResponseLegacy> {
+    public async findOrganisationById(@Param() params: OrganisationByIdParams): Promise<OrganisationResponseLegacy> {
         const result: OrganisationResponseLegacy | SchulConnexError = await this.uc.findOrganisationById(
             params.organisationId,
         );
@@ -253,7 +246,6 @@ export class OrganisationController {
     public async getAdministrierteOrganisationen(
         @Param() routeParams: OrganisationByIdParams,
         @Query() queryParams: OrganisationByIdQueryParams,
-        @Permissions() _permissions: PersonPermissions,
     ): Promise<PagedResponse<OrganisationResponseLegacy>> {
         const result: Paged<OrganisationResponseLegacy> | SchulConnexError = await this.uc.findAdministriertVon(
             routeParams.organisationId,
@@ -302,7 +294,6 @@ export class OrganisationController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
     public async getZugehoerigeOrganisationen(
         @Param() params: OrganisationByIdParams,
-        @Permissions() _permissions: PersonPermissions,
     ): Promise<PagedResponse<OrganisationResponseLegacy>> {
         const result: Paged<OrganisationResponseLegacy> | SchulConnexError = await this.uc.findZugehoerigZu(
             params.organisationId,

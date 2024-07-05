@@ -112,7 +112,6 @@ describe('OpenIdConnectStrategy', () => {
         it('should throw KeycloakUserNotFoundError if keycloak-user does not exist', async () => {
             jest.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createMock<UserinfoResponse>());
             personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
-
             await expect(sut.validate(new TokenSet())).rejects.toThrow(KeycloakUserNotFoundError);
         });
     });

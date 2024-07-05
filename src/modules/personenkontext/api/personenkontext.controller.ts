@@ -171,7 +171,6 @@ export class PersonenkontextController {
     public async hatSystemRecht(
         @Param() personByIdParams: PersonByIdParams,
         @Query() hatSystemrechtQueryParams: HatSystemrechtQueryParams,
-        @Permissions() _permissions: PersonPermissions,
     ): Promise<SystemrechtResponse> {
         if (!isEnum(hatSystemrechtQueryParams.systemRecht, RollenSystemRecht)) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(

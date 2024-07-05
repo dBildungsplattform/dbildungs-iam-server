@@ -128,7 +128,6 @@ export class RolleController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rolle by id.' })
     public async findRolleByIdWithServiceProviders(
         @Param() findRolleByIdParams: FindRolleByIdParams,
-        @Permissions() _permissions: PersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (!rolle) {
@@ -210,7 +209,6 @@ export class RolleController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve service-providers for rolle.' })
     public async getRolleServiceProviderIds(
         @Param() findRolleByIdParams: FindRolleByIdParams,
-        @Permissions() _permissions: PersonPermissions,
     ): Promise<RolleServiceProviderResponse> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (!rolle) {
