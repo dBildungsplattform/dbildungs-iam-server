@@ -14,6 +14,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { CreateGroupAction, CreateGroupParams } from '../actions/create-group.action.js';
 import { GroupResponse, ReadGroupAction } from '../actions/read-group.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
+import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
 
 @Injectable()
 export class ItsLearningOrganisationsEventHandler {
@@ -65,7 +66,7 @@ export class ItsLearningOrganisationsEventHandler {
 
             const params: CreateGroupParams = {
                 id: organisation.id,
-                name: organisation.name ?? 'Unbenannte Schule',
+                name: `${organisation.kennung} (${organisation.name ?? 'Unbenannte Schule'})`,
                 type: 'School',
                 parentId: parent,
             };
@@ -86,11 +87,59 @@ export class ItsLearningOrganisationsEventHandler {
             const result: Result<void, DomainError> = await this.itsLearningService.send(action);
 
             if (!result.ok) {
-                this.logger.error(`Could not create Schule in itsLearning: ${result.error.message}`);
+                return this.logger.error(`Could not create Schule in itsLearning: ${result.error.message}`);
             }
 
             this.logger.info(`Schule with ID ${organisation.id} created.`);
         }
+    }
+
+    @EventHandler(KlasseCreatedEvent)
+    public async createKlasseEventHandler(event: KlasseCreatedEvent): Promise<void> {
+        this.logger.info(`Received KlasseCreatedEvent, ID: ${event.id}`);
+
+        if (!this.ENABLED) {
+            this.logger.info('Not enabled, ignoring event.');
+            return;
+        }
+
+        if (!event.administriertVon) {
+            return this.logger.error('Klasse has no parent organisation. Aborting.');
+        }
+
+        if (!event.name) {
+            return this.logger.error('Klasse has no name. Aborting.');
+        }
+
+        {
+            // Check if parent exists in itsLearning
+            const readAction: ReadGroupAction = new ReadGroupAction(event.administriertVon);
+            const result: Result<GroupResponse, DomainError> = await this.itsLearningService.send(readAction);
+
+            if (!result.ok) {
+                // Klasse already exists, keep relationship
+                return this.logger.error(
+                    `Parent Organisation (${event.administriertVon}) does not exist in itsLearning.`,
+                );
+            }
+        }
+
+        const params: CreateGroupParams = {
+            id: event.id,
+            name: event.name,
+            type: 'Course',
+            parentId: event.administriertVon,
+        };
+
+        const action: CreateGroupAction = new CreateGroupAction(params);
+
+        const result: Result<void, DomainError> = await this.itsLearningService.send(action);
+
+        if (!result.ok) {
+            return this.logger.error(`Could not create Klasse in itsLearning: ${result.error.message}`);
+        }
+
+        this.logger.info(`Klasse with ID ${event.id} created.`);
     }
 
     private async findParentId(organisation: Organisation<true>): Promise<OrganisationID> {
