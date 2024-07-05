@@ -7,6 +7,7 @@ import {
     HttpStatus,
     Inject,
     Param,
+    Post,
     Put,
     Query,
     UseFilters,
@@ -15,6 +16,7 @@ import {
     ApiBadRequestResponse,
     ApiBearerAuth,
     ApiConflictResponse,
+    ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiOAuth2,
@@ -45,8 +47,16 @@ import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-pers
 import { PersonenkontexteUpdateResponse } from './response/personenkontexte-update.response.js';
 import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-update.error.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { DBiamPersonResponse } from './response/dbiam-person.response.js';
+import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
+import { DbiamCreatePersonWithContextBodyParams } from './param/dbiam-create-person-with-context.body.params.js';
+import { PersonPersonenkontext, PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
+import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
+import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter)
+@UseFilters(SchulConnexValidationErrorFilter, new PersonenkontextExceptionFilter())
 @ApiTags('personenkontext')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -54,12 +64,13 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 export class DbiamPersonenkontextWorkflowController {
     public constructor(
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
+        private readonly personenkontextCreationService: PersonenkontextCreationService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
     @Get('step')
     @ApiOkResponse({
-        description: `Initialize or process data from the person creation form. 
+        description: `Initialize or process data from the person creation form.
                       Valid combinations:
                       - Both organisationId and rolleId are undefined: Fetch all possible organisations.
                       - organisationId is provided, but rolleId is undefined: Fetch Rollen for the given organisation.
@@ -202,5 +213,52 @@ export class DbiamPersonenkontextWorkflowController {
         );
 
         return response;
+    }
+
+    @Post()
+    @HttpCode(HttpStatus.CREATED)
+    @ApiCreatedResponse({
+        description: 'Person with Personenkontext was successfully created.',
+        type: DBiamPersonResponse,
+    })
+    @ApiBadRequestResponse({
+        description: 'The person and the personenkontext could not be created, may due to unsatisfied specifications.',
+        type: DbiamPersonenkontextError,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to create person with personenkontext.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permission to create person with personenkontext.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person with personenkontext.' })
+    @ApiBadRequestResponse({ description: 'Request has wrong format.', type: DbiamPersonenkontextError })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while creating person with personenkontext.',
+    })
+    public async createPersonWithKontext(
+        @Body() params: DbiamCreatePersonWithContextBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<DBiamPersonResponse> {
+        //Check all references & permissions then save person
+        const savedPersonWithPersonenkontext: PersonPersonenkontext | DomainError | PersonenkontextCommitError =
+            await this.personenkontextCreationService.createPersonWithPersonenkontext(
+                permissions,
+                params.vorname,
+                params.familienname,
+                params.organisationId,
+                params.rolleId,
+            );
+
+        if (savedPersonWithPersonenkontext instanceof PersonenkontextSpecificationError) {
+            throw savedPersonWithPersonenkontext;
+        }
+
+        if (savedPersonWithPersonenkontext instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(savedPersonWithPersonenkontext),
+            );
+        }
+
+        return new DBiamPersonResponse(
+            savedPersonWithPersonenkontext.person,
+            savedPersonWithPersonenkontext.personenkontext,
+        );
     }
 }

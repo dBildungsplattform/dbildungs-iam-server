@@ -34,10 +34,6 @@ import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-updat
 import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
 import { PersonenkontexteUpdateResponse } from './response/personenkontexte-update.response.js';
-import { DBiamPersonResponse } from './response/dbiam-person.response.js';
-import { DbiamCreatePersonWithContextBodyParams } from './param/dbiam-create-person-with-context.body.params.js';
-import { PersonPersonenkontext, PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
-import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -54,7 +50,6 @@ export class DBiamPersonenkontextController {
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
         private readonly personenkontextFactory: PersonenkontextFactory,
-        private readonly personenkontextCreationService: PersonenkontextCreationService,
     ) {}
 
     @Get(':personId')
@@ -162,52 +157,5 @@ export class DBiamPersonenkontextController {
         }
 
         return new PersonenkontexteUpdateResponse(updateResult);
-    }
-
-    @Post('/person')
-    @HttpCode(HttpStatus.CREATED)
-    @ApiCreatedResponse({
-        description: 'Person with Personenkontext was successfully created.',
-        type: DBiamPersonResponse,
-    })
-    @ApiBadRequestResponse({
-        description: 'The person and the personenkontext could not be created, may due to unsatisfied specifications.',
-        type: DbiamPersonenkontextError,
-    })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to create person with personenkontext.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permission to create person with personenkontext.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person with personenkontext.' })
-    @ApiBadRequestResponse({ description: 'Request has wrong format.', type: DbiamPersonenkontextError })
-    @ApiInternalServerErrorResponse({
-        description: 'Internal server error while creating person with personenkontext.',
-    })
-    public async createPersonWithKontext(
-        @Body() params: DbiamCreatePersonWithContextBodyParams,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<DBiamPersonResponse> {
-        //Check all references & permissions then save person
-        const savedPersonWithPersonenkontext: PersonPersonenkontext | DomainError | PersonenkontextCommitError =
-            await this.personenkontextCreationService.createPersonWithPersonenkontext(
-                permissions,
-                params.vorname,
-                params.familienname,
-                params.organisationId,
-                params.rolleId,
-            );
-
-        if (savedPersonWithPersonenkontext instanceof PersonenkontextSpecificationError) {
-            throw savedPersonWithPersonenkontext;
-        }
-
-        if (savedPersonWithPersonenkontext instanceof DomainError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(savedPersonWithPersonenkontext),
-            );
-        }
-
-        return new DBiamPersonResponse(
-            savedPersonWithPersonenkontext.person,
-            savedPersonWithPersonenkontext.personenkontext,
-        );
     }
 }
