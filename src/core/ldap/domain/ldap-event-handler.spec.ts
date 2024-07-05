@@ -140,7 +140,7 @@ describe('LDAP Event Handler', () => {
                 organisationRepositoryMock.findById.mockResolvedValueOnce(organisation);
                 ldapClientServiceMock.createOrganisation.mockResolvedValueOnce(result);
 
-                await ldapEventHandler.asyncSchuleCreatedEventHandler(event);
+                await ldapEventHandler.handleSchuleCreatedEvent(event);
                 expect(ldapClientServiceMock.createOrganisation).toHaveBeenCalledTimes(1);
             });
         });
@@ -161,7 +161,7 @@ describe('LDAP Event Handler', () => {
                 organisationRepositoryMock.findById.mockResolvedValueOnce(organisation);
                 ldapClientServiceMock.createOrganisation.mockResolvedValueOnce(result);
 
-                await ldapEventHandler.asyncSchuleCreatedEventHandler(event);
+                await ldapEventHandler.handleSchuleCreatedEvent(event);
                 expect(ldapClientServiceMock.createOrganisation).toHaveBeenCalledTimes(1);
             });
         });
@@ -172,7 +172,7 @@ describe('LDAP Event Handler', () => {
 
                 organisationRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
-                await ldapEventHandler.asyncSchuleCreatedEventHandler(event);
+                await ldapEventHandler.handleSchuleCreatedEvent(event);
                 expect(ldapClientServiceMock.createOrganisation).toHaveBeenCalledTimes(0);
             });
         });
@@ -196,7 +196,7 @@ describe('LDAP Event Handler', () => {
                 organisationRepositoryMock.findById.mockResolvedValueOnce(organisation);
                 ldapClientServiceMock.deleteOrganisation.mockResolvedValueOnce(result);
 
-                await ldapEventHandler.asyncSchuleDeletedEventHandler(event);
+                await ldapEventHandler.handleSchuleDeletedEvent(event);
                 expect(ldapClientServiceMock.deleteOrganisation).toHaveBeenCalledTimes(1);
             });
         });
@@ -218,7 +218,7 @@ describe('LDAP Event Handler', () => {
                 organisationRepositoryMock.findById.mockResolvedValueOnce(organisation);
                 ldapClientServiceMock.deleteOrganisation.mockResolvedValueOnce(result);
 
-                await ldapEventHandler.asyncSchuleDeletedEventHandler(event);
+                await ldapEventHandler.handleSchuleDeletedEvent(event);
                 expect(ldapClientServiceMock.deleteOrganisation).toHaveBeenCalledTimes(1);
             });
         });
@@ -229,7 +229,7 @@ describe('LDAP Event Handler', () => {
 
                 organisationRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
-                await ldapEventHandler.asyncSchuleDeletedEventHandler(event);
+                await ldapEventHandler.handleSchuleDeletedEvent(event);
                 expect(ldapClientServiceMock.deleteOrganisation).toHaveBeenCalledTimes(0);
             });
         });
@@ -246,7 +246,7 @@ describe('LDAP Event Handler', () => {
 
                 dbiamPersonenkontextRepoMock.find.mockResolvedValueOnce(undefined);
 
-                await ldapEventHandler.asyncPersonenkontextCreatedEventHandler(event);
+                await ldapEventHandler.handlePersonenkontextCreatedEvent(event);
                 expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
             });
         });
@@ -263,7 +263,7 @@ describe('LDAP Event Handler', () => {
                 dbiamPersonenkontextRepoMock.find.mockResolvedValueOnce(personenkontext);
                 rolleRepoMock.findById.mockResolvedValueOnce(undefined);
 
-                await ldapEventHandler.asyncPersonenkontextCreatedEventHandler(event);
+                await ldapEventHandler.handlePersonenkontextCreatedEvent(event);
                 expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
             });
         });
@@ -282,7 +282,7 @@ describe('LDAP Event Handler', () => {
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
-                await ldapEventHandler.asyncPersonenkontextCreatedEventHandler(event);
+                await ldapEventHandler.handlePersonenkontextCreatedEvent(event);
                 expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
             });
         });
@@ -303,7 +303,7 @@ describe('LDAP Event Handler', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 organisationRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
-                await ldapEventHandler.asyncPersonenkontextCreatedEventHandler(event);
+                await ldapEventHandler.handlePersonenkontextCreatedEvent(event);
                 expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
             });
         });
@@ -329,7 +329,7 @@ describe('LDAP Event Handler', () => {
                     ok: false,
                     error: new Error(),
                 });
-                await ldapEventHandler.asyncPersonenkontextCreatedEventHandler(event);
+                await ldapEventHandler.handlePersonenkontextCreatedEvent(event);
                 expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(1);
             });
         });
@@ -346,7 +346,7 @@ describe('LDAP Event Handler', () => {
 
                 dbiamPersonenkontextRepoMock.find.mockResolvedValueOnce(undefined);
 
-                await ldapEventHandler.asyncPersonenkontextDeletedEventHandler(event);
+                await ldapEventHandler.handlePersonenkontextDeletedEvent(event);
                 expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(0);
             });
         });
@@ -363,7 +363,7 @@ describe('LDAP Event Handler', () => {
                 dbiamPersonenkontextRepoMock.find.mockResolvedValueOnce(personenkontext);
                 rolleRepoMock.findById.mockResolvedValueOnce(undefined);
 
-                await ldapEventHandler.asyncPersonenkontextDeletedEventHandler(event);
+                await ldapEventHandler.handlePersonenkontextDeletedEvent(event);
                 expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(0);
             });
         });
@@ -382,7 +382,7 @@ describe('LDAP Event Handler', () => {
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
-                await ldapEventHandler.asyncPersonenkontextDeletedEventHandler(event);
+                await ldapEventHandler.handlePersonenkontextDeletedEvent(event);
                 expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(0);
             });
         });
@@ -403,7 +403,7 @@ describe('LDAP Event Handler', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 organisationRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
-                await ldapEventHandler.asyncPersonenkontextDeletedEventHandler(event);
+                await ldapEventHandler.handlePersonenkontextDeletedEvent(event);
                 expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(0);
             });
         });
@@ -429,7 +429,7 @@ describe('LDAP Event Handler', () => {
                     ok: false,
                     error: new Error(),
                 });
-                await ldapEventHandler.asyncPersonenkontextDeletedEventHandler(event);
+                await ldapEventHandler.handlePersonenkontextDeletedEvent(event);
                 expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
             });
         });

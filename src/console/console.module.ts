@@ -24,7 +24,6 @@ import { Migrator, TSMigrationGenerator } from '@mikro-orm/migrations';
 import { DbInitMigrationConsole } from './dbmigrate/db-init-migration.console.js';
 import { DbCreateMigrationConsole } from './dbmigrate/db-create-migration.console.js';
 import { DbApplyMigrationConsole } from './dbmigrate/db-apply-migration.console.js';
-import { LdapModule } from '../core/ldap/ldap.module.js';
 
 @Module({
     imports: [
@@ -37,7 +36,6 @@ import { LdapModule } from '../core/ldap/ldap.module.js';
         PersonenKontextModule,
         DbSeedModule,
         LoggerModule.register(ConsoleModule.name),
-        LdapModule,
         ConfigModule.forRoot({
             isGlobal: true,
             load: [loadConfigFiles],
