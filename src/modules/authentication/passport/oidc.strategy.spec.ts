@@ -114,5 +114,15 @@ describe('OpenIdConnectStrategy', () => {
             personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
             await expect(sut.validate(new TokenSet())).rejects.toThrow(KeycloakUserNotFoundError);
         });
+
+        it('should revoke token if keycloak-user does not exist', async () => {
+            jest.spyOn(openIdClient, 'userinfo').mockResolvedValueOnce(createMock<UserinfoResponse>());
+            jest.spyOn(openIdClient, 'revoke').mockResolvedValueOnce(undefined);
+            personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
+            await expect(sut.validate(new TokenSet({ access_token: faker.string.alpha(32) }))).rejects.toThrow(
+                KeycloakUserNotFoundError,
+            );
+            expect(openIdClient.revoke).toHaveBeenCalled();
+        });
     });
 });
