@@ -13,7 +13,7 @@ import { KeycloakAdministrationModule } from '../../modules/keycloak-administrat
 import { DbSeedRepo } from './repo/db-seed.repo.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { DbSeedReferenceRepo } from './repo/db-seed-reference.repo.js';
-import {LdapModule} from "../../core/ldap/ldap.module.js";
+import { LdapModule } from '../../core/ldap/ldap.module.js';
 
 @Module({
     imports: [
