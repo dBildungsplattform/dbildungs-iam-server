@@ -17,6 +17,8 @@ import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { OrganisationScope } from '../../organisation/persistence/organisation.scope.js';
+import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 
 export class PersonenkontextWorkflowAggregate {
     public selectedOrganisationId?: string;
@@ -56,15 +58,33 @@ export class PersonenkontextWorkflowAggregate {
         organisationName: string | undefined,
         limit?: number,
     ): Promise<OrganisationDo<true>[]> {
-        let allOrganisations: OrganisationDo<boolean>[] = [];
+        const scope: OrganisationScope = new OrganisationScope();
+        scope
+            .searchString(organisationName)
+            .setScopeWhereOperator(ScopeOperator.AND)
+            .excludeTyp([OrganisationsTyp.KLASSE]);
+
+        let allOrganisationsExceptKlassen: OrganisationDo<boolean>[] = [];
+        let total: number = 0;
         // If the search string for organisation is present then search for Name or Kennung
         if (organisationName) {
-            allOrganisations = await this.organisationRepo.findByNameOrKennung(organisationName);
+            // allOrganisationsExceptKlassen= await this.organisationRepo.findByNameOrKennung(organisationName);
+
+            scope
+                .searchString(organisationName)
+                .setScopeWhereOperator(ScopeOperator.AND)
+                .excludeTyp([OrganisationsTyp.KLASSE]);
+
+            [allOrganisationsExceptKlassen, total] = await this.organisationRepo.findBy(scope);
         } else {
             // Otherwise just retrieve all orgas
-            allOrganisations = await this.organisationRepo.find(limit);
+            //allOrganisations = await this.organisationRepo.find(limit);
+            //Retrieve except klassen
+
+            scope.excludeTyp([OrganisationsTyp.KLASSE]).paged(0, limit);
+            [allOrganisationsExceptKlassen, total] = await this.organisationRepo.findBy(scope);
         }
-        if (allOrganisations.length === 0) return [];
+        if (total === 0) return [];
 
         const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
@@ -72,13 +92,13 @@ export class PersonenkontextWorkflowAggregate {
         );
         //TODO: Query the filtering of Organisations in the DB
         // Return only the orgas that the admin have rights on
-        let filteredOrganisations: OrganisationDo<boolean>[] = allOrganisations.filter(
+        const filteredOrganisations: OrganisationDo<boolean>[] = allOrganisationsExceptKlassen.filter(
             (orga: OrganisationDo<boolean>) => orgsWithRecht.includes(orga.id as OrganisationID),
         );
         // Exclude Klassen from the orgas as they are separately chosen through another EP
-        filteredOrganisations = filteredOrganisations.filter(
-            (orga: OrganisationDo<boolean>) => orga.typ !== OrganisationsTyp.KLASSE,
-        );
+        // filteredOrganisations = filteredOrganisations.filter(
+        //     (orga: OrganisationDo<boolean>) => orga.typ !== OrganisationsTyp.KLASSE,
+        // );
 
         // Sort the filtered organizations, handling undefined kennung and name
         filteredOrganisations.sort((a: OrganisationDo<boolean>, b: OrganisationDo<boolean>) => {
