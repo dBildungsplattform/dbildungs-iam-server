@@ -323,6 +323,10 @@ describe('Rolle API', () => {
     describe('/GET rolle by id', () => {
         it('should return rolle', async () => {
             const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
+            /* const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(personpermissions);
+*/
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/rolle/${rolle.id}`)
                 .send();
