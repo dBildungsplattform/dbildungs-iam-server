@@ -12,9 +12,9 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Person } from '../../person/domain/person.js';
 import { PersonPermissions } from './person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { UnauthorizedException } from '@nestjs/common';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { KeycloakUserNotFoundError } from './keycloak-user-not-found.error.js';
 
 describe('PersonPermissionRepo', () => {
     let module: TestingModule;
@@ -82,7 +82,7 @@ describe('PersonPermissionRepo', () => {
         describe('when person cannot be found', () => {
             it('should throw exception', async () => {
                 personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
-                await expect(sut.loadPersonPermissions(faker.string.uuid())).rejects.toThrow(UnauthorizedException);
+                await expect(sut.loadPersonPermissions(faker.string.uuid())).rejects.toThrow(KeycloakUserNotFoundError);
             });
         });
     });
