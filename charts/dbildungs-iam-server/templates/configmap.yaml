@@ -8,7 +8,7 @@ metadata:
 data:
   config-json: |-
     {{ .Files.Get "config/config.json" | nindent 4 }}
-  NODE_ENV: {{ .Values.environment | quote }}
+  NODE_ENV: "prod"
   DEPLOY_STAGE: {{ .Values.environment | quote }}
   DB_NAME: {{ .Values.database.name | quote }}
   KC_BASE_URL: "https://{{ .Values.keycloakHostname }}"

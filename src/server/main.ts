@@ -51,15 +51,13 @@ async function bootstrap(): Promise<void> {
     } else {
         redirectUrl = `http://localhost:${port}/docs/oauth2-redirect.html`;
     }
-
+    console.log('Envi: ' + process.env['DEPLOY_STAGE']);
     SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger), {
         swaggerOptions: {
             persistAuthorization: false,
             initOAuth: {
                 clientId:
-                    process.env['DEPLOY_STAGE'] === 'dev' || process.env['NODE_ENV'] === 'dev'
-                        ? keycloakConfig.TEST_CLIENT_ID
-                        : keycloakConfig.CLIENT_ID,
+                    process.env['DEPLOY_STAGE'] === 'dev' ? keycloakConfig.TEST_CLIENT_ID : keycloakConfig.CLIENT_ID,
                 clientSecret: keycloakConfig.CLIENT_SECRET,
                 realm: keycloakConfig.REALM_NAME,
                 usePkceWithAuthorizationCodeGrant: true,

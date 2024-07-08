@@ -1021,8 +1021,8 @@
         "clientAuthenticatorType": "client-secret",
         "secret": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M",
         "redirectUris": [
-           "https://127.0,0.1:8099/*",
-			"http://127.0,0.1:9090/*",
+           "https://127.0.0.1:8099/*",
+			"http://127.0.0.1:9090/*",
 			"http://localhost:9090/*",
 			"/*"
         ],
