@@ -14,6 +14,7 @@ import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RolleNameQueryParams } from './rolle-name-query.param.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -84,11 +85,14 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                 const params: RolleNameQueryParams = {
                     searchStr: faker.string.alpha(),
                 };
+                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+
                 //mock getRollenByName
                 rolleRepoMock.findByName.mockResolvedValueOnce(undefined);
                 //mock call to get sp (direct in controller-method)
                 serviceProviderRepoMock.findById.mockResolvedValueOnce(undefined);
-                await expect(rolleController.findRollen(params)).resolves.not.toThrow(Error);
+                await expect(rolleController.findRollen(params, permissions)).resolves.not.toThrow(Error);
             });
         });
     });

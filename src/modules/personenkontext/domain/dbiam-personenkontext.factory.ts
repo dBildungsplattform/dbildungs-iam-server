@@ -3,7 +3,6 @@ import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.r
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { PersonID } from '../../../shared/types/index.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { EventService } from '../../../core/eventbus/index.js';
 
@@ -13,7 +12,6 @@ export class DbiamPersonenkontextFactory {
         private personenkontextFactory: PersonenkontextFactory,
         private readonly eventService: EventService,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
-        private readonly logger: ClassLogger,
     ) {}
 
     public createNewPersonenkontexteUpdate(
@@ -24,7 +22,6 @@ export class DbiamPersonenkontextFactory {
     ): PersonenkontexteUpdate {
         return PersonenkontexteUpdate.createNew(
             this.eventService,
-            this.logger,
             this.dBiamPersonenkontextRepo,
             this.personenkontextFactory,
             personId,

@@ -7,8 +7,10 @@ import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { RolleServiceProviderEntity } from '../entity/rolle-service-provider.entity.js';
-import { RolleID } from '../../../shared/types/index.js';
+import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -82,7 +84,7 @@ export class RolleRepo {
         return RolleEntity;
     }
 
-    public async findById(id: string): Promise<Option<Rolle<true>>> {
+    public async findById(id: RolleID): Promise<Option<Rolle<true>>> {
         const rolle: Option<RolleEntity> = await this.em.findOne(
             this.entityName,
             { id },
@@ -92,7 +94,38 @@ export class RolleRepo {
         return rolle && mapEntityToAggregate(rolle, this.rolleFactory);
     }
 
-    public async findByIds(ids: string[]): Promise<Map<string, Rolle<true>>> {
+    public async findByIdAuthorized(
+        rolleId: RolleID,
+        permissions: PersonPermissions,
+    ): Promise<Result<Rolle<true>, DomainError>> {
+        const rolle: Option<Rolle<true>> = await this.findById(rolleId);
+        if (!rolle) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError(),
+            };
+        }
+        const rolleAdministeringOrganisationId: OrganisationID = rolle.administeredBySchulstrukturknoten;
+
+        const relevantSystemRechte: RollenSystemRecht[] = [RollenSystemRecht.ROLLEN_VERWALTEN];
+
+        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+            relevantSystemRechte,
+            true,
+        );
+        if (organisationIDs.includes(rolleAdministeringOrganisationId)) {
+            return {
+                ok: true,
+                value: rolle,
+            };
+        }
+        return {
+            ok: false,
+            error: new MissingPermissionsError('Not allowed to view the requested rolle.'),
+        };
+    }
+
+    public async findByIds(ids: RolleID[]): Promise<Map<string, Rolle<true>>> {
         const rollenEntities: RolleEntity[] = await this.em.find(
             RolleEntity,
             { id: { $in: ids } },
@@ -127,6 +160,42 @@ export class RolleRepo {
         });
 
         return rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
+    }
+
+    public async findRollenAuthorized(
+        permissions: PersonPermissions,
+        searchStr?: string,
+        limit?: number,
+        offset?: number,
+    ): Promise<Option<Rolle<true>[]>> {
+        let rollen: Option<RolleEntity[]>;
+        if (searchStr) {
+            rollen = await this.em.find(
+                this.entityName,
+                { name: { $ilike: '%' + searchStr + '%' } },
+                { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit, offset: offset },
+            );
+        } else {
+            rollen = await this.em.findAll(this.entityName, {
+                populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+                limit: limit,
+                offset: offset,
+            });
+        }
+        if (rollen.length === 0) {
+            return [];
+        }
+
+        const orgIdsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ROLLEN_VERWALTEN],
+            true,
+        );
+
+        const filteredRollen: RolleEntity[] = rollen.filter((rolle: RolleEntity) =>
+            orgIdsWithRecht.includes(rolle.administeredBySchulstrukturknoten),
+        );
+
+        return filteredRollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
     }
 
     public async exists(id: RolleID): Promise<boolean> {

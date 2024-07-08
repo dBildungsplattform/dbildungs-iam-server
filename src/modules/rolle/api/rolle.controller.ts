@@ -49,8 +49,11 @@ import { ServiceProviderResponse } from '../../service-provider/api/service-prov
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
-@UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter())
+@UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -75,18 +78,16 @@ export class RolleController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all rollen.' })
     public async findRollen(
         @Query() queryParams: RolleNameQueryParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
-        let rollen: Option<Rolle<true>[]>;
+        const rollen: Option<Rolle<true>[]> = await this.rolleRepo.findRollenAuthorized(
+            permissions,
+            queryParams.searchStr,
+            queryParams.limit,
+            queryParams.offset,
+        );
 
-        if (queryParams.searchStr) {
-            rollen = await this.rolleRepo.findByName(queryParams.searchStr, queryParams.limit, queryParams.offset);
-        } else {
-            rollen = await this.rolleRepo.find(queryParams.limit, queryParams.offset);
-        }
-
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
-
-        if (!rollen) {
+        if (!rollen || rollen.length === 0) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
                 total: 0,
                 offset: 0,
@@ -95,7 +96,7 @@ export class RolleController {
             };
             return new PagedResponse(pagedRolleWithServiceProvidersResponse);
         }
-
+        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {
                 const sps: ServiceProvider<true>[] = r.serviceProviderIds
@@ -126,9 +127,13 @@ export class RolleController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rolle by id.' })
     public async findRolleByIdWithServiceProviders(
         @Param() findRolleByIdParams: FindRolleByIdParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
-        if (!rolle) {
+        const rolleResult: Result<Rolle<true>> = await this.rolleRepo.findByIdAuthorized(
+            findRolleByIdParams.rolleId,
+            permissions,
+        );
+        if (!rolleResult.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId),
@@ -137,11 +142,11 @@ export class RolleController {
         }
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
 
-        const rolleServiceProviders: ServiceProvider<true>[] = rolle.serviceProviderIds
+        const rolleServiceProviders: ServiceProvider<true>[] = rolleResult.value.serviceProviderIds
             .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
             .filter(Boolean) as ServiceProvider<true>[];
 
-        return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
+        return new RolleWithServiceProvidersResponse(rolleResult.value, rolleServiceProviders);
     }
 
     @Post()

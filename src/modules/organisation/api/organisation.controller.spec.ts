@@ -336,7 +336,7 @@ describe('OrganisationController', () => {
                     faker.string.uuid(),
                     faker.string.uuid(),
                     faker.string.numeric(),
-                    'Öffentliche Schulen Land Schleswig Holstein',
+                    'Öffentliche Schulen Land Schleswig-Holstein',
                     faker.lorem.word(),
                     faker.string.uuid(),
                     OrganisationsTyp.ROOT,
@@ -349,13 +349,16 @@ describe('OrganisationController', () => {
                     faker.string.uuid(),
                     faker.string.uuid(),
                     faker.string.numeric(),
-                    'Ersatzschulen Land Schleswig Holstein',
+                    'Ersatzschulen Land Schleswig-Holstein',
                     faker.lorem.word(),
                     faker.string.uuid(),
                     OrganisationsTyp.SCHULE,
                     undefined,
                 );
-                const mockedRepoResponse: Organisation<true>[] = [oeffentlich, ersatz];
+                const mockedRepoResponse: [Organisation<true> | undefined, Organisation<true> | undefined] = [
+                    oeffentlich,
+                    ersatz,
+                ];
 
                 organisationRepositoryMock.findRootDirectChildren.mockResolvedValue(mockedRepoResponse);
 
@@ -369,33 +372,10 @@ describe('OrganisationController', () => {
         });
         describe('when oeffentlich || ersatz could not be found', () => {
             it('should return an error', async () => {
-                const oeffentlich: Organisation<true> = Organisation.construct(
-                    faker.string.uuid(),
-                    faker.date.past(),
-                    faker.date.recent(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.string.numeric(),
-                    'Random Schule',
-                    faker.lorem.word(),
-                    faker.string.uuid(),
-                    OrganisationsTyp.ROOT,
+                const mockedRepoResponse: [Organisation<true> | undefined, Organisation<true> | undefined] = [
                     undefined,
-                );
-                const ersatz: Organisation<true> = Organisation.construct(
-                    faker.string.uuid(),
-                    faker.date.past(),
-                    faker.date.recent(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.string.numeric(),
-                    'Random Schule 2',
-                    faker.lorem.word(),
-                    faker.string.uuid(),
-                    OrganisationsTyp.SCHULE,
                     undefined,
-                );
-                const mockedRepoResponse: Organisation<true>[] = [oeffentlich, ersatz];
+                ];
 
                 organisationRepositoryMock.findRootDirectChildren.mockResolvedValue(mockedRepoResponse);
 

@@ -15,3 +15,8 @@ export type LdapRoleEntry = {
     ou: string;
     objectclass: string[];
 };
+
+export enum LdapEntityType {
+    SCHULE = 'SCHULE',
+    LEHRER = 'LEHRER',
+}

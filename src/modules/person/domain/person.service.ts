@@ -5,6 +5,13 @@ import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { Person } from './person.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+
+export type PersonPersonenkontext = {
+    person: Person<true>;
+    personenkontext: Personenkontext<true>;
+};
 
 @Injectable()
 export class PersonService {

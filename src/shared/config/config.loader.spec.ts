@@ -23,6 +23,7 @@ describe('configloader', () => {
                     OIDC_CALLBACK_URL: 'http://localhost:9091/api/frontend/login',
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
                     LOGOUT_REDIRECT: '/logout',
+                    ERROR_PAGE_REDIRECT: '/error',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -46,9 +47,11 @@ describe('configloader', () => {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
                 ITSLEARNING: {
-                    ENABLED: true,
+                    ENABLED: 'true',
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
+                    ROOT_OEFFENTLICH: 'oeffentlich',
+                    ROOT_ERSATZ: 'ersatz',
                 },
             };
 
@@ -93,6 +96,7 @@ describe('configloader', () => {
                     OIDC_CALLBACK_URL: 'http://localhost:9091/api/frontend/login',
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
                     LOGOUT_REDIRECT: '/logout',
+                    ERROR_PAGE_REDIRECT: '/error',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -120,10 +124,12 @@ describe('configloader', () => {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
                 ITSLEARNING: {
-                    ENABLED: true,
+                    ENABLED: 'true',
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                    ROOT_OEFFENTLICH: 'oeffentlich',
+                    ROOT_ERSATZ: 'ersatz',
                 },
             };
 

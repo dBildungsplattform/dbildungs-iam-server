@@ -3,6 +3,7 @@ import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
 import { UpdateCountError } from '../domain/error/update-count.error.js';
+import { UpdateNotFoundError } from '../domain/error/update-not-found.error.js';
 import { UpdateOutdatedError } from '../domain/error/update-outdated.error.js';
 import { UpdatePersonIdMismatchError } from '../domain/error/update-person-id-mismatch.error.js';
 import {
@@ -20,6 +21,13 @@ export class PersonenkontexteUpdateExceptionFilter implements ExceptionFilter<Pe
             new DbiamPersonenkontexteUpdateError({
                 code: 400,
                 i18nKey: PersonenkontexteUpdateErrorI18nTypes.COUNT_MISMATCHING,
+            }),
+        ],
+        [
+            UpdateNotFoundError.name,
+            new DbiamPersonenkontexteUpdateError({
+                code: 400,
+                i18nKey: PersonenkontexteUpdateErrorI18nTypes.PERSONENKONTEXT_NOT_FOUND,
             }),
         ],
         [

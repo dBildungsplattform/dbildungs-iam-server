@@ -66,6 +66,14 @@ export class OrganisationRepo {
         return !!organisation;
     }
 
+    public async find(limit?: number, offset?: number): Promise<OrganisationDo<boolean>[]> {
+        const organisations: OrganisationEntity[] = await this.em.findAll(OrganisationEntity, {
+            limit: limit,
+            offset: offset,
+        });
+        return this.mapper.mapArray(organisations, OrganisationEntity, OrganisationDo);
+    }
+
     public async findById(id: string): Promise<Option<OrganisationDo<true>>> {
         const organisation: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
         if (organisation) {
