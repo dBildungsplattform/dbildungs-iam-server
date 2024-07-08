@@ -59,17 +59,11 @@ export class PersonenkontextWorkflowAggregate {
         limit?: number,
     ): Promise<OrganisationDo<true>[]> {
         const scope: OrganisationScope = new OrganisationScope();
-        scope
-            .searchString(organisationName)
-            .setScopeWhereOperator(ScopeOperator.AND)
-            .excludeTyp([OrganisationsTyp.KLASSE]);
 
         let allOrganisationsExceptKlassen: OrganisationDo<boolean>[] = [];
         let total: number = 0;
         // If the search string for organisation is present then search for Name or Kennung
         if (organisationName) {
-            // allOrganisationsExceptKlassen= await this.organisationRepo.findByNameOrKennung(organisationName);
-
             scope
                 .searchString(organisationName)
                 .setScopeWhereOperator(ScopeOperator.AND)
@@ -78,9 +72,6 @@ export class PersonenkontextWorkflowAggregate {
             [allOrganisationsExceptKlassen, total] = await this.organisationRepo.findBy(scope);
         } else {
             // Otherwise just retrieve all orgas
-            //allOrganisations = await this.organisationRepo.find(limit);
-            //Retrieve except klassen
-
             scope.excludeTyp([OrganisationsTyp.KLASSE]).paged(0, limit);
             [allOrganisationsExceptKlassen, total] = await this.organisationRepo.findBy(scope);
         }
@@ -90,15 +81,10 @@ export class PersonenkontextWorkflowAggregate {
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );
-        //TODO: Query the filtering of Organisations in the DB
         // Return only the orgas that the admin have rights on
         const filteredOrganisations: OrganisationDo<boolean>[] = allOrganisationsExceptKlassen.filter(
             (orga: OrganisationDo<boolean>) => orgsWithRecht.includes(orga.id as OrganisationID),
         );
-        // Exclude Klassen from the orgas as they are separately chosen through another EP
-        // filteredOrganisations = filteredOrganisations.filter(
-        //     (orga: OrganisationDo<boolean>) => orga.typ !== OrganisationsTyp.KLASSE,
-        // );
 
         // Sort the filtered organizations, handling undefined kennung and name
         filteredOrganisations.sort((a: OrganisationDo<boolean>, b: OrganisationDo<boolean>) => {
@@ -275,9 +261,20 @@ export class PersonenkontextWorkflowAggregate {
     ): Promise<OrganisationDo<true>[]> {
         this.selectedRolleId = rolleId;
 
-        const organisationsFoundByName: Option<OrganisationDo<true>[]> =
-            await this.organisationRepo.findByNameOrKennung(sskName);
-        if (organisationsFoundByName.length === 0) return [];
+        let organisationsFoundByName: OrganisationDo<boolean>[] = [];
+        let total: number = 0;
+
+        if (excludeKlassen) {
+            const scope: OrganisationScope = new OrganisationScope();
+            scope.searchString(sskName).setScopeWhereOperator(ScopeOperator.AND).excludeTyp([OrganisationsTyp.KLASSE]);
+
+            [organisationsFoundByName, total] = await this.organisationRepo.findBy(scope);
+        } else {
+            organisationsFoundByName = await this.organisationRepo.findByNameOrKennung(sskName);
+            total = organisationsFoundByName.length;
+        }
+
+        if (total === 0) return [];
 
         const rolleResult: Option<Rolle<true>> = await this.rolleRepo.findById(rolleId);
         if (!rolleResult) return [];
@@ -298,10 +295,6 @@ export class PersonenkontextWorkflowAggregate {
         let orgas: OrganisationDo<true>[] = organisationsFoundByName.filter((ssk: OrganisationDo<true>) =>
             organisationsRoleIsAvalableIn.some((organisation: OrganisationDo<true>) => ssk.id === organisation.id),
         );
-        //TODO: Please filter by OrganisationsTyp in the DB requests
-        if (excludeKlassen) {
-            orgas = orgas.filter((ssk: OrganisationDo<true>) => ssk.typ !== OrganisationsTyp.KLASSE);
-        }
 
         const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
         orgas = orgas.filter((orga: OrganisationDo<true>) =>
