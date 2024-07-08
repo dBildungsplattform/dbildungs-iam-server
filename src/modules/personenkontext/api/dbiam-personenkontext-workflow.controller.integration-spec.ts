@@ -7,9 +7,9 @@ import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
+    KeycloakConfigTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
@@ -45,6 +45,8 @@ import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-work
 import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
 import { FindDbiamPersonenkontextWorkflowBodyParams } from './param/dbiam-find-personenkontextworkflow-body.params.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
+import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
     const rolle: Rolle<false> = rolleFactory.createNew(
@@ -101,6 +103,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonenKontextApiModule,
                 PersonModule,
+                KeycloakAdministrationModule,
             ],
             providers: [
                 RolleFactory,
@@ -163,7 +166,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     },
                 },
             ],
-        }).compile();
+        })
+            .overrideModule(KeycloakConfigModule)
+            .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .compile();
 
         orm = module.get(MikroORM);
         organisationRepo = module.get(OrganisationRepo);
@@ -179,7 +185,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
         await app.init();
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+    }, 10000000);
 
     afterAll(async () => {
         await orm.close();
