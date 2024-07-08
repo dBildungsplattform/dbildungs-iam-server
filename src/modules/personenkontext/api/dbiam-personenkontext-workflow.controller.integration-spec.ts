@@ -19,8 +19,6 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Observable } from 'rxjs';
@@ -28,13 +26,9 @@ import { PassportUser } from '../../authentication/types/user.js';
 import { Request } from 'express';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { FindRollenResponse } from './response/find-rollen.response.js';
-import { DbiamPersonenkontextFactory } from '../domain/dbiam-personenkontext.factory.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { PersonModule } from '../../person/person.module.js';
-import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { PersonDo } from '../../person/domain/person.do.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
@@ -102,19 +96,9 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonenKontextApiModule,
-                PersonModule,
                 KeycloakAdministrationModule,
             ],
             providers: [
-                RolleFactory,
-                OrganisationRepository,
-                ServiceProviderRepo,
-                DbiamPersonenkontextFactory,
-                PersonenkontextFactory,
-                DBiamPersonenkontextRepo,
-                PersonRepository,
-                RolleRepo,
-                OrganisationRepo,
                 {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
@@ -124,32 +108,12 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     useValue: createMock<PersonPermissionsRepo>(),
                 },
                 {
-                    provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>(),
-                },
-                {
                     provide: PersonenkontextWorkflowFactory,
                     useValue: createMock<PersonenkontextWorkflowFactory>(),
                 },
                 {
                     provide: PersonenkontextWorkflowAggregate,
                     useValue: createMock<PersonenkontextWorkflowAggregate>(),
-                },
-                {
-                    provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
-                },
-                {
-                    provide: OrganisationRepo,
-                    useValue: createMock<OrganisationRepo>(),
-                },
-                {
-                    provide: RolleRepo,
-                    useValue: createMock<RolleRepo>(),
-                },
-                {
-                    provide: OrganisationRepo,
-                    useValue: createMock<OrganisationRepo>(),
                 },
                 {
                     provide: APP_INTERCEPTOR,
@@ -194,6 +158,121 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
+    });
+
+    describe('/POST create person with personenkontext', () => {
+        it('should return created person and personenkontext', async () => {
+            const organisation: OrganisationDo<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/personenkontext-workflow')
+                .send({
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                });
+            expect(response.status).toBe(201);
+        });
+
+        it('should return error with status-code=404 if organisation does NOT exist', async () => {
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: faker.string.uuid(),
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            permissions.canModifyPerson.mockResolvedValueOnce(true);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissions);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/personenkontext-workflow')
+                .send({
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    organisationId: faker.string.uuid(),
+                    rolleId: rolle.id,
+                });
+
+            expect(response.status).toBe(404);
+        });
+
+        it('should return error with status-code 400 if specification ROLLE_NUR_AN_PASSENDE_ORGANISATION is NOT satisfied', async () => {
+            const organisation: OrganisationDo<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.SYSADMIN,
+                }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/personenkontext-workflow')
+                .send({
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({
+                code: 400,
+                i18nKey: 'ROLLE_NUR_AN_PASSENDE_ORGANISATION',
+            });
+        });
+
+        it('should return error with status-code 404 if user does NOT have permissions', async () => {
+            const organisation: OrganisationDo<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/personenkontext-workflow')
+                .send({
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                });
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual({
+                code: 404,
+                subcode: '01',
+                titel: 'Angefragte Entität existiert nicht',
+                beschreibung: 'Die angeforderte Entität existiert nicht',
+            });
+        });
     });
 
     describe('/GET processStep for personenkontext', () => {
@@ -564,124 +643,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Object);
-        });
-    });
-
-    describe('/POST create person with personenkontext', () => {
-        it('should return created person and personenkontext', async () => {
-            const organisation: OrganisationDo<true> = await organisationRepo.save(
-                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
-            );
-            const rolle: Rolle<true> = await rolleRepo.save(
-                DoFactory.createRolle(false, {
-                    administeredBySchulstrukturknoten: organisation.id,
-                    rollenart: RollenArt.LEHR,
-                }),
-            );
-
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .post('/personenkontext-workflow')
-                .send({
-                    familienname: faker.person.lastName(),
-                    vorname: faker.person.firstName(),
-                    organisationId: organisation.id,
-                    rolleId: rolle.id,
-                });
-
-            expect(response.status).toBe(201);
-        });
-
-        it('should return error with status-code=404 if organisation does NOT exist', async () => {
-            const rolle: Rolle<true> = await rolleRepo.save(
-                DoFactory.createRolle(false, {
-                    administeredBySchulstrukturknoten: faker.string.uuid(),
-                    rollenart: RollenArt.LEHR,
-                }),
-            );
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(permissions);
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-            permissions.canModifyPerson.mockResolvedValueOnce(true);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .post('/personenkontext-workflow')
-                .send({
-                    familienname: faker.person.lastName(),
-                    vorname: faker.person.firstName(),
-                    organisationId: faker.string.uuid(),
-                    rolleId: rolle.id,
-                });
-
-            expect(response.status).toBe(404);
-        });
-
-        it('should return error with status-code 400 if specification ROLLE_NUR_AN_PASSENDE_ORGANISATION is NOT satisfied', async () => {
-            const organisation: OrganisationDo<true> = await organisationRepo.save(
-                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
-            );
-            const rolle: Rolle<true> = await rolleRepo.save(
-                DoFactory.createRolle(false, {
-                    administeredBySchulstrukturknoten: organisation.id,
-                    rollenart: RollenArt.SYSADMIN,
-                }),
-            );
-
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .post('/personenkontext-workflow')
-                .send({
-                    familienname: faker.person.lastName(),
-                    vorname: faker.person.firstName(),
-                    organisationId: organisation.id,
-                    rolleId: rolle.id,
-                });
-
-            expect(response.status).toBe(400);
-            expect(response.body).toEqual({
-                code: 400,
-                i18nKey: 'ROLLE_NUR_AN_PASSENDE_ORGANISATION',
-            });
-        });
-
-        it('should return error with status-code 404 if user does NOT have permissions', async () => {
-            const organisation: OrganisationDo<true> = await organisationRepo.save(
-                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
-            );
-            const rolle: Rolle<true> = await rolleRepo.save(
-                DoFactory.createRolle(false, {
-                    administeredBySchulstrukturknoten: organisation.id,
-                    rollenart: RollenArt.LEHR,
-                }),
-            );
-
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .post('/personenkontext-workflow')
-                .send({
-                    familienname: faker.person.lastName(),
-                    vorname: faker.person.firstName(),
-                    organisationId: organisation.id,
-                    rolleId: rolle.id,
-                });
-            expect(response.status).toBe(404);
-            expect(response.body).toEqual({
-                code: 404,
-                subcode: '01',
-                titel: 'Angefragte Entität existiert nicht',
-                beschreibung: 'Die angeforderte Entität existiert nicht',
-            });
         });
     });
 });
