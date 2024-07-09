@@ -28,7 +28,7 @@ export class CreateGroupAction extends IMSESAction<CreateGroupResponseBody, void
     }
 
     public override buildRequest(): object {
-        let extension: object[] = [];
+        let extension: object[] | undefined;
         if (this.params.type === 'Course') {
             extension = [
                 {
@@ -73,7 +73,7 @@ export class CreateGroupAction extends IMSESAction<CreateGroupResponseBody, void
                         'ims2:descLong': this.params.longDescription,
                         'ims2:descFull': this.params.fullDescription,
                     },
-                    'ims2:extension': extension.length > 0 ? { 'ims1:extensionField': extension } : undefined,
+                    'ims2:extension': extension && { 'ims1:extensionField': extension },
                 },
             },
         };

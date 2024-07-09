@@ -117,7 +117,7 @@ export class ItsLearningOrganisationsEventHandler {
             const result: Result<GroupResponse, DomainError> = await this.itsLearningService.send(readAction);
 
             if (!result.ok) {
-                // Klasse already exists, keep relationship
+                // Parent school does not exist
                 return this.logger.error(
                     `Parent Organisation (${event.administriertVon}) does not exist in itsLearning.`,
                 );
