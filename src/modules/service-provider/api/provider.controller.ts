@@ -24,8 +24,9 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter)
+@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
 @ApiOAuth2(['openid'])
 @ApiBearerAuth()

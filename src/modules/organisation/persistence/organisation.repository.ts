@@ -107,15 +107,22 @@ export class OrganisationRepository {
         return rawResult.map(mapEntityToAggregate);
     }
 
-    public async findRootDirectChildren(): Promise<Organisation<true>[]> {
+    public async findRootDirectChildren(): Promise<
+        [oeffentlich: Organisation<true> | undefined, ersatz: Organisation<true> | undefined]
+    > {
         const scope: OrganisationScope = new OrganisationScope().findAdministrierteVon(this.ROOT_ORGANISATION_ID);
 
         const [entities]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
-        const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
-            mapEntityToAggregate(entity),
+
+        const oeffentlich: OrganisationEntity | undefined = entities.find((entity: OrganisationEntity) =>
+            entity.name?.includes('Öffentliche'),
         );
 
-        return organisations;
+        const ersatz: OrganisationEntity | undefined = entities.find((entity: OrganisationEntity) =>
+            entity.name?.includes('Ersatz'),
+        );
+
+        return [oeffentlich && mapEntityToAggregate(oeffentlich), ersatz && mapEntityToAggregate(ersatz)];
     }
 
     public async findById(id: string): Promise<Option<Organisation<true>>> {
@@ -124,5 +131,17 @@ export class OrganisationRepository {
             return mapEntityToAggregate(organisation);
         }
         return null;
+    }
+
+    public async findByIds(ids: string[]): Promise<Map<string, Organisation<true>>> {
+        const organisationEntities: OrganisationEntity[] = await this.em.find(OrganisationEntity, { id: { $in: ids } });
+
+        const organisationMap: Map<string, Organisation<true>> = new Map();
+        organisationEntities.forEach((organisationEntity: OrganisationEntity) => {
+            const organisation: Organisation<true> = mapEntityToAggregate(organisationEntity);
+            organisationMap.set(organisationEntity.id, organisation);
+        });
+
+        return organisationMap;
     }
 }

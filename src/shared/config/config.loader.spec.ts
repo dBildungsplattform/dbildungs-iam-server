@@ -23,6 +23,7 @@ describe('configloader', () => {
                     OIDC_CALLBACK_URL: 'http://localhost:9091/api/frontend/login',
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
                     LOGOUT_REDIRECT: '/logout',
+                    ERROR_PAGE_REDIRECT: '/error',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -45,6 +46,13 @@ describe('configloader', () => {
                 LOGGING: {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
+                ITSLEARNING: {
+                    ENABLED: 'true',
+                    ENDPOINT: 'http://itslearning',
+                    USERNAME: 'username',
+                    ROOT_OEFFENTLICH: 'oeffentlich',
+                    ROOT_ERSATZ: 'ersatz',
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -52,6 +60,9 @@ describe('configloader', () => {
                 KEYCLOAK: { ADMIN_SECRET: 'AdminClientSecret', CLIENT_SECRET: 'ClientSecret' },
                 FRONTEND: { SESSION_SECRET: 'SessionSecret' },
                 REDIS: { PASSWORD: 'password' },
+                ITSLEARNING: {
+                    PASSWORD: 'password',
+                },
             };
 
             beforeEach(() => {
@@ -85,6 +96,7 @@ describe('configloader', () => {
                     OIDC_CALLBACK_URL: 'http://localhost:9091/api/frontend/login',
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
                     LOGOUT_REDIRECT: '/logout',
+                    ERROR_PAGE_REDIRECT: '/error',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -110,6 +122,14 @@ describe('configloader', () => {
                 },
                 LOGGING: {
                     DEFAULT_LOG_LEVEL: 'debug',
+                },
+                ITSLEARNING: {
+                    ENABLED: 'true',
+                    ENDPOINT: 'http://itslearning',
+                    USERNAME: 'username',
+                    PASSWORD: 'password',
+                    ROOT_OEFFENTLICH: 'oeffentlich',
+                    ROOT_ERSATZ: 'ersatz',
                 },
             };
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { Client } from 'ldapts';
-import { LdapOrganisationEntry, LdapPersonEntry, LdapRoleEntry } from './ldap.types.js';
+import { Client, SearchResult } from 'ldapts';
+import { LdapEntityType, LdapOrganisationEntry, LdapPersonEntry, LdapRoleEntry } from './ldap.types.js';
 import { KennungRequiredForSchuleError } from '../../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
@@ -9,6 +9,7 @@ import { LdapClient } from './ldap-client.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
 import { Mutex } from 'async-mutex';
+import { LdapSearchError } from '../error/ldap-search.error.js';
 
 @Injectable()
 export class LdapClientService {
@@ -39,12 +40,12 @@ export class LdapClientService {
     }
 
     public async createOrganisation(organisation: Organisation<true>): Promise<Result<Organisation<true>>> {
-        this.logger.info('LDAP: createOrganisation');
         return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: createOrganisation');
+            if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
-            if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
             const organisationEntry: LdapOrganisationEntry = {
                 ou: organisation.kennung,
                 objectclass: ['organizationalUnit'],
@@ -88,36 +89,60 @@ export class LdapClientService {
     }
 
     public async createLehrer(person: Person<true>, organisation: Organisation<true>): Promise<Result<Person<true>>> {
+        if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
+        if (!person.referrer) {
+            return {
+                ok: false,
+                error: new UsernameRequiredError(
+                    `Lehrer ${person.vorname} ${person.familienname} does not have a username`,
+                ),
+            };
+        }
+        const lehrerUid: string = this.getLehrerUid(person, organisation);
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: createLehrer');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
-            if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
-            if (!person.referrer)
+
+            const searchResultSchule: SearchResult = await client.search(`ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, {
+                filter: `(ou=${organisation.kennung})`,
+            });
+
+            if (searchResultSchule.searchEntries.length <= 0) {
                 return {
                     ok: false,
-                    error: new UsernameRequiredError(
-                        `Lehrer ${person.vorname} ${person.familienname} does not have a username`,
-                    ),
+                    error: new LdapSearchError(LdapEntityType.SCHULE),
                 };
+            }
+
+            const searchResultLehrer: SearchResult = await client.search(
+                `cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
+                {
+                    filter: `(uid=${person.referrer})`,
+                },
+            );
+            if (searchResultLehrer.searchEntries.length > 0) {
+                return {
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                };
+            }
             const entry: LdapPersonEntry = {
                 cn: person.vorname,
                 sn: person.familienname,
                 mail: [`${person.referrer}@schule-sh.de`],
                 objectclass: ['inetOrgPerson'],
             };
-
-            await client.add(
-                `uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
-                entry,
-            );
-            this.logger.info(
-                `LDAP: Successfully created lehrer uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
-            );
+            await client.add(lehrerUid, entry);
+            this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
 
             return { ok: true, value: person };
         });
+    }
+
+    private getLehrerUid(person: Person<true>, organisation: Organisation<true>): string {
+        return `uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`;
     }
 
     public async deleteLehrer(person: Person<true>, organisation: Organisation<true>): Promise<Result<Person<true>>> {
@@ -134,12 +159,9 @@ export class LdapClientService {
                         `Lehrer ${person.vorname} ${person.familienname} does not have a username`,
                     ),
                 };
-            await client.del(
-                `uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
-            );
-            this.logger.info(
-                `LDAP: Successfully deleted lehrer uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
-            );
+            const lehrerUid: string = this.getLehrerUid(person, organisation);
+            await client.del(lehrerUid);
+            this.logger.info(`LDAP: Successfully deleted lehrer ${lehrerUid}`);
 
             return { ok: true, value: person };
         });

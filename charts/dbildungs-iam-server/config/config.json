@@ -9,7 +9,8 @@
     "SESSION_TTL_MS": 3600000,
     "BACKEND_ADDRESS": "http://dbildungs-iam-server-backend:80",
     "DEFAULT_AUTH_REDIRECT": "/",
-    "TRUST_PROXY": 1
+    "TRUST_PROXY": 1,
+    "ERROR_PAGE_REDIRECT": "/login-error"
   },
   "DB": {
     "USE_SSL": true
@@ -26,11 +27,11 @@
     "USERNAME": "default",
     "USE_TLS": false
   },
-    "LDAP": {
-        "URL": "ldap://dbildungs-iam-server-ldap",
-        "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
-        "PASSWORD": "admin"
-    },
+  "LDAP": {
+    "URL": "ldap://dbildungs-iam-server-ldap",
+    "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
+    "PASSWORD": "admin"
+  },
   "DATA": {
     "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
   },
@@ -45,5 +46,13 @@
     "KEYCLOAK_ADMINISTRATION_MODULE_LOG_LEVEL": "debug",
     "HEALTH_MODULE_LOG_LEVEL": "debug",
     "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
+  },
+  "ITSLEARNING": {
+    "ENABLED": "false",
+    "ENDPOINT": "https://itslearning.example.com",
+    "USERNAME": "username",
+    "PASSWORD": "password",
+    "ROOT_OEFFENTLICH": "oeffentlich",
+    "ROOT_ERSATZ": "ersatz"
   }
 }

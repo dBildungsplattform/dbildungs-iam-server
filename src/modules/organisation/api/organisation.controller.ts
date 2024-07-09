@@ -37,16 +37,20 @@ import { OrganisationResponse } from './organisation.response.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { EventService } from '../../../core/eventbus/index.js';
-import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { DbiamOrganisationError } from './dbiam-organisation.error.js';
 import { OrganisationExceptionFilter } from './organisation-exception-filter.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
+import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
-@UseFilters(new SchulConnexValidationErrorFilter(), new OrganisationExceptionFilter())
+@UseFilters(
+    new SchulConnexValidationErrorFilter(),
+    new OrganisationExceptionFilter(),
+    new AuthenticationExceptionFilter(),
+)
 @ApiTags('organisationen')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -55,7 +59,6 @@ export class OrganisationController {
     public constructor(
         private readonly uc: OrganisationUc,
         private readonly organisationRepository: OrganisationRepository,
-        private readonly eventService: EventService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -75,7 +78,6 @@ export class OrganisationController {
             await this.uc.createOrganisation(organisationDto);
 
         if (result instanceof CreatedOrganisationDto) {
-            this.eventService.publish(new SchuleCreatedEvent(result.id));
             return this.mapper.map(result, CreatedOrganisationDto, OrganisationResponseLegacy);
         }
         if (result instanceof OrganisationSpecificationError) {
@@ -138,13 +140,9 @@ export class OrganisationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organizations.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
     public async getRootChildren(): Promise<OrganisationRootChildrenResponse> {
-        const children: Organisation<true>[] = await this.organisationRepository.findRootDirectChildren();
-        const oeffentlich: Organisation<true> | undefined = children.find((orga: Organisation<true>) =>
-            orga.name?.includes('Öffentliche'),
-        );
-        const ersatz: Organisation<true> | undefined = children.find((orga: Organisation<true>) =>
-            orga.name?.includes('Ersatz'),
-        );
+        const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
+            await this.organisationRepository.findRootDirectChildren();
+
         if (!oeffentlich || !ersatz) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
@@ -192,7 +190,24 @@ export class OrganisationController {
             true,
         );
 
-        const scope: OrganisationScope = new OrganisationScope()
+        const scope: OrganisationScope = new OrganisationScope();
+
+        // If the typ is Klasse then only search by Name using the search string
+        if (queryParams.typ === OrganisationsTyp.KLASSE) {
+            scope
+                .findBy({
+                    kennung: queryParams.kennung,
+                    name: queryParams.name,
+                    typ: queryParams.typ,
+                })
+                .setScopeWhereOperator(ScopeOperator.AND)
+                .findByAdministriertVonArray(queryParams.administriertVon)
+                .searchStringAdministriertVon(queryParams.searchString)
+                .excludeTyp(queryParams.excludeTyp)
+                .byIDs(validOrgaIDs)
+                .paged(queryParams.offset, queryParams.limit);
+        }
+        scope
             .findBy({
                 kennung: queryParams.kennung,
                 name: queryParams.name,
