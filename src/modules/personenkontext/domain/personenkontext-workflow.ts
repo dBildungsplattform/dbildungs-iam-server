@@ -17,8 +17,6 @@ import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { OrganisationScope } from '../../organisation/persistence/organisation.scope.js';
-import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 
 export class PersonenkontextWorkflowAggregate {
     public selectedOrganisationId?: string;
@@ -58,24 +56,21 @@ export class PersonenkontextWorkflowAggregate {
         organisationName: string | undefined,
         limit?: number,
     ): Promise<OrganisationDo<true>[]> {
-        const scope: OrganisationScope = new OrganisationScope();
-
         let allOrganisationsExceptKlassen: OrganisationDo<boolean>[] = [];
-        let total: number = 0;
         // If the search string for organisation is present then search for Name or Kennung
         if (organisationName) {
-            scope
-                .searchString(organisationName)
-                .setScopeWhereOperator(ScopeOperator.AND)
-                .excludeTyp([OrganisationsTyp.KLASSE]);
-
-            [allOrganisationsExceptKlassen, total] = await this.organisationRepo.findBy(scope);
+            allOrganisationsExceptKlassen = await this.organisationRepo.findByNameOrKennungAndExcludeByOrganisationType(
+                organisationName,
+                OrganisationsTyp.KLASSE,
+            );
         } else {
             // Otherwise just retrieve all orgas
-            scope.excludeTyp([OrganisationsTyp.KLASSE]).paged(0, limit);
-            [allOrganisationsExceptKlassen, total] = await this.organisationRepo.findBy(scope);
+            allOrganisationsExceptKlassen = await this.organisationRepo.findAllAndExcludeByOrganisationType(
+                OrganisationsTyp.KLASSE,
+                limit,
+            );
         }
-        if (total === 0) return [];
+        if (allOrganisationsExceptKlassen.length === 0) return [];
 
         const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
@@ -262,19 +257,17 @@ export class PersonenkontextWorkflowAggregate {
         this.selectedRolleId = rolleId;
 
         let organisationsFoundByName: OrganisationDo<boolean>[] = [];
-        let total: number = 0;
 
         if (excludeKlassen) {
-            const scope: OrganisationScope = new OrganisationScope();
-            scope.searchString(sskName).setScopeWhereOperator(ScopeOperator.AND).excludeTyp([OrganisationsTyp.KLASSE]);
-
-            [organisationsFoundByName, total] = await this.organisationRepo.findBy(scope);
+            organisationsFoundByName = await this.organisationRepo.findByNameOrKennungAndExcludeByOrganisationType(
+                sskName,
+                OrganisationsTyp.KLASSE,
+            );
         } else {
             organisationsFoundByName = await this.organisationRepo.findByNameOrKennung(sskName);
-            total = organisationsFoundByName.length;
         }
 
-        if (total === 0) return [];
+        if (organisationsFoundByName.length === 0) return [];
 
         const rolleResult: Option<Rolle<true>> = await this.rolleRepo.findById(rolleId);
         if (!rolleResult) return [];

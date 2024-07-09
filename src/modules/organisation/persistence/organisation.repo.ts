@@ -12,6 +12,7 @@ import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 
 @Injectable()
 export class OrganisationRepo {
@@ -142,5 +143,32 @@ export class OrganisationRepo {
             return this.mapper.mapArray(rawResult, OrganisationEntity, OrganisationDo);
         }
         return [];
+    }
+
+    public async findByNameOrKennungAndExcludeByOrganisationType(
+        searchStr: string,
+        excludeOrganisationType: OrganisationsTyp,
+    ): Promise<OrganisationDo<true>[]> {
+        const scope: OrganisationScope = new OrganisationScope()
+            .searchString(searchStr)
+            .setScopeWhereOperator(ScopeOperator.AND)
+            .excludeTyp([excludeOrganisationType]);
+
+        let foundOrganisations: OrganisationDo<true>[] = [];
+        [foundOrganisations] = await this.findBy(scope);
+
+        return foundOrganisations;
+    }
+
+    public async findAllAndExcludeByOrganisationType(
+        excludeOrganisationType: OrganisationsTyp,
+        limit?: number,
+    ): Promise<OrganisationDo<true>[]> {
+        const scope: OrganisationScope = new OrganisationScope().excludeTyp([excludeOrganisationType]).paged(0, limit);
+
+        let foundOrganisations: OrganisationDo<true>[] = [];
+        [foundOrganisations] = await this.findBy(scope);
+
+        return foundOrganisations;
     }
 }

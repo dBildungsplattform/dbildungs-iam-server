@@ -16,6 +16,7 @@ import { OrganisationScope } from './organisation.scope.js';
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { EventModule } from '../../../core/eventbus/index.js';
+import { OrganisationsTyp } from '../domain/organisation.enums.js';
 
 describe('OrganisationRepo', () => {
     let module: TestingModule;
@@ -266,6 +267,63 @@ describe('OrganisationRepo', () => {
                     faker.string.uuid(),
                 ]);
                 expect(foundOrganisations).toEqual([]);
+            });
+        });
+    });
+
+    describe('findByNameOrKennungAndExcludeByOrganisationType', () => {
+        describe('when matching organisations were found', () => {
+            it('should return found organizations', async () => {
+                const orgaName: string = 'Test-Orga';
+                const excludeOrgaType: OrganisationsTyp = OrganisationsTyp.KLASSE;
+                const organisationDoSchule: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+                    name: orgaName,
+                    typ: OrganisationsTyp.SCHULE,
+                });
+                await sut.save(organisationDoSchule);
+
+                const organisationDoKlasse: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+                    name: orgaName + '1',
+                    typ: excludeOrgaType,
+                });
+                await sut.save(organisationDoKlasse);
+
+                const organisationDoSchule2: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+                    typ: OrganisationsTyp.SCHULE,
+                });
+                await sut.save(organisationDoSchule2);
+
+                const foundOrganisations: Option<OrganisationDo<true>[]> =
+                    await sut.findByNameOrKennungAndExcludeByOrganisationType(orgaName, excludeOrgaType);
+                expect(foundOrganisations).toBeInstanceOf(Array);
+                expect(foundOrganisations).toHaveLength(1);
+            });
+        });
+    });
+
+    describe('findAllAndExcludeByOrganisationType', () => {
+        describe('when matching organisations were found', () => {
+            it('should return found organizations', async () => {
+                const excludeOrgaType: OrganisationsTyp = OrganisationsTyp.KLASSE;
+                const organisationDoSchule: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+                    typ: OrganisationsTyp.SCHULE,
+                });
+                await sut.save(organisationDoSchule);
+
+                const organisationDoSchule2: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+                    typ: OrganisationsTyp.SCHULE,
+                });
+                await sut.save(organisationDoSchule2);
+
+                const organisationDoKlasse: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+                    typ: excludeOrgaType,
+                });
+                await sut.save(organisationDoKlasse);
+
+                const foundOrganisations: Option<OrganisationDo<true>[]> =
+                    await sut.findAllAndExcludeByOrganisationType(excludeOrgaType, 1);
+                expect(foundOrganisations).toBeInstanceOf(Array);
+                expect(foundOrganisations).toHaveLength(1);
             });
         });
     });
