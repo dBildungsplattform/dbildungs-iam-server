@@ -544,7 +544,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     .put(`/personenkontext-workflow/${params.personId}`)
                     .send(bodyParams);
 
-                expect(response.status).toBe(500);
+                expect(response.status).toBe(400);
             });
         });
     });
