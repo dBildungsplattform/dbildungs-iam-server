@@ -15,7 +15,6 @@ describe('UpdatePersonNotFoundError', () => {
         expect(error.message).toBe('Personenkontexte could not be updated because the person has been deleted.');
     });
 
-
     it('should handle no details gracefully', () => {
         const error: UpdatePersonNotFoundError = new UpdatePersonNotFoundError();
 
