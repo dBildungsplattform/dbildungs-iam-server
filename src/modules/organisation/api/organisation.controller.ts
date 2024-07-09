@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Patch, Post, Put, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -45,6 +45,7 @@ import { OrganisationSpecificationError } from '../specification/error/organisat
 import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -320,6 +321,29 @@ export class OrganisationController {
         const result: void | SchulConnexError | OrganisationSpecificationError = await this.uc.setZugehoerigZu(
             params.organisationId,
             body.organisationId,
+        );
+
+        if (result instanceof OrganisationSpecificationError) {
+            throw result;
+        }
+        if (result) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
+    }
+
+    @Patch(':organisationId/name')
+    @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
+    @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
+    public async updateOrganisationName(
+        @Param() params: OrganisationByIdParams,
+        @Body() body: OrganisationByNameBodyParams,
+    ): Promise<void> {
+        const result: void | SchulConnexError | OrganisationSpecificationError = await this.uc.setZugehoerigZu(
+            params.organisationId,
+            body.name,
         );
 
         if (result instanceof OrganisationSpecificationError) {
