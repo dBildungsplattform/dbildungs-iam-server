@@ -1,22 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { EventHandler } from '../../core/eventbus/decorators/event-handler.decorator.js';
-import { ClassLogger } from '../../core/logging/class-logger.js';
-import { ItsLearningConfig } from '../../shared/config/itslearning.config.js';
-import { ServerConfig } from '../../shared/config/server.config.js';
-import { DomainError } from '../../shared/error/index.js';
-import { SchuleCreatedEvent } from '../../shared/events/schule-created.event.js';
-import { OrganisationID } from '../../shared/types/aggregate-ids.types.js';
-import { OrganisationsTyp } from '../organisation/domain/organisation.enums.js';
-import { Organisation } from '../organisation/domain/organisation.js';
-import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
-import { CreateGroupAction, CreateGroupParams } from './actions/create-group.action.js';
-import { GroupResponse, ReadGroupAction } from './actions/read-group.action.js';
-import { ItsLearningIMSESService } from './itslearning.service.js';
+import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { ItsLearningConfig } from '../../../shared/config/itslearning.config.js';
+import { ServerConfig } from '../../../shared/config/server.config.js';
+import { DomainError } from '../../../shared/error/index.js';
+import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { CreateGroupAction, CreateGroupParams } from '../actions/create-group.action.js';
+import { GroupResponse, ReadGroupAction } from '../actions/read-group.action.js';
+import { ItsLearningIMSESService } from '../itslearning.service.js';
 
 @Injectable()
-export class ItsLearningEventHandler {
+export class ItsLearningOrganisationsEventHandler {
     public ENABLED: boolean;
 
     private readonly ROOT_OEFFENTLICH: string;
