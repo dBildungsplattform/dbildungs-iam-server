@@ -10,11 +10,15 @@ import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
 import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
+import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { PersonDo } from '../../person/domain/person.do.js';
+import { UpdatePersonNotFoundError } from './error/update-person-not-found.error.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
         private readonly eventService: EventService,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly personRepo: PersonRepo,
         private readonly personenkontextFactory: PersonenkontextFactory,
         private readonly personId: PersonID,
         private readonly lastModified: Date,
@@ -24,6 +28,7 @@ export class PersonenkontexteUpdate {
 
     public static createNew(
         eventService: EventService,
+        personRepo: PersonRepo,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         personenkontextFactory: PersonenkontextFactory,
         personId: PersonID,
@@ -34,6 +39,7 @@ export class PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
             eventService,
             dBiamPersonenkontextRepo,
+            personRepo,
             personenkontextFactory,
             personId,
             lastModified,
@@ -68,7 +74,13 @@ export class PersonenkontexteUpdate {
         return personenKontexte;
     }
 
-    private validate(existingPKs: Personenkontext<true>[]): Option<PersonenkontexteUpdateError> {
+    private async validate(existingPKs: Personenkontext<true>[]): Promise<Option<PersonenkontexteUpdateError>> {
+        const person: Option<PersonDo<true>> = await this.personRepo.findById(this.personId);
+
+        if (!person) {
+            return new UpdatePersonNotFoundError();
+        }
+
         if (existingPKs.length != this.count) {
             return new UpdateCountError();
         }
@@ -130,7 +142,7 @@ export class PersonenkontexteUpdate {
         }
 
         const existingPKs: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(this.personId);
-        const validationError: Option<PersonenkontexteUpdateError> = this.validate(existingPKs);
+        const validationError: Option<PersonenkontexteUpdateError> = await this.validate(existingPKs);
         if (validationError) {
             return validationError;
         }

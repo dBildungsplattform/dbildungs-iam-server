@@ -12,10 +12,10 @@ import {
 } from './dbiam-personenkontexte-update.error.js';
 import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
 import { UpdateInvalidLastModifiedError } from '../domain/error/update-invalid-last-modified.error.js';
+import { UpdatePersonNotFoundError } from '../domain/error/update-person-not-found.error.js';
 
 @Catch(PersonenkontexteUpdateError)
 export class PersonenkontexteUpdateExceptionFilter implements ExceptionFilter<PersonenkontexteUpdateError> {
-
     private ERROR_MAPPINGS: Map<string, DbiamPersonenkontextError> = new Map([
         [
             UpdateCountError.name,
@@ -50,6 +50,13 @@ export class PersonenkontexteUpdateExceptionFilter implements ExceptionFilter<Pe
             new DbiamPersonenkontexteUpdateError({
                 code: 400,
                 i18nKey: PersonenkontexteUpdateErrorI18nTypes.PERSON_ID_MISMATCH,
+            }),
+        ],
+        [
+            UpdatePersonNotFoundError.name,
+            new DbiamPersonenkontexteUpdateError({
+                code: 400,
+                i18nKey: PersonenkontexteUpdateErrorI18nTypes.PERSON_NOT_FOUND,
             }),
         ],
     ]);
