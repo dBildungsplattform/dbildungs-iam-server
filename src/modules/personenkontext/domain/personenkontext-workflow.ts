@@ -58,18 +58,13 @@ export class PersonenkontextWorkflowAggregate {
     ): Promise<OrganisationDo<true>[]> {
         let allOrganisationsExceptKlassen: OrganisationDo<boolean>[] = [];
         // If the search string for organisation is present then search for Name or Kennung
-        if (organisationName) {
-            allOrganisationsExceptKlassen = await this.organisationRepo.findByNameOrKennungAndExcludeByOrganisationType(
-                organisationName,
-                OrganisationsTyp.KLASSE,
-            );
-        } else {
-            // Otherwise just retrieve all orgas
-            allOrganisationsExceptKlassen = await this.organisationRepo.findAllAndExcludeByOrganisationType(
-                OrganisationsTyp.KLASSE,
-                limit,
-            );
-        }
+
+        allOrganisationsExceptKlassen = await this.organisationRepo.findByNameOrKennungAndExcludeByOrganisationType(
+            OrganisationsTyp.KLASSE,
+            organisationName,
+            limit,
+        );
+
         if (allOrganisationsExceptKlassen.length === 0) return [];
 
         const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
@@ -260,8 +255,8 @@ export class PersonenkontextWorkflowAggregate {
 
         if (excludeKlassen) {
             organisationsFoundByName = await this.organisationRepo.findByNameOrKennungAndExcludeByOrganisationType(
-                sskName,
                 OrganisationsTyp.KLASSE,
+                sskName,
             );
         } else {
             organisationsFoundByName = await this.organisationRepo.findByNameOrKennung(sskName);

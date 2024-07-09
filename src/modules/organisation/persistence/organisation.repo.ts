@@ -146,25 +146,19 @@ export class OrganisationRepo {
     }
 
     public async findByNameOrKennungAndExcludeByOrganisationType(
-        searchStr: string,
         excludeOrganisationType: OrganisationsTyp,
-    ): Promise<OrganisationDo<true>[]> {
-        const scope: OrganisationScope = new OrganisationScope()
-            .searchString(searchStr)
-            .setScopeWhereOperator(ScopeOperator.AND)
-            .excludeTyp([excludeOrganisationType]);
-
-        let foundOrganisations: OrganisationDo<true>[] = [];
-        [foundOrganisations] = await this.findBy(scope);
-
-        return foundOrganisations;
-    }
-
-    public async findAllAndExcludeByOrganisationType(
-        excludeOrganisationType: OrganisationsTyp,
+        searchStr?: string,
         limit?: number,
     ): Promise<OrganisationDo<true>[]> {
-        const scope: OrganisationScope = new OrganisationScope().excludeTyp([excludeOrganisationType]).paged(0, limit);
+        const scope: OrganisationScope = new OrganisationScope();
+        if (searchStr) {
+            scope
+                .searchString(searchStr)
+                .setScopeWhereOperator(ScopeOperator.AND)
+                .excludeTyp([excludeOrganisationType]);
+        } else {
+            scope.excludeTyp([excludeOrganisationType]).paged(0, limit);
+        }
 
         let foundOrganisations: OrganisationDo<true>[] = [];
         [foundOrganisations] = await this.findBy(scope);

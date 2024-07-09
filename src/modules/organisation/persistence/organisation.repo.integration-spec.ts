@@ -272,7 +272,7 @@ describe('OrganisationRepo', () => {
     });
 
     describe('findByNameOrKennungAndExcludeByOrganisationType', () => {
-        describe('when matching organisations were found', () => {
+        describe('when matching organisations by name were found', () => {
             it('should return found organizations', async () => {
                 const orgaName: string = 'Test-Orga';
                 const excludeOrgaType: OrganisationsTyp = OrganisationsTyp.KLASSE;
@@ -294,16 +294,14 @@ describe('OrganisationRepo', () => {
                 await sut.save(organisationDoSchule2);
 
                 const foundOrganisations: Option<OrganisationDo<true>[]> =
-                    await sut.findByNameOrKennungAndExcludeByOrganisationType(orgaName, excludeOrgaType);
+                    await sut.findByNameOrKennungAndExcludeByOrganisationType(excludeOrgaType, orgaName);
                 expect(foundOrganisations).toBeInstanceOf(Array);
                 expect(foundOrganisations).toHaveLength(1);
             });
         });
-    });
 
-    describe('findAllAndExcludeByOrganisationType', () => {
-        describe('when matching organisations were found', () => {
-            it('should return found organizations', async () => {
+        describe('when matching organisations were found and search is limit', () => {
+            it('should return limited found organizations', async () => {
                 const excludeOrgaType: OrganisationsTyp = OrganisationsTyp.KLASSE;
                 const organisationDoSchule: OrganisationDo<false> = DoFactory.createOrganisation(false, {
                     typ: OrganisationsTyp.SCHULE,
@@ -321,7 +319,7 @@ describe('OrganisationRepo', () => {
                 await sut.save(organisationDoKlasse);
 
                 const foundOrganisations: Option<OrganisationDo<true>[]> =
-                    await sut.findAllAndExcludeByOrganisationType(excludeOrgaType, 1);
+                    await sut.findByNameOrKennungAndExcludeByOrganisationType(excludeOrgaType, undefined, 1);
                 expect(foundOrganisations).toBeInstanceOf(Array);
                 expect(foundOrganisations).toHaveLength(1);
             });

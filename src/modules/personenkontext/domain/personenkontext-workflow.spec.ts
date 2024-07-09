@@ -147,7 +147,7 @@ describe('PersonenkontextWorkflow', () => {
         it('should return only the organisations that the admin has rights on', async () => {
             const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
             const organisations: OrganisationDo<true>[] = [organisation];
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue(organisations);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue(organisations);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -173,7 +173,7 @@ describe('PersonenkontextWorkflow', () => {
         });
 
         it('should return an empty array if no organisations are found', async () => {
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -197,7 +197,12 @@ describe('PersonenkontextWorkflow', () => {
             const org4: OrganisationDo<true> = DoFactory.createOrganisation(true, { kennung: 'K3' });
             const orgsWithRecht: string[] = [org1.id, org2.id, org3.id, org4.id];
 
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([org1, org2, org3, org4]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([
+                org1,
+                org2,
+                org3,
+                org4,
+            ]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -214,7 +219,7 @@ describe('PersonenkontextWorkflow', () => {
             const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, { kennung: 'K1' });
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -232,7 +237,7 @@ describe('PersonenkontextWorkflow', () => {
             const org3: OrganisationDo<true> = DoFactory.createOrganisation(true, {});
             const orgsWithRecht: string[] = [org1.id, org2.id, org3.id];
 
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([org1, org2, org3]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2, org3]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -250,7 +255,7 @@ describe('PersonenkontextWorkflow', () => {
             const org3: OrganisationDo<true> = DoFactory.createOrganisation(true, {});
             const orgsWithRecht: string[] = [org1.id, org2.id, org3.id];
 
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([org1, org2, org3]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2, org3]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -271,7 +276,7 @@ describe('PersonenkontextWorkflow', () => {
             const org3: OrganisationDo<true> = DoFactory.createOrganisation(true, {});
             const orgsWithRecht: string[] = [org1.id, org2.id, org3.id];
 
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([org1, org2, org3]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2, org3]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -287,7 +292,7 @@ describe('PersonenkontextWorkflow', () => {
             const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, {});
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -309,7 +314,12 @@ describe('PersonenkontextWorkflow', () => {
             const org4: OrganisationDo<true> = DoFactory.createOrganisation(true, {});
             const orgsWithRecht: string[] = [org1.id, org2.id, org3.id, org4.id];
 
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([org1, org2, org3, org4]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([
+                org1,
+                org2,
+                org3,
+                org4,
+            ]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -326,7 +336,7 @@ describe('PersonenkontextWorkflow', () => {
             const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: 'Alpha School' });
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -348,7 +358,7 @@ describe('PersonenkontextWorkflow', () => {
             });
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -370,7 +380,7 @@ describe('PersonenkontextWorkflow', () => {
             });
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -392,7 +402,7 @@ describe('PersonenkontextWorkflow', () => {
             });
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -414,7 +424,7 @@ describe('PersonenkontextWorkflow', () => {
             });
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -436,7 +446,7 @@ describe('PersonenkontextWorkflow', () => {
             });
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -458,7 +468,7 @@ describe('PersonenkontextWorkflow', () => {
             });
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
-            organisationRepoMock.findAllAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
             personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
             const result: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
