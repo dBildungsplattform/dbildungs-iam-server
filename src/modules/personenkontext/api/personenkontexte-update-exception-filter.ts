@@ -15,6 +15,7 @@ import { UpdateInvalidLastModifiedError } from '../domain/error/update-invalid-l
 
 @Catch(PersonenkontexteUpdateError)
 export class PersonenkontexteUpdateExceptionFilter implements ExceptionFilter<PersonenkontexteUpdateError> {
+
     private ERROR_MAPPINGS: Map<string, DbiamPersonenkontextError> = new Map([
         [
             UpdateCountError.name,

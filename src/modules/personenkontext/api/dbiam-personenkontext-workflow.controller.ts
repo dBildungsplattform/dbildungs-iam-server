@@ -1,5 +1,4 @@
 import {
-    BadRequestException,
     Body,
     Controller,
     Get,
@@ -55,8 +54,13 @@ import { PersonenkontextCommitError } from '../domain/error/personenkontext-comm
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
+import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new PersonenkontextExceptionFilter())
+@UseFilters(
+    SchulConnexValidationErrorFilter,
+    new PersonenkontextExceptionFilter(),
+    new PersonenkontexteUpdateExceptionFilter(),
+)
 @ApiTags('personenkontext')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -154,8 +158,8 @@ export class DbiamPersonenkontextWorkflowController {
                 .createNew()
                 .commit(params.personId, bodyParams.lastModified, bodyParams.count, bodyParams.personenkontexte);
 
-        if (updateResult instanceof DomainError) {
-            throw new BadRequestException(updateResult.message);
+        if (updateResult instanceof PersonenkontexteUpdateError) {
+            throw updateResult;
         }
         return new PersonenkontexteUpdateResponse(updateResult);
     }

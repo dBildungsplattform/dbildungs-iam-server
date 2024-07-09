@@ -6,7 +6,6 @@ import { UpdateOutdatedError } from './error/update-outdated.error.js';
 import { PersonID } from '../../../shared/types/index.js';
 import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.error.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
-import { UpdateInvalidLastModifiedError } from './error/update-invalid-last-modified.error.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
@@ -80,12 +79,11 @@ export class PersonenkontexteUpdate {
         const mostRecentUpdatedAt: Date = sortedExistingPKs[0]!.updatedAt;
 
         if (mostRecentUpdatedAt.getTime() > this.lastModified.getTime()) {
+            // The existing data is newer than the incoming update
             return new UpdateOutdatedError();
         }
-        if (mostRecentUpdatedAt.getTime() < this.lastModified.getTime()) {
-            return new UpdateInvalidLastModifiedError();
-        }
 
+        // If mostRecentUpdatedAt is less than or equal to this.lastModified, no error is returned
         return null;
     }
 
