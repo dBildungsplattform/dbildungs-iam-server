@@ -15,4 +15,6 @@ data:
   FRONTEND_OIDC_CALLBACK_URL: "https://{{ .Values.backendHostname }}/api/auth/login"
   FRONTEND_DEFAULT_LOGIN_REDIRECT: "https://{{ .Values.backendHostname }}/"
   FRONTEND_LOGOUT_REDIRECT: "https://{{ .Values.backendHostname }}/"
-  BACKEND_HOSTNAME: "{{.Values.backendHostname}}"
+  BACKEND_HOSTNAME: "{{ .Values.backendHostname }}"
+  LDAP_URL: '{{ .Values.ldap.url | replace "spsh-xxx" .Release.Namespace }}'
+  LDAP_BIND_DN: "{{ .Values.ldap.bindDN }}"

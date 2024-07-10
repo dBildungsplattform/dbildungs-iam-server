@@ -65,7 +65,7 @@ jobs:
       container_registry: "ghcr.io"
       fail_on_vulnerabilites: false
       report_location: "Dockerfile"
-  
+
   scheduled_trivy_scan:
     name: "Scheduled trivy scan of latest image"
     if: ${{ github.event_name == 'schedule' }}
@@ -86,10 +86,10 @@ jobs:
 
   select_helm_version_generation_and_image_tag_generation:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    needs: 
+    needs:
       - scan_helm
     runs-on: ubuntu-latest
-    outputs: 
+    outputs:
       SELECT_HELM_VERION_GENERATION: ${{ steps.select_generation.outputs.SELECT_HELM_VERION_GENERATION }}
       SELECT_IMAGE_TAG_GENERATION: ${{ steps.select_generation.outputs.SELECT_IMAGE_TAG_GENERATION }}
     steps:
@@ -105,7 +105,7 @@ jobs:
           fi
   release_helm:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    needs: 
+    needs:
       - select_helm_version_generation_and_image_tag_generation
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@5
     secrets: inherit
@@ -120,7 +120,7 @@ jobs:
 
   create_branch_identifier:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    needs: 
+    needs:
       - branch_meta
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy-branch-to-namespace.yml@3
     with:
@@ -165,4 +165,4 @@ jobs:
       - create_branch_identifier_for_deletion
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Deletion workflow of namespace" ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }} "done" 
+      - run: echo "Deletion workflow of namespace" ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }} "done"
