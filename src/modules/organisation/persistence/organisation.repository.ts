@@ -6,6 +6,9 @@ import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationScope } from './organisation.scope.js';
+import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
+import { EventService } from '../../../core/eventbus/services/event.service.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -42,6 +45,7 @@ export class OrganisationRepository {
     public readonly ROOT_ORGANISATION_ID: string;
 
     public constructor(
+        private readonly eventService: EventService,
         private readonly em: EntityManager,
         config: ConfigService<ServerConfig>,
     ) {
@@ -64,6 +68,10 @@ export class OrganisationRepository {
         );
 
         await this.em.persistAndFlush(organisationEntity);
+
+        if (organisationEntity.typ === OrganisationsTyp.SCHULE) {
+            this.eventService.publish(new SchuleCreatedEvent(organisationEntity.id));
+        }
 
         return mapEntityToAggregate(organisationEntity);
     }

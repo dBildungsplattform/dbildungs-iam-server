@@ -26,12 +26,19 @@ database:
   password: ""
   username: "dbildungs_iam_server"
 
+
+ldap:
+  url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
+  bindDN: cn=admin,dc=schule-sh,dc=de
+
+
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
   existingSecret: ""
   secretName: dbildungs-iam-server
   keycloak_adminSecret: ""
   keycloak_clientSecret: ""
+  ldap_admin_password: ""
   secrets_json: ""
   frontend_sessionSecret: ""
   itslearning_endpoint: ""
@@ -155,23 +162,3 @@ redis:
   extraEnvVars: []
   extraVolumes: []
   extraVolumeMounts: []
-
-ldap:
-  image:
-    repository: docker.io/osixia/openldap
-    tag: "1.5.0"
-    pullPolicy: IfNotPresent
-  resources:
-    limits:
-      cpu: 2
-      memory: 4G
-      ephemeral-storage: 2Gi
-    requests:
-      cpu: 200m
-      memory: 200Mi
-  adminPassword: admin
-  configPassword: config
-  service:
-    type: ClusterIP
-    ports:
-      ldap: 389
