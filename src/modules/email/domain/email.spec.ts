@@ -49,17 +49,15 @@ describe('Email Aggregate', () => {
         describe('when emailAddresses are already present on aggregate', () => {
             it('should return successfully', async () => {
                 const emailAddressId: EmailAddressID = faker.string.uuid();
-                const emailAddresses: EmailAddress<true>[] = [
-                    new EmailAddress<true>(
-                        emailAddressId,
-                        faker.date.past(),
-                        faker.date.recent(),
-                        faker.string.uuid(),
-                        faker.internet.email(),
-                        false,
-                    ),
-                ];
-                const existingEmail: Email<true> = emailFactory.construct(faker.string.uuid(), emailAddresses);
+                const emailAddress: EmailAddress<true> = new EmailAddress<true>(
+                    emailAddressId,
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.internet.email(),
+                    false,
+                );
+                const existingEmail: Email<true> = emailFactory.construct(faker.string.uuid(), emailAddress);
 
                 const result: Result<Email<true>> = await existingEmail.enable();
 
@@ -111,9 +109,7 @@ describe('Email Aggregate', () => {
                 if (!enabledEmail.ok) throw new Error();
                 const result: boolean = enabledEmail.value.disable();
                 expect(result).toBeTruthy();
-                const emailAddresses: EmailAddress<false>[] | undefined = enabledEmail.value.emailAddresses;
-                if (!emailAddresses) throw new Error();
-                expect(emailAddresses.every((ea: EmailAddress<false>) => !ea.enabled));
+                expect(enabledEmail.value.emailAddress?.enabled).toBeFalsy();
             });
         });
     });

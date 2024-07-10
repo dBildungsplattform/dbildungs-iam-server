@@ -8,9 +8,11 @@ import { EmailAddressEntity } from './email-address.entity.js';
 import { EmailAddress } from '../domain/email-address.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { DomainError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { EmailInvalidError } from '../error/email-invalid.error.js';
+import { Person } from '../../person/domain/person.js';
+import { EmailAddressAmbiguousError } from '../error/email-address-ambiguous.error.js';
 
 function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddressEntity> {
     return {
@@ -35,15 +37,11 @@ function mapEntityToAggregate(entity: EmailAddressEntity): EmailAddress<boolean>
 
 function mapEntitiesToEmailAggregate(
     personId: PersonID,
-    entities: EmailAddressEntity[],
+    entity: EmailAddressEntity,
     emailGeneratorService: EmailGeneratorService,
     personRepository: PersonRepository,
 ): Email<true> {
-    const emailAddresses: EmailAddress<boolean>[] = entities.map((entity: EmailAddressEntity) =>
-        mapEntityToAggregate(entity),
-    );
-
-    return Email.construct(personId, emailGeneratorService, personRepository, emailAddresses);
+    return Email.construct(personId, emailGeneratorService, personRepository, mapEntityToAggregate(entity));
 }
 
 @Injectable()
@@ -55,15 +53,27 @@ export class EmailRepo {
         private readonly personRepository: PersonRepository,
     ) {}
 
-    public async findByPerson(personId: PersonID): Promise<Option<Email<true>>> {
+    public async findByPerson(personId: PersonID): Promise<Email<true> | DomainError> {
         const emailAddressEntities: EmailAddressEntity[] = await this.em.find(EmailAddressEntity, { personId }, {});
 
-        return mapEntitiesToEmailAggregate(
-            personId,
-            emailAddressEntities,
-            this.emailGeneratorService,
-            this.personRepository,
-        );
+        const person: Option<Person<true>> = await this.personRepository.findById(personId);
+        if (!person) {
+            return new EntityNotFoundError('Person');
+        }
+
+        const filteredEAs: EmailAddressEntity[] = [];
+        for (const eaEntity of emailAddressEntities)
+            if (this.emailGeneratorService.isEqual(eaEntity.address, person.vorname, person.familienname)) {
+                filteredEAs.push(eaEntity);
+            }
+        if (filteredEAs.length < 1 || !filteredEAs[0]) {
+            return new EmailAddressNotFoundError();
+        }
+        if (filteredEAs.length > 1) {
+            return new EmailAddressAmbiguousError();
+        }
+
+        return mapEntitiesToEmailAggregate(personId, filteredEAs[0], this.emailGeneratorService, this.personRepository);
     }
 
     public async deactivateEmailAddress(emailAddress: string): Promise<EmailAddressEntity | EmailAddressNotFoundError> {
@@ -82,64 +92,52 @@ export class EmailRepo {
 
     public async save(email: Email<boolean>): Promise<Email<true> | DomainError> {
         this.logger.info('save email');
-        if (!email.emailAddresses) {
+        if (!email.emailAddress) {
             return new EmailInvalidError(['No email-addresses attached to email aggregate']);
         }
 
-        if (email.emailAddresses.some((emailAddress: EmailAddress<boolean>) => emailAddress.id)) {
-            return this.update(email.personId, email.emailAddresses);
+        if (email.emailAddress.id) {
+            return this.update(email.personId, email.emailAddress);
         } else {
-            return this.create(email.personId, email.emailAddresses);
+            return this.create(email.personId, email.emailAddress);
         }
     }
 
-    private async create(
-        personId: PersonID,
-        emailAddresses: EmailAddress<boolean>[],
-    ): Promise<Email<true> | DomainError> {
-        //persist the emailAddresses
-        const emailAddressEntities: EmailAddressEntity[] = [];
-        for (const emailAddress of emailAddresses) {
-            const emailAddressEntity: EmailAddressEntity = this.em.create(
-                EmailAddressEntity,
-                mapAggregateToData(emailAddress),
-            );
-            emailAddressEntities.push(emailAddressEntity);
-            await this.em.persistAndFlush(emailAddressEntity);
-        }
+    private async create(personId: PersonID, emailAddress: EmailAddress<boolean>): Promise<Email<true> | DomainError> {
+        //persist the emailAddress
+        const emailAddressEntity: EmailAddressEntity = this.em.create(
+            EmailAddressEntity,
+            mapAggregateToData(emailAddress),
+        );
+        await this.em.persistAndFlush(emailAddressEntity);
 
         return mapEntitiesToEmailAggregate(
             personId,
-            emailAddressEntities,
+            emailAddressEntity,
             this.emailGeneratorService,
             this.personRepository,
         );
     }
 
-    private async update(
-        personId: PersonID,
-        emailAddresses: EmailAddress<boolean>[],
-    ): Promise<Email<true> | DomainError> {
+    private async update(personId: PersonID, emailAddress: EmailAddress<boolean>): Promise<Email<true> | DomainError> {
         //update the emailAddresses
         const emailAddressEntities: EmailAddressEntity[] = [];
-        for (const emailAddress of emailAddresses) {
-            const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(EmailAddressEntity, {
-                address: emailAddress.address,
-            });
+        const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(EmailAddressEntity, {
+            address: emailAddress.address,
+        });
 
-            if (emailAddressEntity) {
-                emailAddressEntity.assign(mapAggregateToData(emailAddress), {});
-                emailAddressEntities.push(emailAddressEntity);
-                await this.em.persistAndFlush(emailAddressEntity);
-            } else {
-                this.logger.error(`Email-address:${emailAddress.address} could not be found`);
-                return new EmailAddressNotFoundError(emailAddress.address);
-            }
+        if (emailAddressEntity) {
+            emailAddressEntity.assign(mapAggregateToData(emailAddress), {});
+            emailAddressEntities.push(emailAddressEntity);
+            await this.em.persistAndFlush(emailAddressEntity);
+        } else {
+            this.logger.error(`Email-address:${emailAddress.address} could not be found`);
+            return new EmailAddressNotFoundError(emailAddress.address);
         }
 
         return mapEntitiesToEmailAggregate(
             personId,
-            emailAddressEntities,
+            emailAddressEntity,
             this.emailGeneratorService,
             this.personRepository,
         );

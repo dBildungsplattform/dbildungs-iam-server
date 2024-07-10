@@ -9,7 +9,7 @@ import {
 import { EmailRepo } from './email.repo.js';
 import { Email } from '../domain/email.js';
 import { EmailFactory } from '../domain/email.factory.js';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
@@ -20,14 +20,16 @@ import { EmailGeneratorService } from '../domain/email-generator.service.js';
 import { EmailServiceRepo } from './email-service.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
+import { EmailAddressAmbiguousError } from '../error/email-address-ambiguous.error.js';
 
-describe('EmailServiceRepo', () => {
+describe('EmailRepo Mocked Services', () => {
     let module: TestingModule;
-    let emailRepo: EmailRepo;
-    let sut: EmailServiceRepo;
+    let sut: EmailRepo;
     let emailFactory: EmailFactory;
     let personFactory: PersonFactory;
     let personRepository: PersonRepository;
+    let emailGeneratorServiceMock: DeepMocked<EmailGeneratorService>;
     let orm: MikroORM;
 
     beforeAll(async () => {
@@ -37,10 +39,13 @@ describe('EmailServiceRepo', () => {
                 UsernameGeneratorService,
                 EmailRepo,
                 EmailFactory,
-                EmailGeneratorService,
                 EmailServiceRepo,
-                PersonFactory,
                 PersonRepository,
+                PersonFactory,
+                {
+                    provide: EmailGeneratorService,
+                    useValue: createMock<EmailGeneratorService>(),
+                },
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
@@ -66,11 +71,11 @@ describe('EmailServiceRepo', () => {
                 },
             ],
         }).compile();
-        sut = module.get(EmailServiceRepo);
-        emailRepo = module.get(EmailRepo);
+        sut = module.get(EmailRepo);
         emailFactory = module.get(EmailFactory);
         personFactory = module.get(PersonFactory);
         personRepository = module.get(PersonRepository);
+        emailGeneratorServiceMock = module.get(EmailGeneratorService);
         orm = module.get(MikroORM);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -107,29 +112,59 @@ describe('EmailServiceRepo', () => {
         expect(sut).toBeDefined();
     });
 
-    describe('existsEmailAddress', () => {
-        describe('when email does exist in DB', () => {
-            it('should return true', async () => {
+    describe('findByPerson', () => {
+        describe('when NO email-address is found for personId', () => {
+            it('should return EmailAddressNotFoundError', async () => {
                 const person: Person<true> = await createPerson();
                 const email: Email<false> = emailFactory.createNew(person.id);
-                const validEmail: Result<Email<false>> = await email.enable();
+                emailGeneratorServiceMock.generateAddress.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'test.test@schule-sh.de',
+                });
 
+                const validEmail: Result<Email<false>> = await email.enable();
                 if (!validEmail.ok) throw Error();
-                if (!validEmail.value.emailAddress) throw Error();
-                const savedEmail: Email<true> | DomainError = await emailRepo.save(validEmail.value);
+                const savedEmail: Email<true> | DomainError = await sut.save(validEmail.value);
                 if (savedEmail instanceof DomainError) throw new Error();
 
-                const exists: boolean = await sut.existsEmailAddress(validEmail.value.emailAddress.address);
+                emailGeneratorServiceMock.isEqual.mockReturnValue(false);
 
-                expect(exists).toBeTruthy();
+                const foundEmail: Email<true> | DomainError = await sut.findByPerson(person.id);
+
+                expect(foundEmail).toBeInstanceOf(EmailAddressNotFoundError);
             });
         });
 
-        describe('when email does NOT exist in DB', () => {
-            it('should return false', async () => {
-                const exists: boolean = await sut.existsEmailAddress(faker.internet.email());
+        describe('when ambiguous email-address is found for personId', () => {
+            it('should return EmailAddressAmbiguousError', async () => {
+                const person: Person<true> = await createPerson();
+                const email: Email<false> = emailFactory.createNew(person.id);
+                emailGeneratorServiceMock.generateAddress.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'test1.test@schule-sh.de',
+                });
 
-                expect(exists).toBeFalsy();
+                const validEmail: Result<Email<false>> = await email.enable();
+                if (!validEmail.ok) throw Error();
+                const savedEmail: Email<true> | DomainError = await sut.save(validEmail.value);
+                if (savedEmail instanceof DomainError) throw new Error();
+
+                const email2: Email<false> = emailFactory.createNew(person.id);
+                emailGeneratorServiceMock.generateAddress.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'test2.test@schule-sh.de',
+                });
+
+                const validEmail2: Result<Email<false>> = await email2.enable();
+                if (!validEmail2.ok) throw Error();
+                const savedEmail2: Email<true> | DomainError = await sut.save(validEmail2.value);
+                if (savedEmail2 instanceof DomainError) throw new Error();
+
+                emailGeneratorServiceMock.isEqual.mockReturnValue(true);
+
+                const foundEmail: Email<true> | DomainError = await sut.findByPerson(person.id);
+
+                expect(foundEmail).toBeInstanceOf(EmailAddressAmbiguousError);
             });
         });
     });

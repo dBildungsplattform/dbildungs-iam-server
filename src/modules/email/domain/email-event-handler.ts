@@ -16,6 +16,7 @@ import { PersonID } from '../../../shared/types/index.js';
 import { EmailAddressEntity } from '../persistence/email-address.entity.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { EmailRepo } from '../persistence/email.repo.js';
+import { EmailAddressAmbiguousError } from '../error/email-address-ambiguous.error.js';
 
 @Injectable()
 export class EmailEventHandler {
@@ -28,7 +29,7 @@ export class EmailEventHandler {
     ) {}
 
     @EventHandler(PersonenkontextCreatedEvent)
-    public async asyncPersonenkontextCreatedEventHandler(event: PersonenkontextCreatedEvent): Promise<void> {
+    public async handlePersonenkontextCreatedEvent(event: PersonenkontextCreatedEvent): Promise<void> {
         this.logger.info(
             `Received PersonenkontextCreatedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
         );
@@ -40,12 +41,16 @@ export class EmailEventHandler {
 
         if (await this.rolleReferencesEmailServiceProvider(rolle)) {
             this.logger.info(`Received event for creation of PK with rolle that references email SP`);
-            const existingEmail: Option<Email<true>> = await this.emailRepo.findByPerson(event.personId);
+            const existingEmail: Email<true> | DomainError = await this.emailRepo.findByPerson(event.personId);
 
-            if (existingEmail) {
-                await this.enableExistingEmail(existingEmail, event.personId);
-            } else {
+            if (existingEmail instanceof EmailAddressAmbiguousError) {
+                this.logger.error(existingEmail.message);
+                return;
+            }
+            if (existingEmail instanceof DomainError) {
                 await this.createNewEmail(event.personId);
+            } else {
+                await this.enableExistingEmail(existingEmail, event.personId);
             }
         }
     }
@@ -78,7 +83,7 @@ export class EmailEventHandler {
 
     @EventHandler(PersonenkontextDeletedEvent)
     // eslint-disable-next-line @typescript-eslint/require-await
-    public async asyncPersonenkontextDeletedEventHandler(event: PersonenkontextDeletedEvent): Promise<void> {
+    public async handlePersonenkontextDeletedEvent(event: PersonenkontextDeletedEvent): Promise<void> {
         this.logger.info(
             `Received PersonenkontextDeletedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
         );
@@ -86,7 +91,7 @@ export class EmailEventHandler {
     }
 
     @EventHandler(PersonDeletedEvent)
-    public async asyncPersonDeletedEventHandler(event: PersonDeletedEvent): Promise<void> {
+    public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
         //Setting person_id to null in Email table is done via deleteRule, not necessary here
 

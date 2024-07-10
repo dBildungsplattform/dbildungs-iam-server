@@ -10,7 +10,7 @@ export class Email<WasPersisted extends boolean> {
         public readonly personId: PersonID,
         public readonly emailGeneratorService: EmailGeneratorService,
         public readonly personRepository: PersonRepository,
-        public readonly emailAddresses?: EmailAddress<boolean>[],
+        public readonly emailAddress?: EmailAddress<boolean>,
     ) {}
 
     public static createNew(
@@ -25,17 +25,17 @@ export class Email<WasPersisted extends boolean> {
         personId: PersonID,
         emailGeneratorService: EmailGeneratorService,
         personRepository: PersonRepository,
-        emailAddresses: EmailAddress<boolean>[],
+        emailAddresses: EmailAddress<boolean>,
     ): Email<WasPersisted> {
         return new Email(personId, emailGeneratorService, personRepository, emailAddresses);
     }
 
     public async enable(): Promise<Result<Email<WasPersisted>>> {
-        if (this.emailAddresses && this.emailAddresses[0]) {
-            this.emailAddresses[0].enabled = true;
+        if (this.emailAddress) {
+            this.emailAddress.enabled = true;
             return {
                 ok: true,
-                value: new Email(this.personId, this.emailGeneratorService, this.personRepository, this.emailAddresses),
+                value: new Email(this.personId, this.emailGeneratorService, this.personRepository, this.emailAddress),
             };
         }
         const person: Option<Person<true>> = await this.personRepository.findById(this.personId);
@@ -65,31 +65,25 @@ export class Email<WasPersisted extends boolean> {
         );
         return {
             ok: true,
-            value: new Email(this.personId, this.emailGeneratorService, this.personRepository, [newEmailAddress]),
+            value: new Email(this.personId, this.emailGeneratorService, this.personRepository, newEmailAddress),
         };
     }
 
     public disable(): boolean {
-        if (!this.emailAddresses || this.emailAddresses.length <= 0) return false;
+        if (!this.emailAddress) return false;
 
-        for (const emailAddress of this.emailAddresses) {
-            emailAddress.enabled = false;
-        }
+        this.emailAddress.enabled = false;
+
         return true;
     }
 
     public isEnabled(): boolean {
-        if (!this.emailAddresses || this.emailAddresses.length <= 0) return false;
-        return this.emailAddresses.some((emailAddress: EmailAddress<boolean>) => emailAddress.enabled);
+        return !!this.emailAddress && this.emailAddress.enabled;
     }
 
     public get currentAddress(): Option<string> {
-        if (!this.emailAddresses || this.emailAddresses.length <= 0) return undefined;
+        if (!this.emailAddress || !this.emailAddress.enabled) return undefined;
 
-        for (const emailAddress of this.emailAddresses) {
-            if (emailAddress.enabled) return emailAddress.address;
-        }
-
-        return undefined;
+        return this.emailAddress.address;
     }
 }

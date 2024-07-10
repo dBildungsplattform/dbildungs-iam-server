@@ -37,6 +37,14 @@ describe('EmailGeneratorService', () => {
         jest.resetAllMocks();
     });
 
+    describe('isEqual', () => {
+        describe('when generated address is not ok', () => {
+            it('should return false', () => {
+                expect(sut.isEqual('test.test@schule-sh.de', '', '')).toBeFalsy();
+            });
+        });
+    });
+
     describe('generateName', () => {
         describe('when firstname has less than 2 characters', () => {
             it('should return error', async () => {
