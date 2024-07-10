@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, Property, Ref } from '@mikro-orm/core';
+import { Entity, ManyToOne, Property, Rel } from '@mikro-orm/core';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 
@@ -12,7 +12,7 @@ export class EmailAddressEntity extends TimestampedEntity {
         deleteRule: 'set null',
         entity: () => PersonEntity,
     })
-    public personId!: Ref<PersonEntity>;
+    public personId!: Rel<PersonEntity>;
 
     @Property({ primary: true, nullable: false, unique: true })
     public address!: string;

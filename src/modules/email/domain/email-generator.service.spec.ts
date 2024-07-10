@@ -39,8 +39,8 @@ describe('EmailGeneratorService', () => {
 
     describe('isEqual', () => {
         describe('when internal error occurred', () => {
-            it('should return false', async () => {
-                const res: boolean = await sut.isEqual(
+            it('should return false', () => {
+                const res: boolean = sut.isEqual(
                     faker.string.alpha({ length: 10 }),
                     faker.string.alpha({ length: 32 }),
                     faker.string.alpha({ length: 32 }),
@@ -51,28 +51,34 @@ describe('EmailGeneratorService', () => {
         });
 
         describe('when address is NOT equal generated address', () => {
-            it('should return false', async () => {
+            it('should return false', () => {
                 const vorname: string = 'theo';
                 const familienname: string = 'meier';
                 const address: string = faker.internet.email();
                 emailServiceRepoMock.existsEmailAddress.mockResolvedValueOnce(false);
 
-                const res: boolean = await sut.isEqual(address, vorname, familienname);
+                const res: boolean = sut.isEqual(address, vorname, familienname);
 
                 expect(res).toBeFalsy();
             });
         });
 
         describe('when address is equal generated address', () => {
-            it('should return true', async () => {
+            it('should return true', () => {
                 const vorname: string = 'theo';
                 const familienname: string = 'meier';
                 const address: string = 'theo.meier@schule-sh.de';
                 emailServiceRepoMock.existsEmailAddress.mockResolvedValueOnce(false);
 
-                const res: boolean = await sut.isEqual(address, vorname, familienname);
+                const res: boolean = sut.isEqual(address, vorname, familienname);
 
                 expect(res).toBeTruthy();
+            });
+        });
+
+        describe('when generated address is not ok', () => {
+            it('should return false', () => {
+                expect(sut.isEqual('test.test@schule-sh.de', '', '')).toBeFalsy();
             });
         });
     });

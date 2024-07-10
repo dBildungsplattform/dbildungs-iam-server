@@ -11,7 +11,7 @@ import { Email } from '../domain/email.js';
 import { EmailFactory } from '../domain/email.factory.js';
 import { createMock } from '@golevelup/ts-jest';
 import { Person } from '../../person/domain/person.js';
-import { DomainError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
@@ -39,8 +39,10 @@ describe('EmailRepo', () => {
                 UsernameGeneratorService,
                 EmailRepo,
                 EmailFactory,
-                EmailGeneratorService,
                 EmailServiceRepo,
+                EmailGeneratorService,
+                PersonFactory,
+                PersonRepository,
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
@@ -64,8 +66,6 @@ describe('EmailRepo', () => {
                             }),
                     }),
                 },
-                PersonFactory,
-                PersonRepository,
             ],
         }).compile();
         sut = module.get(EmailRepo);
@@ -95,10 +95,6 @@ describe('EmailRepo', () => {
         return person;
     }
 
-    /*  function createEmailAddress(personId: PersonID): EmailAddress<false> {
-        return new EmailAddress(undefined, undefined, undefined, personId, faker.internet.email(), true);
-    }*/
-
     afterAll(async () => {
         await orm.close();
         await module.close();
@@ -106,7 +102,6 @@ describe('EmailRepo', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
-        //jest.resetAllMocks();
     });
 
     it('should be defined', () => {
@@ -114,19 +109,28 @@ describe('EmailRepo', () => {
     });
 
     describe('findByPerson', () => {
-        it('should return email with email-addresses by personId', async () => {
-            const person: Person<true> = await createPerson();
-            const email: Email<false> = emailFactory.createNew(person.id);
-            const validEmail: Result<Email<false>> = await email.enable();
+        describe('when email-address is found for personId', () => {
+            it('should return email with email-addresses by personId', async () => {
+                const person: Person<true> = await createPerson();
+                const email: Email<false> = emailFactory.createNew(person.id);
+                const validEmail: Result<Email<false>> = await email.enable();
 
-            if (!validEmail.ok) throw Error();
-            const savedEmail: Email<true> | DomainError = await sut.save(validEmail.value);
-            if (savedEmail instanceof DomainError) throw new Error();
-            const foundEmail: Option<Email<true>> = await sut.findByPerson(person.id);
-            if (!foundEmail) throw Error();
+                if (!validEmail.ok) throw Error();
+                const savedEmail: Email<true> | DomainError = await sut.save(validEmail.value);
+                if (savedEmail instanceof DomainError) throw new Error();
+                const foundEmail: Email<true> | DomainError = await sut.findByPerson(person.id);
+                if (foundEmail instanceof DomainError) throw Error();
 
-            expect(foundEmail).toBeTruthy();
-            expect(foundEmail.emailAddresses).toHaveLength(1);
+                expect(foundEmail.emailAddress).toBeTruthy();
+            });
+        });
+
+        describe('when person does NOT exist', () => {
+            it('should return EntityNotFoundError', async () => {
+                const foundEmail: Email<true> | DomainError = await sut.findByPerson(faker.string.uuid());
+
+                expect(foundEmail).toBeInstanceOf(EntityNotFoundError);
+            });
         });
     });
 
@@ -166,18 +170,6 @@ describe('EmailRepo', () => {
         });
     });
 
-    /*describe('save (create new)', () => {
-        describe('when no emailAddresses are attached', () => {
-            it('should create entity without email-addresses', async () => {
-                const person: Person<true> = await createPerson();
-                const email: Email<false> = emailFactory.createNew(person.id);
-                const savedEmail: Email<true> | DomainError = await sut.save(email);
-
-                expect(savedEmail).toBeInstanceOf(Email);
-            });
-        });
-    });*/
-
     describe('save', () => {
         describe('when emailAddressEntities are NOT attached to aggregate', () => {
             it('should return EmailInvalidError', async () => {
@@ -216,60 +208,14 @@ describe('EmailRepo', () => {
 
                 const persistedValidEmail: Email<true> | DomainError = await sut.save(validEmail.value);
                 if (persistedValidEmail instanceof DomainError) throw new Error();
-                if (!persistedValidEmail.emailAddresses || !persistedValidEmail.emailAddresses[0]) throw new Error();
+                if (!persistedValidEmail.emailAddress) throw new Error();
 
-                persistedValidEmail.emailAddresses[0].address = faker.internet.email();
+                persistedValidEmail.emailAddress.address = faker.internet.email();
 
                 const persistedChangedEmail: Email<true> | DomainError = await sut.save(persistedValidEmail);
 
                 expect(persistedChangedEmail).toBeInstanceOf(EmailAddressNotFoundError);
             });
         });
-
-        /*describe('when emailAddressEntities can be found in DB', () => {
-            it('should update entity, when id is set', async () => {
-                const person: Person<true> = await createPerson();
-                const email: Email<false> = emailFactory.createNew(person.id);
-                const validEmail: Result<Email<false>> = await email.enable();
-
-                if (!validEmail.ok) throw Error();
-                if (!validEmail.value.emailAddresses || !validEmail.value.emailAddresses[0]) throw Error();
-                const savedEmail: Email<true> | DomainError = await sut.save(validEmail.value);
-                if (savedEmail instanceof DomainError) throw new Error();
-                const newEmail: Email<true> = emailFactory.construct(
-                    person.id,
-                    [validEmail.value.emailAddresses[0]],
-                );
-                const updatedMail: Email<true> | DomainError = await sut.save(newEmail);
-                if (updatedMail instanceof DomainError) throw new Error();
-                const foundEmail: Option<Email<true>> = await sut.findById(updatedMail.id);
-
-                expect(foundEmail).toBeTruthy();
-                expect(foundEmail).toEqual(updatedMail);
-            });
-        });
-
-        describe('when emailAddressEntities CANNOT be found in DB', () => {
-            it('should return EmailAddressNotFoundError', async () => {
-                const person: Person<true> = await createPerson();
-                const email: Email<false> = emailFactory.createNew(person.id);
-                const validEmail: Result<Email<false>> = await email.enable();
-
-                if (!validEmail.ok) throw Error();
-                if (!validEmail.value.emailAddresses || !validEmail.value.emailAddresses[0]) throw Error();
-                const savedEmail: Email<true> | DomainError = await sut.save(validEmail.value);
-                if (savedEmail instanceof DomainError) throw new Error();
-                const newEmail: Email<true> = emailFactory.construct(
-                    savedEmail.id,
-                    faker.date.past(),
-                    faker.date.recent(),
-                    person.id,
-                    [new EmailAddress<true>(faker.string.uuid(), faker.internet.email(), true)], //results in em.findOne returns undefined
-                );
-                const updatedMail: Email<true> | DomainError = await sut.save(newEmail);
-
-                expect(updatedMail).toBeInstanceOf(EmailAddressNotFoundError);
-            });
-        });*/
     });
 });

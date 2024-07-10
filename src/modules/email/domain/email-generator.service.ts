@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-    DomainError,
     InvalidNameError,
     InvalidCharacterSetError,
     InvalidAttributeLengthError,
@@ -14,15 +13,15 @@ export class EmailGeneratorService {
 
     public constructor(private emailServiceRepo: EmailServiceRepo) {}
 
-    public async isEqual(address: string, firstname: string, lastname: string): Promise<boolean> {
-        const generatedAddress: Result<string, DomainError> = await this.generateAddress(firstname, lastname);
+    public isEqual(address: string, firstname: string, lastname: string): boolean {
+        const createAddress: Result<string> = this.createAddress(firstname, lastname);
 
-        if (!generatedAddress.ok) return false;
+        if (!createAddress.ok) return false;
 
-        return address === generatedAddress.value;
+        return address === createAddress.value + EmailGeneratorService.EMAIL_SUFFIX;
     }
 
-    public async generateAddress(firstname: string, lastname: string): Promise<Result<string, DomainError>> {
+    public createAddress(firstname: string, lastname: string): Result<string> {
         // Check for minimum length
         if (firstname.length < 2) {
             return { ok: false, error: new InvalidAttributeLengthError('name.vorname') };
@@ -63,7 +62,18 @@ export class EmailGeneratorService {
             return { ok: false, error: new InvalidNameError('Could not generate valid username') };
         }
 
-        const nextAddressName: string = await this.getNextAvailableAddress(calculatedAddress);
+        return {
+            ok: true,
+            value: calculatedAddress,
+        };
+    }
+
+    public async generateAddress(firstname: string, lastname: string): Promise<Result<string>> {
+        const createdAddress: Result<string> = this.createAddress(firstname, lastname);
+
+        if (!createdAddress.ok) return createdAddress;
+
+        const nextAddressName: string = await this.getNextAvailableAddress(createdAddress.value);
 
         return {
             ok: true,

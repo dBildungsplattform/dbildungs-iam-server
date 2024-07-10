@@ -29,7 +29,6 @@ import { EventModule, EventService } from '../../../core/eventbus/index.js';
 import { EmailFactory } from './email.factory.js';
 import { Email } from './email.js';
 import { EmailAddressID, PersonID, RolleID } from '../../../shared/types/index.js';
-import { EmailInvalidError } from '../error/email-invalid.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailAddress } from './email-address.js';
 import { EmailRepo } from '../persistence/email.repo.js';
@@ -37,13 +36,18 @@ import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed.event.js';
 import { Person } from '../../person/domain/person.js';
+import { EmailAddressAmbiguousError } from '../error/email-address-ambiguous.error.js';
+import { EmailInvalidError } from '../error/email-invalid.error.js';
 
-function getEmail(emaiGeneratorService: EmailGeneratorService, personRepository: PersonRepository): Email<true> {
+function getEmail(emailGeneratorService: EmailGeneratorService, personRepository: PersonRepository): Email<true> {
     const fakePersonId: PersonID = faker.string.uuid();
     const fakeEmailAddressId: string = faker.string.uuid();
-    return Email.construct(fakePersonId, emaiGeneratorService, personRepository, [
+    return Email.construct(
+        fakePersonId,
+        emailGeneratorService,
+        personRepository,
         new EmailAddress<boolean>(fakeEmailAddressId, undefined, undefined, fakePersonId, faker.internet.email(), true),
-    ]);
+    );
 }
 
 function getPerson(): Person<true> {
@@ -135,7 +139,7 @@ describe('Email Event Handler', () => {
         jest.resetAllMocks();
     });
 
-    describe('asyncPersonenkontextCreatedEventHandler', () => {
+    describe('handlePersonenkontextCreatedEvent', () => {
         let rolle: Rolle<true>;
         let sp: ServiceProvider<true>;
         let spMap: Map<string, ServiceProvider<true>>;
@@ -162,20 +166,18 @@ describe('Email Event Handler', () => {
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
 
-                const emailAddresses: EmailAddress<true>[] = [
-                    new EmailAddress<true>(
-                        emailAddressId,
-                        faker.date.past(),
-                        faker.date.recent(),
-                        fakePersonId,
-                        faker.internet.email(),
-                        true,
-                    ),
-                ];
+                const emailAddress: EmailAddress<true> = new EmailAddress<true>(
+                    emailAddressId,
+                    faker.date.past(),
+                    faker.date.recent(),
+                    fakePersonId,
+                    faker.internet.email(),
+                    true,
+                );
                 // eslint-disable-next-line @typescript-eslint/require-await
                 emailRepoMock.findByPerson.mockImplementationOnce(async (personId: PersonID) => {
                     const emailMock: DeepMocked<Email<true>> = createMock<Email<true>>({
-                        emailAddresses: emailAddresses,
+                        emailAddress: emailAddress,
                         personId: personId,
                     });
                     // eslint-disable-next-line @typescript-eslint/require-await
@@ -187,7 +189,7 @@ describe('Email Event Handler', () => {
                                     return 'test@schule-sh.de';
                                 },
                                 personId: fakePersonId,
-                                emailAddresses: emailAddresses,
+                                emailAddress: emailAddress,
                             }),
                         };
                     });
@@ -196,7 +198,7 @@ describe('Email Event Handler', () => {
                 });
                 emailRepoMock.save.mockResolvedValueOnce(getEmail(emailGeneratorServiceMock, personRepositoryMock)); //mock email was persisted successfully
 
-                await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
+                await emailEventHandler.handlePersonenkontextCreatedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(`Enabling existing email for person:${fakePersonId}`);
             });
@@ -215,20 +217,18 @@ describe('Email Event Handler', () => {
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
 
-                const emailAddresses: EmailAddress<true>[] = [
-                    new EmailAddress<true>(
-                        emailAddressId,
-                        faker.date.past(),
-                        faker.date.recent(),
-                        fakePersonId,
-                        faker.internet.email(),
-                        true,
-                    ),
-                ];
+                const emailAddress: EmailAddress<true> = new EmailAddress<true>(
+                    emailAddressId,
+                    faker.date.past(),
+                    faker.date.recent(),
+                    fakePersonId,
+                    faker.internet.email(),
+                    true,
+                );
                 // eslint-disable-next-line @typescript-eslint/require-await
                 emailRepoMock.findByPerson.mockImplementationOnce(async (personId: PersonID) => {
                     const emailMock: DeepMocked<Email<true>> = createMock<Email<true>>({
-                        emailAddresses: emailAddresses,
+                        emailAddress: emailAddress,
                         personId: personId,
                     });
                     // eslint-disable-next-line @typescript-eslint/require-await
@@ -242,7 +242,7 @@ describe('Email Event Handler', () => {
                     return emailMock;
                 });
 
-                await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
+                await emailEventHandler.handlePersonenkontextCreatedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Could not re-enable email, error is requested EmailAddress with the address:address was not found`,
@@ -250,7 +250,7 @@ describe('Email Event Handler', () => {
             });
         });
 
-        describe('when rolle exists and service provider with kategorie email is found', () => {
+        describe('when rolle exists and service provider with target email is found', () => {
             it('should execute without errors', async () => {
                 const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(
                     faker.string.uuid(),
@@ -260,20 +260,18 @@ describe('Email Event Handler', () => {
 
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
-                emailRepoMock.findByPerson.mockResolvedValueOnce(undefined); //mock: no existing email is found -> create a new address
+                emailRepoMock.findByPerson.mockResolvedValueOnce(new EmailAddressNotFoundError()); //mock: no existing email is found -> create a new address
 
                 emailFactoryMock.createNew.mockImplementationOnce((personId: PersonID) => {
                     const emailMock: DeepMocked<Email<false>> = createMock<Email<false>>({
-                        emailAddresses: [
-                            new EmailAddress<false>(
-                                undefined,
-                                undefined,
-                                undefined,
-                                personId,
-                                faker.internet.email(),
-                                true,
-                            ),
-                        ],
+                        emailAddress: new EmailAddress<false>(
+                            undefined,
+                            undefined,
+                            undefined,
+                            personId,
+                            faker.internet.email(),
+                            true,
+                        ),
                         personId: personId,
                     });
                     const emailAddress: EmailAddress<false> = createMock<EmailAddress<false>>({
@@ -287,7 +285,7 @@ describe('Email Event Handler', () => {
                                 get currentAddress(): Option<string> {
                                     return 'test@schule-sh.de';
                                 },
-                                emailAddresses: [emailAddress],
+                                emailAddress: emailAddress,
                             }),
                         };
                     });
@@ -298,11 +296,29 @@ describe('Email Event Handler', () => {
                 const fakePersistedEmail: Email<true> = getEmail(emailGeneratorServiceMock, personRepositoryMock);
                 emailRepoMock.save.mockResolvedValueOnce(fakePersistedEmail); //mock email was persisted successfully
 
-                await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
+                await emailEventHandler.handlePersonenkontextCreatedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Successfully persisted email with new address:${fakePersistedEmail.currentAddress}`,
                 );
+            });
+        });
+
+        describe('when email address is ambiguous', () => {
+            it('should log error', async () => {
+                const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                );
+
+                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
+                emailRepoMock.findByPerson.mockResolvedValueOnce(new EmailAddressAmbiguousError()); //mock: email address is ambiguous
+
+                await emailEventHandler.handlePersonenkontextCreatedEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(`Email-address is ambiguous for person`);
             });
         });
 
@@ -316,12 +332,55 @@ describe('Email Event Handler', () => {
                 );
 
                 rolleRepoMock.findById.mockResolvedValueOnce(undefined);
-                await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
+                await emailEventHandler.handlePersonenkontextCreatedEvent(event);
                 expect(loggerMock.error).toHaveBeenCalledWith(`Rolle id:${rolleId} does NOT exist`);
             });
         });
 
-        describe('when activation of email returns error', () => {
+        describe('when creating new email returns error', () => {
+            it('should log error', async () => {
+                const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                );
+
+                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
+                emailRepoMock.findByPerson.mockResolvedValueOnce(new EmailAddressNotFoundError()); //mock: no existing email is found -> create a new address
+
+                emailFactoryMock.createNew.mockImplementationOnce((personId: PersonID) => {
+                    const emailMock: DeepMocked<Email<false>> = createMock<Email<false>>({
+                        emailAddress: new EmailAddress<false>(
+                            undefined,
+                            undefined,
+                            undefined,
+                            personId,
+                            faker.internet.email(),
+                            true,
+                        ),
+                        personId: personId,
+                    });
+                    // eslint-disable-next-line @typescript-eslint/require-await
+                    emailMock.enable.mockImplementationOnce(async () => {
+                        return {
+                            ok: false,
+                            error: new EmailAddressNotFoundError(),
+                        };
+                    });
+
+                    return emailMock;
+                });
+
+                await emailEventHandler.handlePersonenkontextCreatedEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Could not create email, error is requested EmailAddress with the address:address was not found`,
+                );
+            });
+        });
+
+        /*describe('when activation of email returns error', () => {
             it('should log error', async () => {
                 const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(
                     faker.string.uuid(),
@@ -348,14 +407,14 @@ describe('Email Event Handler', () => {
                 });
                 emailRepoMock.save.mockResolvedValueOnce(createMock<Email<true>>()); //mock email was persisted successfully
 
-                await emailEventHandler.asyncPersonenkontextCreatedEventHandler(event);
+                await emailEventHandler.handlePersonenkontextCreatedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(`Could not create email, error is Email is invalid`);
             });
-        });
+        });*/
     });
 
-    describe('asyncPersonenkontextDeletedEventHandler', () => {
+    describe('handlePersonenkontextDeletedEvent', () => {
         describe('when rolle exists and service provider with kategorie email is found', () => {
             it('should execute without errors', async () => {
                 const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(
@@ -373,7 +432,7 @@ describe('Email Event Handler', () => {
                 rolleRepoMock.findById.mockResolvedValueOnce(rolle);
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
 
-                const result: void = await emailEventHandler.asyncPersonenkontextDeletedEventHandler(event);
+                const result: void = await emailEventHandler.handlePersonenkontextDeletedEvent(event);
 
                 expect(result).toBeUndefined();
             });
@@ -388,14 +447,14 @@ describe('Email Event Handler', () => {
                 );
 
                 rolleRepoMock.findById.mockResolvedValueOnce(undefined);
-                const result: void = await emailEventHandler.asyncPersonenkontextDeletedEventHandler(event);
+                const result: void = await emailEventHandler.handlePersonenkontextDeletedEvent(event);
 
                 expect(result).toBeUndefined();
             });
         });
     });
 
-    describe('asyncPersonDeletedEventHandler', () => {
+    describe('handlePersonDeletedEvent', () => {
         let personId: string;
         let emailAddress: string;
         let event: PersonDeletedEvent;
@@ -408,7 +467,7 @@ describe('Email Event Handler', () => {
 
         describe('when deletion is successful', () => {
             it('should log info', async () => {
-                await emailEventHandler.asyncPersonDeletedEventHandler(event);
+                await emailEventHandler.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(`Successfully deactivated email-address:${emailAddress}`);
             });
@@ -417,7 +476,7 @@ describe('Email Event Handler', () => {
         describe('when event does not provide email-address', () => {
             it('should log info about that', async () => {
                 event = new PersonDeletedEvent(personId, undefined);
-                await emailEventHandler.asyncPersonDeletedEventHandler(event);
+                await emailEventHandler.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Cannot deactivate email-address, person did not have an email-address`,
@@ -428,7 +487,7 @@ describe('Email Event Handler', () => {
         describe('when email-address for deletion cannot be found', () => {
             it('should log error', async () => {
                 emailRepoMock.deactivateEmailAddress.mockResolvedValueOnce(new EmailAddressNotFoundError());
-                await emailEventHandler.asyncPersonDeletedEventHandler(event);
+                await emailEventHandler.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Deactivation of email-address:${event.emailAddress} failed`,
@@ -450,7 +509,7 @@ describe('Email Event Handler', () => {
 
         describe('when no existing email-addresses are found for person', () => {
             it('should log info', async () => {
-                emailRepoMock.findByPerson.mockResolvedValueOnce(undefined); //mock NO existing email-addresses found
+                emailRepoMock.findByPerson.mockResolvedValueOnce(new EmailAddressNotFoundError()); //mock NO existing email-addresses found
 
                 await emailEventHandler.asyncPersonRenamedEventHandler(event);
 
@@ -479,7 +538,7 @@ describe('Email Event Handler', () => {
                 // eslint-disable-next-line @typescript-eslint/require-await
                 emailRepoMock.findByPerson.mockImplementationOnce(async (personId: PersonID) => {
                     const emailMock: DeepMocked<Email<true>> = createMock<Email<true>>({
-                        emailAddresses: [],
+                        emailAddress: undefined,
                         personId: personId,
                     });
                     // eslint-disable-next-line @typescript-eslint/require-await
@@ -508,7 +567,7 @@ describe('Email Event Handler', () => {
                 // eslint-disable-next-line @typescript-eslint/require-await
                 emailRepoMock.findByPerson.mockImplementationOnce(async (personId: PersonID) => {
                     const emailMock: DeepMocked<Email<true>> = createMock<Email<true>>({
-                        emailAddresses: [],
+                        emailAddress: undefined,
                         personId: personId,
                     });
                     // eslint-disable-next-line @typescript-eslint/require-await
@@ -520,7 +579,7 @@ describe('Email Event Handler', () => {
                                     return 'test@schule-sh.de';
                                 },
                                 personId: faker.string.uuid(),
-                                emailAddresses: [],
+                                emailAddress: undefined,
                             }),
                         };
                     });

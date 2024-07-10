@@ -8,6 +8,7 @@ import { faker } from '@faker-js/faker';
 import { Person } from '../../person/domain/person.js';
 import { EmailInvalidError } from '../error/email-invalid.error.js';
 import { EmailAddress } from './email-address.js';
+import { EmailAddressID } from '../../../shared/types/index.js';
 
 describe('Email Aggregate', () => {
     let module: TestingModule;
@@ -16,7 +17,6 @@ describe('Email Aggregate', () => {
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let newEmail: Email<false>;
     let firstEmailAddress: EmailAddress<true>;
-    let emailAddresses: EmailAddress<true>[];
     let existingEmail: Email<true>;
     let newNames: EmailAddressProperties;
 
@@ -54,8 +54,7 @@ describe('Email Aggregate', () => {
             faker.internet.email(),
             false,
         );
-        emailAddresses = [firstEmailAddress];
-        existingEmail = emailFactory.construct(faker.string.uuid(), emailAddresses);
+        existingEmail = emailFactory.construct(faker.string.uuid(), firstEmailAddress);
         newNames = {
             vorname: faker.person.firstName(),
             familienname: faker.person.lastName(),
@@ -78,7 +77,18 @@ describe('Email Aggregate', () => {
                 ];
                 const existingEmail: Email<true> = emailFactory.construct(faker.string.uuid(), emailAddresses);
 */
-                const result: Result<Email<true>> = await existingEmail.enable();
+                const emailAddressId: EmailAddressID = faker.string.uuid();
+                const emailAddress: EmailAddress<true> = new EmailAddress<true>(
+                    emailAddressId,
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.internet.email(),
+                    false,
+                );
+                const someMail: Email<true> = emailFactory.construct(faker.string.uuid(), emailAddress);
+
+                const result: Result<Email<true>> = await someMail.enable();
 
                 expect(result.ok).toBeTruthy();
             });
@@ -143,7 +153,7 @@ describe('Email Aggregate', () => {
         describe('when person cannot be found', () => {
             it('should return EmailInvalidError', async () => {
                 personRepositoryMock.findById.mockResolvedValue(createMock<Person<true>>());
-                emailGeneratorServiceMock.isEqual.mockResolvedValueOnce(true);
+                emailGeneratorServiceMock.isEqual.mockReturnValueOnce(true);
 
                 const result: Result<Email<true>> = await existingEmail.enable();
 
@@ -157,7 +167,7 @@ describe('Email Aggregate', () => {
 
         describe('when generation of new (changed) address fails', () => {
             it('should return EmailInvalidError', async () => {
-                emailGeneratorServiceMock.isEqual.mockResolvedValueOnce(true);
+                emailGeneratorServiceMock.isEqual.mockReturnValueOnce(true);
                 personRepositoryMock.findById.mockResolvedValue(createMock<Person<true>>());
 
                 const result: Result<Email<true>> = await existingEmail.enable();
@@ -175,7 +185,7 @@ describe('Email Aggregate', () => {
 
         describe('when email already contains other addresses', () => {
             it('should concat existing and new addresses', async () => {
-                emailGeneratorServiceMock.isEqual.mockResolvedValueOnce(true);
+                emailGeneratorServiceMock.isEqual.mockReturnValueOnce(true);
                 personRepositoryMock.findById.mockResolvedValue(createMock<Person<true>>());
 
                 const result: Result<Email<true>> = await existingEmail.enable();
@@ -185,9 +195,13 @@ describe('Email Aggregate', () => {
                     ok: true,
                     value: faker.internet.email(),
                 });
-                const changeAddressResult: Result<Email<true>> = await result.value.changeAddress(newNames);
-                if (!changeAddressResult.ok) throw new Error();
-                expect(changeAddressResult.value.emailAddresses).toHaveLength(2);
+
+                const enabledEmail: Result<Email<false>> = await existingEmail.enable();
+
+                if (!enabledEmail.ok) throw new Error();
+                const disablingResult: boolean = enabledEmail.value.disable();
+                expect(disablingResult).toBeTruthy();
+                expect(enabledEmail.value.emailAddress?.enabled).toBeFalsy();
             });
         });
     });
@@ -209,7 +223,7 @@ describe('Email Aggregate', () => {
                     faker.internet.email(),
                     true,
                 );
-                const email: Email<true> = emailFactory.construct(faker.string.uuid(), [emailAddress]);
+                const email: Email<true> = emailFactory.construct(faker.string.uuid(), emailAddress);
                 const result: boolean = email.isEnabled();
 
                 expect(result).toBeTruthy();
@@ -234,7 +248,7 @@ describe('Email Aggregate', () => {
                     faker.internet.email(),
                     true,
                 );
-                const email: Email<true> = emailFactory.construct(faker.string.uuid(), [emailAddress]);
+                const email: Email<true> = emailFactory.construct(faker.string.uuid(), emailAddress);
                 const result: Option<string> = email.currentAddress;
 
                 expect(result).toBeDefined();

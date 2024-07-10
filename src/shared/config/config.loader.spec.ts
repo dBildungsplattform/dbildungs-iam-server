@@ -23,6 +23,7 @@ describe('configloader', () => {
                     OIDC_CALLBACK_URL: 'http://localhost:9091/api/frontend/login',
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
                     LOGOUT_REDIRECT: '/logout',
+                    ERROR_PAGE_REDIRECT: '/error',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -95,6 +96,7 @@ describe('configloader', () => {
                     OIDC_CALLBACK_URL: 'http://localhost:9091/api/frontend/login',
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
                     LOGOUT_REDIRECT: '/logout',
+                    ERROR_PAGE_REDIRECT: '/error',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',

@@ -20,8 +20,13 @@ import { DBiamPersonResponse } from './dbiam-person.response.js';
 import { DbiamPersonenkontextError } from '../../personenkontext/api/dbiam-personenkontext.error.js';
 import { PersonenkontextExceptionFilter } from '../../personenkontext/api/personenkontext-exception-filter.js';
 import { PersonenkontextSpecificationError } from '../../personenkontext/specification/error/personenkontext-specification.error.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
-@UseFilters(new SchulConnexValidationErrorFilter(), new PersonenkontextExceptionFilter())
+@UseFilters(
+    new SchulConnexValidationErrorFilter(),
+    new PersonenkontextExceptionFilter(),
+    new AuthenticationExceptionFilter(),
+)
 @ApiTags('dbiam-personen')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
