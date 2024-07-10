@@ -145,7 +145,7 @@ export class PersonService {
         organisationId: string,
     ): Promise<Option<DomainError>> {
         // Check if logged in person has permission
-        const hasPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(organisationId, [
+        const hasPermissionAtOrga: boolean = await permissions.hasSystemrechteAtOrganisation(organisationId, [
             RollenSystemRecht.PERSONEN_VERWALTEN,
         ]);
 

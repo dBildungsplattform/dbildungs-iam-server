@@ -250,7 +250,7 @@ describe('sut', () => {
             organisationRepositoryMock.findById.mockResolvedValueOnce(
                 createMock<Organisation<true>>({ typ: OrganisationsTyp.LAND }),
             );
-            personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            personpermissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false);
 
             const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontext(
                 personpermissionsMock,
@@ -270,7 +270,7 @@ describe('sut', () => {
             organisationRepositoryMock.findById.mockResolvedValueOnce(
                 createMock<Organisation<true>>({ typ: OrganisationsTyp.LAND }),
             );
-            personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            personpermissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true);
             personRepositoryMock.create.mockResolvedValueOnce(
                 new KeycloakClientError('Username or email already exists'),
             );

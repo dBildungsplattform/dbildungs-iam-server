@@ -11,6 +11,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
 import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export type PersonenkontextPartial = Pick<
     Personenkontext<boolean>,
@@ -39,9 +40,11 @@ export class Personenkontext<WasPersisted extends boolean> {
         public readonly personId: PersonID,
         public readonly organisationId: OrganisationID,
         public readonly rolleId: RolleID,
+        public readonly logger: ClassLogger,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
+        logger: ClassLogger,
         personRepo: PersonRepository,
         organisationRepo: OrganisationRepository,
         rolleRepo: RolleRepo,
@@ -62,10 +65,12 @@ export class Personenkontext<WasPersisted extends boolean> {
             personId,
             organisationId,
             rolleId,
+            logger
         );
     }
 
     public static createNew(
+        logger: ClassLogger,
         personRepo: PersonRepository,
         organisationRepo: OrganisationRepository,
         rolleRepo: RolleRepo,
@@ -83,6 +88,7 @@ export class Personenkontext<WasPersisted extends boolean> {
             personId,
             organisationId,
             rolleId,
+            logger
         );
     }
 
@@ -123,8 +129,9 @@ export class Personenkontext<WasPersisted extends boolean> {
 
     public async checkPermissions(permissions: PersonPermissions): Promise<Option<DomainError>> {
         // Check if logged in person has permission
+        this.logger.info(`${permissions.personFields.id}   START   hasSystemrechteAtOrganisation`);
         {
-            const hasPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(this.organisationId, [
+            const hasPermissionAtOrga: boolean = await permissions.hasSystemrechteAtOrganisation(this.organisationId, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
 
@@ -133,6 +140,7 @@ export class Personenkontext<WasPersisted extends boolean> {
                 return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
             }
         }
+        this.logger.info(`${permissions.personFields.id}   END     hasSystemrechteAtOrganisation`);
 
         // Check if logged in user can modify target person
         {

@@ -109,7 +109,7 @@ describe('dbiam Person API', () => {
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
             personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            personpermissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/dbiam/personen')
@@ -132,7 +132,7 @@ describe('dbiam Person API', () => {
             );
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(permissions);
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            permissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true);
             permissions.canModifyPerson.mockResolvedValueOnce(true);
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -159,7 +159,7 @@ describe('dbiam Person API', () => {
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            personpermissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
             personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
 
@@ -191,7 +191,7 @@ describe('dbiam Person API', () => {
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            personpermissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const response: Response = await request(app.getHttpServer() as App)
