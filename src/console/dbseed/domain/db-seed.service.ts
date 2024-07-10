@@ -42,7 +42,6 @@ export class DbSeedService {
         private readonly personFactory: PersonFactory,
         private readonly personRepository: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
-        //private readonly organisationRepo: OrganisationRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,

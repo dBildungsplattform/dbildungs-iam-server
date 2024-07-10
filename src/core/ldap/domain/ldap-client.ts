@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Client } from 'ldapts';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
 
 @Injectable()
-export class LdapClient {
+export class LdapClient implements OnModuleDestroy {
     private client: Client | undefined;
 
     public constructor(private readonly ldapInstanceConfig: LdapInstanceConfig) {}
@@ -28,5 +28,9 @@ export class LdapClient {
         } else {
             return false;
         }
+    }
+
+    public async onModuleDestroy(): Promise<void> {
+        await this.disconnect();
     }
 }

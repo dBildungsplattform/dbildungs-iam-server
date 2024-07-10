@@ -15,7 +15,6 @@ import { createHash, Hash } from 'crypto';
 import { DbSeed } from './domain/db-seed.js';
 import { DbSeedStatus } from './repo/db-seed.entity.js';
 import { DbSeedRepo } from './repo/db-seed.repo.js';
-import { LdapClient } from '../../core/ldap/domain/ldap-client.js';
 
 export interface SeedFile {
     entityName: string;
@@ -36,7 +35,6 @@ export class DbSeedConsole extends CommandRunner {
         private readonly logger: ClassLogger,
         private readonly dbSeedService: DbSeedService,
         private readonly dbSeedRepo: DbSeedRepo,
-        private readonly ldapClient: LdapClient,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {
         super();
@@ -78,7 +76,7 @@ export class DbSeedConsole extends CommandRunner {
                 }
                 await this.orm.em.flush();
                 this.logger.info(`Created seed data from ${subDir} successfully.`);
-                await this.ldapClient.disconnect();
+                //await this.ldapClient.disconnect();
             } catch (err) {
                 this.logger.error('Seed data could not be created!');
                 this.logger.error(String(err));
