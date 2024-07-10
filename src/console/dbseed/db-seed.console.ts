@@ -76,7 +76,6 @@ export class DbSeedConsole extends CommandRunner {
                 }
                 await this.orm.em.flush();
                 this.logger.info(`Created seed data from ${subDir} successfully.`);
-                //await this.ldapClient.disconnect();
             } catch (err) {
                 this.logger.error('Seed data could not be created!');
                 this.logger.error(String(err));
