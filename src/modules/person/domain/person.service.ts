@@ -1,23 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { PersonFactory } from './person.factory.js';
 import { Person } from './person.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { OrganisationMatchesRollenart } from '../../personenkontext/specification/organisation-matches-rollenart.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { PersonRepository } from '../persistence/person.repository.js';
-import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 
 export type PersonPersonenkontext = {
@@ -27,15 +15,7 @@ export type PersonPersonenkontext = {
 
 @Injectable()
 export class PersonService {
-    public constructor(
-        private readonly personRepo: PersonRepo,
-        private readonly organisationRepo: OrganisationRepository,
-        private readonly rolleRepo: RolleRepo,
-        private readonly personRepository: PersonRepository,
-        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
-        private readonly personFactory: PersonFactory,
-        private readonly personenkontextFactory: PersonenkontextFactory,
-    ) {}
+    public constructor(private readonly personRepo: PersonRepo) {}
 
     public async findPersonById(id: string): Promise<Result<PersonDo<true>, DomainError>> {
         const person: Option<PersonDo<true>> = await this.personRepo.findById(id);
@@ -67,6 +47,7 @@ export class PersonService {
             items: persons,
         };
     }
+<<<<<<< HEAD
 
     public async createPersonWithPersonenkontext(
         permissions: PersonPermissions,
@@ -156,4 +137,6 @@ export class PersonService {
 
         return undefined;
     }
+=======
+>>>>>>> main
 }
