@@ -19,6 +19,6 @@ import { LdapClient } from './domain/ldap-client.js';
         PersonenKontextModule,
     ],
     providers: [LdapEventHandler, LdapClientService, LdapClient],
-    exports: [LdapEventHandler, LdapClientService],
+    exports: [LdapEventHandler, LdapClientService, LdapClient],
 })
 export class LdapModule {}

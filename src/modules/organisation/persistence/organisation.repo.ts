@@ -13,6 +13,7 @@ import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.
 import { EventService } from '../../../core/eventbus/index.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
+import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 
 @Injectable()
 export class OrganisationRepo {
@@ -69,6 +70,14 @@ export class OrganisationRepo {
         );
 
         return !!organisation;
+    }
+
+    public async find(limit?: number, offset?: number): Promise<OrganisationDo<boolean>[]> {
+        const organisations: OrganisationEntity[] = await this.em.findAll(OrganisationEntity, {
+            limit: limit,
+            offset: offset,
+        });
+        return this.mapper.mapArray(organisations, OrganisationEntity, OrganisationDo);
     }
 
     public async findById(id: string): Promise<Option<OrganisationDo<true>>> {
@@ -139,5 +148,26 @@ export class OrganisationRepo {
             return this.mapper.mapArray(rawResult, OrganisationEntity, OrganisationDo);
         }
         return [];
+    }
+
+    public async findByNameOrKennungAndExcludeByOrganisationType(
+        excludeOrganisationType: OrganisationsTyp,
+        searchStr?: string,
+        limit?: number,
+    ): Promise<OrganisationDo<true>[]> {
+        const scope: OrganisationScope = new OrganisationScope();
+        if (searchStr) {
+            scope
+                .searchString(searchStr)
+                .setScopeWhereOperator(ScopeOperator.AND)
+                .excludeTyp([excludeOrganisationType]);
+        } else {
+            scope.excludeTyp([excludeOrganisationType]).paged(0, limit);
+        }
+
+        let foundOrganisations: OrganisationDo<true>[] = [];
+        [foundOrganisations] = await this.findBy(scope);
+
+        return foundOrganisations;
     }
 }
