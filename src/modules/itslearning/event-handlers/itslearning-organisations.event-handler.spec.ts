@@ -14,6 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import { ItsLearningConfig, ServerConfig } from '../../../shared/config/index.js';
 import { CreateGroupAction } from '../actions/create-group.action.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
 
 describe('ItsLearning Organisations Event Handler', () => {
     let module: TestingModule;
@@ -238,6 +239,95 @@ describe('ItsLearning Organisations Event Handler', () => {
             }); // CreateGroupAction
 
             await sut.createSchuleEventHandler(event);
+        });
+    });
+
+    describe('createKlasseEventHandler', () => {
+        it('should log on success', async () => {
+            const event: KlasseCreatedEvent = new KlasseCreatedEvent(
+                faker.string.uuid(),
+                faker.string.alphanumeric(),
+                faker.string.uuid(),
+            );
+            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: {} }); // ReadGroupAction
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            }); // CreateGroupAction
+
+            await sut.createKlasseEventHandler(event);
+
+            expect(itsLearningServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateGroupAction));
+            expect(loggerMock.info).toHaveBeenLastCalledWith(`Klasse with ID ${event.id} created.`);
+        });
+
+        it('should skip event, if not enabled', async () => {
+            sut.ENABLED = false;
+            const event: KlasseCreatedEvent = new KlasseCreatedEvent(
+                faker.string.uuid(),
+                faker.string.alphanumeric(),
+                faker.string.uuid(),
+            );
+
+            await sut.createKlasseEventHandler(event);
+
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
+            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+        });
+
+        it('should log error, if administriertVon is undefined', async () => {
+            const event: KlasseCreatedEvent = new KlasseCreatedEvent(
+                faker.string.uuid(),
+                faker.string.alphanumeric(),
+                undefined,
+            );
+
+            await sut.createKlasseEventHandler(event);
+
+            expect(loggerMock.error).toHaveBeenCalledWith('Klasse has no parent organisation. Aborting.');
+        });
+
+        it('should log error, if the klasse has no name', async () => {
+            const event: KlasseCreatedEvent = new KlasseCreatedEvent(
+                faker.string.uuid(),
+                undefined,
+                faker.string.uuid(),
+            );
+
+            await sut.createKlasseEventHandler(event);
+
+            expect(loggerMock.error).toHaveBeenCalledWith('Klasse has no name. Aborting.');
+        });
+
+        it('should log error, if the parent school does not exist', async () => {
+            const event: KlasseCreatedEvent = new KlasseCreatedEvent(
+                faker.string.uuid(),
+                faker.string.alphanumeric(),
+                faker.string.uuid(),
+            );
+            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: false, error: createMock() }); // ReadGroupAction
+
+            await sut.createKlasseEventHandler(event);
+
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `Parent Organisation (${event.administriertVon}) does not exist in itsLearning.`,
+            );
+        });
+
+        it('should log error on failed creation', async () => {
+            const event: KlasseCreatedEvent = new KlasseCreatedEvent(
+                faker.string.uuid(),
+                faker.string.alphanumeric(),
+                faker.string.uuid(),
+            );
+            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: {} }); // ReadGroupAction
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: false,
+                error: createMock<DomainError>({ message: 'Error' }),
+            }); // CreateGroupAction
+
+            await sut.createKlasseEventHandler(event);
+            expect(loggerMock.error).toHaveBeenLastCalledWith('Could not create Klasse in itsLearning: Error');
         });
     });
 });
