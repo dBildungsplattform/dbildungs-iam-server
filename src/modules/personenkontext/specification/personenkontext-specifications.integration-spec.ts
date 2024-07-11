@@ -25,6 +25,7 @@ import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-con
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { EventService } from '../../../core/eventbus/index.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -71,6 +72,10 @@ describe('PersonenkontextSpecifications Integration', () => {
                 PersonFactory,
                 UsernameGeneratorService,
                 PersonenkontextFactory,
+                {
+                    provide: EmailRepo,
+                    useValue: createMock<EmailRepo>(),
+                },
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),

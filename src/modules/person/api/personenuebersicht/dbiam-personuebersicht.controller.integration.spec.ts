@@ -41,6 +41,7 @@ import { DBiamPersonenuebersichtController } from './dbiam-personenuebersicht.co
 import { OrganisationID } from '../../../../shared/types/aggregate-ids.types.js';
 import { PersonenkontextFactory } from '../../../personenkontext/domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
+import { EmailRepo } from '../../../email/persistence/email.repo.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -74,6 +75,10 @@ describe('Personenuebersicht API', () => {
                 {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
+                },
+                {
+                    provide: EmailRepo,
+                    useValue: createMock<EmailRepo>(),
                 },
                 {
                     provide: UsernameGeneratorService,

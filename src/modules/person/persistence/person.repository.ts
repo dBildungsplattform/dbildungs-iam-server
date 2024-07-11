@@ -19,7 +19,7 @@ import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import {EmailRepo} from "../../email/persistence/email.repo.js";
+import { EmailRepo } from '../../email/persistence/email.repo.js';
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
     return {

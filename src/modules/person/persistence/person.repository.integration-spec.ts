@@ -37,6 +37,7 @@ import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -58,6 +59,10 @@ describe('PersonRepository Integration', () => {
                 PersonRepo,
                 PersonRepository,
                 ConfigService,
+                {
+                    provide: EmailRepo,
+                    useValue: createMock<EmailRepo>(),
+                },
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
