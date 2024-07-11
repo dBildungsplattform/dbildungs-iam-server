@@ -38,7 +38,7 @@ import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { DbiamOrganisationError } from './dbiam-organisation.error.js';
 import { OrganisationExceptionFilter } from './organisation-exception-filter.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
@@ -46,6 +46,8 @@ import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
+import { OrganisationFactory } from '../domain/organisation.factory.js';
+import { OrganisationUpdate } from '../domain/organisation-update.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -61,6 +63,7 @@ export class OrganisationController {
         private readonly uc: OrganisationUc,
         private readonly organisationRepository: OrganisationRepository,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
+        private readonly organisationFactory: OrganisationFactory,
     ) {}
 
     @Post()
@@ -341,16 +344,20 @@ export class OrganisationController {
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByNameBodyParams,
     ): Promise<void> {
-        const result: void | SchulConnexError | OrganisationSpecificationError = await this.uc.setZugehoerigZu(
+        const organisationUpdate: OrganisationUpdate = this.organisationFactory.createNewOrganisationUpdate(
             params.organisationId,
-            body.name,
         );
 
-        if (result instanceof OrganisationSpecificationError) {
-            throw result;
-        }
+        const result: DomainError | void = await organisationUpdate.updateKlassenName(body.name);
+
         if (result) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+            if (result instanceof OrganisationSpecificationError) {
+                throw result;
+            }
+
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
         }
     }
 }

@@ -28,6 +28,11 @@ import { EventService } from '../../../core/eventbus/index.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
+import { OrganisationFactory } from '../domain/organisation.factory.js';
+import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
+import { OrganisationUpdate } from '../domain/organisation-update.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { NameRequiredForKlasseError } from '../specification/error/name-required-for-klasse.error.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -44,6 +49,8 @@ describe('OrganisationController', () => {
     let organisationController: OrganisationController;
     let organisationUcMock: DeepMocked<OrganisationUc>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
+    let organisationFactoryMock: DeepMocked<OrganisationFactory>;
+    let organisationUpdateMock: DeepMocked<OrganisationUpdate>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -63,11 +70,21 @@ describe('OrganisationController', () => {
                     provide: EventService,
                     useValue: createMock<EventService>(),
                 },
+                {
+                    provide: OrganisationFactory,
+                    useValue: createMock<OrganisationFactory>(),
+                },
+                {
+                    provide: OrganisationUpdate,
+                    useValue: createMock<OrganisationUpdate>(),
+                },
             ],
         }).compile();
         organisationController = module.get(OrganisationController);
         organisationUcMock = module.get(OrganisationUc);
         organisationRepositoryMock = module.get(OrganisationRepository);
+        organisationFactoryMock = module.get(OrganisationFactory);
+        organisationUpdateMock = module.get(OrganisationUpdate);
     });
 
     afterAll(async () => {
@@ -606,6 +623,60 @@ describe('OrganisationController', () => {
                 );
 
                 expect(organisationUcMock.setZugehoerigZu).toHaveBeenCalledTimes(1);
+            });
+        });
+    });
+
+    describe('updateOrganisationName', () => {
+        describe('when usecase succeeds', () => {
+            it('should not throw an error', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
+                const body: OrganisationByNameBodyParams = {
+                    name: faker.company.name(),
+                };
+
+                organisationUpdateMock.updateKlassenName.mockResolvedValueOnce();
+                organisationFactoryMock.createNewOrganisationUpdate.mockReturnValueOnce(organisationUpdateMock);
+
+                await expect(organisationController.updateOrganisationName(params, body)).resolves.not.toThrow();
+            });
+        });
+
+        describe('when usecase returns a OrganisationSpecificationError', () => {
+            it('should throw a HttpException', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
+                const body: OrganisationByNameBodyParams = {
+                    name: faker.company.name(),
+                };
+
+                organisationUpdateMock.updateKlassenName.mockResolvedValueOnce(new NameRequiredForKlasseError());
+                organisationFactoryMock.createNewOrganisationUpdate.mockReturnValueOnce(organisationUpdateMock);
+
+                await expect(organisationController.updateOrganisationName(params, body)).rejects.toThrow(
+                    NameRequiredForKlasseError,
+                );
+            });
+        });
+
+        describe('when usecase returns a SchulConnexError', () => {
+            it('should throw a HttpException', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
+                const body: OrganisationByNameBodyParams = {
+                    name: faker.company.name(),
+                };
+
+                organisationUpdateMock.updateKlassenName.mockResolvedValueOnce(new EntityNotFoundError());
+                organisationFactoryMock.createNewOrganisationUpdate.mockReturnValueOnce(organisationUpdateMock);
+
+                await expect(organisationController.updateOrganisationName(params, body)).rejects.toThrow(
+                    HttpException,
+                );
             });
         });
     });
