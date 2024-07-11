@@ -1,27 +1,25 @@
-import { Injectable } from '@nestjs/common';
 import {
     InvalidNameError,
     InvalidCharacterSetError,
     InvalidAttributeLengthError,
 } from '../../../shared/error/index.js';
 import { isDIN91379A, toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
-import { EmailServiceRepo } from '../persistence/email-service.repo.js';
+import { EmailRepo } from '../persistence/email.repo.js';
 
-@Injectable()
-export class EmailGeneratorService {
+export class EmailGenerator {
     private static EMAIL_SUFFIX: string = '@schule-sh.de';
 
-    public constructor(private emailServiceRepo: EmailServiceRepo) {}
+    public constructor(private emailRepo: EmailRepo) {}
 
     public isEqual(address: string, firstname: string, lastname: string): boolean {
-        const createAddress: Result<string> = this.createAddress(firstname, lastname);
+        const createAddress: Result<string> = this.calculateAddress(firstname, lastname);
 
         if (!createAddress.ok) return false;
 
-        return address === createAddress.value + EmailGeneratorService.EMAIL_SUFFIX;
+        return address === createAddress.value + EmailGenerator.EMAIL_SUFFIX;
     }
 
-    public createAddress(firstname: string, lastname: string): Result<string> {
+    public calculateAddress(firstname: string, lastname: string): Result<string> {
         // Check for minimum length
         if (firstname.length < 2) {
             return { ok: false, error: new InvalidAttributeLengthError('name.vorname') };
@@ -69,7 +67,7 @@ export class EmailGeneratorService {
     }
 
     public async generateAddress(firstname: string, lastname: string): Promise<Result<string>> {
-        const createdAddress: Result<string> = this.createAddress(firstname, lastname);
+        const createdAddress: Result<string> = this.calculateAddress(firstname, lastname);
 
         if (!createdAddress.ok) return createdAddress;
 
@@ -77,7 +75,7 @@ export class EmailGeneratorService {
 
         return {
             ok: true,
-            value: nextAddressName + EmailGeneratorService.EMAIL_SUFFIX,
+            value: nextAddressName + EmailGenerator.EMAIL_SUFFIX,
         };
     }
 
@@ -93,15 +91,11 @@ export class EmailGeneratorService {
     }
 
     private async getNextAvailableAddress(calculatedAddress: string): Promise<string> {
-        if (!(await this.emailServiceRepo.existsEmailAddress(calculatedAddress + EmailGeneratorService.EMAIL_SUFFIX))) {
+        if (!(await this.emailRepo.existsEmailAddress(calculatedAddress + EmailGenerator.EMAIL_SUFFIX))) {
             return calculatedAddress;
         }
         let counter: number = 1;
-        while (
-            await this.emailServiceRepo.existsEmailAddress(
-                calculatedAddress + counter + EmailGeneratorService.EMAIL_SUFFIX,
-            )
-        ) {
+        while (await this.emailRepo.existsEmailAddress(calculatedAddress + counter + EmailGenerator.EMAIL_SUFFIX)) {
             counter = counter + 1;
         }
         return calculatedAddress + counter;

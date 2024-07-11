@@ -8,15 +8,14 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderTarget } from '../../service-provider/domain/service-provider.enum.js';
-import { EmailFactory } from './email.factory.js';
-import { Email } from './email.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { PersonID } from '../../../shared/types/index.js';
 import { EmailAddressEntity } from '../persistence/email-address.entity.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { EmailRepo } from '../persistence/email.repo.js';
-import { EmailAddressAmbiguousError } from '../error/email-address-ambiguous.error.js';
+import { Email } from './email.js';
+import { EmailFactory } from './email.factory.js';
 
 @Injectable()
 export class EmailEventHandler {
@@ -38,46 +37,33 @@ export class EmailEventHandler {
             this.logger.error(`Rolle id:${event.rolleId} does NOT exist`);
             return;
         }
-
         if (await this.rolleReferencesEmailServiceProvider(rolle)) {
             this.logger.info(`Received event for creation of PK with rolle that references email SP`);
-            const existingEmail: Email<true> | DomainError = await this.emailRepo.findByPerson(event.personId);
+            const existingEmail: Option<Email> = await this.emailRepo.findByPerson(event.personId);
 
-            if (existingEmail instanceof EmailAddressAmbiguousError) {
-                this.logger.error(existingEmail.message);
+            if (existingEmail) {
+                this.logger.info(`Existing email found for personId:${event.personId}`);
+                existingEmail.enable();
                 return;
-            }
-            if (existingEmail instanceof DomainError) {
-                await this.createNewEmail(event.personId);
             } else {
-                await this.enableExistingEmail(existingEmail, event.personId);
+                this.logger.info(`No existing email found for personId:${event.personId}, creating a new one`);
+                await this.createNewEmail(event.personId);
             }
-        }
-    }
-
-    private async enableExistingEmail(existingEmail: Email<true>, personId: PersonID): Promise<void> {
-        const validEmail: Result<Email<true>> = await existingEmail.enable();
-        this.logger.info(`Enabling existing email for person:${personId}`);
-        if (!validEmail.ok) {
-            this.logger.error(`Could not re-enable email, error is ${validEmail.error.message}`);
-            return;
-        }
-        const persistedEmail: Email<true> | DomainError = await this.emailRepo.save(validEmail.value);
-        if (persistedEmail instanceof Email) {
-            this.logger.info(`Successfully re-enabled email with new address:${persistedEmail.currentAddress}`);
         }
     }
 
     private async createNewEmail(personId: PersonID): Promise<void> {
-        const email: Email<false> = this.emailFactory.createNew(personId);
-        const validEmail: Result<Email<false>> = await email.enable();
-        if (!validEmail.ok) {
-            this.logger.error(`Could not create email, error is ${validEmail.error.message}`);
+        const email: Result<Email> = await this.emailFactory.createNew(personId);
+        if (!email.ok) {
+            this.logger.error(`Could not create email, error is ${email.error.message}`);
             return;
         }
-        const persistedEmail: Email<true> | DomainError = await this.emailRepo.save(validEmail.value);
-        if (persistedEmail instanceof Email) {
-            this.logger.info(`Successfully persisted email with new address:${persistedEmail.currentAddress}`);
+        email.value.enable();
+        const persistenceResult: Email | DomainError = await this.emailRepo.save(email.value);
+        if (persistenceResult instanceof Email) {
+            this.logger.info(`Successfully persisted email with new address:${persistenceResult.currentAddress}`);
+        } else {
+            this.logger.error(`Could not create email, error is ${persistenceResult.message}`);
         }
     }
 

@@ -3,7 +3,6 @@ import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../..
 import { EmailModule } from './email.module.js';
 import { EmailRepo } from './persistence/email.repo.js';
 import { EmailFactory } from './domain/email.factory.js';
-import { EmailGeneratorService } from './domain/email-generator.service.js';
 import { createMock } from '@golevelup/ts-jest';
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
@@ -19,17 +18,11 @@ describe('EmailModule', () => {
                 EmailFactory,
                 PersonRepository,
                 {
-                    provide: EmailGeneratorService,
-                    useValue: createMock<EmailGeneratorService>(),
-                },
-                {
                     provide: ClassLogger,
                     useValue: createMock<ClassLogger>(),
                 },
             ],
         })
-            .overrideProvider(EmailGeneratorService)
-            .useValue(createMock<EmailGeneratorService>())
             .overrideProvider(PersonRepository)
             .useValue(createMock<PersonRepository>())
             .compile();

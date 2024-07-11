@@ -19,7 +19,7 @@ import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
+import {EmailRepo} from "../../email/persistence/email.repo.js";
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
     return {
@@ -96,6 +96,7 @@ export class PersonRepository {
         private readonly kcUserService: KeycloakUserService,
         private readonly em: EntityManager,
         private readonly eventService: EventService,
+        private readonly emailRepo: EmailRepo,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -124,7 +125,7 @@ export class PersonRepository {
         const persons: Person<true>[] = entities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
 
         for (const person of persons) {
-            person.email = await this.findEmailAddressByPerson(person.id);
+            person.email = await this.emailRepo.findEmailAddressByPerson(person.id);
         }
         return [persons, total];
     }
@@ -320,15 +321,5 @@ export class PersonRepository {
         person.keycloakUserId = creationResult.value;
 
         return person;
-    }
-
-    // This method in principle should be located in email.repo. It is here to avoid a circular reference.
-    public async findEmailAddressByPerson(personId: PersonID): Promise<string | undefined> {
-        const emailAddressEntities: EmailAddressEntity[] = await this.em.find(EmailAddressEntity, { personId }, {});
-
-        for (const emailAddressEntity of emailAddressEntities) {
-            if (emailAddressEntity.enabled) return emailAddressEntity.address;
-        }
-        return undefined;
     }
 }

@@ -1,40 +1,35 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { EmailGeneratorService } from './email-generator.service.js';
+import { createMock } from '@golevelup/ts-jest';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { EmailFactory } from './email.factory.js';
 import { Email } from './email.js';
 import { faker } from '@faker-js/faker';
-import { Person } from '../../person/domain/person.js';
-import { EmailInvalidError } from '../error/email-invalid.error.js';
 import { EmailAddress } from './email-address.js';
-import { EmailAddressID } from '../../../shared/types/index.js';
 
 describe('Email Aggregate', () => {
     let module: TestingModule;
-    let emailFactory: EmailFactory;
-    let emailGeneratorServiceMock: DeepMocked<EmailGeneratorService>;
-    let personRepositoryMock: DeepMocked<PersonRepository>;
-    let email: Email<false>;
+    let personId: string;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             providers: [
-                EmailFactory,
-                {
-                    provide: EmailGeneratorService,
-                    useValue: createMock<EmailGeneratorService>(),
-                },
                 {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
                 },
             ],
         }).compile();
-        emailGeneratorServiceMock = module.get(EmailGeneratorService);
-        personRepositoryMock = module.get(PersonRepository);
-        emailFactory = module.get(EmailFactory);
     });
+
+    function getEmailAddress(enabled: boolean): EmailAddress<true> {
+        return new EmailAddress<true>(
+            faker.string.uuid(),
+            faker.date.past(),
+            faker.date.recent(),
+            personId,
+            faker.internet.email(),
+            enabled,
+        );
+    }
 
     afterAll(async () => {
         await module.close();
@@ -42,136 +37,69 @@ describe('Email Aggregate', () => {
 
     beforeEach(() => {
         jest.resetAllMocks();
-        email = emailFactory.createNew(faker.string.uuid());
+        personId = faker.string.uuid();
     });
 
     describe('enable', () => {
-        describe('when emailAddresses are already present on aggregate', () => {
-            it('should return successfully', async () => {
-                const emailAddressId: EmailAddressID = faker.string.uuid();
-                const emailAddress: EmailAddress<true> = new EmailAddress<true>(
-                    emailAddressId,
-                    faker.date.past(),
-                    faker.date.recent(),
-                    faker.string.uuid(),
-                    faker.internet.email(),
-                    false,
-                );
-                const existingEmail: Email<true> = emailFactory.construct(faker.string.uuid(), emailAddress);
+        describe('when called', () => {
+            it('should set enabled for address to true', () => {
+                const emailAddress: EmailAddress<true> = getEmailAddress(false);
+                const email: Email = Email.createNew(personId, emailAddress);
+                email.enable();
 
-                const result: Result<Email<true>> = await existingEmail.enable();
-
-                expect(result.ok).toBeTruthy();
-            });
-        });
-
-        describe('when person cannot be found', () => {
-            it('should return EmailInvalidError', async () => {
-                personRepositoryMock.findById.mockResolvedValueOnce(undefined);
-
-                const result: Result<Email<false>> = await email.enable();
-
-                expect(result.ok).toBeFalsy();
-            });
-        });
-
-        describe('when generation of address fails', () => {
-            it('should return EmailInvalidError', async () => {
-                personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>());
-                emailGeneratorServiceMock.generateAddress.mockResolvedValueOnce({
-                    ok: false,
-                    error: new EmailInvalidError(),
-                });
-                const result: Result<Email<false>> = await email.enable();
-
-                expect(result.ok).toBeFalsy();
+                expect(email.emailAddress.enabled).toBeTruthy();
             });
         });
     });
 
     describe('disable', () => {
-        describe('when no emailAddresses exist', () => {
-            it('should return false', () => {
-                const result: boolean = email.disable();
-                expect(result).toBeFalsy();
-            });
-        });
+        describe('when called', () => {
+            it('should set enabled for address to false', () => {
+                const emailAddress: EmailAddress<true> = getEmailAddress(true);
+                const email: Email = Email.createNew(personId, emailAddress);
+                email.disable();
 
-        describe('when emailAddresses exist', () => {
-            it('should set all of them to disabled return true ', async () => {
-                personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>());
-                emailGeneratorServiceMock.generateAddress.mockResolvedValueOnce({
-                    ok: true,
-                    value: faker.internet.email(),
-                });
-                const enabledEmail: Result<Email<false>> = await email.enable();
-
-                if (!enabledEmail.ok) throw new Error();
-                const result: boolean = enabledEmail.value.disable();
-                expect(result).toBeTruthy();
-                expect(enabledEmail.value.emailAddress?.enabled).toBeFalsy();
+                expect(email.emailAddress.enabled).toBeFalsy();
             });
         });
     });
 
     describe('isEnabled', () => {
-        describe('when no emailAddresses exist', () => {
-            it('should return false', () => {
-                expect(email.isEnabled()).toBeFalsy();
+        describe('when address is enabled', () => {
+            it('should return true', () => {
+                const emailAddress: EmailAddress<true> = getEmailAddress(true);
+                const email: Email = Email.createNew(personId, emailAddress);
+
+                expect(email.isEnabled()).toBeTruthy();
             });
         });
 
-        describe('when emailAddresses exist and at least one is enabled', () => {
-            it('should return true ', async () => {
-                personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>());
-                emailGeneratorServiceMock.generateAddress.mockResolvedValueOnce({
-                    ok: true,
-                    value: faker.internet.email(),
-                });
-                const enabledEmail: Result<Email<false>> = await email.enable();
+        describe('when address is NOT enabled', () => {
+            it('should return false', () => {
+                const emailAddress: EmailAddress<true> = getEmailAddress(false);
+                const email: Email = Email.createNew(personId, emailAddress);
 
-                if (!enabledEmail.ok) throw new Error();
-                expect(enabledEmail.value.isEnabled()).toBeTruthy();
+                expect(email.isEnabled()).toBeFalsy();
             });
         });
     });
 
     describe('get currentAddress', () => {
-        let fakeEmailAddress: string;
+        describe('when address is enabled', () => {
+            it('should return address', () => {
+                const emailAddress: EmailAddress<true> = getEmailAddress(true);
+                const email: Email = Email.createNew(personId, emailAddress);
 
-        beforeEach(() => {
-            email = emailFactory.createNew(faker.string.uuid());
-            fakeEmailAddress = faker.internet.email();
-            personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>());
-            emailGeneratorServiceMock.generateAddress.mockResolvedValueOnce({
-                ok: true,
-                value: fakeEmailAddress,
+                expect(email.currentAddress).toBeDefined();
             });
         });
 
-        describe('when no emailAddresses exist', () => {
+        describe('when address is NOT enabled', () => {
             it('should return undefined', () => {
+                const emailAddress: EmailAddress<true> = getEmailAddress(false);
+                const email: Email = Email.createNew(personId, emailAddress);
+
                 expect(email.currentAddress).toBeUndefined();
-            });
-        });
-
-        describe('when emailAddresses exist and at least one is enabled', () => {
-            it('should return the emailAddress-address string', async () => {
-                const enabledEmail: Result<Email<false>> = await email.enable();
-
-                if (!enabledEmail.ok) throw new Error();
-                expect(enabledEmail.value.currentAddress).toStrictEqual(fakeEmailAddress);
-            });
-        });
-
-        describe('when emailAddresses exist but none is enabled', () => {
-            it('should return undefined', async () => {
-                const enabledEmail: Result<Email<false>> = await email.enable();
-
-                if (!enabledEmail.ok) throw new Error();
-                enabledEmail.value.disable();
-
-                expect(enabledEmail.value.currentAddress).toBeUndefined();
             });
         });
     });
