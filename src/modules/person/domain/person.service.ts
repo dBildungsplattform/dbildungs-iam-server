@@ -37,8 +37,8 @@ export class PersonService {
         private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
-    public async findPersonById(id: string): Promise<Result<PersonDo<true>, DomainError>> {
-        const person: Option<PersonDo<true>> = await this.personRepo.findById(id);
+    public async findPersonById(id: string): Promise<Result<Person<true>, DomainError>> {
+        const person: Option<Person<true>> = await this.personRepository.findById(id);
         if (person) {
             return { ok: true, value: person };
         }

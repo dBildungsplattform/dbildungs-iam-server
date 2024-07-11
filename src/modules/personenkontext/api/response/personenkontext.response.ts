@@ -1,65 +1,73 @@
-import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
-import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../../domain/personenkontext.enums.js';
+import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from '../../domain/personenkontext.enums.js';
 import { CreatedPersonenkontextOrganisationDto } from '../created-personenkontext-organisation.dto.js';
 import { LoeschungResponse } from '../../../person/api/loeschung.response.js';
+import { Personenkontext } from '../../domain/personenkontext.js';
+import { Rolle } from '../../../rolle/domain/rolle.js';
 
 export class PersonenkontextResponse {
-    @AutoMap()
     @ApiProperty()
     public id!: string;
 
-    @AutoMap()
     @ApiProperty({ nullable: true })
     public referrer?: string;
 
-    @AutoMap()
     @ApiProperty()
     public mandant!: string;
 
-    @AutoMap(() => CreatedPersonenkontextOrganisationDto)
     @ApiProperty({ type: CreatedPersonenkontextOrganisationDto })
     public organisation!: CreatedPersonenkontextOrganisationDto;
 
-    @AutoMap(() => String)
-    @ApiProperty({ enum: Rolle })
-    public rolle!: Rolle;
+    // @ApiProperty({ enum: Rolle }) public rolle!: Rolle;
 
-    @AutoMap(() => String)
+    @ApiProperty({ nullable: true })
+    public roleName?: string;
+
     @ApiProperty({ enum: Personenstatus, nullable: true })
     public personenstatus?: Personenstatus;
 
-    @AutoMap(() => String)
     @ApiProperty({ enum: Jahrgangsstufe, nullable: true })
     public jahrgangsstufe?: Jahrgangsstufe;
 
-    @AutoMap(() => String)
     @ApiProperty({ enum: SichtfreigabeType, nullable: true })
     public sichtfreigabe?: SichtfreigabeType;
 
-    @AutoMap(() => LoeschungResponse)
     @ApiProperty({ type: LoeschungResponse, nullable: true })
     public loeschung?: LoeschungResponse;
 
-    @AutoMap()
     @ApiProperty()
     public revision!: string;
 
-    public static new(props: Readonly<PersonenkontextResponse>): PersonenkontextResponse {
-        const response: PersonenkontextResponse = new PersonenkontextResponse();
+    public constructor(props: Readonly<PersonenkontextResponse>) {
+        this.id = props.id;
+        this.referrer = props.referrer;
+        this.mandant = props.mandant!;
+        this.organisation = props.organisation;
+        // this.rolle = props.rolle;
+        this.personenstatus = props.personenstatus;
+        this.jahrgangsstufe = props.jahrgangsstufe;
+        this.sichtfreigabe = props.sichtfreigabe;
+        this.loeschung = props.loeschung;
+        this.revision = props.revision;
+    }
 
-        response.id = props.id;
-        response.referrer = props.referrer;
-        response.mandant = props.mandant;
-        response.organisation = CreatedPersonenkontextOrganisationDto.new(props.organisation);
-        response.rolle = props.rolle;
-        response.personenstatus = props.personenstatus;
-        response.jahrgangsstufe = props.jahrgangsstufe;
-        response.sichtfreigabe = props.sichtfreigabe;
-        response.loeschung = props.loeschung
-            ? LoeschungResponse.new({ zeitpunkt: props.loeschung.zeitpunkt })
-            : undefined;
-        response.revision = props.revision;
+    public static async construct(props: Personenkontext<true>): Promise<PersonenkontextResponse> {
+        const rolle: Option<Rolle<true>> = await props.getRolle();
+        const response: PersonenkontextResponse = new PersonenkontextResponse({
+            id: props.id,
+            referrer: props.referrer,
+            mandant: props.mandant!,
+            organisation: CreatedPersonenkontextOrganisationDto.new({ id: props.organisationId }),
+            personenstatus: props.personenstatus,
+            jahrgangsstufe: props.jahrgangsstufe,
+            sichtfreigabe: props.sichtfreigabe,
+            loeschung: props.loeschungZeitpunkt
+                ? LoeschungResponse.new({ zeitpunkt: props.loeschungZeitpunkt })
+                : undefined,
+            revision: props.revision,
+        });
+
+        response.roleName = rolle ? rolle.name : undefined;
 
         return response;
     }

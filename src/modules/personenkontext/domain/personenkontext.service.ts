@@ -13,6 +13,7 @@ import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonKontextRepository } from '../persistence/personenkontext.repository.js';
 
 @Injectable()
 export class PersonenkontextService {
@@ -67,9 +68,9 @@ export class PersonenkontextService {
         };
     }
 
-    public async findPersonenkontextById(id: string): Promise<Result<PersonenkontextDo<true>, DomainError>> {
-        const personenkontext: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.findById(id);
-        const result: Result<PersonenkontextDo<true>, DomainError> = personenkontext
+    public async findPersonenkontextById(id: string): Promise<Result<Personenkontext<true>, DomainError>> {
+        const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findByID(id);
+        const result: Result<Personenkontext<true>, DomainError> = personenkontext
             ? { ok: true, value: personenkontext }
             : { ok: false, error: new EntityNotFoundError('Personenkontext', id) };
 

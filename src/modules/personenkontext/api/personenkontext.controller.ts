@@ -50,7 +50,7 @@ import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 import { HatSystemrechtQueryParams } from './param/hat-systemrecht.query.params.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
-import { isEnum } from 'class-validator';
+import { isEnum, validate } from 'class-validator';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
@@ -95,24 +95,18 @@ export class PersonenkontextController {
                 );
             }
         }
+        const requestParamsId: FindPersonenkontextByIdParams = {
+            personenkontextId: params.personenkontextId,
+        };
         /// TODO  here we start with old code!!
-        const request: FindPersonenkontextByIdDto = this.mapper.map(
-            params,
-            FindPersonenkontextByIdParams,
-            FindPersonenkontextByIdDto,
-        );
-        const result: PersonendatensatzDto | SchulConnexError =
-            await this.personenkontextUc.findPersonenkontextById(request);
+        /// TODO  here we start with old code!!
+        //const request: FindPersonenkontextByIdParams = new FindPersonenkontextByIdParams(params.personenkontextId);
+        const response: PersonendatensatzResponseAutomapper | SchulConnexError =
+            await this.personenkontextUc.findPersonenkontextById(requestParamsId);
 
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        if (response instanceof SchulConnexError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
         }
-
-        const response: PersonendatensatzResponseAutomapper = this.mapper.map(
-            result,
-            PersonendatensatzDto,
-            PersonendatensatzResponseAutomapper,
-        );
 
         return response;
     }

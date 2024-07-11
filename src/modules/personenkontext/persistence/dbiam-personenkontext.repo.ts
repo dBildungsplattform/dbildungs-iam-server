@@ -43,6 +43,13 @@ function mapEntityToAggregate(
         entity.personId.id,
         entity.organisationId,
         entity.rolleId.id,
+        entity.referrer,
+        entity.mandant,
+        entity.personenstatus,
+        entity.jahrgangsstufe,
+        entity.sichtfreigabe,
+        entity.loeschungZeitpunkt,
+        entity.revision,
     );
 }
 

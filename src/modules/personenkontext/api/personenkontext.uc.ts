@@ -28,6 +28,13 @@ import { OrganisationService } from '../../organisation/domain/organisation.serv
 import { SystemrechtResponse } from './response/personenkontext-systemrecht.response.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { FindPersonenkontextByIdParams } from './param/find-personenkontext-by-id.params.js';
+import { PersonenkontextdatensatzResponse } from './response/personenkontextdatensatz.response.js';
+import { PersonendatensatzResponse } from '../../person/api/personendatensatz.response.js';
+import { PersonendatensatzResponseAutomapper } from '../../person/api/personendatensatz.response-automapper.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonResponseAutomapper } from '../../person/api/person.response-automapper.js';
+import { PersonenkontextResponse } from './response/personenkontext.response.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -91,18 +98,18 @@ export class PersonenkontextUc {
     }
 
     public async findPersonenkontextById(
-        dto: FindPersonenkontextByIdDto,
-    ): Promise<PersonendatensatzDto | SchulConnexError> {
+        params: FindPersonenkontextByIdParams,
+    ): Promise<PersonendatensatzResponseAutomapper | SchulConnexError> {
         const personenkontextResult: Result<
-            PersonenkontextDo<true>,
+            Personenkontext<true>,
             DomainError
-        > = await this.personenkontextService.findPersonenkontextById(dto.personenkontextId);
+        > = await this.personenkontextService.findPersonenkontextById(params.personenkontextId);
 
         if (!personenkontextResult.ok) {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personenkontextResult.error);
         }
-
-        const personResult: Result<PersonDo<true>, DomainError> = await this.personService.findPersonById(
+        // leave this DO for now as it goes to the repo
+        const personResult: Result<Person<true>, DomainError> = await this.personService.findPersonById(
             personenkontextResult.value.personId,
         );
 
@@ -110,10 +117,9 @@ export class PersonenkontextUc {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResult.error);
         }
 
-        return new PersonendatensatzDto({
-            person: this.mapper.map(personResult.value, PersonDo, PersonDto),
-            personenkontexte: [this.mapper.map(personenkontextResult.value, PersonenkontextDo, PersonenkontextDto)],
-        });
+        return new PersonendatensatzResponseAutomapper(new PersonResponseAutomapper(personResult.value), [
+            await PersonenkontextResponse.construct(personenkontextResult.value),
+        ]);
     }
 
     public async hatSystemRecht(personId: string, systemRecht: RollenSystemRecht): Promise<SystemrechtResponse> {

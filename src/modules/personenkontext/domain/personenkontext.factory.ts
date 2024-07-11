@@ -4,6 +4,7 @@ import { Personenkontext } from './personenkontext.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from './personenkontext.enums.js';
 
 @Injectable()
 export class PersonenkontextFactory {
@@ -20,6 +21,13 @@ export class PersonenkontextFactory {
         personId: PersonID,
         organisationId: OrganisationID,
         rolleId: RolleID,
+        referrer: string | undefined,
+        mandant: string | undefined,
+        personenstatus: Personenstatus | undefined,
+        jahrgangsstufe: Jahrgangsstufe | undefined,
+        sichtfreigabe: SichtfreigabeType | undefined,
+        loeschungZeitpunkt: Date | undefined,
+        revision: Persisted<string, WasPersisted>,
     ): Personenkontext<WasPersisted> {
         return Personenkontext.construct(
             this.personRepo,
@@ -31,6 +39,13 @@ export class PersonenkontextFactory {
             personId,
             organisationId,
             rolleId,
+            referrer,
+            mandant,
+            personenstatus,
+            jahrgangsstufe,
+            sichtfreigabe,
+            loeschungZeitpunkt,
+            revision,
         );
     }
 

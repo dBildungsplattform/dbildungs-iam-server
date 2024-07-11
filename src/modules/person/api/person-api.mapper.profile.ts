@@ -1,7 +1,7 @@
 import { createMap, forMember, ignore, mapFrom, Mapper, MappingProfile } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
-import { UserDo } from '../../keycloak-administration/index.js';
+//import { UserDo } from '../../keycloak-administration/index.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
@@ -182,7 +182,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 forMember((dest: PersonendatensatzResponseAutomapper) => dest.personenkontexte, ignore()),
             );
             // transformation from person to User
-            createMap(mapper, CreatePersonDto, UserDo);
+            // createMap(mapper, CreatePersonDto, UserDo);
 
             createMap(
                 mapper,
