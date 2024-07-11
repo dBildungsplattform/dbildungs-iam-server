@@ -4,12 +4,10 @@ import { Personenkontext } from './personenkontext.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 @Injectable()
 export class PersonenkontextFactory {
     public constructor(
-        private readonly logger: ClassLogger,
         private readonly personRepo: PersonRepository,
         private readonly organisationRepo: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
@@ -24,7 +22,6 @@ export class PersonenkontextFactory {
         rolleId: RolleID,
     ): Personenkontext<WasPersisted> {
         return Personenkontext.construct(
-            this.logger,
             this.personRepo,
             this.organisationRepo,
             this.rolleRepo,
@@ -39,7 +36,6 @@ export class PersonenkontextFactory {
 
     public createNew(personId: PersonID, organisationId: OrganisationID, rolleId: RolleID): Personenkontext<false> {
         return Personenkontext.createNew(
-            this.logger,
             this.personRepo,
             this.organisationRepo,
             this.rolleRepo,
