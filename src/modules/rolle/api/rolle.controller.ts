@@ -97,7 +97,6 @@ export class RolleController {
             return new PagedResponse(pagedRolleWithServiceProvidersResponse);
         }
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
-
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {
                 const sps: ServiceProvider<true>[] = r.serviceProviderIds

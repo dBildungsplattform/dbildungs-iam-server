@@ -7,8 +7,6 @@ import { UsernameGeneratorService } from './domain/username-generator.service.js
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { PersonRepository } from './persistence/person.repository.js';
 import { PersonFactory } from './domain/person.factory.js';
-import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonenkontextFactory } from '../personenkontext/domain/personenkontext.factory.js';
 import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { OrganisationRepo } from '../organisation/persistence/organisation.repo.js';
 import { RolleFactory } from '../rolle/domain/rolle.factory.js';
@@ -23,11 +21,9 @@ import {EmailRepo} from "../email/persistence/email.repo.js";
         PersonPersistenceMapperProfile,
         PersonRepo,
         PersonRepository,
-        DBiamPersonenkontextRepo,
         PersonService,
         PersonFactory,
         UsernameGeneratorService,
-        PersonenkontextFactory,
         RolleRepo,
         OrganisationRepo,
         OrganisationRepository,
