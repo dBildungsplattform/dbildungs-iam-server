@@ -46,6 +46,7 @@ export class KeycloakConfigTestModule implements OnModuleDestroy {
                             keycloakConfig.REALM_NAME,
                             keycloakConfig.CLIENT_ID,
                             keycloakConfig.CLIENT_SECRET,
+                            keycloakConfig.TEST_CLIENT_ID,
                         );
                     },
                     inject: [ConfigService],

@@ -28,4 +28,8 @@ export class KeycloakConfig {
     @IsString()
     @IsNotEmpty()
     public readonly CLIENT_SECRET!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    public readonly TEST_CLIENT_ID!: string;
 }
