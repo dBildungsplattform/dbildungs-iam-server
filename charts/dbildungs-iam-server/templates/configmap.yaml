@@ -8,11 +8,13 @@ metadata:
 data:
   config-json: |-
     {{ .Files.Get "config/config.json" | nindent 4 }}
-  NODE_ENV: {{ .Values.environment | quote }}
+  NODE_ENV: "prod"
   DEPLOY_STAGE: {{ .Values.environment | quote }}
   DB_NAME: {{ .Values.database.name | quote }}
   KC_BASE_URL: "https://{{ .Values.keycloakHostname }}"
   FRONTEND_OIDC_CALLBACK_URL: "https://{{ .Values.backendHostname }}/api/auth/login"
   FRONTEND_DEFAULT_LOGIN_REDIRECT: "https://{{ .Values.backendHostname }}/"
   FRONTEND_LOGOUT_REDIRECT: "https://{{ .Values.backendHostname }}/"
-  BACKEND_HOSTNAME: "{{.Values.backendHostname}}"
+  BACKEND_HOSTNAME: "{{ .Values.backendHostname }}"
+  LDAP_URL: '{{ .Values.ldap.url | replace "spsh-xxx" .Release.Namespace }}'
+  LDAP_BIND_DN: "{{ .Values.ldap.bindDN }}"

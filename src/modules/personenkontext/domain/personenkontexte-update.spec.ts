@@ -8,11 +8,14 @@ import { PersonID } from '../../../shared/types/index.js';
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.error.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { Personenkontext } from './personenkontext.js';
 import { UpdateCountError } from './error/update-count.error.js';
 import { UpdateOutdatedError } from './error/update-outdated.error.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
+import { PersonenkontextFactory } from './personenkontext.factory.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
@@ -54,8 +57,21 @@ describe('PersonenkontexteUpdate', () => {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
+                {
+                    provide: PersonRepository,
+                    useValue: createMock<PersonRepository>(),
+                },
+                {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
+                },
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
                 EventService,
                 DbiamPersonenkontextFactory,
+                PersonenkontextFactory,
             ],
         }).compile();
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
@@ -100,9 +116,9 @@ describe('PersonenkontexteUpdate', () => {
     });
 
     describe('update', () => {
-        describe('when sent personenkontexte contain non-existing personkontext', () => {
+        describe('when sent personenkontexte contain new personenkontext', () => {
             beforeAll(() => {
-                const count: number = 2;
+                const count: number = 1;
 
                 sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
                     personId,
@@ -114,9 +130,15 @@ describe('PersonenkontexteUpdate', () => {
 
             it('should return PersonenkontextSpecificationError', async () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(null);
-                const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(null); //mock pk2 is not found => therefore handled as new
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]); //mock pk1 is found as existing in DB
 
-                expect(updateError).toBeInstanceOf(PersonenkontexteUpdateError);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock the return values in the end of update method
+
+                const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
+                expect(updateResult).toBeInstanceOf(Array);
             });
         });
 
@@ -138,25 +160,6 @@ describe('PersonenkontexteUpdate', () => {
             });
         });
 
-        describe('when existing personenkontexte cannot be found', () => {
-            beforeAll(() => {
-                const count: number = 2;
-                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(personId, lastModified, count, [
-                    bodyParam1,
-                    bodyParam2,
-                ]);
-            });
-
-            it('should return EntityNotFoundError', async () => {
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([]); //mock: no existing pks are found
-                const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
-
-                expect(updateError).toBeInstanceOf(EntityNotFoundError);
-            });
-        });
-
         describe('when existing personenkontexte amount does NOT match count', () => {
             beforeAll(() => {
                 const count: number = 2;
@@ -167,8 +170,8 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return UpdateCountError', async () => {
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]); //mock: only one PK is found
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -187,8 +190,8 @@ describe('PersonenkontexteUpdate', () => {
             });
 
             it('should return UpdateOutdatedError', async () => {
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: both PKs are found
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -197,7 +200,7 @@ describe('PersonenkontexteUpdate', () => {
         });
 
         describe('when validate returns no errors', () => {
-            beforeAll(() => {
+            beforeEach(() => {
                 const count: number = 2;
                 sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(personId, lastModified, count, [
                     bodyParam1,
@@ -205,14 +208,15 @@ describe('PersonenkontexteUpdate', () => {
                 ]);
             });
 
-            it('should return null', async () => {
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
+            it('should return null asc order', async () => {
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: both PKs are found
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: return the PKs found after update
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
                 expect(updateResult).toBeInstanceOf(Array);
+                expect(dBiamPersonenkontextRepoMock.delete).toHaveBeenCalledTimes(0);
             });
 
             // This test only test for right sorting by date of PKs, pk2 and pk1 are switched in retrieval order
@@ -222,8 +226,8 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk2, pk1]); //mock: both PKs are found
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: return the PKs found after update
 
+                expect(dBiamPersonenkontextRepoMock.delete).toHaveBeenCalledTimes(0);
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
-
                 expect(updateResult).toBeInstanceOf(Array);
             });
         });

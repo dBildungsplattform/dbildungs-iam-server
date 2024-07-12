@@ -22,7 +22,6 @@ import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
-import { PersonenkontextAnlage } from '../domain/personenkontext-anlage.js';
 import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { Personenkontext } from '../domain/personenkontext.js';
@@ -98,10 +97,6 @@ describe('PersonenkontextUc', () => {
                 {
                     provide: PersonenkontextService,
                     useValue: createMock<PersonenkontextService>(),
-                },
-                {
-                    provide: PersonenkontextAnlage,
-                    useValue: createMock<PersonenkontextAnlage>(),
                 },
                 {
                     provide: ServiceProviderRepo,

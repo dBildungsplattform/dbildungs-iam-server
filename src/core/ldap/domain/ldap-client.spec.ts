@@ -65,12 +65,28 @@ describe('LDAP Client', () => {
         expect(ldapClient).toBeDefined();
     });
 
-    describe('test client creation', () => {
+    describe('getClient', () => {
         describe('when client is not already initialized', () => {
             it('should create a new one and return it', () => {
                 const client: Client = ldapClient.getClient();
 
                 expect(client).toBeDefined();
+            });
+        });
+    });
+
+    describe('disconnect', () => {
+        describe('when client is initialized', () => {
+            it('should disconnect and return true', async () => {
+                ldapClient.getClient();
+
+                expect(await ldapClient.disconnect()).toBeTruthy();
+            });
+        });
+
+        describe('when client is NOT initialized', () => {
+            it('should return false', async () => {
+                expect(await ldapClient.disconnect()).toBeFalsy();
             });
         });
     });
