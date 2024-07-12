@@ -48,10 +48,15 @@ import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { OrganisationService } from '../domain/organisation.service.js';
 import { DataConfig } from '../../../shared/config/data.config.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
 // DONE
 //done
-@UseFilters(new SchulConnexValidationErrorFilter(), new OrganisationExceptionFilter())
+@UseFilters(
+    new SchulConnexValidationErrorFilter(),
+    new OrganisationExceptionFilter(),
+    new AuthenticationExceptionFilter(),
+)
 @ApiTags('organisationen')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])

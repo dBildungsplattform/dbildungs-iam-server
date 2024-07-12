@@ -58,8 +58,9 @@ import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonIdResponse } from '../../person/api/person-id.response.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter)
+@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personenkontexte')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])

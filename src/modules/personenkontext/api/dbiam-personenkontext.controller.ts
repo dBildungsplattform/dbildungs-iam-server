@@ -34,11 +34,13 @@ import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-updat
 import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
 import { PersonenkontexteUpdateResponse } from './response/personenkontexte-update.response.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
     new PersonenkontextExceptionFilter(),
     new PersonenkontexteUpdateExceptionFilter(),
+    new AuthenticationExceptionFilter(),
 )
 @ApiTags('dbiam-personenkontexte')
 @ApiBearerAuth()
