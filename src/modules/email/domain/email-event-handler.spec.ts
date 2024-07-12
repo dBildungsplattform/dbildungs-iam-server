@@ -183,14 +183,7 @@ describe('Email Event Handler', () => {
                 // eslint-disable-next-line @typescript-eslint/require-await
                 emailFactoryMock.createNew.mockImplementationOnce(async (personId: PersonID) => {
                     const emailMock: DeepMocked<Email> = createMock<Email>({
-                        emailAddress: new EmailAddress<false>(
-                            undefined,
-                            undefined,
-                            undefined,
-                            personId,
-                            faker.internet.email(),
-                            true,
-                        ),
+                        emailAddress: EmailAddress.createNew(personId, faker.internet.email(), true),
                         personId: personId,
                     });
                     emailMock.enable.mockImplementationOnce(() => {
@@ -273,14 +266,7 @@ describe('Email Event Handler', () => {
                 // eslint-disable-next-line @typescript-eslint/require-await
                 emailFactoryMock.createNew.mockImplementationOnce(async (personId: PersonID) => {
                     const emailMock: DeepMocked<Email> = createMock<Email>({
-                        emailAddress: new EmailAddress<false>(
-                            undefined,
-                            undefined,
-                            undefined,
-                            personId,
-                            faker.internet.email(),
-                            true,
-                        ),
+                        emailAddress: EmailAddress.createNew(personId, faker.internet.email(), true),
                         personId: personId,
                     });
                     emailMock.enable.mockImplementationOnce(() => {

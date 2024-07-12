@@ -9,4 +9,8 @@ export class EmailAddress<WasPersisted extends boolean> {
         public address: string,
         public enabled: boolean,
     ) {}
+
+    public static createNew(personId: PersonID, address: string, enabled: boolean): EmailAddress<false> {
+        return new EmailAddress(undefined, undefined, undefined, personId, address, enabled);
+    }
 }

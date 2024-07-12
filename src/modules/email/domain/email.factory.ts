@@ -42,10 +42,7 @@ export class EmailFactory {
             };
         }
 
-        const newEmailAddress: EmailAddress<false> = new EmailAddress<false>(
-            undefined,
-            undefined,
-            undefined,
+        const newEmailAddress: EmailAddress<false> = EmailAddress.createNew(
             personId,
             generatedAddressResult.value,
             true,

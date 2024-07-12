@@ -8,7 +8,7 @@ export class EmailAddressEntity extends TimestampedEntity {
         columnType: 'uuid',
         fieldName: 'person_id',
         ref: true,
-        nullable: true,
+        nullable: false,
         deleteRule: 'set null',
         entity: () => PersonEntity,
     })
