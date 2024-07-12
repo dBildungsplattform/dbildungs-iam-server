@@ -55,8 +55,9 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
-@UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter())
+@UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -101,7 +102,6 @@ export class RolleController {
             return new PagedResponse(pagedRolleWithServiceProvidersResponse);
         }
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
-
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {
                 const sps: ServiceProvider<true>[] = r.serviceProviderIds

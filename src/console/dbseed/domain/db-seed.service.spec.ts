@@ -12,7 +12,6 @@ import { DataProviderFile } from '../file/data-provider-file.js';
 import { PersonFactory } from '../../../modules/person/domain/person.factory.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { OrganisationRepo } from '../../../modules/organisation/persistence/organisation.repo.js';
 import { OrganisationDo } from '../../../modules/organisation/domain/organisation.do.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { faker } from '@faker-js/faker';
@@ -35,7 +34,7 @@ import { KeycloakGroupRoleService } from '../../../modules/keycloak-administrati
 describe('DbSeedService', () => {
     let module: TestingModule;
     let dbSeedService: DbSeedService;
-    let organisationRepoMock: DeepMocked<OrganisationRepo>;
+    let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let personRepoMock: DeepMocked<PersonRepository>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
@@ -77,10 +76,6 @@ describe('DbSeedService', () => {
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
-                    provide: OrganisationRepo,
-                    useValue: createMock<OrganisationRepo>(),
-                },
-                {
                     provide: OrganisationRepository,
                     useValue: createMock<OrganisationRepository>(),
                 },
@@ -103,7 +98,7 @@ describe('DbSeedService', () => {
             ],
         }).compile();
         dbSeedService = module.get(DbSeedService);
-        organisationRepoMock = module.get(OrganisationRepo);
+        organisationRepositoryMock = module.get(OrganisationRepository);
         rolleRepoMock = module.get(RolleRepo);
         personRepoMock = module.get(PersonRepository);
         serviceProviderRepoMock = module.get(ServiceProviderRepo);
@@ -151,7 +146,7 @@ describe('DbSeedService', () => {
                 );
                 const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
 
-                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                organisationRepositoryMock.save.mockResolvedValueOnce(persistedOrganisation);
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
                     EntityNotFoundError,
                 );
@@ -166,7 +161,7 @@ describe('DbSeedService', () => {
                 );
                 const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
 
-                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                organisationRepositoryMock.save.mockResolvedValueOnce(persistedOrganisation);
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
                     EntityNotFoundError,
                 );
@@ -180,10 +175,10 @@ describe('DbSeedService', () => {
                     'utf-8',
                 );
                 const parent: OrganisationDo<true> = createMock<OrganisationDo<true>>();
-                organisationRepoMock.save.mockResolvedValueOnce(parent);
+                organisationRepositoryMock.save.mockResolvedValueOnce(parent);
                 //USE MockResolved instead of MockRecolvedOnce because it's called for administriert and zugehoerigZu
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID of referenced parent
-                organisationRepoMock.findById.mockResolvedValue(parent);
+                organisationRepositoryMock.findById.mockResolvedValue(parent);
 
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
                     EntityNotFoundError,
@@ -198,10 +193,10 @@ describe('DbSeedService', () => {
                     'utf-8',
                 );
                 const parent: OrganisationDo<true> = createMock<OrganisationDo<true>>();
-                organisationRepoMock.save.mockResolvedValueOnce(parent);
+                organisationRepositoryMock.save.mockResolvedValueOnce(parent);
                 //USE MockResolved instead of MockRecolvedOnce because it's called for administriert and zugehoerigZu
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID of referenced parent
-                organisationRepoMock.findById.mockResolvedValue(parent); // mock get-SSK
+                organisationRepositoryMock.findById.mockResolvedValue(parent); // mock get-SSK
 
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
                     EntityNotFoundError,
@@ -217,7 +212,7 @@ describe('DbSeedService', () => {
                 );
                 const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
 
-                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                organisationRepositoryMock.save.mockResolvedValueOnce(persistedOrganisation);
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
@@ -230,7 +225,7 @@ describe('DbSeedService', () => {
                 );
                 const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
 
-                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                organisationRepositoryMock.save.mockResolvedValueOnce(persistedOrganisation);
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
@@ -242,7 +237,7 @@ describe('DbSeedService', () => {
                 );
                 const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
 
-                organisationRepoMock.save.mockResolvedValueOnce(persistedOrganisation);
+                organisationRepositoryMock.save.mockResolvedValueOnce(persistedOrganisation);
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
                     EntityNotFoundError,
                 );
@@ -263,7 +258,7 @@ describe('DbSeedService', () => {
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced serviceProvider
                 serviceProviderRepoMock.findById.mockResolvedValueOnce(serviceProviderMocked);
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced parent
-                organisationRepoMock.findById.mockResolvedValue(createMock<OrganisationDo<true>>()); // mock get-SSK
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<OrganisationDo<true>>()); // mock get-SSK
 
                 rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
                 await expect(dbSeedService.seedRolle(fileContentAsStr)).resolves.not.toThrow(EntityNotFoundError);
@@ -282,7 +277,7 @@ describe('DbSeedService', () => {
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced serviceProvider
                 serviceProviderRepoMock.findById.mockResolvedValueOnce(serviceProviderMocked);
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced parent
-                organisationRepoMock.findById.mockResolvedValue(createMock<OrganisationDo<true>>()); // mock get-SSK
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<OrganisationDo<true>>()); // mock get-SSK
 
                 rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
                 await expect(dbSeedService.seedRolle(fileContentAsStr)).resolves.not.toThrow(EntityNotFoundError);
@@ -302,7 +297,7 @@ describe('DbSeedService', () => {
                 serviceProviderRepoMock.findById.mockResolvedValueOnce(serviceProviderMocked);
 
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced parent
-                organisationRepoMock.findById.mockRejectedValueOnce(new EntityNotFoundError());
+                organisationRepositoryMock.findById.mockRejectedValueOnce(new EntityNotFoundError());
 
                 rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
                 await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
@@ -331,7 +326,7 @@ describe('DbSeedService', () => {
                     'utf-8',
                 );
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID providedOnSchulstrukturknoten
-                organisationRepoMock.findById.mockResolvedValue(createMock<OrganisationDo<true>>()); // mock get-SSK
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<OrganisationDo<true>>()); // mock get-SSK
 
                 await expect(dbSeedService.seedServiceProvider(fileContentAsStr)).resolves.not.toThrow(
                     EntityNotFoundError,
@@ -377,7 +372,7 @@ describe('DbSeedService', () => {
                 personRepoMock.findById.mockResolvedValue(createMock<Person<true>>()); // mock getReferencedPerson
 
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
-                organisationRepoMock.findById.mockResolvedValue(createMock<OrganisationDo<true>>()); // mock getReferencedOrganisation
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<OrganisationDo<true>>()); // mock getReferencedOrganisation
 
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
                 rolleRepoMock.findById.mockResolvedValue(createMock<Rolle<true>>()); // mock getReferencedRolle
@@ -418,7 +413,7 @@ describe('DbSeedService', () => {
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID for person, found via seeding-ref-table
                 personRepoMock.findById.mockResolvedValue(createMock<Person<true>>());
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID for orga, found via seeding-ref-table
-                organisationRepoMock.findById.mockResolvedValue(undefined);
+                organisationRepositoryMock.findById.mockResolvedValue(undefined);
 
                 await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
@@ -436,7 +431,7 @@ describe('DbSeedService', () => {
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID for person, found via seeding-ref-table
                 personRepoMock.findById.mockResolvedValue(createMock<Person<true>>());
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID for orga, found via seeding-ref-table
-                organisationRepoMock.findById.mockResolvedValueOnce(createMock<OrganisationDo<true>>());
+                organisationRepositoryMock.findById.mockResolvedValueOnce(createMock<OrganisationDo<true>>());
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(undefined); //mock UUID for rolle, found via seeding-ref-table
 
                 await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
@@ -453,7 +448,7 @@ describe('DbSeedService', () => {
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID for person, found via seeding-ref-table
                 personRepoMock.findById.mockResolvedValue(createMock<Person<true>>());
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID for orga, found via seeding-ref-table
-                organisationRepoMock.findById.mockResolvedValueOnce(createMock<OrganisationDo<true>>());
+                organisationRepositoryMock.findById.mockResolvedValueOnce(createMock<OrganisationDo<true>>());
 
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID for rolle, found via seeding-ref-table
                 rolleRepoMock.findById.mockResolvedValue(undefined);

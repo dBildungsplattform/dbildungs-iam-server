@@ -118,7 +118,6 @@ export class Rolle<WasPersisted extends boolean> {
 
     public async canBeAssignedToOrga(orgaId: OrganisationID): Promise<boolean> {
         if (orgaId === this.administeredBySchulstrukturknoten) return true;
-
         const childOrgas: Organisation<true>[] = await this.organisationRepo.findChildOrgasForIds([
             this.administeredBySchulstrukturknoten,
         ]);

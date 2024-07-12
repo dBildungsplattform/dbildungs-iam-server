@@ -11,5 +11,5 @@ export class LdapConfig {
 
     @IsString()
     @IsNotEmpty()
-    public readonly PASSWORD!: string;
+    public readonly ADMIN_PASSWORD!: string;
 }

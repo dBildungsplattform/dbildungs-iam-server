@@ -33,8 +33,9 @@ import { ServerConfig, DataConfig } from '../../../../shared/config/index.js';
 import { RollenSystemRecht } from '../../../rolle/domain/rolle.enums.js';
 import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
+import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter)
+@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('dbiam-personenuebersicht')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
