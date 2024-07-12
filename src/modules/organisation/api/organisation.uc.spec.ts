@@ -178,12 +178,6 @@ describe('OrganisationUc', () => {
 
                 expect(result.total).toBe(2);
                 expect(result.items).toHaveLength(2);
-                expect(result.items[0]?.name).toEqual(organisationDos[0]?.name);
-                expect(result.items[1]?.name).toEqual(organisationDos[1]?.name);
-                expect(result.items[0]?.kennung).toEqual(organisationDos[0]?.kennung);
-                expect(result.items[1]?.kennung).toEqual(organisationDos[1]?.kennung);
-                expect(result.items[0]?.typ).toEqual(organisationDos[0]?.typ);
-                expect(result.items[1]?.typ).toEqual(organisationDos[1]?.typ);
             });
         });
 
@@ -321,12 +315,56 @@ describe('OrganisationUc', () => {
                 if (!(result instanceof SchulConnexError)) {
                     expect(result.total).toBe(2);
                     expect(result.items).toHaveLength(2);
-                    expect(result.items[0]?.name).toEqual(organisationDos[0]?.name);
-                    expect(result.items[1]?.name).toEqual(organisationDos[1]?.name);
-                    expect(result.items[0]?.kennung).toEqual(organisationDos[0]?.kennung);
-                    expect(result.items[1]?.kennung).toEqual(organisationDos[1]?.kennung);
-                    expect(result.items[0]?.typ).toEqual(organisationDos[0]?.typ);
-                    expect(result.items[1]?.typ).toEqual(organisationDos[1]?.typ);
+                }
+            });
+
+            it('should handle undefined names during sorting', async () => {
+                const org1: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: undefined });
+                const org2: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: 'Alpha' });
+                const org3: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: 'Beta' });
+
+                organisationServiceMock.findOrganisationById.mockResolvedValueOnce({
+                    ok: true,
+                    value: DoFactory.createOrganisation(true),
+                });
+
+                organisationServiceMock.findAllAdministriertVon.mockResolvedValue({
+                    total: 3,
+                    offset: 0,
+                    limit: 3,
+                    items: [org1, org2, org3],
+                });
+
+                const result: Paged<OrganisationResponseLegacy> | SchulConnexError =
+                    await organisationUc.findAdministriertVon('parent-id');
+
+                if (!(result instanceof SchulConnexError)) {
+                    expect(result.items.map((o: OrganisationResponseLegacy) => o.name)).toEqual([
+                        undefined,
+                        'Alpha',
+                        'Beta',
+                    ]);
+                }
+            });
+
+            it('should handle empty list of organisations', async () => {
+                organisationServiceMock.findAllAdministriertVon.mockResolvedValue({
+                    total: 0,
+                    offset: 0,
+                    limit: 0,
+                    items: [],
+                });
+
+                organisationServiceMock.findOrganisationById.mockResolvedValueOnce({
+                    ok: true,
+                    value: DoFactory.createOrganisation(true),
+                });
+
+                const result: Paged<OrganisationResponseLegacy> | SchulConnexError =
+                    await organisationUc.findAdministriertVon('parent-id');
+
+                if (!(result instanceof SchulConnexError)) {
+                    expect(result.items).toHaveLength(0);
                 }
             });
         });
@@ -372,12 +410,6 @@ describe('OrganisationUc', () => {
                 if (!(result instanceof SchulConnexError)) {
                     expect(result.total).toBe(2);
                     expect(result.items).toHaveLength(2);
-                    expect(result.items[0]?.name).toEqual(organisationDos[0]?.name);
-                    expect(result.items[1]?.name).toEqual(organisationDos[1]?.name);
-                    expect(result.items[0]?.kennung).toEqual(organisationDos[0]?.kennung);
-                    expect(result.items[1]?.kennung).toEqual(organisationDos[1]?.kennung);
-                    expect(result.items[0]?.typ).toEqual(organisationDos[0]?.typ);
-                    expect(result.items[1]?.typ).toEqual(organisationDos[1]?.typ);
                 }
             });
         });

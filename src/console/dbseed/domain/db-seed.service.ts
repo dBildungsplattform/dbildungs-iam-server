@@ -16,7 +16,6 @@ import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ConfigService } from '@nestjs/config';
 import { PersonenkontextFile } from '../file/personenkontext-file.js';
-import { OrganisationRepo } from '../../../modules/organisation/persistence/organisation.repo.js';
 import { RolleFile } from '../file/rolle-file.js';
 import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
 import { RolleFactory } from '../../../modules/rolle/domain/rolle.factory.js';
@@ -31,6 +30,8 @@ import { DbSeedReferenceRepo } from '../repo/db-seed-reference.repo.js';
 import { DbSeedReference } from './db-seed-reference.js';
 import { ReferencedEntityType } from '../repo/db-seed-reference.entity.js';
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
+import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
+import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 
 @Injectable()
 export class DbSeedService {
@@ -41,7 +42,7 @@ export class DbSeedService {
         private readonly personFactory: PersonFactory,
         private readonly personRepository: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
-        private readonly organisationRepo: OrganisationRepo,
+        private readonly organisationRepository: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
@@ -68,9 +69,7 @@ export class DbSeedService {
         return entities;
     }
 
-    //to be refactored when organisation becomes DomainDriven
-    private async constructAndPersistOrganisation(data: OrganisationFile): Promise<OrganisationDo<true>> {
-        const organisationDo: OrganisationDo<true> = new OrganisationDo<true>();
+    private async constructAndPersistOrganisation(data: OrganisationFile): Promise<Organisation<true>> {
         let administriertVon: string | undefined = undefined;
         let zugehoerigZu: string | undefined = undefined;
 
@@ -87,27 +86,30 @@ export class DbSeedService {
             zugehoerigZu = zugehoerigZuOrganisation.id;
         }
 
+        const organisation: Organisation<false> = Organisation.createNew(
+            administriertVon,
+            zugehoerigZu,
+            data.kennung,
+            data.name,
+            data.namensergaenzung,
+            data.kuerzel,
+            data.typ,
+            data.traegerschaft,
+        );
+
         if (!administriertVon && !zugehoerigZu && data.kuerzel === 'Root') {
-            organisationDo.id = this.ROOT_ORGANISATION_ID;
+            organisation.id = this.ROOT_ORGANISATION_ID;
         }
 
-        organisationDo.administriertVon = administriertVon ?? undefined;
-        organisationDo.zugehoerigZu = zugehoerigZu ?? undefined;
-        organisationDo.kennung = data.kennung ?? undefined;
-        organisationDo.name = data.name ?? undefined;
-        organisationDo.namensergaenzung = data.namensergaenzung ?? undefined;
-        organisationDo.kuerzel = data.kuerzel ?? undefined;
-        organisationDo.typ = data.typ ?? undefined;
-        organisationDo.traegerschaft = data.traegerschaft ?? undefined;
-
-        const persistedOrganisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
+        const savedOrga: Organisation<true> = await this.organisationRepository.save(organisation);
         const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
             ReferencedEntityType.ORGANISATION,
             data.id,
-            persistedOrganisation.id,
+            savedOrga.id,
         );
         await this.dbSeedReferenceRepo.create(dbSeedReference);
-        return organisationDo;
+
+        return savedOrga;
     }
 
     public async seedOrganisation(fileContentAsStr: string): Promise<void> {
@@ -311,7 +313,7 @@ export class DbSeedService {
             ReferencedEntityType.ORGANISATION,
         );
         if (!organisationUUID) throw new EntityNotFoundError('Organisation', seedingId.toString());
-        const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(organisationUUID);
+        const organisation: Option<OrganisationDo<true>> = await this.organisationRepository.findById(organisationUUID);
         if (!organisation) throw new EntityNotFoundError('Organisation', seedingId.toString());
 
         return organisation;

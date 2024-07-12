@@ -28,6 +28,22 @@ export class CreateGroupAction extends IMSESAction<CreateGroupResponseBody, void
     }
 
     public override buildRequest(): object {
+        let extension: object[] | undefined;
+        if (this.params.type === 'Course') {
+            extension = [
+                {
+                    'ims1:fieldName': 'course',
+                    'ims1:fieldType': 'String',
+                    'ims1:fieldValue': this.params.name,
+                },
+                {
+                    'ims1:fieldName': 'course/code',
+                    'ims1:fieldType': 'String',
+                    'ims1:fieldValue': this.params.name,
+                },
+            ];
+        }
+
         return {
             'ims:createGroupRequest': {
                 '@_xmlns:ims': IMS_GROUP_MAN_MESS_SCHEMA,
@@ -57,6 +73,7 @@ export class CreateGroupAction extends IMSESAction<CreateGroupResponseBody, void
                         'ims2:descLong': this.params.longDescription,
                         'ims2:descFull': this.params.fullDescription,
                     },
+                    'ims2:extension': extension && { 'ims1:extensionField': extension },
                 },
             },
         };
