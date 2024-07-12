@@ -99,12 +99,13 @@ export class Personenkontext<WasPersisted extends boolean> {
         organisationId: OrganisationID,
         rolleId: RolleID,
         // new fields
-        referrer?: string,
-        mandant?: string,
-        personenstatus?: Personenstatus,
-        jahrgangsstufe?: Jahrgangsstufe,
-        sichtfreigabe?: SichtfreigabeType,
-        loeschungZeitpunkt?: Date,
+        referrer: string | undefined,
+        mandant: string | undefined,
+        personenstatus: Personenstatus | undefined,
+        jahrgangsstufe: Jahrgangsstufe | undefined,
+        sichtfreigabe: SichtfreigabeType | undefined,
+        loeschungZeitpunkt: Date | undefined,
+        revision: string | undefined,
     ): Personenkontext<false> {
         return new Personenkontext(
             personRepo,
@@ -123,7 +124,8 @@ export class Personenkontext<WasPersisted extends boolean> {
             jahrgangsstufe,
             sichtfreigabe,
             loeschungZeitpunkt,
-            undefined,
+            //!!! question should this be undefined
+            revision,
         );
     }
 

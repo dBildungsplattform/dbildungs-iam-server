@@ -1,4 +1,3 @@
-import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { PagedQueryParams } from '../../../../shared/paging/paged.query.params.js';
@@ -12,7 +11,14 @@ import {
 } from '../../domain/personenkontext.enums.js';
 
 export class PersonenkontextQueryParams extends PagedQueryParams {
-    @AutoMap()
+    @IsOptional()
+    @IsString()
+    @ApiProperty({
+        required: false,
+        nullable: true,
+    })
+    public readonly personId?: string;
+
     @IsOptional()
     @IsString()
     @ApiProperty({
@@ -21,7 +27,6 @@ export class PersonenkontextQueryParams extends PagedQueryParams {
     })
     public readonly referrer?: string;
 
-    @AutoMap(() => String)
     @IsOptional()
     @IsEnum(Rolle)
     @ApiProperty({
@@ -32,7 +37,6 @@ export class PersonenkontextQueryParams extends PagedQueryParams {
     })
     public readonly rolle?: Rolle;
 
-    @AutoMap(() => String)
     @IsOptional()
     @IsEnum(Personenstatus)
     @ApiProperty({
@@ -43,7 +47,6 @@ export class PersonenkontextQueryParams extends PagedQueryParams {
     })
     public readonly personenstatus?: Personenstatus;
 
-    @AutoMap(() => String)
     @IsOptional()
     @IsEnum(SichtfreigabeType)
     @ApiProperty({

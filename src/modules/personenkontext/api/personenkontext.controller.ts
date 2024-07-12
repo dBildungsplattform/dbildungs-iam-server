@@ -55,6 +55,9 @@ import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { Personenkontext } from '../domain/personenkontext.js';
+import { PersonIdResponse } from '../../person/api/person-id.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter)
 @ApiTags('personenkontexte')
@@ -66,6 +69,7 @@ export class PersonenkontextController {
         private readonly personenkontextUc: PersonenkontextUc,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
     @Get(':personenkontextId')
@@ -114,7 +118,7 @@ export class PersonenkontextController {
     @Get()
     @ApiOkResponse({
         description: 'The personenkontexte were successfully returned.',
-        type: [PersonendatensatzResponseAutomapper],
+        type: [PersonenkontextdatensatzResponse],
         headers: PagingHeadersObject,
     })
     @ApiBadRequestResponse({ description: 'Request has wrong format.' })
@@ -126,25 +130,19 @@ export class PersonenkontextController {
         @Query() queryParams: PersonenkontextQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<PersonenkontextdatensatzResponse>> {
-        const findPersonenkontextDto: FindPersonenkontextDto = this.mapper.map(
-            queryParams,
-            PersonenkontextQueryParams,
-            FindPersonenkontextDto,
-        );
-
         const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );
 
-        const result: Paged<PersonenkontextDto> = await this.personenkontextUc.findAll(
-            findPersonenkontextDto,
-            organisationIDs,
-        );
-        const responseItems: PersonenkontextdatensatzResponse[] = this.mapper.mapArray(
-            result.items,
-            PersonenkontextDto,
-            PersonenkontextdatensatzResponse,
+        const result: Paged<Personenkontext<true>> = await this.personenkontextUc.findAll(queryParams, organisationIDs);
+        const responseItems: PersonenkontextdatensatzResponse[] = await Promise.all(
+            result.items.map(
+                async (personenkontext: Personenkontext<true>) =>
+                    new PersonenkontextdatensatzResponse(new PersonIdResponse({ id: personenkontext.personId }), [
+                        await PersonenkontextResponse.construct(personenkontext),
+                    ]),
+            ),
         );
         const response: PagedResponse<PersonenkontextdatensatzResponse> = new PagedResponse({
             items: responseItems,

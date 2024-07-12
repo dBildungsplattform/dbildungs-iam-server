@@ -14,6 +14,7 @@ import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.r
 import { Personenkontext } from './personenkontext.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonKontextRepository } from '../persistence/personenkontext.repository.js';
+import { PersonenkontextQueryParams } from '../api/param/personenkontext-query.params.js';
 
 @Injectable()
 export class PersonenkontextService {
@@ -39,26 +40,26 @@ export class PersonenkontextService {
     }
 
     public async findAllPersonenkontexte(
-        personenkontextDo: PersonenkontextDo<false>,
+        personenkontext: PersonenkontextQueryParams,
         organisationIDs?: OrganisationID[] | undefined,
         offset?: number,
         limit?: number,
-    ): Promise<Paged<PersonenkontextDo<true>>> {
+    ): Promise<Paged<Personenkontext<true>>> {
         const scope: PersonenkontextScope = new PersonenkontextScope()
             .setScopeWhereOperator(ScopeOperator.AND)
             .byOrganisations(organisationIDs)
             .findBy({
-                personId: personenkontextDo.personId,
-                referrer: personenkontextDo.referrer,
-                rolle: personenkontextDo.rolle,
-                personenstatus: personenkontextDo.personenstatus,
-                sichtfreigabe: personenkontextDo.sichtfreigabe,
+                personId: personenkontext.personId,
+                referrer: personenkontext.referrer,
+                rolle: personenkontext.rolle,
+                personenstatus: personenkontext.personenstatus,
+                sichtfreigabe: personenkontext.sichtfreigabe,
             })
             .sortBy('id', ScopeOrder.ASC)
             .paged(offset, limit);
 
-        const [personenkontexte, total]: Counted<PersonenkontextDo<true>> =
-            await this.personenkontextRepo.findBy(scope);
+        const [personenkontexte, total]: Counted<Personenkontext<true>> =
+            await this.dBiamPersonenkontextRepo.findBy(scope);
 
         return {
             offset: offset ?? 0,

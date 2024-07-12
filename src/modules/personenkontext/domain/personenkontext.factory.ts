@@ -49,7 +49,18 @@ export class PersonenkontextFactory {
         );
     }
 
-    public createNew(personId: PersonID, organisationId: OrganisationID, rolleId: RolleID): Personenkontext<false> {
+    public createNew(
+        personId: PersonID,
+        organisationId: OrganisationID,
+        rolleId: RolleID,
+        referrer: string | undefined,
+        mandant: string | undefined,
+        personenstatus: Personenstatus | undefined,
+        jahrgangsstufe: Jahrgangsstufe | undefined,
+        sichtfreigabe: SichtfreigabeType | undefined,
+        loeschungZeitpunkt: Date | undefined,
+        revision: string | undefined,
+    ): Personenkontext<false> {
         return Personenkontext.createNew(
             this.personRepo,
             this.organisationRepo,
@@ -57,6 +68,13 @@ export class PersonenkontextFactory {
             personId,
             organisationId,
             rolleId,
+            referrer,
+            mandant,
+            personenstatus,
+            jahrgangsstufe,
+            sichtfreigabe,
+            loeschungZeitpunkt,
+            revision,
         );
     }
 }

@@ -35,6 +35,8 @@ import { PersonendatensatzResponseAutomapper } from '../../person/api/personenda
 import { Person } from '../../person/domain/person.js';
 import { PersonResponseAutomapper } from '../../person/api/person.response-automapper.js';
 import { PersonenkontextResponse } from './response/personenkontext.response.js';
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { PersonenkontextQueryParams } from './param/personenkontext-query.params.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -45,6 +47,7 @@ export class PersonenkontextUc {
         private readonly organisationRepo: OrganisationRepo,
         private readonly organisationService: OrganisationService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
+        // private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
     public async createPersonenkontext(
@@ -67,33 +70,21 @@ export class PersonenkontextUc {
     }
 
     public async findAll(
-        findPersonenkontextDto: FindPersonenkontextDto,
+        findPersonenkontext: PersonenkontextQueryParams,
         organisationIDs?: OrganisationID[] | undefined,
-    ): Promise<Paged<PersonenkontextDto>> {
-        const personenkontextDo: PersonenkontextDo<false> = this.mapper.map(
-            findPersonenkontextDto,
-            FindPersonenkontextDto,
-            PersonenkontextDo,
-        );
-
-        const result: Paged<PersonenkontextDo<true>> = await this.personenkontextService.findAllPersonenkontexte(
-            personenkontextDo,
+    ): Promise<Paged<Personenkontext<true>>> {
+        const result: Paged<Personenkontext<true>> = await this.personenkontextService.findAllPersonenkontexte(
+            findPersonenkontext,
             organisationIDs,
-            findPersonenkontextDto.offset,
-            findPersonenkontextDto.limit,
-        );
-
-        const personenkontexte: PersonenkontextDto[] = this.mapper.mapArray(
-            result.items,
-            PersonenkontextDo,
-            PersonenkontextDto,
+            findPersonenkontext.offset,
+            findPersonenkontext.limit,
         );
 
         return {
             total: result.total,
             offset: result.offset,
             limit: result.limit,
-            items: personenkontexte,
+            items: result.items,
         };
     }
 
@@ -168,7 +159,7 @@ export class PersonenkontextUc {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
         }
 
-        const personResult: Result<PersonDo<true>, DomainError> = await this.personService.findPersonById(
+        const personResult: Result<Person<true>, DomainError> = await this.personService.findPersonById(
             result.value.personId,
         );
 
