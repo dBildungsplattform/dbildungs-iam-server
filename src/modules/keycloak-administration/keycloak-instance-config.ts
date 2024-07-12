@@ -12,6 +12,7 @@ export class KeycloakInstanceConfig implements KeycloakConfig {
         public REALM_NAME: string,
         public CLIENT_ID: string,
         public CLIENT_SECRET: string,
+        public TEST_CLIENT_ID: string,
     ) {}
 
     public static fromConfigService(): Provider {
@@ -28,6 +29,7 @@ export class KeycloakInstanceConfig implements KeycloakConfig {
                     keycloakConfig.REALM_NAME,
                     keycloakConfig.CLIENT_ID,
                     keycloakConfig.CLIENT_SECRET,
+                    keycloakConfig.TEST_CLIENT_ID,
                 );
             },
             inject: [ConfigService],

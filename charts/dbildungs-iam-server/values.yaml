@@ -18,7 +18,7 @@ containerSecurityContext:
     type: "RuntimeDefault"
 
 restartPolicy: Always
-environment: prod
+environment: dev
 
 database:
   name: "dbildungs_iam_server"
