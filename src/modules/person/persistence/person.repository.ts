@@ -19,7 +19,7 @@ import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
     return {
@@ -96,7 +96,7 @@ export class PersonRepository {
         private readonly kcUserService: KeycloakUserService,
         private readonly em: EntityManager,
         private readonly eventService: EventService,
-        private readonly emailRepo: EmailRepo,
+        //private readonly emailRepo: EmailRepo,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -124,9 +124,9 @@ export class PersonRepository {
         const [entities, total]: Counted<PersonEntity> = await scope.executeQuery(this.em);
         const persons: Person<true>[] = entities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
 
-        for (const person of persons) {
+        /*   for (const person of persons) {
             person.email = await this.emailRepo.findEmailAddressByPerson(person.id);
-        }
+        }*/
         return [persons, total];
     }
 
@@ -197,12 +197,35 @@ export class PersonRepository {
         // Delete the person from Keycloak
         await this.kcUserService.delete(person.keycloakUserId);
 
+        // Delete email-addresses if any, must happen before person deletion to get the referred email-address
+        const emailAddress: Option<string> = await this.getEmailAddressForPerson(personId);
+        if (emailAddress) {
+            this.eventService.publish(new PersonDeletedEvent(personId, emailAddress));
+        }
+
         // Delete the person from the database with all their kontexte
         await this.em.nativeDelete(PersonEntity, person.id);
 
-        this.eventService.publish(new PersonDeletedEvent(personId, person.email));
-
         return { ok: true, value: undefined };
+    }
+
+    private async getEmailAddressForPerson(personId: PersonID): Promise<Option<string>> {
+        const person: Option<PersonEntity> = await this.em.findOne(
+            PersonEntity,
+            { id: personId },
+            { populate: ['emailAddresses'] as const },
+        );
+        if (!person || !person.emailAddresses) {
+            return undefined;
+        }
+        const enabledAddresses: EmailAddressEntity[] = person.emailAddresses.filter(
+            (ea: EmailAddressEntity) => ea.enabled,
+        );
+        // Avoidance of multiple enabled email-addresses for one person has to be done beforehand
+        if (!enabledAddresses[0]) {
+            return undefined;
+        }
+        return enabledAddresses[0].address; //
     }
 
     public async findByKeycloakUserId(keycloakUserId: string): Promise<Option<Person<true>>> {

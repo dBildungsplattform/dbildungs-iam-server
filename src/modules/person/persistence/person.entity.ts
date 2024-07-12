@@ -14,6 +14,7 @@ import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
 import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
+import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 
 @Entity({ tableName: 'person' })
 export class PersonEntity extends TimestampedEntity {
@@ -122,4 +123,13 @@ export class PersonEntity extends TimestampedEntity {
         orphanRemoval: true,
     })
     public personenKontexte: Collection<PersonenkontextEntity> = new Collection<PersonenkontextEntity>(this);
+
+    @OneToMany({
+        entity: () => EmailAddressEntity,
+        mappedBy: 'personId',
+        cascade: [],
+        orphanRemoval: false,
+        eager: true,
+    })
+    public emailAddresses?: Collection<EmailAddressEntity> = new Collection<EmailAddressEntity>(this);
 }
