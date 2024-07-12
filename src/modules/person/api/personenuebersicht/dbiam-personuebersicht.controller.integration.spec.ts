@@ -179,6 +179,7 @@ describe('Personenuebersicht API', () => {
                     expect(responseBody?.vorname).toEqual(savedPerson.vorname);
                     expect(responseBody?.nachname).toEqual(savedPerson.familienname);
                     expect(responseBody?.benutzername).toEqual(savedPerson.referrer);
+                    expect(responseBody?.lastModifiedZuordnungen).toBeUndefined();
                     expect(responseBody?.zuordnungen).toEqual([]);
                 });
             });
@@ -240,6 +241,7 @@ describe('Personenuebersicht API', () => {
                     expect(responseBody?.vorname).toEqual(savedPerson.vorname);
                     expect(responseBody?.nachname).toEqual(savedPerson.familienname);
                     expect(responseBody?.benutzername).toEqual(savedPerson.referrer);
+                    expect(responseBody?.lastModifiedZuordnungen).toBeInstanceOf(Date);
                     expect(responseBody?.zuordnungen.length).toEqual(3);
                     expect(
                         responseBody.zuordnungen.findIndex(
