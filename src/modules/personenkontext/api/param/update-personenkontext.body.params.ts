@@ -9,13 +9,14 @@ import {
 } from '../../domain/personenkontext.enums.js';
 
 export class UpdatePersonenkontextBodyParams {
-    @AutoMap()
+    @IsString()
+    public id!: string;
+
     @IsString()
     @IsOptional()
     @ApiProperty({ required: false, description: 'The new referrer of the personenkontext.' })
     public readonly referrer?: string;
 
-    @AutoMap(() => String)
     @IsEnum(Personenstatus)
     @IsOptional()
     @ApiProperty({
@@ -26,7 +27,6 @@ export class UpdatePersonenkontextBodyParams {
     })
     public readonly personenstatus?: Personenstatus;
 
-    @AutoMap(() => String)
     @IsEnum(Jahrgangsstufe)
     @IsOptional()
     @ApiProperty({
@@ -37,7 +37,6 @@ export class UpdatePersonenkontextBodyParams {
     })
     public readonly jahrgangsstufe?: Jahrgangsstufe;
 
-    @AutoMap()
     @IsString()
     @ApiProperty({ required: true, description: 'The revision of the personenkontext.' })
     public readonly revision!: string;

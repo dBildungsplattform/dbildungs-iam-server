@@ -37,6 +37,8 @@ import { PersonResponseAutomapper } from '../../person/api/person.response-autom
 import { PersonenkontextResponse } from './response/personenkontext.response.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { PersonenkontextQueryParams } from './param/personenkontext-query.params.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 @Injectable()
 export class PersonenkontextUc {
@@ -45,6 +47,7 @@ export class PersonenkontextUc {
         private readonly personenkontextService: PersonenkontextService,
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepo,
+        private readonly organisationRepository: OrganisationRepository,
         private readonly organisationService: OrganisationService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         // private readonly personenkontextFactory: PersonenkontextFactory,
@@ -114,29 +117,28 @@ export class PersonenkontextUc {
     }
 
     public async hatSystemRecht(personId: string, systemRecht: RollenSystemRecht): Promise<SystemrechtResponse> {
-        const organisationDos: OrganisationDo<true>[] = [];
+        const organisations: Organisation<true>[] = [];
         const personenkontexte: Personenkontext<true>[] =
             await this.personenkontextService.findPersonenkontexteByPersonId(personId);
         for (const personenkontext of personenkontexte) {
             const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(personenkontext.rolleId);
             if (!rolle) continue;
             if (rolle.hasSystemRecht(systemRecht)) {
-                const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(
+                const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
                     personenkontext.organisationId,
                 );
                 if (organisation) {
-                    organisationDos.push(organisation);
-                    const children: Option<Paged<OrganisationDo<true>>> =
+                    organisations.push(organisation);
+                    const children: Option<Paged<Organisation<true>>> =
                         await this.organisationService.findAllAdministriertVon(personenkontext.organisationId);
-                    organisationDos.push(...children.items);
+                    organisations.push(...children.items);
                 }
             }
         }
         const systemrechtResponse: SystemrechtResponse = new SystemrechtResponse();
-        const organisationResponses: OrganisationResponseLegacy[] = this.mapper.mapArray(
-            organisationDos,
-            OrganisationDo,
-            OrganisationResponseLegacy,
+
+        const organisationResponses: OrganisationResponseLegacy[] = organisations.map(
+            (org: Organisation<true>) => new OrganisationResponseLegacy(org),
         );
         systemrechtResponse[RollenSystemRecht.ROLLEN_VERWALTEN] = organisationResponses;
         return systemrechtResponse;
@@ -144,16 +146,18 @@ export class PersonenkontextUc {
 
     public async updatePersonenkontext(
         updateDto: UpdatePersonenkontextDto,
-    ): Promise<PersonendatensatzDto | SchulConnexError> {
-        const personenkontextDo: PersonenkontextDo<true> = this.mapper.map(
-            updateDto,
-            UpdatePersonenkontextDto,
-            PersonenkontextDo,
-        );
+    ): Promise<PersonendatensatzResponseAutomapper | SchulConnexError> {
+        // const personenkontextDo: PersonenkontextDo<true> = this.mapper.map(
+        //     updateDto,
+        //     UpdatePersonenkontextDto,
+        //     PersonenkontextDo,
+        // );
+
+        // const personenkontextDo = new Personenkontext(updateDto);
         const result: Result<
-            PersonenkontextDo<true>,
+            Personenkontext<true>,
             DomainError
-        > = await this.personenkontextService.updatePersonenkontext(personenkontextDo);
+        > = await this.personenkontextService.updatePersonenkontext(updateDto);
 
         if (!result.ok) {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error);
@@ -167,10 +171,14 @@ export class PersonenkontextUc {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResult.error);
         }
 
-        return new PersonendatensatzDto({
-            person: this.mapper.map(personResult.value, PersonDo, PersonDto),
-            personenkontexte: [this.mapper.map(result.value, PersonenkontextDo, PersonenkontextDto)],
-        });
+        return new PersonendatensatzResponseAutomapper(new PersonResponseAutomapper(personResult.value), [
+            await PersonenkontextResponse.construct(result.value),
+        ]);
+        // PREVIOUS implmentation
+        // return new PersonendatensatzDto({
+        //     person: this.mapper.map(personResult.value, PersonDo, PersonDto),
+        //     personenkontexte: [this.mapper.map(result.value, PersonenkontextDo, PersonenkontextDto)],
+        // });
     }
 
     public async deletePersonenkontextById(

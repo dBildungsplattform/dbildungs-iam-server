@@ -7,6 +7,7 @@ import { Paged } from '../../../shared/paging/paged.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { Person } from './person.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { PersonRepository } from '../persistence/person.repository.js';
 
 export type PersonPersonenkontext = {
     person: Person<true>;
@@ -15,7 +16,10 @@ export type PersonPersonenkontext = {
 
 @Injectable()
 export class PersonService {
-    public constructor(private readonly personRepo: PersonRepo) {}
+    public constructor(
+        private readonly personRepo: PersonRepo,
+        private readonly personRepository: PersonRepository,
+    ) {}
 
     public async findPersonById(id: string): Promise<Result<Person<true>, DomainError>> {
         const person: Option<Person<true>> = await this.personRepository.findById(id);

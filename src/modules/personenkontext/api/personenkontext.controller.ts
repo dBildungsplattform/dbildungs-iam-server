@@ -73,6 +73,7 @@ export class PersonenkontextController {
         private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
+    // done
     @Get(':personenkontextId')
     @ApiOkResponse({
         description: 'The personenkontext was successfully returned.',
@@ -116,6 +117,7 @@ export class PersonenkontextController {
         return response;
     }
 
+    // done
     @Get()
     @ApiOkResponse({
         description: 'The personenkontexte were successfully returned.',
@@ -155,6 +157,7 @@ export class PersonenkontextController {
         return response;
     }
 
+    //done
     @Get(':personId/hatSystemrecht')
     @ApiOkResponse({
         type: SystemrechtResponse,
@@ -178,6 +181,7 @@ export class PersonenkontextController {
         return response;
     }
 
+    // Done
     @Put(':personenkontextId')
     @ApiOkResponse({
         description: 'The personenkontext was successfully updated.',
@@ -205,24 +209,25 @@ export class PersonenkontextController {
                 );
             }
         }
+        //TODO rename this to body and params (not done)
+        const dto: UpdatePersonenkontextBodyParams = body;
 
-        const dto: UpdatePersonenkontextDto = this.mapper.map(
-            body,
-            UpdatePersonenkontextBodyParams,
-            UpdatePersonenkontextDto,
-        );
         dto.id = params.personenkontextId;
 
-        const response: PersonendatensatzDto | SchulConnexError =
+        const response: PersonendatensatzResponseAutomapper | SchulConnexError =
             await this.personenkontextUc.updatePersonenkontext(dto);
 
         if (response instanceof SchulConnexError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
         }
-
-        return this.mapper.map(response, PersonendatensatzDto, PersonendatensatzResponseAutomapper);
+        // something like this
+        // return new PersonendatensatzResponseAutomapper(new PersonResponseAutomapper(personResult.value), [
+        //     await PersonenkontextResponse.construct(personenkontextResult.value),
+        // ]);
+        return response;
     }
 
+    // Done
     @Delete(':personenkontextId')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiNoContentResponse({

@@ -15,6 +15,7 @@ import { Personenkontext } from './personenkontext.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonKontextRepository } from '../persistence/personenkontext.repository.js';
 import { PersonenkontextQueryParams } from '../api/param/personenkontext-query.params.js';
+import { UpdatePersonenkontextDto } from '../api/update-personenkontext.dto.js';
 
 @Injectable()
 export class PersonenkontextService {
@@ -84,9 +85,9 @@ export class PersonenkontextService {
     }
 
     public async updatePersonenkontext(
-        personenkontextDo: PersonenkontextDo<true>,
-    ): Promise<Result<PersonenkontextDo<true>, DomainError>> {
-        const storedPersonenkontext: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.findById(
+        personenkontextDo: UpdatePersonenkontextDto,
+    ): Promise<Result<Personenkontext<true>, DomainError>> {
+        const storedPersonenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findByID(
             personenkontextDo.id,
         );
 
@@ -104,14 +105,14 @@ export class PersonenkontextService {
         }
 
         const newRevision: string = (parseInt(storedPersonenkontext.revision) + 1).toString();
-        const newData: Partial<PersonenkontextDo<true>> = {
+        const newData: Partial<Personenkontext<true>> = {
             referrer: personenkontextDo.referrer,
             personenstatus: personenkontextDo.personenstatus,
             jahrgangsstufe: personenkontextDo.jahrgangsstufe,
             revision: newRevision,
         };
-        const updatedPersonenkontextDo: PersonenkontextDo<true> = Object.assign(storedPersonenkontext, newData);
-        const saved: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.save(updatedPersonenkontextDo);
+        const updatedPersonenkontextDo: Personenkontext<true> = Object.assign(storedPersonenkontext, newData);
+        const saved: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.save(updatedPersonenkontextDo);
 
         if (!saved) {
             return { ok: false, error: new EntityCouldNotBeUpdated('Personenkontext', updatedPersonenkontextDo.id) };
