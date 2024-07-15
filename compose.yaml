@@ -9,8 +9,11 @@ services:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=dbildungs-iam-server
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
   keycloak:
-    image: ghcr.io/dbildungsplattform/dbildungs-iam:latest
+    image: kc-with-pi
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
@@ -32,6 +35,7 @@ services:
       - source: "${THEMES_DIR:-keycloak/themes}"
         target: "/opt/keycloak/themes"
         type: bind
+
   redis:
     image: redis:7.2.2
     healthcheck:
@@ -106,3 +110,30 @@ services:
     ports:
       - 9007:80
       - 4443:443
+
+  privacy-idea:
+    image: khalibre/privacyidea:latest
+    container_name: privacy-idea
+    ports:
+      - 5000:8080
+    environment:
+      - PI_ADMIN_USER=admin
+      - PI_ADMIN_PASSWORD=admin
+      - PI_DB_TYPE=postgresql
+      - PI_DB_HOST=db
+      - PI_DB_PORT=5432
+      - PI_DB_NAME=privacyidea
+      - PI_DB_USER=admin
+      - PI_DB_PASSWORD=password
+      - PI_DB_VENDOR=postgresql
+      - PI_SUPERUSER_REALM="administrator,api"
+      - PI_LOGLEVEL=DEBUG
+      - PI_PAGE_TITLE=pivacyIDEA
+      - PI_SECRET_KEY=secret
+      - PI_PEPPER=pepper
+    depends_on:
+      - db
+
+volumes:
+  db-data:
+

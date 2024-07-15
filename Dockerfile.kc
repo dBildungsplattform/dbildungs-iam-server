@@ -1,0 +1,8 @@
+# Start from the official Keycloak image
+FROM ghcr.io/dbildungsplattform/dbildungs-iam:latest
+
+# Add the privacyIDEA Keycloak provider
+COPY  ./keycloak/plugins/PrivacyIDEA-Provider-v1.4.0.KC22.jar /opt/keycloak/providers/PrivacyIDEA-Provider-v1.4.0.KC22.jar
+
+# Set the entrypoint
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start-dev"]
