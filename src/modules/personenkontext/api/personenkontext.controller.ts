@@ -31,18 +31,13 @@ import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulcon
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { PagingHeadersObject } from '../../../shared/paging/paging.enums.js';
-import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
 import { FindPersonenkontextByIdParams } from './param/find-personenkontext-by-id.params.js';
-import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
-import { PersonendatensatzDto } from '../../person/api/personendatensatz.dto.js';
 import { PersonendatensatzResponseAutomapper } from '../../person/api/personendatensatz.response-automapper.js';
 import { PersonenkontextQueryParams } from './param/personenkontext-query.params.js';
-import { PersonenkontextDto } from './personenkontext.dto.js';
 import { PersonenkontextResponse } from './response/personenkontext.response.js';
 import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextdatensatzResponse } from './response/personenkontextdatensatz.response.js';
 import { UpdatePersonenkontextBodyParams } from './param/update-personenkontext.body.params.js';
-import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
 import { SystemrechtResponse } from './response/personenkontext-systemrecht.response.js';
@@ -50,15 +45,18 @@ import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 import { HatSystemrechtQueryParams } from './param/hat-systemrecht.query.params.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
-import { isEnum, validate } from 'class-validator';
+import { isEnum } from 'class-validator';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonIdResponse } from '../../person/api/person-id.response.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { PersonenkontextService } from '../domain/personenkontext.service.js';
+import { PersonService } from '../../person/domain/person.service.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonResponseAutomapper } from '../../person/api/person.response-automapper.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personenkontexte')
@@ -70,10 +68,12 @@ export class PersonenkontextController {
         private readonly personenkontextUc: PersonenkontextUc,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
-        private readonly personenkontextFactory: PersonenkontextFactory,
+        private readonly personenkontextService: PersonenkontextService,
+        private readonly personService: PersonService,
     ) {}
 
     // done
+    //done
     @Get(':personenkontextId')
     @ApiOkResponse({
         description: 'The personenkontext was successfully returned.',
@@ -88,36 +88,44 @@ export class PersonenkontextController {
         @Param() params: FindPersonenkontextByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponseAutomapper> {
-        {
-            //TODO Check permissions
-            // change the result here this is an aggregiate
-            const result: Result<unknown, DomainError> = await this.personenkontextRepo.findByIDAuthorized(
-                params.personenkontextId,
-                permissions,
+        const result: Result<unknown, DomainError> = await this.personenkontextRepo.findByIDAuthorized(
+            params.personenkontextId,
+            permissions,
+        );
+        if (!result.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
             );
-            if (!result.ok) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
-                );
-            }
-        }
-        const requestParamsId: FindPersonenkontextByIdParams = {
-            personenkontextId: params.personenkontextId,
-        };
-        /// TODO  here we start with old code!!
-        /// TODO  here we start with old code!!
-        //const request: FindPersonenkontextByIdParams = new FindPersonenkontextByIdParams(params.personenkontextId);
-        const response: PersonendatensatzResponseAutomapper | SchulConnexError =
-            await this.personenkontextUc.findPersonenkontextById(requestParamsId);
-
-        if (response instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
         }
 
-        return response;
+        const personenkontextResult: Result<
+            Personenkontext<true>,
+            DomainError
+        > = await this.personenkontextService.findPersonenkontextById(params.personenkontextId);
+
+        if (!personenkontextResult.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personenkontextResult.error),
+            );
+        }
+
+        const personResult: Result<Person<true>, DomainError> = await this.personService.findPersonById(
+            personenkontextResult.value.personId,
+        );
+
+        if (!personResult.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResult.error),
+            );
+        }
+
+        return new PersonendatensatzResponseAutomapper(new PersonResponseAutomapper(personResult.value), [
+            await PersonenkontextResponse.construct(personenkontextResult.value),
+        ]);
     }
 
     // done
+    // Done
     @Get()
     @ApiOkResponse({
         description: 'The personenkontexte were successfully returned.',
@@ -138,7 +146,13 @@ export class PersonenkontextController {
             true,
         );
 
-        const result: Paged<Personenkontext<true>> = await this.personenkontextUc.findAll(queryParams, organisationIDs);
+        const result: Paged<Personenkontext<true>> = await this.personenkontextService.findAllPersonenkontexte(
+            queryParams,
+            organisationIDs,
+            queryParams.offset,
+            queryParams.limit,
+        );
+
         const responseItems: PersonenkontextdatensatzResponse[] = await Promise.all(
             result.items.map(
                 async (personenkontext: Personenkontext<true>) =>
@@ -147,6 +161,7 @@ export class PersonenkontextController {
                     ]),
             ),
         );
+
         const response: PagedResponse<PersonenkontextdatensatzResponse> = new PagedResponse({
             items: responseItems,
             total: result.total,
@@ -220,10 +235,6 @@ export class PersonenkontextController {
         if (response instanceof SchulConnexError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
         }
-        // something like this
-        // return new PersonendatensatzResponseAutomapper(new PersonResponseAutomapper(personResult.value), [
-        //     await PersonenkontextResponse.construct(personenkontextResult.value),
-        // ]);
         return response;
     }
 
