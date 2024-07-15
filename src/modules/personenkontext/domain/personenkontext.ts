@@ -12,7 +12,6 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
 import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from './personenkontext.enums.js';
-import { PersonenkontextEntity } from '../persistence/personenkontext.entity.js';
 
 export type PersonenkontextPartial = Pick<
     Personenkontext<boolean>,

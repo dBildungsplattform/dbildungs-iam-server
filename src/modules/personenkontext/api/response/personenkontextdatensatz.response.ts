@@ -1,4 +1,3 @@
-import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { PersonIdResponse } from '../../../person/api/person-id.response.js';
 import { PersonenkontextResponse } from './personenkontext.response.js';

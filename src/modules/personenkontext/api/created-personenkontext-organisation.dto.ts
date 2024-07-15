@@ -1,5 +1,3 @@
-import { AutoMap } from '@automapper/classes';
-
 export class CreatedPersonenkontextOrganisationDto {
     public id!: string;
 

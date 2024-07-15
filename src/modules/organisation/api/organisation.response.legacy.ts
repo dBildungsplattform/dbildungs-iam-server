@@ -1,4 +1,3 @@
-import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrganisationsTyp, OrganisationsTypName, Traegerschaft } from '../domain/organisation.enums.js';
 import { Organisation } from '../domain/organisation.js';

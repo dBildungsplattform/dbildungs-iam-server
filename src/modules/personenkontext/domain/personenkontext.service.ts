@@ -13,7 +13,6 @@ import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { PersonKontextRepository } from '../persistence/personenkontext.repository.js';
 import { PersonenkontextQueryParams } from '../api/param/personenkontext-query.params.js';
 import { UpdatePersonenkontextDto } from '../api/update-personenkontext.dto.js';
 

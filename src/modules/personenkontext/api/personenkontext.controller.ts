@@ -26,7 +26,6 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
@@ -35,7 +34,6 @@ import { FindPersonenkontextByIdParams } from './param/find-personenkontext-by-i
 import { PersonendatensatzResponseAutomapper } from '../../person/api/personendatensatz.response-automapper.js';
 import { PersonenkontextQueryParams } from './param/personenkontext-query.params.js';
 import { PersonenkontextResponse } from './response/personenkontext.response.js';
-import { PersonenkontextUc } from './personenkontext.uc.js';
 import { PersonenkontextdatensatzResponse } from './response/personenkontextdatensatz.response.js';
 import { UpdatePersonenkontextBodyParams } from './param/update-personenkontext.body.params.js';
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
@@ -71,7 +69,6 @@ import { OrganisationResponseLegacy } from '../../organisation/api/organisation.
 @Controller({ path: 'personenkontexte' })
 export class PersonenkontextController {
     public constructor(
-        private readonly personenkontextUc: PersonenkontextUc,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personenkontextService: PersonenkontextService,

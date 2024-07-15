@@ -1,4 +1,3 @@
-import { AutoMap } from '@automapper/classes';
 import { Jahrgangsstufe, Personenstatus } from '../domain/personenkontext.enums.js';
 
 export class UpdatePersonenkontextDto {

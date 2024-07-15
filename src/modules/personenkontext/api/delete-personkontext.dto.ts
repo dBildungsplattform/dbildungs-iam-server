@@ -1,4 +1,3 @@
-import { AutoMap } from '@automapper/classes';
 import { IsUUID } from 'class-validator';
 
 export class DeletePersonenkontextDto {

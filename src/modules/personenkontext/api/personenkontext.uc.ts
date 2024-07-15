@@ -2,24 +2,16 @@ import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { Paged } from '../../../shared/paging/paged.js';
-import { PersonDo } from '../../person/domain/person.do.js';
 import { PersonService } from '../../person/domain/person.service.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { PersonenkontextService } from '../domain/personenkontext.service.js';
 import { CreatePersonenkontextDto } from './create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from './created-personenkontext.dto.js';
-import { FindPersonenkontextByIdDto } from './find-personenkontext-by-id.dto.js';
-import { FindPersonenkontextDto } from './find-personenkontext.dto.js';
-import { PersonDto } from '../../person/api/person.dto.js';
-import { PersonendatensatzDto } from '../../person/api/personendatensatz.dto.js';
-import { PersonenkontextDto } from './personenkontext.dto.js';
 import { UpdatePersonenkontextDto } from './update-personenkontext.dto.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -29,13 +21,10 @@ import { SystemrechtResponse } from './response/personenkontext-systemrecht.resp
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { FindPersonenkontextByIdParams } from './param/find-personenkontext-by-id.params.js';
-import { PersonenkontextdatensatzResponse } from './response/personenkontextdatensatz.response.js';
-import { PersonendatensatzResponse } from '../../person/api/personendatensatz.response.js';
 import { PersonendatensatzResponseAutomapper } from '../../person/api/personendatensatz.response-automapper.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonResponseAutomapper } from '../../person/api/person.response-automapper.js';
 import { PersonenkontextResponse } from './response/personenkontext.response.js';
-import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { PersonenkontextQueryParams } from './param/personenkontext-query.params.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -46,7 +35,6 @@ export class PersonenkontextUc {
         private readonly personService: PersonService,
         private readonly personenkontextService: PersonenkontextService,
         private readonly rolleRepo: RolleRepo,
-        private readonly organisationRepo: OrganisationRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly organisationService: OrganisationService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
