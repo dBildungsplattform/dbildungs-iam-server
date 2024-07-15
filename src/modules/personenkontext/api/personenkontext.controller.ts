@@ -57,6 +57,12 @@ import { PersonenkontextService } from '../domain/personenkontext.service.js';
 import { PersonService } from '../../person/domain/person.service.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonResponseAutomapper } from '../../person/api/person.response-automapper.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { OrganisationService } from '../../organisation/domain/organisation.service.js';
+import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personenkontexte')
@@ -70,6 +76,9 @@ export class PersonenkontextController {
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personenkontextService: PersonenkontextService,
         private readonly personService: PersonService,
+        private readonly rolleRepo: RolleRepo,
+        private readonly organisationRepository: OrganisationRepository,
+        private readonly organisationService: OrganisationService,
     ) {}
 
     // done
@@ -173,6 +182,7 @@ export class PersonenkontextController {
     }
 
     //done
+    //done
     @Get(':personId/hatSystemrecht')
     @ApiOkResponse({
         type: SystemrechtResponse,
@@ -189,14 +199,38 @@ export class PersonenkontextController {
             );
         }
         const systemrecht: RollenSystemRecht = hatSystemrechtQueryParams.systemRecht as RollenSystemRecht;
-        const response: SystemrechtResponse = await this.personenkontextUc.hatSystemRecht(
-            personByIdParams.personId,
-            systemrecht,
+
+        const organisations: Organisation<true>[] = [];
+        const personenkontexte: Personenkontext<true>[] =
+            await this.personenkontextService.findPersonenkontexteByPersonId(personByIdParams.personId);
+
+        for (const personenkontext of personenkontexte) {
+            const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(personenkontext.rolleId);
+            if (!rolle) continue;
+            if (rolle.hasSystemRecht(systemrecht)) {
+                const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
+                    personenkontext.organisationId,
+                );
+                if (organisation) {
+                    organisations.push(organisation);
+                    const children: Option<Paged<Organisation<true>>> =
+                        await this.organisationService.findAllAdministriertVon(personenkontext.organisationId);
+                    organisations.push(...children.items);
+                }
+            }
+        }
+        const systemrechtResponse: SystemrechtResponse = new SystemrechtResponse();
+
+        const organisationResponses: OrganisationResponseLegacy[] = organisations.map(
+            (org: Organisation<true>) => new OrganisationResponseLegacy(org),
         );
-        return response;
+        systemrechtResponse[RollenSystemRecht.ROLLEN_VERWALTEN] = organisationResponses;
+
+        return systemrechtResponse;
     }
 
     // Done
+    //Done
     @Put(':personenkontextId')
     @ApiOkResponse({
         description: 'The personenkontext was successfully updated.',
@@ -212,33 +246,49 @@ export class PersonenkontextController {
         @Body() body: UpdatePersonenkontextBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponseAutomapper> {
-        {
-            // Check permissions
-            const result: Result<unknown, DomainError> = await this.personenkontextRepo.findByIDAuthorized(
-                params.personenkontextId,
-                permissions,
+        // Check permissions
+        const result: Result<unknown, DomainError> = await this.personenkontextRepo.findByIDAuthorized(
+            params.personenkontextId,
+            permissions,
+        );
+        if (!result.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
             );
-            if (!result.ok) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
-                );
-            }
         }
-        //TODO rename this to body and params (not done)
-        const dto: UpdatePersonenkontextBodyParams = body;
 
+        //!!! Note: rename this
+        const dto: UpdatePersonenkontextBodyParams = body;
         dto.id = params.personenkontextId;
 
-        const response: PersonendatensatzResponseAutomapper | SchulConnexError =
-            await this.personenkontextUc.updatePersonenkontext(dto);
+        const updateResult: Result<
+            Personenkontext<true>,
+            DomainError
+        > = await this.personenkontextService.updatePersonenkontext(dto);
 
-        if (response instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
+        if (!updateResult.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updateResult.error),
+            );
         }
-        return response;
+
+        const personResult: Result<Person<true>, DomainError> = await this.personService.findPersonById(
+            updateResult.value.personId,
+        );
+
+        if (!personResult.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResult.error),
+            );
+        }
+
+        return new PersonendatensatzResponseAutomapper(new PersonResponseAutomapper(personResult.value), [
+            await PersonenkontextResponse.construct(updateResult.value),
+        ]);
     }
 
     // Done
+    //done
     @Delete(':personenkontextId')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiNoContentResponse({
@@ -254,26 +304,29 @@ export class PersonenkontextController {
         @Body() body: DeleteRevisionBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        {
-            // Check permissions
-            const result: Result<unknown, DomainError> = await this.personenkontextRepo.findByIDAuthorized(
-                params.personenkontextId,
-                permissions,
+        // Check permissions
+        const result: Result<unknown, DomainError> = await this.personenkontextRepo.findByIDAuthorized(
+            params.personenkontextId,
+            permissions,
+        );
+        if (!result.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
             );
-            if (!result.ok) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
-                );
-            }
         }
-
+        //!!! rename this
         const dto: DeletePersonenkontextDto = this.mapper.map(body, DeleteRevisionBodyParams, DeletePersonenkontextDto);
         dto.id = params.personenkontextId;
 
-        const response: void | SchulConnexError = await this.personenkontextUc.deletePersonenkontextById(dto);
+        const deleteResult: Result<void, DomainError> = await this.personenkontextService.deletePersonenkontextById(
+            dto.id,
+            dto.revision,
+        );
 
-        if (response instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
+        if (!deleteResult.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(deleteResult.error),
+            );
         }
     }
 }
