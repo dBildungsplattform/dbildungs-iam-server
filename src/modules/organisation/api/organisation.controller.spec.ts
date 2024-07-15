@@ -3,7 +3,7 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { plainToClass } from 'class-transformer';
-import { MapperTestModule } from '../../../../test/utils/index.js';
+import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
@@ -28,9 +28,7 @@ import { EventService } from '../../../core/eventbus/index.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
-import { OrganisationFactory } from '../domain/organisation.factory.js';
 import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
-import { OrganisationUpdate } from '../domain/organisation-update.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { NameRequiredForKlasseError } from '../specification/error/name-required-for-klasse.error.js';
 
@@ -49,8 +47,6 @@ describe('OrganisationController', () => {
     let organisationController: OrganisationController;
     let organisationUcMock: DeepMocked<OrganisationUc>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
-    let organisationFactoryMock: DeepMocked<OrganisationFactory>;
-    let organisationUpdateMock: DeepMocked<OrganisationUpdate>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -70,21 +66,11 @@ describe('OrganisationController', () => {
                     provide: EventService,
                     useValue: createMock<EventService>(),
                 },
-                {
-                    provide: OrganisationFactory,
-                    useValue: createMock<OrganisationFactory>(),
-                },
-                {
-                    provide: OrganisationUpdate,
-                    useValue: createMock<OrganisationUpdate>(),
-                },
             ],
         }).compile();
         organisationController = module.get(OrganisationController);
         organisationUcMock = module.get(OrganisationUc);
         organisationRepositoryMock = module.get(OrganisationRepository);
-        organisationFactoryMock = module.get(OrganisationFactory);
-        organisationUpdateMock = module.get(OrganisationUpdate);
     });
 
     afterAll(async () => {
@@ -309,21 +295,7 @@ describe('OrganisationController', () => {
                 };
 
                 const mockedRepoResponse: Counted<Organisation<true>> = [
-                    [
-                        {
-                            id: faker.string.uuid(),
-                            createdAt: faker.date.recent(),
-                            updatedAt: faker.date.recent(),
-                            administriertVon: faker.string.uuid(),
-                            zugehoerigZu: faker.string.uuid(),
-                            kennung: faker.lorem.word(),
-                            name: faker.lorem.word(),
-                            namensergaenzung: faker.lorem.word(),
-                            kuerzel: faker.lorem.word(),
-                            typ: OrganisationsTyp.KLASSE,
-                            traegerschaft: Traegerschaft.LAND,
-                        },
-                    ],
+                    [DoFactory.createOrganisationAggregate(true)],
                     1,
                 ];
 

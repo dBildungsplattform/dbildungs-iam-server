@@ -1,6 +1,6 @@
-import { DoFactory } from '../../../../test/utils/index.js';
-import { OrganisationDo } from '../domain/organisation.do.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { Organisation } from '../domain/organisation.js';
 import { NameRequiredForKlasse } from './name-required-for-klasse.js';
 
 describe('NameRequiredForKlasse specification', () => {
@@ -8,7 +8,7 @@ describe('NameRequiredForKlasse specification', () => {
 
     describe('when organisation is schule', () => {
         it('should return true, if name is set', async () => {
-            const schule: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+            const schule: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                 typ: OrganisationsTyp.KLASSE,
                 name: 'test',
             });
@@ -17,7 +17,7 @@ describe('NameRequiredForKlasse specification', () => {
         });
 
         it('should return false, if name is undefined', async () => {
-            const schule: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+            const schule: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                 typ: OrganisationsTyp.KLASSE,
                 name: undefined,
             });
@@ -26,7 +26,7 @@ describe('NameRequiredForKlasse specification', () => {
         });
 
         it('should return false, if name is empty string', async () => {
-            const schule: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+            const schule: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                 typ: OrganisationsTyp.KLASSE,
                 name: '',
             });
@@ -37,7 +37,7 @@ describe('NameRequiredForKlasse specification', () => {
 
     describe('when organisation is not klasse', () => {
         it('should return true, if name is set', async () => {
-            const organisation: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+            const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                 typ: OrganisationsTyp.SONSTIGE,
                 name: 'test',
             });
@@ -46,7 +46,7 @@ describe('NameRequiredForKlasse specification', () => {
         });
 
         it('should return true, if name is undefined', async () => {
-            const organisation: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+            const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                 typ: OrganisationsTyp.SONSTIGE,
                 name: undefined,
             });
@@ -55,7 +55,7 @@ describe('NameRequiredForKlasse specification', () => {
         });
 
         it('should return true, if name is empty string', async () => {
-            const organisation: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+            const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                 typ: OrganisationsTyp.SONSTIGE,
                 name: '',
             });

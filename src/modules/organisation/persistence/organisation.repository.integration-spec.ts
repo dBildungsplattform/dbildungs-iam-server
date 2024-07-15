@@ -23,6 +23,10 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DataConfig } from '../../../shared/config/index.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { createMock } from '@golevelup/ts-jest';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;
@@ -471,6 +475,81 @@ describe('OrganisationRepository', () => {
 
                 expect(result).toBeInstanceOf(Array);
                 expect(result).toHaveLength(2);
+            });
+        });
+    });
+
+    describe('updateKlassenName', () => {
+        describe('when organisation does not exist', () => {
+            it('should return EntityNotFoundError', async () => {
+                const id: string = faker.string.uuid();
+                const result: DomainError | void = await sut.updateKlassenName(id, faker.company.name());
+
+                expect(result).toEqual(new EntityNotFoundError('Organisation', id));
+            });
+        });
+
+        describe('when organisation is not a Klasse', () => {
+            it('should return EntityCouldNotBeUpdated', async () => {
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.SONSTIGE,
+                    name: 'test',
+                });
+                const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
+                const result: DomainError | void = await sut.updateKlassenName(
+                    savedOrganisaiton.id,
+                    faker.company.name(),
+                );
+
+                expect(result).toBeInstanceOf(EntityCouldNotBeUpdated);
+            });
+        });
+
+        describe('when name of organisation is empty', () => {
+            it('should return OrganisationSpecificationError', async () => {
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.KLASSE,
+                    name: 'test',
+                });
+                const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
+                const result: DomainError | void = await sut.updateKlassenName(savedOrganisaiton.id, '');
+
+                expect(result).toBeInstanceOf(OrganisationSpecificationError);
+            });
+        });
+
+        describe('when all validations are passed', () => {
+            it('should update class name and return void', async () => {
+                const parentOrga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                    typ: OrganisationsTyp.SCHULE,
+                });
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.KLASSE,
+                    name: 'name',
+                    administriertVon: parentOrga.id,
+                });
+                const otherChildOrga: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.KLASSE,
+                    administriertVon: parentOrga.id,
+                });
+
+                const organisationEntity1: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(parentOrga),
+                );
+                const organisationEntity2: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(organisation),
+                );
+                const organisationEntity3: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(otherChildOrga),
+                );
+                await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
+
+                const result: DomainError | void = await sut.updateKlassenName(organisationEntity2.id, 'newName');
+
+                expect(result).not.toBeInstanceOf(DomainError);
             });
         });
     });

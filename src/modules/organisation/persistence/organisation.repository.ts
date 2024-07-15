@@ -9,6 +9,11 @@ import { OrganisationScope } from './organisation.scope.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
+import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -62,18 +67,11 @@ export class OrganisationRepository {
     }
 
     public async save(organisation: Organisation<boolean>): Promise<Organisation<true>> {
-        const organisationEntity: OrganisationEntity = this.em.create(
-            OrganisationEntity,
-            mapAggregateToData(organisation),
-        );
-
-        await this.em.persistAndFlush(organisationEntity);
-
-        if (organisationEntity.typ === OrganisationsTyp.SCHULE) {
-            this.eventService.publish(new SchuleCreatedEvent(organisationEntity.id));
+        if (organisation.id) {
+            return this.update(organisation);
+        } else {
+            return this.create(organisation);
         }
-
-        return mapEntityToAggregate(organisationEntity);
     }
 
     public async exists(id: OrganisationID): Promise<boolean> {
@@ -151,5 +149,56 @@ export class OrganisationRepository {
         });
 
         return organisationMap;
+    }
+
+    public async updateKlassenName(id: string, newName: string): Promise<DomainError | void> {
+        const organisationFound: Option<Organisation<true>> = await this.findById(id);
+
+        if (!organisationFound) {
+            return new EntityNotFoundError('Organisation', id);
+        }
+        if (organisationFound.typ !== OrganisationsTyp.KLASSE) {
+            return new EntityCouldNotBeUpdated('Organisation', id, ['Only the name of Klassen can be updated.']);
+        }
+        //Specifications: it needs to be clarified how the specifications can be checked using DDD principles
+        {
+            organisationFound.name = newName;
+            const specificationError: undefined | OrganisationSpecificationError =
+                await organisationFound.checkKlasseSpecifications(this);
+
+            if (specificationError) {
+                return specificationError;
+            }
+        }
+
+        await this.save(organisationFound);
+        this.eventService.publish(new KlasseUpdatedEvent(id));
+    }
+
+    private async create(organisation: Organisation<false>): Promise<Organisation<true>> {
+        const organisationEntity: OrganisationEntity = this.em.create(
+            OrganisationEntity,
+            mapAggregateToData(organisation),
+        );
+
+        await this.em.persistAndFlush(organisationEntity);
+
+        if (organisationEntity.typ === OrganisationsTyp.SCHULE) {
+            this.eventService.publish(new SchuleCreatedEvent(organisationEntity.id));
+        }
+
+        return mapEntityToAggregate(organisationEntity);
+    }
+
+    private async update(organisation: Organisation<true>): Promise<Organisation<true>> {
+        const organisationEntity: Loaded<OrganisationEntity> = await this.em.findOneOrFail(
+            OrganisationEntity,
+            organisation.id,
+        );
+        organisationEntity.assign(mapAggregateToData(organisation));
+
+        await this.em.persistAndFlush(organisationEntity);
+
+        return mapEntityToAggregate(organisationEntity);
     }
 }

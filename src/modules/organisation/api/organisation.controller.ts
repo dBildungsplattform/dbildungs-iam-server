@@ -46,8 +46,6 @@ import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
-import { OrganisationFactory } from '../domain/organisation.factory.js';
-import { OrganisationUpdate } from '../domain/organisation-update.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -63,7 +61,6 @@ export class OrganisationController {
         private readonly uc: OrganisationUc,
         private readonly organisationRepository: OrganisationRepository,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
-        private readonly organisationFactory: OrganisationFactory,
     ) {}
 
     @Post()
@@ -344,11 +341,10 @@ export class OrganisationController {
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByNameBodyParams,
     ): Promise<void> {
-        const organisationUpdate: OrganisationUpdate = this.organisationFactory.createNewOrganisationUpdate(
+        const result: DomainError | void = await this.organisationRepository.updateKlassenName(
             params.organisationId,
+            body.name,
         );
-
-        const result: DomainError | void = await organisationUpdate.updateKlassenName(body.name);
 
         if (result) {
             if (result instanceof OrganisationSpecificationError) {
