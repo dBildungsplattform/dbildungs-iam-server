@@ -12,14 +12,14 @@ export class EmailGenerator {
     public constructor(private emailRepo: EmailRepo) {}
 
     public isEqual(address: string, firstname: string, lastname: string): boolean {
-        const createAddress: Result<string> = this.calculateAddress(firstname, lastname);
+        const createAddress: Result<string> = this.generateAddress(firstname, lastname);
 
         if (!createAddress.ok) return false;
 
         return address === createAddress.value + EmailGenerator.EMAIL_SUFFIX;
     }
 
-    public calculateAddress(firstname: string, lastname: string): Result<string> {
+    public generateAddress(firstname: string, lastname: string): Result<string> {
         // Check for minimum length
         if (firstname.length < 2) {
             return { ok: false, error: new InvalidAttributeLengthError('name.vorname') };
@@ -66,8 +66,8 @@ export class EmailGenerator {
         };
     }
 
-    public async generateAddress(firstname: string, lastname: string): Promise<Result<string>> {
-        const createdAddress: Result<string> = this.calculateAddress(firstname, lastname);
+    public async generateAvailableAddress(firstname: string, lastname: string): Promise<Result<string>> {
+        const createdAddress: Result<string> = this.generateAddress(firstname, lastname);
 
         if (!createdAddress.ok) return createdAddress;
 

@@ -1,7 +1,7 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
-import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
+import {Collection, EntityManager, MikroORM, RequiredEntityData} from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -15,6 +15,7 @@ import { PersonPersistenceMapperProfile } from './person-persistence.mapper.prof
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
 import {
+    getEnabledEmailAddress,
     mapAggregateToData,
     mapEntityToAggregate,
     mapEntityToAggregateInplace,
@@ -38,6 +39,7 @@ import { DataConfig } from '../../../shared/config/data.config.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -596,6 +598,54 @@ describe('PersonRepository Integration', () => {
                     faker.string.uuid(),
                 );
                 await expect(sut.update(person)).rejects.toBeDefined();
+            });
+        });
+    });
+
+    describe('getEnabledEmailAddress', () => {
+        let personEntity: PersonEntity;
+
+        beforeEach(() => {
+            personEntity = mapper.map(
+                DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() }),
+                PersonDo,
+                PersonEntity,
+            );
+            personEntity.emailAddresses = new Collection<EmailAddressEntity>(personEntity);
+
+        });
+
+        describe('when enabled emailAddress is in collection', () => {
+            it('should return address of (first found) enabled address', () => {
+                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+                emailAddressEntity.enabled = true;
+                emailAddressEntity.address = faker.internet.email();
+                personEntity.emailAddresses.add(emailAddressEntity);
+
+                const result: string | undefined = getEnabledEmailAddress(personEntity);
+
+                expect(result).toBeDefined();
+            });
+        });
+
+        describe('when NO enabled emailAddress is in collection', () => {
+            it('should return undefined', () => {
+                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+                emailAddressEntity.enabled = false;
+                emailAddressEntity.address = faker.internet.email();
+                personEntity.emailAddresses.add(emailAddressEntity);
+
+                const result: string | undefined = getEnabledEmailAddress(personEntity);
+
+                expect(result).toBeUndefined();
+            });
+        });
+
+        describe('when NO emailAddress at all is found in collection', () => {
+            it('should return undefined', () => {
+                const result: string | undefined = getEnabledEmailAddress(personEntity);
+
+                expect(result).toBeUndefined();
             });
         });
     });

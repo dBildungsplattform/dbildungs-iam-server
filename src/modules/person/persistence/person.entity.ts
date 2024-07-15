@@ -131,5 +131,5 @@ export class PersonEntity extends TimestampedEntity {
         orphanRemoval: false,
         eager: true,
     })
-    public emailAddresses?: Collection<EmailAddressEntity> = new Collection<EmailAddressEntity>(this);
+    public emailAddresses: Collection<EmailAddressEntity> = new Collection<EmailAddressEntity>(this);
 }

@@ -11,6 +11,6 @@ import { EmailRepo } from './persistence/email.repo.js';
 @Module({
     imports: [PersonModule, RolleModule, ServiceProviderModule, EventModule, LoggerModule.register(EmailModule.name)],
     providers: [EmailRepo, EmailFactory, EmailEventHandler],
-    exports: [EmailRepo, EmailFactory, EmailEventHandler],
+    exports: [EmailRepo],
 })
 export class EmailModule {}

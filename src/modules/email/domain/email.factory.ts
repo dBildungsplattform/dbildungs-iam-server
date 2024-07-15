@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailAddress } from './email-address.js';
-import { Email } from './email.js';
 import { EmailGenerator } from './email-generator.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { Person } from '../../person/domain/person.js';
@@ -19,11 +18,18 @@ export class EmailFactory {
         this.emailGenerator = new EmailGenerator(this.emailRepo);
     }
 
-    public construct(personId: PersonID, emailAddress: EmailAddress<true>): Email {
-        return Email.construct(personId, emailAddress);
+    public construct(
+        id: string,
+        createdAt: Date,
+        updatedAt: Date,
+        personId: PersonID,
+        address: string,
+        enabled: boolean,
+    ): EmailAddress<true> {
+        return EmailAddress.construct(id, createdAt, updatedAt, personId, address, enabled);
     }
 
-    public async createNew(personId: PersonID): Promise<Result<Email>> {
+    public async createNew(personId: PersonID): Promise<Result<EmailAddress<false>>> {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
         if (!person) {
             return {
@@ -31,7 +37,7 @@ export class EmailFactory {
                 error: new EntityNotFoundError('Person', personId),
             };
         }
-        const generatedAddressResult: Result<string> = await this.emailGenerator.generateAddress(
+        const generatedAddressResult: Result<string> = await this.emailGenerator.generateAvailableAddress(
             person.vorname,
             person.familienname,
         );
@@ -50,7 +56,7 @@ export class EmailFactory {
 
         return {
             ok: true,
-            value: Email.construct(personId, newEmailAddress),
+            value: newEmailAddress,
         };
     }
 }
