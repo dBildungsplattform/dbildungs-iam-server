@@ -56,6 +56,7 @@ import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { DbiamRolleError } from './dbiam-rolle.error.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -303,7 +304,7 @@ export class RolleController {
         description: 'The rolle was successfully updated.',
         type: RolleWithServiceProvidersResponse,
     })
-    @ApiBadRequestResponse({ description: 'The input was not valid.' })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamRolleError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to update the rolle.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to update the rolle.' })
     @ApiInternalServerErrorResponse({
