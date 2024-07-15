@@ -115,6 +115,33 @@ export class OrganisationRepository {
         return rawResult.map(mapEntityToAggregate);
     }
 
+    public async isOrgaAParentOfOrgaB(
+        organisationIdA: OrganisationID,
+        organisationIdB: OrganisationID,
+    ): Promise<boolean> {
+        const query: string = `
+        WITH RECURSIVE parent_organisations AS (
+            SELECT id, administriert_von
+            FROM public.organisation
+            WHERE id = ?
+            UNION ALL
+            SELECT o.id, o.administriert_von
+            FROM public.organisation o
+            INNER JOIN parent_organisations po ON o.id = po.administriert_von
+        )
+        SELECT EXISTS (
+            SELECT 1
+            FROM parent_organisations
+            WHERE id = ?
+        ) AS is_parent;
+        `;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result: any[] = await this.em.execute(query, [organisationIdB, organisationIdA]);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        return result[0].is_parent as boolean;
+    }
+
     public async findRootDirectChildren(): Promise<
         [oeffentlich: Organisation<true> | undefined, ersatz: Organisation<true> | undefined]
     > {
