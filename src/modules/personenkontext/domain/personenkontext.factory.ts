@@ -59,7 +59,6 @@ export class PersonenkontextFactory {
         jahrgangsstufe: Jahrgangsstufe | undefined,
         sichtfreigabe: SichtfreigabeType | undefined,
         loeschungZeitpunkt: Date | undefined,
-        revision: string | undefined,
     ): Personenkontext<false> {
         return Personenkontext.createNew(
             this.personRepo,
@@ -74,7 +73,6 @@ export class PersonenkontextFactory {
             jahrgangsstufe,
             sichtfreigabe,
             loeschungZeitpunkt,
-            revision,
         );
     }
 }

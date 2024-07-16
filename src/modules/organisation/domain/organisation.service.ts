@@ -31,14 +31,10 @@ import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { SchuleKennungEindeutig } from '../specification/schule-kennung-eindeutig.js';
 import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
 import { Organisation } from './organisation.js';
-import { OrganisationRepository } from '../persistence/organisation.repository.js';
 
 @Injectable()
 export class OrganisationService {
-    public constructor(
-        private readonly organisationRepo: OrganisationRepo,
-        private readonly organisationRepository: OrganisationRepository,
-    ) {}
+    public constructor(private readonly organisationRepo: OrganisationRepo) {}
 
     public async createOrganisation(
         organisationDo: OrganisationDo<false>,

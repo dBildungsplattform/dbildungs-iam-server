@@ -12,6 +12,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
+
 import { Personenkontext } from '../domain/personenkontext.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';

@@ -61,6 +61,7 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personen')
@@ -194,6 +195,7 @@ export class PersonController {
         return new PersonendatensatzResponse(personResult.value, false);
     }
 
+    // TODO will no longer be used add a no longer use message here from the errors
     @Post(':personId/personenkontexte')
     @HttpCode(200)
     @ApiOkResponse({ description: 'The personenkontext was successfully created.' })
@@ -236,6 +238,7 @@ export class PersonController {
         return this.mapper.map(result, CreatedPersonenkontextDto, PersonenkontextResponse);
     }
 
+    /// now here
     @Get(':personId/personenkontexte')
     @ApiOkResponsePaginated(PersonenkontextResponse, {
         description: 'The personenkontexte were successfully pulled.',
@@ -250,12 +253,7 @@ export class PersonController {
         @Query() queryParams: PersonenkontextQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<PersonenkontextResponse>> {
-        const findPersonenkontextDto: FindPersonenkontextDto = this.mapper.map(
-            queryParams,
-            PersonenkontextQueryParams,
-            FindPersonenkontextDto,
-        );
-        //check that logged-in user is allowed to update person
+        // check that logged-in user is allowed to update person
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             pathParams.personId,
             permissions,
@@ -267,15 +265,16 @@ export class PersonController {
                 ),
             );
         }
-        findPersonenkontextDto.personId = personResult.value.id;
 
-        const personenkontextDtos: Paged<PersonenkontextDto> =
-            await this.personenkontextUc.findAll(findPersonenkontextDto);
-        // AI next 5 lines
-        const responseItems: PersonenkontextResponse[] = this.mapper.mapArray(
-            personenkontextDtos.items,
-            PersonenkontextDto,
-            PersonenkontextResponse,
+        const updatedQueryParams: PersonenkontextQueryParams = { ...queryParams, personId: personResult.value.id };
+
+        const personenkontextDtos: Paged<Personenkontext<true>> =
+            await this.personenkontextUc.findAll(updatedQueryParams);
+
+        const responseItems: PersonenkontextResponse[] = await Promise.all(
+            personenkontextDtos.items.map(async (item: Personenkontext<true>) =>
+                PersonenkontextResponse.construct(item),
+            ),
         );
 
         return new PagedResponse({

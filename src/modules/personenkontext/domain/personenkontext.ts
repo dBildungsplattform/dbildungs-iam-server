@@ -104,7 +104,6 @@ export class Personenkontext<WasPersisted extends boolean> {
         jahrgangsstufe: Jahrgangsstufe | undefined,
         sichtfreigabe: SichtfreigabeType | undefined,
         loeschungZeitpunkt: Date | undefined,
-        revision: string | undefined,
     ): Personenkontext<false> {
         return new Personenkontext(
             personRepo,
@@ -124,7 +123,7 @@ export class Personenkontext<WasPersisted extends boolean> {
             sichtfreigabe,
             loeschungZeitpunkt,
             //!!! question should this be undefined
-            revision,
+            undefined,
         );
     }
 
