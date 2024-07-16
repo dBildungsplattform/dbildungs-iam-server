@@ -52,33 +52,30 @@ export class Rolle<WasPersisted extends boolean> {
     public static async update(
         organisationRepo: OrganisationRepository,
         serviceProviderRepo: ServiceProviderRepo,
-        rolleRepo: RolleRepo,
         id: string,
+        createdAt: Date,
+        updatedAt: Date,
         name: string,
+        administeredBySchulstrukturknoten: string,
+        rollenart: RollenArt,
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
     ): Promise<Rolle<true> | DomainError> {
-        //Check references
-        const rolle: Option<Rolle<true>> = await rolleRepo.findById(id);
-        if (!rolle) {
-            return new EntityNotFoundError('Rolle', id);
-        }
-
         const rolleToUpdate: Rolle<true> = new Rolle(
             organisationRepo,
             serviceProviderRepo,
             id,
-            rolle.createdAt,
-            rolle.updatedAt,
+            createdAt,
+            updatedAt,
             name,
-            rolle.administeredBySchulstrukturknoten,
-            rolle.rollenart,
+            administeredBySchulstrukturknoten,
+            rollenart,
             merkmale,
             systemrechte,
             [],
         );
-
+        //Replace service providers with new ones.
         for (const serviceProviderId of serviceProviderIds) {
             const result: void | DomainError = await rolleToUpdate.attachServiceProvider(serviceProviderId);
             if (result instanceof DomainError) {

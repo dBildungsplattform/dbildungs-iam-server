@@ -216,15 +216,21 @@ export class RolleRepo {
         }
     }
 
-    public async saveAuthorized(
-        rolle: Rolle<true>,
+    public async updateRolle(
+        id: string,
+        name: string,
+        merkmale: RollenMerkmal[],
+        systemrechte: RollenSystemRecht[],
+        serviceProviderIds: string[],
         permissions: PersonPermissions,
     ): Promise<Rolle<true> | DomainError> {
-        //Permissions
-        const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(rolle.id, permissions);
+        //Reference & Permissions
+        const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
         if (!authorizedRole.ok) {
             return authorizedRole.error;
         }
+
+        //Update fields with aggregate
         const result: Rolle<true> = await this.update(rolle);
         return result;
     }

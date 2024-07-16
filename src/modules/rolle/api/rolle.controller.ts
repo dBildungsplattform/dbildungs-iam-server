@@ -315,9 +315,9 @@ export class RolleController {
         @Body() params: UpdateRolleBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
+
         //Due to circular reference error, the rolleRepo needs to be passed into the aggregate.
         const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(
-            this.rolleRepo,
             findRolleByIdParams.rolleId,
             params.name,
             params.merkmale,

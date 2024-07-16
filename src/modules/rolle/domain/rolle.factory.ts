@@ -60,9 +60,12 @@ export class RolleFactory {
     }
 
     public async update(
-        rolleRepo: RolleRepo,
         id: string,
+        createdAt: Date,
+        updatedAt: Date,
         name: string,
+        administeredBySchulstrukturknoten: string,
+        rollenart: RollenArt,
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
@@ -70,9 +73,12 @@ export class RolleFactory {
         return Rolle.update(
             this.organisationRepo,
             this.serviceProviderRepo,
-            rolleRepo,
             id,
+            createdAt,
+            updatedAt,
             name,
+            administeredBySchulstrukturknoten,
+            rollenart,
             merkmale,
             systemrechte,
             serviceProviderIds,
