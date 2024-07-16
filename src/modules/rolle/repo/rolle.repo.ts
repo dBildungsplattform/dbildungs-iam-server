@@ -230,8 +230,22 @@ export class RolleRepo {
             return authorizedRole.error;
         }
 
-        //Update fields with aggregate
-        const result: Rolle<true> = await this.update(rolle);
+        const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(
+            id,
+            authorizedRole.value.createdAt,
+            authorizedRole.value.updatedAt,
+            name,
+            authorizedRole.value.administeredBySchulstrukturknoten,
+            authorizedRole.value.rollenart,
+            merkmale,
+            systemrechte,
+            serviceProviderIds,
+        );
+
+        if (updatedRolle instanceof DomainError) {
+            return updatedRolle;
+        }
+        const result: Rolle<true> = await this.update(updatedRolle);
         return result;
     }
 

@@ -4,7 +4,6 @@ import { Rolle } from './rolle.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { RolleRepo } from '../repo/rolle.repo.js';
 
 @Injectable()
 export class RolleFactory {

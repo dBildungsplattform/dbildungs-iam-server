@@ -355,4 +355,8 @@ export class DBiamPersonenkontextRepo {
             rolleId: rolleId,
         });
     }
+
+    public async isRolleAlreadyAssigned(id: RolleID): Promise<boolean> {
+        return (await this.findByRolle(id)).length > 0;
+    }
 }
