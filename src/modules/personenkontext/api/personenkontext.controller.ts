@@ -78,8 +78,6 @@ export class PersonenkontextController {
         private readonly organisationService: OrganisationService,
     ) {}
 
-    // done
-    //done
     @Get(':personenkontextId')
     @ApiOkResponse({
         description: 'The personenkontext was successfully returned.',
@@ -130,8 +128,6 @@ export class PersonenkontextController {
         ]);
     }
 
-    // done
-    // Done
     @Get()
     @ApiOkResponse({
         description: 'The personenkontexte were successfully returned.',
@@ -178,8 +174,6 @@ export class PersonenkontextController {
         return response;
     }
 
-    //done
-    //done
     @Get(':personId/hatSystemrecht')
     @ApiOkResponse({
         type: SystemrechtResponse,
@@ -226,8 +220,6 @@ export class PersonenkontextController {
         return systemrechtResponse;
     }
 
-    // Done
-    //Done
     @Put(':personenkontextId')
     @ApiOkResponse({
         description: 'The personenkontext was successfully updated.',
@@ -284,8 +276,6 @@ export class PersonenkontextController {
         ]);
     }
 
-    // Done
-    //done
     @Delete(':personenkontextId')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiNoContentResponse({

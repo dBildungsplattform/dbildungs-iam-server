@@ -17,7 +17,6 @@ export type PersonenkontextPartial = Pick<
     Personenkontext<boolean>,
     'id' | 'createdAt' | 'updatedAt' | 'personId' | 'organisationId' | 'rolleId'
 >;
-// TODO add the new stuff in the table here, chnage the code to follow DDD and then do the rollen art thing that Marvin spoke about
 export function mapAggregateToPartial(personenkontext: Personenkontext<boolean>): PersonenkontextPartial {
     return {
         id: personenkontext.id,
@@ -122,7 +121,6 @@ export class Personenkontext<WasPersisted extends boolean> {
             jahrgangsstufe,
             sichtfreigabe,
             loeschungZeitpunkt,
-            //!!! question should this be undefined
             undefined,
         );
     }

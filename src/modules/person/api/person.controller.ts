@@ -238,7 +238,6 @@ export class PersonController {
         return this.mapper.map(result, CreatedPersonenkontextDto, PersonenkontextResponse);
     }
 
-    /// now here
     @Get(':personId/personenkontexte')
     @ApiOkResponsePaginated(PersonenkontextResponse, {
         description: 'The personenkontexte were successfully pulled.',

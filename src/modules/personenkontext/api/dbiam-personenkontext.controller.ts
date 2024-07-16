@@ -78,7 +78,6 @@ export class DBiamPersonenkontextController {
         return result.value.map((k: Personenkontext<true>) => new DBiamPersonenkontextResponse(k));
     }
 
-    /// TODO check this is ddd
     @Post()
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({

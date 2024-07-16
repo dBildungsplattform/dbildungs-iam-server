@@ -1,5 +1,3 @@
-// import { Mapper } from '@automapper/core';
-// import { getMapperToken } from '@automapper/nestjs';
 import { Body, Controller, Get, NotFoundException, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
@@ -19,15 +17,9 @@ import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulcon
 import { Paged, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
-// import { CreateOrganisationDto } from './create-organisation.dto.js';
-// import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
 import { OrganisationByIdParams } from './organisation-by-id.params.js';
-// import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
-// import { OrganisationUc } from './organisation.uc.js';
 import { UpdateOrganisationBodyParams } from './update-organisation.body.params.js';
-// import { UpdateOrganisationDto } from './update-organisation.dto.js';
-// import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
@@ -50,8 +42,6 @@ import { OrganisationService } from '../domain/organisation.service.js';
 import { DataConfig } from '../../../shared/config/data.config.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
-// DONE
-//done
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
     new OrganisationExceptionFilter(),
@@ -101,11 +91,6 @@ export class OrganisationController {
         return new OrganisationResponse(result.value);
     }
 
-    /// !!!! warning: test this with partical and not!!!
-    /// Todo add the find by to the aggrigate
-    /// Todo update and save etc add to the repo
-    // done
-    //done
     @Put(':organisationId')
     @ApiOkResponse({
         description: 'The organisation was successfully updated.',
@@ -146,7 +131,6 @@ export class OrganisationController {
         if (result.ok) {
             return new OrganisationResponse(result.value);
         } else {
-            // Avoid passing OrganisationSpecificationError to SchulConnexErrorMapper
             if (result.error instanceof OrganisationSpecificationError) {
                 throw result.error;
             }
@@ -155,10 +139,6 @@ export class OrganisationController {
             );
         }
     }
-
-    // Done
-    // findRootOrganisation
-    //Done
 
     @Get('root')
     @ApiOkResponse({ description: 'The root organization was successfully retrieved.', type: OrganisationResponse })
@@ -181,7 +161,6 @@ export class OrganisationController {
         );
     }
 
-    // Done
     @Get('root/children')
     @ApiOkResponse({
         description: 'The root organizations were successfully pulled.',
@@ -205,8 +184,6 @@ export class OrganisationController {
         return new OrganisationRootChildrenResponse(oeffentlich, ersatz);
     }
 
-    // Done
-    //Done
     @Get(':organisationId')
     @ApiOkResponse({ description: 'The organization was successfully pulled.', type: OrganisationResponse })
     @ApiBadRequestResponse({ description: 'Organization ID is required' })
@@ -228,7 +205,6 @@ export class OrganisationController {
         }
     }
 
-    // Done
     @Get()
     @ApiOkResponse({
         description: 'The organizations were successfully returned.',
@@ -291,10 +267,6 @@ export class OrganisationController {
         return new PagedResponse(pagedOrganisationResponse);
     }
 
-    // TODO starting here lots of mappers in the uc
-    // Done
-    //Done
-    // findAdministriertVon
     @Get(':organisationId/administriert')
     @ApiOkResponse({
         description: 'The organizations were successfully returned.',
@@ -340,9 +312,6 @@ export class OrganisationController {
         return response;
     }
 
-    // Done
-    // setAdministriertVon
-    //Done
     @Post(':organisationId/administriert')
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
     @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
@@ -367,9 +336,6 @@ export class OrganisationController {
         }
     }
 
-    // Done
-    // findZugehoerigZu
-    //Done
     @Get(':organisationId/zugehoerig')
     @ApiOkResponse({
         description: 'The organizations were successfully returned.',
@@ -413,9 +379,6 @@ export class OrganisationController {
         return response;
     }
 
-    // Done
-    // setZugehoerigZu
-    //Done
     @Post(':organisationId/zugehoerig')
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
     @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })

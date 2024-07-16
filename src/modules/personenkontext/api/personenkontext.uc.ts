@@ -39,7 +39,6 @@ export class PersonenkontextUc {
         private readonly organisationRepository: OrganisationRepository,
         private readonly organisationService: OrganisationService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
-        // private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
     public async createPersonenkontext(
@@ -91,7 +90,6 @@ export class PersonenkontextUc {
         if (!personenkontextResult.ok) {
             return SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personenkontextResult.error);
         }
-        // leave this DO for now as it goes to the repo
         const personResult: Result<Person<true>, DomainError> = await this.personService.findPersonById(
             personenkontextResult.value.personId,
         );
@@ -136,13 +134,6 @@ export class PersonenkontextUc {
     public async updatePersonenkontext(
         updateDto: UpdatePersonenkontextDto,
     ): Promise<PersonendatensatzResponseAutomapper | SchulConnexError> {
-        // const personenkontextDo: PersonenkontextDo<true> = this.mapper.map(
-        //     updateDto,
-        //     UpdatePersonenkontextDto,
-        //     PersonenkontextDo,
-        // );
-
-        // const personenkontextDo = new Personenkontext(updateDto);
         const result: Result<
             Personenkontext<true>,
             DomainError
@@ -163,11 +154,6 @@ export class PersonenkontextUc {
         return new PersonendatensatzResponseAutomapper(new PersonResponseAutomapper(personResult.value), [
             await PersonenkontextResponse.construct(result.value),
         ]);
-        // PREVIOUS implmentation
-        // return new PersonendatensatzDto({
-        //     person: this.mapper.map(personResult.value, PersonDo, PersonDto),
-        //     personenkontexte: [this.mapper.map(result.value, PersonenkontextDo, PersonenkontextDto)],
-        // });
     }
 
     public async deletePersonenkontextById(

@@ -1,5 +1,3 @@
-// Assuming the existence of a UserRepository and relevant domain logic
-
 export class UserDo<WasPersisted extends boolean> {
     private constructor(
         public id: Persisted<string, WasPersisted>,
