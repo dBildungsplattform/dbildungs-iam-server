@@ -101,6 +101,12 @@ export class DBiamPersonenkontextController {
             params.personId,
             params.organisationId,
             params.rolleId,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
         );
 
         //Check specifications

@@ -269,7 +269,7 @@ export class DbSeedService {
         const persistedPersonenkontexte: Personenkontext<true>[] = [];
         for (const file of files) {
             const referencedPerson: Person<true> = await this.getReferencedPerson(file.personId);
-            const referencedOrga: OrganisationDo<true> = await this.getReferencedOrganisation(file.organisationId);
+            const referencedOrga: Organisation<true> = await this.getReferencedOrganisation(file.organisationId);
             const referencedRolle: Rolle<true> = await this.getReferencedRolle(file.rolleId);
             const personenKontext: Personenkontext<false> = this.personenkontextFactory.construct(
                 undefined,
@@ -278,6 +278,13 @@ export class DbSeedService {
                 referencedPerson.id,
                 referencedOrga.id,
                 referencedRolle.id,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
             );
 
             //Check specifications

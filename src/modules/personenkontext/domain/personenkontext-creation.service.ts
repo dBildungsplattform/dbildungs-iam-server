@@ -59,6 +59,12 @@ export class PersonenkontextCreationService {
             savedPerson.id,
             organisationId,
             rolleId,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
         );
         //Save Personenkontext
         const savedPersonenkontext: Personenkontext<true> = await this.personenkontextRepo.save(personenkontext);
