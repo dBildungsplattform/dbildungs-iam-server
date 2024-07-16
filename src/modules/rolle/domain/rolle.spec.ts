@@ -21,7 +21,6 @@ describe('Rolle Aggregate', () => {
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let organisationRepo: DeepMocked<OrganisationRepository>;
 
-
     beforeAll(async () => {
         module = await Test.createTestingModule({
             providers: [
