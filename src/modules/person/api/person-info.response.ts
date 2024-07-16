@@ -66,8 +66,8 @@ export class PersonInfoResponse {
     public constructor(props: Readonly<PersonInfoResponse>) {
         this.pid = props.pid;
         this.person = new Person(props.person);
-        this.personenkontexte = props.personenkontexte.map((kontext: Readonly<PersonenkontextResponse>) =>
-            PersonenkontextResponse.new(kontext),
+        this.personenkontexte = props.personenkontexte.map(
+            (kontext: Readonly<PersonenkontextResponse>) => new PersonenkontextResponse(kontext),
         );
         this.gruppen = [];
     }

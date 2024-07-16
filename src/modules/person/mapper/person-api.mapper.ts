@@ -2,11 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { PersonInfoResponse } from '../api/person-info.response.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
 import { PersonDo } from '../domain/person.do.js';
-import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
+
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 
 @Injectable()
 export class PersonApiMapper {
-    public mapToPersonInfoResponse(person: PersonDo<true>, kontexte: PersonenkontextDo<true>[]): PersonInfoResponse {
+    public async mapToPersonInfoResponse(
+        person: PersonDo<true>,
+        kontexte: Personenkontext<true>[],
+    ): Promise<PersonInfoResponse> {
+        const personenkontexte: PersonenkontextResponse[] = await Promise.all(
+            kontexte.map((kontext: Personenkontext<true>) => this.mapToPersonenkontextResponse(kontext)),
+        );
+
         const response: PersonInfoResponse = new PersonInfoResponse({
             pid: person.id,
             person: {
@@ -35,31 +43,15 @@ export class PersonApiMapper {
                 vertrauensstufe: person.vertrauensstufe,
                 revision: person.revision,
             },
-            personenkontexte: kontexte.map((kontext: PersonenkontextDo<true>) =>
-                this.mapToPersonenkontextResponse(kontext),
-            ),
+            personenkontexte: personenkontexte,
             gruppen: [], // TODO: if the gruppe module is implemented, this should be filled out with EW-656 / EW-697
         });
 
         return response;
     }
 
-    private mapToPersonenkontextResponse(kontext: PersonenkontextDo<true>): PersonenkontextResponse {
-        const response: PersonenkontextResponse = PersonenkontextResponse.new({
-            id: kontext.id,
-            referrer: kontext.referrer,
-            mandant: kontext.mandant,
-            organisation: {
-                id: kontext.organisationId,
-            },
-            rolle: kontext.rolle,
-            personenstatus: kontext.personenstatus,
-            jahrgangsstufe: kontext.jahrgangsstufe,
-            sichtfreigabe: kontext.sichtfreigabe,
-            loeschung: kontext.loeschungZeitpunkt ? { zeitpunkt: kontext.loeschungZeitpunkt } : undefined,
-            revision: kontext.revision,
-        });
-
+    private async mapToPersonenkontextResponse(kontext: Personenkontext<true>): Promise<PersonenkontextResponse> {
+        const response: PersonenkontextResponse = await PersonenkontextResponse.construct(kontext);
         return response;
     }
 }

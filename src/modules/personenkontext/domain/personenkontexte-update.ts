@@ -58,6 +58,12 @@ export class PersonenkontexteUpdate {
                     pkBodyParam.personId,
                     pkBodyParam.organisationId,
                     pkBodyParam.rolleId,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
                 );
                 personenKontexte.push(newPK);
             } else {
