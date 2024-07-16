@@ -288,7 +288,6 @@ describe('RolleRepo', () => {
                 DoFactory.createRolle(false, { administeredBySchulstrukturknoten: faker.string.uuid() }),
             );
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
             const rolleResult: Rolle<true> | DomainError = await sut.updateRolle(
@@ -297,6 +296,26 @@ describe('RolleRepo', () => {
                 [],
                 [],
                 [],
+                permissions,
+            );
+
+            expect(rolleResult).toBeInstanceOf(DomainError);
+        });
+
+        it('should return error when service providers doe not exist', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            const rolle: Rolle<true> = await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
+
+            const rolleResult: Rolle<true> | DomainError = await sut.updateRolle(
+                rolle.id,
+                faker.company.name(),
+                [],
+                [],
+                [faker.string.uuid()],
                 permissions,
             );
 
