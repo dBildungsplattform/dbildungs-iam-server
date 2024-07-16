@@ -353,6 +353,7 @@ export class RolleController {
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ description: 'Delete a role by id.' })
     @ApiOkResponse({ description: 'Role was deleted successfully.' })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamRolleError })
     @ApiNotFoundResponse({ description: 'The rolle that should be deleted does not exist.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to delete the role.' })
     public async deleteRolle(
