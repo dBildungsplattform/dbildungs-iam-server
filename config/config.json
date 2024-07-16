@@ -11,7 +11,8 @@
         "BACKEND_ADDRESS": "http://localhost:9090",
         "OIDC_CALLBACK_URL": "https://localhost:8099/api/auth/login",
         "DEFAULT_LOGIN_REDIRECT": "https://localhost:8099/",
-        "LOGOUT_REDIRECT": "https://localhost:8099/"
+        "LOGOUT_REDIRECT": "https://localhost:8099/",
+        "ERROR_PAGE_REDIRECT": "https://localhost:8099/login-error"
     },
     "DB": {
         "CLIENT_URL": "postgres://admin:password@127.0.0.1:5432",
@@ -25,7 +26,8 @@
         "REALM_NAME": "SPSH",
         "CLIENT_ID": "spsh",
         "CLIENT_SECRET": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M",
-        "ADMIN_SECRET": "44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R"
+        "ADMIN_SECRET": "44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R",
+        "TEST_CLIENT_ID": "spsh-test"
     },
     "REDIS": {
         "HOST": "localhost",
@@ -37,7 +39,7 @@
     "LDAP": {
         "URL": "ldap://localhost",
         "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
-        "PASSWORD": "admin"
+        "ADMIN_PASSWORD": "admin"
     },
     "DATA": {
         "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
@@ -55,9 +57,11 @@
         "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
     },
     "ITSLEARNING": {
-        "ENABLED": false,
+        "ENABLED": "false",
         "ENDPOINT": "https://itslearning-test.example.com",
         "USERNAME": "username",
-        "PASSWORD": "password"
+        "PASSWORD": "password",
+        "ROOT_OEFFENTLICH": "oeffentlich",
+        "ROOT_ERSATZ": "ersatz"
     }
 }

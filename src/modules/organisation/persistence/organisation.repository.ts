@@ -6,6 +6,9 @@ import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationScope } from './organisation.scope.js';
+import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
+import { EventService } from '../../../core/eventbus/services/event.service.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -42,6 +45,7 @@ export class OrganisationRepository {
     public readonly ROOT_ORGANISATION_ID: string;
 
     public constructor(
+        private readonly eventService: EventService,
         private readonly em: EntityManager,
         config: ConfigService<ServerConfig>,
     ) {
@@ -64,6 +68,10 @@ export class OrganisationRepository {
         );
 
         await this.em.persistAndFlush(organisationEntity);
+
+        if (organisationEntity.typ === OrganisationsTyp.SCHULE) {
+            this.eventService.publish(new SchuleCreatedEvent(organisationEntity.id));
+        }
 
         return mapEntityToAggregate(organisationEntity);
     }
@@ -107,15 +115,22 @@ export class OrganisationRepository {
         return rawResult.map(mapEntityToAggregate);
     }
 
-    public async findRootDirectChildren(): Promise<Organisation<true>[]> {
+    public async findRootDirectChildren(): Promise<
+        [oeffentlich: Organisation<true> | undefined, ersatz: Organisation<true> | undefined]
+    > {
         const scope: OrganisationScope = new OrganisationScope().findAdministrierteVon(this.ROOT_ORGANISATION_ID);
 
         const [entities]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
-        const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
-            mapEntityToAggregate(entity),
+
+        const oeffentlich: OrganisationEntity | undefined = entities.find((entity: OrganisationEntity) =>
+            entity.name?.includes('Öffentliche'),
         );
 
-        return organisations;
+        const ersatz: OrganisationEntity | undefined = entities.find((entity: OrganisationEntity) =>
+            entity.name?.includes('Ersatz'),
+        );
+
+        return [oeffentlich && mapEntityToAggregate(oeffentlich), ersatz && mapEntityToAggregate(ersatz)];
     }
 
     public async findById(id: string): Promise<Option<Organisation<true>>> {

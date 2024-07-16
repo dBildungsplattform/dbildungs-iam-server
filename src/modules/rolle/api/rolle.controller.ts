@@ -55,8 +55,10 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { DbiamRolleError } from './dbiam-rolle.error.js';
 
-@UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter())
+@UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -82,18 +84,16 @@ export class RolleController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all rollen.' })
     public async findRollen(
         @Query() queryParams: RolleNameQueryParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
-        let rollen: Option<Rolle<true>[]>;
+        const rollen: Option<Rolle<true>[]> = await this.rolleRepo.findRollenAuthorized(
+            permissions,
+            queryParams.searchStr,
+            queryParams.limit,
+            queryParams.offset,
+        );
 
-        if (queryParams.searchStr) {
-            rollen = await this.rolleRepo.findByName(queryParams.searchStr, queryParams.limit, queryParams.offset);
-        } else {
-            rollen = await this.rolleRepo.find(queryParams.limit, queryParams.offset);
-        }
-
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
-
-        if (!rollen) {
+        if (!rollen || rollen.length === 0) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
                 total: 0,
                 offset: 0,
@@ -102,7 +102,7 @@ export class RolleController {
             };
             return new PagedResponse(pagedRolleWithServiceProvidersResponse);
         }
-
+        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {
                 const sps: ServiceProvider<true>[] = r.serviceProviderIds
@@ -304,7 +304,7 @@ export class RolleController {
         description: 'The rolle was successfully updated.',
         type: RolleWithServiceProvidersResponse,
     })
-    @ApiBadRequestResponse({ description: 'The input was not valid.' })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamRolleError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to update the rolle.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to update the rolle.' })
     @ApiInternalServerErrorResponse({

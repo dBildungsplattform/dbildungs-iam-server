@@ -21,6 +21,8 @@ import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DataConfig } from '../../../shared/config/index.js';
+import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { createMock } from '@golevelup/ts-jest';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;
@@ -35,7 +37,14 @@ describe('OrganisationRepository', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
-            providers: [OrganisationPersistenceMapperProfile, OrganisationRepository],
+            providers: [
+                OrganisationPersistenceMapperProfile,
+                OrganisationRepository,
+                {
+                    provide: EventService,
+                    useValue: createMock<EventService>(),
+                },
+            ],
         }).compile();
         sut = module.get(OrganisationRepository);
         orm = module.get(MikroORM);
@@ -430,7 +439,7 @@ describe('OrganisationRepository', () => {
                 ROOT_ORGANISATION_ID,
                 faker.string.uuid(),
                 faker.string.numeric(),
-                'Öffentliche Schulen Land Schleswig Holstein',
+                'Öffentliche Schulen Land Schleswig-Holstein',
                 faker.lorem.word(),
                 faker.string.uuid(),
                 OrganisationsTyp.ROOT,
@@ -443,7 +452,7 @@ describe('OrganisationRepository', () => {
                 ROOT_ORGANISATION_ID,
                 faker.string.uuid(),
                 faker.string.numeric(),
-                'Ersatzschulen Land Schleswig Holstein',
+                'Ersatzschulen Land Schleswig-Holstein',
                 faker.lorem.word(),
                 faker.string.uuid(),
                 OrganisationsTyp.SCHULE,
@@ -457,7 +466,8 @@ describe('OrganisationRepository', () => {
 
         describe('When Called', () => {
             it('should return flaged oeffentlich & ersatz root nodes', async () => {
-                const result: Organisation<true>[] = await sut.findRootDirectChildren();
+                const result: [Organisation<true> | undefined, Organisation<true> | undefined] =
+                    await sut.findRootDirectChildren();
 
                 expect(result).toBeInstanceOf(Array);
                 expect(result).toHaveLength(2);

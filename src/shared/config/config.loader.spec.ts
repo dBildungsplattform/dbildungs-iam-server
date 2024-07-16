@@ -23,6 +23,7 @@ describe('configloader', () => {
                     OIDC_CALLBACK_URL: 'http://localhost:9091/api/frontend/login',
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
                     LOGOUT_REDIRECT: '/logout',
+                    ERROR_PAGE_REDIRECT: '/error',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -35,6 +36,7 @@ describe('configloader', () => {
                     ADMIN_REALM_NAME: 'master',
                     REALM_NAME: 'schulportal',
                     CLIENT_ID: 'schulportal',
+                    TEST_CLIENT_ID: 'schulportal-test',
                 },
                 REDIS: {
                     HOST: 'localhost',
@@ -45,16 +47,23 @@ describe('configloader', () => {
                 LOGGING: {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
+                LDAP: {
+                    URL: 'ldap://localhost',
+                    BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
+                },
                 ITSLEARNING: {
-                    ENABLED: true,
+                    ENABLED: 'true',
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
+                    ROOT_OEFFENTLICH: 'oeffentlich',
+                    ROOT_ERSATZ: 'ersatz',
                 },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
                 DB: { SECRET: 'SuperSecretSecret' },
                 KEYCLOAK: { ADMIN_SECRET: 'AdminClientSecret', CLIENT_SECRET: 'ClientSecret' },
+                LDAP: { ADMIN_PASSWORD: 'password' },
                 FRONTEND: { SESSION_SECRET: 'SessionSecret' },
                 REDIS: { PASSWORD: 'password' },
                 ITSLEARNING: {
@@ -93,6 +102,7 @@ describe('configloader', () => {
                     OIDC_CALLBACK_URL: 'http://localhost:9091/api/frontend/login',
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
                     LOGOUT_REDIRECT: '/logout',
+                    ERROR_PAGE_REDIRECT: '/error',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -108,6 +118,7 @@ describe('configloader', () => {
                     CLIENT_ID: 'schulportal',
                     ADMIN_SECRET: 'geheimer Admin',
                     CLIENT_SECRET: 'geheimer client',
+                    TEST_CLIENT_ID: 'schulportal-test',
                 },
                 REDIS: {
                     HOST: 'localhost',
@@ -119,11 +130,18 @@ describe('configloader', () => {
                 LOGGING: {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
+                LDAP: {
+                    URL: 'ldap://localhost',
+                    BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
+                    ADMIN_PASSWORD: 'password',
+                },
                 ITSLEARNING: {
-                    ENABLED: true,
+                    ENABLED: 'true',
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                    ROOT_OEFFENTLICH: 'oeffentlich',
+                    ROOT_ERSATZ: 'ersatz',
                 },
             };
 
@@ -162,6 +180,7 @@ describe('configloader', () => {
                     ADMIN_REALM_NAME: '',
                     REALM_NAME: '',
                     CLIENT_ID: '',
+                    TEST_CLIENT_ID: '',
                 },
             };
 

@@ -24,6 +24,7 @@ import { DbSeedStatus } from './repo/db-seed.entity.js';
 import { DBiamPersonenkontextService } from '../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
 import { DbSeedReferenceRepo } from './repo/db-seed-reference.repo.js';
 import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
+import { LdapClient } from '../../core/ldap/domain/ldap-client.js';
 
 describe('DbSeedConsoleMockedDbSeedRepo', () => {
     let module: TestingModule;
@@ -56,6 +57,10 @@ describe('DbSeedConsoleMockedDbSeedRepo', () => {
                 {
                     provide: DbSeedRepo,
                     useValue: createMock<DbSeedRepo>(),
+                },
+                {
+                    provide: LdapClient,
+                    useValue: createMock<LdapClient>(),
                 },
             ],
         })

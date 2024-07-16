@@ -9,7 +9,8 @@
         "BACKEND_ADDRESS": "http://127.0.0.1:8080",
         "OIDC_CALLBACK_URL": "http://localhost:9091/api/frontend/login",
         "DEFAULT_LOGIN_REDIRECT": "/",
-        "LOGOUT_REDIRECT": "/"
+        "LOGOUT_REDIRECT": "/",
+        "ERROR_PAGE_REDIRECT": "/login-error"
     },
     "DB": {
         "CLIENT_URL": "postgres://127.0.0.1:5432",
@@ -23,7 +24,8 @@
         "REALM_NAME": "SPSH",
         "CLIENT_ID": "spsh",
         "ADMIN_SECRET": "44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R",
-        "CLIENT_SECRET": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M"
+        "CLIENT_SECRET": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M",
+        "TEST_CLIENT_ID": "spsh-test"
     },
     "REDIS": {
         "HOST": "localhost",
@@ -44,9 +46,11 @@
         "DEFAULT_LOG_LEVEL": "info"
     },
     "ITSLEARNING": {
-        "ENABLED": false,
+        "ENABLED": "false",
         "ENDPOINT": "https://itslearning-test.example.com",
         "USERNAME": "username",
-        "PASSWORD": "password"
+        "PASSWORD": "password",
+        "ROOT_OEFFENTLICH": "oeffentlich",
+        "ROOT_ERSATZ": "ersatz"
     }
 }

@@ -162,6 +162,42 @@ export class RolleRepo {
         return rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
     }
 
+    public async findRollenAuthorized(
+        permissions: PersonPermissions,
+        searchStr?: string,
+        limit?: number,
+        offset?: number,
+    ): Promise<Option<Rolle<true>[]>> {
+        let rollen: Option<RolleEntity[]>;
+        if (searchStr) {
+            rollen = await this.em.find(
+                this.entityName,
+                { name: { $ilike: '%' + searchStr + '%' } },
+                { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit, offset: offset },
+            );
+        } else {
+            rollen = await this.em.findAll(this.entityName, {
+                populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+                limit: limit,
+                offset: offset,
+            });
+        }
+        if (rollen.length === 0) {
+            return [];
+        }
+
+        const orgIdsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ROLLEN_VERWALTEN],
+            true,
+        );
+
+        const filteredRollen: RolleEntity[] = rollen.filter((rolle: RolleEntity) =>
+            orgIdsWithRecht.includes(rolle.administeredBySchulstrukturknoten),
+        );
+
+        return filteredRollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
+    }
+
     public async exists(id: RolleID): Promise<boolean> {
         const rolle: Option<Loaded<RolleEntity, never, 'id', never>> = await this.em.findOne(
             RolleEntity,
