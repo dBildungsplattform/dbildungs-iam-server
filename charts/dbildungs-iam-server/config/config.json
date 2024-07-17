@@ -19,7 +19,8 @@
     "ADMIN_REALM_NAME": "SPSH",
     "REALM_NAME": "SPSH",
     "ADMIN_CLIENT_ID": "spsh-admin",
-    "CLIENT_ID": "spsh"
+    "CLIENT_ID": "spsh",
+    "TEST_CLIENT_ID": "spsh-test"
   },
   "REDIS": {
     "HOST": "dbildungs-iam-server-redis",

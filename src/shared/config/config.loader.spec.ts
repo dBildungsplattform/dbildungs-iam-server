@@ -36,6 +36,7 @@ describe('configloader', () => {
                     ADMIN_REALM_NAME: 'master',
                     REALM_NAME: 'schulportal',
                     CLIENT_ID: 'schulportal',
+                    TEST_CLIENT_ID: 'schulportal-test',
                 },
                 REDIS: {
                     HOST: 'localhost',
@@ -117,6 +118,7 @@ describe('configloader', () => {
                     CLIENT_ID: 'schulportal',
                     ADMIN_SECRET: 'geheimer Admin',
                     CLIENT_SECRET: 'geheimer client',
+                    TEST_CLIENT_ID: 'schulportal-test',
                 },
                 REDIS: {
                     HOST: 'localhost',
@@ -178,6 +180,7 @@ describe('configloader', () => {
                     ADMIN_REALM_NAME: '',
                     REALM_NAME: '',
                     CLIENT_ID: '',
+                    TEST_CLIENT_ID: '',
                 },
             };
 
