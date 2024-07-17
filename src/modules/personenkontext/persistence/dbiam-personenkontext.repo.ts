@@ -212,6 +212,14 @@ export class DBiamPersonenkontextRepo {
         return !!personenKontext;
     }
 
+    public async updateList(
+        personId: PersonID,
+        personenkontexte: Personenkontext<boolean>[],
+        permissions: PersonPermissions,
+    ): Promise<void> {
+        // TODO
+    }
+
     public async save(personenKontext: Personenkontext<boolean>): Promise<Personenkontext<true>> {
         if (personenKontext.id) {
             return this.update(personenKontext);

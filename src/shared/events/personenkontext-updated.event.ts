@@ -12,6 +12,7 @@ export type PersonenkontextUpdatedPersonData = {
     id: PersonID;
     vorname: string;
     familienname: string;
+    referrer?: string;
 };
 
 export type PersonenkontextUpdatedData = {
@@ -26,6 +27,7 @@ function mapPersonToData(person: Person<true>): PersonenkontextUpdatedPersonData
         id: person.id,
         vorname: person.vorname,
         familienname: person.familienname,
+        referrer: person.referrer,
     };
 }
 

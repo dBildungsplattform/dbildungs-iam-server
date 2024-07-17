@@ -9,6 +9,7 @@ import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow.js'
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
+import { EventService } from '../../../core/eventbus/index.js';
 
 export type PersonPersonenkontext = {
     person: Person<true>;
@@ -23,6 +24,7 @@ export class PersonenkontextCreationService {
         private readonly personFactory: PersonFactory,
         private readonly personenkontextFactory: PersonenkontextFactory,
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
+        private readonly eventService: EventService,
     ) {}
 
     public async createPersonWithPersonenkontext(
@@ -62,6 +64,7 @@ export class PersonenkontextCreationService {
         );
         //Save Personenkontext
         const savedPersonenkontext: Personenkontext<true> = await this.personenkontextRepo.save(personenkontext);
+
         return {
             person: savedPerson,
             personenkontext: savedPersonenkontext,
