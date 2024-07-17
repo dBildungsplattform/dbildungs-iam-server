@@ -8,9 +8,7 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 
-function mapAggregateToData(
-    emailAddress: EmailAddress<boolean>,
-): RequiredEntityData<EmailAddressEntity> {
+function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddressEntity> {
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
         id: emailAddress.id,
@@ -85,7 +83,10 @@ export class EmailRepo {
 
     private async create(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {
         //persist the emailAddress
-        const emailAddressEntity: EmailAddressEntity = this.em.create(EmailAddressEntity, mapAggregateToData(emailAddress));
+        const emailAddressEntity: EmailAddressEntity = this.em.create(
+            EmailAddressEntity,
+            mapAggregateToData(emailAddress),
+        );
         await this.em.persistAndFlush(emailAddressEntity);
 
         return mapEntityToAggregate(emailAddressEntity);

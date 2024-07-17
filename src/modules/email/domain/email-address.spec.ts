@@ -51,11 +51,7 @@ describe('EmailAddress Aggregate', () => {
         describe('when email-address is enabled', () => {
             it('should return address', () => {
                 const fakeEmail: string = faker.internet.email();
-                const emailAddress: EmailAddress<false> = EmailAddress.createNew(
-                    personId,
-                    fakeEmail,
-                    true,
-                );
+                const emailAddress: EmailAddress<false> = EmailAddress.createNew(personId, fakeEmail, true);
 
                 const currentAddress: Option<string> = emailAddress.currentAddress;
                 expect(currentAddress).toBeDefined();
