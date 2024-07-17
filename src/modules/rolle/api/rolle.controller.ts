@@ -319,7 +319,7 @@ export class RolleController {
             params.merkmale.length > 0 &&
             (await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(findRolleByIdParams.rolleId))
         ) {
-            throw new UpdateMerkmaleError();
+            throw new RolleHatPersonenkontexteError(['The Merkmale for the Rolle cannot be updated.']);
         }
 
         const result: Rolle<true> | DomainError = await this.rolleRepo.updateRolle(
@@ -351,20 +351,14 @@ export class RolleController {
         @Param() findRolleByIdParams: FindRolleByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
-        if (!rolle) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId),
-                ),
-            );
-        }
-
-        if (await rolle.isAlreadyAssigned(this.dBiamPersonenkontextRepo, rolle.id)) {
+        if (await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(findRolleByIdParams.rolleId)) {
             throw new RolleHatPersonenkontexteError();
         }
 
-        const result: Option<DomainError> = await this.rolleRepo.deleteAuthorized(rolle.id, permissions);
+        const result: Option<DomainError> = await this.rolleRepo.deleteAuthorized(
+            findRolleByIdParams.rolleId,
+            permissions,
+        );
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
