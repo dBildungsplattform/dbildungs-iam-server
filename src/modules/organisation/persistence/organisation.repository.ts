@@ -9,6 +9,8 @@ import { OrganisationScope } from './organisation.scope.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -151,5 +153,22 @@ export class OrganisationRepository {
         });
 
         return organisationMap;
+    }
+
+    public async deleteKlasse(id: OrganisationID): Promise<Option<DomainError>> {
+        const organisationEntity: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
+        if (!organisationEntity) {
+            return new EntityNotFoundError('Organisation', id);
+        }
+
+        //Check specifications
+        //Get organisation,
+        //Check type, if not klasse return error
+        //If klasse: Get PK by Orgaisation
+
+        await this.em.removeAndFlush(organisationEntity);
+        //EventBus
+
+        return;
     }
 }

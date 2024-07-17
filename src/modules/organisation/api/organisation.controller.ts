@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -10,6 +10,7 @@ import {
     ApiNotFoundResponse,
     ApiOAuth2,
     ApiOkResponse,
+    ApiOperation,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -327,6 +328,33 @@ export class OrganisationController {
         }
         if (result) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        }
+    }
+
+    @Delete(':organisationId/klasse')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiOperation({ description: 'Delete an organisation of type Klasse by id.' })
+    @ApiOkResponse({ description: 'The organisation was deleted successfully.' })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamOrganisationError })
+    @ApiNotFoundResponse({ description: 'The organisation that should be deleted does not exist.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to delete the organisation.' })
+    public async deleteKlasse(
+        @Param() findRolleByIdParams: OrganisationByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+
+        if (await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(findRolleByIdParams.rolleId)) {
+            throw new RolleHatPersonenkontexteError();
+        }
+
+        const result: Option<DomainError> = await this.rolleRepo.deleteAuthorized(
+            findRolleByIdParams.rolleId,
+            permissions,
+        );
+        if (result instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
         }
     }
 }
