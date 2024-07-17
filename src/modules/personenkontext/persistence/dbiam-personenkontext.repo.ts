@@ -97,46 +97,34 @@ export class DBiamPersonenkontextRepo {
         );
     }
 
+    /**
+     *
+     * @param personId
+     * @param permissions
+     * @returns
+     *
+     * Should return all kontexts of a given person, if the caller has the systemrecht PERSONEN_VERWALTEN at at least one node of the target persons kontexts
+     */
     public async findByPersonAuthorized(
         personId: PersonID,
         permissions: PersonPermissions,
     ): Promise<Result<Personenkontext<true>[], DomainError>> {
-        const relevantSystemRechte: RollenSystemRecht[] = [RollenSystemRecht.PERSONEN_VERWALTEN];
-
-        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
-            relevantSystemRechte,
-            true,
-        );
-
-        // Find all kontexte, where the personID matches and that person has at least one organisation in common
-        const personenkontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
-            personId: {
-                id: personId,
-                personenKontexte: {
-                    $some: {
-                        organisationId: { $in: organisationIDs },
-                    },
-                },
-            },
-        });
-
-        if (personenkontexte.length === 0) {
-            const isAuthorizedAtRoot: boolean =
-                await permissions.hasSystemrechteAtRootOrganisation(relevantSystemRechte);
-
-            if (!isAuthorizedAtRoot) {
+        const allKontextsForTargetPerson: Personenkontext<true>[] = await this.findByPerson(personId);
+        for (const targetPersonKontext of allKontextsForTargetPerson) {
+            const hasPermission: boolean = await permissions.hasSystemrechtAtOrganisation(
+                targetPersonKontext.organisationId,
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ); //await in loop used on purpose to be able to use early loop exit (Not possible with Promise.awaitall)
+            if (hasPermission) {
                 return {
-                    ok: false,
-                    error: new MissingPermissionsError('Not allowed to view the requested personenkontexte'),
+                    ok: true,
+                    value: allKontextsForTargetPerson,
                 };
             }
         }
-
         return {
-            ok: true,
-            value: personenkontexte.map((pk: PersonenkontextEntity) =>
-                mapEntityToAggregate(pk, this.personenkontextFactory),
-            ),
+            ok: false,
+            error: new MissingPermissionsError('Not allowed to view the requested personenkontexte'),
         };
     }
 
@@ -388,5 +376,12 @@ export class DBiamPersonenkontextRepo {
         const result: any[] = await this.em.execute(query, [organisationId, personId, systemrecht]);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         return result[0].has_systemrecht_at_orga as boolean;
+    }
+
+    public canPersonASeeKontextsOfPersonB(
+        personIdA: PersonID,
+        personIdB: PersonID,
+    ){
+
     }
 }
