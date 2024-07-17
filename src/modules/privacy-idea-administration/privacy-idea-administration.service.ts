@@ -8,9 +8,8 @@ import { InitSoftwareTokenResponse, InitSoftwareTokenPayload } from './privacy-i
 export class PrivacyIdeaAdministrationService {
     public constructor(private readonly httpService: HttpService) {}
 
-    public async initializeSoftwareToken(): Promise<InitSoftwareTokenResponse> {
+    public async initializeSoftwareToken(user: string): Promise<InitSoftwareTokenResponse> {
         const token: string = await this.getJWTToken();
-        const user: string = 'root';
 
         try {
             const response: InitSoftwareTokenResponse = await this.initToken(user, token);
@@ -49,7 +48,7 @@ export class PrivacyIdeaAdministrationService {
         description: string = 'Description of the token',
         type: string = 'totp',
         otplen: number = 6,
-        hashlib: string = 'sha256',
+        hashlib: string = 'sha1',
         twoStepInit: number = 0,
         otpkeyformat: string = 'hex',
         rollover: number = 0,
