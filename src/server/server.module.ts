@@ -12,6 +12,7 @@ import { KeycloakAdministrationModule } from '../modules/keycloak-administration
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { HealthModule } from '../modules/health/health.module.js';
+import { PrivacyIdeaAdministrationModule } from '../modules/privacy-idea-administration/privacy-idea-administration.module.js';
 import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
 import { LoggerModule } from '../core/logging/logger.module.js';
 import { ErrorModule } from '../shared/error/error.module.js';
@@ -83,6 +84,7 @@ import { LdapModule } from '../core/ldap/ldap.module.js';
         KeycloakConfigModule,
         ItsLearningModule,
         LdapModule,
+        PrivacyIdeaAdministrationModule,
     ],
     providers: [
         {
