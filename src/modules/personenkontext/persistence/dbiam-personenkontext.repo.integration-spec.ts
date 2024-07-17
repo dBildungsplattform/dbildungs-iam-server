@@ -5,7 +5,6 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DoFactory,
-    //KeycloakConfigTestModule,
     LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
@@ -38,7 +37,6 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -94,10 +92,6 @@ describe('dbiam Personenkontext Repo', () => {
                 RolleRepo,
                 ServiceProviderRepo,
                 PersonenkontextFactory,
-                {
-                    provide: EmailRepo,
-                    useValue: createMock<EmailRepo>(),
-                },
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>({
