@@ -315,31 +315,22 @@ export class RolleController {
         @Body() params: UpdateRolleBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
-        //Due to circular reference error, the rolleRepo needs to be passed into the aggregate.
-        const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(
-            this.rolleRepo,
+        if (
+            params.merkmale.length > 0 &&
+            (await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(findRolleByIdParams.rolleId))
+        ) {
+            throw new UpdateMerkmaleError();
+        }
+
+        const result: Rolle<true> | DomainError = await this.rolleRepo.updateRolle(
             findRolleByIdParams.rolleId,
             params.name,
             params.merkmale,
             params.systemrechte,
             params.serviceProviderIds,
+            permissions,
         );
 
-        if (updatedRolle instanceof DomainError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updatedRolle),
-            );
-        }
-        //The check is here because it cannot be implemented in the aggregate itself in the method update
-        //using DBiamPersonenkontextRepo causes circular reference error.
-        if (
-            params.merkmale.length > 0 &&
-            (await updatedRolle.isAlreadyAssigned(this.dBiamPersonenkontextRepo, updatedRolle.id))
-        ) {
-            throw new RolleHatPersonenkontexteError(['The Merkmale for the Rolle cannot be updated.']);
-        }
-
-        const result: Rolle<true> | DomainError = await this.rolleRepo.saveAuthorized(updatedRolle, permissions);
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),

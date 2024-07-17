@@ -4,7 +4,6 @@ import { Rolle } from './rolle.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { RolleRepo } from '../repo/rolle.repo.js';
 
 @Injectable()
 export class RolleFactory {
@@ -60,9 +59,12 @@ export class RolleFactory {
     }
 
     public async update(
-        rolleRepo: RolleRepo,
         id: string,
+        createdAt: Date,
+        updatedAt: Date,
         name: string,
+        administeredBySchulstrukturknoten: string,
+        rollenart: RollenArt,
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
@@ -70,9 +72,12 @@ export class RolleFactory {
         return Rolle.update(
             this.organisationRepo,
             this.serviceProviderRepo,
-            rolleRepo,
             id,
+            createdAt,
+            updatedAt,
             name,
+            administeredBySchulstrukturknoten,
+            rollenart,
             merkmale,
             systemrechte,
             serviceProviderIds,

@@ -13,7 +13,6 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 
 describe('Rolle Aggregate', () => {
@@ -21,28 +20,6 @@ describe('Rolle Aggregate', () => {
     let rolleFactory: RolleFactory;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let organisationRepo: DeepMocked<OrganisationRepository>;
-    let rolleRepoMock: DeepMocked<RolleRepo>;
-    let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
-    let personenkontextFactory: PersonenkontextFactory;
-
-    function createPersonenkontext<WasPersisted extends boolean>(
-        this: void,
-        withId: WasPersisted,
-        params: Partial<Personenkontext<boolean>> = {},
-    ): Personenkontext<WasPersisted> {
-        const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
-            withId ? faker.string.uuid() : undefined,
-            withId ? faker.date.past() : undefined,
-            withId ? faker.date.recent() : undefined,
-            faker.string.uuid(),
-            faker.string.uuid(),
-            faker.string.uuid(),
-        );
-
-        Object.assign(personenkontext, params);
-
-        return personenkontext;
-    }
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -74,9 +51,6 @@ describe('Rolle Aggregate', () => {
         rolleFactory = module.get(RolleFactory);
         serviceProviderRepoMock = module.get(ServiceProviderRepo);
         organisationRepo = module.get(OrganisationRepository);
-        rolleRepoMock = module.get(RolleRepo);
-        dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
-        personenkontextFactory = module.get(PersonenkontextFactory);
     });
 
     afterAll(async () => {
@@ -311,44 +285,16 @@ describe('Rolle Aggregate', () => {
         });
     });
 
-    describe('IsAlreadyAssigned', () => {
-        it('should return false if rolle is not assigned yet', async () => {
-            const rolle: Rolle<true> = DoFactory.createRolle(true);
-            dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValueOnce([]);
-            const result: boolean = await rolle.isAlreadyAssigned(dBiamPersonenkontextRepoMock, rolle.id);
-            expect(result).toBeFalsy();
-        });
-
-        it('should return true if rolle is already assigned', async () => {
-            const rolle: Rolle<true> = DoFactory.createRolle(true);
-            const personenkontext: Personenkontext<true> = createPersonenkontext(true);
-            dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValueOnce([personenkontext]);
-            const result: boolean = await rolle.isAlreadyAssigned(dBiamPersonenkontextRepoMock, rolle.id);
-            expect(result).toBeTruthy();
-        });
-    });
-
     describe('update', () => {
-        it('should return domain error if rolle is does not exist', async () => {
-            rolleRepoMock.findById.mockResolvedValueOnce(undefined);
-            const result: Rolle<true> | DomainError = await rolleFactory.update(
-                rolleRepoMock,
-                faker.string.uuid(),
-                'newName',
-                [],
-                [],
-                [],
-            );
-            expect(result).toBeInstanceOf(DomainError);
-        });
-
         it('should return domain error if service provider is does not exist', async () => {
-            rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
             serviceProviderRepoMock.findById.mockResolvedValue(undefined);
             const result: Rolle<true> | DomainError = await rolleFactory.update(
-                rolleRepoMock,
                 faker.string.uuid(),
+                faker.datatype.datetime(),
+                faker.datatype.datetime(),
                 'newName',
+                faker.string.uuid(),
+                faker.helpers.enumValue(RollenArt),
                 [faker.helpers.enumValue(RollenMerkmal)],
                 [faker.helpers.enumValue(RollenSystemRecht)],
                 [faker.string.uuid()],

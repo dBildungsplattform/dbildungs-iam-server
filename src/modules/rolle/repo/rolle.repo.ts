@@ -216,16 +216,36 @@ export class RolleRepo {
         }
     }
 
-    public async saveAuthorized(
-        rolle: Rolle<true>,
+    public async updateRolle(
+        id: string,
+        name: string,
+        merkmale: RollenMerkmal[],
+        systemrechte: RollenSystemRecht[],
+        serviceProviderIds: string[],
         permissions: PersonPermissions,
     ): Promise<Rolle<true> | DomainError> {
-        //Permissions
-        const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(rolle.id, permissions);
+        //Reference & Permissions
+        const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
         if (!authorizedRole.ok) {
             return authorizedRole.error;
         }
-        const result: Rolle<true> = await this.update(rolle);
+
+        const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(
+            id,
+            authorizedRole.value.createdAt,
+            authorizedRole.value.updatedAt,
+            name,
+            authorizedRole.value.administeredBySchulstrukturknoten,
+            authorizedRole.value.rollenart,
+            merkmale,
+            systemrechte,
+            serviceProviderIds,
+        );
+
+        if (updatedRolle instanceof DomainError) {
+            return updatedRolle;
+        }
+        const result: Rolle<true> = await this.update(updatedRolle);
         return result;
     }
 
