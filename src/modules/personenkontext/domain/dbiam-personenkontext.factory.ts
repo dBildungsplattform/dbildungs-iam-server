@@ -8,6 +8,7 @@ import { EventService } from '../../../core/eventbus/index.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { IPersonPermissions } from '../../authentication/domain/person-permissions.interface.js';
 
 @Injectable()
 export class DbiamPersonenkontextFactory {
@@ -25,6 +26,7 @@ export class DbiamPersonenkontextFactory {
         lastModified: Date,
         count: number,
         dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
+        permissions: IPersonPermissions,
     ): PersonenkontexteUpdate {
         return PersonenkontexteUpdate.createNew(
             this.eventService,
@@ -37,6 +39,7 @@ export class DbiamPersonenkontextFactory {
             lastModified,
             count,
             dBiamPersonenkontextBodyParams,
+            permissions,
         );
     }
 }

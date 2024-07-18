@@ -148,11 +148,18 @@ export class DbiamPersonenkontextWorkflowController {
     public async commit(
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
         @Body() bodyParams: DbiamUpdatePersonenkontexteBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PersonenkontexteUpdateResponse> {
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError =
             await this.personenkontextWorkflowFactory
                 .createNew()
-                .commit(params.personId, bodyParams.lastModified, bodyParams.count, bodyParams.personenkontexte);
+                .commit(
+                    params.personId,
+                    bodyParams.lastModified,
+                    bodyParams.count,
+                    bodyParams.personenkontexte,
+                    permissions,
+                );
 
         if (updateResult instanceof DomainError) {
             throw new BadRequestException(updateResult.message);

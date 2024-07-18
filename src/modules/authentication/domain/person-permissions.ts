@@ -8,6 +8,8 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { IPersonPermissions } from './person-permissions.interface.js';
+import { PersonPermissionsMock } from './person-permissions.mock.js';
 
 export type PersonFields = Pick<
     Person<true>,
@@ -28,7 +30,9 @@ export type PersonenkontextRolleFields = {
     rolle: RolleFields;
 };
 
-export class PersonPermissions {
+export class PersonPermissions implements IPersonPermissions {
+    public static ALL: IPersonPermissions = new PersonPermissionsMock();
+
     private cachedPersonenkontextsFields?: PersonKontextFields[];
 
     private cachedPersonFields: PersonFields;

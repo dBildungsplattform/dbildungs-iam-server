@@ -146,12 +146,14 @@ export class DBiamPersonenkontextController {
     public async updatePersonenkontexte(
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
         @Body() bodyParams: DbiamUpdatePersonenkontexteBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PersonenkontexteUpdateResponse> {
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
             params.personId,
             bodyParams.lastModified,
             bodyParams.count,
             bodyParams.personenkontexte,
+            permissions,
         );
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
         if (updateResult instanceof PersonenkontexteUpdateError) {

@@ -17,6 +17,10 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { Person } from '../../person/domain/person.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { IPersonPermissions } from '../../authentication/domain/person-permissions.interface.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -30,6 +34,7 @@ export class PersonenkontexteUpdate {
         private readonly lastModified: Date,
         private readonly count: number,
         private readonly dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
+        private readonly permissions: IPersonPermissions,
     ) {}
 
     public static createNew(
@@ -43,6 +48,7 @@ export class PersonenkontexteUpdate {
         lastModified: Date,
         count: number,
         dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
+        permissions: IPersonPermissions,
     ): PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
             eventService,
@@ -55,6 +61,7 @@ export class PersonenkontexteUpdate {
             lastModified,
             count,
             dBiamPersonenkontextBodyParams,
+            permissions,
         );
     }
 
@@ -92,13 +99,57 @@ export class PersonenkontexteUpdate {
         const sortedExistingPKs: Personenkontext<true>[] = existingPKs.sort(
             (pk1: Personenkontext<true>, pk2: Personenkontext<true>) => (pk1.updatedAt < pk2.updatedAt ? 1 : -1),
         );
-        const mostRecentUpdatedAt: Date = sortedExistingPKs[0]!.updatedAt;
+        const mostRecentUpdatedAt: Date | undefined = sortedExistingPKs[0]?.updatedAt;
 
-        if (mostRecentUpdatedAt.getTime() > this.lastModified.getTime()) {
+        if (mostRecentUpdatedAt && mostRecentUpdatedAt.getTime() > this.lastModified.getTime()) {
             return new UpdateOutdatedError();
         }
 
         return null;
+    }
+
+    private async checkPermissionsForChanged(
+        existingPKs: Personenkontext<true>[],
+        sentPKs: Personenkontext<true>[],
+    ): Promise<Option<DomainError>> {
+        // Check if the target person can be modified
+        if (!(await this.permissions.canModifyPerson(this.personId))) {
+            return new MissingPermissionsError('Can not modify person');
+        }
+
+        // Find all new and deleted personenkontexte
+        const modifiedPKs: Personenkontext<true>[] = [];
+        for (const existingPK of existingPKs) {
+            if (
+                !sentPKs.some(
+                    (pk: Personenkontext<true>) =>
+                        pk.personId === existingPK.personId &&
+                        pk.organisationId === existingPK.organisationId &&
+                        pk.rolleId === existingPK.rolleId,
+                )
+            ) {
+                modifiedPKs.push(existingPK);
+            }
+        }
+
+        const modifiedOrgIDs: OrganisationID[] = [
+            ...new Set(modifiedPKs.map((pk: Personenkontext<true>) => pk.organisationId)),
+        ];
+
+        // Check for permissions at the target organisations
+        const hasPermissions: boolean = (
+            await Promise.all(
+                modifiedOrgIDs.map((orgID: OrganisationID) =>
+                    this.permissions.hasSystemrechtAtOrganisation(orgID, [RollenSystemRecht.PERSONEN_VERWALTEN]),
+                ),
+            )
+        ).every(Boolean);
+
+        if (!hasPermissions) {
+            return new MissingPermissionsError('Can not modify person');
+        }
+
+        return undefined;
     }
 
     private async delete(
@@ -163,6 +214,11 @@ export class PersonenkontexteUpdate {
         const validationError: Option<PersonenkontexteUpdateError> = this.validate(existingPKs);
         if (validationError) {
             return validationError;
+        }
+
+        const permissionsError: Option<DomainError> = await this.checkPermissionsForChanged(existingPKs, sentPKs);
+        if (permissionsError) {
+            return permissionsError;
         }
 
         const deletedPKs: Personenkontext<true>[] = await this.delete(existingPKs, sentPKs);
