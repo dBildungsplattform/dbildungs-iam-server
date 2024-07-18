@@ -216,7 +216,7 @@ export class RolleRepo {
         }
     }
 
-    public async updateRolle(
+    public async updateRolleAuthorized(
         id: string,
         name: string,
         merkmale: RollenMerkmal[],

@@ -322,7 +322,7 @@ export class RolleController {
             throw new UpdateMerkmaleError();
         }
 
-        const result: Rolle<true> | DomainError = await this.rolleRepo.updateRolle(
+        const result: Rolle<true> | DomainError = await this.rolleRepo.updateRolleAuthorized(
             findRolleByIdParams.rolleId,
             params.name,
             params.merkmale,

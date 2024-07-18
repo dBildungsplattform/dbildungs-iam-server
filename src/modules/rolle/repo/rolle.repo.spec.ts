@@ -265,7 +265,7 @@ describe('RolleRepo', () => {
             const newSystemrechte: RollenSystemRecht[] = [RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN];
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
 
-            const rolleResult: Rolle<true> | DomainError = await sut.updateRolle(
+            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
                 rolle.id,
                 newName,
                 newMermale,
@@ -290,7 +290,7 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
-            const rolleResult: Rolle<true> | DomainError = await sut.updateRolle(
+            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
                 rolle.id,
                 faker.company.name(),
                 [],
@@ -310,7 +310,7 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
 
-            const rolleResult: Rolle<true> | DomainError = await sut.updateRolle(
+            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
                 rolle.id,
                 faker.company.name(),
                 [],
