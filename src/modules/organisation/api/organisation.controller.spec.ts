@@ -242,7 +242,7 @@ describe('OrganisationController', () => {
 
                 const mockedRepoResponse: Counted<Organisation<true>> = [
                     [
-                        {
+                        DoFactory.createOrganisationAggregate(true, {
                             id: faker.string.uuid(),
                             createdAt: faker.date.recent(),
                             updatedAt: faker.date.recent(),
@@ -254,7 +254,7 @@ describe('OrganisationController', () => {
                             kuerzel: faker.lorem.word(),
                             typ: OrganisationsTyp.SCHULE,
                             traegerschaft: Traegerschaft.LAND,
-                        },
+                        }),
                     ],
                     1,
                 ];
@@ -609,8 +609,7 @@ describe('OrganisationController', () => {
                     name: faker.company.name(),
                 };
 
-                organisationUpdateMock.updateKlassenName.mockResolvedValueOnce();
-                organisationFactoryMock.createNewOrganisationUpdate.mockReturnValueOnce(organisationUpdateMock);
+                organisationRepositoryMock.updateKlassenName.mockResolvedValueOnce();
 
                 await expect(organisationController.updateOrganisationName(params, body)).resolves.not.toThrow();
             });
@@ -624,9 +623,7 @@ describe('OrganisationController', () => {
                 const body: OrganisationByNameBodyParams = {
                     name: faker.company.name(),
                 };
-
-                organisationUpdateMock.updateKlassenName.mockResolvedValueOnce(new NameRequiredForKlasseError());
-                organisationFactoryMock.createNewOrganisationUpdate.mockReturnValueOnce(organisationUpdateMock);
+                organisationRepositoryMock.updateKlassenName.mockResolvedValueOnce(new NameRequiredForKlasseError());
 
                 await expect(organisationController.updateOrganisationName(params, body)).rejects.toThrow(
                     NameRequiredForKlasseError,
@@ -643,8 +640,7 @@ describe('OrganisationController', () => {
                     name: faker.company.name(),
                 };
 
-                organisationUpdateMock.updateKlassenName.mockResolvedValueOnce(new EntityNotFoundError());
-                organisationFactoryMock.createNewOrganisationUpdate.mockReturnValueOnce(organisationUpdateMock);
+                organisationRepositoryMock.updateKlassenName.mockResolvedValueOnce(new EntityNotFoundError());
 
                 await expect(organisationController.updateOrganisationName(params, body)).rejects.toThrow(
                     HttpException,

@@ -6,6 +6,7 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DoFactory,
     LdapTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
@@ -77,14 +78,14 @@ describe('LDAP Client Service', () => {
             OrganisationsTyp.SCHULE,
             undefined,
         );
-        invalidOrganisation = {
+        invalidOrganisation = DoFactory.createOrganisationAggregate(true, {
             id: faker.string.uuid(),
             name: faker.company.name(),
             kennung: undefined,
             typ: OrganisationsTyp.SCHULE,
             createdAt: faker.date.past(),
             updatedAt: faker.date.recent(),
-        };
+        });
         person = Person.construct(
             faker.string.uuid(),
             faker.date.past(),
