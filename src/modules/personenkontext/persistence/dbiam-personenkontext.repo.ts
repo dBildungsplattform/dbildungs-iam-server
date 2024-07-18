@@ -355,4 +355,12 @@ export class DBiamPersonenkontextRepo {
             rolleId: rolleId,
         });
     }
+
+    public async isOrganisationAlreadyAssigned(organisationId: string): Promise<boolean> {
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
+            organisationId,
+        });
+
+        return personenKontexte.length > 0;
+    }
 }

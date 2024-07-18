@@ -11,6 +11,8 @@ import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
+import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -161,13 +163,12 @@ export class OrganisationRepository {
             return new EntityNotFoundError('Organisation', id);
         }
 
-        //Check specifications
-        //Get organisation,
-        //Check type, if not klasse return error
-        //If klasse: Get PK by Orgaisation
+        if (organisationEntity.typ !== OrganisationsTyp.KLASSE) {
+            return new EntityCouldNotBeUpdated('Organisation', id, ['Only Klassen can be deleted.']);
+        }
 
         await this.em.removeAndFlush(organisationEntity);
-        //EventBus
+        this.eventService.publish(new KlasseDeletedEvent(organisationEntity.id));
 
         return;
     }

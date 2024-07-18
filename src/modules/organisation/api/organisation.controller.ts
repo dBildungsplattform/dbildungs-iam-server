@@ -1,6 +1,19 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Inject,
+    Param,
+    Post,
+    Put,
+    Query,
+    UseFilters,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -39,13 +52,15 @@ import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { DbiamOrganisationError } from './dbiam-organisation.error.js';
 import { OrganisationExceptionFilter } from './organisation-exception-filter.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { OrganisationIstBereitsZugewiesenError } from '../domain/organisation-ist-bereits-zugewiesen.error.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -60,6 +75,7 @@ export class OrganisationController {
     public constructor(
         private readonly uc: OrganisationUc,
         private readonly organisationRepository: OrganisationRepository,
+        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
@@ -338,19 +354,12 @@ export class OrganisationController {
     @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamOrganisationError })
     @ApiNotFoundResponse({ description: 'The organisation that should be deleted does not exist.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to delete the organisation.' })
-    public async deleteKlasse(
-        @Param() findRolleByIdParams: OrganisationByIdParams,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<void> {
-
-        if (await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(findRolleByIdParams.rolleId)) {
-            throw new RolleHatPersonenkontexteError();
+    public async deleteKlasse(@Param() params: OrganisationByIdParams): Promise<void> {
+        if (await this.dBiamPersonenkontextRepo.isOrganisationAlreadyAssigned(params.organisationId)) {
+            throw new OrganisationIstBereitsZugewiesenError();
         }
 
-        const result: Option<DomainError> = await this.rolleRepo.deleteAuthorized(
-            findRolleByIdParams.rolleId,
-            permissions,
-        );
+        const result: Option<DomainError> = await this.organisationRepository.deleteKlasse(params.organisationId);
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),

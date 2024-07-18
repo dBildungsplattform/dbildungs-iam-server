@@ -23,6 +23,9 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DataConfig } from '../../../shared/config/index.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { createMock } from '@golevelup/ts-jest';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;
@@ -471,6 +474,44 @@ describe('OrganisationRepository', () => {
 
                 expect(result).toBeInstanceOf(Array);
                 expect(result).toHaveLength(2);
+            });
+        });
+    });
+
+    describe('deleteKlasse', () => {
+        describe('when all validations succeed', () => {
+            it('should succeed', async () => {
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.KLASSE,
+                });
+                const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
+
+                await sut.deleteKlasse(savedOrganisaiton.id);
+                const exists: boolean = await sut.exists(savedOrganisaiton.id);
+
+                expect(exists).toBe(false);
+            });
+        });
+
+        describe('when organisation does not exist', () => {
+            it('should return EntityNotFoundError', async () => {
+                const id: string = faker.string.uuid();
+                const result: Option<DomainError> = await sut.deleteKlasse(id);
+                expect(result).toEqual(new EntityNotFoundError('Organisation', id));
+            });
+        });
+
+        describe('when organisation is not a Klasse', () => {
+            it('should return EntityCouldNotBeUpdated', async () => {
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.SONSTIGE,
+                    name: 'test',
+                });
+                const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
+
+                const result: Option<DomainError> = await sut.deleteKlasse(savedOrganisaiton.id);
+
+                expect(result).toBeInstanceOf(EntityCouldNotBeUpdated);
             });
         });
     });
