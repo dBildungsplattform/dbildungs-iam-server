@@ -294,42 +294,4 @@ export class PersonenkontextWorkflowAggregate {
 
         return orgas.slice(0, limit);
     }
-
-    public async findAuthorizedRollen(
-        permissions: PersonPermissions,
-        rolleName?: string,
-        limit?: number,
-    ): Promise<Rolle<true>[]> {
-        let rollen: Option<Rolle<true>[]>;
-
-        if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName);
-        } else {
-            rollen = await this.rolleRepo.find();
-        }
-
-        if (!rollen) return [];
-
-        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
-            true,
-        );
-
-        //Landesadmin can view all roles.
-        if (orgsWithRecht.includes(this.organisationRepo.ROOT_ORGANISATION_ID)) {
-            return limit ? rollen.slice(0, limit) : rollen;
-        }
-
-        const allowedRollen: Rolle<true>[] = [];
-        const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-        (await this.organisationRepo.findByIds(orgsWithRecht)).forEach(function (orga: OrganisationDo<true>) {
-            rollen.forEach(function (rolle: Rolle<true>) {
-                if (organisationMatchesRollenart.isSatisfiedBy(orga, rolle) && !allowedRollen.includes(rolle)) {
-                    allowedRollen.push(rolle);
-                }
-            });
-        });
-
-        return limit ? allowedRollen.slice(0, limit) : allowedRollen;
-    }
 }
