@@ -17,6 +17,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>({
@@ -125,6 +126,7 @@ describe('PersonenkontexteUpdate', () => {
                     lastModified,
                     count,
                     createPKBodyParams(personId),
+                    PersonPermissions.ALL,
                 );
             });
 
@@ -150,6 +152,7 @@ describe('PersonenkontexteUpdate', () => {
                     lastModified,
                     count,
                     createPKBodyParams(personId),
+                    PersonPermissions.ALL,
                 );
             });
 
@@ -163,10 +166,13 @@ describe('PersonenkontexteUpdate', () => {
         describe('when existing personenkontexte amount does NOT match count', () => {
             beforeAll(() => {
                 const count: number = 2;
-                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(personId, lastModified, count, [
-                    bodyParam1,
-                    bodyParam2,
-                ]);
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    lastModified,
+                    count,
+                    [bodyParam1, bodyParam2],
+                    PersonPermissions.ALL,
+                );
             });
 
             it('should return UpdateCountError', async () => {
@@ -183,10 +189,13 @@ describe('PersonenkontexteUpdate', () => {
             beforeAll(() => {
                 const wrongLastModified: Date = faker.date.past();
                 const count: number = 2;
-                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(personId, wrongLastModified, count, [
-                    bodyParam1,
-                    bodyParam2,
-                ]);
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    wrongLastModified,
+                    count,
+                    [bodyParam1, bodyParam2],
+                    PersonPermissions.ALL,
+                );
             });
 
             it('should return UpdateOutdatedError', async () => {
@@ -202,10 +211,13 @@ describe('PersonenkontexteUpdate', () => {
         describe('when validate returns no errors', () => {
             beforeEach(() => {
                 const count: number = 2;
-                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(personId, lastModified, count, [
-                    bodyParam1,
-                    bodyParam2,
-                ]);
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    lastModified,
+                    count,
+                    [bodyParam1, bodyParam2],
+                    PersonPermissions.ALL,
+                );
             });
 
             it('should return null asc order', async () => {

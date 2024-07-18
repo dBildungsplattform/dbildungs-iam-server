@@ -140,7 +140,7 @@ export class PersonenkontexteUpdate {
         const hasPermissions: boolean = (
             await Promise.all(
                 modifiedOrgIDs.map((orgID: OrganisationID) =>
-                    this.permissions.hasSystemrechtAtOrganisation(orgID, [RollenSystemRecht.PERSONEN_VERWALTEN]),
+                    this.permissions.hasSystemrechtAtOrganisation(orgID, RollenSystemRecht.PERSONEN_VERWALTEN),
                 ),
             )
         ).every(Boolean);

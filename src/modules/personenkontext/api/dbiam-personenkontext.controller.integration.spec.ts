@@ -29,7 +29,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
@@ -454,9 +454,16 @@ describe('dbiam Personenkontext API', () => {
         describe('when sending no PKs', () => {
             it('should delete and therefore return 200', async () => {
                 const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const orga: OrganisationDo<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, { systemrechte: [RollenSystemRecht.PERSONEN_VERWALTEN] }),
+                );
                 const savedPK: Personenkontext<true> = await personenkontextRepo.save(
-                    createPersonenkontext(personenkontextFactory, false, { personId: person.id, rolleId: rolle.id }),
+                    createPersonenkontext(personenkontextFactory, false, {
+                        personId: person.id,
+                        rolleId: rolle.id,
+                        organisationId: orga.id,
+                    }),
                 );
                 const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
                     createMock<DbiamUpdatePersonenkontexteBodyParams>({
