@@ -109,18 +109,17 @@ export class DBiamPersonenkontextRepo {
         personId: PersonID,
         permissions: PersonPermissions,
     ): Promise<Result<Personenkontext<true>[], DomainError>> {
-        const allKontextsForTargetPerson: Personenkontext<true>[] = await this.findByPerson(personId);
-        for (const targetPersonKontext of allKontextsForTargetPerson) {
-            const hasPermission: boolean = await permissions.hasSystemrechtAtOrganisation(
-                targetPersonKontext.organisationId,
-                RollenSystemRecht.PERSONEN_VERWALTEN,
-            ); //await in loop used on purpose to be able to use early loop exit (Not possible with Promise.awaitall)
-            if (hasPermission) {
-                return {
-                    ok: true,
-                    value: allKontextsForTargetPerson,
-                };
-            }
+        const canSeeKontexts: boolean = await this.hasPersonASystemrechtAtAnyKontextOfPersonB(
+            permissions.personFields.id,
+            personId,
+            RollenSystemRecht.PERSONEN_VERWALTEN,
+        );
+        if (canSeeKontexts) {
+            const allKontextsForTargetPerson: Personenkontext<true>[] = await this.findByPerson(personId);
+            return {
+                ok: true,
+                value: allKontextsForTargetPerson,
+            };
         }
         return {
             ok: false,
@@ -378,10 +377,44 @@ export class DBiamPersonenkontextRepo {
         return result[0].has_systemrecht_at_orga as boolean;
     }
 
-    public canPersonASeeKontextsOfPersonB(
+    public async hasPersonASystemrechtAtAnyKontextOfPersonB(
         personIdA: PersonID,
         personIdB: PersonID,
-    ){
+        systemrecht: RollenSystemRecht,
+    ): Promise<boolean> {
+        const query: string = `
+        WITH RECURSIVE all_orgas_where_personB_has_any_kontext_with_parents AS (
+                    SELECT id, administriert_von
+                    FROM public.organisation
+                    WHERE id IN (
+                        SELECT organisation_id
+                        FROM public.personenkontext
+                        WHERE person_id = ?
+                    )
+                    UNION ALL
+                    SELECT o.id, o.administriert_von
+                    FROM public.organisation o
+                    INNER JOIN all_orgas_where_personB_has_any_kontext_with_parents po ON o.id = po.administriert_von
+                ),
+                kontexts_personB_at_orgas AS (
+                    SELECT pk.*
+                    FROM public.personenkontext pk
+                    WHERE pk.person_id = ? AND pk.organisation_id IN (SELECT id FROM all_orgas_where_personB_has_any_kontext_with_parents)
+                ),
+                permission_check AS (
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM kontexts_personB_at_orgas kb
+                        JOIN public.rolle_systemrecht sr ON sr.rolle_id = kb.rolle_id
+                        WHERE sr.systemrecht = ?
+                    ) AS has_personA_systemrecht_at_any_kontext_of_personB
+                )
+                SELECT has_personA_systemrecht_at_any_kontext_of_personB FROM permission_check;
+                    `;
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result: any[] = await this.em.execute(query, [personIdB, personIdA, systemrecht]);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        return result[0].has_systemrecht_at_orga as boolean;
     }
 }
