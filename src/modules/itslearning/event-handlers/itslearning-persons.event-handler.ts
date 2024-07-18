@@ -11,10 +11,7 @@ import {
     PersonenkontextUpdatedEvent,
     PersonenkontextUpdatedPersonData,
 } from '../../../shared/events/personenkontext-updated.event.js';
-import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { CreatePersonAction } from '../actions/create-person.action.js';
 import { DeletePersonAction } from '../actions/delete-person.action.js';
 import { PersonResponse, ReadPersonAction } from '../actions/read-person.action.js';
@@ -51,7 +48,6 @@ export class ItsLearningPersonsEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly itsLearningService: ItsLearningIMSESService,
-        private readonly rolleRepo: RolleRepo,
         configService: ConfigService<ServerConfig>,
     ) {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
@@ -96,7 +92,7 @@ export class ItsLearningPersonsEventHandler {
                 return;
             }
 
-            const targetRole: ItsLearningRoleType = await this.determineItsLearningRole(personenkontexte);
+            const targetRole: ItsLearningRoleType = this.determineItsLearningRole(personenkontexte);
 
             const personResult: Result<PersonResponse, DomainError> = await this.itsLearningService.send(
                 new ReadPersonAction(person.id),
@@ -134,16 +130,11 @@ export class ItsLearningPersonsEventHandler {
      * @param personenkontexte
      * @returns
      */
-    private async determineItsLearningRole(
-        personenkontexte: PersonenkontextUpdatedData[],
-    ): Promise<ItsLearningRoleType> {
-        const rollenIDs: RolleID[] = personenkontexte.map((pk: PersonenkontextUpdatedData) => pk.rolleId);
-        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIDs);
-
+    private determineItsLearningRole(personenkontexte: PersonenkontextUpdatedData[]): ItsLearningRoleType {
         let highestRole: number = 0;
 
-        for (const rolle of rollenMap.values()) {
-            highestRole = Math.max(highestRole, ROLLENART_ORDER.indexOf(rolle.rollenart));
+        for (const { rolle } of personenkontexte) {
+            highestRole = Math.max(highestRole, ROLLENART_ORDER.indexOf(rolle));
         }
 
         // Null assertion is valid here, highestRole can never be OOB

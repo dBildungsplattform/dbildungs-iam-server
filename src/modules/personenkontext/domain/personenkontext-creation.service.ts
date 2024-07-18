@@ -10,7 +10,6 @@ import { PersonFactory } from '../../person/domain/person.factory.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
-import { PersonPermissionsMock } from '../../authentication/domain/person-permissions.mock.js';
 
 export type PersonPersonenkontext = {
     person: Person<true>;
@@ -68,7 +67,7 @@ export class PersonenkontextCreationService {
                 },
             ],
             // Permissions were checked in PersonenkontextWorkflowAggregate
-            new PersonPermissionsMock(),
+            PersonPermissions.ALL,
         );
 
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
