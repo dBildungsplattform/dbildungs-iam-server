@@ -71,7 +71,7 @@ export class PersonenkontextCreationService {
         );
 
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
-        if (updateResult instanceof PersonenkontexteUpdateError) {
+        if (updateResult instanceof DomainError) {
             return updateResult;
         }
 

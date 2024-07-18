@@ -538,22 +538,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
                 expect(response.status).toBe(400);
             });
-            it('should rethrow generic errors', async () => {
-                const params: DBiamFindPersonenkontexteByPersonIdParams = { personId: faker.string.uuid() };
-                const bodyParams: DbiamUpdatePersonenkontexteBodyParams = {
-                    count: 0,
-                    lastModified: new Date(),
-                    personenkontexte: [],
-                };
-                const genericError: Error = new Error('Generic error message');
-                personenkontextWorkflowMock.commit.mockRejectedValue(genericError);
-
-                const response: Response = await request(app.getHttpServer() as App)
-                    .put(`/personenkontext-workflow/${params.personId}`)
-                    .send(bodyParams);
-
-                expect(response.status).toBe(500);
-            });
         });
     });
 

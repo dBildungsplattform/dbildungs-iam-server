@@ -18,6 +18,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>({
@@ -241,6 +242,45 @@ describe('PersonenkontexteUpdate', () => {
                 expect(dBiamPersonenkontextRepoMock.delete).toHaveBeenCalledTimes(0);
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
                 expect(updateResult).toBeInstanceOf(Array);
+            });
+        });
+
+        describe('when permissions are insufficient', () => {
+            it('should return MissingPermissionsError if the target person can not be modified', async () => {
+                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk2, pk1]); //mock: both PKs are found
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: return the PKs found after update
+                const permissions: DeepMocked<PersonPermissions> = createMock();
+                permissions.canModifyPerson.mockResolvedValueOnce(false);
+                const pkUpdate: PersonenkontexteUpdate = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    lastModified,
+                    2,
+                    [bodyParam1, bodyParam2],
+                    permissions,
+                );
+
+                await expect(pkUpdate.update()).resolves.toBeInstanceOf(MissingPermissionsError);
+            });
+
+            it('should return MissingPermissionsError if the user can not modify persons at organisation', async () => {
+                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk2, pk1]); //mock: both PKs are found
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: return the PKs found after update
+                const permissions: DeepMocked<PersonPermissions> = createMock();
+                permissions.canModifyPerson.mockResolvedValueOnce(true);
+                permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+                const pkUpdate: PersonenkontexteUpdate = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    lastModified,
+                    2,
+                    [bodyParam1, bodyParam2],
+                    permissions,
+                );
+
+                await expect(pkUpdate.update()).resolves.toBeInstanceOf(MissingPermissionsError);
             });
         });
     });
