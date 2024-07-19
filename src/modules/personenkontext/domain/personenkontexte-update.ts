@@ -21,7 +21,7 @@ export class PersonenkontexteUpdate {
         private readonly personRepo: PersonRepo,
         private readonly personenkontextFactory: PersonenkontextFactory,
         private readonly personId: PersonID,
-        private readonly lastModified: Date,
+        private readonly lastModified: Date | undefined,
         private readonly count: number,
         private readonly dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
     ) {}
@@ -32,7 +32,7 @@ export class PersonenkontexteUpdate {
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         personenkontextFactory: PersonenkontextFactory,
         personId: PersonID,
-        lastModified: Date,
+        lastModified: Date | undefined,
         count: number,
         dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
     ): PersonenkontexteUpdate {
@@ -81,14 +81,24 @@ export class PersonenkontexteUpdate {
             return new UpdatePersonNotFoundError();
         }
 
-        if (existingPKs.length != this.count) {
+        if (existingPKs.length !== this.count) {
             return new UpdateCountError();
+        }
+
+        if (existingPKs.length === 0) {
+            // If there are no existing PKs and lastModified is undefined, it's okay and validation stops here with no error
+            return null;
         }
 
         const sortedExistingPKs: Personenkontext<true>[] = existingPKs.sort(
             (pk1: Personenkontext<true>, pk2: Personenkontext<true>) => (pk1.updatedAt < pk2.updatedAt ? 1 : -1),
         );
         const mostRecentUpdatedAt: Date = sortedExistingPKs[0]!.updatedAt;
+
+        if (this.lastModified === undefined) {
+            // If there are existing PKs but lastModified is undefined, return an error
+            return new UpdateOutdatedError();
+        }
 
         if (mostRecentUpdatedAt.getTime() > this.lastModified.getTime()) {
             // The existing data is newer than the incoming update

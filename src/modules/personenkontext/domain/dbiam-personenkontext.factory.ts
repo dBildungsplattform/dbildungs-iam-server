@@ -18,7 +18,7 @@ export class DbiamPersonenkontextFactory {
 
     public createNewPersonenkontexteUpdate(
         personId: PersonID,
-        lastModified: Date,
+        lastModified: Date | undefined,
         count: number,
         dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
     ): PersonenkontexteUpdate {
