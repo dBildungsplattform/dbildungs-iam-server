@@ -119,6 +119,7 @@ export class PersonenkontexteUpdate {
 
         // Find all new and deleted personenkontexte
         const modifiedPKs: Personenkontext<true>[] = [];
+
         for (const existingPK of existingPKs) {
             if (
                 !sentPKs.some(
@@ -129,6 +130,19 @@ export class PersonenkontexteUpdate {
                 )
             ) {
                 modifiedPKs.push(existingPK);
+            }
+        }
+
+        for (const sentPK of sentPKs) {
+            if (
+                !existingPKs.some(
+                    (pk: Personenkontext<true>) =>
+                        pk.personId === sentPK.personId &&
+                        pk.organisationId === sentPK.organisationId &&
+                        pk.rolleId === sentPK.rolleId,
+                )
+            ) {
+                modifiedPKs.push(sentPK);
             }
         }
 
@@ -259,7 +273,7 @@ export class PersonenkontexteUpdate {
         ]);
 
         if (!person) {
-            return; // TODO!!!
+            return; // Person can not be found
         }
 
         this.eventService.publish(
