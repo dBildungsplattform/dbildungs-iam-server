@@ -123,7 +123,7 @@ export class DBiamPersonenkontextRepo {
 
         if (personenkontexte.length === 0) {
             const isAuthorizedAtRoot: boolean =
-                await permissions.hasSystemrechtAtRootOrganisation(relevantSystemRechte);
+                await permissions.hasSystemrechteAtRootOrganisation(relevantSystemRechte);
 
             if (!isAuthorizedAtRoot) {
                 return {
@@ -362,5 +362,39 @@ export class DBiamPersonenkontextRepo {
                 personenKontext.rolleId,
             ),
         );
+    }
+
+    public async hasSystemrechtAtOrganisation(
+        personId: PersonID,
+        organisationId: OrganisationID,
+        systemrecht: RollenSystemRecht,
+    ): Promise<boolean> {
+        const query: string = `
+            WITH RECURSIVE parent_organisations AS (
+                SELECT id, administriert_von
+                FROM public.organisation
+                WHERE id = ?
+                UNION ALL
+                SELECT o.id, o.administriert_von
+                FROM public.organisation o
+                INNER JOIN parent_organisations po ON o.id = po.administriert_von
+            ),
+            person_roles_at_orgas AS (
+                SELECT DISTINCT pk.rolle_id
+                FROM parent_organisations po
+                JOIN public.personenkontext pk ON pk.organisation_id = po.id AND pk.person_id = ?
+            )
+            SELECT EXISTS (
+                SELECT 1
+                FROM person_roles_at_orgas pr
+                JOIN public.rolle_systemrecht sr ON sr.rolle_id = pr.rolle_id
+                WHERE sr.systemrecht = ?
+            ) AS has_systemrecht_at_orga;
+                        `;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result: any[] = await this.em.execute(query, [organisationId, personId, systemrecht]);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        return result[0].has_systemrecht_at_orga as boolean;
     }
 }
