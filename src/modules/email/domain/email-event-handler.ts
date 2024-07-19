@@ -43,14 +43,18 @@ export class EmailEventHandler {
 
             if (existingEmail) {
                 this.logger.info(`Existing email found for personId:${event.personId}`);
-                existingEmail.enable();
-                const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(existingEmail);
-                if (persistenceResult instanceof EmailAddress) {
-                    this.logger.info(
-                        `Successfully persisted email with new address:${persistenceResult.currentAddress}`,
-                    );
+
+                if (existingEmail.enabled) {
+                    this.logger.info(`Existing email for personId:${event.personId} already enabled`);
                 } else {
-                    this.logger.error(`Could not enable email, error is ${persistenceResult.message}`);
+                    existingEmail.enable();
+                    const persistenceResult: EmailAddress<true> | DomainError =
+                        await this.emailRepo.save(existingEmail);
+                    if (persistenceResult instanceof EmailAddress) {
+                        this.logger.info(`Enabled and saved address:${persistenceResult.currentAddress}`);
+                    } else {
+                        this.logger.error(`Could not enable email, error is ${persistenceResult.message}`);
+                    }
                 }
             } else {
                 this.logger.info(`No existing email found for personId:${event.personId}, creating a new one`);

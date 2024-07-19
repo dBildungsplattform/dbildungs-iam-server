@@ -40,7 +40,7 @@ export class EmailRepo {
         const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
             EmailAddressEntity,
             {
-                $and: [{ personId: { $eq: personId } }, { enabled: { $eq: true } }],
+                personId: { $eq: personId },
             },
             {},
         );
