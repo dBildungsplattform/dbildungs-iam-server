@@ -121,6 +121,15 @@ export class DBiamPersonenkontextRepo {
                 value: allKontextsForTargetPerson,
             };
         }
+        const isAuthorizedAtRoot: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+            RollenSystemRecht.PERSONEN_VERWALTEN,
+        ]);
+        if (isAuthorizedAtRoot) {
+            return {
+                ok: true,
+                value: [],
+            };
+        }
         return {
             ok: false,
             error: new MissingPermissionsError('Not allowed to view the requested personenkontexte'),
