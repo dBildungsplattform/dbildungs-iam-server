@@ -392,7 +392,7 @@ export class DBiamPersonenkontextRepo {
         systemrecht: RollenSystemRecht,
     ): Promise<boolean> {
         const query: string = `
-        WITH RECURSIVE all_orgas_where_personB_has_any_kontext_with_parents AS (
+        WITH RECURSIVE all_orgas_where_personb_has_any_kontext_with_parents AS (
                     SELECT id, administriert_von
                     FROM public.organisation
                     WHERE id IN (
@@ -403,12 +403,12 @@ export class DBiamPersonenkontextRepo {
                     UNION ALL
                     SELECT o.id, o.administriert_von
                     FROM public.organisation o
-                    INNER JOIN all_orgas_where_personB_has_any_kontext_with_parents po ON o.id = po.administriert_von
+                    INNER JOIN all_orgas_where_personb_has_any_kontext_with_parents po ON o.id = po.administriert_von
                 ),
                 kontexts_personB_at_orgas AS (
                     SELECT pk.*
                     FROM public.personenkontext pk
-                    WHERE pk.person_id = ? AND pk.organisation_id IN (SELECT id FROM all_orgas_where_personB_has_any_kontext_with_parents)
+                    WHERE pk.person_id = ? AND pk.organisation_id IN (SELECT id FROM all_orgas_where_personb_has_any_kontext_with_parents)
                 ),
                 permission_check AS (
                     SELECT EXISTS (
@@ -416,14 +416,14 @@ export class DBiamPersonenkontextRepo {
                         FROM kontexts_personB_at_orgas kb
                         JOIN public.rolle_systemrecht sr ON sr.rolle_id = kb.rolle_id
                         WHERE sr.systemrecht = ?
-                    ) AS has_personA_systemrecht_at_any_kontext_of_personB
+                    ) AS has_persona_systemrecht_at_any_kontext_of_personb
                 )
-                SELECT has_personA_systemrecht_at_any_kontext_of_personB FROM permission_check;
+                SELECT has_persona_systemrecht_at_any_kontext_of_personb FROM permission_check;
                     `;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result: any[] = await this.em.execute(query, [personIdB, personIdA, systemrecht]);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        return result[0].has_systemrecht_at_orga as boolean;
+        return result[0].has_persona_systemrecht_at_any_kontext_of_personb as boolean;
     }
 }
