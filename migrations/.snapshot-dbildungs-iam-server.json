@@ -1147,6 +1147,26 @@
       "schema": "public",
       "indexes": [
         {
+          "columnNames": [
+            "administriert_von"
+          ],
+          "composite": false,
+          "keyName": "organisation_administriert_von_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "typ"
+          ],
+          "composite": false,
+          "keyName": "organisation_typ_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "organisation_pkey",
           "columnNames": [
             "id"
@@ -1560,6 +1580,26 @@
       "name": "person",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "keycloak_user_id"
+          ],
+          "composite": false,
+          "keyName": "person_keycloak_user_id_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "personalnummer"
+          ],
+          "composite": false,
+          "keyName": "person_personalnummer_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
         {
           "keyName": "person_pkey",
           "columnNames": [
@@ -2119,6 +2159,16 @@
       "name": "personenkontext",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "person_id"
+          ],
+          "composite": false,
+          "keyName": "personenkontext_person_id_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "personenkontext_person_id_organisation_id_rolle_id_unique",
           "columnNames": [
