@@ -3,13 +3,22 @@ import { ClassLogger } from '../../logging/class-logger.js';
 import { Client, SearchResult } from 'ldapts';
 import { LdapEntityType, LdapOrganisationEntry, LdapPersonEntry, LdapRoleEntry } from './ldap.types.js';
 import { KennungRequiredForSchuleError } from '../../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
-import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { LdapClient } from './ldap-client.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
 import { Mutex } from 'async-mutex';
 import { LdapSearchError } from '../error/ldap-search.error.js';
+
+export type PersonData = {
+    vorname: string;
+    familienname: string;
+    referrer?: string;
+};
+
+type OrganisationData = {
+    kennung?: string;
+};
 
 @Injectable()
 export class LdapClientService {
@@ -90,7 +99,7 @@ export class LdapClientService {
         });
     }
 
-    public async createLehrer(person: Person<true>, organisation: Organisation<true>): Promise<Result<Person<true>>> {
+    public async createLehrer(person: PersonData, organisation: OrganisationData): Promise<Result<PersonData>> {
         if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
         if (!person.referrer) {
             return {
@@ -100,7 +109,7 @@ export class LdapClientService {
                 ),
             };
         }
-        const lehrerUid: string = this.getLehrerUid(person, organisation);
+        const lehrerUid: string = this.getLehrerUid(person.referrer, organisation.kennung);
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: createLehrer');
             const client: Client = this.ldapClient.getClient();
@@ -143,11 +152,11 @@ export class LdapClientService {
         });
     }
 
-    private getLehrerUid(person: Person<true>, organisation: Organisation<true>): string {
-        return `uid=${person.referrer},cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`;
+    private getLehrerUid(referrer: string, orgaKennung: string): string {
+        return `uid=${referrer},cn=lehrer,ou=${orgaKennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`;
     }
 
-    public async deleteLehrer(person: Person<true>, organisation: Organisation<true>): Promise<Result<Person<true>>> {
+    public async deleteLehrer(person: PersonData, organisation: OrganisationData): Promise<Result<PersonData>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteLehrer');
             const client: Client = this.ldapClient.getClient();
@@ -161,7 +170,7 @@ export class LdapClientService {
                         `Lehrer ${person.vorname} ${person.familienname} does not have a username`,
                     ),
                 };
-            const lehrerUid: string = this.getLehrerUid(person, organisation);
+            const lehrerUid: string = this.getLehrerUid(person.referrer, organisation.kennung);
             await client.del(lehrerUid);
             this.logger.info(`LDAP: Successfully deleted lehrer ${lehrerUid}`);
 

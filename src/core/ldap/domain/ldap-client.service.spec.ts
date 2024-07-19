@@ -14,7 +14,7 @@ import { LdapConfigModule } from '../ldap-config.module.js';
 import { LdapModule } from '../ldap.module.js';
 import { faker } from '@faker-js/faker';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
-import { LdapClientService } from './ldap-client.service.js';
+import { LdapClientService, PersonData } from './ldap-client.service.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
@@ -184,7 +184,7 @@ describe('LDAP Client Service', () => {
 
                     return clientMock;
                 });
-                const result: Result<Person<true>> = await ldapClientService.createLehrer(person, organisation);
+                const result: Result<PersonData> = await ldapClientService.createLehrer(person, organisation);
 
                 expect(result.ok).toBeTruthy();
             });
@@ -195,7 +195,7 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<Person<true>> = await ldapClientService.createLehrer(person, invalidOrganisation);
+                const result: Result<PersonData> = await ldapClientService.createLehrer(person, invalidOrganisation);
 
                 expect(result.ok).toBeFalsy();
             });
@@ -208,7 +208,7 @@ describe('LDAP Client Service', () => {
 
                     return clientMock;
                 });
-                const result: Result<Person<true>> = await ldapClientService.createLehrer(person, organisation);
+                const result: Result<PersonData> = await ldapClientService.createLehrer(person, organisation);
 
                 expect(result.ok).toBeFalsy();
             });
@@ -226,7 +226,7 @@ describe('LDAP Client Service', () => {
 
                     return clientMock;
                 });
-                const result: Result<Person<true>> = await ldapClientService.createLehrer(person, organisation);
+                const result: Result<PersonData> = await ldapClientService.createLehrer(person, organisation);
 
                 expect(result.ok).toBeFalsy();
             });
@@ -242,7 +242,7 @@ describe('LDAP Client Service', () => {
 
                     return clientMock;
                 });
-                const result: Result<Person<true>> = await ldapClientService.createLehrer(
+                const result: Result<PersonData> = await ldapClientService.createLehrer(
                     personWithoutReferrer,
                     organisation,
                 );
@@ -256,7 +256,7 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<Person<true>> = await ldapClientService.createLehrer(person, organisation);
+                const result: Result<PersonData> = await ldapClientService.createLehrer(person, organisation);
 
                 expect(result.ok).toBeFalsy();
             });
@@ -272,7 +272,7 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
 
-                const result: Result<Person<true>> = await ldapClientService.deleteLehrer(person, organisation);
+                const result: Result<PersonData> = await ldapClientService.deleteLehrer(person, organisation);
 
                 expect(result.ok).toBeTruthy();
             });
@@ -283,7 +283,7 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<Person<true>> = await ldapClientService.deleteLehrer(person, invalidOrganisation);
+                const result: Result<PersonData> = await ldapClientService.deleteLehrer(person, invalidOrganisation);
 
                 expect(result.ok).toBeFalsy();
             });
@@ -294,7 +294,7 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<Person<true>> = await ldapClientService.deleteLehrer(
+                const result: Result<PersonData> = await ldapClientService.deleteLehrer(
                     personWithoutReferrer,
                     organisation,
                 );
@@ -308,7 +308,7 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<Person<true>> = await ldapClientService.deleteLehrer(person, organisation);
+                const result: Result<PersonData> = await ldapClientService.deleteLehrer(person, organisation);
 
                 expect(result.ok).toBeFalsy();
             });

@@ -20,6 +20,7 @@ export type PersonenkontextUpdatedData = {
     rolle: RollenArt;
     orgaId: OrganisationID;
     orgaTyp?: OrganisationsTyp;
+    orgaKennung?: string;
 };
 
 function mapPersonToData(person: Person<true>): PersonenkontextUpdatedPersonData {
@@ -41,6 +42,7 @@ function mapPersonenkontextAndRolleAggregateToData([pk, orga, rolle]: [
         rolle: rolle.rollenart,
         orgaId: pk.organisationId,
         orgaTyp: orga.typ,
+        orgaKennung: orga.kennung,
     };
 }
 
