@@ -109,8 +109,7 @@ export class DBiamPersonenkontextRepo {
         personId: PersonID,
         permissions: PersonPermissions,
     ): Promise<Result<Personenkontext<true>[], DomainError>> {
-        const canSeeKontexts: boolean = await this.hasPersonASystemrechtAtAnyKontextOfPersonB(
-            permissions.personFields.id,
+        const canSeeKontexts: boolean = await permissions.hasSystemrechtAtAnyKontextOfTargetPerson(
             personId,
             RollenSystemRecht.PERSONEN_VERWALTEN,
         );
