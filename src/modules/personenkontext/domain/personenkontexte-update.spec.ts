@@ -270,5 +270,38 @@ describe('PersonenkontexteUpdate', () => {
                 expect(updateResult).toBeInstanceOf(Array);
             });
         });
+        describe('when there are no existing PKs and lastModified is undefined', () => {
+            beforeEach(() => {
+                const count: number = 0;
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(personId, undefined, count, []);
+            });
+
+            it('should return null', async () => {
+                const newPerson: PersonDo<true> = DoFactory.createPerson(true);
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([]); // No existing PKs
+
+                const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+                expect(updateResult).toBeUndefined();
+            });
+        });
+        describe('when there are existing PKs but lastModified is undefined', () => {
+            beforeEach(() => {
+                const count: number = 2;
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(personId, undefined, count, [
+                    bodyParam1,
+                    bodyParam2,
+                ]);
+            });
+
+            it('should return UpdateOutdatedError', async () => {
+                const newPerson: PersonDo<true> = DoFactory.createPerson(true);
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); // Existing PKs
+
+                const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+                expect(updateResult).toBeInstanceOf(UpdateOutdatedError);
+            });
+        });
     });
 });
