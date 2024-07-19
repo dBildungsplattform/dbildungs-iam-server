@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { DbiamPersonenkontextBodyParams } from './dbiam-personenkontext.body.params.js';
-import { IsNumber, ValidateNested } from 'class-validator';
+import { IsDate, IsNumber, IsOptional, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class DbiamUpdatePersonenkontexteBodyParams {
-
+    @IsDate()
+    @IsOptional()
     @ApiProperty({
         required: false,
         nullable: true,
