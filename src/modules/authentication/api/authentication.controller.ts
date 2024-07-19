@@ -15,7 +15,7 @@ import { Request, Response } from 'express';
 import { SessionData } from 'express-session';
 import { Client } from 'openid-client';
 
-import { FrontendConfig, ServerConfig } from '../../../shared/config/index.js';
+import { FrontendConfig, KeycloakConfig, ServerConfig } from '../../../shared/config/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
 import { LoginGuard } from './login.guard.js';
 import { RedirectQueryParams } from './redirect.query.params.js';
@@ -37,13 +37,17 @@ export class AuthenticationController {
 
     private readonly logoutRedirect: string;
 
+    private readonly defaultKeycloakBaseUrl: string;
+
     public constructor(
         configService: ConfigService<ServerConfig>,
         @Inject(OIDC_CLIENT) private client: Client,
         private readonly logger: ClassLogger,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
+        const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
         this.defaultLoginRedirect = frontendConfig.DEFAULT_LOGIN_REDIRECT;
+        this.defaultKeycloakBaseUrl = keycloakConfig.BASE_URL;
         this.logoutRedirect = frontendConfig.LOGOUT_REDIRECT;
     }
 
@@ -117,5 +121,13 @@ export class AuthenticationController {
                 ),
         );
         return new UserinfoResponse(permissions, rolleFieldsResponse);
+    }
+
+    @Get('keycloakbaseurl')
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Used to get the keycloak base url.' })
+    @ApiOkResponse({ description: 'Keycloak base url.', type: String })
+    public getKeycloakBaseUrl(): string {
+        return this.defaultKeycloakBaseUrl;
     }
 }
