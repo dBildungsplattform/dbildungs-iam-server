@@ -23,7 +23,7 @@ export class Migration20240612044813 extends Migration {
         this.addSql('alter table "person" drop constraint if exists "person_vertrauensstufe_check";');
         this.addSql('alter table "personenkontext" drop constraint if exists "personenkontext_personenstatus_check";');
         this.addSql('alter table "personenkontext" drop constraint if exists "personenkontext_jahrgangsstufe_check";');
-        this.addSql('alter table "personenkontext" drop constraint "personenkontext_person_id_id_foreign";');
+        this.addSql('alter table "personenkontext" drop constraint "personenkontext_person_id_foreign";');
         this.addSql('alter table "rolle" drop constraint if exists "rolle_rollenart_check";');
         this.addSql('alter table "rolle_merkmal" drop constraint if exists "rolle_merkmal_merkmal_check";');
         this.addSql('alter table "rolle_systemrecht" drop constraint if exists "rolle_systemrecht_systemrecht_check";');
@@ -37,7 +37,7 @@ export class Migration20240612044813 extends Migration {
         this.addSql('alter table "person" alter column "vertrauensstufe" type "vertrauensstufe_enum" using ("vertrauensstufe"::"vertrauensstufe_enum");');
         this.addSql('alter table "personenkontext" alter column "personenstatus" type "personenstatus_enum" using ("personenstatus"::"personenstatus_enum");');
         this.addSql('alter table "personenkontext" alter column "jahrgangsstufe" type "jahrgangsstufe_enum" using ("jahrgangsstufe"::"jahrgangsstufe_enum");');
-        this.addSql('alter table "personenkontext" add constraint "personenkontext_person_id_id_foreign" foreign key ("person_id_id") references "person" ("id") on delete cascade;');
+        this.addSql('alter table "personenkontext" add constraint "personenkontext_person_id_foreign" foreign key ("person_id") references "person" ("id") on delete cascade;');
         this.addSql('alter table "rolle" alter column "rollenart" type "rollen_art_enum" using ("rollenart"::"rollen_art_enum");');
         this.addSql('alter table "rolle_merkmal" alter column "merkmal" type "rollen_merkmal_enum" using ("merkmal"::"rollen_merkmal_enum");');
         this.addSql('alter table "rolle_systemrecht" alter column "systemrecht" type "rollen_system_recht_enum" using ("systemrecht"::"rollen_system_recht_enum");');
@@ -46,7 +46,7 @@ export class Migration20240612044813 extends Migration {
     }
     async down() {
         this.addSql('create table "fake" ("id" uuid not null, "created_at" timestamptz not null, "updated_at" timestamptz not null, "source" uuid not null, "target" uuid not null, constraint "fake_pkey" primary key ("id"));');
-        this.addSql('alter table "personenkontext" drop constraint "personenkontext_person_id_id_foreign";');
+        this.addSql('alter table "personenkontext" drop constraint "personenkontext_person_id_foreign";');
         this.addSql('alter table "seeding" alter column "status" type text using ("status"::text);');
         this.addSql('alter table "seeding" add constraint "seeding_status_check" check("status" in (\'STARTED\', \'DONE\', \'FAILED\'));');
         this.addSql('alter table "seeding_reference" alter column "referenced_entity_type" type text using ("referenced_entity_type"::text);');
@@ -63,7 +63,7 @@ export class Migration20240612044813 extends Migration {
         this.addSql('alter table "personenkontext" alter column "jahrgangsstufe" type text using ("jahrgangsstufe"::text);');
         this.addSql('alter table "personenkontext" add constraint "personenkontext_personenstatus_check" check("personenstatus" in (\'AKTIV\'));');
         this.addSql('alter table "personenkontext" add constraint "personenkontext_jahrgangsstufe_check" check("jahrgangsstufe" in (\'01\', \'02\', \'03\', \'04\', \'05\', \'06\', \'07\', \'08\', \'09\', \'10\'));');
-        this.addSql('alter table "personenkontext" add constraint "personenkontext_person_id_id_foreign" foreign key ("person_id_id") references "person" ("id");');
+        this.addSql('alter table "personenkontext" add constraint "personenkontext_person_id_foreign" foreign key ("person_id") references "person" ("id");');
         this.addSql('alter table "rolle" alter column "rollenart" type text using ("rollenart"::text);');
         this.addSql('alter table "rolle" add constraint "rolle_rollenart_check" check("rollenart" in (\'LERN\', \'LEHR\', \'EXTERN\', \'ORGADMIN\', \'LEIT\', \'SYSADMIN\'));');
         this.addSql('alter table "rolle_merkmal" alter column "merkmal" type text using ("merkmal"::text);');
