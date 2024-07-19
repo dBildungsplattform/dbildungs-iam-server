@@ -136,10 +136,8 @@ export class OrganisationRepository {
         ) AS is_parent;
         `;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result: any[] = await this.em.execute(query, [organisationIdB, organisationIdA]);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        return result[0].is_parent as boolean;
+        const result: [{ is_parent: boolean }] = await this.em.execute(query, [organisationIdB, organisationIdA]);
+        return result[0].is_parent;
     }
 
     public async findRootDirectChildren(): Promise<
