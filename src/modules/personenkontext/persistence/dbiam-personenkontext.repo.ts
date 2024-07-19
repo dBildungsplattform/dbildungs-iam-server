@@ -420,9 +420,8 @@ export class DBiamPersonenkontextRepo {
                 SELECT has_persona_systemrecht_at_any_kontext_of_personb FROM permission_check;
                     `;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result: any[] = await this.em.execute(query, [personIdB, personIdA, systemrecht]);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        return result[0].has_persona_systemrecht_at_any_kontext_of_personb as boolean;
+        const result: [{ has_persona_systemrecht_at_any_kontext_of_personb: boolean }] = await this.em.execute(query, [personIdB, personIdA, systemrecht]);
+        return result[0].has_persona_systemrecht_at_any_kontext_of_personb;
+
     }
 }
