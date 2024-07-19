@@ -2,10 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
-import { InitSoftwareTokenResponse, InitSoftwareTokenPayload } from './privacy-idea-api.types.js';
+import {
+    InitSoftwareTokenResponse,
+    InitSoftwareTokenPayload,
+    PrivacyIdeaResponseTokens,
+    PrivacyIdeaToken,
+    AuthenticaitonResponse,
+} from './privacy-idea-api.types.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {
+    private jwtToken: string | null = null;
+
+    private tokenExpiry: number = 0;
+
+    private static AUTHORIZATION_TIMEBOX_MS: number = 59 * 60 * 1000;
+
     public constructor(private readonly httpService: HttpService) {}
 
     public async initializeSoftwareToken(user: string): Promise<InitSoftwareTokenResponse> {
@@ -20,6 +32,11 @@ export class PrivacyIdeaAdministrationService {
     }
 
     private async getJWTToken(): Promise<string> {
+        const now: number = Date.now();
+        if (this.jwtToken && now < this.tokenExpiry) {
+            return this.jwtToken;
+        }
+
         const endpoint: string = '/auth';
         const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
         const authUrl: string = baseUrl + endpoint;
@@ -29,12 +46,14 @@ export class PrivacyIdeaAdministrationService {
         };
 
         try {
-            const response: AxiosResponse = await firstValueFrom(
+            const response: AxiosResponse<AuthenticaitonResponse> = await firstValueFrom(
                 this.httpService.post(authUrl, authPayload, {
                     headers: { 'Content-Type': 'application/json' },
                 }),
             );
-            return response.data.result.value.token as string;
+            this.tokenExpiry = now + PrivacyIdeaAdministrationService.AUTHORIZATION_TIMEBOX_MS;
+            this.jwtToken = response.data.result.value.token;
+            return this.jwtToken;
         } catch (error) {
             throw new Error(`Error fetching JWT token`);
         }
@@ -81,6 +100,29 @@ export class PrivacyIdeaAdministrationService {
             return response.data;
         } catch (error) {
             throw new Error(`Error initializing token: `);
+        }
+    }
+
+    public async getTwoAuthState(userName: string): Promise<PrivacyIdeaToken | undefined> {
+        const token: string = await this.getJWTToken();
+        const endpoint: string = '/token';
+        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
+        const url: string = baseUrl + endpoint;
+        const headers: { Authorization: string } = {
+            Authorization: `${token}`,
+        };
+        const params: { user: string; type: string } = {
+            user: userName,
+            type: 'totp',
+        };
+
+        try {
+            const response: AxiosResponse<PrivacyIdeaResponseTokens> = await firstValueFrom(
+                this.httpService.get(url, { headers: headers, params: params }),
+            );
+            return response.data.result.value.tokens[0];
+        } catch (error) {
+            throw new Error(`Error getting token: `);
         }
     }
 }

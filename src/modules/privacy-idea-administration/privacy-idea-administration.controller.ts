@@ -1,7 +1,7 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { Public } from '../authentication/api/public.decorator.js';
-import { InitSoftwareTokenResponse } from './privacy-idea-api.types.js';
+import { InitSoftwareTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -30,7 +30,20 @@ export class PrivacyIdeaAdministrationController {
     @ApiNotFoundResponse({ description: 'Insufficient permissions to create token.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating a token.' })
     @Public()
-    public async initializeSoftwareToken(@Body() params: { user: string }): Promise<InitSoftwareTokenResponse> {
-        return this.privacyIdeaAdministrationService.initializeSoftwareToken(params.user);
+    public async initializeSoftwareToken(@Body() params: { userName: string }): Promise<InitSoftwareTokenResponse> {
+        return this.privacyIdeaAdministrationService.initializeSoftwareToken(params.userName);
+    }
+
+    @Get('state')
+    @HttpCode(HttpStatus.OK)
+    @ApiCreatedResponse({ description: 'The token was successfully created.', type: PrivacyIdeaAdministrationService })
+    @ApiBadRequestResponse({ description: 'A username was not given or not found.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to create token.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to create token.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to create token.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while creating a token.' })
+    @Public()
+    public async getTwoAuthState(@Query('userName') userName: string): Promise<PrivacyIdeaToken | undefined> {
+        return this.privacyIdeaAdministrationService.getTwoAuthState(userName);
     }
 }
