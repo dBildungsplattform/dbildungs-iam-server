@@ -151,7 +151,7 @@ export class OrganisationRepository {
         return organisationMap;
     }
 
-    public async updateKlassenName(id: string, newName: string): Promise<DomainError | void> {
+    public async updateKlassenName(id: string, newName: string): Promise<DomainError | Organisation<true> > {
         const organisationFound: Option<Organisation<true>> = await this.findById(id);
 
         if (!organisationFound) {
@@ -170,9 +170,10 @@ export class OrganisationRepository {
                 return specificationError;
             }
         }
-
-        await this.save(organisationFound);
+        const organisationEntity: Organisation<true> =  await this.save(organisationFound);
         this.eventService.publish(new KlasseUpdatedEvent(id));
+
+        return organisationEntity;
     }
 
     private async create(organisation: Organisation<false>): Promise<Organisation<true>> {

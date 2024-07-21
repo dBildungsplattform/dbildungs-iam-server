@@ -332,7 +332,11 @@ export class OrganisationController {
     }
 
     @Patch(':organisationId/name')
-    @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
+    @ApiOkResponse({
+        description: 'The organizations were successfully updated.',
+        type: OrganisationResponseLegacy,
+        headers: PagingHeadersObject,
+    })
     @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
@@ -340,13 +344,13 @@ export class OrganisationController {
     public async updateOrganisationName(
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByNameBodyParams,
-    ): Promise<void> {
-        const result: DomainError | void = await this.organisationRepository.updateKlassenName(
+    ): Promise<OrganisationResponse | DomainError> {
+        const result: DomainError | Organisation<true> = await this.organisationRepository.updateKlassenName(
             params.organisationId,
             body.name,
         );
 
-        if (result) {
+        if (result instanceof DomainError) {
             if (result instanceof OrganisationSpecificationError) {
                 throw result;
             }
@@ -355,5 +359,7 @@ export class OrganisationController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
+
+        return new OrganisationResponse(result);
     }
 }
