@@ -1,6 +1,6 @@
 import { IPersonPermissions } from './person-permissions.interface.js';
 
-export class PersonPermissionsMock implements IPersonPermissions {
+export class PersonPermissionsBypass implements IPersonPermissions {
     public hasSystemrechteAtOrganisation(): Promise<boolean> {
         return Promise.resolve(true);
     }

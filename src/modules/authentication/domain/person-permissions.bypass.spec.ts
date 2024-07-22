@@ -1,7 +1,7 @@
-import { PersonPermissionsMock } from './person-permissions.mock.js';
+import { PersonPermissionsBypass } from './person-permissions.bypass.js';
 
 describe('PersonPermissionsMock', () => {
-    const sut: PersonPermissionsMock = new PersonPermissionsMock();
+    const sut: PersonPermissionsBypass = new PersonPermissionsBypass();
 
     describe('hasSystemrechteAtOrganisation', () => {
         it('should return true', async () => {

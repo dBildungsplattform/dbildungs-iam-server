@@ -9,7 +9,7 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { IPersonPermissions } from './person-permissions.interface.js';
-import { PersonPermissionsMock } from './person-permissions.mock.js';
+import { PersonPermissionsBypass } from './person-permissions.bypass.js';
 
 export type PersonFields = Pick<
     Person<true>,
@@ -31,7 +31,7 @@ export type PersonenkontextRolleFields = {
 };
 
 export class PersonPermissions implements IPersonPermissions {
-    public static ALL: IPersonPermissions = new PersonPermissionsMock();
+    public static ALL: IPersonPermissions = new PersonPermissionsBypass();
 
     private cachedPersonenkontextsFields?: PersonKontextFields[];
 
