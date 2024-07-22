@@ -79,7 +79,7 @@ export class DoFactory {
             email: faker.internet.email(),
         };
 
-        return Object.assign(new UserDo<WasPersisted>(), user, props);
+        return Object.assign(Object.create(UserDo.prototype) as UserDo<boolean>, user, props);
     }
 
     public static createPersonenkontext<WasPersisted extends boolean>(
