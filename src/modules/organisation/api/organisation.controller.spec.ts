@@ -602,6 +602,19 @@ describe('OrganisationController', () => {
     describe('updateOrganisationName', () => {
         describe('when usecase succeeds', () => {
             it('should not throw an error', async () => {
+                const oeffentlich: Organisation<true> = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.numeric(),
+                    'Öffentliche Schulen Land Schleswig-Holstein',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.ROOT,
+                    undefined,
+                );
                 const params: OrganisationByIdParams = {
                     organisationId: faker.string.uuid(),
                 };
@@ -609,7 +622,7 @@ describe('OrganisationController', () => {
                     name: faker.company.name(),
                 };
 
-                organisationRepositoryMock.updateKlassenName.mockResolvedValueOnce();
+                organisationRepositoryMock.updateKlassenName.mockResolvedValueOnce(oeffentlich);
 
                 await expect(organisationController.updateOrganisationName(params, body)).resolves.not.toThrow();
             });
