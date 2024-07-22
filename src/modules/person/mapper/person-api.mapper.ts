@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PersonInfoResponse } from '../api/person-info.response.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
-import { PersonDo } from '../domain/person.do.js';
 
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { Person } from '../domain/person.js';
 
 @Injectable()
 export class PersonApiMapper {
     public async mapToPersonInfoResponse(
-        person: PersonDo<true>,
+        person: Person<true>,
         kontexte: Personenkontext<true>[],
     ): Promise<PersonInfoResponse> {
         const personenkontexte: PersonenkontextResponse[] = await Promise.all(

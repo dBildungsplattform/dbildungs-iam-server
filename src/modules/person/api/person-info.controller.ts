@@ -16,12 +16,11 @@ import { PersonInfoResponse } from './person-info.response.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
-import { PersonRepo } from '../persistence/person.repo.js';
-import { PersonDo } from '../domain/person.do.js';
 import { PersonenkontextScope } from '../../personenkontext/persistence/personenkontext.scope.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonRepository } from '../persistence/person.repository.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiBearerAuth()
@@ -31,7 +30,7 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 export class PersonInfoController {
     public constructor(
         private readonly logger: ClassLogger,
-        private readonly personRepo: PersonRepo,
+        private readonly personRepo: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly mapper: PersonApiMapper,
     ) {
@@ -44,7 +43,7 @@ export class PersonInfoController {
     @ApiOkResponse({ description: 'Returns info about the person.', type: PersonInfoResponse })
     public async info(@Permissions() permissions: PersonPermissions): Promise<PersonInfoResponse> {
         const personId: string = permissions.personFields.id;
-        const person: Option<PersonDo<true>> = await this.personRepo.findById(personId);
+        const person: Option<Person<true>> = await this.personRepo.findById(personId);
 
         if (!person) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
