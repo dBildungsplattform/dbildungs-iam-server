@@ -1,7 +1,5 @@
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -26,23 +24,16 @@ export class PersonenkontextWorkflowAggregate {
 
     private constructor(
         private readonly rolleRepo: RolleRepo,
-        private readonly organisationRepo: OrganisationRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
     ) {}
 
     public static createNew(
         rolleRepo: RolleRepo,
-        organisationRepo: OrganisationRepo,
         organisationRepository: OrganisationRepository,
         dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
     ): PersonenkontextWorkflowAggregate {
-        return new PersonenkontextWorkflowAggregate(
-            rolleRepo,
-            organisationRepo,
-            organisationRepository,
-            dbiamPersonenkontextFactory,
-        );
+        return new PersonenkontextWorkflowAggregate(rolleRepo, organisationRepository, dbiamPersonenkontextFactory);
     }
 
     // Initialize the aggregate with the selected Organisation and Rolle
@@ -122,10 +113,10 @@ export class PersonenkontextWorkflowAggregate {
             return [];
         }
 
-        let organisation: Option<OrganisationDo<true>>;
+        let organisation: Option<Organisation<true>>;
         if (this.selectedOrganisationId) {
             // The organisation that was selected and that will be the base for the returned roles
-            organisation = await this.organisationRepo.findById(this.selectedOrganisationId);
+            organisation = await this.organisationRepository.findById(this.selectedOrganisationId);
         }
         // If the organisation was not found with the provided selected Id then just return an array of empty orgas
         if (!organisation) {
@@ -201,7 +192,7 @@ export class PersonenkontextWorkflowAggregate {
 
     // Checks if the rolle can be assigned to the target organisation
     public async checkReferences(organisationId: string, rolleId: string): Promise<Option<DomainError>> {
-        const [orga, rolle]: [Option<OrganisationDo<true>>, Option<Rolle<true>>] = await Promise.all([
+        const [orga, rolle]: [Option<Organisation<true>>, Option<Rolle<true>>] = await Promise.all([
             this.organisationRepository.findById(organisationId),
             this.rolleRepo.findById(rolleId),
         ]);
@@ -316,13 +307,13 @@ export class PersonenkontextWorkflowAggregate {
         );
 
         //Landesadmin can view all roles.
-        if (orgsWithRecht.includes(this.organisationRepo.ROOT_ORGANISATION_ID)) {
+        if (orgsWithRecht.includes(this.organisationRepository.ROOT_ORGANISATION_ID)) {
             return limit ? rollen.slice(0, limit) : rollen;
         }
 
         const allowedRollen: Rolle<true>[] = [];
         const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-        (await this.organisationRepo.findByIds(orgsWithRecht)).forEach(function (orga: OrganisationDo<true>) {
+        (await this.organisationRepository.findByIds(orgsWithRecht)).forEach(function (orga: Organisation<true>) {
             rollen.forEach(function (rolle: Rolle<true>) {
                 if (organisationMatchesRollenart.isSatisfiedBy(orga, rolle) && !allowedRollen.includes(rolle)) {
                     allowedRollen.push(rolle);
