@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { Entity, Enum, Property } from '@mikro-orm/core';
+import { Entity, Enum, Index, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 
@@ -10,6 +10,7 @@ export class OrganisationEntity extends TimestampedEntity {
     }
 
     @AutoMap()
+    @Index({ name: 'organisation_administriert_von_index' })
     @Property({ columnType: 'uuid', nullable: true })
     public administriertVon?: string;
 
@@ -34,6 +35,7 @@ export class OrganisationEntity extends TimestampedEntity {
     public kuerzel?: string;
 
     @AutoMap(() => String)
+    @Index({ name: 'organisation_typ_index' })
     @Enum({ items: () => OrganisationsTyp, nullable: true, nativeEnumName: 'organisations_typ_enum' })
     public typ?: OrganisationsTyp;
 

@@ -1,4 +1,4 @@
-# Migration via Mikro-Orm Extension
+# Migration via Mikro-ORM Extension
 
 ## Commands
 
