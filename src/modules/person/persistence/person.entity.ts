@@ -9,6 +9,7 @@ import {
     ManyToOne,
     OneToMany,
     Property,
+    Unique,
 } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
@@ -25,6 +26,7 @@ export class PersonEntity extends TimestampedEntity {
     }
 
     @AutoMap()
+    @Unique({ name: 'person_keycloak_user_id_unique' })
     @Property()
     public keycloakUserId!: string;
 
@@ -112,6 +114,7 @@ export class PersonEntity extends TimestampedEntity {
     public revision!: string;
 
     @AutoMap()
+    @Unique({ name: 'person_personalnummer_unique' })
     @Property({ nullable: true })
     public personalnummer?: string;
 
