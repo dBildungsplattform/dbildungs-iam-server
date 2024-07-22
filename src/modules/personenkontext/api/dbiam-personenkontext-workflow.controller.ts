@@ -55,6 +55,7 @@ import { PersonenkontextCommitError } from '../domain/error/personenkontext-comm
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new PersonenkontextExceptionFilter())
 @ApiTags('personenkontext')
@@ -93,7 +94,7 @@ export class DbiamPersonenkontextWorkflowController {
         anlage.initialize(params.organisationId, params.rolleId);
 
         // Find all possible SSKs (Possibly through name if the name was given)
-        const organisations: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
+        const organisations: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
             permissions,
             params.organisationName,
             params.limit,
@@ -104,10 +105,8 @@ export class DbiamPersonenkontextWorkflowController {
             ? await anlage.findRollenForOrganisation(permissions, params.rolleName, params.limit)
             : [];
 
-        const organisationsResponse: OrganisationResponseLegacy[] = this.mapper.mapArray(
-            organisations,
-            OrganisationDo,
-            OrganisationResponseLegacy,
+        const organisationsResponse: OrganisationResponseLegacy[] = organisations.map(
+            (org: Organisation<true>) => new OrganisationResponseLegacy(org),
         );
 
         // Determine canCommit status, by default it's always false unless both the rolle and orga are selected

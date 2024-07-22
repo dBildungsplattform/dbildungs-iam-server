@@ -9,6 +9,7 @@ import { OrganisationScope } from './organisation.scope.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -151,5 +152,26 @@ export class OrganisationRepository {
         });
 
         return organisationMap;
+    }
+
+    public async findByNameOrKennungAndExcludeByOrganisationType(
+        excludeOrganisationType: OrganisationsTyp,
+        searchStr?: string,
+        limit?: number,
+    ): Promise<Organisation<true>[]> {
+        const scope: OrganisationScope = new OrganisationScope();
+        if (searchStr) {
+            scope
+                .searchString(searchStr)
+                .setScopeWhereOperator(ScopeOperator.AND)
+                .excludeTyp([excludeOrganisationType]);
+        } else {
+            scope.excludeTyp([excludeOrganisationType]).paged(0, limit);
+        }
+
+        let foundOrganisations: Organisation<true>[] = [];
+        [foundOrganisations] = await this.findBy(scope);
+
+        return foundOrganisations;
     }
 }

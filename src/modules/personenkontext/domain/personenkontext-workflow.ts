@@ -17,6 +17,7 @@ import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 export class PersonenkontextWorkflowAggregate {
     public selectedOrganisationId?: string;
@@ -55,15 +56,16 @@ export class PersonenkontextWorkflowAggregate {
         permissions: PersonPermissions,
         organisationName: string | undefined,
         limit?: number,
-    ): Promise<OrganisationDo<true>[]> {
-        let allOrganisationsExceptKlassen: OrganisationDo<boolean>[] = [];
+    ): Promise<Organisation<true>[]> {
+        let allOrganisationsExceptKlassen: Organisation<boolean>[] = [];
         // If the search string for organisation is present then search for Name or Kennung
 
-        allOrganisationsExceptKlassen = await this.organisationRepo.findByNameOrKennungAndExcludeByOrganisationType(
-            OrganisationsTyp.KLASSE,
-            organisationName,
-            limit,
-        );
+        allOrganisationsExceptKlassen =
+            await this.organisationRepository.findByNameOrKennungAndExcludeByOrganisationType(
+                OrganisationsTyp.KLASSE,
+                organisationName,
+                limit,
+            );
 
         if (allOrganisationsExceptKlassen.length === 0) return [];
 
@@ -72,12 +74,12 @@ export class PersonenkontextWorkflowAggregate {
             true,
         );
         // Return only the orgas that the admin have rights on
-        const filteredOrganisations: OrganisationDo<boolean>[] = allOrganisationsExceptKlassen.filter(
-            (orga: OrganisationDo<boolean>) => orgsWithRecht.includes(orga.id as OrganisationID),
+        const filteredOrganisations: Organisation<boolean>[] = allOrganisationsExceptKlassen.filter(
+            (orga: Organisation<boolean>) => orgsWithRecht.includes(orga.id as OrganisationID),
         );
 
         // Sort the filtered organizations, handling undefined kennung and name
-        filteredOrganisations.sort((a: OrganisationDo<boolean>, b: OrganisationDo<boolean>) => {
+        filteredOrganisations.sort((a: Organisation<boolean>, b: Organisation<boolean>) => {
             if (a.name && b.name) {
                 const aTitle: string = a.kennung ? `${a.kennung} (${a.name})` : a.name;
                 const bTitle: string = b.kennung ? `${b.kennung} (${b.name})` : b.name;
