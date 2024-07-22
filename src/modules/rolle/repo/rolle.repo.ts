@@ -245,7 +245,7 @@ export class RolleRepo {
         if (updatedRolle instanceof DomainError) {
             return updatedRolle;
         }
-        const result: Rolle<true> = await this.update(updatedRolle);
+        const result: Rolle<true> = await this.save(updatedRolle);
         return result;
     }
 
