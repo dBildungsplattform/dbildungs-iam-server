@@ -9,11 +9,18 @@ import { TraegerInTraeger } from './traeger-in-traeger.js';
 import { KlasseNurVonSchuleAdministriert } from './klasse-nur-von-schule-administriert.js';
 import { KlassenNameAnSchuleEindeutig } from './klassen-name-an-schule-eindeutig.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
+<<<<<<< HEAD
 import { Organisation } from '../domain/organisation.js';
 
 describe('OrganisationSpecificationMockedRepoTest', () => {
     let module: TestingModule;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
+=======
+
+describe('OrganisationSpecificationMockedRepoTest', () => {
+    let module: TestingModule;
+    let organisationRepoMock: DeepMocked<OrganisationRepository>;
+>>>>>>> a41c377424b12ae371189eafa5b238f364279822
 
     beforeAll(async () => {
         module = await Test.createTestingModule({

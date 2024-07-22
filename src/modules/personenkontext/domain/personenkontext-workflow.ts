@@ -250,18 +250,19 @@ export class PersonenkontextWorkflowAggregate {
         sskName: string,
         limit?: number,
         excludeKlassen: boolean = false,
-    ): Promise<OrganisationDo<true>[]> {
+    ): Promise<Organisation<true>[]> {
         this.selectedRolleId = rolleId;
 
-        let organisationsFoundByName: OrganisationDo<boolean>[] = [];
+        let organisationsFoundByName: Organisation<boolean>[] = [];
 
         if (excludeKlassen) {
-            organisationsFoundByName = await this.organisationRepo.findByNameOrKennungAndExcludeByOrganisationType(
-                OrganisationsTyp.KLASSE,
-                sskName,
-            );
+            organisationsFoundByName =
+                await this.organisationRepository.findByNameOrKennungAndExcludeByOrganisationType(
+                    OrganisationsTyp.KLASSE,
+                    sskName,
+                );
         } else {
-            organisationsFoundByName = await this.organisationRepo.findByNameOrKennung(sskName);
+            organisationsFoundByName = await this.organisationRepository.findByNameOrKennung(sskName);
         }
 
         if (organisationsFoundByName.length === 0) return [];
@@ -269,25 +270,25 @@ export class PersonenkontextWorkflowAggregate {
         const rolleResult: Option<Rolle<true>> = await this.rolleRepo.findById(rolleId);
         if (!rolleResult) return [];
 
-        const organisationsRoleIsAvalableIn: OrganisationDo<true>[] = [];
+        const organisationsRoleIsAvalableIn: Organisation<true>[] = [];
 
-        const parentOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(
+        const parentOrganisation: Option<Organisation<true>> = await this.organisationRepository.findById(
             rolleResult.administeredBySchulstrukturknoten,
         );
         if (!parentOrganisation) return [];
         organisationsRoleIsAvalableIn.push(parentOrganisation);
 
-        const childOrganisations: OrganisationDo<true>[] = await this.organisationRepo.findChildOrgasForIds([
+        const childOrganisations: Organisation<true>[] = await this.organisationRepository.findChildOrgasForIds([
             rolleResult.administeredBySchulstrukturknoten,
         ]);
         organisationsRoleIsAvalableIn.push(...childOrganisations);
 
-        let orgas: OrganisationDo<true>[] = organisationsFoundByName.filter((ssk: OrganisationDo<true>) =>
-            organisationsRoleIsAvalableIn.some((organisation: OrganisationDo<true>) => ssk.id === organisation.id),
+        let orgas: Organisation<true>[] = organisationsFoundByName.filter((ssk: Organisation<true>) =>
+            organisationsRoleIsAvalableIn.some((organisation: Organisation<true>) => ssk.id === organisation.id),
         );
 
         const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-        orgas = orgas.filter((orga: OrganisationDo<true>) =>
+        orgas = orgas.filter((orga: Organisation<true>) =>
             organisationMatchesRollenart.isSatisfiedBy(orga, rolleResult),
         );
 
