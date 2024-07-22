@@ -5,7 +5,6 @@ import {
     Get,
     HttpCode,
     HttpStatus,
-    Inject,
     Param,
     Post,
     Put,
@@ -34,8 +33,6 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
-import { getMapperToken } from '@automapper/nestjs';
-import { Mapper } from '@automapper/core';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { FindDbiamPersonenkontextWorkflowBodyParams } from './param/dbiam-find-personenkontextworkflow-body.params.js';
@@ -66,7 +63,6 @@ export class DbiamPersonenkontextWorkflowController {
     public constructor(
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly personenkontextCreationService: PersonenkontextCreationService,
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
     @Get('step')
@@ -201,11 +197,15 @@ export class DbiamPersonenkontextWorkflowController {
             params.limit,
             true,
         );
-        const sskResponses: OrganisationResponseLegacy[] = this.mapper.mapArray(
-            ssks,
-            OrganisationDo,
-            OrganisationResponseLegacy,
+
+        const sskResponses: OrganisationResponseLegacy[] = ssks.map(
+            (org: Organisation<true>) => new OrganisationResponseLegacy(org),
         );
+        // const sskResponses: OrganisationResponseLegacy[] = this.mapper.mapArray(
+        //     ssks,
+        //     OrganisationDo,
+        //     OrganisationResponseLegacy,
+        // );
         const response: FindSchulstrukturknotenResponse = new FindSchulstrukturknotenResponse(
             sskResponses,
             ssks.length,

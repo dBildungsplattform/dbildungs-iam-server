@@ -174,4 +174,12 @@ export class OrganisationRepository {
 
         return foundOrganisations;
     }
+
+    public async findByNameOrKennung(searchStr: string): Promise<Organisation<true>[]> {
+        const organisations: OrganisationEntity[] = await this.em.find(OrganisationEntity, {
+            $or: [{ name: { $ilike: '%' + searchStr + '%' } }, { kennung: { $ilike: '%' + searchStr + '%' } }],
+        });
+
+        return organisations.map(mapEntityToAggregate);
+    }
 }
