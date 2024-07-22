@@ -622,7 +622,7 @@ describe('OrganisationController', () => {
                     name: faker.company.name(),
                 };
 
-                organisationRepositoryMock.updateKlassenName.mockResolvedValueOnce(oeffentlich);
+                organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(oeffentlich);
 
                 await expect(organisationController.updateOrganisationName(params, body)).resolves.not.toThrow();
             });
@@ -636,7 +636,7 @@ describe('OrganisationController', () => {
                 const body: OrganisationByNameBodyParams = {
                     name: faker.company.name(),
                 };
-                organisationRepositoryMock.updateKlassenName.mockResolvedValueOnce(new NameRequiredForKlasseError());
+                organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(new NameRequiredForKlasseError());
 
                 await expect(organisationController.updateOrganisationName(params, body)).rejects.toThrow(
                     NameRequiredForKlasseError,
@@ -653,7 +653,7 @@ describe('OrganisationController', () => {
                     name: faker.company.name(),
                 };
 
-                organisationRepositoryMock.updateKlassenName.mockResolvedValueOnce(new EntityNotFoundError());
+                organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(new EntityNotFoundError());
 
                 await expect(organisationController.updateOrganisationName(params, body)).rejects.toThrow(
                     HttpException,
