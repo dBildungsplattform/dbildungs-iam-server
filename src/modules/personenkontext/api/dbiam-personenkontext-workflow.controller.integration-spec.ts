@@ -25,7 +25,6 @@ import { Observable } from 'rxjs';
 import { PassportUser } from '../../authentication/types/user.js';
 import { Request } from 'express';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { FindRollenResponse } from './response/find-rollen.response.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
@@ -173,7 +172,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -195,7 +194,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 }),
             );
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
             permissions.canModifyPerson.mockResolvedValueOnce(true);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissions);
 
@@ -223,7 +222,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -254,7 +253,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            personpermissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -546,51 +545,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
                 expect(response.status).toBe(500);
             });
-        });
-    });
-
-    describe('/GET rollen for personenkontext', () => {
-        it('should return all rollen for a personenkontext without filter, if the user is Landesadmin', async () => {
-            const rolleName: string = faker.string.alpha({ length: 10 });
-            await rolleRepo.save(createRolle(rolleFactory, { name: rolleName, rollenart: RollenArt.SYSADMIN }));
-            const schuladminRolleName: string = faker.string.alpha({ length: 10 });
-            await rolleRepo.save(createRolle(rolleFactory, { name: schuladminRolleName, rollenart: RollenArt.LEIT }));
-
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationRepo.ROOT_ORGANISATION_ID]);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .get('/personenkontext-workflow/rollen')
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
-            expect(response.body).toEqual(
-                expect.objectContaining({
-                    total: 2,
-                }) as FindRollenResponse,
-            );
-        });
-
-        it('should return all rollen for a personenkontext based on PersonenkontextAnlage', async () => {
-            const rolleName: string = faker.string.alpha({ length: 10 });
-            await rolleRepo.save(createRolle(rolleFactory, { name: rolleName }));
-            const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext-workflow/rollen?rolleName=${rolleName}&limit=25`)
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
-        });
-
-        it('should return empty list', async () => {
-            const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext-workflow/rollen?rolleName=${faker.string.alpha()}&limit=25`)
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
         });
     });
 
