@@ -10,10 +10,11 @@ import { SchuleUnterTraeger } from './schule-unter-traeger.js';
 import { TraegerInTraeger } from './traeger-in-traeger.js';
 import { KlasseNurVonSchuleAdministriert } from './klasse-nur-von-schule-administriert.js';
 import { KlassenNameAnSchuleEindeutig } from './klassen-name-an-schule-eindeutig.js';
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
 
 describe('OrganisationSpecificationMockedRepoTest', () => {
     let module: TestingModule;
-    let organisationRepoMock: DeepMocked<OrganisationRepo>;
+    let organisationRepoMock: DeepMocked<OrganisationRepository>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({

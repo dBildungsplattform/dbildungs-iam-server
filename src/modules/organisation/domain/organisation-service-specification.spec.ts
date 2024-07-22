@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrganisationService } from './organisation.service.js';
-import { OrganisationRepo } from '../persistence/organisation.repo.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
@@ -15,15 +14,16 @@ import { TraegerInTraegerError } from '../specification/error/traeger-in-traeger
 import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
 import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
 import { DomainError } from '../../../shared/error/index.js';
-// import { faker } from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { EventModule } from '../../../core/eventbus/index.js';
 import { Organisation } from './organisation.js';
 import { OrganisationsTyp } from './organisation.enums.js';
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
 
 describe('OrganisationServiceSpecificationTest', () => {
     let module: TestingModule;
     let organisationService: OrganisationService;
-    let organisationRepo: OrganisationRepo;
+    let organisationRepo: OrganisationRepository;
     let orm: MikroORM;
     let root: Organisation<true>;
     let traeger1: Organisation<true>;
@@ -36,10 +36,10 @@ describe('OrganisationServiceSpecificationTest', () => {
                 MapperTestModule,
                 EventModule,
             ],
-            providers: [OrganisationService, OrganisationRepo, OrganisationPersistenceMapperProfile],
+            providers: [OrganisationService, OrganisationRepository, OrganisationPersistenceMapperProfile],
         }).compile();
         organisationService = module.get(OrganisationService);
-        organisationRepo = module.get(OrganisationRepo);
+        organisationRepo = module.get(OrganisationRepository);
         orm = module.get(MikroORM);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -122,28 +122,28 @@ describe('OrganisationServiceSpecificationTest', () => {
         });
     });
     //TODO: Uncomment when all the OrganisatioonDo are removed from the organisation service.
-    // describe('update', () => {
-    //     it('should return DomainError, when Klasse specificatons are not satisfied and type is KLASSE', async () => {
-    //         const id: string = faker.string.uuid();
-    //         const klasseDo: Organisation<boolean> = DoFactory.createOrganisation(false, {
-    //             id: id,
-    //             name: 'Klasse',
-    //             administriertVon: traeger1.id,
-    //             zugehoerigZu: traeger1.id,
-    //             typ: OrganisationsTyp.KLASSE,
-    //         });
-    //         await organisationRepo.save(klasseDo);
+    describe('update', () => {
+        it('should return DomainError, when Klasse specificatons are not satisfied and type is KLASSE', async () => {
+            const id: string = faker.string.uuid();
+            const klasseDo: Organisation<boolean> = DoFactory.createOrganisation(false, {
+                id: id,
+                name: 'Klasse',
+                administriertVon: traeger1.id,
+                zugehoerigZu: traeger1.id,
+                typ: OrganisationsTyp.KLASSE,
+            });
+            await organisationRepo.save(klasseDo);
 
-    //         const result: Result<Organisation<true>, DomainError> = await organisationService.updateOrganisation(
-    //             klasseDo,
-    //         );
+            const result: Result<Organisation<true>, DomainError> = await organisationService.updateOrganisation(
+                klasseDo,
+            );
 
-    //         expect(result).toEqual<Result<Organisation<true>>>({
-    //             ok: false,
-    //             error: new KlasseNurVonSchuleAdministriertError(id),
-    //         });
-    //     });
-    // });
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new KlasseNurVonSchuleAdministriertError(id),
+            });
+        });
+    });
 
     describe('setAdministriertVon', () => {
         it('should update the organisation', async () => {

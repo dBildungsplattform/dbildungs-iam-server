@@ -18,10 +18,11 @@ import { ZyklusInOrganisationen } from './zyklus-in-organisationen.js';
 import { KlasseNurVonSchuleAdministriert } from './klasse-nur-von-schule-administriert.js';
 import { KlassenNameAnSchuleEindeutig } from './klassen-name-an-schule-eindeutig.js';
 import { EventModule } from '../../../core/eventbus/index.js';
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
 
 describe('OrganisationSpecificationTests', () => {
     let module: TestingModule;
-    let repo: OrganisationRepo;
+    let repo: OrganisationRepository;
     let orm: MikroORM;
 
     let schule1: OrganisationDo<true>;

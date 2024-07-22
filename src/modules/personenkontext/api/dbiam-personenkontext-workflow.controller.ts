@@ -201,11 +201,6 @@ export class DbiamPersonenkontextWorkflowController {
         const sskResponses: OrganisationResponseLegacy[] = ssks.map(
             (org: Organisation<true>) => new OrganisationResponseLegacy(org),
         );
-        // const sskResponses: OrganisationResponseLegacy[] = this.mapper.mapArray(
-        //     ssks,
-        //     OrganisationDo,
-        //     OrganisationResponseLegacy,
-        // );
         const response: FindSchulstrukturknotenResponse = new FindSchulstrukturknotenResponse(
             sskResponses,
             ssks.length,

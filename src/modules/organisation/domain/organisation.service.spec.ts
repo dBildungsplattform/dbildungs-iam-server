@@ -10,18 +10,18 @@ import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/index.js';
 import { Paged } from '../../../shared/paging/index.js';
-import { OrganisationRepo } from '../persistence/organisation.repo.js';
 import { OrganisationDo } from './organisation.do.js';
 import { OrganisationService } from './organisation.service.js';
 import { OrganisationsTyp } from './organisation.enums.js';
 import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
 import { NameRequiredForSchuleError } from '../specification/error/name-required-for-schule.error.js';
 import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
     let organisationService: OrganisationService;
-    let organisationRepoMock: DeepMocked<OrganisationRepo>;
+    let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let mapperMock: DeepMocked<Mapper>;
 
     beforeAll(async () => {
@@ -30,8 +30,8 @@ describe('OrganisationService', () => {
             providers: [
                 OrganisationService,
                 {
-                    provide: OrganisationRepo,
-                    useValue: createMock<OrganisationRepo>(),
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
                 },
                 {
                     provide: getMapperToken(),
@@ -40,7 +40,7 @@ describe('OrganisationService', () => {
             ],
         }).compile();
         organisationService = module.get(OrganisationService);
-        organisationRepoMock = module.get(OrganisationRepo);
+        organisationRepoMock = module.get(OrganisationRepository);
         mapperMock = module.get(getMapperToken());
     });
 
