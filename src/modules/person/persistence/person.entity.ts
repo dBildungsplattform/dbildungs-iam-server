@@ -120,8 +120,7 @@ export class PersonEntity extends TimestampedEntity {
     @AutoMap()
     @Index({
         name: 'person_personalnummer_unique',
-        expression:
-            'create unique index "person_personalnummer_unique" on "person" ("personalnummer") nulls distinct;',
+        expression: 'create unique index "person_personalnummer_unique" on "person" ("personalnummer") nulls distinct;',
     })
     @Property({ nullable: true })
     public personalnummer?: string;
