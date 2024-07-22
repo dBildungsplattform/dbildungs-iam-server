@@ -483,7 +483,7 @@ describe('OrganisationRepository', () => {
         describe('when organisation does not exist', () => {
             it('should return EntityNotFoundError', async () => {
                 const id: string = faker.string.uuid();
-                const result: DomainError | void = await sut.updateKlassenName(id, faker.company.name());
+                const result: DomainError | Organisation<true> = await sut.updateKlassenName(id, faker.company.name());
 
                 expect(result).toEqual(new EntityNotFoundError('Organisation', id));
             });
@@ -496,7 +496,7 @@ describe('OrganisationRepository', () => {
                     name: 'test',
                 });
                 const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
-                const result: DomainError | void = await sut.updateKlassenName(
+                const result: DomainError | Organisation<true> = await sut.updateKlassenName(
                     savedOrganisaiton.id,
                     faker.company.name(),
                 );
@@ -512,7 +512,7 @@ describe('OrganisationRepository', () => {
                     name: 'test',
                 });
                 const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
-                const result: DomainError | void = await sut.updateKlassenName(savedOrganisaiton.id, '');
+                const result: DomainError | Organisation<true> = await sut.updateKlassenName(savedOrganisaiton.id, '');
 
                 expect(result).toBeInstanceOf(OrganisationSpecificationError);
             });
@@ -547,7 +547,10 @@ describe('OrganisationRepository', () => {
                 );
                 await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
 
-                const result: DomainError | void = await sut.updateKlassenName(organisationEntity2.id, 'newName');
+                const result: DomainError | Organisation<true> = await sut.updateKlassenName(
+                    organisationEntity2.id,
+                    'newName',
+                );
 
                 expect(result).not.toBeInstanceOf(DomainError);
             });
