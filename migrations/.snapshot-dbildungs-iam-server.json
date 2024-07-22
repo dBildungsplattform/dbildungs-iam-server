@@ -1581,24 +1581,26 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "person_keycloak_user_id_unique",
           "columnNames": [
             "keycloak_user_id"
           ],
           "composite": false,
-          "keyName": "person_keycloak_user_id_unique",
-          "constraint": true,
+          "constraint": false,
           "primary": false,
-          "unique": true
+          "unique": false,
+          "expression": "create unique index \"person_keycloak_user_id_unique\" on \"person\" (\"keycloak_user_id\") nulls not distinct;"
         },
         {
+          "keyName": "person_personalnummer_unique",
           "columnNames": [
             "personalnummer"
           ],
           "composite": false,
-          "keyName": "person_personalnummer_unique",
-          "constraint": true,
+          "constraint": false,
           "primary": false,
-          "unique": true
+          "unique": false,
+          "expression": "create unique index \"person_personalnummer_unique\" on \"person\" (\"personalnummer\") nulls distinct;"
         },
         {
           "keyName": "person_pkey",

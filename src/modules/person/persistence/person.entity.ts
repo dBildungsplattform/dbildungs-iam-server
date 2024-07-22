@@ -6,10 +6,10 @@ import {
     DateTimeType,
     Entity,
     Enum,
+    Index,
     ManyToOne,
     OneToMany,
     Property,
-    Unique,
 } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
@@ -26,7 +26,11 @@ export class PersonEntity extends TimestampedEntity {
     }
 
     @AutoMap()
-    @Unique({ name: 'person_keycloak_user_id_unique' })
+    @Index({
+        name: 'person_keycloak_user_id_unique',
+        expression:
+            'create unique index "person_keycloak_user_id_unique" on "person" ("keycloak_user_id") nulls not distinct;',
+    })
     @Property()
     public keycloakUserId!: string;
 
@@ -114,7 +118,11 @@ export class PersonEntity extends TimestampedEntity {
     public revision!: string;
 
     @AutoMap()
-    @Unique({ name: 'person_personalnummer_unique' })
+    @Index({
+        name: 'person_personalnummer_unique',
+        expression:
+            'create unique index "person_personalnummer_unique" on "person" ("personalnummer") nulls distinct;',
+    })
     @Property({ nullable: true })
     public personalnummer?: string;
 
