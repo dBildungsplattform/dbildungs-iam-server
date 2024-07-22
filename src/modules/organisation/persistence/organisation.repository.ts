@@ -151,7 +151,7 @@ export class OrganisationRepository {
         return organisationMap;
     }
 
-    public async updateKlassenName(id: string, newName: string): Promise<DomainError | Organisation<true>> {
+    public async updateKlassenname(id: string, newName: string): Promise<DomainError | Organisation<true>> {
         const organisationFound: Option<Organisation<true>> = await this.findById(id);
 
         if (!organisationFound) {
@@ -162,12 +162,14 @@ export class OrganisationRepository {
         }
         //Specifications: it needs to be clarified how the specifications can be checked using DDD principles
         {
-            organisationFound.name = newName;
-            const specificationError: undefined | OrganisationSpecificationError =
-                await organisationFound.checkKlasseSpecifications(this);
+            if (organisationFound.name !== newName) {
+                organisationFound.name = newName;
+                const specificationError: undefined | OrganisationSpecificationError =
+                    await organisationFound.checkKlasseSpecifications(this);
 
-            if (specificationError) {
-                return specificationError;
+                if (specificationError) {
+                    return specificationError;
+                }
             }
         }
         const organisationEntity: Organisation<true> = await this.save(organisationFound);

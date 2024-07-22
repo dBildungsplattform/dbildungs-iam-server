@@ -345,7 +345,7 @@ export class OrganisationController {
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByNameBodyParams,
     ): Promise<OrganisationResponse | DomainError> {
-        const result: DomainError | Organisation<true> = await this.organisationRepository.updateKlassenName(
+        const result: DomainError | Organisation<true> = await this.organisationRepository.updateKlassenname(
             params.organisationId,
             body.name,
         );

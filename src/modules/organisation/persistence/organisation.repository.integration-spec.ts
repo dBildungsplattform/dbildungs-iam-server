@@ -479,11 +479,11 @@ describe('OrganisationRepository', () => {
         });
     });
 
-    describe('updateKlassenName', () => {
+    describe('updateKlassenname', () => {
         describe('when organisation does not exist', () => {
             it('should return EntityNotFoundError', async () => {
                 const id: string = faker.string.uuid();
-                const result: DomainError | Organisation<true> = await sut.updateKlassenName(id, faker.company.name());
+                const result: DomainError | Organisation<true> = await sut.updateKlassenname(id, faker.company.name());
 
                 expect(result).toEqual(new EntityNotFoundError('Organisation', id));
             });
@@ -496,7 +496,7 @@ describe('OrganisationRepository', () => {
                     name: 'test',
                 });
                 const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
-                const result: DomainError | Organisation<true> = await sut.updateKlassenName(
+                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
                     savedOrganisaiton.id,
                     faker.company.name(),
                 );
@@ -512,7 +512,7 @@ describe('OrganisationRepository', () => {
                     name: 'test',
                 });
                 const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
-                const result: DomainError | Organisation<true> = await sut.updateKlassenName(savedOrganisaiton.id, '');
+                const result: DomainError | Organisation<true> = await sut.updateKlassenname(savedOrganisaiton.id, '');
 
                 expect(result).toBeInstanceOf(OrganisationSpecificationError);
             });
@@ -547,9 +547,39 @@ describe('OrganisationRepository', () => {
                 );
                 await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
 
-                const result: DomainError | Organisation<true> = await sut.updateKlassenName(
+                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
                     organisationEntity2.id,
                     'newName',
+                );
+
+                expect(result).not.toBeInstanceOf(DomainError);
+            });
+        });
+
+        describe('when name did not change', () => {
+            it('should not check specifications, update class name and return void', async () => {
+                const parentOrga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                    typ: OrganisationsTyp.SCHULE,
+                });
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.KLASSE,
+                    name: 'name',
+                    administriertVon: parentOrga.id,
+                });
+
+                const organisationEntity1: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(parentOrga),
+                );
+                const organisationEntity2: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(organisation),
+                );
+                await em.persistAndFlush([organisationEntity1, organisationEntity2]);
+
+                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                    organisationEntity2.id,
+                    'name',
                 );
 
                 expect(result).not.toBeInstanceOf(DomainError);
