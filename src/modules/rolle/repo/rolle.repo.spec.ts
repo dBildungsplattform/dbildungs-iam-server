@@ -361,7 +361,7 @@ describe('RolleRepo', () => {
             const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
                 rolle.id,
                 faker.company.name(),
-                [faker.helpers.enumValue(RollenMerkmal)],
+                [],
                 [],
                 [],
                 true,
