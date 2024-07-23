@@ -10,7 +10,6 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RolleFactory } from './rolle.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('Rolle Aggregate', () => {
     let module: TestingModule;
@@ -60,16 +59,14 @@ describe('Rolle Aggregate', () => {
             const rolle: Rolle<false> = rolleFactory.createNew('test', faker.string.uuid(), RollenArt.LERN, [], [], []);
 
             const orgaId: string = faker.string.uuid();
-            organisationRepo.findChildOrgasForIds.mockResolvedValueOnce([
-                createMock<Organisation<true>>({ id: orgaId }),
-            ]);
+            organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
 
             await expect(rolle.canBeAssignedToOrga(orgaId)).resolves.toBe(true);
         });
 
         it('should resolve to false, if the given organisation id is not a suborganisation', async () => {
             const rolle: Rolle<false> = rolleFactory.createNew('test', faker.string.uuid(), RollenArt.LERN, [], [], []);
-            organisationRepo.findChildOrgasForIds.mockResolvedValueOnce([]);
+            organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(false);
 
             await expect(rolle.canBeAssignedToOrga(faker.string.uuid())).resolves.toBe(false);
         });
