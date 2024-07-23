@@ -39,11 +39,9 @@ import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/param/create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from '../../personenkontext/api/create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
-
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
-
 import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
 import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
@@ -62,6 +60,7 @@ import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personen')
@@ -75,6 +74,7 @@ export class PersonController {
         private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
         private readonly personFactory: PersonFactory,
+        private readonly personenkontextService: PersonenkontextService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
     ) {
@@ -195,7 +195,9 @@ export class PersonController {
         return new PersonendatensatzResponse(personResult.value, false);
     }
 
-    // TODO will no longer be used add a no longer use message here from the errors
+    /**
+     * @deprecated This endpoint is no longer used.
+     */
     @Post(':personId/personenkontexte')
     @HttpCode(200)
     @ApiOkResponse({ description: 'The personenkontext was successfully created.' })
@@ -266,21 +268,24 @@ export class PersonController {
         }
 
         const updatedQueryParams: PersonenkontextQueryParams = { ...queryParams, personId: personResult.value.id };
-
-        const personenkontextDtos: Paged<Personenkontext<true>> =
-            await this.personenkontextUc.findAll(updatedQueryParams);
+        // orgnisationID is undefined
+        const personenkontexts: Paged<Personenkontext<true>> =
+            await this.personenkontextService.findAllPersonenkontexte(
+                updatedQueryParams,
+                undefined,
+                updatedQueryParams.offset,
+                updatedQueryParams.limit,
+            );
 
         const responseItems: PersonenkontextResponse[] = await Promise.all(
-            personenkontextDtos.items.map(async (item: Personenkontext<true>) =>
-                PersonenkontextResponse.construct(item),
-            ),
+            personenkontexts.items.map(async (item: Personenkontext<true>) => PersonenkontextResponse.construct(item)),
         );
 
         return new PagedResponse({
             items: responseItems,
-            offset: personenkontextDtos.offset,
-            limit: personenkontextDtos.limit,
-            total: personenkontextDtos.total,
+            offset: personenkontexts.offset,
+            limit: personenkontexts.limit,
+            total: personenkontexts.total,
         });
     }
 
