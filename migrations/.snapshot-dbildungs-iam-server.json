@@ -1147,6 +1147,26 @@
       "schema": "public",
       "indexes": [
         {
+          "columnNames": [
+            "administriert_von"
+          ],
+          "composite": false,
+          "keyName": "organisation_administriert_von_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "typ"
+          ],
+          "composite": false,
+          "keyName": "organisation_typ_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "organisation_pkey",
           "columnNames": [
             "id"
@@ -1560,6 +1580,28 @@
       "name": "person",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "person_keycloak_user_id_unique",
+          "columnNames": [
+            "keycloak_user_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "create unique index \"person_keycloak_user_id_unique\" on \"person\" (\"keycloak_user_id\") nulls not distinct;"
+        },
+        {
+          "keyName": "person_personalnummer_unique",
+          "columnNames": [
+            "personalnummer"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "create unique index \"person_personalnummer_unique\" on \"person\" (\"personalnummer\") nulls distinct;"
+        },
         {
           "keyName": "person_pkey",
           "columnNames": [
@@ -2119,6 +2161,16 @@
       "name": "personenkontext",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "person_id"
+          ],
+          "composite": false,
+          "keyName": "personenkontext_person_id_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "personenkontext_person_id_organisation_id_rolle_id_unique",
           "columnNames": [
