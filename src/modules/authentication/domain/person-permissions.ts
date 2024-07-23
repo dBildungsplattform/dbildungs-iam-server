@@ -1,6 +1,6 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Person } from '../../person/domain/person.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
@@ -84,11 +84,11 @@ export class PersonPermissions {
         }
 
         if (withChildren) {
-            const childOrgas: OrganisationDo<true>[] = await this.organisationRepo.findChildOrgasForIds(
+            const childOrgas: Organisation<true>[] = await this.organisationRepo.findChildOrgasForIds(
                 Array.from(organisationIDs),
             );
 
-            childOrgas.forEach((orga: OrganisationDo<true>) => organisationIDs.add(orga.id));
+            childOrgas.forEach((orga: Organisation<true>) => organisationIDs.add(orga.id));
         }
 
         return Array.from(organisationIDs);
