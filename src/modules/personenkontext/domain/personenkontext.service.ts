@@ -122,7 +122,7 @@ export class PersonenkontextService {
     }
 
     public async deletePersonenkontextById(id: string, revision: string): Promise<Result<void, DomainError>> {
-        const personenkontext: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.findById(id);
+        const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findByID(id);
 
         if (!personenkontext) {
             return { ok: false, error: new EntityNotFoundError('Personenkontext', id) };

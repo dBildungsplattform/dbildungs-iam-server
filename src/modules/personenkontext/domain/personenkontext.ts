@@ -60,13 +60,13 @@ export class Personenkontext<WasPersisted extends boolean> {
         organisationId: OrganisationID,
         rolleId: RolleID,
         // new params
-        referrer: string | undefined,
-        mandant: string | undefined,
-        personenstatus: Personenstatus | undefined,
-        jahrgangsstufe: Jahrgangsstufe | undefined,
-        sichtfreigabe: SichtfreigabeType | undefined,
-        loeschungZeitpunkt: Date | undefined,
-        revision: Persisted<string, WasPersisted>,
+        referrer: string | undefined = undefined,
+        mandant: string | undefined = undefined,
+        personenstatus: Personenstatus | undefined = undefined,
+        jahrgangsstufe: Jahrgangsstufe | undefined = undefined,
+        sichtfreigabe: SichtfreigabeType | undefined = undefined,
+        loeschungZeitpunkt: Date | undefined = undefined,
+        revision: Persisted<string, WasPersisted> = '1',
     ): Personenkontext<WasPersisted> {
         return new Personenkontext(
             personRepo,
@@ -97,12 +97,12 @@ export class Personenkontext<WasPersisted extends boolean> {
         organisationId: OrganisationID,
         rolleId: RolleID,
         // new fields
-        referrer: string | undefined,
-        mandant: string | undefined,
-        personenstatus: Personenstatus | undefined,
-        jahrgangsstufe: Jahrgangsstufe | undefined,
-        sichtfreigabe: SichtfreigabeType | undefined,
-        loeschungZeitpunkt: Date | undefined,
+        referrer: string | undefined = undefined,
+        mandant: string | undefined = undefined,
+        personenstatus: Personenstatus | undefined = undefined,
+        jahrgangsstufe: Jahrgangsstufe | undefined = undefined,
+        sichtfreigabe: SichtfreigabeType | undefined = undefined,
+        loeschungZeitpunkt: Date | undefined = undefined,
     ): Personenkontext<false> {
         return new Personenkontext(
             personRepo,
