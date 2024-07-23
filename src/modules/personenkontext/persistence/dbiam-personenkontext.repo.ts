@@ -97,46 +97,41 @@ export class DBiamPersonenkontextRepo {
         );
     }
 
+    /**
+     *
+     * @param personId
+     * @param permissions
+     * @returns
+     *
+     * Should return all kontexts of a given person, if the caller has the systemrecht PERSONEN_VERWALTEN at at least one node of the target persons kontexts
+     */
     public async findByPersonAuthorized(
         personId: PersonID,
         permissions: PersonPermissions,
     ): Promise<Result<Personenkontext<true>[], DomainError>> {
-        const relevantSystemRechte: RollenSystemRecht[] = [RollenSystemRecht.PERSONEN_VERWALTEN];
-
-        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
-            relevantSystemRechte,
-            true,
+        const canSeeKontexts: boolean = await permissions.hasSystemrechtAtAnyKontextOfTargetPerson(
+            personId,
+            RollenSystemRecht.PERSONEN_VERWALTEN,
         );
-
-        // Find all kontexte, where the personID matches and that person has at least one organisation in common
-        const personenkontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
-            personId: {
-                id: personId,
-                personenKontexte: {
-                    $some: {
-                        organisationId: { $in: organisationIDs },
-                    },
-                },
-            },
-        });
-
-        if (personenkontexte.length === 0) {
-            const isAuthorizedAtRoot: boolean =
-                await permissions.hasSystemrechteAtRootOrganisation(relevantSystemRechte);
-
-            if (!isAuthorizedAtRoot) {
-                return {
-                    ok: false,
-                    error: new MissingPermissionsError('Not allowed to view the requested personenkontexte'),
-                };
-            }
+        if (canSeeKontexts) {
+            const allKontextsForTargetPerson: Personenkontext<true>[] = await this.findByPerson(personId);
+            return {
+                ok: true,
+                value: allKontextsForTargetPerson,
+            };
         }
-
+        const isAuthorizedAtRoot: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+            RollenSystemRecht.PERSONEN_VERWALTEN,
+        ]);
+        if (isAuthorizedAtRoot) {
+            return {
+                ok: true,
+                value: [],
+            };
+        }
         return {
-            ok: true,
-            value: personenkontexte.map((pk: PersonenkontextEntity) =>
-                mapEntityToAggregate(pk, this.personenkontextFactory),
-            ),
+            ok: false,
+            error: new MissingPermissionsError('Not allowed to view the requested personenkontexte'),
         };
     }
 
@@ -356,14 +351,6 @@ export class DBiamPersonenkontextRepo {
         });
     }
 
-    public async isOrganisationAlreadyAssigned(organisationId: string): Promise<boolean> {
-        const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
-            organisationId,
-        });
-
-        return personenKontexte.length > 0;
-    }
-
     public async hasSystemrechtAtOrganisation(
         personId: PersonID,
         organisationId: OrganisationID,
@@ -396,5 +383,56 @@ export class DBiamPersonenkontextRepo {
         const result: any[] = await this.em.execute(query, [organisationId, personId, systemrecht]);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         return result[0].has_systemrecht_at_orga as boolean;
+    }
+
+    public async hasPersonASystemrechtAtAnyKontextOfPersonB(
+        personIdA: PersonID,
+        personIdB: PersonID,
+        systemrecht: RollenSystemRecht,
+    ): Promise<boolean> {
+        const query: string = `
+        WITH RECURSIVE all_orgas_where_personb_has_any_kontext_with_parents AS (
+                    SELECT id, administriert_von
+                    FROM public.organisation
+                    WHERE id IN (
+                        SELECT organisation_id
+                        FROM public.personenkontext
+                        WHERE person_id = ?
+                    )
+                    UNION ALL
+                    SELECT o.id, o.administriert_von
+                    FROM public.organisation o
+                    INNER JOIN all_orgas_where_personb_has_any_kontext_with_parents po ON o.id = po.administriert_von
+                ),
+                kontexts_personB_at_orgas AS (
+                    SELECT pk.*
+                    FROM public.personenkontext pk
+                    WHERE pk.person_id = ? AND pk.organisation_id IN (SELECT id FROM all_orgas_where_personb_has_any_kontext_with_parents)
+                ),
+                permission_check AS (
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM kontexts_personB_at_orgas kb
+                        JOIN public.rolle_systemrecht sr ON sr.rolle_id = kb.rolle_id
+                        WHERE sr.systemrecht = ?
+                    ) AS has_persona_systemrecht_at_any_kontext_of_personb
+                )
+                SELECT has_persona_systemrecht_at_any_kontext_of_personb FROM permission_check;
+                    `;
+
+        const result: [{ has_persona_systemrecht_at_any_kontext_of_personb: boolean }] = await this.em.execute(query, [
+            personIdB,
+            personIdA,
+            systemrecht,
+        ]);
+        return result[0].has_persona_systemrecht_at_any_kontext_of_personb;
+    }
+
+    public async isOrganisationAlreadyAssigned(organisationId: string): Promise<boolean> {
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
+            organisationId,
+        });
+
+        return personenKontexte.length > 0;
     }
 }
