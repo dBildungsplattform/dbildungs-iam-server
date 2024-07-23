@@ -14,6 +14,7 @@ import { DbiamOrganisationError, OrganisationSpecificationErrorI18nTypes } from 
 import { NameRequiredForSchuleError } from '../specification/error/name-required-for-schule.error.js';
 import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
 import { OrganisationIstBereitsZugewiesenError } from '../domain/organisation-ist-bereits-zugewiesen.error.js';
+import { NameRequiredForKlasseError } from '../specification/error/name-required-for-klasse.error.js';
 
 @Catch(OrganisationSpecificationError)
 export class OrganisationExceptionFilter implements ExceptionFilter<OrganisationSpecificationError> {
@@ -93,6 +94,13 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 400,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.ORGANISATION_IST_BEREITS_ZUGEWIESEN_ERROR,
+            }),
+        ],
+        [
+            NameRequiredForKlasseError.name,
+            new DbiamOrganisationError({
+                code: 400,
+                i18nKey: OrganisationSpecificationErrorI18nTypes.NAME_REQUIRED_FOR_KLASSE,
             }),
         ],
     ]);

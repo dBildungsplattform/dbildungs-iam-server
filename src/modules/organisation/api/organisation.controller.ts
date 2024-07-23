@@ -9,6 +9,7 @@ import {
     HttpStatus,
     Inject,
     Param,
+    Patch,
     Post,
     Put,
     Query,
@@ -61,6 +62,7 @@ import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { OrganisationIstBereitsZugewiesenError } from '../domain/organisation-ist-bereits-zugewiesen.error.js';
+import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -365,5 +367,37 @@ export class OrganisationController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
+    }
+
+    @Patch(':organisationId/name')
+    @ApiOkResponse({
+        description: 'The organizations were successfully updated.',
+        type: OrganisationResponseLegacy,
+        headers: PagingHeadersObject,
+    })
+    @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
+    public async updateOrganisationName(
+        @Param() params: OrganisationByIdParams,
+        @Body() body: OrganisationByNameBodyParams,
+    ): Promise<OrganisationResponse | DomainError> {
+        const result: DomainError | Organisation<true> = await this.organisationRepository.updateKlassenname(
+            params.organisationId,
+            body.name,
+        );
+
+        if (result instanceof DomainError) {
+            if (result instanceof OrganisationSpecificationError) {
+                throw result;
+            }
+
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
+
+        return new OrganisationResponse(result);
     }
 }
