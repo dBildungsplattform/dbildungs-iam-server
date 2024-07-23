@@ -53,10 +53,10 @@ import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/pagin
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
-import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
+import { RolleDomainError } from '../domain/rolle-domain.error.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -315,23 +315,24 @@ export class RolleController {
         @Body() params: UpdateRolleBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
-        if (
-            params.merkmale.length > 0 &&
-            (await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(findRolleByIdParams.rolleId))
-        ) {
-            throw new UpdateMerkmaleError();
-        }
-
+        const isAlreadyAssigned: boolean = await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(
+            findRolleByIdParams.rolleId,
+        );
         const result: Rolle<true> | DomainError = await this.rolleRepo.updateRolleAuthorized(
             findRolleByIdParams.rolleId,
             params.name,
             params.merkmale,
             params.systemrechte,
             params.serviceProviderIds,
+            isAlreadyAssigned,
             permissions,
         );
 
         if (result instanceof DomainError) {
+            if (result instanceof RolleDomainError) {
+                throw result;
+            }
+
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
