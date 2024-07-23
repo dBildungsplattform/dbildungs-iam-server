@@ -185,6 +185,17 @@ export class PersonPermissions {
         return this.cachedRollenFields;
     }
 
+    public async hasSystemrechtAtAnyKontextOfTargetPerson(
+        targetPersonId: PersonID,
+        systemrecht: RollenSystemRecht,
+    ): Promise<boolean> {
+        return this.personenkontextRepo.hasPersonASystemrechtAtAnyKontextOfPersonB(
+            this.cachedPersonFields.id,
+            targetPersonId,
+            systemrecht,
+        );
+    }
+
     public get personFields(): PersonFields {
         return this.cachedPersonFields;
     }
