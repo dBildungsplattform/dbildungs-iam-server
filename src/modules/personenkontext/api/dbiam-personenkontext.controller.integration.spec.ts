@@ -127,7 +127,7 @@ describe('dbiam Personenkontext API', () => {
     });
 
     describe('/GET personenkontexte for person', () => {
-        it('should return all personenkontexte for the person', async () => {
+        it('should return personenkontexte for the person', async () => {
             const rolleA: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
             const rolleB: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
             const rolleC: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
@@ -135,33 +135,30 @@ describe('dbiam Personenkontext API', () => {
             const personA: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
             const personB: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
 
-            const [pk1, pk2]: [Personenkontext<true>, Personenkontext<true>, Personenkontext<true>] = await Promise.all(
-                [
-                    personenkontextRepo.save(
-                        createPersonenkontext(personenkontextFactory, false, {
-                            personId: personA.id,
-                            rolleId: rolleA.id,
-                        }),
-                    ),
-                    personenkontextRepo.save(
-                        createPersonenkontext(personenkontextFactory, false, {
-                            personId: personA.id,
-                            rolleId: rolleB.id,
-                        }),
-                    ),
-                    personenkontextRepo.save(
-                        createPersonenkontext(personenkontextFactory, false, {
-                            personId: personB.id,
-                            rolleId: rolleC.id,
-                        }),
-                    ),
-                ],
-            );
+            await Promise.all([
+                personenkontextRepo.save(
+                    createPersonenkontext(personenkontextFactory, false, {
+                        personId: personA.id,
+                        rolleId: rolleA.id,
+                    }),
+                ),
+                personenkontextRepo.save(
+                    createPersonenkontext(personenkontextFactory, false, {
+                        personId: personA.id,
+                        rolleId: rolleB.id,
+                    }),
+                ),
+                personenkontextRepo.save(
+                    createPersonenkontext(personenkontextFactory, false, {
+                        personId: personB.id,
+                        rolleId: rolleC.id,
+                    }),
+                ),
+            ]);
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.hasSystemrechtAtAnyKontextOfTargetPerson.mockResolvedValueOnce(true);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([pk1.organisationId, pk2.organisationId]);
-
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/dbiam/personenkontext/${personA.id}`)
                 .send();
@@ -174,7 +171,8 @@ describe('dbiam Personenkontext API', () => {
         it('should return empty list', async () => {
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+            personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+            personpermissions.hasSystemrechtAtAnyKontextOfTargetPerson.mockResolvedValueOnce(false);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/dbiam/personenkontext/${faker.string.uuid()}`)
@@ -188,8 +186,8 @@ describe('dbiam Personenkontext API', () => {
         it('should return error when no results found and user is not admin', async () => {
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
             personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
+            personpermissions.hasSystemrechtAtAnyKontextOfTargetPerson.mockResolvedValueOnce(false);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/dbiam/personenkontext/${faker.string.uuid()}`)
