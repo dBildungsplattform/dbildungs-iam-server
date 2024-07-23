@@ -3,6 +3,7 @@ import {
     Collection,
     Entity,
     Enum,
+    Index,
     ManyToOne,
     OneToMany,
     Property,
@@ -16,6 +17,18 @@ import { DataProviderEntity } from '../../../persistence/data-provider.entity.js
 
 @Entity({ tableName: 'person' })
 export class PersonEntity extends TimestampedEntity {
+    /**
+     * @deprecated This constructor is for automapper only.
+     */
+    public constructor() {
+        super();
+    }
+
+    @Index({
+        name: 'person_keycloak_user_id_unique',
+        expression:
+            'create unique index "person_keycloak_user_id_unique" on "person" ("keycloak_user_id") nulls not distinct;',
+    })
     @Property()
     public keycloakUserId!: string;
 
@@ -82,6 +95,10 @@ export class PersonEntity extends TimestampedEntity {
     @Property({ nullable: false, default: '1' })
     public revision!: string;
 
+    @Index({
+        name: 'person_personalnummer_unique',
+        expression: 'create unique index "person_personalnummer_unique" on "person" ("personalnummer") nulls distinct;',
+    })
     @Property({ nullable: true })
     public personalnummer?: string;
 

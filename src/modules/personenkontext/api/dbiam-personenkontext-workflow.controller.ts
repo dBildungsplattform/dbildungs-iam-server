@@ -24,9 +24,7 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { FindPersonenkontextRollenBodyParams } from './param/find-personenkontext-rollen.body.params.js';
 import { FindPersonenkontextSchulstrukturknotenBodyParams } from './param/find-personenkontext-schulstrukturknoten.body.params.js';
-import { FindRollenResponse } from './response/find-rollen.response.js';
 import { FindSchulstrukturknotenResponse } from './response/find-schulstrukturknoten.response.js';
 import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
@@ -153,25 +151,6 @@ export class DbiamPersonenkontextWorkflowController {
             throw new BadRequestException(updateResult.message);
         }
         return new PersonenkontexteUpdateResponse(updateResult);
-    }
-
-    @Get('rollen')
-    @ApiOkResponse({
-        description: 'The rollen for a personenkontext were successfully returned.',
-        type: FindRollenResponse,
-    })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to get available rolen for personenkontexte.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permission to get rollen for personenkontext.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rollen for personenkontexte.' })
-    public async findRollen(
-        @Query() params: FindPersonenkontextRollenBodyParams,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<FindRollenResponse> {
-        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
-        const rollen: Rolle<true>[] = await anlage.findAuthorizedRollen(permissions, params.rolleName, params.limit);
-        const response: FindRollenResponse = new FindRollenResponse(rollen, rollen.length);
-
-        return response;
     }
 
     @Get('schulstrukturknoten')

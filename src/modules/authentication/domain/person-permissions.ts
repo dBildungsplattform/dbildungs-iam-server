@@ -62,6 +62,9 @@ export class PersonPermissions {
         });
     }
 
+    /**
+     * @deprecated Inefficient
+     */
     public async getOrgIdsWithSystemrecht(
         systemrechte: RollenSystemRecht[],
         withChildren: boolean = false,
@@ -91,24 +94,37 @@ export class PersonPermissions {
         return Array.from(organisationIDs);
     }
 
-    public async hasSystemrechtAtOrganisation(
+    public async hasSystemrechteAtOrganisation(
         organisationId: OrganisationID,
         systemrechte: RollenSystemRecht[],
     ): Promise<boolean> {
-        const orgsWithRecht: OrganisationID[] = await this.getOrgIdsWithSystemrecht(systemrechte, true);
+        const checks: Promise<boolean>[] = systemrechte.map(
+            (systemrecht: RollenSystemRecht): Promise<boolean> =>
+                this.hasSystemrechtAtOrganisation(organisationId, systemrecht),
+        );
+        const results: boolean[] = await Promise.all(checks);
 
-        return orgsWithRecht.includes(organisationId);
+        return results.every((result: boolean): boolean => result);
     }
 
-    public async hasSystemrechtAtRootOrganisation(systemrechte: RollenSystemRecht[]): Promise<boolean> {
-        const orgsWithRecht: OrganisationID[] = await this.getOrgIdsWithSystemrecht(systemrechte, true);
+    public async hasSystemrechteAtRootOrganisation(systemrechte: RollenSystemRecht[]): Promise<boolean> {
+        return this.hasSystemrechteAtOrganisation(this.organisationRepo.ROOT_ORGANISATION_ID, systemrechte);
+    }
 
-        return orgsWithRecht.includes(this.organisationRepo.ROOT_ORGANISATION_ID);
+    public async hasSystemrechtAtOrganisation(
+        organisationId: OrganisationID,
+        systemrecht: RollenSystemRecht,
+    ): Promise<boolean> {
+        return this.personenkontextRepo.hasSystemrechtAtOrganisation(
+            this.cachedPersonFields.id,
+            organisationId,
+            systemrecht,
+        );
     }
 
     public async canModifyPerson(personId: PersonID): Promise<boolean> {
         {
-            const hasModifyRechtAtRoot: boolean = await this.hasSystemrechtAtRootOrganisation([
+            const hasModifyRechtAtRoot: boolean = await this.hasSystemrechteAtRootOrganisation([
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
 

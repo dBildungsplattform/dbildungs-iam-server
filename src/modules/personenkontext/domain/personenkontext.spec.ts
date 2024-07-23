@@ -176,7 +176,7 @@ describe('Personenkontext aggregate', () => {
     describe('checkPermissions', () => {
         it('should return MissingPermissionsError, if logged in user is not authorized at organisation', async () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false); // Check orga permissions
+            permissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false); // Check orga permissions
 
             const personenkontext: Personenkontext<false> = personenkontextFactory.createNew(
                 faker.string.uuid(),
@@ -188,14 +188,14 @@ describe('Personenkontext aggregate', () => {
                 new MissingPermissionsError('Unauthorized to manage persons at the organisation'),
             );
 
-            expect(permissions.hasSystemrechtAtOrganisation).toHaveBeenCalledWith(personenkontext.organisationId, [
+            expect(permissions.hasSystemrechteAtOrganisation).toHaveBeenCalledWith(personenkontext.organisationId, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
         });
 
         it('should return MissingPermissionsError, if target person can not be modified by logged in user', async () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true); // Check orga permissions
+            permissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true); // Check orga permissions
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true); // Check rolle<->orga validity
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
@@ -214,7 +214,7 @@ describe('Personenkontext aggregate', () => {
 
         it('should not return an error, if kontext is valid', async () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true); // Check orga permissions
+            permissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true); // Check orga permissions
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true); // Check rolle<->orga validity
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);

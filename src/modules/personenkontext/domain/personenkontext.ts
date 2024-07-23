@@ -163,7 +163,7 @@ export class Personenkontext<WasPersisted extends boolean> {
     public async checkPermissions(permissions: PersonPermissions): Promise<Option<DomainError>> {
         // Check if logged in person has permission
         {
-            const hasPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(this.organisationId, [
+            const hasPermissionAtOrga: boolean = await permissions.hasSystemrechteAtOrganisation(this.organisationId, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
 
