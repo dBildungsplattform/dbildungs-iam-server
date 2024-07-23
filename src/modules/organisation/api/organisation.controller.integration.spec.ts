@@ -133,7 +133,7 @@ describe('Organisation API', () => {
         describe('should return error', () => {
             it('if Organisation does NOT exist', async () => {
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/organisation/${faker.string.uuid()}/klasse`)
+                    .delete(`/organisationen/${faker.string.uuid()}/klasse`)
                     .send();
 
                 expect(response.status).toBe(404);
@@ -146,7 +146,7 @@ describe('Organisation API', () => {
                 await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/organisation/${faker.string.uuid()}/klasse`)
+                    .delete(`/organisationen/${faker.string.uuid()}/klasse`)
                     .send();
 
                 expect(response.status).toBe(404);
@@ -176,7 +176,7 @@ describe('Organisation API', () => {
                 );
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/organisation/${organisation.id}/klasse`)
+                    .delete(`/organisationen/${organisation.id}/klasse`)
                     .send();
 
                 expect(response.status).toBe(400);
@@ -195,7 +195,7 @@ describe('Organisation API', () => {
                 await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/organisation/${organisation.id}/klasse`)
+                    .delete(`/organisationen/${organisation.id}/klasse`)
                     .send();
 
                 expect(response.status).toBe(204);
