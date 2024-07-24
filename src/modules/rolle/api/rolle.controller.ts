@@ -55,6 +55,7 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
+import { RolleDomainError } from '../domain/rolle-domain.error.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
 
@@ -315,23 +316,24 @@ export class RolleController {
         @Body() params: UpdateRolleBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
-        if (
-            params.merkmale.length > 0 &&
-            (await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(findRolleByIdParams.rolleId))
-        ) {
-            throw new RolleHatPersonenkontexteError(['The Merkmale for the Rolle cannot be updated.']);
-        }
-
-        const result: Rolle<true> | DomainError = await this.rolleRepo.updateRolle(
+        const isAlreadyAssigned: boolean = await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(
+            findRolleByIdParams.rolleId,
+        );
+        const result: Rolle<true> | DomainError = await this.rolleRepo.updateRolleAuthorized(
             findRolleByIdParams.rolleId,
             params.name,
             params.merkmale,
             params.systemrechte,
             params.serviceProviderIds,
+            isAlreadyAssigned,
             permissions,
         );
 
         if (result instanceof DomainError) {
+            if (result instanceof RolleDomainError) {
+                throw result;
+            }
+
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );

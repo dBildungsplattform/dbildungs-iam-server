@@ -11,6 +11,7 @@ import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -216,18 +217,25 @@ export class RolleRepo {
         }
     }
 
-    public async updateRolle(
+    public async updateRolleAuthorized(
         id: string,
         name: string,
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
+        isAlreadyAssigned: boolean,
         permissions: PersonPermissions,
     ): Promise<Rolle<true> | DomainError> {
         //Reference & Permissions
         const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
         if (!authorizedRole.ok) {
             return authorizedRole.error;
+        }
+        //Specifications
+        {
+            if (isAlreadyAssigned && (merkmale.length > 0 || merkmale.length < authorizedRole.value.merkmale.length)) {
+                return new UpdateMerkmaleError();
+            }
         }
 
         const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(
