@@ -22,7 +22,6 @@ import { FindPersonenkontextByIdParams } from '../../personenkontext/api/param/f
 import { FindPersonenkontextDto } from '../../personenkontext/api/find-personenkontext.dto.js';
 import { LoeschungDto } from './loeschung.dto.js';
 import { LoeschungResponse } from './loeschung.response.js';
-import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonGeburtDto } from './person-geburt.dto.js';
 import { PersonNameDto } from './person-name.dto.js';
