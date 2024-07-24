@@ -85,7 +85,7 @@ backend:
       port: 8080
       path: '/health'
   dbseeding:
-    enabled: true
+    enabled: false
     command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
   ingress:
     enabled: true
