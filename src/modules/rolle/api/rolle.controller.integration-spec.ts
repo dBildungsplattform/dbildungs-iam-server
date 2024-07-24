@@ -718,7 +718,7 @@ describe('Rolle API', () => {
                 expect(response.status).toBe(400);
                 expect(response.body).toEqual({
                     code: 400,
-                    i18nKey: 'ROLLE_HAT_PERSONENKONTEXTE_ERROR',
+                    i18nKey: 'UPDATE_MERKMALE_ERROR',
                 });
             });
         });
