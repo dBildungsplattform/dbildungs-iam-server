@@ -594,10 +594,6 @@ describe('Rolle API', () => {
         it('should return updated rolle', async () => {
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persistAndFlush(organisation);
-<<<<<<< HEAD
-=======
-
->>>>>>> e45e0fcf4d140457b09ebe0d9636191ba5a390a9
             await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
             const rolle: Rolle<true> = await rolleRepo.save(
@@ -651,10 +647,6 @@ describe('Rolle API', () => {
         it('should return error with status-code 404 if user does NOT have permissions', async () => {
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persistAndFlush(organisation);
-<<<<<<< HEAD
-=======
-
->>>>>>> e45e0fcf4d140457b09ebe0d9636191ba5a390a9
             await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
             const rolle: Rolle<true> = await rolleRepo.save(
@@ -726,16 +718,11 @@ describe('Rolle API', () => {
                 expect(response.status).toBe(400);
                 expect(response.body).toEqual({
                     code: 400,
-<<<<<<< HEAD
                     i18nKey: 'ROLLE_HAT_PERSONENKONTEXTE_ERROR',
-=======
-                    i18nKey: 'UPDATE_MERKMALE_ERROR',
->>>>>>> e45e0fcf4d140457b09ebe0d9636191ba5a390a9
                 });
             });
         });
     });
-<<<<<<< HEAD
 
     describe('/DELETE rolleId', () => {
         describe('should return error', () => {
@@ -836,6 +823,4 @@ describe('Rolle API', () => {
             });
         });
     });
-=======
->>>>>>> e45e0fcf4d140457b09ebe0d9636191ba5a390a9
 });
