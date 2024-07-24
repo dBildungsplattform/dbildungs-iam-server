@@ -16,7 +16,7 @@ import { ServiceProviderRepo } from '../../../service-provider/repo/service-prov
 import { PersonApiModule } from '../../person-api.module.js';
 import { PersonRepository } from '../../persistence/person.repository.js';
 import { UsernameGeneratorService } from '../../domain/username-generator.service.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Person, PersonCreationParams } from '../../domain/person.js';
 import { faker } from '@faker-js/faker';
 import { DomainError } from '../../../../shared/error/index.js';
@@ -58,7 +58,9 @@ describe('Personenuebersicht API', () => {
 
     beforeAll(async () => {
         const keycloakUserServiceMock: KeycloakUserService = createMock<KeycloakUserService>({
-            create: jest.fn().mockResolvedValue({ ok: true, value: '' }),
+            create: jest.fn().mockImplementation(() => {
+                return { ok: true, value: faker.string.uuid() };
+            }),
             setPassword: jest.fn().mockResolvedValue({ ok: true, value: '' }),
             delete: jest.fn().mockResolvedValue({ ok: true }),
         });
@@ -372,6 +374,7 @@ describe('Personenuebersicht API', () => {
             if (person1 instanceof DomainError) {
                 return;
             }
+
             const savedPerson1: Person<true> | DomainError = await personRepository.create(person1);
             expect(savedPerson1).not.toBeInstanceOf(DomainError);
             if (savedPerson1 instanceof DomainError) {
@@ -382,10 +385,12 @@ describe('Personenuebersicht API', () => {
                 usernameGeneratorService,
                 creationParams,
             );
+
             expect(person2).not.toBeInstanceOf(DomainError);
             if (person2 instanceof DomainError) {
                 return;
             }
+
             const savedPerson2: Person<true> | DomainError = await personRepository.create(person2);
             expect(savedPerson2).not.toBeInstanceOf(DomainError);
             if (savedPerson2 instanceof DomainError) {

@@ -6,6 +6,7 @@ import {
     DateTimeType,
     Entity,
     Enum,
+    Index,
     ManyToOne,
     OneToMany,
     Property,
@@ -26,6 +27,11 @@ export class PersonEntity extends TimestampedEntity {
     }
 
     @AutoMap()
+    @Index({
+        name: 'person_keycloak_user_id_unique',
+        expression:
+            'create unique index "person_keycloak_user_id_unique" on "person" ("keycloak_user_id") nulls not distinct;',
+    })
     @Property()
     public keycloakUserId!: string;
 
@@ -113,6 +119,10 @@ export class PersonEntity extends TimestampedEntity {
     public revision!: string;
 
     @AutoMap()
+    @Index({
+        name: 'person_personalnummer_unique',
+        expression: 'create unique index "person_personalnummer_unique" on "person" ("personalnummer") nulls distinct;',
+    })
     @Property({ nullable: true })
     public personalnummer?: string;
 
