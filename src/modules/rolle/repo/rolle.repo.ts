@@ -1,4 +1,4 @@
-import { EntityData, EntityManager, EntityName, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { EntityData, EntityManager, EntityName, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 
 import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
@@ -168,35 +168,40 @@ export class RolleRepo {
         searchStr?: string,
         limit?: number,
         offset?: number,
-    ): Promise<Option<Rolle<true>[]>> {
-        let rollen: Option<RolleEntity[]>;
-        if (searchStr) {
-            rollen = await this.em.find(
-                this.entityName,
-                { name: { $ilike: '%' + searchStr + '%' } },
-                { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit, offset: offset },
-            );
-        } else {
-            rollen = await this.em.findAll(this.entityName, {
-                populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
-                limit: limit,
-                offset: offset,
-            });
-        }
-        if (rollen.length === 0) {
-            return [];
-        }
-
+    ): Promise<[Option<Rolle<true>[]>, number]> {
         const orgIdsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ROLLEN_VERWALTEN],
             true,
         );
 
-        const filteredRollen: RolleEntity[] = rollen.filter((rolle: RolleEntity) =>
-            orgIdsWithRecht.includes(rolle.administeredBySchulstrukturknoten),
-        );
+        let rollen: Option<RolleEntity[]>;
+        let total: number;
+        const organisationWhereClause = { administeredBySchulstrukturknoten: { $in: orgIdsWithRecht } };
+        if (searchStr) {
+            [rollen, total] = await this.em.findAndCount(
+                this.entityName,
+                {
+                    name: { $ilike: '%' + searchStr + '%' },
+                    ...organisationWhereClause,
+                },
+                { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit, offset: offset },
+            );
+        } else {
+            [rollen, total] = await this.em.findAndCount(
+                this.entityName,
+                { ...organisationWhereClause },
+                {
+                    populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+                    limit: limit,
+                    offset: offset,
+                },
+            );
+        }
+        if (total === 0) {
+            return [[], 0];
+        }
 
-        return filteredRollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
+        return [rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory)), total];
     }
 
     public async exists(id: RolleID): Promise<boolean> {

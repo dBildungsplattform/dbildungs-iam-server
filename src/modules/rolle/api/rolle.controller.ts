@@ -18,8 +18,8 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
-    ApiOAuth2,
     ApiNotFoundResponse,
+    ApiOAuth2,
     ApiOkResponse,
     ApiOperation,
     ApiTags,
@@ -86,7 +86,7 @@ export class RolleController {
         @Query() queryParams: RolleNameQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
-        const rollen: Option<Rolle<true>[]> = await this.rolleRepo.findRollenAuthorized(
+        const [rollen, total]: [Option<Rolle<true>[]>, number] = await this.rolleRepo.findRollenAuthorized(
             permissions,
             queryParams.searchStr,
             queryParams.limit,
@@ -113,7 +113,7 @@ export class RolleController {
             },
         );
         const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
-            total: rollenWithServiceProvidersResponses.length,
+            total: total,
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? rollenWithServiceProvidersResponses.length,
             items: rollenWithServiceProvidersResponses,
