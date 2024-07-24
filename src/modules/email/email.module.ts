@@ -7,9 +7,17 @@ import { EventModule } from '../../core/eventbus/event.module.js';
 import { EmailEventHandler } from './domain/email-event-handler.js';
 import { EmailFactory } from './domain/email.factory.js';
 import { EmailRepo } from './persistence/email.repo.js';
+import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 
 @Module({
-    imports: [PersonModule, RolleModule, ServiceProviderModule, EventModule, LoggerModule.register(EmailModule.name)],
+    imports: [
+        PersonModule,
+        RolleModule,
+        ServiceProviderModule,
+        EventModule,
+        PersonenKontextModule,
+        LoggerModule.register(EmailModule.name),
+    ],
     providers: [EmailRepo, EmailFactory, EmailEventHandler],
     exports: [EmailRepo],
 })
