@@ -1,4 +1,3 @@
-import { DomainError } from '../../../shared/error/domain.error.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -138,14 +137,7 @@ export class PersonPermissions implements IPersonPermissions {
         }
 
         {
-            const result: Result<Personenkontext<true>[], DomainError> =
-                await this.personenkontextRepo.findByPersonAuthorized(personId, this);
-
-            if (!result.ok) {
-                return false;
-            }
-
-            return result.value.length > 0;
+            return this.hasSystemrechtAtAnyKontextOfTargetPerson(personId, RollenSystemRecht.PERSONEN_VERWALTEN);
         }
     }
 
