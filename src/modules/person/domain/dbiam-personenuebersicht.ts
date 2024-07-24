@@ -75,18 +75,18 @@ export class DbiamPersonenuebersicht {
             organisationIdsForKontexte,
         ); //use Organisation Aggregate as soon as there is one
 
-        const personenUebersichten: DBiamPersonenzuordnungResponse[] | EntityNotFoundError =
+        const result: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
             this.createZuordnungenForKontexte(
                 personenKontexte,
                 rollenForKontexte,
                 organisationsForKontexte,
                 organisationIDs,
             );
-        if (personenUebersichten instanceof EntityNotFoundError) {
-            return personenUebersichten;
+        if (result instanceof EntityNotFoundError) {
+            return result;
         }
 
-        return new DBiamPersonenuebersichtResponse(person, personenUebersichten);
+        return new DBiamPersonenuebersichtResponse(person, result[0], result[1]);
     }
 
     public createZuordnungenForKontexte(
@@ -94,8 +94,9 @@ export class DbiamPersonenuebersicht {
         rollen: Map<string, Rolle<true>>,
         organisations: Map<string, Organisation<true>>,
         organisationIds?: string[],
-    ): DBiamPersonenzuordnungResponse[] | EntityNotFoundError {
+    ): [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError {
         const personenUebersichten: DBiamPersonenzuordnungResponse[] = [];
+        let lastModifiedZuordnungen: Date | undefined = undefined;
         for (const pk of kontexte) {
             const rolle: Rolle<true> | undefined = rollen.get(pk.rolleId);
             const organisation: Organisation<true> | undefined = organisations.get(pk.organisationId);
@@ -116,8 +117,15 @@ export class DbiamPersonenuebersicht {
                     personenUebersichten.push(new DBiamPersonenzuordnungResponse(pk, organisation, rolle, false));
                 }
             }
+
+            if (lastModifiedZuordnungen == undefined) {
+                lastModifiedZuordnungen = pk.updatedAt;
+            } else {
+                lastModifiedZuordnungen =
+                    lastModifiedZuordnungen.getTime() < pk.updatedAt.getTime() ? pk.updatedAt : lastModifiedZuordnungen;
+            }
         }
 
-        return personenUebersichten;
+        return [personenUebersichten, lastModifiedZuordnungen];
     }
 }

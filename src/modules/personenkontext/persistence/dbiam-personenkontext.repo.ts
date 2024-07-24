@@ -434,5 +434,9 @@ export class DBiamPersonenkontextRepo {
         });
 
         return personenKontexte.length > 0;
+    };
+
+    public async isRolleAlreadyAssigned(id: RolleID): Promise<boolean> {
+        return (await this.findByRolle(id)).length > 0;
     }
 }

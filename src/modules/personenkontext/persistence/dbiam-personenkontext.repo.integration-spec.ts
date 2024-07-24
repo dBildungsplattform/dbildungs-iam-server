@@ -849,12 +849,28 @@ describe('dbiam Personenkontext Repo', () => {
             );
 
             const result: boolean = await sut.isOrganisationAlreadyAssigned(organisation.id);
+            expect(result).toBeTruthy();
+        });
+    });
+
+    describe('isRolleAlreadyAssigned', () => {
+        it('should return true if there is any personenkontext for a rolle', async () => {
+            const person: Person<true> = await createPerson();
+            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
+            await sut.save(createPersonenkontext(false, { rolleId: rolle.id, personId: person.id }));
+            const result: boolean = await sut.isRolleAlreadyAssigned(rolle.id);
 
             expect(result).toBeTruthy();
         });
 
         it('should return false if there is no  personenkontext for an organisation', async () => {
             const result: boolean = await sut.isOrganisationAlreadyAssigned(faker.string.uuid());
+            expect(result).toBeFalsy();
+        });
+
+        it('should return false if there is no  personenkontext for a rolle', async () => {
+            const result: boolean = await sut.isRolleAlreadyAssigned(faker.string.uuid());
 
             expect(result).toBeFalsy();
         });

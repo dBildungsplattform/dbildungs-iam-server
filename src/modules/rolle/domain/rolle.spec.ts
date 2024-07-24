@@ -10,17 +10,21 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RolleFactory } from './rolle.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 
 describe('Rolle Aggregate', () => {
     let module: TestingModule;
     let rolleFactory: RolleFactory;
-    let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
+    let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let organisationRepo: DeepMocked<OrganisationRepository>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             providers: [
                 RolleFactory,
+                PersonenkontextFactory,
                 {
                     provide: ServiceProviderRepo,
                     useValue: createMock<ServiceProviderRepo>(),
@@ -33,10 +37,18 @@ describe('Rolle Aggregate', () => {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
                 },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                },
+                {
+                    provide: PersonRepository,
+                    useValue: createMock<PersonRepository>(),
+                },
             ],
         }).compile();
         rolleFactory = module.get(RolleFactory);
-        serviceProviderRepo = module.get(ServiceProviderRepo);
+        serviceProviderRepoMock = module.get(ServiceProviderRepo);
         organisationRepo = module.get(OrganisationRepository);
     });
 
@@ -127,7 +139,7 @@ describe('Rolle Aggregate', () => {
                 );
                 const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
                 serviceProvider.id = serviceProviderIdToAttach;
-                serviceProviderRepo.findById.mockResolvedValue(serviceProvider);
+                serviceProviderRepoMock.findById.mockResolvedValue(serviceProvider);
 
                 const result: void | DomainError = await rolle.attachServiceProvider(serviceProviderIdToAttach);
 
@@ -153,7 +165,7 @@ describe('Rolle Aggregate', () => {
                     [],
                     [],
                 );
-                serviceProviderRepo.findById.mockResolvedValue(undefined);
+                serviceProviderRepoMock.findById.mockResolvedValue(undefined);
 
                 const result: void | DomainError = await rolle.attachServiceProvider(serviceProviderIdToAttach);
 
@@ -179,7 +191,7 @@ describe('Rolle Aggregate', () => {
 
                 const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
                 serviceProvider.id = serviceProviderIdToAttach;
-                serviceProviderRepo.findById.mockResolvedValue(serviceProvider);
+                serviceProviderRepoMock.findById.mockResolvedValue(serviceProvider);
 
                 const result: void | DomainError = await rolle.attachServiceProvider(serviceProviderIdToAttach);
 
@@ -267,6 +279,24 @@ describe('Rolle Aggregate', () => {
             const savedRolle: Rolle<true> = DoFactory.createRolle(true, { systemrechte: [] });
 
             expect(savedRolle.hasSystemRecht(RollenSystemRecht.ROLLEN_VERWALTEN)).toBeFalsy();
+        });
+    });
+
+    describe('update', () => {
+        it('should return domain error if service provider is does not exist', async () => {
+            serviceProviderRepoMock.findById.mockResolvedValue(undefined);
+            const result: Rolle<true> | DomainError = await rolleFactory.update(
+                faker.string.uuid(),
+                faker.datatype.datetime(),
+                faker.datatype.datetime(),
+                'newName',
+                faker.string.uuid(),
+                faker.helpers.enumValue(RollenArt),
+                [faker.helpers.enumValue(RollenMerkmal)],
+                [faker.helpers.enumValue(RollenSystemRecht)],
+                [faker.string.uuid()],
+            );
+            expect(result).toBeInstanceOf(DomainError);
         });
     });
 });
