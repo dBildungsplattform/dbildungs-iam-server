@@ -1,6 +1,6 @@
-import { IPersonPermissions } from './person-permissions.interface.js';
+import { IPersonPermissions } from '../../src/modules/authentication/domain/person-permissions.interface.js';
 
-export class PersonPermissionsBypass implements IPersonPermissions {
+export class PersonPermissionsMock implements IPersonPermissions {
     public hasSystemrechteAtOrganisation(): Promise<boolean> {
         return Promise.resolve(true);
     }

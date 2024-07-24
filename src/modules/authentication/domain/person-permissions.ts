@@ -8,7 +8,6 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { IPersonPermissions } from './person-permissions.interface.js';
-import { PersonPermissionsBypass } from './person-permissions.bypass.js';
 
 export type PersonFields = Pick<
     Person<true>,
@@ -30,8 +29,6 @@ export type PersonenkontextRolleFields = {
 };
 
 export class PersonPermissions implements IPersonPermissions {
-    public static ALL: IPersonPermissions = new PersonPermissionsBypass();
-
     private cachedPersonenkontextsFields?: PersonKontextFields[];
 
     private cachedPersonFields: PersonFields;
@@ -181,7 +178,7 @@ export class PersonPermissions implements IPersonPermissions {
         return this.cachedRollenFields;
     }
 
-    public async hasSystemrechtAtAnyKontextOfTargetPerson(
+    private async hasSystemrechtAtAnyKontextOfTargetPerson(
         targetPersonId: PersonID,
         systemrecht: RollenSystemRecht,
     ): Promise<boolean> {

@@ -157,7 +157,7 @@ describe('dbiam Personenkontext API', () => {
             ]);
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechtAtAnyKontextOfTargetPerson.mockResolvedValueOnce(true);
+            personpermissions.canModifyPerson.mockResolvedValueOnce(true);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/dbiam/personenkontext/${personA.id}`)
@@ -168,11 +168,10 @@ describe('dbiam Personenkontext API', () => {
             expect(response.body).toHaveLength(2);
         });
 
-        it('should return empty list', async () => {
+        it('should return empty list, if user has systemrechte at ROOT organisation', async () => {
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-            personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
-            personpermissions.hasSystemrechtAtAnyKontextOfTargetPerson.mockResolvedValueOnce(false);
+            personpermissions.canModifyPerson.mockResolvedValueOnce(true);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/dbiam/personenkontext/${faker.string.uuid()}`)
@@ -187,7 +186,7 @@ describe('dbiam Personenkontext API', () => {
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
             personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
-            personpermissions.hasSystemrechtAtAnyKontextOfTargetPerson.mockResolvedValueOnce(false);
+            personpermissions.canModifyPerson.mockResolvedValueOnce(false);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/dbiam/personenkontext/${faker.string.uuid()}`)

@@ -66,8 +66,7 @@ export class PersonenkontextCreationService {
                     rolleId,
                 },
             ],
-            // Permissions were checked in PersonenkontextWorkflowAggregate
-            PersonPermissions.ALL,
+            permissions,
         );
 
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();

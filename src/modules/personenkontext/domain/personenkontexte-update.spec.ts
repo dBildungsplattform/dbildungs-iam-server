@@ -19,6 +19,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { PersonPermissionsMock } from '../../../../test/utils/index.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>({
@@ -47,6 +48,7 @@ describe('PersonenkontexteUpdate', () => {
     let bodyParam2: DbiamPersonenkontextBodyParams;
     let pk1: Personenkontext<true>;
     let pk2: Personenkontext<true>;
+    let personPermissionsMock: PersonPermissionsMock;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -103,6 +105,7 @@ describe('PersonenkontexteUpdate', () => {
             organisationId: bodyParam2.organisationId,
             rolleId: bodyParam2.rolleId,
         });
+        personPermissionsMock = new PersonPermissionsMock();
     });
 
     afterAll(async () => {
@@ -127,7 +130,7 @@ describe('PersonenkontexteUpdate', () => {
                     lastModified,
                     count,
                     createPKBodyParams(personId),
-                    PersonPermissions.ALL,
+                    personPermissionsMock,
                 );
             });
 
@@ -153,7 +156,7 @@ describe('PersonenkontexteUpdate', () => {
                     lastModified,
                     count,
                     createPKBodyParams(personId),
-                    PersonPermissions.ALL,
+                    personPermissionsMock,
                 );
             });
 
@@ -172,7 +175,7 @@ describe('PersonenkontexteUpdate', () => {
                     lastModified,
                     count,
                     [bodyParam1, bodyParam2],
-                    PersonPermissions.ALL,
+                    personPermissionsMock,
                 );
             });
 
@@ -195,7 +198,7 @@ describe('PersonenkontexteUpdate', () => {
                     wrongLastModified,
                     count,
                     [bodyParam1, bodyParam2],
-                    PersonPermissions.ALL,
+                    personPermissionsMock,
                 );
             });
 
@@ -217,7 +220,7 @@ describe('PersonenkontexteUpdate', () => {
                     lastModified,
                     count,
                     [bodyParam1, bodyParam2],
-                    PersonPermissions.ALL,
+                    personPermissionsMock,
                 );
             });
 
