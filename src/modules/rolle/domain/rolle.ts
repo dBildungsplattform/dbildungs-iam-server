@@ -5,7 +5,6 @@ import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 import { EntityAlreadyExistsError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 
 export class Rolle<WasPersisted extends boolean> {
     private constructor(
@@ -47,6 +46,42 @@ export class Rolle<WasPersisted extends boolean> {
         );
     }
 
+    public static async update(
+        organisationRepo: OrganisationRepository,
+        serviceProviderRepo: ServiceProviderRepo,
+        id: string,
+        createdAt: Date,
+        updatedAt: Date,
+        name: string,
+        administeredBySchulstrukturknoten: string,
+        rollenart: RollenArt,
+        merkmale: RollenMerkmal[],
+        systemrechte: RollenSystemRecht[],
+        serviceProviderIds: string[],
+    ): Promise<Rolle<true> | DomainError> {
+        const rolleToUpdate: Rolle<true> = new Rolle(
+            organisationRepo,
+            serviceProviderRepo,
+            id,
+            createdAt,
+            updatedAt,
+            name,
+            administeredBySchulstrukturknoten,
+            rollenart,
+            merkmale,
+            systemrechte,
+            [],
+        );
+        //Replace service providers with new ones.
+        for (const serviceProviderId of serviceProviderIds) {
+            const result: void | DomainError = await rolleToUpdate.attachServiceProvider(serviceProviderId);
+            if (result instanceof DomainError) {
+                return result;
+            }
+        }
+        return rolleToUpdate;
+    }
+
     public static construct<WasPersisted extends boolean = false>(
         organisationRepo: OrganisationRepository,
         serviceProviderRepo: ServiceProviderRepo,
@@ -77,11 +112,7 @@ export class Rolle<WasPersisted extends boolean> {
 
     public async canBeAssignedToOrga(orgaId: OrganisationID): Promise<boolean> {
         if (orgaId === this.administeredBySchulstrukturknoten) return true;
-        const childOrgas: Organisation<true>[] = await this.organisationRepo.findChildOrgasForIds([
-            this.administeredBySchulstrukturknoten,
-        ]);
-
-        return !!childOrgas.find((orga: Organisation<true>) => orga.id === orgaId);
+        return this.organisationRepo.isOrgaAParentOfOrgaB(this.administeredBySchulstrukturknoten, orgaId);
     }
 
     public addMerkmal(merkmal: RollenMerkmal): void {
