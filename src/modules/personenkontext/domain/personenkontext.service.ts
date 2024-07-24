@@ -132,7 +132,7 @@ export class PersonenkontextService {
             return { ok: false, error: new MismatchedRevisionError('Personenkontext') };
         }
 
-        const deletedPersons: number = await this.personenkontextRepo.deleteById(id);
+        const deletedPersons: number = await this.dBiamPersonenkontextRepo.deleteById(id);
 
         if (deletedPersons === 0) {
             return { ok: false, error: new EntityCouldNotBeDeleted('Personenkontext', id) };

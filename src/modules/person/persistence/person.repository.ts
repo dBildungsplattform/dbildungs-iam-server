@@ -12,7 +12,7 @@ import {
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { KeycloakUserService, PersonHasNoKeycloakId, UserDo } from '../../keycloak-administration/index.js';
+import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Person } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
@@ -262,7 +262,7 @@ export class PersonRepository {
         }
 
         person.referrer = person.username;
-        const userDo: UserDo<false> = UserDo.createNew(person.username, undefined);
+        const userDo: User<false> = User.createNew(person.username, undefined);
 
         const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
         if (!creationResult.ok) {
@@ -292,7 +292,7 @@ export class PersonRepository {
             return new EntityCouldNotBeCreated('Person');
         }
         person.referrer = person.username;
-        const userDo: UserDo<false> = UserDo.createNew(person.username, undefined);
+        const userDo: User<false> = User.createNew(person.username, undefined);
 
         const creationResult: Result<string, DomainError> = await kcUserService.createWithHashedPassword(
             userDo,

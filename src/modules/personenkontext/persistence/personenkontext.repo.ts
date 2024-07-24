@@ -5,8 +5,10 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
-import { PersonenkontextScope } from './personenkontext.scope.js';
 
+/**
+ * @deprecated This class is depricated and only used by one post method
+ */
 @Injectable()
 export class PersonenkontextRepo {
     public constructor(
@@ -19,24 +21,6 @@ export class PersonenkontextRepo {
             return this.update(personenkontextDo);
         }
         return this.create(personenkontextDo);
-    }
-
-    public async findBy(scope: PersonenkontextScope): Promise<Counted<PersonenkontextDo<true>>> {
-        const [entities, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(this.em);
-        const dos: PersonenkontextDo<true>[] = entities.map((e: PersonenkontextEntity) =>
-            this.mapper.map(e, PersonenkontextEntity, PersonenkontextDo),
-        );
-
-        return [dos, total];
-    }
-
-    public async findById(id: string): Promise<Option<PersonenkontextDo<true>>> {
-        const entity: Option<Loaded<PersonenkontextEntity>> = await this.em.findOne(PersonenkontextEntity, { id });
-        const result: Option<PersonenkontextDo<true>> = entity
-            ? this.mapper.map(entity, PersonenkontextEntity, PersonenkontextDo)
-            : null;
-
-        return result;
     }
 
     private async create(personenkontextDo: PersonenkontextDo<false>): Promise<Option<PersonenkontextDo<true>>> {
@@ -67,10 +51,5 @@ export class PersonenkontextRepo {
         await this.em.persistAndFlush(personenkontext);
 
         return this.mapper.map(personenkontext, PersonenkontextEntity, PersonenkontextDo);
-    }
-
-    public async deleteById(id: string): Promise<number> {
-        const deletedPersons: number = await this.em.nativeDelete(PersonenkontextEntity, { id });
-        return deletedPersons;
     }
 }

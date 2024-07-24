@@ -6,7 +6,7 @@ import { validate, ValidationError } from 'class-validator';
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { UserRepresentationDto } from './keycloak-client/user-representation.dto.js';
-import { UserDo } from './user.do.js';
+import { User } from './user.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export type FindUserFilter = {
@@ -22,7 +22,7 @@ export class KeycloakUserService {
         private readonly logger: ClassLogger,
     ) {}
 
-    public async create(user: UserDo<false>, password?: string): Promise<Result<string, DomainError>> {
+    public async create(user: User<false>, password?: string): Promise<Result<string, DomainError>> {
         // Get authed client
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
@@ -40,7 +40,7 @@ export class KeycloakUserService {
             filter.email = user.email;
         }
 
-        const findResult: Result<UserDo<true>, DomainError> = await this.findOne(filter);
+        const findResult: Result<User<true>, DomainError> = await this.findOne(filter);
 
         if (findResult.ok) {
             return {
@@ -74,7 +74,7 @@ export class KeycloakUserService {
     }
 
     public async createWithHashedPassword(
-        user: UserDo<false>,
+        user: User<false>,
         hashedPassword: string,
     ): Promise<Result<string, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
@@ -124,7 +124,7 @@ export class KeycloakUserService {
             filter.email = user.email;
         }
 
-        const findResult: Result<UserDo<true>, DomainError> = await this.findOne(filter);
+        const findResult: Result<User<true>, DomainError> = await this.findOne(filter);
 
         if (findResult.ok) {
             return {
@@ -172,7 +172,7 @@ export class KeycloakUserService {
         return this.wrapClientResponse(kcAdminClientResult.value.users.del({ id }));
     }
 
-    public async findById(id: string): Promise<Result<UserDo<true>, DomainError>> {
+    public async findById(id: string): Promise<Result<User<true>, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
 
@@ -196,7 +196,7 @@ export class KeycloakUserService {
         };
     }
 
-    public async findOne(filter: FindUserFilter): Promise<Result<UserDo<true>, DomainError>> {
+    public async findOne(filter: FindUserFilter): Promise<Result<User<true>, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
 
@@ -256,7 +256,7 @@ export class KeycloakUserService {
         }
     }
 
-    private async mapResponseToDto(user?: UserRepresentation): Promise<Result<UserDo<true>, DomainError>> {
+    private async mapResponseToDto(user?: UserRepresentation): Promise<Result<User<true>, DomainError>> {
         const userReprDto: UserRepresentationDto = plainToClass(UserRepresentationDto, user);
         const validationErrors: ValidationError[] = await validate(userReprDto);
 
@@ -264,7 +264,7 @@ export class KeycloakUserService {
             return { ok: false, error: new KeycloakClientError('Response is invalid') };
         }
 
-        const userDo: UserDo<true> = UserDo.construct<true>(
+        const userDo: User<true> = User.construct<true>(
             userReprDto.id,
             userReprDto.username,
             userReprDto.email,

@@ -23,7 +23,7 @@ import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persi
 import { ServiceProviderFactory } from '../../../modules/service-provider/domain/service-provider.factory.js';
 import { ServiceProviderRepo } from '../../../modules/service-provider/repo/service-provider.repo.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
-import { FindUserFilter, KeycloakUserService, UserDo } from '../../../modules/keycloak-administration/index.js';
+import { FindUserFilter, KeycloakUserService, User } from '../../../modules/keycloak-administration/index.js';
 import { DBiamPersonenkontextService } from '../../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
 import { DbSeedReferenceRepo } from '../repo/db-seed-reference.repo.js';
 import { DbSeedReference } from './db-seed-reference.js';
@@ -236,7 +236,7 @@ export class DbSeedService {
                 username: person.username,
             };
 
-            const existingKcUser: Result<UserDo<true>, DomainError> = await this.kcUserService.findOne(filter);
+            const existingKcUser: Result<User<true>, DomainError> = await this.kcUserService.findOne(filter);
             if (existingKcUser.ok) {
                 await this.kcUserService.delete(existingKcUser.value.id); //When kcUser exists delete it
                 this.logger.warning(

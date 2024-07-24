@@ -1,4 +1,4 @@
-export class UserDo<WasPersisted extends boolean> {
+export class User<WasPersisted extends boolean> {
     private constructor(
         public id: Persisted<string, WasPersisted>,
         public username: string,
@@ -6,8 +6,8 @@ export class UserDo<WasPersisted extends boolean> {
         public createdDate: Persisted<Date, WasPersisted>,
     ) {}
 
-    public static createNew(username: string, email: string | undefined): UserDo<false> {
-        return new UserDo(undefined, username, email, undefined);
+    public static createNew(username: string, email: string | undefined): User<false> {
+        return new User(undefined, username, email, undefined);
     }
 
     public static construct<WasPersisted extends boolean = true>(
@@ -15,7 +15,7 @@ export class UserDo<WasPersisted extends boolean> {
         username: string,
         email: string | undefined,
         createdDate: Date,
-    ): UserDo<WasPersisted> {
-        return new UserDo(id, username, email, createdDate);
+    ): User<WasPersisted> {
+        return new User(id, username, email, createdDate);
     }
 }

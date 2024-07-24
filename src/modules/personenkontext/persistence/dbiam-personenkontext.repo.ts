@@ -396,4 +396,9 @@ export class DBiamPersonenkontextRepo {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         return result[0].has_systemrecht_at_orga as boolean;
     }
+
+    public async deleteById(id: string): Promise<number> {
+        const deletedPersons: number = await this.em.nativeDelete(PersonenkontextEntity, { id });
+        return deletedPersons;
+    }
 }

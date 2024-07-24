@@ -8,7 +8,7 @@ import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { UserMapperProfile } from './keycloak-client/user.mapper.profile.js';
 import { type FindUserFilter, KeycloakUserService } from './keycloak-user.service.js';
-import { UserDo } from './user.do.js';
+import { UserDo } from './user.js';
 import { PersonService } from '../../person/domain/person.service.js';
 
 describe('KeycloakUserService', () => {

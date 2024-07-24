@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { UserDo } from '../../src/modules/keycloak-administration/domain/user.do.js';
+import { User } from '../../src/modules/keycloak-administration/domain/user.js';
 import { OrganisationDo } from '../../src/modules/organisation/domain/organisation.do.js';
 import { OrganisationsTyp, Traegerschaft } from '../../src/modules/organisation/domain/organisation.enums.js';
 import { PersonDo } from '../../src/modules/person/domain/person.do.js';
@@ -70,16 +70,16 @@ export class DoFactory {
     public static createUser<WasPersisted extends boolean>(
         this: void,
         withId: WasPersisted,
-        props?: Partial<UserDo<WasPersisted>>,
-    ): UserDo<WasPersisted> {
-        const user: UserDo<false> = {
+        props?: Partial<User<WasPersisted>>,
+    ): User<WasPersisted> {
+        const user: User<false> = {
             id: withId ? faker.string.uuid() : undefined,
             createdDate: withId ? faker.date.past() : undefined,
             username: faker.internet.userName(),
             email: faker.internet.email(),
         };
 
-        return Object.assign(Object.create(UserDo.prototype) as UserDo<boolean>, user, props);
+        return Object.assign(Object.create(User.prototype) as User<boolean>, user, props);
     }
 
     public static createPersonenkontext<WasPersisted extends boolean>(
