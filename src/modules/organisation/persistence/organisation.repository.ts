@@ -203,7 +203,11 @@ export class OrganisationRepository {
         return organisationEntity;
     }
 
-    private async create(organisation: Organisation<false>): Promise<Organisation<true>> {
+    public async saveSeedData(organisation: Organisation<boolean>): Promise<Organisation<true>> {
+        return this.create(organisation);
+    }
+
+    private async create(organisation: Organisation<boolean>): Promise<Organisation<true>> {
         const organisationEntity: OrganisationEntity = this.em.create(
             OrganisationEntity,
             mapAggregateToData(organisation),

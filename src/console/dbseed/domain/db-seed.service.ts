@@ -101,7 +101,7 @@ export class DbSeedService {
             organisation.id = this.ROOT_ORGANISATION_ID;
         }
 
-        const savedOrga: Organisation<true> = await this.organisationRepository.save(organisation);
+        const savedOrga: Organisation<true> = await this.organisationRepository.saveSeedData(organisation);
         const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
             ReferencedEntityType.ORGANISATION,
             data.id,
