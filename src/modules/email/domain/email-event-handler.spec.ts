@@ -33,6 +33,8 @@ import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { EmailAddress } from './email-address.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 function getEmail(): EmailAddress<true> {
     const fakePersonId: PersonID = faker.string.uuid();
@@ -389,6 +391,24 @@ describe('Email Event Handler', () => {
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Deactivation of email-address:${event.emailAddress} failed`,
                 );
+            });
+        });
+    });
+
+    describe('handleRolleUpdatedEvent', () => {
+        let rolleId: string;
+        let event: RolleUpdatedEvent;
+
+        beforeEach(() => {
+            rolleId = faker.string.uuid();
+            event = new RolleUpdatedEvent(rolleId, faker.helpers.enumValue(RollenArt), [], [], []);
+        });
+
+        describe('when rolle is updated', () => {
+            it('should log info', async () => {
+                await emailEventHandler.handleRolleUpdatedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(`Received RolleUpdatedEvent, rolleId:${event.rolleId}`);
             });
         });
     });
