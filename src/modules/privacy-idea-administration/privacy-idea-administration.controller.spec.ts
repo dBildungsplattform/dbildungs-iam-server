@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PrivacyIdeaAdministrationController } from './privacy-idea-administration.controller';
-import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service';
+import { PrivacyIdeaAdministrationController } from './privacy-idea-administration.controller.js';
+import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { HttpService } from '@nestjs/axios'; // Import HttpService if it's not already
 
 describe('PrivacyIdeaAdministrationController', () => {
@@ -14,8 +14,9 @@ describe('PrivacyIdeaAdministrationController', () => {
                 PrivacyIdeaAdministrationService,
                 {
                     provide: HttpService,
-                    useValue: { // Mock HttpService
-                        post: jest.fn() // Mock the methods you need
+                    useValue: {
+                        // Mock HttpService
+                        post: jest.fn(), // Mock the methods you need
                     },
                 },
             ],

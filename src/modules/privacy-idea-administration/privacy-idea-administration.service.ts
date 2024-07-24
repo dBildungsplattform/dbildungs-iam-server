@@ -131,11 +131,11 @@ export class PrivacyIdeaAdministrationService {
     public async resetToken(user: string): Promise<ResetTokenResponse> {
         const token: string = await this.getJWTToken();
 
-        const twoAuthState = await this.getTwoAuthState(user);
+        const twoAuthState: PrivacyIdeaToken | undefined = await this.getTwoAuthState(user);
         if (!twoAuthState) {
             throw new Error('Error getting two-factor auth state.');
         }
-        const serial = twoAuthState.serial;
+        const serial: string = twoAuthState.serial;
         try {
             const response: ResetTokenResponse = await this.unassignToken(serial, token);
             return response;
@@ -144,10 +144,7 @@ export class PrivacyIdeaAdministrationService {
         }
     }
 
-    public async unassignToken(
-        serial: string,
-        token: string,
-    ): Promise<ResetTokenResponse> {
+    public async unassignToken(serial: string, token: string): Promise<ResetTokenResponse> {
         const endpoint: string = '/token/unassign';
         const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
         const url: string = baseUrl + endpoint;
@@ -157,7 +154,7 @@ export class PrivacyIdeaAdministrationService {
         };
 
         const payload: ResetTokenPayload = {
-            serial
+            serial,
         };
 
         try {
