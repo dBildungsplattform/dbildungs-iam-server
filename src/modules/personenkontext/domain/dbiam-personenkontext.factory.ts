@@ -5,6 +5,7 @@ import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkonte
 import { PersonID } from '../../../shared/types/index.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { EventService } from '../../../core/eventbus/index.js';
+import { PersonRepo } from '../../person/persistence/person.repo.js';
 
 @Injectable()
 export class DbiamPersonenkontextFactory {
@@ -12,16 +13,18 @@ export class DbiamPersonenkontextFactory {
         private personenkontextFactory: PersonenkontextFactory,
         private readonly eventService: EventService,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly personRepo: PersonRepo,
     ) {}
 
     public createNewPersonenkontexteUpdate(
         personId: PersonID,
-        lastModified: Date,
+        lastModified: Date | undefined,
         count: number,
         dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
     ): PersonenkontexteUpdate {
         return PersonenkontexteUpdate.createNew(
             this.eventService,
+            this.personRepo,
             this.dBiamPersonenkontextRepo,
             this.personenkontextFactory,
             personId,
