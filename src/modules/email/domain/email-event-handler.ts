@@ -19,6 +19,7 @@ import { EmailAddress } from './email-address.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 
 @Injectable()
 export class EmailEventHandler {
@@ -64,21 +65,6 @@ export class EmailEventHandler {
                 this.logger.info(`No existing email found for personId:${event.personId}, creating a new one`);
                 await this.createNewEmail(event.personId);
             }
-        }
-    }
-
-    private async createNewEmail(personId: PersonID): Promise<void> {
-        const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId);
-        if (!email.ok) {
-            this.logger.error(`Could not create email, error is ${email.error.message}`);
-            return;
-        }
-        email.value.enable();
-        const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email.value);
-        if (persistenceResult instanceof EmailAddress) {
-            this.logger.info(`Successfully persisted email with new address:${persistenceResult.currentAddress}`);
-        } else {
-            this.logger.error(`Could not create email, error is ${persistenceResult.message}`);
         }
     }
 
@@ -157,6 +143,27 @@ export class EmailEventHandler {
         const res: boolean = results.some((r: boolean) => r);
 
         return res;
+    }
+
+    @EventHandler(RolleUpdatedEvent)
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async handleRolleUpdatedEvent(event: RolleUpdatedEvent): Promise<void> {
+        this.logger.info(`Received RolleUpdatedEvent, rolleId:${event.rolleId}`);
+    }
+
+    private async createNewEmail(personId: PersonID): Promise<void> {
+        const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId);
+        if (!email.ok) {
+            this.logger.error(`Could not create email, error is ${email.error.message}`);
+            return;
+        }
+        email.value.enable();
+        const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email.value);
+        if (persistenceResult instanceof EmailAddress) {
+            this.logger.info(`Successfully persisted email with new address:${persistenceResult.currentAddress}`);
+        } else {
+            this.logger.error(`Could not create email, error is ${persistenceResult.message}`);
+        }
     }
 
     private async rolleReferencesEmailServiceProvider(rolle: Rolle<true>): Promise<boolean> {
