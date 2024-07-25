@@ -174,7 +174,7 @@ export class RolleRepo {
             true,
         );
 
-        if(!orgIdsWithRecht) {
+        if (!orgIdsWithRecht || orgIdsWithRecht.length == 0) {
             return [[], 0];
         }
 
