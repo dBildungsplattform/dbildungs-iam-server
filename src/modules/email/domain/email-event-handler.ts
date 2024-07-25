@@ -17,6 +17,8 @@ import { EmailRepo } from '../persistence/email.repo.js';
 import { EmailFactory } from './email.factory.js';
 import { EmailAddress } from './email-address.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 
 @Injectable()
 export class EmailEventHandler {
@@ -26,6 +28,7 @@ export class EmailEventHandler {
         private readonly emailRepo: EmailRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly serviceProviderRepo: ServiceProviderRepo,
+        private readonly dbiamPersonenkontextRepo: DBiamPersonenkontextRepo,
     ) {}
 
     @EventHandler(PersonenkontextCreatedEvent)
@@ -33,7 +36,8 @@ export class EmailEventHandler {
         this.logger.info(
             `Received PersonenkontextCreatedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
         );
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(event.rolleId);
+        await this.handlePerson(event.personId);
+        /* const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(event.rolleId);
         if (!rolle) {
             this.logger.error(`Rolle id:${event.rolleId} does NOT exist`);
             return;
@@ -61,7 +65,7 @@ export class EmailEventHandler {
                 this.logger.info(`No existing email found for personId:${event.personId}, creating a new one`);
                 await this.createNewEmail(event.personId);
             }
-        }
+        }*/
     }
 
     @EventHandler(PersonenkontextDeletedEvent)
@@ -73,6 +77,7 @@ export class EmailEventHandler {
         // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
     }
 
+    // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received
     @EventHandler(PersonDeletedEvent)
     public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
@@ -91,10 +96,75 @@ export class EmailEventHandler {
         this.logger.info(`Successfully deactivated email-address:${event.emailAddress}`);
     }
 
+    private async anyRolleReferencesEmailServiceProvider(rollen: Rolle<true>[]): Promise<boolean> {
+        const pro: Promise<boolean>[] = rollen.map((rolle: Rolle<true>) =>
+            this.rolleReferencesEmailServiceProvider(rolle),
+        );
+        const results: boolean[] = await Promise.all(pro);
+
+        const res: boolean = results.some((r: boolean) => r);
+
+        return res;
+    }
+
     @EventHandler(RolleUpdatedEvent)
     // eslint-disable-next-line @typescript-eslint/require-await
     public async handleRolleUpdatedEvent(event: RolleUpdatedEvent): Promise<void> {
         this.logger.info(`Received RolleUpdatedEvent, rolleId:${event.rolleId}`);
+
+        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByRolle(
+            event.rolleId,
+        );
+        const personIdsSet: Set<PersonID> = new Set<PersonID>();
+        personenkontexte.map((pk: Personenkontext<true>) => personIdsSet.add(pk.personId));
+        const distinctPersonIds: PersonID[] = Array.from(personIdsSet.values());
+
+        this.logger.info(`RolleUpdatedEvent affects:${distinctPersonIds.length} persons`);
+
+        const handlePersonPromises: Promise<void>[] = distinctPersonIds.map((personId: PersonID) => {
+            return this.handlePerson(personId);
+        });
+
+        await Promise.all(handlePersonPromises);
+    }
+
+    private async handlePerson(personId: PersonID): Promise<void> {
+        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
+        const rollenIds: string[] = personenkontexte.map((pk: Personenkontext<true>) => pk.rolleId);
+        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
+        const rollen: Rolle<true>[] = Array.from(rollenMap.values(), (value: Rolle<true>) => {
+            return value;
+        });
+
+        const needsEmail: boolean = await this.anyRolleReferencesEmailServiceProvider(rollen);
+
+        if (needsEmail) {
+            await this.createOrEnableEmail(personId);
+        }
+        //currently no else for calling disablingEmail is necessary, emails are only disabled, when the person is deleted not by PK-events
+    }
+
+    private async createOrEnableEmail(personId: PersonID): Promise<void> {
+        const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(personId);
+
+        if (existingEmail) {
+            this.logger.info(`Existing email found for personId:${personId}`);
+
+            if (existingEmail.enabled) {
+                this.logger.info(`Existing email for personId:${personId} already enabled`);
+            } else {
+                existingEmail.enable();
+                const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(existingEmail);
+                if (persistenceResult instanceof EmailAddress) {
+                    this.logger.info(`Enabled and saved address:${persistenceResult.currentAddress}`);
+                } else {
+                    this.logger.error(`Could not enable email, error is ${persistenceResult.message}`);
+                }
+            }
+        } else {
+            this.logger.info(`No existing email found for personId:${personId}, creating a new one`);
+            await this.createNewEmail(personId);
+        }
     }
 
     private async createNewEmail(personId: PersonID): Promise<void> {
@@ -108,7 +178,7 @@ export class EmailEventHandler {
         if (persistenceResult instanceof EmailAddress) {
             this.logger.info(`Successfully persisted email with new address:${persistenceResult.currentAddress}`);
         } else {
-            this.logger.error(`Could not create email, error is ${persistenceResult.message}`);
+            this.logger.error(`Could not persist email, error is ${persistenceResult.message}`);
         }
     }
 
