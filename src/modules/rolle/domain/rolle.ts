@@ -46,6 +46,42 @@ export class Rolle<WasPersisted extends boolean> {
         );
     }
 
+    public static async update(
+        organisationRepo: OrganisationRepository,
+        serviceProviderRepo: ServiceProviderRepo,
+        id: string,
+        createdAt: Date,
+        updatedAt: Date,
+        name: string,
+        administeredBySchulstrukturknoten: string,
+        rollenart: RollenArt,
+        merkmale: RollenMerkmal[],
+        systemrechte: RollenSystemRecht[],
+        serviceProviderIds: string[],
+    ): Promise<Rolle<true> | DomainError> {
+        const rolleToUpdate: Rolle<true> = new Rolle(
+            organisationRepo,
+            serviceProviderRepo,
+            id,
+            createdAt,
+            updatedAt,
+            name,
+            administeredBySchulstrukturknoten,
+            rollenart,
+            merkmale,
+            systemrechte,
+            [],
+        );
+        //Replace service providers with new ones.
+        for (const serviceProviderId of serviceProviderIds) {
+            const result: void | DomainError = await rolleToUpdate.attachServiceProvider(serviceProviderId);
+            if (result instanceof DomainError) {
+                return result;
+            }
+        }
+        return rolleToUpdate;
+    }
+
     public static construct<WasPersisted extends boolean = false>(
         organisationRepo: OrganisationRepository,
         serviceProviderRepo: ServiceProviderRepo,

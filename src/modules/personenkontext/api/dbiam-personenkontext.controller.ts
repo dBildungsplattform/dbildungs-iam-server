@@ -26,15 +26,14 @@ import { DbiamPersonenkontextBodyParams } from './param/dbiam-personenkontext.bo
 import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
-import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
-import { DbiamPersonenkontextFactory } from '../domain/dbiam-personenkontext.factory.js';
-import { PersonenkontexteUpdate } from '../domain/personenkontexte-update.js';
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
-import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-update.error.js';
 import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
-import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
-import { PersonenkontexteUpdateResponse } from './response/personenkontexte-update.response.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { PersonenkontexteUpdateResponse } from './response/personenkontexte-update.response.js';
+import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-update.error.js';
+import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
+import { PersonenkontexteUpdate } from '../domain/personenkontexte-update.js';
+import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -48,7 +47,6 @@ import { AuthenticationExceptionFilter } from '../../authentication/api/authenti
 @Controller({ path: 'dbiam/personenkontext' })
 export class DBiamPersonenkontextController {
     public constructor(
-        private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
         private readonly personenkontextFactory: PersonenkontextFactory,

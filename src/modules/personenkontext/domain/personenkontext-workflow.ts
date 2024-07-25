@@ -180,7 +180,7 @@ export class PersonenkontextWorkflowAggregate {
     // This will only be used during "bearbeiten".
     public async commit(
         personId: string,
-        lastModified: Date,
+        lastModified: Date | undefined,
         count: number,
         personenkontexte: DbiamPersonenkontextBodyParams[],
         permissions: IPersonPermissions,

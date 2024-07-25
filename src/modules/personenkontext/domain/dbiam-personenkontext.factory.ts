@@ -5,6 +5,7 @@ import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkonte
 import { PersonID } from '../../../shared/types/index.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { EventService } from '../../../core/eventbus/index.js';
+import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -23,7 +24,7 @@ export class DbiamPersonenkontextFactory {
 
     public createNewPersonenkontexteUpdate(
         personId: PersonID,
-        lastModified: Date,
+        lastModified: Date | undefined,
         count: number,
         dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
         permissions: IPersonPermissions,

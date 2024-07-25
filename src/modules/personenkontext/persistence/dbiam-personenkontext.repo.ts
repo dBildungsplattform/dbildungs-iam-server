@@ -416,4 +416,8 @@ export class DBiamPersonenkontextRepo {
         ]);
         return result[0].has_persona_systemrecht_at_any_kontext_of_personb;
     }
+
+    public async isRolleAlreadyAssigned(id: RolleID): Promise<boolean> {
+        return (await this.findByRolle(id)).length > 0;
+    }
 }

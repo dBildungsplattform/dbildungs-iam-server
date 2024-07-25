@@ -8,6 +8,7 @@ import {
     Param,
     Patch,
     Post,
+    Put,
     Query,
     UseFilters,
 } from '@nestjs/common';
@@ -51,7 +52,11 @@ import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { DbiamRolleError } from './dbiam-rolle.error.js';
+import { RolleDomainError } from '../domain/rolle-domain.error.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -64,6 +69,7 @@ export class RolleController {
         private readonly rolleFactory: RolleFactory,
         private readonly orgService: OrganisationService,
         private readonly serviceProviderRepo: ServiceProviderRepo,
+        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
     ) {}
 
     @Get()
@@ -140,13 +146,8 @@ export class RolleController {
                 ),
             );
         }
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
 
-        const rolleServiceProviders: ServiceProvider<true>[] = rolleResult.value.serviceProviderIds
-            .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
-            .filter(Boolean) as ServiceProvider<true>[];
-
-        return new RolleWithServiceProvidersResponse(rolleResult.value, rolleServiceProviders);
+        return this.returnRolleWithServiceProvidersResponse(rolleResult.value);
     }
 
     @Post()
@@ -294,5 +295,61 @@ export class RolleController {
             );
         }
         await this.rolleRepo.save(rolle);
+    }
+
+    @Put(':rolleId')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ description: 'Update rolle.' })
+    @ApiOkResponse({
+        description: 'The rolle was successfully updated.',
+        type: RolleWithServiceProvidersResponse,
+    })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamRolleError })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update the rolle.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to update the rolle.' })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while updating the rolle.',
+    })
+    public async updateRolle(
+        @Param() findRolleByIdParams: FindRolleByIdParams,
+        @Body() params: UpdateRolleBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<RolleWithServiceProvidersResponse> {
+        const isAlreadyAssigned: boolean = await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(
+            findRolleByIdParams.rolleId,
+        );
+        const result: Rolle<true> | DomainError = await this.rolleRepo.updateRolleAuthorized(
+            findRolleByIdParams.rolleId,
+            params.name,
+            params.merkmale,
+            params.systemrechte,
+            params.serviceProviderIds,
+            isAlreadyAssigned,
+            permissions,
+        );
+
+        if (result instanceof DomainError) {
+            if (result instanceof RolleDomainError) {
+                throw result;
+            }
+
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
+
+        return this.returnRolleWithServiceProvidersResponse(result);
+    }
+
+    private async returnRolleWithServiceProvidersResponse(
+        rolle: Rolle<true>,
+    ): Promise<RolleWithServiceProvidersResponse> {
+        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
+
+        const rolleServiceProviders: ServiceProvider<true>[] = rolle.serviceProviderIds
+            .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
+            .filter(Boolean) as ServiceProvider<true>[];
+
+        return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
     }
 }
