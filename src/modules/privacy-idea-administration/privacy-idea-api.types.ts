@@ -1,5 +1,5 @@
-export type InitSoftwareTokenResponse = {
-    details: {
+export type InitSoftwareToken = {
+    detail: {
         googleurl: {
             description: string;
             img: string;
@@ -131,6 +131,32 @@ export type AuthenticaitonResponse = {
             logout_redirect_url: string;
             require_description: string[];
         };
+    };
+    time: number;
+    version: string;
+    versionnumber: string;
+    signature: string;
+};
+
+export type User = {
+    description: string;
+    editable: boolean;
+    email: string;
+    givenname: string;
+    mobile: string;
+    phone: string;
+    resolver: string;
+    surname: string;
+    userid: string;
+    username: string;
+};
+
+export type UserResponse = {
+    id: number;
+    jsonrpc: string;
+    result: {
+        status: boolean;
+        value: User[];
     };
     time: number;
     version: string;
