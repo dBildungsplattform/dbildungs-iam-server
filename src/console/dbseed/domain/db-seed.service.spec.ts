@@ -30,6 +30,7 @@ import { GleicheRolleAnKlasseWieSchuleError } from '../../../modules/personenkon
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { KeycloakGroupRoleService } from '../../../modules/keycloak-administration/domain/keycloak-group-role.service.js';
+import { NameValidationError } from '../../../shared/error/name-validation.error.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -229,17 +230,29 @@ describe('DbSeedService', () => {
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
-        describe('kuerzel = root', () => {
-            it('should create root orga', async () => {
+        describe('with ', () => {
+            it('should throw EntityNotFoundError', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./seeding/seeding-integration-test/organisation/06_kuerzel-is-root.json`,
+                    `./seeding/seeding-integration-test/organisation/05_missing_zugehoerig-zu.json`,
+                    'utf-8',
+                );
+                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+
+                organisationRepositoryMock.save.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+        describe('kuerzel = root', () => {
+            it('should throw NameValidationError if OrganisationFactory.createNew returns DomainError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/organisation/07_organisation_with_invalid_name.json`,
                     'utf-8',
                 );
                 const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
 
                 organisationRepositoryMock.save.mockResolvedValueOnce(persistedOrganisation);
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
-                    EntityNotFoundError,
+                    NameValidationError,
                 );
             });
         });
@@ -301,6 +314,18 @@ describe('DbSeedService', () => {
 
                 rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
                 await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+            it('should throw NameValidationError if RolleFactory.createNew returns DomainError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/rolle/08_rolle-with-invalid-name.json`,
+                    'utf-8',
+                );
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid());
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<OrganisationDo<true>>());
+                serviceProviderRepoMock.findById.mockResolvedValue(createMock<ServiceProvider<true>>());
+
+                await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(NameValidationError);
             });
         });
 
