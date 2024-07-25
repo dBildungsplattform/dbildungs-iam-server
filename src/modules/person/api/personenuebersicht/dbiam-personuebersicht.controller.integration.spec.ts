@@ -41,6 +41,7 @@ import { DBiamPersonenuebersichtController } from './dbiam-personenuebersicht.co
 import { OrganisationID } from '../../../../shared/types/aggregate-ids.types.js';
 import { PersonenkontextFactory } from '../../../personenkontext/domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
+import { NameValidationError } from '../../../../shared/error/name-validation.error.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -207,12 +208,33 @@ describe('Personenuebersicht API', () => {
                         return;
                     }
 
-                    const savedRolle1: Rolle<true> = await rolleRepo.save(
-                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LEHR, [], [], []),
+                    const rolle1: Rolle<false> | DomainError = rolleFactory.createNew(
+                        faker.string.alpha(5),
+                        faker.string.uuid(),
+                        RollenArt.LEHR,
+                        [],
+                        [],
+                        [],
                     );
-                    const savedRolle2: Rolle<true> = await rolleRepo.save(
-                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LERN, [], [], []),
+
+                    if (rolle1 instanceof DomainError) {
+                        throw new NameValidationError('Rollenname');
+                    }
+                    const savedRolle1: Rolle<true> = await rolleRepo.save(rolle1);
+
+                    const rolle2: Rolle<false> | DomainError = rolleFactory.createNew(
+                        faker.string.alpha(5),
+                        faker.string.uuid(),
+                        RollenArt.LEHR,
+                        [],
+                        [],
+                        [],
                     );
+
+                    if (rolle2 instanceof DomainError) {
+                        throw new NameValidationError('Rollenname');
+                    }
+                    const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
                     const savedOrganisation1: OrganisationDo<true> = await organisationRepo.save(
                         DoFactory.createOrganisation(true),
@@ -329,12 +351,33 @@ describe('Personenuebersicht API', () => {
                         return;
                     }
 
-                    const savedRolle1: Rolle<true> = await rolleRepo.save(
-                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LEHR, [], [], []),
+                    const rolle1: Rolle<false> | DomainError = rolleFactory.createNew(
+                        faker.string.alpha(5),
+                        faker.string.uuid(),
+                        RollenArt.LEHR,
+                        [],
+                        [],
+                        [],
                     );
-                    const savedRolle2: Rolle<true> = await rolleRepo.save(
-                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LERN, [], [], []),
+
+                    if (rolle1 instanceof DomainError) {
+                        throw new NameValidationError('Rollenname');
+                    }
+                    const savedRolle1: Rolle<true> = await rolleRepo.save(rolle1);
+
+                    const rolle2: Rolle<false> | DomainError = rolleFactory.createNew(
+                        faker.string.alpha(5),
+                        faker.string.uuid(),
+                        RollenArt.LERN,
+                        [],
+                        [],
+                        [],
                     );
+
+                    if (rolle2 instanceof DomainError) {
+                        throw new NameValidationError('Rollenname');
+                    }
+                    const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
                     const unsavedOrganisation1: OrganisationDo<true> = DoFactory.createOrganisation(true);
                     const savedOrganisation2: OrganisationDo<true> = await organisationRepo.save(
@@ -399,12 +442,33 @@ describe('Personenuebersicht API', () => {
                 return;
             }
 
-            const savedRolle1: Rolle<true> = await rolleRepo.save(
-                rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LEHR, [], [], []),
+            const rolle1: Rolle<false> | DomainError = rolleFactory.createNew(
+                faker.string.alpha(5),
+                faker.string.uuid(),
+                RollenArt.LEHR,
+                [],
+                [],
+                [],
             );
-            const savedRolle2: Rolle<true> = await rolleRepo.save(
-                rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LERN, [], [], []),
+
+            if (rolle1 instanceof DomainError) {
+                throw new NameValidationError('Rollenname');
+            }
+            const savedRolle1: Rolle<true> = await rolleRepo.save(rolle1);
+
+            const rolle2: Rolle<false> | DomainError = rolleFactory.createNew(
+                faker.string.alpha(5),
+                faker.string.uuid(),
+                RollenArt.LERN,
+                [],
+                [],
+                [],
             );
+
+            if (rolle2 instanceof DomainError) {
+                throw new NameValidationError('Rollenname');
+            }
+            const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
             const savedOrganisation1: OrganisationDo<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(true, { id: ROOT_ORGANISATION_ID }),

@@ -32,6 +32,7 @@ import { ReferencedEntityType } from '../repo/db-seed-reference.entity.js';
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
+import { NameValidationError } from '../../../shared/error/name-validation.error.js';
 
 @Injectable()
 export class DbSeedService {
@@ -86,7 +87,7 @@ export class DbSeedService {
             zugehoerigZu = zugehoerigZuOrganisation.id;
         }
 
-        const organisation: Organisation<false> = Organisation.createNew(
+        const organisation: Organisation<false> | DomainError = Organisation.createNew(
             administriertVon,
             zugehoerigZu,
             data.kennung,
@@ -96,6 +97,10 @@ export class DbSeedService {
             data.typ,
             data.traegerschaft,
         );
+
+        if (organisation instanceof DomainError) {
+            throw new NameValidationError('Organisationsname');
+        }
 
         if (!administriertVon && !zugehoerigZu && data.kuerzel === 'Root') {
             organisation.id = this.ROOT_ORGANISATION_ID;
@@ -137,7 +142,7 @@ export class DbSeedService {
             const referencedOrga: OrganisationDo<true> = await this.getReferencedOrganisation(
                 file.administeredBySchulstrukturknoten,
             );
-            const rolle: Rolle<false> = this.rolleFactory.createNew(
+            const rolle: Rolle<false> | DomainError = this.rolleFactory.createNew(
                 file.name,
                 referencedOrga.id,
                 file.rollenart,
@@ -145,6 +150,10 @@ export class DbSeedService {
                 file.systemrechte,
                 serviceProviderUUIDs,
             );
+
+            if (rolle instanceof DomainError) {
+                throw new NameValidationError('Rollenname');
+            }
 
             const persistedRolle: Rolle<true> = await this.rolleRepo.save(rolle);
             if (persistedRolle && file.id != null) {

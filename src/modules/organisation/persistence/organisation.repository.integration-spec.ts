@@ -23,6 +23,8 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DataConfig } from '../../../shared/config/index.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { createMock } from '@golevelup/ts-jest';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { NameValidationError } from '../../../shared/error/name-validation.error.js';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;
@@ -74,7 +76,10 @@ describe('OrganisationRepository', () => {
 
     describe('findById', () => {
         it('should return one organisation by id', async () => {
-            const orga: Organisation<false> = Organisation.createNew();
+            const orga: Organisation<false> | DomainError = Organisation.createNew();
+            if (orga instanceof DomainError) {
+                throw new NameValidationError('Orgnanisationsname');
+            }
             const organisaiton: Organisation<true> = await sut.save(orga);
             const foundOrganisation: Option<Organisation<true>> = await sut.findById(organisaiton.id);
 
@@ -139,20 +144,21 @@ describe('OrganisationRepository', () => {
 
     describe('exists', () => {
         it('should return true if the orga exists', async () => {
-            const orga: OrganisationEntity = em.create(
-                OrganisationEntity,
-                mapAggregateToData(
-                    Organisation.createNew(
-                        sut.ROOT_ORGANISATION_ID,
-                        sut.ROOT_ORGANISATION_ID,
-                        faker.string.numeric(6),
-                        faker.company.name(),
-                    ),
-                ),
+            const orga: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                faker.string.numeric(6),
+                faker.company.name(),
             );
-            await em.persistAndFlush(orga);
+            if (orga instanceof DomainError) {
+                throw new NameValidationError('Orgnanisationsname');
+            }
 
-            await expect(sut.exists(orga.id)).resolves.toBe(true);
+            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+
+            await em.persistAndFlush(mappedOrga);
+
+            await expect(sut.exists(mappedOrga.id)).resolves.toBe(true);
         });
 
         it('should return false if the orga does not exists', async () => {
@@ -162,20 +168,21 @@ describe('OrganisationRepository', () => {
 
     describe('findById', () => {
         it('should return the organisation if it exists', async () => {
-            const orga: OrganisationEntity = em.create(
-                OrganisationEntity,
-                mapAggregateToData(
-                    Organisation.createNew(
-                        sut.ROOT_ORGANISATION_ID,
-                        sut.ROOT_ORGANISATION_ID,
-                        faker.string.numeric(6),
-                        faker.company.name(),
-                    ),
-                ),
+            const orga: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                faker.string.numeric(6),
+                faker.company.name(),
             );
-            await em.persistAndFlush(orga);
+            if (orga instanceof DomainError) {
+                throw new NameValidationError('Orgnanisationsname');
+            }
 
-            await expect(sut.findById(orga.id)).resolves.toBeInstanceOf(Organisation);
+            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+
+            await em.persistAndFlush(mappedOrga);
+
+            await expect(sut.findById(mappedOrga.id)).resolves.toBeInstanceOf(Organisation);
         });
 
         it('should return null', async () => {

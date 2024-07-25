@@ -40,9 +40,11 @@ import { FindDbiamPersonenkontextWorkflowBodyParams } from './param/dbiam-find-p
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { NameValidationError } from '../../../shared/error/name-validation.error.js';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
-    const rolle: Rolle<false> = rolleFactory.createNew(
+    const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
         faker.string.alpha(),
         faker.string.uuid(),
         faker.helpers.enumValue(RollenArt),
@@ -52,6 +54,9 @@ function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rol
     );
     Object.assign(rolle, params);
 
+    if (rolle instanceof DomainError) {
+        throw new NameValidationError('Rollenname');
+    }
     return rolle;
 }
 
