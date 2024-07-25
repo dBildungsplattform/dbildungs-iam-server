@@ -3,20 +3,21 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonenkontextRepo } from '../../personenkontext/persistence/personenkontext.repo.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
-import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonInfoController } from './person-info.controller.js';
 import { PersonInfoResponse } from './person-info.response.js';
-import { PersonDo } from '../domain/person.do.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonRepository } from '../persistence/person.repository.js';
+import { Person } from '../domain/person.js';
+import { PersonDo } from '../domain/person.do.js';
 
 describe('PersonInfoController', () => {
     let module: TestingModule;
     let sut: PersonInfoController;
-    let personRepoMock: DeepMocked<PersonRepo>;
-    let personenkontextRepoMock: DeepMocked<PersonenkontextRepo>;
+    let personRepoMock: DeepMocked<PersonRepository>;
+    let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -28,19 +29,19 @@ describe('PersonInfoController', () => {
                     useValue: createMock<ClassLogger>(),
                 },
                 {
-                    provide: PersonRepo,
-                    useValue: createMock<PersonRepo>(),
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
-                    provide: PersonenkontextRepo,
-                    useValue: createMock<PersonenkontextRepo>(),
+                    provide: PersonRepository,
+                    useValue: createMock<PersonRepository>(),
                 },
             ],
         }).compile();
 
         sut = module.get<PersonInfoController>(PersonInfoController);
-        personRepoMock = module.get(PersonRepo);
-        personenkontextRepoMock = module.get(PersonenkontextRepo);
+        personRepoMock = module.get(PersonRepository);
+        personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
     });
 
     afterAll(async () => {

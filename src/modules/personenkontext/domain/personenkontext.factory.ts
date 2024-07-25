@@ -53,12 +53,12 @@ export class PersonenkontextFactory {
         personId: PersonID,
         organisationId: OrganisationID,
         rolleId: RolleID,
-        referrer: string | undefined,
-        mandant: string | undefined,
-        personenstatus: Personenstatus | undefined,
-        jahrgangsstufe: Jahrgangsstufe | undefined,
-        sichtfreigabe: SichtfreigabeType | undefined,
-        loeschungZeitpunkt: Date | undefined,
+        referrer: string | undefined = undefined,
+        mandant: string | undefined = undefined,
+        personenstatus: Personenstatus | undefined = undefined,
+        jahrgangsstufe: Jahrgangsstufe | undefined = undefined,
+        sichtfreigabe: SichtfreigabeType | undefined = undefined,
+        loeschungZeitpunkt: Date | undefined = undefined,
     ): Personenkontext<false> {
         return Personenkontext.createNew(
             this.personRepo,
