@@ -251,9 +251,8 @@ describe('DbSeedService', () => {
                 const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
 
                 organisationRepositoryMock.save.mockResolvedValueOnce(persistedOrganisation);
-                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
-                    NameValidationError,
-                );
+
+                await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(NameValidationError);
             });
         });
     });
