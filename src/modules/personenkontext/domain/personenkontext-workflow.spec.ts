@@ -4,7 +4,7 @@ import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow.js'
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { DoFactory, PersonPermissionsMock } from '../../../../test/utils/index.js';
+import { DoFactory } from '../../../../test/utils/index.js';
 import { Personenkontext } from './personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { faker } from '@faker-js/faker';
@@ -76,7 +76,7 @@ describe('PersonenkontextWorkflow', () => {
     let personenkontextFactory: PersonenkontextFactory;
     let personpermissionsMock: DeepMocked<PersonPermissions>;
     let dbiamPersonenkontextFactoryMock: DeepMocked<DbiamPersonenkontextFactory>;
-    let personPermissionsMock: PersonPermissionsMock;
+    // let personPermissionsMock: PersonPermissionsMock;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -122,7 +122,7 @@ describe('PersonenkontextWorkflow', () => {
         personenkontextFactory = module.get(PersonenkontextFactory);
         anlage = personenkontextAnlageFactory.createNew();
         personpermissionsMock = module.get(PersonPermissions);
-        personPermissionsMock = new PersonPermissionsMock();
+        // personPermissionsMock = new PersonPermissionsMock();
     });
 
     afterAll(async () => {
@@ -651,7 +651,7 @@ describe('PersonenkontextWorkflow', () => {
                 lastModified,
                 count,
                 personenkontexte,
-                personPermissionsMock,
+                personpermissionsMock,
             );
 
             expect(result).toEqual(updateResult);
@@ -673,7 +673,7 @@ describe('PersonenkontextWorkflow', () => {
                 lastModified,
                 count,
                 personenkontexte,
-                personPermissionsMock,
+                personpermissionsMock,
             );
 
             expect(result).toBeInstanceOf(PersonenkontexteUpdateError);
@@ -695,7 +695,7 @@ describe('PersonenkontextWorkflow', () => {
             lastModified,
             count,
             personenkontexte,
-            personPermissionsMock,
+            personpermissionsMock,
         );
 
         expect(result).toEqual([]);

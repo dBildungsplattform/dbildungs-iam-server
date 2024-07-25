@@ -10,8 +10,6 @@ import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
 import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
-import { PersonRepo } from '../../person/persistence/person.repo.js';
-import { PersonDo } from '../../person/domain/person.do.js';
 import { UpdatePersonNotFoundError } from './error/update-person-not-found.error.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -42,7 +40,6 @@ export class PersonenkontexteUpdate {
 
     public static createNew(
         eventService: EventService,
-        personRepo: PersonRepo,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         personRepo: PersonRepository,
         rolleRepo: RolleRepo,
@@ -96,7 +93,7 @@ export class PersonenkontexteUpdate {
     }
 
     private async validate(existingPKs: Personenkontext<true>[]): Promise<Option<PersonenkontexteUpdateError>> {
-        const person: Option<PersonDo<true>> = await this.personRepo.findById(this.personId);
+        const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
 
         if (!person) {
             return new UpdatePersonNotFoundError();
@@ -121,7 +118,7 @@ export class PersonenkontexteUpdate {
             return new UpdateOutdatedError();
         }
 
-        if (mostRecentUpdatedAt.getTime() > this.lastModified.getTime()) {
+        if (mostRecentUpdatedAt && mostRecentUpdatedAt.getTime() > this.lastModified.getTime()) {
             // The existing data is newer than the incoming update
             return new UpdateOutdatedError();
         }

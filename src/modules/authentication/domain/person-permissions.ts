@@ -178,7 +178,7 @@ export class PersonPermissions implements IPersonPermissions {
         return this.cachedRollenFields;
     }
 
-    private async hasSystemrechtAtAnyKontextOfTargetPerson(
+    private hasSystemrechtAtAnyKontextOfTargetPerson(
         targetPersonId: PersonID,
         systemrecht: RollenSystemRecht,
     ): Promise<boolean> {

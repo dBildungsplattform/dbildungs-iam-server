@@ -1,8 +1,7 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
-    ApiConflictResponse,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
@@ -29,11 +28,6 @@ import { PersonenkontextExceptionFilter } from './personenkontext-exception-filt
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
 import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { PersonenkontexteUpdateResponse } from './response/personenkontexte-update.response.js';
-import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-update.error.js';
-import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
-import { PersonenkontexteUpdate } from '../domain/personenkontexte-update.js';
-import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -124,40 +118,5 @@ export class DBiamPersonenkontextController {
         }
 
         return new DBiamPersonenkontextResponse(saveResult.value);
-    }
-
-    @Put(':personId')
-    @HttpCode(HttpStatus.OK)
-    @ApiOkResponse({
-        description:
-            'Add or remove personenkontexte as one operation. Returns the Personenkontexte existing after update.',
-        type: PersonenkontexteUpdateResponse,
-    })
-    @ApiBadRequestResponse({
-        description: 'The personenkontexte could not be updated, may due to unsatisfied specifications.',
-        type: DbiamPersonenkontexteUpdateError,
-    })
-    @ApiConflictResponse({ description: 'Changes are conflicting with current state of personenkontexte.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to update personenkontexte.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permission to update personenkontexte.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while updating personenkontexte.' })
-    public async updatePersonenkontexte(
-        @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
-        @Body() bodyParams: DbiamUpdatePersonenkontexteBodyParams,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<PersonenkontexteUpdateResponse> {
-        const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
-            params.personId,
-            bodyParams.lastModified,
-            bodyParams.count,
-            bodyParams.personenkontexte,
-            permissions,
-        );
-        const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
-        if (updateResult instanceof PersonenkontexteUpdateError) {
-            throw updateResult;
-        }
-
-        return new PersonenkontexteUpdateResponse(updateResult);
     }
 }
