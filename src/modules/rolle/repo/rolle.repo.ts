@@ -180,7 +180,9 @@ export class RolleRepo {
 
         let rollen: Option<RolleEntity[]>;
         let total: number;
-        const organisationWhereClause = { administeredBySchulstrukturknoten: { $in: orgIdsWithRecht } };
+        const organisationWhereClause: {
+            administeredBySchulstrukturknoten: { $in: OrganisationID[] };
+        } = { administeredBySchulstrukturknoten: { $in: orgIdsWithRecht } };
         if (searchStr) {
             [rollen, total] = await this.em.findAndCount(
                 this.entityName,
