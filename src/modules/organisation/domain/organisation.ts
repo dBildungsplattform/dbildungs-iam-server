@@ -1,3 +1,4 @@
+import { NameValidationError } from '../../../shared/error/name-validation.error.js';
 import { OrganisationsTyp, Traegerschaft } from './organisation.enums.js';
 
 export class Organisation<WasPersisted extends boolean> {
@@ -15,6 +16,13 @@ export class Organisation<WasPersisted extends boolean> {
         public traegerschaft?: Traegerschaft,
     ) {}
 
+    private static validateName(name: string, fieldName: string): void {
+        const NO_LEADING_TRAILING_WHITESPACE: RegExp = /^(?! ).*(?<! )$/;
+        if (!NO_LEADING_TRAILING_WHITESPACE.test(name) || name.trim().length === 0) {
+            throw new NameValidationError(fieldName);
+        }
+    }
+
     public static construct<WasPersisted extends boolean = false>(
         id: Persisted<string, WasPersisted>,
         createdAt: Persisted<Date, WasPersisted>,
@@ -28,6 +36,13 @@ export class Organisation<WasPersisted extends boolean> {
         typ?: OrganisationsTyp,
         traegerschaft?: Traegerschaft,
     ): Organisation<WasPersisted> {
+        if (name) {
+            this.validateName(name, 'Der Organisationsname');
+        }
+        if (kennung) {
+            this.validateName(kennung, 'Die Dienstellennummer');
+        }
+
         return new Organisation(
             id,
             createdAt,

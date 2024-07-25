@@ -5,6 +5,7 @@ import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 import { EntityAlreadyExistsError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { NameValidationError } from '../../../shared/error/name-validation.error.js';
 
 export class Rolle<WasPersisted extends boolean> {
     private constructor(
@@ -21,6 +22,13 @@ export class Rolle<WasPersisted extends boolean> {
         public serviceProviderIds: string[],
     ) {}
 
+    private static validateName(name: string): void {
+        const NO_LEADING_TRAILING_WHITESPACE: RegExp = /^(?! ).*(?<! )$/;
+        if (!NO_LEADING_TRAILING_WHITESPACE.test(name) || name.trim().length === 0) {
+            throw new NameValidationError('Der Rollenname');
+        }
+    }
+
     public static createNew(
         organisationRepo: OrganisationRepository,
         serviceProviderRepo: ServiceProviderRepo,
@@ -31,6 +39,8 @@ export class Rolle<WasPersisted extends boolean> {
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
     ): Rolle<false> {
+        // Validate the Rollenname
+        this.validateName(name);
         return new Rolle(
             organisationRepo,
             serviceProviderRepo,

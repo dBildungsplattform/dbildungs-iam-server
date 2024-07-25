@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
+import { NameValidationError } from '../../../shared/error/name-validation.error.js';
 
 type PasswordInternalState = { passwordInternal: string | undefined; isTemporary: boolean };
 
@@ -77,6 +78,13 @@ export class Person<WasPersisted extends boolean> {
         return this.passwordInternalState.isTemporary;
     }
 
+    private static validateName(name: string): void {
+        const NO_LEADING_TRAILING_WHITESPACE: RegExp = /^(?! ).*(?<! )$/;
+        if (!NO_LEADING_TRAILING_WHITESPACE.test(name) || name.trim().length === 0) {
+            throw new NameValidationError('Der Vor- oder Nachname');
+        }
+    }
+
     public static construct<WasPersisted extends boolean = false>(
         id: string,
         createdAt: Date,
@@ -137,6 +145,9 @@ export class Person<WasPersisted extends boolean> {
         usernameGenerator: UsernameGeneratorService,
         creationParams: PersonCreationParams,
     ): Promise<Person<false> | DomainError> {
+        // Validate the Vor - and Nachname
+        this.validateName(creationParams.vorname);
+        this.validateName(creationParams.familienname);
         const person: Person<false> = new Person(
             undefined,
             undefined,
