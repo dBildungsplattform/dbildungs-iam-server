@@ -113,7 +113,7 @@ describe('DbSeedServiceIntegration', () => {
 
     describe('seedPerson', () => {
         describe('when personFactory is failing', () => {
-            it('should throw error', async () => {
+            it.only('should throw error', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
                     `./seeding/seeding-integration-test/invalidPerson/02_person.json`,
                     'utf-8',

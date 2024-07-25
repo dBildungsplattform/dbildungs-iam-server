@@ -78,11 +78,12 @@ export class Person<WasPersisted extends boolean> {
         return this.passwordInternalState.isTemporary;
     }
 
-    private static validateName(name: string, fieldName: string): void {
+    private static validateName(name: string, fieldName: string): Option<DomainError> {
         const NO_LEADING_TRAILING_WHITESPACE: RegExp = /^(?! ).*(?<! )$/;
         if (!NO_LEADING_TRAILING_WHITESPACE.test(name) || name.trim().length === 0) {
-            throw new NameValidationError(fieldName);
+            return new NameValidationError(fieldName);
         }
+        return null;
     }
 
     public static construct<WasPersisted extends boolean = false>(
@@ -146,8 +147,17 @@ export class Person<WasPersisted extends boolean> {
         creationParams: PersonCreationParams,
     ): Promise<Person<false> | DomainError> {
         // Validate the Vor - and Nachname
-        this.validateName(creationParams.vorname, 'Der Vorname');
-        this.validateName(creationParams.familienname, 'Der Familienname');
+        const vornameValidationError: Option<DomainError> = this.validateName(creationParams.vorname, 'Der Vorname');
+        if (vornameValidationError) {
+            return vornameValidationError;
+        }
+        const familiennameValidationError: Option<DomainError> = this.validateName(
+            creationParams.familienname,
+            'Der Familienname',
+        );
+        if (familiennameValidationError) {
+            return familiennameValidationError;
+        }
         const person: Person<false> = new Person(
             undefined,
             undefined,

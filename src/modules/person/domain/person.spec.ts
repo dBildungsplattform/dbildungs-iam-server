@@ -124,34 +124,40 @@ describe('Person', () => {
             });
         });
         describe('name validation', () => {
-            it('should throw an error if the vorname starts with whitespace', async () => {
+            it('should return an error if the vorname starts with whitespace', async () => {
                 const creationParams: PersonCreationParams = {
                     familienname: 'Mustermann',
                     vorname: ' Max',
                 };
-                await expect(Person.createNew(usernameGeneratorService, creationParams)).rejects.toBeInstanceOf(
-                    NameValidationError,
+                const result: DomainError | Person<false> = await Person.createNew(
+                    usernameGeneratorService,
+                    creationParams,
                 );
+                expect(result).toBeInstanceOf(NameValidationError);
             });
 
-            it('should throw an error if the familienname ends with whitespace', async () => {
+            it('should return an error if the familienname ends with whitespace', async () => {
                 const creationParams: PersonCreationParams = {
                     familienname: 'Mustermann ',
                     vorname: 'Max',
                 };
-                await expect(Person.createNew(usernameGeneratorService, creationParams)).rejects.toBeInstanceOf(
-                    NameValidationError,
+                const result: DomainError | Person<false> = await Person.createNew(
+                    usernameGeneratorService,
+                    creationParams,
                 );
+                expect(result).toBeInstanceOf(NameValidationError);
             });
 
-            it('should throw an error if the familienname is only whitespace', async () => {
+            it('should return an error if the familienname is only whitespace', async () => {
                 const creationParams: PersonCreationParams = {
                     familienname: '   ',
                     vorname: 'Max',
                 };
-                await expect(Person.createNew(usernameGeneratorService, creationParams)).rejects.toBeInstanceOf(
-                    NameValidationError,
+                const result: DomainError | Person<false> = await Person.createNew(
+                    usernameGeneratorService,
+                    creationParams,
                 );
+                expect(result).toBeInstanceOf(NameValidationError);
             });
 
             it('should create a new person if names are valid', async () => {
