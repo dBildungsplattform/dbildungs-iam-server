@@ -21,6 +21,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { OrganisationID } from '../../../shared/types/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
@@ -323,6 +324,51 @@ describe('RolleRepo', () => {
             );
 
             expect(rolleResult).toBeInstanceOf(DomainError);
+        });
+
+        it('should return error when organisation has a personenkontext and merkmale needs to be updated', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            const rolle: Rolle<true> = await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
+
+            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+                rolle.id,
+                faker.company.name(),
+                [faker.helpers.enumValue(RollenMerkmal)],
+                [],
+                [],
+                true,
+                permissions,
+            );
+
+            expect(rolleResult).toBeInstanceOf(UpdateMerkmaleError);
+        });
+
+        it('should return error when organisation has a personenkontext and merkmale needs to be deleted', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            const rolle: Rolle<true> = await sut.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisationId,
+                    merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT, RollenMerkmal.KOPERS_PFLICHT],
+                }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
+
+            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+                rolle.id,
+                faker.company.name(),
+                [],
+                [],
+                [],
+                true,
+                permissions,
+            );
+
+            expect(rolleResult).toBeInstanceOf(UpdateMerkmaleError);
         });
     });
 
