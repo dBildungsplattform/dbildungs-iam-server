@@ -2,7 +2,6 @@ import { faker } from '@faker-js/faker';
 import { User } from '../../src/modules/keycloak-administration/domain/user.js';
 import { OrganisationDo } from '../../src/modules/organisation/domain/organisation.do.js';
 import { OrganisationsTyp, Traegerschaft } from '../../src/modules/organisation/domain/organisation.enums.js';
-import { PersonDo } from '../../src/modules/person/domain/person.do.js';
 import { PersonenkontextDo } from '../../src/modules/personenkontext/domain/personenkontext.do.js';
 import {
     Jahrgangsstufe,
