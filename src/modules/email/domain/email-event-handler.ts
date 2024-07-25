@@ -36,7 +36,7 @@ export class EmailEventHandler {
         this.logger.info(
             `Received PersonenkontextCreatedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
         );
-        await this.handlePerson(event.personId);
+        await this.handlePerson(event.personId, true);
     }
 
     @EventHandler(PersonenkontextDeletedEvent)
@@ -73,9 +73,7 @@ export class EmailEventHandler {
         );
         const results: boolean[] = await Promise.all(pro);
 
-        const res: boolean = results.some((r: boolean) => r);
-
-        return res;
+        return results.some((r: boolean) => r);
     }
 
     @EventHandler(RolleUpdatedEvent)
@@ -99,20 +97,27 @@ export class EmailEventHandler {
         await Promise.all(handlePersonPromises);
     }
 
-    private async handlePerson(personId: PersonID): Promise<void> {
-        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
-        const rollenIds: string[] = personenkontexte.map((pk: Personenkontext<true>) => pk.rolleId);
-        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
-        const rollen: Rolle<true>[] = Array.from(rollenMap.values(), (value: Rolle<true>) => {
-            return value;
-        });
+    private async handlePerson(personId: PersonID, forceEmailCreation: boolean = false): Promise<void> {
+        let needsEmail: boolean = forceEmailCreation;
+        if (!forceEmailCreation) {
+            const personenkontexte: Personenkontext<true>[] =
+                await this.dbiamPersonenkontextRepo.findByPerson(personId);
+            const rollenIds: string[] = personenkontexte.map((pk: Personenkontext<true>) => pk.rolleId);
+            const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
+            const rollen: Rolle<true>[] = Array.from(rollenMap.values(), (value: Rolle<true>) => {
+                return value;
+            });
 
-        const needsEmail: boolean = await this.anyRolleReferencesEmailServiceProvider(rollen);
+            needsEmail = await this.anyRolleReferencesEmailServiceProvider(rollen);
+        }
 
         if (needsEmail) {
+            this.logger.info(`Person with id:${personId} needs an email, creating or enabling address`);
             await this.createOrEnableEmail(personId);
+        } else {
+            //currently no else for calling disablingEmail is necessary, emails are only disabled, when the person is deleted not by PK-events
+            this.logger.info(`Person with id:${personId} does not need an email`);
         }
-        //currently no else for calling disablingEmail is necessary, emails are only disabled, when the person is deleted not by PK-events
     }
 
     private async createOrEnableEmail(personId: PersonID): Promise<void> {
