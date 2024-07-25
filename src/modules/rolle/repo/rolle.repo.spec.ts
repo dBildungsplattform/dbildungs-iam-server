@@ -8,6 +8,7 @@ import {
     DatabaseTestModule,
     DoFactory,
     LoggingTestModule,
+    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleRepo } from './rolle.repo.js';
@@ -21,6 +22,14 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { OrganisationID } from '../../../shared/types/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonFactory } from '../../person/domain/person.factory.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
+import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
@@ -28,10 +37,20 @@ describe('RolleRepo', () => {
     let orm: MikroORM;
     let em: EntityManager;
     let serviceProviderRepo: ServiceProviderRepo;
+    let personFactory: PersonFactory;
+    let personRepo: PersonRepository;
+    let personenkontextFactory: PersonenkontextFactory;
+    let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
+            imports: [
+                ConfigTestModule,
+                LoggingTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                PersonenKontextModule,
+                MapperTestModule,
+            ],
             providers: [RolleRepo, RolleFactory, ServiceProviderRepo, OrganisationRepository, EventService],
         }).compile();
 
@@ -39,9 +58,31 @@ describe('RolleRepo', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         serviceProviderRepo = module.get(ServiceProviderRepo);
+        personFactory = module.get(PersonFactory);
+        personRepo = module.get(PersonRepository);
+        personenkontextFactory = module.get(PersonenkontextFactory);
+        dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+
+    async function createPerson(): Promise<Person<true>> {
+        const personResult: Person<false> | DomainError = await personFactory.createNew({
+            vorname: faker.person.firstName(),
+            familienname: faker.person.lastName(),
+            username: faker.internet.userName(),
+            password: faker.string.alphanumeric(8),
+        });
+        if (personResult instanceof DomainError) {
+            throw personResult;
+        }
+        const person: Person<true> | DomainError = await personRepo.create(personResult);
+        if (person instanceof DomainError) {
+            throw person;
+        }
+
+        return person;
+    }
 
     afterAll(async () => {
         await orm.close();
@@ -356,6 +397,34 @@ describe('RolleRepo', () => {
 
                 const rolleResult: Option<DomainError> = await sut.deleteAuthorized(rolle.id, permissions);
                 expect(rolleResult).toBeInstanceOf(DomainError);
+            });
+        });
+
+        describe('should return RolleHatPersonenkontexteError', () => {
+            it('if rolle has Personenkontexte', async () => {
+                const person: Person<true> = await createPerson();
+                const organisationId: OrganisationID = faker.string.uuid();
+                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                    DoFactory.createServiceProvider(false),
+                );
+                const rolle: Rolle<true> = await sut.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisationId,
+                        serviceProviderIds: [serviceProvider.id],
+                    }),
+                );
+                const personenkontext: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
+                    personenkontextFactory.createNew(person.id, organisationId, rolle.id),
+                );
+                if (!personenkontext) {
+                    return;
+                }
+                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
+
+                const rolleResult: Option<DomainError> = await sut.deleteAuthorized(rolle.id, permissions);
+
+                expect(rolleResult).toBeInstanceOf(RolleHatPersonenkontexteError);
             });
         });
     });

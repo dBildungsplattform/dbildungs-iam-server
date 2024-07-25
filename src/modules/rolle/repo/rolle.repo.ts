@@ -1,4 +1,11 @@
-import { EntityData, EntityManager, EntityName, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import {
+    EntityData,
+    EntityManager,
+    EntityName,
+    ForeignKeyConstraintViolationException,
+    Loaded,
+    RequiredEntityData,
+} from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
 import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
@@ -11,6 +18,7 @@ import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -259,8 +267,15 @@ export class RolleRepo {
         const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, id, {
             populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
         });
-        //Cascade removal
-        await this.em.removeAndFlush(rolleEntity);
+
+        try {
+            //Cascade removal
+            await this.em.removeAndFlush(rolleEntity);
+        } catch (ex) {
+            if (ex instanceof ForeignKeyConstraintViolationException) {
+                return new RolleHatPersonenkontexteError();
+            }
+        }
 
         return;
     }

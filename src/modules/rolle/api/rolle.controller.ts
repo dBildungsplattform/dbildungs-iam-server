@@ -57,6 +57,7 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
+import { RolleDomainError } from '../domain/rolle-domain.error.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -351,15 +352,15 @@ export class RolleController {
         @Param() findRolleByIdParams: FindRolleByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        if (await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(findRolleByIdParams.rolleId)) {
-            throw new RolleHatPersonenkontexteError();
-        }
-
         const result: Option<DomainError> = await this.rolleRepo.deleteAuthorized(
             findRolleByIdParams.rolleId,
             permissions,
         );
         if (result instanceof DomainError) {
+            if (result instanceof RolleDomainError) {
+                throw result;
+            }
+
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
