@@ -10,30 +10,36 @@ import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
 import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
+import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { PersonDo } from '../../person/domain/person.do.js';
+import { UpdatePersonNotFoundError } from './error/update-person-not-found.error.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
         private readonly eventService: EventService,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly personRepo: PersonRepo,
         private readonly personenkontextFactory: PersonenkontextFactory,
         private readonly personId: PersonID,
-        private readonly lastModified: Date,
+        private readonly lastModified: Date | undefined,
         private readonly count: number,
         private readonly dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
     ) {}
 
     public static createNew(
         eventService: EventService,
+        personRepo: PersonRepo,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         personenkontextFactory: PersonenkontextFactory,
         personId: PersonID,
-        lastModified: Date,
+        lastModified: Date | undefined,
         count: number,
         dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
     ): PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
             eventService,
             dBiamPersonenkontextRepo,
+            personRepo,
             personenkontextFactory,
             personId,
             lastModified,
@@ -68,9 +74,20 @@ export class PersonenkontexteUpdate {
         return personenKontexte;
     }
 
-    private validate(existingPKs: Personenkontext<true>[]): Option<PersonenkontexteUpdateError> {
-        if (existingPKs.length != this.count) {
+    private async validate(existingPKs: Personenkontext<true>[]): Promise<Option<PersonenkontexteUpdateError>> {
+        const person: Option<PersonDo<true>> = await this.personRepo.findById(this.personId);
+
+        if (!person) {
+            return new UpdatePersonNotFoundError();
+        }
+
+        if (existingPKs.length !== this.count) {
             return new UpdateCountError();
+        }
+
+        if (existingPKs.length === 0) {
+            // If there are no existing PKs and lastModified is undefined, it's okay and validation stops here with no error
+            return null;
         }
 
         const sortedExistingPKs: Personenkontext<true>[] = existingPKs.sort(
@@ -78,10 +95,17 @@ export class PersonenkontexteUpdate {
         );
         const mostRecentUpdatedAt: Date = sortedExistingPKs[0]!.updatedAt;
 
-        if (mostRecentUpdatedAt.getTime() > this.lastModified.getTime()) {
+        if (this.lastModified === undefined) {
+            // If there are existing PKs but lastModified is undefined, return an error
             return new UpdateOutdatedError();
         }
 
+        if (mostRecentUpdatedAt.getTime() > this.lastModified.getTime()) {
+            // The existing data is newer than the incoming update
+            return new UpdateOutdatedError();
+        }
+
+        // If mostRecentUpdatedAt is less than or equal to this.lastModified, no error is returned
         return null;
     }
 
@@ -128,7 +152,7 @@ export class PersonenkontexteUpdate {
         }
 
         const existingPKs: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(this.personId);
-        const validationError: Option<PersonenkontexteUpdateError> = this.validate(existingPKs);
+        const validationError: Option<PersonenkontexteUpdateError> = await this.validate(existingPKs);
         if (validationError) {
             return validationError;
         }
