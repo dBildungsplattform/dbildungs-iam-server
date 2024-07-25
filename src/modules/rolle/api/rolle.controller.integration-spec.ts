@@ -624,6 +624,8 @@ describe('Rolle API', () => {
                 }),
             );
 
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([organisation.id]);
+
             const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
                 DoFactory.createServiceProvider(false),
             );
