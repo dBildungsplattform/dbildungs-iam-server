@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { Public } from '../authentication/api/public.decorator.js';
-import { InitSoftwareTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
+import { PrivacyIdeaToken } from './privacy-idea-api.types.js';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -13,6 +13,8 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { TokenStateResponse } from './token-state.response.js';
+import { TokenInitBodyParams } from './token-init.body.params.js';
 
 @ApiTags('2FA')
 @ApiBearerAuth()
@@ -23,27 +25,29 @@ export class PrivacyIdeaAdministrationController {
 
     @Post('init')
     @HttpCode(HttpStatus.CREATED)
-    @ApiCreatedResponse({ description: 'The token was successfully created.', type: PrivacyIdeaAdministrationService })
+    @ApiCreatedResponse({ description: 'The token was successfully created.', type: String })
     @ApiBadRequestResponse({ description: 'A username was not given or not found.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create token.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create token.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to create token.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating a token.' })
     @Public()
-    public async initializeSoftwareToken(@Body() params: { userName: string }): Promise<InitSoftwareTokenResponse> {
+    public async initializeSoftwareToken(@Body() params: TokenInitBodyParams): Promise<string> {
         return this.privacyIdeaAdministrationService.initializeSoftwareToken(params.userName);
     }
 
     @Get('state')
     @HttpCode(HttpStatus.OK)
-    @ApiCreatedResponse({ description: 'The token was successfully created.', type: PrivacyIdeaAdministrationService })
+    @ApiCreatedResponse({ description: 'The token was successfully created.', type: TokenStateResponse })
     @ApiBadRequestResponse({ description: 'A username was not given or not found.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create token.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create token.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to create token.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating a token.' })
     @Public()
-    public async getTwoAuthState(@Query('userName') userName: string): Promise<PrivacyIdeaToken | undefined> {
-        return this.privacyIdeaAdministrationService.getTwoAuthState(userName);
+    public async getTwoAuthState(@Query('userName') userName: string): Promise<TokenStateResponse> {
+        const piToken: PrivacyIdeaToken | undefined =
+            await this.privacyIdeaAdministrationService.getTwoAuthState(userName);
+        return new TokenStateResponse(piToken);
     }
 }
