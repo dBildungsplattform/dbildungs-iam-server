@@ -19,9 +19,8 @@ spec:
         app.kubernetes.io/component: server-backend
     spec:
       automountServiceAccountToken: false
-      {{- if .Values.backend.dbseeding.enabled }}
       initContainers:
-        - name: "{{ template "common.names.name" . }}-db-migrate"
+        - name: "{{ template "common.names.name" . }}-db-migration-apply"
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always" }}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
@@ -40,30 +39,12 @@ spec:
               name: migration-volume
               readOnly: true
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
-        - name: "{{ template "common.names.name" . }}-db-init"
-          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always"}}
-          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          command: ["node", "dist/src/console/main.js", "db", "init"]
-          env:
-            {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
-            {{- if .Values.backend.extraEnvVars }}
-            {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
-            {{- end }}
-          envFrom:
-            - configMapRef:
-                name: {{ template "common.names.name" . }}
-          volumeMounts:
-            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
-            - mountPath: /app/seeding/dev
-              name: seeding-volume
-              readOnly: true
-          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+        {{- if .Values.backend.dbseeding.enabled }}
         - name: db-seeding
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
+          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev" ]
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
@@ -74,7 +55,7 @@ spec:
               name: seeding-volume
               readOnly: true
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
-      {{end}}
+        {{end}}
       containers:
         - name: "{{ template "common.names.name" . }}-backend"
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"

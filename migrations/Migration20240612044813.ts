@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/require-await */
-/* eslint-disable @typescript-eslint/explicit-member-accessibility */
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20240620082431 extends Migration {
+export class Migration20240612044813 extends Migration {
 
   async up(): Promise<void> {
     this.addSql('create type "db_seed_status_enum" as enum (\'STARTED\', \'DONE\', \'FAILED\');');
@@ -11,9 +9,9 @@ export class Migration20240620082431 extends Migration {
     this.addSql('create type "traegerschaft_enum" as enum (\'01\', \'02\', \'03\', \'04\', \'05\', \'06\');');
     this.addSql('create type "geschlecht_enum" as enum (\'m\', \'w\', \'d\', \'x\');');
     this.addSql('create type "vertrauensstufe_enum" as enum (\'KEIN\', \'UNBE\', \'TEIL\', \'VOLL\');');
-    this.addSql('create type "rollen_art_enum" as enum (\'LERN\', \'LEHR\', \'EXTERN\', \'ORGADMIN\', \'LEIT\', \'SYSADMIN\');');
     this.addSql('create type "personenstatus_enum" as enum (\'AKTIV\');');
     this.addSql('create type "jahrgangsstufe_enum" as enum (\'01\', \'02\', \'03\', \'04\', \'05\', \'06\', \'07\', \'08\', \'09\', \'10\');');
+    this.addSql('create type "rollen_art_enum" as enum (\'LERN\', \'LEHR\', \'EXTERN\', \'ORGADMIN\', \'LEIT\', \'SYSADMIN\');');
     this.addSql('create type "rollen_merkmal_enum" as enum (\'BEFRISTUNG_PFLICHT\', \'KOPERS_PFLICHT\');');
     this.addSql('create type "rollen_system_recht_enum" as enum (\'ROLLEN_VERWALTEN\', \'PERSONEN_SOFORT_LOESCHEN\', \'PERSONEN_VERWALTEN\', \'SCHULEN_VERWALTEN\', \'KLASSEN_VERWALTEN\', \'SCHULTRAEGER_VERWALTEN\', \'MIGRATION_DURCHFUEHREN\');');
     this.addSql('create type "service_provider_target_enum" as enum (\'URL\', \'SCHULPORTAL_ADMINISTRATION\');');
@@ -30,12 +28,12 @@ export class Migration20240620082431 extends Migration {
     this.addSql('alter table "person" drop constraint if exists "person_geschlecht_check";');
     this.addSql('alter table "person" drop constraint if exists "person_vertrauensstufe_check";');
 
-    this.addSql('alter table "rolle" drop constraint if exists "rolle_rollenart_check";');
-
     this.addSql('alter table "personenkontext" drop constraint if exists "personenkontext_personenstatus_check";');
     this.addSql('alter table "personenkontext" drop constraint if exists "personenkontext_jahrgangsstufe_check";');
 
     this.addSql('alter table "personenkontext" drop constraint "personenkontext_person_id_id_foreign";');
+
+    this.addSql('alter table "rolle" drop constraint if exists "rolle_rollenart_check";');
 
     this.addSql('alter table "rolle_merkmal" drop constraint if exists "rolle_merkmal_merkmal_check";');
 
@@ -54,34 +52,24 @@ export class Migration20240620082431 extends Migration {
     this.addSql('alter table "person" alter column "geschlecht" type "geschlecht_enum" using ("geschlecht"::"geschlecht_enum");');
     this.addSql('alter table "person" alter column "vertrauensstufe" type "vertrauensstufe_enum" using ("vertrauensstufe"::"vertrauensstufe_enum");');
 
-    this.addSql('alter table "rolle" alter column "rollenart" type "rollen_art_enum" using ("rollenart"::"rollen_art_enum");');
-
-    this.addSql('alter table "personenkontext" drop constraint "personenkontext_person_id_id_organisation_id_rolle_id_unique";');
-
-    this.addSql('alter table "personenkontext" alter column "rolle_id" drop default;');
-    this.addSql('alter table "personenkontext" alter column "rolle_id" type uuid using ("rolle_id"::text::uuid);');
-    this.addSql('alter table "personenkontext" alter column "rolle_id" set not null;');
     this.addSql('alter table "personenkontext" alter column "personenstatus" type "personenstatus_enum" using ("personenstatus"::"personenstatus_enum");');
     this.addSql('alter table "personenkontext" alter column "jahrgangsstufe" type "jahrgangsstufe_enum" using ("jahrgangsstufe"::"jahrgangsstufe_enum");');
-    this.addSql('alter table "personenkontext" rename column "person_id_id" to "person_id";');
-    this.addSql('alter table "personenkontext" add constraint "personenkontext_person_id_foreign" foreign key ("person_id") references "person" ("id") on delete cascade;');
-    this.addSql('alter table "personenkontext" add constraint "personenkontext_rolle_id_foreign" foreign key ("rolle_id") references "rolle" ("id") on update cascade;');
-    this.addSql('alter table "personenkontext" add constraint "personenkontext_person_id_organisation_id_rolle_id_unique" unique ("person_id", "organisation_id", "rolle_id");');
+    this.addSql('alter table "personenkontext" add constraint "personenkontext_person_id_id_foreign" foreign key ("person_id_id") references "person" ("id") on delete cascade;');
+
+    this.addSql('alter table "rolle" alter column "rollenart" type "rollen_art_enum" using ("rollenart"::"rollen_art_enum");');
 
     this.addSql('alter table "rolle_merkmal" alter column "merkmal" type "rollen_merkmal_enum" using ("merkmal"::"rollen_merkmal_enum");');
 
     this.addSql('alter table "rolle_systemrecht" alter column "systemrecht" type "rollen_system_recht_enum" using ("systemrecht"::"rollen_system_recht_enum");');
 
-    this.addSql('alter table "service_provider" add column "keycloak_group" varchar(255) null, add column "keycloak_role" varchar(255) null;');
     this.addSql('alter table "service_provider" alter column "target" type "service_provider_target_enum" using ("target"::"service_provider_target_enum");');
     this.addSql('alter table "service_provider" alter column "kategorie" type "service_provider_kategorie_enum" using ("kategorie"::"service_provider_kategorie_enum");');
   }
 
-  override async down(): Promise<void> {
+    override async down(): Promise<void> {
     this.addSql('create table "fake" ("id" uuid not null, "created_at" timestamptz not null, "updated_at" timestamptz not null, "source" uuid not null, "target" uuid not null, constraint "fake_pkey" primary key ("id"));');
 
-    this.addSql('alter table "personenkontext" drop constraint "personenkontext_person_id_foreign";');
-    this.addSql('alter table "personenkontext" drop constraint "personenkontext_rolle_id_foreign";');
+    this.addSql('alter table "personenkontext" drop constraint "personenkontext_person_id_id_foreign";');
 
     this.addSql('alter table "seeding" alter column "status" type text using ("status"::text);');
     this.addSql('alter table "seeding" add constraint "seeding_status_check" check("status" in (\'STARTED\', \'DONE\', \'FAILED\'));');
@@ -99,18 +87,11 @@ export class Migration20240620082431 extends Migration {
     this.addSql('alter table "person" add constraint "person_geschlecht_check" check("geschlecht" in (\'m\', \'w\', \'d\', \'x\'));');
     this.addSql('alter table "person" add constraint "person_vertrauensstufe_check" check("vertrauensstufe" in (\'KEIN\', \'UNBE\', \'TEIL\', \'VOLL\'));');
 
-    this.addSql('alter table "personenkontext" drop constraint "personenkontext_person_id_organisation_id_rolle_id_unique";');
-
-    this.addSql('alter table "personenkontext" alter column "rolle_id" drop default;');
-    this.addSql('alter table "personenkontext" alter column "rolle_id" type uuid using ("rolle_id"::text::uuid);');
-    this.addSql('alter table "personenkontext" alter column "rolle_id" drop not null;');
     this.addSql('alter table "personenkontext" alter column "personenstatus" type text using ("personenstatus"::text);');
     this.addSql('alter table "personenkontext" alter column "jahrgangsstufe" type text using ("jahrgangsstufe"::text);');
     this.addSql('alter table "personenkontext" add constraint "personenkontext_personenstatus_check" check("personenstatus" in (\'AKTIV\'));');
     this.addSql('alter table "personenkontext" add constraint "personenkontext_jahrgangsstufe_check" check("jahrgangsstufe" in (\'01\', \'02\', \'03\', \'04\', \'05\', \'06\', \'07\', \'08\', \'09\', \'10\'));');
-    this.addSql('alter table "personenkontext" rename column "person_id" to "person_id_id";');
     this.addSql('alter table "personenkontext" add constraint "personenkontext_person_id_id_foreign" foreign key ("person_id_id") references "person" ("id");');
-    this.addSql('alter table "personenkontext" add constraint "personenkontext_person_id_id_organisation_id_rolle_id_unique" unique ("person_id_id", "organisation_id", "rolle_id");');
 
     this.addSql('alter table "rolle" alter column "rollenart" type text using ("rollenart"::text);');
     this.addSql('alter table "rolle" add constraint "rolle_rollenart_check" check("rollenart" in (\'LERN\', \'LEHR\', \'EXTERN\', \'ORGADMIN\', \'LEIT\', \'SYSADMIN\'));');
@@ -120,8 +101,6 @@ export class Migration20240620082431 extends Migration {
 
     this.addSql('alter table "rolle_systemrecht" alter column "systemrecht" type text using ("systemrecht"::text);');
     this.addSql('alter table "rolle_systemrecht" add constraint "rolle_systemrecht_systemrecht_check" check("systemrecht" in (\'ROLLEN_VERWALTEN\', \'PERSONEN_VERWALTEN\', \'SCHULEN_VERWALTEN\', \'KLASSEN_VERWALTEN\', \'SCHULTRAEGER_VERWALTEN\'));');
-
-    this.addSql('alter table "service_provider" drop column "keycloak_group", drop column "keycloak_role";');
 
     this.addSql('alter table "service_provider" alter column "target" type text using ("target"::text);');
     this.addSql('alter table "service_provider" alter column "kategorie" type text using ("kategorie"::text);');
@@ -134,9 +113,9 @@ export class Migration20240620082431 extends Migration {
     this.addSql('drop type "traegerschaft_enum";');
     this.addSql('drop type "geschlecht_enum";');
     this.addSql('drop type "vertrauensstufe_enum";');
-    this.addSql('drop type "rollen_art_enum";');
     this.addSql('drop type "personenstatus_enum";');
     this.addSql('drop type "jahrgangsstufe_enum";');
+    this.addSql('drop type "rollen_art_enum";');
     this.addSql('drop type "rollen_merkmal_enum";');
     this.addSql('drop type "rollen_system_recht_enum";');
     this.addSql('drop type "service_provider_target_enum";');
