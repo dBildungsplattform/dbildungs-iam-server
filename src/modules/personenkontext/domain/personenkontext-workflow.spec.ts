@@ -76,7 +76,6 @@ describe('PersonenkontextWorkflow', () => {
     let personenkontextFactory: PersonenkontextFactory;
     let personpermissionsMock: DeepMocked<PersonPermissions>;
     let dbiamPersonenkontextFactoryMock: DeepMocked<DbiamPersonenkontextFactory>;
-    // let personPermissionsMock: PersonPermissionsMock;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -122,7 +121,6 @@ describe('PersonenkontextWorkflow', () => {
         personenkontextFactory = module.get(PersonenkontextFactory);
         anlage = personenkontextAnlageFactory.createNew();
         personpermissionsMock = module.get(PersonPermissions);
-        // personPermissionsMock = new PersonPermissionsMock();
     });
 
     afterAll(async () => {
