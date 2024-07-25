@@ -78,9 +78,9 @@ export class Person<WasPersisted extends boolean> {
     }
 
     public static construct<WasPersisted extends boolean = false>(
-        id: string,
-        createdAt: Date,
-        updatedAt: Date,
+        id: Persisted<string, WasPersisted>,
+        createdAt: Persisted<Date, WasPersisted>,
+        updatedAt: Persisted<Date, WasPersisted>,
         familienname: string,
         vorname: string,
         revision: string,

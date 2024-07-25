@@ -283,6 +283,13 @@ export class PersonRepository {
         return person;
     }
 
+    public async save(person: Person<boolean>): Promise<Person<true> | DomainError> {
+        if (person.id) {
+            return this.update(person);
+        }
+        return this.create(person);
+    }
+
     private async createKeycloakUserWithHashedPassword(
         person: Person<boolean>,
         hashedPassword: string,
