@@ -4,7 +4,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import {
     ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
     LoggingTestModule,
@@ -31,6 +30,7 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
@@ -52,7 +52,28 @@ describe('RolleRepo', () => {
                 PersonenKontextModule,
                 MapperTestModule,
             ],
-            providers: [RolleRepo, RolleFactory, ServiceProviderRepo, OrganisationRepository, EventService],
+            providers: [
+                RolleRepo,
+                RolleFactory,
+                ServiceProviderRepo,
+                OrganisationRepository,
+                EventService,
+                {
+                    provide: KeycloakUserService,
+                    useValue: createMock<KeycloakUserService>({
+                        create: () =>
+                            Promise.resolve({
+                                ok: true,
+                                value: faker.string.uuid(),
+                            }),
+                        setPassword: () =>
+                            Promise.resolve({
+                                ok: true,
+                                value: faker.string.alphanumeric(16),
+                            }),
+                    }),
+                },
+            ],
         }).compile();
 
         sut = module.get(RolleRepo);
@@ -65,7 +86,7 @@ describe('RolleRepo', () => {
         dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+    }, 10000000);
 
     async function createPerson(): Promise<Person<true>> {
         const personResult: Person<false> | DomainError = await personFactory.createNew({
