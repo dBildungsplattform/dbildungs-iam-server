@@ -156,6 +156,14 @@
             "password": "test",
             "vorname": "Heinrich",
             "familienname": "Heinzmann"
+        },
+        {
+            "id": 20,
+            "username": "migration",
+            "password": "migration",
+            "vorname": "migration",
+            "familienname": "migration",
+            "personalnummer": "9999999"
         }
     ]
 }
