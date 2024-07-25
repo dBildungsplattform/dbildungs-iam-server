@@ -17,6 +17,8 @@ import { DbiamPersonenkontextFactory } from './domain/dbiam-personenkontext.fact
 import { EventModule } from '../../core/eventbus/index.js';
 import { PersonenkontextFactory } from './domain/personenkontext.factory.js';
 import { PersonenkontextCreationService } from './domain/personenkontext-creation.service.js';
+import { PersonAdministrationService } from './domain/person-administration.service.js';
+import { PersonAdministrationController } from './api/person-administration.controller.js';
 
 @Module({
     imports: [
@@ -37,7 +39,13 @@ import { PersonenkontextCreationService } from './domain/personenkontext-creatio
         DbiamPersonenkontextFactory,
         PersonenkontextFactory,
         PersonenkontextCreationService,
+        PersonAdministrationService,
     ],
-    controllers: [PersonenkontextController, DBiamPersonenkontextController, DbiamPersonenkontextWorkflowController],
+    controllers: [
+        PersonenkontextController,
+        DBiamPersonenkontextController,
+        DbiamPersonenkontextWorkflowController,
+        PersonAdministrationController,
+    ],
 })
 export class PersonenKontextApiModule {}

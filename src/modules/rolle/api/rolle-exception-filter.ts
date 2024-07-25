@@ -5,6 +5,7 @@ import { AddSystemrechtError } from './add-systemrecht.error.js';
 import { DbiamRolleError, RolleErrorI18nTypes } from './dbiam-rolle.error.js';
 import { RolleDomainError } from '../domain/rolle-domain.error.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
+import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 
 @Catch(RolleDomainError)
 export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
@@ -21,6 +22,13 @@ export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
             new DbiamRolleError({
                 code: 400,
                 i18nKey: RolleErrorI18nTypes.ROLLE_HAT_PERSONENKONTEXTE_ERROR,
+            }),
+        ],
+        [
+            UpdateMerkmaleError.name,
+            new DbiamRolleError({
+                code: 400,
+                i18nKey: RolleErrorI18nTypes.UPDATE_MERKMALE_ERROR,
             }),
         ],
     ]);

@@ -1,5 +1,4 @@
 import {
-    BadRequestException,
     Body,
     Controller,
     Get,
@@ -25,9 +24,7 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { FindPersonenkontextRollenBodyParams } from './param/find-personenkontext-rollen.body.params.js';
 import { FindPersonenkontextSchulstrukturknotenBodyParams } from './param/find-personenkontext-schulstrukturknoten.body.params.js';
-import { FindRollenResponse } from './response/find-rollen.response.js';
 import { FindSchulstrukturknotenResponse } from './response/find-schulstrukturknoten.response.js';
 import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
@@ -55,8 +52,13 @@ import { PersonenkontextCommitError } from '../domain/error/personenkontext-comm
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
+import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new PersonenkontextExceptionFilter())
+@UseFilters(
+    SchulConnexValidationErrorFilter,
+    new PersonenkontextExceptionFilter(),
+    new PersonenkontexteUpdateExceptionFilter(),
+)
 @ApiTags('personenkontext')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -154,29 +156,10 @@ export class DbiamPersonenkontextWorkflowController {
                 .createNew()
                 .commit(params.personId, bodyParams.lastModified, bodyParams.count, bodyParams.personenkontexte);
 
-        if (updateResult instanceof DomainError) {
-            throw new BadRequestException(updateResult.message);
+        if (updateResult instanceof PersonenkontexteUpdateError) {
+            throw updateResult;
         }
         return new PersonenkontexteUpdateResponse(updateResult);
-    }
-
-    @Get('rollen')
-    @ApiOkResponse({
-        description: 'The rollen for a personenkontext were successfully returned.',
-        type: FindRollenResponse,
-    })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to get available rolen for personenkontexte.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permission to get rollen for personenkontext.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting rollen for personenkontexte.' })
-    public async findRollen(
-        @Query() params: FindPersonenkontextRollenBodyParams,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<FindRollenResponse> {
-        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
-        const rollen: Rolle<true>[] = await anlage.findAuthorizedRollen(permissions, params.rolleName, params.limit);
-        const response: FindRollenResponse = new FindRollenResponse(rollen, rollen.length);
-
-        return response;
     }
 
     @Get('schulstrukturknoten')
