@@ -242,17 +242,19 @@ describe('DbSeedService', () => {
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
-        describe('kuerzel = root', () => {
+        describe('should throw error', () => {
             it('should throw NameValidationError if OrganisationFactory.createNew returns DomainError', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
                     `./seeding/seeding-integration-test/organisation/07_organisation_with_invalid_name.json`,
                     'utf-8',
                 );
-                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+                const parent: OrganisationDo<true> = createMock<OrganisationDo<true>>();
+                organisationRepositoryMock.save.mockResolvedValueOnce(parent);
+                //USE MockResolved instead of MockRecolvedOnce because it's called for administriert and zugehoerigZu
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID of referenced parent
+                organisationRepositoryMock.findById.mockResolvedValue(parent); // mock get-SSK
 
-                organisationRepositoryMock.save.mockResolvedValueOnce(persistedOrganisation);
-
-                await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(NameValidationError);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(NameValidationError);
             });
         });
     });
