@@ -174,6 +174,10 @@ export class RolleRepo {
             true,
         );
 
+        if(!orgIdsWithRecht) {
+            return [[], 0];
+        }
+
         let rollen: Option<RolleEntity[]>;
         let total: number;
         const organisationWhereClause = { administeredBySchulstrukturknoten: { $in: orgIdsWithRecht } };
