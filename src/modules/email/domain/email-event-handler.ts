@@ -37,35 +37,6 @@ export class EmailEventHandler {
             `Received PersonenkontextCreatedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
         );
         await this.handlePerson(event.personId);
-        /* const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(event.rolleId);
-        if (!rolle) {
-            this.logger.error(`Rolle id:${event.rolleId} does NOT exist`);
-            return;
-        }
-        if (await this.rolleReferencesEmailServiceProvider(rolle)) {
-            this.logger.info(`Received event for creation of PK with rolle that references email SP`);
-            const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(event.personId);
-
-            if (existingEmail) {
-                this.logger.info(`Existing email found for personId:${event.personId}`);
-
-                if (existingEmail.enabled) {
-                    this.logger.info(`Existing email for personId:${event.personId} already enabled`);
-                } else {
-                    existingEmail.enable();
-                    const persistenceResult: EmailAddress<true> | DomainError =
-                        await this.emailRepo.save(existingEmail);
-                    if (persistenceResult instanceof EmailAddress) {
-                        this.logger.info(`Enabled and saved address:${persistenceResult.currentAddress}`);
-                    } else {
-                        this.logger.error(`Could not enable email, error is ${persistenceResult.message}`);
-                    }
-                }
-            } else {
-                this.logger.info(`No existing email found for personId:${event.personId}, creating a new one`);
-                await this.createNewEmail(event.personId);
-            }
-        }*/
     }
 
     @EventHandler(PersonenkontextDeletedEvent)

@@ -82,7 +82,6 @@ export class EmailRepo {
     }
 
     private async create(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {
-        //persist the emailAddress
         const emailAddressEntity: EmailAddressEntity = this.em.create(
             EmailAddressEntity,
             mapAggregateToData(emailAddress),
@@ -93,7 +92,6 @@ export class EmailRepo {
     }
 
     private async update(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {
-        //update the emailAddress
         const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(EmailAddressEntity, {
             id: emailAddress.id,
         });
