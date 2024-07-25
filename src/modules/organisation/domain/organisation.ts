@@ -36,13 +36,6 @@ export class Organisation<WasPersisted extends boolean> {
         typ?: OrganisationsTyp,
         traegerschaft?: Traegerschaft,
     ): Organisation<WasPersisted> {
-        if (name) {
-            this.validateName(name, 'Der Organisationsname');
-        }
-        if (kennung) {
-            this.validateName(kennung, 'Die Dienstellennummer');
-        }
-
         return new Organisation(
             id,
             createdAt,
@@ -68,6 +61,12 @@ export class Organisation<WasPersisted extends boolean> {
         typ?: OrganisationsTyp,
         traegerschaft?: Traegerschaft,
     ): Organisation<false> {
+        if (name) {
+            this.validateName(name, 'Der Organisationsname');
+        }
+        if (kennung) {
+            this.validateName(kennung, 'Die Dienstellennummer');
+        }
         return new Organisation(
             undefined,
             undefined,

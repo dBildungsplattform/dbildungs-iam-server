@@ -11,7 +11,7 @@ import { DbSeedService } from './db-seed.service.js';
 import { UsernameGeneratorService } from '../../../modules/person/domain/username-generator.service.js';
 import { KeycloakAdministrationModule } from '../../../modules/keycloak-administration/keycloak-administration.module.js';
 import { KeycloakConfigModule } from '../../../modules/keycloak-administration/keycloak-config.module.js';
-import { EntityNotFoundError, InvalidAttributeLengthError } from '../../../shared/error/index.js';
+import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { OrganisationModule } from '../../../modules/organisation/organisation.module.js';
 import fs from 'fs';
 import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -20,6 +20,7 @@ import { RolleModule } from '../../../modules/rolle/rolle.module.js';
 import { PersonModule } from '../../../modules/person/person.module.js';
 import { DbSeedModule } from '../db-seed.module.js';
 import { PersonenKontextModule } from '../../../modules/personenkontext/personenkontext.module.js';
+import { NameValidationError } from '../../../shared/error/name-validation.error.js';
 
 describe('DbSeedServiceIntegration', () => {
     let module: TestingModule;
@@ -117,7 +118,7 @@ describe('DbSeedServiceIntegration', () => {
                     `./seeding/seeding-integration-test/invalidPerson/02_person.json`,
                     'utf-8',
                 );
-                await expect(dbSeedService.seedPerson(fileContentAsStr)).rejects.toThrow(InvalidAttributeLengthError);
+                await expect(dbSeedService.seedPerson(fileContentAsStr)).rejects.toThrow(NameValidationError);
             });
         });
     });
