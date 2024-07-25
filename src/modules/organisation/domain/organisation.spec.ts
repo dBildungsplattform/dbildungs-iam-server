@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { Organisation } from './organisation.js';
+import { NameValidationError } from '../../../shared/error/name-validation.error.js';
 
 describe('Organisation', () => {
     let module: TestingModule;
@@ -58,6 +59,51 @@ describe('Organisation', () => {
 
             expect(organisation).toBeDefined();
             expect(organisation).toBeInstanceOf(Organisation<false>);
+        });
+        it('should return non persisted organisation', () => {
+            const organisation: Organisation<false> = Organisation.createNew(
+                faker.string.uuid(),
+                faker.string.uuid(),
+                'kennung',
+                'name',
+                faker.lorem.word(),
+                faker.string.uuid(),
+                undefined,
+                undefined,
+            );
+
+            expect(organisation).toBeDefined();
+            expect(organisation).toBeInstanceOf(Organisation<false>);
+        });
+
+        it('should throw an error if name has leading whitespace', () => {
+            expect(() =>
+                Organisation.createNew(
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    'kennung',
+                    ' Test',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    undefined,
+                    undefined,
+                ),
+            ).toThrow(NameValidationError);
+        });
+
+        it('should throw an error if dienststellennummer has leading whitespace', () => {
+            expect(() =>
+                Organisation.createNew(
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    ' Test',
+                    'name',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    undefined,
+                    undefined,
+                ),
+            ).toThrow(NameValidationError);
         });
     });
 });

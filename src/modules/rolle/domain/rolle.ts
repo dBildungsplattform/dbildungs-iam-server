@@ -22,10 +22,10 @@ export class Rolle<WasPersisted extends boolean> {
         public serviceProviderIds: string[],
     ) {}
 
-    private static validateName(name: string): void {
+    private static validateName(name: string, fieldName: string): void {
         const NO_LEADING_TRAILING_WHITESPACE: RegExp = /^(?! ).*(?<! )$/;
         if (!NO_LEADING_TRAILING_WHITESPACE.test(name) || name.trim().length === 0) {
-            throw new NameValidationError('Der Rollenname');
+            throw new NameValidationError(fieldName);
         }
     }
 
@@ -40,7 +40,7 @@ export class Rolle<WasPersisted extends boolean> {
         serviceProviderIds: string[],
     ): Rolle<false> {
         // Validate the Rollenname
-        this.validateName(name);
+        this.validateName(name, 'Der Rollenname');
         return new Rolle(
             organisationRepo,
             serviceProviderRepo,

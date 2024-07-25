@@ -78,10 +78,10 @@ export class Person<WasPersisted extends boolean> {
         return this.passwordInternalState.isTemporary;
     }
 
-    private static validateName(name: string): void {
+    private static validateName(name: string, fieldName: string): void {
         const NO_LEADING_TRAILING_WHITESPACE: RegExp = /^(?! ).*(?<! )$/;
         if (!NO_LEADING_TRAILING_WHITESPACE.test(name) || name.trim().length === 0) {
-            throw new NameValidationError('Der Vor- oder Nachname');
+            throw new NameValidationError(fieldName);
         }
     }
 
@@ -146,8 +146,8 @@ export class Person<WasPersisted extends boolean> {
         creationParams: PersonCreationParams,
     ): Promise<Person<false> | DomainError> {
         // Validate the Vor - and Nachname
-        this.validateName(creationParams.vorname);
-        this.validateName(creationParams.familienname);
+        this.validateName(creationParams.vorname, 'Der Vorname');
+        this.validateName(creationParams.familienname, 'Der Familienname');
         const person: Person<false> = new Person(
             undefined,
             undefined,

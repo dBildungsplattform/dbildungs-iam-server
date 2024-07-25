@@ -6,6 +6,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
+import { NameValidationError } from '../../../shared/error/name-validation.error.js';
 
 describe('Person', () => {
     let module: TestingModule;
@@ -120,6 +121,56 @@ describe('Person', () => {
                 expect(person.newPassword).toEqual('testpassword');
                 expect(person.isNewPasswordTemporary).toEqual(false);
                 expect(person.revision).toEqual('1');
+            });
+        });
+        describe('name validation', () => {
+            it('should throw an error if the vorname starts with whitespace', async () => {
+                const creationParams: PersonCreationParams = {
+                    familienname: 'Mustermann',
+                    vorname: ' Max',
+                };
+                await expect(Person.createNew(usernameGeneratorService, creationParams)).rejects.toBeInstanceOf(
+                    NameValidationError,
+                );
+            });
+
+            it('should throw an error if the familienname ends with whitespace', async () => {
+                const creationParams: PersonCreationParams = {
+                    familienname: 'Mustermann ',
+                    vorname: 'Max',
+                };
+                await expect(Person.createNew(usernameGeneratorService, creationParams)).rejects.toBeInstanceOf(
+                    NameValidationError,
+                );
+            });
+
+            it('should throw an error if the familienname is only whitespace', async () => {
+                const creationParams: PersonCreationParams = {
+                    familienname: '   ',
+                    vorname: 'Max',
+                };
+                await expect(Person.createNew(usernameGeneratorService, creationParams)).rejects.toBeInstanceOf(
+                    NameValidationError,
+                );
+            });
+
+            it('should create a new person if names are valid', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: '' });
+                const creationParams: PersonCreationParams = {
+                    familienname: 'Mustermann',
+                    vorname: 'Max',
+                };
+                const person: Person<false> | DomainError = await Person.createNew(
+                    usernameGeneratorService,
+                    creationParams,
+                );
+
+                expect(person).not.toBeInstanceOf(DomainError);
+                if (person instanceof DomainError) {
+                    return;
+                }
+                expect(person).toBeDefined();
+                expect(person).toBeInstanceOf(Person<false>);
             });
         });
     });
