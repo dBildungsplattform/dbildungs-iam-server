@@ -22,11 +22,12 @@ export class Rolle<WasPersisted extends boolean> {
         public serviceProviderIds: string[],
     ) {}
 
-    private static validateName(name: string, fieldName: string): void {
+    private static validateName(name: string, fieldName: string): Option<DomainError> {
         const NO_LEADING_TRAILING_WHITESPACE: RegExp = /^(?! ).*(?<! )$/;
         if (!NO_LEADING_TRAILING_WHITESPACE.test(name) || name.trim().length === 0) {
-            throw new NameValidationError(fieldName);
+            return new NameValidationError(fieldName);
         }
+        return null;
     }
 
     public static createNew(
@@ -38,9 +39,12 @@ export class Rolle<WasPersisted extends boolean> {
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
-    ): Rolle<false> {
+    ): Rolle<false> | DomainError {
         // Validate the Rollenname
-        this.validateName(name, 'Der Rollenname');
+        const rollennameValidationError: Option<DomainError> = this.validateName(name, 'Der Rollenname');
+        if (rollennameValidationError) {
+            return rollennameValidationError;
+        }
         return new Rolle(
             organisationRepo,
             serviceProviderRepo,

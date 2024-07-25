@@ -63,13 +63,35 @@ describe('Rolle Aggregate', () => {
 
     describe('canBeAssignedToOrga', () => {
         it('should resolve to true, if the rolle is administered by the given organisation', async () => {
-            const rolle: Rolle<false> = rolleFactory.createNew('test', faker.string.uuid(), RollenArt.LERN, [], [], []);
+            const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
+                'test',
+                faker.string.uuid(),
+                RollenArt.LERN,
+                [],
+                [],
+                [],
+            );
+
+            if (rolle instanceof DomainError) {
+                throw new NameValidationError('Name Invalid');
+            }
 
             await expect(rolle.canBeAssignedToOrga(rolle.administeredBySchulstrukturknoten)).resolves.toBe(true);
         });
 
         it('should resolve to true, if the given organisation id is a suborganisation', async () => {
-            const rolle: Rolle<false> = rolleFactory.createNew('test', faker.string.uuid(), RollenArt.LERN, [], [], []);
+            const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
+                'test',
+                faker.string.uuid(),
+                RollenArt.LERN,
+                [],
+                [],
+                [],
+            );
+
+            if (rolle instanceof DomainError) {
+                throw new NameValidationError('Name Invalid');
+            }
 
             const orgaId: string = faker.string.uuid();
             organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
@@ -78,15 +100,26 @@ describe('Rolle Aggregate', () => {
         });
 
         it('should resolve to false, if the given organisation id is not a suborganisation', async () => {
-            const rolle: Rolle<false> = rolleFactory.createNew('test', faker.string.uuid(), RollenArt.LERN, [], [], []);
+            const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
+                'test',
+                faker.string.uuid(),
+                RollenArt.LERN,
+                [],
+                [],
+                [],
+            );
             organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(false);
+
+            if (rolle instanceof DomainError) {
+                throw new NameValidationError('Name Invalid');
+            }
 
             await expect(rolle.canBeAssignedToOrga(faker.string.uuid())).resolves.toBe(false);
         });
     });
 
     describe('createNew', () => {
-        it('should throw an error if the name starts with whitespace', () => {
+        it('should return an error if the name starts with whitespace', () => {
             const creationParams: {
                 name: string;
                 administeredBySchulstrukturknoten: string;
@@ -102,19 +135,19 @@ describe('Rolle Aggregate', () => {
                 systemrechte: [],
                 serviceProviderIds: [],
             };
-            expect(() =>
-                rolleFactory.createNew(
-                    creationParams.name,
-                    creationParams.administeredBySchulstrukturknoten,
-                    creationParams.art,
-                    creationParams.merkmale,
-                    creationParams.systemrechte,
-                    creationParams.serviceProviderIds,
-                ),
-            ).toThrow(NameValidationError);
+            const result: Rolle<false> | DomainError = rolleFactory.createNew(
+                creationParams.name,
+                creationParams.administeredBySchulstrukturknoten,
+                creationParams.art,
+                creationParams.merkmale,
+                creationParams.systemrechte,
+                creationParams.serviceProviderIds,
+            );
+
+            expect(result).toBeInstanceOf(NameValidationError);
         });
 
-        it('should throw an error if the name ends with whitespace', () => {
+        it('should return an error if the name ends with whitespace', () => {
             const creationParams: {
                 name: string;
                 administeredBySchulstrukturknoten: string;
@@ -130,19 +163,19 @@ describe('Rolle Aggregate', () => {
                 systemrechte: [],
                 serviceProviderIds: [],
             };
-            expect(() =>
-                rolleFactory.createNew(
-                    creationParams.name,
-                    creationParams.administeredBySchulstrukturknoten,
-                    creationParams.art,
-                    creationParams.merkmale,
-                    creationParams.systemrechte,
-                    creationParams.serviceProviderIds,
-                ),
-            ).toThrow(NameValidationError);
+            const result: Rolle<false> | DomainError = rolleFactory.createNew(
+                creationParams.name,
+                creationParams.administeredBySchulstrukturknoten,
+                creationParams.art,
+                creationParams.merkmale,
+                creationParams.systemrechte,
+                creationParams.serviceProviderIds,
+            );
+
+            expect(result).toBeInstanceOf(NameValidationError);
         });
 
-        it('should throw an error if the name is only whitespace', () => {
+        it('should return an error if the name is only whitespace', () => {
             const creationParams: {
                 name: string;
                 administeredBySchulstrukturknoten: string;
@@ -158,16 +191,16 @@ describe('Rolle Aggregate', () => {
                 systemrechte: [],
                 serviceProviderIds: [],
             };
-            expect(() =>
-                rolleFactory.createNew(
-                    creationParams.name,
-                    creationParams.administeredBySchulstrukturknoten,
-                    creationParams.art,
-                    creationParams.merkmale,
-                    creationParams.systemrechte,
-                    creationParams.serviceProviderIds,
-                ),
-            ).toThrow(NameValidationError);
+            const result: Rolle<false> | DomainError = rolleFactory.createNew(
+                creationParams.name,
+                creationParams.administeredBySchulstrukturknoten,
+                creationParams.art,
+                creationParams.merkmale,
+                creationParams.systemrechte,
+                creationParams.serviceProviderIds,
+            );
+
+            expect(result).toBeInstanceOf(NameValidationError);
         });
 
         it('should create a new rolle if the name is valid', () => {
@@ -186,7 +219,7 @@ describe('Rolle Aggregate', () => {
                 systemrechte: [],
                 serviceProviderIds: [],
             };
-            const rolle: Rolle<false> = rolleFactory.createNew(
+            const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
                 creationParams.name,
                 creationParams.administeredBySchulstrukturknoten,
                 creationParams.art,

@@ -169,13 +169,19 @@ export class RolleController {
             );
         }
 
-        const rolle: Rolle<false> = this.rolleFactory.createNew(
+        const rolle: DomainError | Rolle<false> = this.rolleFactory.createNew(
             params.name,
             params.administeredBySchulstrukturknoten,
             params.rollenart,
             params.merkmale,
             params.systemrechte,
         );
+
+        if (rolle instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(rolle),
+            );
+        }
 
         const result: Rolle<true> = await this.rolleRepo.save(rolle);
 

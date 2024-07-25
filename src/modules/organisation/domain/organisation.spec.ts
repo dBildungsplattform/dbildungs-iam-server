@@ -4,6 +4,7 @@ import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { Organisation } from './organisation.js';
 import { NameValidationError } from '../../../shared/error/name-validation.error.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 describe('Organisation', () => {
     let module: TestingModule;
@@ -46,7 +47,7 @@ describe('Organisation', () => {
 
     describe('createNew', () => {
         it('should return non pesisted organisation', () => {
-            const organisation: Organisation<false> = Organisation.createNew(
+            const organisation: Organisation<false> | DomainError = Organisation.createNew(
                 faker.string.uuid(),
                 faker.string.uuid(),
                 faker.lorem.word(),
@@ -61,7 +62,7 @@ describe('Organisation', () => {
             expect(organisation).toBeInstanceOf(Organisation<false>);
         });
         it('should return non persisted organisation', () => {
-            const organisation: Organisation<false> = Organisation.createNew(
+            const organisation: Organisation<false> | DomainError = Organisation.createNew(
                 faker.string.uuid(),
                 faker.string.uuid(),
                 'kennung',
@@ -76,34 +77,32 @@ describe('Organisation', () => {
             expect(organisation).toBeInstanceOf(Organisation<false>);
         });
 
-        it('should throw an error if name has leading whitespace', () => {
-            expect(() =>
-                Organisation.createNew(
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    'kennung',
-                    ' Test',
-                    faker.lorem.word(),
-                    faker.string.uuid(),
-                    undefined,
-                    undefined,
-                ),
-            ).toThrow(NameValidationError);
+        it('should return an error if name has leading whitespace', () => {
+            const result: DomainError | Organisation<false> = Organisation.createNew(
+                faker.string.uuid(),
+                faker.string.uuid(),
+                'kennung',
+                ' Test',
+                faker.lorem.word(),
+                faker.string.uuid(),
+                undefined,
+                undefined,
+            );
+            expect(result).toBeInstanceOf(NameValidationError);
         });
 
-        it('should throw an error if dienststellennummer has leading whitespace', () => {
-            expect(() =>
-                Organisation.createNew(
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    ' Test',
-                    'name',
-                    faker.lorem.word(),
-                    faker.string.uuid(),
-                    undefined,
-                    undefined,
-                ),
-            ).toThrow(NameValidationError);
+        it('should return an error if dienststellennummer has leading whitespace', () => {
+            const result: DomainError | Organisation<false> = Organisation.createNew(
+                faker.string.uuid(),
+                faker.string.uuid(),
+                ' Test',
+                'name',
+                faker.lorem.word(),
+                faker.string.uuid(),
+                undefined,
+                undefined,
+            );
+            expect(result).toBeInstanceOf(NameValidationError);
         });
     });
 });
