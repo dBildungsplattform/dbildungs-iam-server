@@ -11,7 +11,6 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { Person } from '../domain/person.js';
-import { PersonDo } from '../domain/person.do.js';
 
 describe('PersonInfoController', () => {
     let module: TestingModule;
@@ -60,7 +59,7 @@ describe('PersonInfoController', () => {
         describe('when person exists', () => {
             it('should return person info', async () => {
                 // Arrange
-                const person: PersonDo<true> = DoFactory.createPerson(true);
+                const person: Person<true> = DoFactory.createPerson(true);
                 const permissions: PersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),

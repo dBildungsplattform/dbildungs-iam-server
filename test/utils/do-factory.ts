@@ -18,6 +18,7 @@ import {
     ServiceProviderKategorie,
     ServiceProviderTarget,
 } from '../../src/modules/service-provider/domain/service-provider.enum.js';
+import { Person } from '../../src/modules/person/domain/person.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -33,9 +34,9 @@ export class DoFactory {
     public static createPerson<WasPersisted extends boolean>(
         this: void,
         withId: WasPersisted,
-        props?: Partial<PersonDo<false>>,
-    ): PersonDo<WasPersisted> {
-        const person: PersonDo<false> = {
+        props?: Partial<Person<WasPersisted>>,
+    ): Person<WasPersisted> {
+        const person: Partial<Person<WasPersisted>> = {
             keycloakUserId: faker.string.uuid(),
             mandant: faker.string.uuid(),
             familienname: faker.person.lastName(),
@@ -45,7 +46,7 @@ export class DoFactory {
             updatedAt: withId ? faker.date.recent() : undefined,
             revision: '1',
         };
-        return Object.assign(new PersonDo<WasPersisted>(), person, props);
+        return Object.assign(Object.create(Person.prototype) as Person<boolean>, person, props);
     }
 
     public static createOrganisation<WasPersisted extends boolean>(
