@@ -1,18 +1,17 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonInfoResponse } from '../api/person-info.response.js';
 import { Person } from '../domain/person.js';
 import { PersonApiMapper } from './person-api.mapper.js';
 import { Test, TestingModule } from '@nestjs/testing';
+import { faker } from '@faker-js/faker';
 
 describe('PersonApiMapper', () => {
     let module: TestingModule;
     let sut: PersonApiMapper;
     let rolleRepoMock: DeepMocked<RolleRepo>;
-    let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -21,14 +20,9 @@ describe('PersonApiMapper', () => {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
                 },
-                {
-                    provide: OrganisationRepository,
-                    useValue: createMock<OrganisationRepository>(),
-                },
             ],
         }).compile();
         rolleRepoMock = module.get(RolleRepo);
-        organisationRepositoryMock = module.get(OrganisationRepository);
         sut = new PersonApiMapper();
     });
 
@@ -41,12 +35,13 @@ describe('PersonApiMapper', () => {
             it('should return PersonInfoResponse', async () => {
                 // Arrange
                 const person: Person<true> = DoFactory.createPerson(true);
+                rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
+
                 const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                     loeschungZeitpunkt: new Date(),
+                    getRolle: () => rolleRepoMock.findById(faker.string.uuid()),
                 });
                 const kontexte: Personenkontext<true>[] = [kontext];
-                rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
-                organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
 
                 // Act
                 const result: PersonInfoResponse = await sut.mapToPersonInfoResponse(person, kontexte);
@@ -105,10 +100,10 @@ describe('PersonApiMapper', () => {
             // Arrange
             const person: Person<true> = DoFactory.createPerson(true);
             rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
-            organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
 
             const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                 loeschungZeitpunkt: undefined,
+                getRolle: () => rolleRepoMock.findById(faker.string.uuid()),
             });
             const kontexte: Personenkontext<true>[] = [kontext];
 
