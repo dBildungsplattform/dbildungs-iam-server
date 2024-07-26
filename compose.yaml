@@ -11,6 +11,7 @@ services:
       - POSTGRES_DB=dbildungs-iam-server
   keycloak:
     image: ghcr.io/dbildungsplattform/dbildungs-iam-keycloak:latest
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-keycloak:latest
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
@@ -103,3 +104,7 @@ services:
     ports:
       - 9007:80
       - 4443:443
+
+volumes:
+  db-data:
+

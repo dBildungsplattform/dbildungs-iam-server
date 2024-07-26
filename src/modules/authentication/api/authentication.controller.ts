@@ -123,11 +123,17 @@ export class AuthenticationController {
         return new UserinfoResponse(permissions, rolleFieldsResponse);
     }
 
-    @Get('keycloakbaseurl')
-    @ApiBearerAuth()
-    @ApiOperation({ summary: 'Used to get the keycloak base url.' })
-    @ApiOkResponse({ description: 'Keycloak base url.', type: String })
-    public getKeycloakBaseUrl(): string {
-        return this.defaultKeycloakBaseUrl;
+    @Get('set-new-password')
+    @Public()
+    @ApiOperation({ summary: 'Redirect to Keycloak password reset.' })
+    @ApiResponse({ status: 302, description: 'Redirect to Keycloak password reset page.' })
+    public setNewPassword(@Res() res: Response): void {
+        const clientId: string = 'spsh';
+        const redirectUri: string = 'http://localhost:8099';
+        const responseType: string = 'code';
+        const scope: string = 'openid';
+        const kcAction: string = 'UPDATE_PASSWORD';
+        const setNewPasswordUrl: string = `${this.client.issuer.metadata.authorization_endpoint}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}&kc_action=${kcAction}`;
+        res.redirect(setNewPasswordUrl);
     }
 }
