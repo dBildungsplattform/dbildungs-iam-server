@@ -244,6 +244,23 @@ describe('DbSeedService', () => {
                 );
             });
         });
+        describe('Should throw error', () => {
+            it('should throw NameValidationError if OrganisationFactory.createNew returns DomainError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/organisation/07_organisation_with_invalid_name.json`,
+                    'utf-8',
+                );
+                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+                const parent: OrganisationDo<true> = createMock<OrganisationDo<true>>();
+                organisationRepositoryMock.save.mockResolvedValueOnce(parent);
+                //USE MockResolved instead of MockRecolvedOnce because it's called for administriert and zugehoerigZu
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID of referenced parent
+                organisationRepositoryMock.findById.mockResolvedValue(parent);
+
+                organisationRepositoryMock.save.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(NameValidationError);
+            });
+        });
     });
 
     describe('seedRolle', () => {
@@ -321,15 +338,18 @@ describe('DbSeedService', () => {
         describe('should throw error', () => {
             it('should throw NameValidationError if OrganisationFactory.createNew returns DomainError', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./seeding/seeding-integration-test/organisation/08_rolle-with-invalid-name.json`,
+                    `./seeding/seeding-integration-test/rolle/08_rolle-with-invalid-name.json`,
                     'utf-8',
                 );
-                const parent: OrganisationDo<true> = createMock<OrganisationDo<true>>();
-                organisationRepositoryMock.save.mockResolvedValueOnce(parent);
-                //USE MockResolved instead of MockRecolvedOnce because it's called for administriert and zugehoerigZu
-                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID of referenced parent
-                organisationRepositoryMock.findById.mockResolvedValue(parent); // mock get-SSK
+                const persistedRolle: Rolle<true> = DoFactory.createRolle(true);
+                const serviceProviderMocked: ServiceProvider<true> = createMock<ServiceProvider<true>>();
 
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced serviceProvider
+                serviceProviderRepoMock.findById.mockResolvedValueOnce(serviceProviderMocked);
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced parent
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<OrganisationDo<true>>()); // mock get-SSK
+
+                rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
                 await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(NameValidationError);
             });
         });
