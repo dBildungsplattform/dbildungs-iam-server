@@ -247,7 +247,8 @@ describe('DbSeedService', () => {
         describe('Should throw error', () => {
             it('should throw NameValidationError if OrganisationFactory.createNew returns DomainError', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./seeding/seeding-integration-test/organisation/07_organisation_with_invalid_name.json`, 'utf-8',
+                    `./seeding/seeding-integration-test/organisation/07_organisation_with_invalid_name.json`,
+                    'utf-8',
                 );
                 const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
 
