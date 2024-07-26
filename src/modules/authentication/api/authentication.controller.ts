@@ -29,7 +29,6 @@ import { RolleID } from '../../../shared/types/index.js';
 import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
 import { RollenSystemRechtServiceProviderIDResponse } from './rolle-systemrechte-serviceproviderid.response.js';
 import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
-import { Key } from 'readline';
 @UseFilters(new AuthenticationExceptionFilter())
 @ApiTags('auth')
 @Controller({ path: 'auth' })
