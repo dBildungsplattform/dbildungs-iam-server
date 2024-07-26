@@ -8,13 +8,10 @@ import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { FindPersonenkontextByIdParams } from './param/find-personenkontext-by-id.params.js';
 import { PersonApiMapperProfile } from '../../person/api/person-api.mapper.profile.js';
-import { PersonDto } from '../../person/api/person.dto.js';
-import { PersonendatensatzDto } from '../../person/api/personendatensatz.dto.js';
 import { PersonendatensatzResponseAutomapper } from '../../person/api/personendatensatz.response-automapper.js';
 import { PersonenkontextQueryParams } from './param/personenkontext-query.params.js';
 import { PersonenkontextController } from './personenkontext.controller.js';
-import { PersonenkontextDto } from './personenkontext.dto.js';
-import { PersonenkontextUc } from './personenkontext.uc.js';
+
 import { PersonenkontextdatensatzResponse } from './response/personenkontextdatensatz.response.js';
 import { UpdatePersonenkontextBodyParams } from './param/update-personenkontext.body.params.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
@@ -24,19 +21,24 @@ import { HatSystemrechtQueryParams } from './param/hat-systemrecht.query.params.
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { SystemrechtResponse } from './response/personenkontext-systemrecht.response.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 import { OrganisationApiMapperProfile } from '../../organisation/api/organisation-api.mapper.profile.js';
 import { getMapperToken } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { PersonenkontextService } from '../domain/personenkontext.service.js';
+import { PersonService } from '../../person/domain/person.service.js';
+import { Personenkontext } from '../domain/personenkontext.js';
+import { Person } from '../../person/domain/person.js';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
     let sut: PersonenkontextController;
-    let personenkontextUcMock: DeepMocked<PersonenkontextUc>;
     let personenkontextRepo: DeepMocked<DBiamPersonenkontextRepo>;
+    let personenkontextService: DeepMocked<PersonenkontextService>;
+    let personSerivce: DeepMocked<PersonService>;
     let mapper: Mapper;
 
     beforeAll(async () => {
@@ -45,11 +47,9 @@ describe('PersonenkontextController', () => {
             providers: [
                 PersonenkontextController,
                 PersonApiMapperProfile,
+                PersonenkontextService,
                 OrganisationApiMapperProfile,
-                {
-                    provide: PersonenkontextUc,
-                    useValue: createMock<PersonenkontextUc>(),
-                },
+                PersonService,
                 {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock<DBiamPersonenkontextRepo>(),
@@ -57,8 +57,9 @@ describe('PersonenkontextController', () => {
             ],
         }).compile();
         sut = module.get(PersonenkontextController);
-        personenkontextUcMock = module.get(PersonenkontextUc);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
+        personenkontextService = module.get(PersonenkontextService);
+        personSerivce = module.get(PersonService);
         mapper = module.get(getMapperToken());
     });
 
@@ -82,16 +83,25 @@ describe('PersonenkontextController', () => {
                     ok: true,
                     value: createMock(),
                 });
+
                 const params: FindPersonenkontextByIdParams = {
                     personenkontextId: faker.string.uuid(),
                 };
-                const dtoMock: PersonendatensatzDto = {
-                    person: new PersonDto(),
-                    personenkontexte: [],
-                };
+
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
 
-                personenkontextUcMock.findPersonenkontextById.mockResolvedValue(dtoMock);
+                const personenkontextResultMock: Result<Personenkontext<true>, DomainError> = {
+                    ok: true,
+                    value: createMock<Personenkontext<true>>(),
+                };
+
+                const personResultMock: Result<Person<true>, DomainError> = {
+                    ok: true,
+                    value: createMock<Person<true>>(),
+                };
+
+                personenkontextService.findPersonenkontextById.mockResolvedValue(personenkontextResultMock);
+                personSerivce.findPersonById.mockResolvedValue(personResultMock);
 
                 const response: PersonendatensatzResponseAutomapper = await sut.findPersonenkontextById(
                     params,
@@ -99,28 +109,33 @@ describe('PersonenkontextController', () => {
                 );
 
                 expect(response).toBeInstanceOf(PersonendatensatzResponseAutomapper);
-                expect(personenkontextUcMock.findPersonenkontextById).toBeCalledTimes(1);
+                expect(personenkontextService.findPersonenkontextById).toBeCalledTimes(1);
+                expect(personSerivce.findPersonById).toBeCalledTimes(1);
             });
         });
+    });
 
-        describe('when NOT finding personenkontext with id', () => {
-            it('should throw http error', async () => {
-                // Mock Auth check
-                personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
-                    ok: true,
-                    value: createMock(),
-                });
-                const params: FindPersonenkontextByIdParams = {
-                    personenkontextId: faker.string.uuid(),
-                };
-
-                personenkontextUcMock.findPersonenkontextById.mockResolvedValue(
-                    new SchulConnexError({} as SchulConnexError),
-                );
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-
-                await expect(sut.findPersonenkontextById(params, permissionsMock)).rejects.toThrow(HttpException);
+    describe('when NOT finding personenkontext with id', () => {
+        it('should throw http error', async () => {
+            // Mock Auth check
+            personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
+                ok: true,
+                value: createMock(),
             });
+            const params: FindPersonenkontextByIdParams = {
+                personenkontextId: faker.string.uuid(),
+            };
+
+            personenkontextService.findPersonenkontextById.mockResolvedValue({
+                ok: false,
+                error: createMock<DomainError>(),
+            });
+
+            const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+
+            await expect(sut.findPersonenkontextById(params, permissionsMock)).rejects.toThrow(HttpException);
+        });
+
 
             it('should throw error', async () => {
                 // Mock Auth check
@@ -133,7 +148,7 @@ describe('PersonenkontextController', () => {
                 };
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
 
-                personenkontextUcMock.findPersonenkontextById.mockRejectedValue(new Error());
+                personenkontextService.findPersonenkontextById.mockRejectedValue(new Error());
 
                 await expect(sut.findPersonenkontextById(params, permissionsMock)).rejects.toThrowError(Error);
             });
@@ -188,7 +203,7 @@ describe('PersonenkontextController', () => {
                     total: 1,
                     items: [personenkontext],
                 };
-                personenkontextUcMock.findAll.mockResolvedValue(personenkontexte);
+                personenkontextService.findAll.mockResolvedValue(personenkontexte);
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
 
                 const result: PagedResponse<PersonenkontextdatensatzResponse> = await sut.findPersonenkontexte(
@@ -196,7 +211,7 @@ describe('PersonenkontextController', () => {
                     permissionsMock,
                 );
 
-                expect(personenkontextUcMock.findAll).toBeCalledTimes(1);
+                expect(personenkontextService.findAll).toBeCalledTimes(1);
                 expect(result.items.length).toBe(1);
                 expect(result.items[0]?.person.id).toBe(personenkontext.personId);
                 expect(result.items[0]?.personenkontexte.length).toBe(1);
@@ -221,10 +236,10 @@ describe('PersonenkontextController', () => {
                 const systemrechtResponse: SystemrechtResponse = {
                     ROLLEN_VERWALTEN: organisationResponses,
                 };
-                personenkontextUcMock.hatSystemRecht.mockResolvedValue(systemrechtResponse);
+                personenkontextService.hatSystemRecht.mockResolvedValue(systemrechtResponse);
                 const response: SystemrechtResponse = await sut.hatSystemRecht(idParams, bodyParams);
                 expect(response.ROLLEN_VERWALTEN).toHaveLength(1);
-                expect(personenkontextUcMock.hatSystemRecht).toHaveBeenCalledTimes(1);
+                expect(personenkontextService.hatSystemRecht).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -236,9 +251,9 @@ describe('PersonenkontextController', () => {
                 const bodyParams: HatSystemrechtQueryParams = {
                     systemRecht: 'FALSCHER_RECHTE_NAME',
                 };
-                personenkontextUcMock.hatSystemRecht.mockRejectedValue(new EntityNotFoundError());
+                personenkontextService.hatSystemRecht.mockRejectedValue(new EntityNotFoundError());
                 await expect(sut.hatSystemRecht(idParams, bodyParams)).rejects.toThrow(HttpException);
-                expect(personenkontextUcMock.hatSystemRecht).toHaveBeenCalledTimes(0);
+                expect(personenkontextService.hatSystemRecht).toHaveBeenCalledTimes(0);
             });
         });
     });
@@ -266,7 +281,7 @@ describe('PersonenkontextController', () => {
                 };
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
 
-                personenkontextUcMock.updatePersonenkontext.mockResolvedValue(mockResonse);
+                personenkontextService.updatePersonenkontext.mockResolvedValue(mockResonse);
 
                 const response: PersonendatensatzResponseAutomapper = await sut.updatePersonenkontextWithId(
                     idParams,
@@ -275,7 +290,7 @@ describe('PersonenkontextController', () => {
                 );
 
                 expect(response).toBeInstanceOf(PersonendatensatzResponseAutomapper);
-                expect(personenkontextUcMock.updatePersonenkontext).toHaveBeenCalledTimes(1);
+                expect(personenkontextService.updatePersonenkontext).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -297,14 +312,14 @@ describe('PersonenkontextController', () => {
                 };
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
 
-                personenkontextUcMock.updatePersonenkontext.mockResolvedValue(
+                personenkontextService.updatePersonenkontext.mockResolvedValue(
                     new SchulConnexError({} as SchulConnexError),
                 );
 
                 await expect(sut.updatePersonenkontextWithId(idParams, bodyParams, permissionsMock)).rejects.toThrow(
                     HttpException,
                 );
-                expect(personenkontextUcMock.updatePersonenkontext).toHaveBeenCalledTimes(1);
+                expect(personenkontextService.updatePersonenkontext).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -342,13 +357,13 @@ describe('PersonenkontextController', () => {
                     ok: true,
                     value: createMock(),
                 });
-                personenkontextUcMock.deletePersonenkontextById.mockResolvedValue(undefined);
+                personenkontextService.deletePersonenkontextById.mockResolvedValue(undefined);
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
 
                 const response: void = await sut.deletePersonenkontextById(idParams, bodyParams, permissionsMock);
 
                 expect(response).toBeUndefined();
-                expect(personenkontextUcMock.deletePersonenkontextById).toHaveBeenCalledTimes(1);
+                expect(personenkontextService.deletePersonenkontextById).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -359,7 +374,7 @@ describe('PersonenkontextController', () => {
                     ok: true,
                     value: createMock(),
                 });
-                personenkontextUcMock.deletePersonenkontextById.mockResolvedValue(
+                personenkontextService.deletePersonenkontextById.mockResolvedValue(
                     new SchulConnexError({} as SchulConnexError),
                 );
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
@@ -367,7 +382,7 @@ describe('PersonenkontextController', () => {
                 await expect(sut.deletePersonenkontextById(idParams, bodyParams, permissionsMock)).rejects.toThrow(
                     HttpException,
                 );
-                expect(personenkontextUcMock.deletePersonenkontextById).toHaveBeenCalledTimes(1);
+                expect(personenkontextService.deletePersonenkontextById).toHaveBeenCalledTimes(1);
             });
         });
 
