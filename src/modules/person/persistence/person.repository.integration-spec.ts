@@ -1,5 +1,3 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -10,8 +8,6 @@ import {
     DoFactory,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { PersonDo } from '../domain/person.do.js';
-import { PersonPersistenceMapperProfile } from './person-persistence.mapper.profile.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
 import {
@@ -39,11 +35,9 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 
 describe('PersonRepository', () => {
     let module: TestingModule;
-    let sutLegacy: PersonRepo;
     let sut: PersonRepository;
     let orm: MikroORM;
     let em: EntityManager;
-    let mapper: Mapper;
     let kcUserServiceMock: DeepMocked<KeycloakUserService>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
@@ -53,7 +47,6 @@ describe('PersonRepository', () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
             providers: [
-                PersonPersistenceMapperProfile,
                 PersonRepo,
                 PersonRepository,
                 ConfigService,
@@ -71,11 +64,9 @@ describe('PersonRepository', () => {
                 },
             ],
         }).compile();
-        sutLegacy = module.get(PersonRepo);
         sut = module.get(PersonRepository);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
-        mapper = module.get(getMapperToken());
         personPermissionsMock = createMock<PersonPermissions>();
 
         kcUserServiceMock = module.get(KeycloakUserService);
@@ -96,16 +87,18 @@ describe('PersonRepository', () => {
     });
 
     it('should be defined', () => {
-        expect(sutLegacy).toBeDefined();
+        expect(sut).toBeDefined();
     });
 
     describe('findByKeycloakUserId', () => {
         describe('when found by keycloakUserId', () => {
             it('should return found person', async () => {
-                const person: PersonDo<true> = DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() });
-                await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
+                const keycloakUserId: string = faker.string.uuid();
+                const person: Person<true> = DoFactory.createPerson(true, { keycloakUserId: keycloakUserId });
+                const entity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(entity.assign(mapAggregateToData(person)));
 
-                const foundPerson: Option<Person<true>> = await sut.findByKeycloakUserId(person.keycloakUserId);
+                const foundPerson: Option<Person<true>> = await sut.findByKeycloakUserId(keycloakUserId);
 
                 expect(foundPerson).toBeInstanceOf(Person);
             });
@@ -123,10 +116,11 @@ describe('PersonRepository', () => {
     describe('findById', () => {
         describe('when found by Id', () => {
             it('should return found person', async () => {
-                const person: PersonDo<true> = DoFactory.createPerson(true);
-                await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
+                const person: Person<true> = DoFactory.createPerson(true);
+                const entity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(entity.assign(mapAggregateToData(person)));
 
-                const foundPerson: Option<Person<true>> = await sut.findById(person.id);
+                const foundPerson: Option<Person<true>> = await sut.findById(entity.id);
 
                 expect(foundPerson).toBeInstanceOf(Person);
             });
@@ -142,12 +136,13 @@ describe('PersonRepository', () => {
 
         describe('findBy', () => {
             it('should return found persons for scope', async () => {
-                const person1: PersonDo<true> = DoFactory.createPerson(true);
-                const person2: PersonDo<true> = DoFactory.createPerson(true);
-                const person3: PersonDo<true> = DoFactory.createPerson(true);
-                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
-                await em.persistAndFlush(mapper.map(person2, PersonDo, PersonEntity));
-                await em.persistAndFlush(mapper.map(person3, PersonDo, PersonEntity));
+                const person1: Person<true> = DoFactory.createPerson(true);
+                const person2: Person<true> = DoFactory.createPerson(true);
+                const person3: Person<true> = DoFactory.createPerson(true);
+
+                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
+                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person2)));
+                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person3)));
 
                 const scope: PersonScope = new PersonScope()
                     .findBy({
@@ -481,10 +476,11 @@ describe('PersonRepository', () => {
         describe('when person exist', () => {
             describe('when only updating database attributes', () => {
                 it('should return updated person', async () => {
-                    const existingPerson: PersonDo<true> = DoFactory.createPerson(true);
-                    await em.persistAndFlush(mapper.map(existingPerson, PersonDo, PersonEntity));
+                    const existingPerson: Person<true> = DoFactory.createPerson(true);
+                    const personEntity: PersonEntity = new PersonEntity();
+                    await em.persistAndFlush(personEntity.assign(mapAggregateToData(existingPerson)));
                     const person: Person<true> = Person.construct(
-                        existingPerson.id,
+                        personEntity.id,
                         faker.date.past(),
                         faker.date.recent(),
                         faker.person.lastName(),
@@ -508,10 +504,11 @@ describe('PersonRepository', () => {
             describe('when updating keycloak password', () => {
                 describe('when keycloak operation succeeds', () => {
                     it('should return updated person', async () => {
-                        const existingPerson: PersonDo<true> = DoFactory.createPerson(true);
-                        await em.persistAndFlush(mapper.map(existingPerson, PersonDo, PersonEntity));
+                        const existingPerson: Person<true> = DoFactory.createPerson(true);
+                        const personEntity: PersonEntity = new PersonEntity();
+                        await em.persistAndFlush(personEntity.assign(mapAggregateToData(existingPerson)));
                         const person: Person<true> = Person.construct(
-                            existingPerson.id,
+                            personEntity.id,
                             faker.date.past(),
                             faker.date.recent(),
                             faker.person.lastName(),
@@ -541,10 +538,11 @@ describe('PersonRepository', () => {
                 });
                 describe('when keycloak operation fails', () => {
                     it('should return updated person', async () => {
-                        const existingPerson: PersonDo<true> = DoFactory.createPerson(true);
-                        await em.persistAndFlush(mapper.map(existingPerson, PersonDo, PersonEntity));
+                        const existingPerson: Person<true> = DoFactory.createPerson(true);
+                        const personEntity: PersonEntity = new PersonEntity();
+                        await em.persistAndFlush(personEntity.assign(mapAggregateToData(existingPerson)));
                         const person: Person<true> = Person.construct(
-                            existingPerson.id,
+                            personEntity.id,
                             faker.date.past(),
                             faker.date.recent(),
                             faker.person.lastName(),
@@ -639,10 +637,8 @@ describe('PersonRepository', () => {
 
     describe('mapEntityToAggregate', () => {
         it('should return New Aggregate', () => {
-            const personEntity: PersonEntity = mapper.map(
+            const personEntity: PersonEntity = createMock<PersonEntity>(
                 DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() }),
-                PersonDo,
-                PersonEntity,
             );
             const person: Person<true> = mapEntityToAggregate(personEntity);
 
@@ -664,10 +660,8 @@ describe('PersonRepository', () => {
                 faker.string.uuid(),
             );
 
-            const personEntity: PersonEntity = mapper.map(
+            const personEntity: PersonEntity = createMock<PersonEntity>(
                 DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() }),
-                PersonDo,
-                PersonEntity,
             );
             const personAfterUpdate: Person<true> = mapEntityToAggregateInplace(personEntity, person);
 
@@ -679,10 +673,11 @@ describe('PersonRepository', () => {
     describe('getPersonIfAllowed', () => {
         describe('when person is found on any same organisations like the affected person', () => {
             it('should return person', async () => {
-                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
-
-                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
 
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
@@ -692,14 +687,17 @@ describe('PersonRepository', () => {
         });
         describe('when user has permission on root organisation', () => {
             it('should return person', async () => {
-                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                const person1: Person<true> = DoFactory.createPerson(true);
                 const fakeOrganisationId: string = configService.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
 
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([fakeOrganisationId]);
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
 
-                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
-
-                const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+                const result: Result<Person<true>> = await sut.getPersonIfAllowed(
+                    personEntity.id,
+                    personPermissionsMock,
+                );
 
                 expect(result.ok).toBeTruthy();
             });
@@ -708,10 +706,11 @@ describe('PersonRepository', () => {
     describe('checkIfDeleteIsAllowed', () => {
         describe('when person is found on any same organisations like the affected person', () => {
             it('should delete with no error', async () => {
-                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
-
-                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
 
@@ -720,11 +719,11 @@ describe('PersonRepository', () => {
         });
         describe('when user has no permission on root organisation', () => {
             it('should not delete', async () => {
-                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                const person1: Person<true> = DoFactory.createPerson(true);
 
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
-                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
                 const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
 
@@ -732,11 +731,11 @@ describe('PersonRepository', () => {
             });
         });
         it('should return an EntityCouldNotBeDeleted exception', async () => {
-            const person1: PersonDo<true> = DoFactory.createPerson(true);
+            const person1: Person<true> = DoFactory.createPerson(true);
 
             personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
-            await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+            await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
             const result: Result<Person<true>, Error> = await sut.checkIfDeleteIsAllowed(
                 person1.id,
@@ -751,10 +750,11 @@ describe('PersonRepository', () => {
     describe('deletePerson', () => {
         describe('Delete the person and all kontexte', () => {
             it('should delete the person', async () => {
-                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
-
-                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
                     person1.id,
@@ -770,20 +770,22 @@ describe('PersonRepository', () => {
                 expect(result.ok).toBeTruthy();
             });
             it('should not delete the person because of unsufficient permissions to find the person', async () => {
-                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
-                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
+                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
                 const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
 
                 expect(result.ok).toBeFalsy();
             });
             it('should not delete the person because of unsufficient permissions to delete the person', async () => {
-                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
 
-                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
                     person1.id,
@@ -811,11 +813,13 @@ describe('PersonRepository', () => {
                 checkIfDeleteIsAllowedSpy.mockRestore();
             });
             it('should not delete the person because it has no keycloakId', async () => {
-                const person1: PersonDo<true> = DoFactory.createPerson(true);
+                const person1: Person<true> = DoFactory.createPerson(true);
                 person1.keycloakUserId = '';
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
 
-                await em.persistAndFlush(mapper.map(person1, PersonDo, PersonEntity));
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
                     person1.id,
