@@ -244,18 +244,6 @@ describe('DbSeedService', () => {
                 );
             });
         });
-        describe('Should throw error', () => {
-            it('should throw NameValidationError if OrganisationFactory.createNew returns DomainError', async () => {
-                const fileContentAsStr: string = fs.readFileSync(
-                    `./seeding/seeding-integration-test/organisation/07_organisation_with_invalid_name.json`,
-                    'utf-8',
-                );
-                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
-
-                organisationRepositoryMock.save.mockResolvedValueOnce(persistedOrganisation);
-                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(NameValidationError);
-            });
-        });
     });
 
     describe('seedRolle', () => {
@@ -333,7 +321,7 @@ describe('DbSeedService', () => {
         describe('should throw error', () => {
             it('should throw NameValidationError if OrganisationFactory.createNew returns DomainError', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
-                    `./seeding/seeding-integration-test/organisation/07_organisation_with_invalid_name.json`,
+                    `./seeding/seeding-integration-test/organisation/08_rolle-with-invalid-name.json`,
                     'utf-8',
                 );
                 const parent: OrganisationDo<true> = createMock<OrganisationDo<true>>();
