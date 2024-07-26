@@ -36,7 +36,7 @@ export class EmailEventHandler {
         this.logger.info(
             `Received PersonenkontextCreatedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
         );
-        await this.handlePerson(event.personId, true);
+        await this.handlePerson(event.personId);
     }
 
     @EventHandler(PersonenkontextDeletedEvent)
@@ -97,19 +97,15 @@ export class EmailEventHandler {
         await Promise.all(handlePersonPromises);
     }
 
-    private async handlePerson(personId: PersonID, forceEmailCreation: boolean = false): Promise<void> {
-        let needsEmail: boolean = forceEmailCreation;
-        if (!forceEmailCreation) {
-            const personenkontexte: Personenkontext<true>[] =
-                await this.dbiamPersonenkontextRepo.findByPerson(personId);
-            const rollenIds: string[] = personenkontexte.map((pk: Personenkontext<true>) => pk.rolleId);
-            const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
-            const rollen: Rolle<true>[] = Array.from(rollenMap.values(), (value: Rolle<true>) => {
-                return value;
-            });
+    private async handlePerson(personId: PersonID): Promise<void> {
+        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
+        const rollenIds: string[] = personenkontexte.map((pk: Personenkontext<true>) => pk.rolleId);
+        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
+        const rollen: Rolle<true>[] = Array.from(rollenMap.values(), (value: Rolle<true>) => {
+            return value;
+        });
 
-            needsEmail = await this.anyRolleReferencesEmailServiceProvider(rollen);
-        }
+        const needsEmail: boolean = await this.anyRolleReferencesEmailServiceProvider(rollen);
 
         if (needsEmail) {
             this.logger.info(`Person with id:${personId} needs an email, creating or enabling address`);
