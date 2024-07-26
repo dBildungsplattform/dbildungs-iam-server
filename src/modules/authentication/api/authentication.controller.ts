@@ -15,7 +15,7 @@ import { Request, Response } from 'express';
 import { SessionData } from 'express-session';
 import { Client } from 'openid-client';
 
-import { FrontendConfig, ServerConfig } from '../../../shared/config/index.js';
+import { FrontendConfig, KeycloakConfig, ServerConfig } from '../../../shared/config/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
 import { LoginGuard } from './login.guard.js';
 import { RedirectQueryParams } from './redirect.query.params.js';
@@ -29,6 +29,7 @@ import { RolleID } from '../../../shared/types/index.js';
 import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
 import { RollenSystemRechtServiceProviderIDResponse } from './rolle-systemrechte-serviceproviderid.response.js';
 import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
+import { Key } from 'readline';
 @UseFilters(new AuthenticationExceptionFilter())
 @ApiTags('auth')
 @Controller({ path: 'auth' })
@@ -37,12 +38,16 @@ export class AuthenticationController {
 
     private readonly logoutRedirect: string;
 
+    private readonly keyCloakclientRealm: string;
+
     public constructor(
         configService: ConfigService<ServerConfig>,
         @Inject(OIDC_CLIENT) private client: Client,
         private readonly logger: ClassLogger,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
+        const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
+        this.keyCloakclientRealm = keycloakConfig.REALM_NAME;
         this.defaultLoginRedirect = frontendConfig.DEFAULT_LOGIN_REDIRECT;
         this.logoutRedirect = frontendConfig.LOGOUT_REDIRECT;
     }
@@ -124,7 +129,7 @@ export class AuthenticationController {
     @ApiOperation({ summary: 'Redirect to Keycloak password reset.' })
     @ApiResponse({ status: 302, description: 'Redirect to Keycloak password reset page.' })
     public setNewPassword(@Query('redirectUrl') redirectUrl: string, @Res() res: Response): void {
-        const clientId: string = 'spsh';
+        const clientId: string = this.keyCloakclientRealm;
         const responseType: string = 'code';
         const scope: string = 'openid';
         const kcAction: string = 'UPDATE_PASSWORD';
