@@ -1,6 +1,5 @@
 import { faker } from '@faker-js/faker';
 import { User } from '../../src/modules/keycloak-administration/domain/user.js';
-import { OrganisationDo } from '../../src/modules/organisation/domain/organisation.do.js';
 import { OrganisationsTyp, Traegerschaft } from '../../src/modules/organisation/domain/organisation.enums.js';
 import {
     Jahrgangsstufe,
@@ -17,6 +16,7 @@ import {
 } from '../../src/modules/service-provider/domain/service-provider.enum.js';
 import { Person } from '../../src/modules/person/domain/person.js';
 import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
+import { Organisation } from '../../src/modules/organisation/domain/organisation.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -50,9 +50,9 @@ export class DoFactory {
     public static createOrganisation<WasPersisted extends boolean>(
         this: void,
         withId: WasPersisted,
-        props?: Partial<OrganisationDo<false>>,
-    ): OrganisationDo<WasPersisted> {
-        const organisation: OrganisationDo<false> = {
+        props?: Partial<Organisation<false>>,
+    ): Organisation<WasPersisted> {
+        const organisation: Organisation<false> = {
             id: withId ? faker.string.uuid() : undefined,
             kennung: faker.lorem.word(),
             name: faker.company.name(),
@@ -63,7 +63,7 @@ export class DoFactory {
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
         };
-        return Object.assign(new OrganisationDo<WasPersisted>(), organisation, props);
+        return Object.assign(Object.create(Organisation.prototype) as Organisation<boolean>, organisation, props);
     }
 
     public static createUser<WasPersisted extends boolean>(
