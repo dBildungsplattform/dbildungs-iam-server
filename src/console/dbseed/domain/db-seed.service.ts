@@ -304,7 +304,7 @@ export class DbSeedService {
         return persistedPersonenkontexte;
     }
 
-    private async getReferencedPerson(seedingId: number): Promise<Person<true>> {
+    public async getReferencedPerson(seedingId: number): Promise<Person<true>> {
         const personUUID: Option<string> = await this.dbSeedReferenceRepo.findUUID(
             seedingId,
             ReferencedEntityType.PERSON,

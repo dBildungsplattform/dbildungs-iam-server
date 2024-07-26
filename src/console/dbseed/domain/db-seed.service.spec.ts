@@ -474,6 +474,47 @@ describe('DbSeedService', () => {
                 await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
+        describe('seedPersonenkontext', () => {
+            describe('when person UUID cannot be found', () => {
+                it('should throw EntityNotFoundError', async () => {
+                    const fileContentAsStr: string = fs.readFileSync(
+                        `./seeding/seeding-integration-test/personenkontext/05_personenkontext.json`,
+                        'utf-8',
+                    );
+
+                    // Mock dbSeedReferenceRepo to return undefined for the person UUID
+                    dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(undefined);
+
+                    await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(
+                        EntityNotFoundError,
+                    );
+                });
+            });
+
+            describe('with violated Personenkontext Klasse specification', () => {
+                it('should throw GleicheRolleAnKlasseWieSchuleError', async () => {
+                    const fileContentAsStr: string = fs.readFileSync(
+                        `./seeding/seeding-integration-test/personenkontext/05_personenkontext.json`,
+                        'utf-8',
+                    );
+                    dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                    personRepoMock.findById.mockResolvedValue(createMock<Person<true>>()); // mock getReferencedPerson
+
+                    dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                    organisationRepositoryMock.findById.mockResolvedValue(createMock<OrganisationDo<true>>()); // mock getReferencedOrganisation
+
+                    dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                    rolleRepoMock.findById.mockResolvedValue(createMock<Rolle<true>>()); // mock getReferencedRolle
+
+                    personenkontextServiceMock.checkSpecifications.mockResolvedValueOnce(
+                        new GleicheRolleAnKlasseWieSchuleError(),
+                    );
+                    await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(
+                        GleicheRolleAnKlasseWieSchuleError,
+                    );
+                });
+            });
+        });
 
         describe('when rolle cannot be found via RolleRepository', () => {
             it('should throw EntityNotFoundError', async () => {
