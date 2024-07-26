@@ -35,6 +35,8 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
+import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -43,6 +45,7 @@ describe('PersonController', () => {
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
+    let rolleRepoMock: DeepMocked<RolleRepo>;
 
     let personPermissionsMock: DeepMocked<PersonPermissions>;
 
@@ -50,6 +53,7 @@ describe('PersonController', () => {
         module = await Test.createTestingModule({
             imports: [MapperTestModule],
             providers: [
+                PersonApiMapperProfile,
                 PersonController,
                 PersonFactory,
                 {
@@ -84,6 +88,10 @@ describe('PersonController', () => {
                     provide: PersonenkontextService,
                     useValue: createMock<PersonenkontextService>(),
                 },
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
             ],
         }).compile();
         personController = module.get(PersonController);
@@ -91,6 +99,7 @@ describe('PersonController', () => {
         personRepositoryMock = module.get(PersonRepository);
         usernameGeneratorService = module.get(UsernameGeneratorService);
         personenkontextServiceMock = module.get(PersonenkontextService);
+        rolleRepoMock = module.get(RolleRepo);
     });
 
     function getPerson(): Person<true> {
@@ -462,7 +471,9 @@ describe('PersonController', () => {
                     personenstatus: Personenstatus.AKTIV,
                     rolle: Rolle.LERNENDER,
                 };
-                const personenkontextResponse: Personenkontext<true> = DoFactory.createPersonenkontext(true);
+                const personenkontextResponse: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    getRolle: () => rolleRepoMock.findById(faker.string.uuid()),
+                });
                 const personenkontextDtos: Paged<Personenkontext<true>> = {
                     items: [personenkontextResponse],
                     total: 1,
