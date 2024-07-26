@@ -13,7 +13,6 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
@@ -25,13 +24,10 @@ import { Observable } from 'rxjs';
 import { PassportUser } from '../../authentication/types/user.js';
 import { Request } from 'express';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { PersonDo } from '../../person/domain/person.do.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
-import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
 import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
@@ -40,6 +36,11 @@ import { FindDbiamPersonenkontextWorkflowBodyParams } from './param/dbiam-find-p
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
     const rolle: Rolle<false> = rolleFactory.createNew(
@@ -68,6 +69,13 @@ function createPersonenkontext<WasPersisted extends boolean>(
         faker.string.uuid(),
         faker.string.uuid(),
         faker.string.uuid(),
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
     );
 
     Object.assign(personenkontext, params);
@@ -78,11 +86,11 @@ function createPersonenkontext<WasPersisted extends boolean>(
 describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let app: INestApplication;
     let orm: MikroORM;
-    let organisationRepo: OrganisationRepo;
+    let organisationRepo: OrganisationRepository;
     let rolleRepo: RolleRepo;
     let rolleFactory: RolleFactory;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
-    let personRepo: PersonRepo;
+    let personRepo: PersonRepository;
     let personenkontextRepo: DBiamPersonenkontextRepo;
     let personenkontextFactory: PersonenkontextFactory;
     let personenkontextWorkflowMock: DeepMocked<PersonenkontextWorkflowAggregate>;
@@ -135,11 +143,11 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             .compile();
 
         orm = module.get(MikroORM);
-        organisationRepo = module.get(OrganisationRepo);
+        organisationRepo = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
         rolleFactory = module.get(RolleFactory);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
-        personRepo = module.get(PersonRepo);
+        personRepo = module.get(PersonRepository);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
         personenkontextWorkflowMock = module.get(PersonenkontextWorkflowAggregate);
@@ -161,7 +169,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
     describe('/POST create person with personenkontext', () => {
         it('should return created person and personenkontext', async () => {
-            const organisation: OrganisationDo<true> = await organisationRepo.save(
+            const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
             );
             const rolle: Rolle<true> = await rolleRepo.save(
@@ -211,7 +219,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         });
 
         it('should return error with status-code 400 if specification ROLLE_NUR_AN_PASSENDE_ORGANISATION is NOT satisfied', async () => {
-            const organisation: OrganisationDo<true> = await organisationRepo.save(
+            const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
             );
             const rolle: Rolle<true> = await rolleRepo.save(
@@ -242,7 +250,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         });
 
         it('should return error with status-code 404 if user does NOT have permissions', async () => {
-            const organisation: OrganisationDo<true> = await organisationRepo.save(
+            const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
             );
             const rolle: Rolle<true> = await rolleRepo.save(
@@ -277,7 +285,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     describe('/GET processStep for personenkontext', () => {
         it('should return selected organisation and all rollen', async () => {
             const organisationName: string = faker.company.name();
-            const organisation: OrganisationDo<true> = await organisationRepo.save(
+            const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { name: organisationName }),
             );
 
@@ -315,10 +323,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             const organisationName: string = faker.company.name();
             const randomName: string = faker.company.name();
 
-            const organisation: OrganisationDo<true> = await organisationRepo.save(
+            const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { name: organisationName }),
             );
-            const organisations: OrganisationDo<true>[] = [organisation];
+            const organisations: Organisation<true>[] = [organisation];
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
@@ -351,7 +359,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         });
 
         it('should call findRollenForOrganisation when organisationId is provided', async () => {
-            const organisation: OrganisationDo<true> = await organisationRepo.save(
+            const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { name: faker.company.name() }),
             );
 
@@ -385,7 +393,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
         it('should return empty organisations and empty roles if organisationId is provided but no roles nor orgas are found', async () => {
             const organisationName: string = faker.company.name();
-            const organisation: OrganisationDo<true> = await organisationRepo.save(
+            const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { name: organisationName }),
             );
 
@@ -405,7 +413,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         it('should set canCommit to true if canCommit returns true', async () => {
             const organisationId: string = faker.string.uuid();
             // Create and save an organisation and a rolle
-            const organisation: OrganisationDo<true> = await organisationRepo.save(
+            const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { id: organisationId, typ: OrganisationsTyp.LAND }),
             );
 
@@ -447,8 +455,15 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     describe('/PUT commit', () => {
         describe('when sending no PKs', () => {
             it('should delete and therefore return 200', async () => {
-                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const person: Person<true> | DomainError = await personRepo.save(DoFactory.createPerson(false));
+                if (person instanceof DomainError) {
+                    return;
+                }
+
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) {
+                    return;
+                }
                 const savedPK: Personenkontext<true> = await personenkontextRepo.save(
                     createPersonenkontext(personenkontextFactory, false, {
                         personId: person.id,
@@ -489,8 +504,15 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
         describe('when errors occur', () => {
             it('should return error because the count is not matching', async () => {
-                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const person: Person<true> | DomainError = await personRepo.save(DoFactory.createPerson(false));
+                if (person instanceof DomainError) {
+                    return;
+                }
+
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) {
+                    return;
+                }
                 const savedPK: Personenkontext<true> = await personenkontextRepo.save(
                     createPersonenkontext(personenkontextFactory, false, {
                         personId: person.id,
