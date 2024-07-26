@@ -242,6 +242,19 @@ describe('DbSeedService', () => {
                 await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
+        describe('kuerzel = root', () => {
+            it('should create root orga', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/organisation/06_kuerzel-is-root.json`, 'utf-8',
+                );
+                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+
+                organisationRepositoryMock.save.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
+        });
         describe('should throw error', () => {
             it('should throw NameValidationError if OrganisationFactory.createNew returns DomainError', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
