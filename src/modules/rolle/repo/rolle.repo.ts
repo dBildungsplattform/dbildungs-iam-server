@@ -19,6 +19,8 @@ import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
+import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 
 /**
@@ -86,6 +88,7 @@ export class RolleRepo {
 
     public constructor(
         protected readonly rolleFactory: RolleFactory,
+        private readonly eventService: EventService,
         protected readonly em: EntityManager,
     ) {}
 
@@ -235,24 +238,29 @@ export class RolleRepo {
         permissions: PersonPermissions,
     ): Promise<Rolle<true> | DomainError> {
         //Reference & Permissions
-        const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
-        if (!authorizedRole.ok) {
-            return authorizedRole.error;
+        const authorizedRoleResult: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
+        if (!authorizedRoleResult.ok) {
+            return authorizedRoleResult.error;
         }
         //Specifications
         {
-            if (isAlreadyAssigned && (merkmale.length > 0 || merkmale.length < authorizedRole.value.merkmale.length)) {
+            if (
+                isAlreadyAssigned &&
+                (merkmale.length > 0 || merkmale.length < authorizedRoleResult.value.merkmale.length)
+            ) {
                 return new UpdateMerkmaleError();
             }
         }
 
+        const authorizedRole: Rolle<true> = authorizedRoleResult.value;
+
         const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(
             id,
-            authorizedRole.value.createdAt,
-            authorizedRole.value.updatedAt,
+            authorizedRole.createdAt,
+            authorizedRole.updatedAt,
             name,
-            authorizedRole.value.administeredBySchulstrukturknoten,
-            authorizedRole.value.rollenart,
+            authorizedRole.administeredBySchulstrukturknoten,
+            authorizedRole.rollenart,
             merkmale,
             systemrechte,
             serviceProviderIds,
@@ -261,7 +269,11 @@ export class RolleRepo {
         if (updatedRolle instanceof DomainError) {
             return updatedRolle;
         }
-        const result: Rolle<true> = await this.update(updatedRolle);
+        const result: Rolle<true> = await this.save(updatedRolle);
+        this.eventService.publish(
+            new RolleUpdatedEvent(id, authorizedRole.rollenart, merkmale, systemrechte, serviceProviderIds),
+        );
+
         return result;
     }
 
