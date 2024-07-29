@@ -18,10 +18,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import {
-    ServiceProviderKategorie,
-    ServiceProviderTarget,
-} from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EventModule, EventService } from '../../../core/eventbus/index.js';
 import { EmailFactory } from './email.factory.js';
@@ -149,7 +146,7 @@ describe('Email Event Handler', () => {
             rolleMap = new Map<string, Rolle<true>>();
             rolleMap.set(fakeRolleId, rolle);
             sp = createMock<ServiceProvider<true>>({
-                target: ServiceProviderTarget.EMAIL,
+                kategorie: ServiceProviderKategorie.EMAIL,
             });
             spMap = new Map<string, ServiceProvider<true>>();
             spMap.set(sp.id, sp);
@@ -432,7 +429,7 @@ describe('Email Event Handler', () => {
             rolleMap = new Map<string, Rolle<true>>();
             rolleMap.set(fakeRolleId, rolle);
             sp = createMock<ServiceProvider<true>>({
-                target: ServiceProviderTarget.EMAIL,
+                kategorie: ServiceProviderKategorie.EMAIL,
             });
             spMap = new Map<string, ServiceProvider<true>>();
             spMap.set(sp.id, sp);
