@@ -61,6 +61,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
+import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personen')
@@ -77,6 +78,7 @@ export class PersonController {
         private readonly personenkontextService: PersonenkontextService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
+        private readonly personApiMapper: PersonApiMapper,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
@@ -278,7 +280,9 @@ export class PersonController {
             );
 
         const responseItems: PersonenkontextResponse[] = await Promise.all(
-            personenkontexts.items.map(async (item: Personenkontext<true>) => PersonenkontextResponse.construct(item)),
+            personenkontexts.items.map(async (item: Personenkontext<true>) =>
+                this.personApiMapper.mapToPersonenkontextResponse(item),
+            ),
         );
 
         return new PagedResponse({

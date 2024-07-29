@@ -37,6 +37,7 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -56,6 +57,7 @@ describe('PersonController', () => {
                 PersonApiMapperProfile,
                 PersonController,
                 PersonFactory,
+                PersonApiMapper,
                 {
                     provide: PersonenkontextUc,
                     useValue: createMock<PersonenkontextUc>(),

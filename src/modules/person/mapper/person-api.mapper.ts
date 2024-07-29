@@ -4,6 +4,9 @@ import { PersonenkontextResponse } from '../../personenkontext/api/response/pers
 
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { Person } from '../domain/person.js';
+import { CreatedPersonenkontextOrganisation } from '../../personenkontext/api/created-personenkontext-organisation.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { LoeschungResponse } from '../api/loeschung.response.js';
 
 @Injectable()
 export class PersonApiMapper {
@@ -50,8 +53,24 @@ export class PersonApiMapper {
         return response;
     }
 
-    private async mapToPersonenkontextResponse(kontext: Personenkontext<true>): Promise<PersonenkontextResponse> {
-        const response: PersonenkontextResponse = await PersonenkontextResponse.construct(kontext);
+    public async mapToPersonenkontextResponse(props: Personenkontext<true>): Promise<PersonenkontextResponse> {
+        const rolle: Option<Rolle<true>> = await props.getRolle();
+        const response: PersonenkontextResponse = new PersonenkontextResponse({
+            id: props.id,
+            referrer: props.referrer,
+            mandant: props.mandant!,
+            organisation: CreatedPersonenkontextOrganisation.new({ id: props.organisationId }),
+            personenstatus: props.personenstatus,
+            jahrgangsstufe: props.jahrgangsstufe,
+            sichtfreigabe: props.sichtfreigabe,
+            loeschung: props.loeschungZeitpunkt
+                ? LoeschungResponse.new({ zeitpunkt: props.loeschungZeitpunkt })
+                : undefined,
+            revision: props.revision,
+        });
+
+        response.roleName = rolle ? rolle.name : undefined;
+
         return response;
     }
 }

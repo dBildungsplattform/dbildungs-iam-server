@@ -12,6 +12,7 @@ import { KeycloakAdministrationModule } from '../keycloak-administration/keycloa
 import { DBiamPersonenuebersichtController } from './api/personenuebersicht/dbiam-personenuebersicht.controller.js';
 import { PersonInfoController } from './api/person-info.controller.js';
 import { PersonApiMapper } from './mapper/person-api.mapper.js';
+import { PersonApiMapperProfile } from './api/person-api.mapper.profile.js';
 
 @Module({
     imports: [
@@ -23,7 +24,7 @@ import { PersonApiMapper } from './mapper/person-api.mapper.js';
         KeycloakAdministrationModule,
         LoggerModule.register(PersonApiModule.name),
     ],
-    providers: [PersonenkontextUc, PersonApiMapper],
+    providers: [PersonenkontextUc, PersonApiMapper, PersonApiMapperProfile],
     controllers: [PersonController, PersonFrontendController, DBiamPersonenuebersichtController, PersonInfoController],
 })
 export class PersonApiModule {}

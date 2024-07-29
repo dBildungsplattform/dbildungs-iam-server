@@ -2,39 +2,48 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from '../../domain/personenkontext.enums.js';
 import { CreatedPersonenkontextOrganisation } from '../created-personenkontext-organisation.js';
 import { LoeschungResponse } from '../../../person/api/loeschung.response.js';
-import { Personenkontext } from '../../domain/personenkontext.js';
-import { Rolle } from '../../../rolle/domain/rolle.js';
+import { AutoMap } from '@automapper/classes';
 
 export class PersonenkontextResponse {
+    @AutoMap()
     @ApiProperty()
     public id!: string;
 
+    @AutoMap()
     @ApiProperty({ nullable: true })
     public referrer?: string;
 
+    @AutoMap()
     @ApiProperty()
     public mandant!: string;
 
+    @AutoMap(() => CreatedPersonenkontextOrganisation)
     @ApiProperty({ type: CreatedPersonenkontextOrganisation })
     public organisation!: CreatedPersonenkontextOrganisation;
 
     // @ApiProperty({ enum: Rolle }) public rolle!: Rolle;
 
+    @AutoMap()
     @ApiProperty({ nullable: true })
     public roleName?: string;
 
+    @AutoMap(() => String)
     @ApiProperty({ enum: Personenstatus, nullable: true })
     public personenstatus?: Personenstatus;
 
+    @AutoMap(() => String)
     @ApiProperty({ enum: Jahrgangsstufe, nullable: true })
     public jahrgangsstufe?: Jahrgangsstufe;
 
+    @AutoMap(() => String)
     @ApiProperty({ enum: SichtfreigabeType, nullable: true })
     public sichtfreigabe?: SichtfreigabeType;
 
+    @AutoMap(() => String)
     @ApiProperty({ type: LoeschungResponse, nullable: true })
     public loeschung?: LoeschungResponse;
 
+    @AutoMap()
     @ApiProperty()
     public revision!: string;
 
@@ -49,26 +58,5 @@ export class PersonenkontextResponse {
         this.sichtfreigabe = props.sichtfreigabe;
         this.loeschung = props.loeschung;
         this.revision = props.revision;
-    }
-
-    public static async construct(props: Personenkontext<true>): Promise<PersonenkontextResponse> {
-        const rolle: Option<Rolle<true>> = await props.getRolle();
-        const response: PersonenkontextResponse = new PersonenkontextResponse({
-            id: props.id,
-            referrer: props.referrer,
-            mandant: props.mandant!,
-            organisation: CreatedPersonenkontextOrganisation.new({ id: props.organisationId }),
-            personenstatus: props.personenstatus,
-            jahrgangsstufe: props.jahrgangsstufe,
-            sichtfreigabe: props.sichtfreigabe,
-            loeschung: props.loeschungZeitpunkt
-                ? LoeschungResponse.new({ zeitpunkt: props.loeschungZeitpunkt })
-                : undefined,
-            revision: props.revision,
-        });
-
-        response.roleName = rolle ? rolle.name : undefined;
-
-        return response;
     }
 }
