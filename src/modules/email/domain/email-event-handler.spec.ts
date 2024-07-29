@@ -568,5 +568,20 @@ describe('Email Event Handler', () => {
                 expect(loggerMock.info).toHaveBeenCalledWith(`RolleUpdatedEvent affects:2 persons`);
             });
         });
+
+        describe('when rolle is updated but person should not get an email-address by event', () => {
+            it('should log info', async () => {
+                dbiamPersonenkontextRepoMock.findByRolle.mockResolvedValueOnce(personenkontexte);
+
+                //mock that no email-address is necessary for person to test handlePerson
+                dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValue([]);
+                rolleRepoMock.findByIds.mockResolvedValue(new Map<string, Rolle<true>>());
+                serviceProviderRepoMock.findByIds.mockResolvedValue(new Map<string, ServiceProvider<true>>());
+
+                await emailEventHandler.handleRolleUpdatedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(`Person with id:${fakePersonId} does not need an email`);
+            });
+        });
     });
 });

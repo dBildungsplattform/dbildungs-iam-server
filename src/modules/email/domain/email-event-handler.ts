@@ -113,9 +113,7 @@ export class EmailEventHandler {
         );
         const results: boolean[] = await Promise.all(pro);
 
-        const res: boolean = results.some((r: boolean) => r);
-
-        return res;
+        return results.some((r: boolean) => r);
     }
 
     @EventHandler(RolleUpdatedEvent)
@@ -150,9 +148,12 @@ export class EmailEventHandler {
         const needsEmail: boolean = await this.anyRolleReferencesEmailServiceProvider(rollen);
 
         if (needsEmail) {
+            this.logger.info(`Person with id:${personId} needs an email, creating or enabling address`);
             await this.createOrEnableEmail(personId);
+        } else {
+            //currently no else for calling disablingEmail is necessary, emails are only disabled, when the person is deleted not by PK-events
+            this.logger.info(`Person with id:${personId} does not need an email`);
         }
-        //currently no else for calling disablingEmail is necessary, emails are only disabled, when the person is deleted not by PK-events
     }
 
     private async createOrEnableEmail(personId: PersonID): Promise<void> {
