@@ -2,6 +2,7 @@ import { EntityName, QBFilterQuery } from '@mikro-orm/core';
 import { ScopeBase, ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonEntity } from './person.entity.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { EntityManager, SelectQueryBuilder } from '@mikro-orm/postgresql';
 
 type FindProps = {
     id: PersonID;
@@ -32,6 +33,16 @@ export class PersonScope extends ScopeBase<PersonEntity> {
         this.findByQuery(filters);
 
         return this;
+    }
+
+    // overriding implementation is necessary to populate emailAddresses for triggering events with email properties. e.g. when person is deleted
+    public override async executeQuery(em: EntityManager): Promise<Counted<PersonEntity>> {
+        const selectQuery: SelectQueryBuilder<PersonEntity> = this.getQueryBuilder(em);
+
+        const [entities, count]: [PersonEntity[], number] = await selectQuery.getResultAndCount();
+        await em.populate(entities, ['emailAddresses']);
+
+        return [entities, count];
     }
 
     public findByPersonenKontext(organisationen?: string[] | undefined, rollen?: string[] | undefined): this {
