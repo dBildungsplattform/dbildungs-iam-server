@@ -40,6 +40,7 @@ function mapEntityToAggregate(
         entity.id,
         entity.createdAt,
         entity.updatedAt,
+        entity.revision,
         entity.personId.id,
         entity.organisationId,
         entity.rolleId.id,
@@ -49,7 +50,6 @@ function mapEntityToAggregate(
         entity.jahrgangsstufe,
         entity.sichtfreigabe,
         entity.loeschungZeitpunkt,
-        entity.revision,
     );
 }
 

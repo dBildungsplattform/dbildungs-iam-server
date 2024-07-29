@@ -274,16 +274,10 @@ export class DbSeedService {
                 undefined,
                 new Date(),
                 new Date(),
+                undefined,
                 referencedPerson.id,
                 referencedOrga.id,
                 referencedRolle.id,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
             );
 
             //Check specifications
