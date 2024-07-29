@@ -4,8 +4,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import {
     ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     LoggingTestModule,
 } from '../../../../test/utils/index.js';
@@ -160,9 +160,15 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
 
-            const rolleResult: Option<Rolle<true>[]> = await sut.findRollenAuthorized(permissions, undefined, 10, 0);
+            const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                undefined,
+                10,
+                0,
+            );
 
             expect(rolleResult?.length).toBe(0);
+            expect(total).toBe(0);
         });
 
         it('should return the rollen when permissions are sufficient', async () => {
@@ -172,9 +178,15 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
 
-            const rolleResult: Option<Rolle<true>[]> = await sut.findRollenAuthorized(permissions, undefined, 10, 0);
+            const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                undefined,
+                10,
+                0,
+            );
 
             expect(rolleResult?.length).toBe(1);
+            expect(total).toBe(1);
         });
 
         it('should return empty array when permissions are insufficient', async () => {
@@ -184,9 +196,15 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
-            const rolleResult: Option<Rolle<true>[]> = await sut.findRollenAuthorized(permissions, undefined, 10, 0);
+            const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                undefined,
+                10,
+                0,
+            );
 
             expect(rolleResult?.length).toBe(0);
+            expect(total).toBe(0);
         });
 
         it('should filter rollen based on search string and permissions', async () => {
@@ -204,9 +222,15 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
 
-            const rolleResult: Option<Rolle<true>[]> = await sut.findRollenAuthorized(permissions, 'Test', 10, 0);
+            const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                'Test',
+                10,
+                0,
+            );
 
             expect(rolleResult?.length).toBe(1);
+            expect(total).toBe(1);
         });
 
         it('should return all rollen when no search string is provided and permissions are sufficient', async () => {
@@ -216,9 +240,15 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
 
-            const rolleResult: Option<Rolle<true>[]> = await sut.findRollenAuthorized(permissions, undefined, 10, 0);
+            const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                undefined,
+                10,
+                0,
+            );
 
             expect(rolleResult?.length).toBe(1);
+            expect(total).toBe(1);
         });
     });
     describe('findByName', () => {
