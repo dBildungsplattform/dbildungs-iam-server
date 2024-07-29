@@ -63,6 +63,7 @@ describe('dbiam Personenkontext Repo', () => {
             withId ? faker.string.uuid() : undefined,
             withId ? faker.date.past() : undefined,
             withId ? faker.date.recent() : undefined,
+            undefined,
             faker.string.uuid(),
             faker.string.uuid(),
             faker.string.uuid(),
