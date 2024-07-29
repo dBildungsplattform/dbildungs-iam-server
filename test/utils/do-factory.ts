@@ -43,6 +43,7 @@ export class DoFactory {
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
+            personalnummer: faker.string.numeric({ length: 7 }),
             revision: '1',
         };
         return Object.assign(new PersonDo<WasPersisted>(), person, props);
