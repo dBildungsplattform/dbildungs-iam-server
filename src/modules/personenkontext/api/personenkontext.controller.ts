@@ -61,6 +61,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
+import { PersonApiMapper } from '../../person/mapper/person-api.mapper.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personenkontexte')
@@ -76,6 +77,7 @@ export class PersonenkontextController {
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly organisationService: OrganisationService,
+        private readonly personApiMapper: PersonApiMapper,
     ) {}
 
     @Get(':personenkontextId')
@@ -124,7 +126,7 @@ export class PersonenkontextController {
         }
 
         return new PersonendatensatzResponseAutomapper(new PersonResponseAutomapper(personResult.value), [
-            await PersonenkontextResponse.construct(personenkontextResult.value),
+            await this.personApiMapper.mapToPersonenkontextResponse(personenkontextResult.value),
         ]);
     }
 
@@ -159,7 +161,7 @@ export class PersonenkontextController {
             result.items.map(
                 async (personenkontext: Personenkontext<true>) =>
                     new PersonenkontextdatensatzResponse(new PersonIdResponse({ id: personenkontext.personId }), [
-                        await PersonenkontextResponse.construct(personenkontext),
+                        await this.personApiMapper.mapToPersonenkontextResponse(personenkontext),
                     ]),
             ),
         );
@@ -272,7 +274,7 @@ export class PersonenkontextController {
         }
 
         return new PersonendatensatzResponseAutomapper(new PersonResponseAutomapper(personResult.value), [
-            await PersonenkontextResponse.construct(updateResult.value),
+            await this.personApiMapper.mapToPersonenkontextResponse(updateResult.value),
         ]);
     }
 
