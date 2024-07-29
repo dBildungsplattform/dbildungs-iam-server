@@ -1,4 +1,4 @@
-import { createMap, forMember, ignore, mapFrom, Mapper, MappingProfile } from '@automapper/core';
+import { constructUsing, createMap, forMember, ignore, mapFrom, Mapper, MappingProfile } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
@@ -21,6 +21,7 @@ import { UpdatePersonenkontextDto } from '../../personenkontext/api/update-perso
 import { DeleteRevisionBodyParams } from './delete-revision.body.params.js';
 import { DeletePersonenkontextDto } from '../../personenkontext/api/delete-personkontext.dto.js';
 import { CreatedPersonenkontextOrganisation } from '../../personenkontext/api/created-personenkontext-organisation.js';
+import { LoeschungResponse } from './loeschung.response.js';
 
 @Injectable()
 export class PersonApiMapperProfile extends AutomapperProfile {
@@ -213,7 +214,34 @@ export class PersonApiMapperProfile extends AutomapperProfile {
 
             createMap(mapper, OrganisationDo, CreatedPersonenkontextOrganisation);
 
-            createMap(mapper, CreatedPersonenkontextDto, PersonenkontextResponse);
+            createMap(
+                mapper,
+                CreatedPersonenkontextDto,
+                PersonenkontextResponse,
+                constructUsing(
+                    (src: CreatedPersonenkontextDto) =>
+                        new PersonenkontextResponse({
+                            id: src.id,
+                            referrer: src.referrer,
+                            mandant: src.mandant,
+                            organisation: CreatedPersonenkontextOrganisation.new({
+                                id: src.organisation.id,
+                            }),
+                            personenstatus: src.personenstatus,
+                            jahrgangsstufe: src.jahrgangsstufe,
+                            sichtfreigabe: src.sichtfreigabe,
+                            loeschung: src.loeschung
+                                ? LoeschungResponse.new({ zeitpunkt: src.loeschung.zeitpunkt })
+                                : undefined,
+                            revision: src.revision,
+                        }),
+                ),
+                forMember(
+                    (dest: PersonenkontextResponse) => dest.loeschung,
+                    mapFrom((src: CreatedPersonenkontextDto) => src.loeschung),
+                ),
+                forMember((dest: PersonenkontextResponse) => dest.roleName, ignore()),
+            );
 
             createMap(
                 mapper,
