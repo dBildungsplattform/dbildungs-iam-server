@@ -5,7 +5,6 @@ import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 import { EntityAlreadyExistsError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 
 export class Rolle<WasPersisted extends boolean> {
     private constructor(
@@ -77,11 +76,7 @@ export class Rolle<WasPersisted extends boolean> {
 
     public async canBeAssignedToOrga(orgaId: OrganisationID): Promise<boolean> {
         if (orgaId === this.administeredBySchulstrukturknoten) return true;
-        const childOrgas: Organisation<true>[] = await this.organisationRepo.findChildOrgasForIds([
-            this.administeredBySchulstrukturknoten,
-        ]);
-
-        return !!childOrgas.find((orga: Organisation<true>) => orga.id === orgaId);
+        return this.organisationRepo.isOrgaAParentOfOrgaB(this.administeredBySchulstrukturknoten, orgaId);
     }
 
     public addMerkmal(merkmal: RollenMerkmal): void {
