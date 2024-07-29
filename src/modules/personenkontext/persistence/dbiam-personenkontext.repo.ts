@@ -18,6 +18,7 @@ import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { EventService } from '../../../core/eventbus/index.js';
+import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
@@ -349,6 +350,13 @@ export class DBiamPersonenkontextRepo {
             organisationId: organisationId,
             rolleId: rolleId,
         });
+        this.eventService.publish(
+            new PersonenkontextDeletedEvent(
+                personenKontext.personId,
+                personenKontext.organisationId,
+                personenKontext.rolleId,
+            ),
+        );
     }
 
     public async hasSystemrechtAtOrganisation(
@@ -426,5 +434,9 @@ export class DBiamPersonenkontextRepo {
             systemrecht,
         ]);
         return result[0].has_persona_systemrecht_at_any_kontext_of_personb;
+    }
+
+    public async isRolleAlreadyAssigned(id: RolleID): Promise<boolean> {
+        return (await this.findByRolle(id)).length > 0;
     }
 }

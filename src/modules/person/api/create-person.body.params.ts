@@ -75,4 +75,10 @@ export class CreatePersonBodyParams {
     @IsString()
     @ApiProperty({ required: false })
     public readonly username?: string;
+
+    @AutoMap()
+    @IsOptional()
+    @IsString()
+    @ApiProperty({ required: false })
+    public readonly personalnummer?: string;
 }

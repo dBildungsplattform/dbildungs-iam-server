@@ -114,14 +114,20 @@ export class DBiamPersonenuebersichtController {
 
             persons.forEach((person: Person<true>) => {
                 const personenKontexte: Personenkontext<true>[] = allPersonenKontexte.get(person.id) ?? [];
-                const personenUebersichtenResult: DBiamPersonenzuordnungResponse[] | EntityNotFoundError =
+                const personenUebersichtenResult: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
                     dbiamPersonenUebersicht.createZuordnungenForKontexte(personenKontexte, allRollen, allOrganisations);
                 if (personenUebersichtenResult instanceof EntityNotFoundError) {
                     throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                         SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personenUebersichtenResult),
                     );
                 }
-                items.push(new DBiamPersonenuebersichtResponse(person, personenUebersichtenResult));
+                items.push(
+                    new DBiamPersonenuebersichtResponse(
+                        person,
+                        personenUebersichtenResult[0],
+                        personenUebersichtenResult[1],
+                    ),
+                );
             });
         }
 

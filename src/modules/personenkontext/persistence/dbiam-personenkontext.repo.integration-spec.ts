@@ -5,7 +5,6 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DoFactory,
-    //KeycloakConfigTestModule,
     LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
@@ -829,6 +828,24 @@ describe('dbiam Personenkontext Repo', () => {
             const result: Option<DomainError> = await sut.deleteAuthorized(personenkontext.id, '2', permissions);
 
             expect(result).toEqual(new MismatchedRevisionError('Personenkontext'));
+        });
+    });
+
+    describe('isRolleAlreadyAssigned', () => {
+        it('should return true if there is any personenkontext for a rolle', async () => {
+            const person: Person<true> = await createPerson();
+            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
+            await sut.save(createPersonenkontext(false, { rolleId: rolle.id, personId: person.id }));
+            const result: boolean = await sut.isRolleAlreadyAssigned(rolle.id);
+
+            expect(result).toBeTruthy();
+        });
+
+        it('should return false if there is no  personenkontext for a rolle', async () => {
+            const result: boolean = await sut.isRolleAlreadyAssigned(faker.string.uuid());
+
+            expect(result).toBeFalsy();
         });
     });
 });

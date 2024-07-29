@@ -11,6 +11,9 @@ import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
+import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -77,6 +80,7 @@ export class RolleRepo {
 
     public constructor(
         protected readonly rolleFactory: RolleFactory,
+        private readonly eventService: EventService,
         protected readonly em: EntityManager,
     ) {}
 
@@ -214,6 +218,55 @@ export class RolleRepo {
         } else {
             return this.create(rolle);
         }
+    }
+
+    public async updateRolleAuthorized(
+        id: string,
+        name: string,
+        merkmale: RollenMerkmal[],
+        systemrechte: RollenSystemRecht[],
+        serviceProviderIds: string[],
+        isAlreadyAssigned: boolean,
+        permissions: PersonPermissions,
+    ): Promise<Rolle<true> | DomainError> {
+        //Reference & Permissions
+        const authorizedRoleResult: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
+        if (!authorizedRoleResult.ok) {
+            return authorizedRoleResult.error;
+        }
+        //Specifications
+        {
+            if (
+                isAlreadyAssigned &&
+                (merkmale.length > 0 || merkmale.length < authorizedRoleResult.value.merkmale.length)
+            ) {
+                return new UpdateMerkmaleError();
+            }
+        }
+
+        const authorizedRole: Rolle<true> = authorizedRoleResult.value;
+
+        const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(
+            id,
+            authorizedRole.createdAt,
+            authorizedRole.updatedAt,
+            name,
+            authorizedRole.administeredBySchulstrukturknoten,
+            authorizedRole.rollenart,
+            merkmale,
+            systemrechte,
+            serviceProviderIds,
+        );
+
+        if (updatedRolle instanceof DomainError) {
+            return updatedRolle;
+        }
+        const result: Rolle<true> = await this.save(updatedRolle);
+        this.eventService.publish(
+            new RolleUpdatedEvent(id, authorizedRole.rollenart, merkmale, systemrechte, serviceProviderIds),
+        );
+
+        return result;
     }
 
     private async create(rolle: Rolle<false>): Promise<Rolle<true>> {
