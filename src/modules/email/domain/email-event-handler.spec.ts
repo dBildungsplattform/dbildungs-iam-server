@@ -357,7 +357,7 @@ describe('Email Event Handler', () => {
         beforeEach(() => {
             fakePersonId = faker.string.uuid();
             fakeEmailAddress = faker.internet.email();
-            event = new PersonRenamedEvent(fakePersonId, fakeEmailAddress);
+            event = new PersonRenamedEvent(fakePersonId);
             personenkontext = createMock<Personenkontext<true>>();
             rolle = createMock<Rolle<true>>({ id: faker.string.uuid() });
             rollenMap = new Map<string, Rolle<true>>();
@@ -398,7 +398,7 @@ describe('Email Event Handler', () => {
                     await emailEventHandler.handlePersonRenamedEvent(event);
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received PersonRenamedEvent, personId:${event.personId}, emailAddress:${event.emailAddress}`,
+                        `Received PersonRenamedEvent, personId:${event.personId}`,
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(
                         `Disabled and saved address:${emailAddress.currentAddress}`,
@@ -427,7 +427,7 @@ describe('Email Event Handler', () => {
                     await emailEventHandler.handlePersonRenamedEvent(event);
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received PersonRenamedEvent, personId:${event.personId}, emailAddress:${event.emailAddress}`,
+                        `Received PersonRenamedEvent, personId:${event.personId}`,
                     );
                     expect(loggerMock.error).toHaveBeenCalledWith(
                         `Could not disable email, error is requested EmailAddress with the address:${fakeEmailAddress} was not found`,

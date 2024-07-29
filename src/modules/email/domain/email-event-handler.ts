@@ -43,13 +43,15 @@ export class EmailEventHandler {
     @EventHandler(PersonRenamedEvent)
     // eslint-disable-next-line @typescript-eslint/require-await
     public async handlePersonRenamedEvent(event: PersonRenamedEvent): Promise<void> {
-        this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}, emailAddress:${event.emailAddress}`);
+        this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}`);
 
         const rollen: Rolle<true>[] = await this.getRollenForPerson(event.personId);
         if (await this.anyRolleReferencesEmailServiceProvider(rollen)) {
             const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(event.personId);
             if (existingEmail) {
-                this.logger.info(`Existing email found for personId:${event.personId}`);
+                this.logger.info(
+                    `Existing email found for personId:${event.personId}, address:${existingEmail.currentAddress}`,
+                );
                 if (existingEmail.enabled) {
                     existingEmail.disable();
                     const persistenceResult: EmailAddress<true> | DomainError =
