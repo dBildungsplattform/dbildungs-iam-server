@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import {
     ConfigTestModule,
     DatabaseTestModule,
@@ -7,7 +8,7 @@ import {
 } from '../../../../test/utils/index.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
-
+import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { GleicheRolleAnKlasseWieSchule } from './gleiche-rolle-an-klasse-wie-schule.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
@@ -25,7 +26,6 @@ import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -37,7 +37,6 @@ function createPersonenkontext<WasPersisted extends boolean>(
         withId ? faker.string.uuid() : undefined,
         withId ? faker.date.past() : undefined,
         withId ? faker.date.recent() : undefined,
-        undefined,
         faker.string.uuid(),
         faker.string.uuid(),
         faker.string.uuid(),
@@ -51,7 +50,7 @@ function createPersonenkontext<WasPersisted extends boolean>(
 describe('PersonenkontextSpecifications Integration', () => {
     let module: TestingModule;
     let orm: MikroORM;
-    let organisationRepoMock: DeepMocked<OrganisationRepository>;
+    let organisationRepoMock: DeepMocked<OrganisationRepo>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
 
@@ -86,6 +85,10 @@ describe('PersonenkontextSpecifications Integration', () => {
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
+                    provide: OrganisationRepo,
+                    useValue: createMock<OrganisationRepo>(),
+                },
+                {
                     provide: OrganisationRepository,
                     useValue: createMock<OrganisationRepository>(),
                 },
@@ -98,7 +101,7 @@ describe('PersonenkontextSpecifications Integration', () => {
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
             .compile();
-        organisationRepoMock = module.get(OrganisationRepository);
+        organisationRepoMock = module.get(OrganisationRepo);
         rolleRepoMock = module.get(RolleRepo);
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personFactory = module.get(PersonFactory);
@@ -126,9 +129,9 @@ describe('PersonenkontextSpecifications Integration', () => {
 
     describe('Gleiche Rolle An Klasse Wie Schule', () => {
         it('should not be satisfied when rolle could not be found', async () => {
-            const klasse: Organisation<true> = createMock<Organisation<true>>();
+            const klasse: OrganisationDo<true> = createMock<OrganisationDo<true>>();
             klasse.typ = OrganisationsTyp.KLASSE;
-            const schule: Organisation<true> = createMock<Organisation<true>>();
+            const schule: OrganisationDo<true> = createMock<OrganisationDo<true>>();
             schule.typ = OrganisationsTyp.SCHULE;
             schule.id = faker.string.uuid();
             klasse.administriertVon = schule.id;
