@@ -37,6 +37,8 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { PersonApiMapper } from '../../person/mapper/person-api.mapper.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
@@ -44,9 +46,9 @@ describe('PersonenkontextController', () => {
     let personenkontextRepo: DeepMocked<DBiamPersonenkontextRepo>;
     let personenkontextService: DeepMocked<PersonenkontextService>;
     let personService: DeepMocked<PersonService>;
-    // let rolleRepo: DeepMocked<RolleRepo>;
-    // let organisationRepository: DeepMocked<OrganisationRepository>;
-    // let organisationService: DeepMocked<OrganisationService>;
+    let rolleRepo: DeepMocked<RolleRepo>;
+    let organisationRepository: DeepMocked<OrganisationRepository>;
+    let organisationService: DeepMocked<OrganisationService>;
     // let personApiMapper: DeepMocked<PersonApiMapper>;
 
     let mapper: Mapper;
@@ -74,9 +76,9 @@ describe('PersonenkontextController', () => {
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personenkontextService = module.get(PersonenkontextService);
         personService = module.get(PersonService);
-        // rolleRepo = module.get(RolleRepo);
-        // organisationRepository = module.get(OrganisationRepository);
-        // organisationService = module.get(OrganisationService);
+        rolleRepo = module.get(RolleRepo);
+        organisationRepository = module.get(OrganisationRepository);
+        organisationService = module.get(OrganisationService);
         // personApiMapper = module.get(PersonApiMapper);
         mapper = module.get(getMapperToken());
     });
@@ -199,24 +201,8 @@ describe('PersonenkontextController', () => {
                     offset: 0,
                     limit: 10,
                 };
-                const mockPersonenkontext: Personenkontext<true> = Personenkontext.construct(
-                    createMock<PersonRepository>(),
-                    createMock<OrganisationRepository>(),
-                    createMock<RolleRepo>(),
-                    faker.string.uuid(),
-                    new Date(),
-                    new Date(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    Personenstatus.AKTIV,
-                    Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                    SichtfreigabeType.JA,
-                    undefined,
-                    '1' as Persisted<string, true>,
-                );
+
+                const mockPersonenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true);
                 const personenkontexte: Paged<Personenkontext<true>> = {
                     offset: queryParams.offset ?? 0,
                     limit: queryParams.limit ?? 1,
@@ -237,7 +223,7 @@ describe('PersonenkontextController', () => {
                     true,
                 );
                 expect(mockPersonenkontext).toBeDefined();
-                expect(personenkontextService.findAllPersonenkontexte).toBeCalledTimes(1);
+                expect(personenkontextService.findAllPersonenkontexte).toHaveBeenCalledTimes(1);
                 expect(result.items.length).toBe(1);
                 if (result.items[0]) {
                     expect(result.items[0].person.id).toBe(mockPersonenkontext.personId);
@@ -245,46 +231,64 @@ describe('PersonenkontextController', () => {
                     expect(result.items[0].personenkontexte[0]?.id).toBe(mockPersonenkontext.id);
                 }
             });
-        });
 
-        describe('hatSystemRecht', () => {
-            describe('when verifying user has existing SystemRecht', () => {
-                it('should return PersonenkontextSystemrechtResponse', async () => {
-                    const idParams: PersonByIdParams = {
-                        personId: '1',
-                    };
-                    const bodyParams: HatSystemrechtQueryParams = {
-                        systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
-                    };
-                    const organisations: OrganisationDo<true>[] = [DoFactory.createOrganisation(true)];
-                    const organisationResponses: OrganisationResponseLegacy[] = organisations.map(
-                        (o: OrganisationDo<true>) => mapper.map(o, OrganisationDo<true>, OrganisationResponseLegacy),
-                    );
-                    const systemrechtResponse: SystemrechtResponse = {
-                        ROLLEN_VERWALTEN: organisationResponses,
-                    };
-                    personenkontextService.hatSystemRecht.mockResolvedValue(systemrechtResponse);
-                    const response: SystemrechtResponse = await sut.hatSystemRecht(idParams, bodyParams);
-                    expect(response.ROLLEN_VERWALTEN).toHaveLength(1);
-                    expect(personenkontextService.hatSystemRecht).toHaveBeenCalledTimes(1);
+            describe('hatSystemRecht', () => {
+                describe('when verifying user has existing SystemRecht', () => {
+                    it('should return PersonenkontextSystemrechtResponse', async () => {
+                        const idParams: PersonByIdParams = { personId: '1' };
+                        const queryParams: HatSystemrechtQueryParams = {
+                            systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
+                        };
+
+                        const organisations: Organisation<true>[] = [DoFactory.createOrganisation(true)];
+                        const rolle: RolleAggregate<true> = DoFactory.createRolle(true);
+                        const personenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                            organisationId: organisations[0]?.id,
+                            rolleId: rolle.id,
+                        });
+
+                        const pagedOrganisations: Paged<Organisation<true>> = {
+                            offset: 0,
+                            limit: 10,
+                            total: organisations.length,
+                            items: organisations,
+                        };
+
+                        personenkontextService.findPersonenkontexteByPersonId.mockResolvedValue([personenkontext]);
+                        rolleRepo.findById.mockResolvedValue(rolle);
+                        organisationRepository.findById.mockResolvedValue(organisations[0]);
+                        organisationService.findAllAdministriertVon.mockResolvedValue(pagedOrganisations);
+
+                        const response: SystemrechtResponse = await sut.hatSystemRecht(idParams, queryParams);
+                        const expectedResponses: OrganisationResponseLegacy[] = organisations.map(
+                            (org: Organisation<true>) => new OrganisationResponseLegacy(org),
+                        );
+
+                        expect(personenkontextService.findPersonenkontexteByPersonId).toHaveBeenCalledTimes(1);
+                        expect(rolleRepo.findById).toHaveBeenCalledTimes(1);
+                        expect(organisationRepository.findById).toHaveBeenCalledTimes(1);
+                        expect(organisationService.findAllAdministriertVon).toHaveBeenCalledTimes(1);
+
+                        expect(response[RollenSystemRecht.ROLLEN_VERWALTEN]).toEqual(expectedResponses);
+                        expect(response[RollenSystemRecht.ROLLEN_VERWALTEN]).toHaveLength(organisations.length);
+                    });
+                });
+
+                describe('when verifying user has non-existing SystemRecht', () => {
+                    it('should return 404', async () => {
+                        const idParams: PersonByIdParams = {
+                            personId: '1',
+                        };
+                        const bodyParams: HatSystemrechtQueryParams = {
+                            systemRecht: 'FALSCHER_RECHTE_NAME',
+                        };
+                        personenkontextService.hatSystemRecht.mockRejectedValue(new EntityNotFoundError());
+                        await expect(sut.hatSystemRecht(idParams, bodyParams)).rejects.toThrow(HttpException);
+                        expect(personenkontextService.hatSystemRecht).toHaveBeenCalledTimes(0);
+                    });
                 });
             });
-
-            describe('when verifying user has non-existing SystemRecht', () => {
-                it('should return 404', async () => {
-                    const idParams: PersonByIdParams = {
-                        personId: '1',
-                    };
-                    const bodyParams: HatSystemrechtQueryParams = {
-                        systemRecht: 'FALSCHER_RECHTE_NAME',
-                    };
-                    personenkontextService.hatSystemRecht.mockRejectedValue(new EntityNotFoundError());
-                    await expect(sut.hatSystemRecht(idParams, bodyParams)).rejects.toThrow(HttpException);
-                    expect(personenkontextService.hatSystemRecht).toHaveBeenCalledTimes(0);
-                });
-            });
         });
-
         describe('updatePersonenkontextWithId', () => {
             describe('when updating a personenkontext is successful', () => {
                 it('should return PersonenkontextResponse', async () => {
