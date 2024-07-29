@@ -7,7 +7,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ServiceProviderTarget } from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { PersonID } from '../../../shared/types/index.js';
@@ -17,9 +17,9 @@ import { EmailRepo } from '../persistence/email.repo.js';
 import { EmailFactory } from './email.factory.js';
 import { EmailAddress } from './email-address.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 
 @Injectable()
 export class EmailEventHandler {
@@ -205,6 +205,6 @@ export class EmailEventHandler {
             },
         );
 
-        return serviceProviders.some((sp: ServiceProvider<true>) => sp.target === ServiceProviderTarget.EMAIL);
+        return serviceProviders.some((sp: ServiceProvider<true>) => sp.kategorie === ServiceProviderKategorie.EMAIL);
     }
 }
