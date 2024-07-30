@@ -3,8 +3,9 @@ import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
 import { AddSystemrechtError } from './add-systemrecht.error.js';
 import { DbiamRolleError, RolleErrorI18nTypes } from './dbiam-rolle.error.js';
-import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { RolleDomainError } from '../domain/rolle-domain.error.js';
+import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
+import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 
 @Catch(RolleDomainError)
 export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
@@ -14,6 +15,13 @@ export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
             new DbiamRolleError({
                 code: 500,
                 i18nKey: RolleErrorI18nTypes.ADD_SYSTEMRECHT_ERROR,
+            }),
+        ],
+        [
+            RolleHatPersonenkontexteError.name,
+            new DbiamRolleError({
+                code: 400,
+                i18nKey: RolleErrorI18nTypes.ROLLE_HAT_PERSONENKONTEXTE_ERROR,
             }),
         ],
         [
