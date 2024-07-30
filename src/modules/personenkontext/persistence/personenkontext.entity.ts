@@ -3,10 +3,12 @@ import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
+import { AutoMap } from '@automapper/classes';
 
 @Entity({ tableName: 'personenkontext' })
 @Unique({ properties: ['personId', 'organisationId', 'rolleId'] })
 export class PersonenkontextEntity extends TimestampedEntity {
+    @AutoMap()
     @ManyToOne({
         fieldName: 'person_id',
         columnType: 'uuid',
@@ -19,7 +21,7 @@ export class PersonenkontextEntity extends TimestampedEntity {
     public personId!: Ref<PersonEntity>;
 
     // TODO EW-636: get from access_token, see SchulConneX (Version 1.003.003.000) page 91
-
+    @AutoMap()
     @Property({ columnType: 'uuid', nullable: true })
     public organisationId!: string;
 
@@ -32,31 +34,38 @@ export class PersonenkontextEntity extends TimestampedEntity {
     })
     public rolleId!: Ref<RolleEntity>;
 
+    @AutoMap()
     @Property({ nullable: true })
     public referrer?: string;
 
     // TODO EW-636: mandant is related to organizations so it is not set for now. When implemented should be set to nullable: false
 
+    @AutoMap()
     @Property({ nullable: true })
     public mandant?: string;
 
     // Will be removed in favor of `rolleId`.
-
+    @AutoMap(() => String)
     @Enum({ nullable: false, items: () => Rolle })
     public rolle!: Rolle;
 
+    @AutoMap(() => String)
     @Enum({ nullable: true, items: () => Personenstatus, nativeEnumName: 'personenstatus_enum' })
     public personenstatus?: Personenstatus;
 
+    @AutoMap(() => String)
     @Enum({ nullable: true, items: () => Jahrgangsstufe, nativeEnumName: 'jahrgangsstufe_enum' })
     public jahrgangsstufe?: Jahrgangsstufe;
 
+    @AutoMap(() => String)
     @Property({ nullable: true, default: SichtfreigabeType.NEIN })
     public sichtfreigabe?: SichtfreigabeType;
 
+    @AutoMap(() => Date)
     @Property({ nullable: true, type: DateTimeType })
     public loeschungZeitpunkt?: Date;
 
+    @AutoMap(() => String)
     @Property({ nullable: false, default: '1' })
     public revision!: string & Opt;
 }
