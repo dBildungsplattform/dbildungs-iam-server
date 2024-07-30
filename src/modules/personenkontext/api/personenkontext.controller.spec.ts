@@ -23,7 +23,6 @@ import { SystemrechtResponse } from './response/personenkontext-systemrecht.resp
 
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
-import { OrganisationApiMapperProfile } from '../../organisation/api/organisation-api.mapper.profile.js';
 
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
@@ -37,7 +36,6 @@ import { OrganisationService } from '../../organisation/domain/organisation.serv
 import { PersonApiMapper } from '../../person/mapper/person-api.mapper.js';
 
 import { Organisation } from '../../organisation/domain/organisation.js';
-//import { Rolle as RolleAggregate } from '../../rolle/domain/rolle.js';
 
 describe('PersonenkontextController', () => {
     let module: TestingModule;
@@ -48,7 +46,6 @@ describe('PersonenkontextController', () => {
     let rolleRepo: DeepMocked<RolleRepo>;
     let organisationRepository: DeepMocked<OrganisationRepository>;
     let organisationService: DeepMocked<OrganisationService>;
-    // let personApiMapper: DeepMocked<PersonApiMapper>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -56,12 +53,12 @@ describe('PersonenkontextController', () => {
             providers: [
                 PersonenkontextController,
                 {
-                    provide: PersonenkontextService,
-                    useValue: createMock<PersonenkontextService>(),
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
-                    provide: OrganisationApiMapperProfile,
-                    useValue: createMock<OrganisationApiMapperProfile>(),
+                    provide: PersonenkontextService,
+                    useValue: createMock<PersonenkontextService>(),
                 },
                 {
                     provide: PersonService,
@@ -79,14 +76,7 @@ describe('PersonenkontextController', () => {
                     provide: OrganisationService,
                     useValue: createMock<OrganisationService>(),
                 },
-                {
-                    provide: PersonApiMapper,
-                    useValue: createMock<PersonApiMapper>(),
-                },
-                {
-                    provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
-                },
+                PersonApiMapper,
             ],
         }).compile();
         sut = module.get(PersonenkontextController);
@@ -96,7 +86,6 @@ describe('PersonenkontextController', () => {
         rolleRepo = module.get(RolleRepo);
         organisationRepository = module.get(OrganisationRepository);
         organisationService = module.get(OrganisationService);
-        // personApiMapper = module.get(PersonApiMapper);
     });
 
     afterAll(async () => {
@@ -217,7 +206,9 @@ describe('PersonenkontextController', () => {
                         limit: 10,
                     };
 
-                    const mockPersonenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true);
+                    const mockPersonenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                        getRolle: () => rolleRepo.findById(faker.string.uuid()),
+                    });
                     const personenkontexte: Paged<Personenkontext<true>> = {
                         offset: queryParams.offset ?? 0,
                         limit: queryParams.limit ?? 1,
@@ -269,16 +260,20 @@ describe('PersonenkontextController', () => {
                                 ROLLEN_VERWALTEN: organisationResponses,
                             };
 
-                            personenkontextService.findPersonenkontexteByPersonId = jest
-                                .fn()
-                                .mockResolvedValue([{ rolleId: 'rolle1', organisationId: 'org1' }]);
-                            rolleRepo.findById = jest.fn().mockResolvedValue({
-                                hasSystemRecht: jest.fn().mockReturnValue(true),
-                            });
-                            organisationRepository.findById = jest.fn().mockResolvedValue(organisations[0]);
-                            organisationService.findAllAdministriertVon = jest.fn().mockResolvedValue({
+                            personenkontextService.findPersonenkontexteByPersonId.mockResolvedValue([
+                                DoFactory.createPersonenkontext(true, { rolleId: 'rolle1', organisationId: 'org1' }),
+                            ]);
+                            rolleRepo.findById.mockResolvedValue(
+                                DoFactory.createRolle(true, { hasSystemRecht: () => true }),
+                            );
+                            organisationRepository.findById.mockResolvedValue(organisations[0]);
+                            const pagedOrgas: Paged<Organisation<true>> = {
+                                offset: 0,
+                                limit: 0,
+                                total: 0,
                                 items: [],
-                            });
+                            };
+                            organisationService.findAllAdministriertVon.mockResolvedValue(pagedOrgas);
 
                             const response: SystemrechtResponse = await sut.hatSystemRecht(idParams, bodyParams);
                             expect(response).toEqual(systemrechtResponse);
