@@ -15,7 +15,6 @@ import { faker } from '@faker-js/faker';
 import { RolleFactory } from '../../../rolle/domain/rolle.factory.js';
 import { RolleRepo } from '../../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
-import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
 import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenuebersichtController } from './dbiam-personenuebersicht.controller.js';
@@ -27,6 +26,7 @@ import { PersonenuebersichtQueryParams } from './personenuebersicht-query.params
 import { DBiamPersonenuebersichtResponse } from './dbiam-personenuebersicht.response.js';
 import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
 import { EntityNotFoundError } from '../../../../shared/error/index.js';
+import { Organisation } from '../../../organisation/domain/organisation.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -119,8 +119,8 @@ describe('Personenuebersicht API Mocked', () => {
                 const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const rollenMap: Map<string, Rolle<true>> = new Map();
                 rollenMap.set(faker.string.numeric(), rolle); //rolle will not be found with correct id
-                const orga: OrganisationDo<true> = DoFactory.createOrganisation(true);
-                const orgaMap: Map<string, OrganisationDo<true>> = new Map();
+                const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true);
+                const orgaMap: Map<string, Organisation<true>> = new Map();
                 orgaMap.set(orga.id, orga);
                 const pk: Personenkontext<true> = createPersonenkontext(
                     true,
@@ -155,8 +155,8 @@ describe('Personenuebersicht API Mocked', () => {
                 const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const rollenMap: Map<string, Rolle<true>> = new Map();
                 rollenMap.set(rolle.id, rolle);
-                const orga: OrganisationDo<true> = DoFactory.createOrganisation(true);
-                const orgaMap: Map<string, OrganisationDo<true>> = new Map();
+                const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true);
+                const orgaMap: Map<string, Organisation<true>> = new Map();
                 orgaMap.set(orga.id, orga);
                 const pk: Personenkontext<true> = createPersonenkontext(
                     true,
@@ -194,8 +194,8 @@ describe('Personenuebersicht API Mocked', () => {
                 const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const rollenMap: Map<string, Rolle<true>> = new Map();
                 rollenMap.set(rolle.id, rolle);
-                const orga: OrganisationDo<true> = DoFactory.createOrganisation(true);
-                const orgaMap: Map<string, OrganisationDo<true>> = new Map();
+                const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true);
+                const orgaMap: Map<string, Organisation<true>> = new Map();
                 orgaMap.set(orga.id, orga);
                 const pk: Personenkontext<true> = createPersonenkontext(
                     true,
@@ -234,8 +234,8 @@ describe('Personenuebersicht API Mocked', () => {
                 const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const rollenMap: Map<string, Rolle<true>> = new Map();
                 rollenMap.set(faker.string.numeric(), rolle);
-                const orga: OrganisationDo<true> = DoFactory.createOrganisation(true);
-                const orgaMap: Map<string, OrganisationDo<true>> = new Map();
+                const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true);
+                const orgaMap: Map<string, Organisation<true>> = new Map();
                 orgaMap.set(orga.id, orga);
                 const pk: Personenkontext<true> = createPersonenkontext(
                     true,
