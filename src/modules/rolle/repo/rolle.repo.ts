@@ -1,4 +1,11 @@
-import { EntityData, EntityManager, EntityName, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import {
+    EntityData,
+    EntityManager,
+    EntityName,
+    ForeignKeyConstraintViolationException,
+    Loaded,
+    RequiredEntityData,
+} from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
 import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
@@ -14,6 +21,7 @@ import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../..
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
+import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -278,6 +286,29 @@ export class RolleRepo {
         );
 
         return result;
+    }
+
+    public async deleteAuthorized(id: RolleID, permissions: PersonPermissions): Promise<Option<DomainError>> {
+        //Permissions
+        const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
+        if (!authorizedRole.ok) {
+            return authorizedRole.error;
+        }
+
+        const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, id, {
+            populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+        });
+
+        try {
+            //Cascade removal
+            await this.em.removeAndFlush(rolleEntity);
+        } catch (ex) {
+            if (ex instanceof ForeignKeyConstraintViolationException) {
+                return new RolleHatPersonenkontexteError();
+            }
+        }
+
+        return;
     }
 
     private async create(rolle: Rolle<false>): Promise<Rolle<true>> {
