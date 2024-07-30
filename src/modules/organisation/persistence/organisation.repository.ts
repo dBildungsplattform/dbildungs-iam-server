@@ -96,16 +96,15 @@ export class OrganisationRepository {
         } else {
             // Otherwise, perform the recursive CTE query.
             const query: string = `
-            WITH RECURSIVE sub_organisations AS (
-                SELECT *
-                FROM public.organisation
-                WHERE administriert_von IN (?)
-                UNION ALL
-                SELECT o.*
-                FROM public.organisation o
-                INNER JOIN sub_organisations so ON o.administriert_von = so.id
-            )
-            SELECT DISTINCT ON (id) * FROM sub_organisations;
+                WITH RECURSIVE sub_organisations AS (SELECT *
+                                                     FROM public.organisation
+                                                     WHERE administriert_von IN (?)
+                                                     UNION ALL
+                                                     SELECT o.*
+                                                     FROM public.organisation o
+                                                              INNER JOIN sub_organisations so ON o.administriert_von = so.id)
+                SELECT DISTINCT ON (id) *
+                FROM sub_organisations;
             `;
 
             rawResult = await this.em.execute(query, [ids]);
@@ -119,20 +118,16 @@ export class OrganisationRepository {
         organisationIdB: OrganisationID,
     ): Promise<boolean> {
         const query: string = `
-        WITH RECURSIVE parent_organisations AS (
-            SELECT id, administriert_von
-            FROM public.organisation
-            WHERE id = ?
-            UNION ALL
-            SELECT o.id, o.administriert_von
-            FROM public.organisation o
-            INNER JOIN parent_organisations po ON o.id = po.administriert_von
-        )
-        SELECT EXISTS (
-            SELECT 1
-            FROM parent_organisations
-            WHERE id = ?
-        ) AS is_parent;
+            WITH RECURSIVE parent_organisations AS (SELECT id, administriert_von
+                                                    FROM public.organisation
+                                                    WHERE id = ?
+                                                    UNION ALL
+                                                    SELECT o.id, o.administriert_von
+                                                    FROM public.organisation o
+                                                             INNER JOIN parent_organisations po ON o.id = po.administriert_von)
+            SELECT EXISTS (SELECT 1
+                           FROM parent_organisations
+                           WHERE id = ?) AS is_parent;
         `;
 
         const result: [{ is_parent: boolean }] = await this.em.execute(query, [organisationIdB, organisationIdA]);

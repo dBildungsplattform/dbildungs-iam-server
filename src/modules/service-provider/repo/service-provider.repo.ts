@@ -77,6 +77,22 @@ export class ServiceProviderRepo {
         return serviceProviders.map(mapEntityToAggregate);
     }
 
+    public async findByIds(ids: string[]): Promise<Map<string, ServiceProvider<true>>> {
+        const serviceProviderEntities: ServiceProviderEntity[] = await this.em.find(
+            ServiceProviderEntity,
+            { id: { $in: ids } },
+            {},
+        );
+
+        const serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
+        serviceProviderEntities.forEach((serviceProviderEntity: ServiceProviderEntity) => {
+            const serviceProvider: ServiceProvider<true> = mapEntityToAggregate(serviceProviderEntity);
+            serviceProviderMap.set(serviceProviderEntity.id, serviceProvider);
+        });
+
+        return serviceProviderMap;
+    }
+
     public async save(serviceProvider: ServiceProvider<boolean>): Promise<ServiceProvider<true>> {
         if (serviceProvider.id) {
             return this.update(serviceProvider);
