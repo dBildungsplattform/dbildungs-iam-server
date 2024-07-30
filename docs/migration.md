@@ -4,6 +4,9 @@
 
 Run `npm run db:migration-create` to create a new migration
 
+[!IMPORTANT]
+Files are generated and stored under `migrations`, but have to be copied to `charts/dbildungs-iam-server/migrations` manually for application on cluster!
+
 Run `npm run db:migration-apply` apply the latest version of migration to the database, latest migration files MUST BE available in `./dist/migrations`.
 You can ensure this by starting the app via `npm run start`.
 
