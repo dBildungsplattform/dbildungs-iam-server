@@ -5,10 +5,9 @@ import { OrganisationModule } from './organisation.module.js';
 import { OrganisationUc } from './api/organisation.uc.js';
 import { OrganisationApiMapperProfile } from './api/organisation-api.mapper.profile.js';
 import { EventModule } from '../../core/eventbus/index.js';
-import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonenkontextFactory } from '../personenkontext/domain/personenkontext.factory.js';
 import { PersonModule } from '../person/person.module.js';
 import { RolleModule } from '../rolle/rolle.module.js';
+import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 
 @Module({
     imports: [
@@ -17,8 +16,9 @@ import { RolleModule } from '../rolle/rolle.module.js';
         EventModule,
         PersonModule,
         RolleModule,
+        PersonenKontextModule,
     ],
-    providers: [OrganisationApiMapperProfile, OrganisationUc, DBiamPersonenkontextRepo, PersonenkontextFactory],
+    providers: [OrganisationApiMapperProfile, OrganisationUc],
     controllers: [OrganisationController],
 })
 export class OrganisationApiModule {}
