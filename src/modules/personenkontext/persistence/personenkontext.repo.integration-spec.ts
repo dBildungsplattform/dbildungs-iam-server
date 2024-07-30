@@ -1,4 +1,3 @@
-import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
@@ -9,7 +8,6 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
-import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
@@ -33,31 +31,6 @@ describe('PersonenkontextRepo', () => {
         const person: PersonEntity = new PersonEntity().assign(mapAggregateToData(DoFactory.createPerson(false)));
         return person;
     };
-
-    function createPersonenkontextDo<WasPersisted extends boolean>(
-        this: void,
-        withId: WasPersisted,
-        params: Partial<PersonenkontextDo<boolean>> = {},
-    ): PersonenkontextDo<WasPersisted> {
-        const personenkontext: PersonenkontextDo<false> = {
-            id: withId ? faker.string.uuid() : undefined,
-            mandant: faker.string.uuid(),
-            personId: faker.string.uuid(),
-            createdAt: withId ? faker.date.past() : undefined,
-            updatedAt: withId ? faker.date.recent() : undefined,
-            organisationId: faker.string.uuid(),
-            revision: '1',
-            rolle: Rolle.LEHRENDER,
-            rolleId: faker.string.uuid(),
-            jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-            personenstatus: Personenstatus.AKTIV,
-            referrer: 'referrer',
-            sichtfreigabe: SichtfreigabeType.JA,
-            loeschungZeitpunkt: faker.date.anytime(),
-        };
-
-        return Object.assign(new PersonenkontextDo<WasPersisted>(), personenkontext, params);
-    }
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -108,7 +81,7 @@ describe('PersonenkontextRepo', () => {
                 const personEntity: PersonEntity = await em.findOneOrFail(PersonEntity, {
                     vorname: newPerson.vorname,
                 });
-                const newPersonenkontext: PersonenkontextDo<false> = createPersonenkontextDo(false, {
+                const newPersonenkontext: PersonenkontextDo<false> = DoFactory.createPersonenkontextDo(false, {
                     personId: personEntity.id,
                     rolleId: rolle.id,
                 });
@@ -129,7 +102,7 @@ describe('PersonenkontextRepo', () => {
                 const personEntity: PersonEntity = await em.findOneOrFail(PersonEntity, {
                     vorname: newPerson.vorname,
                 });
-                const newPersonenkontext: PersonenkontextDo<false> = createPersonenkontextDo(false, {
+                const newPersonenkontext: PersonenkontextDo<false> = DoFactory.createPersonenkontextDo(false, {
                     personId: personEntity.id,
                     rolleId: rolle.id,
                 });
@@ -152,7 +125,7 @@ describe('PersonenkontextRepo', () => {
                 const personEntity: PersonEntity = await em.findOneOrFail(PersonEntity, {
                     vorname: newPerson.vorname,
                 });
-                const newPersonenkontext: PersonenkontextDo<true> = createPersonenkontextDo(true, {
+                const newPersonenkontext: PersonenkontextDo<true> = DoFactory.createPersonenkontextDo(true, {
                     personId: personEntity.id,
                     rolleId: rolle.id,
                 });

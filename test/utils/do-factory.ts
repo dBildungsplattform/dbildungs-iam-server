@@ -4,6 +4,7 @@ import { OrganisationsTyp, Traegerschaft } from '../../src/modules/organisation/
 import {
     Jahrgangsstufe,
     Personenstatus,
+    Rolle,
     SichtfreigabeType,
 } from '../../src/modules/personenkontext/domain/personenkontext.enums.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../src/modules/rolle/domain/rolle.enums.js';
@@ -17,6 +18,7 @@ import {
 import { Person } from '../../src/modules/person/domain/person.js';
 import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
 import { Organisation } from '../../src/modules/organisation/domain/organisation.js';
+import { PersonenkontextDo } from '../../src/modules/personenkontext/domain/personenkontext.do.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -150,5 +152,31 @@ export class DoFactory {
             serviceProvider,
             props,
         );
+    }
+
+    //Remove this when PersonenkontextDo is remove dor set to deprecated
+    public static createPersonenkontextDo<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        params: Partial<PersonenkontextDo<boolean>> = {},
+    ): PersonenkontextDo<WasPersisted> {
+        const personenkontext: PersonenkontextDo<false> = {
+            id: withId ? faker.string.uuid() : undefined,
+            mandant: faker.string.uuid(),
+            personId: faker.string.uuid(),
+            createdAt: withId ? faker.date.past() : undefined,
+            updatedAt: withId ? faker.date.recent() : undefined,
+            organisationId: faker.string.uuid(),
+            revision: '1',
+            rolle: Rolle.LEHRENDER,
+            rolleId: faker.string.uuid(),
+            jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+            personenstatus: Personenstatus.AKTIV,
+            referrer: 'referrer',
+            sichtfreigabe: SichtfreigabeType.JA,
+            loeschungZeitpunkt: faker.date.anytime(),
+        };
+
+        return Object.assign(new PersonenkontextDo<WasPersisted>(), personenkontext, params);
     }
 }
