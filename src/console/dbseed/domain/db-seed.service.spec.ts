@@ -21,7 +21,7 @@ import { RolleFactory } from '../../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../../modules/service-provider/repo/service-provider.repo.js';
 import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ServiceProviderFactory } from '../../../modules/service-provider/domain/service-provider.factory.js';
-import { KeycloakUserService, UserDo } from '../../../modules/keycloak-administration/index.js';
+import { KeycloakUserService, User } from '../../../modules/keycloak-administration/index.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { DBiamPersonenkontextService } from '../../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
 import { DbSeedReferenceRepo } from '../repo/db-seed-reference.repo.js';
@@ -344,10 +344,12 @@ describe('DbSeedService', () => {
                 );
 
                 const person: Person<true> = createMock<Person<true>>();
-                const existingUser: UserDo<true> = new UserDo<true>();
-                existingUser.id = faker.string.uuid();
-                existingUser.createdDate = faker.date.recent();
-                existingUser.username = 'testusername';
+                const existingUser: User<true> = User.construct<true>(
+                    faker.string.uuid(),
+                    'testusername',
+                    'test@example.com',
+                    faker.date.recent(),
+                );
 
                 kcUserService.findOne.mockResolvedValueOnce({ ok: true, value: existingUser });
                 kcUserService.delete.mockResolvedValueOnce({ ok: true, value: undefined });
