@@ -1,4 +1,3 @@
-import { DomainError } from '../../../shared/error/domain.error.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -8,6 +7,7 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { IPersonPermissions } from './person-permissions.interface.js';
 
 export type PersonFields = Pick<
     Person<true>,
@@ -28,7 +28,7 @@ export type PersonenkontextRolleFields = {
     rolle: RolleFields;
 };
 
-export class PersonPermissions {
+export class PersonPermissions implements IPersonPermissions {
     private cachedPersonenkontextsFields?: PersonKontextFields[];
 
     private cachedPersonFields: PersonFields;
@@ -134,14 +134,7 @@ export class PersonPermissions {
         }
 
         {
-            const result: Result<Personenkontext<true>[], DomainError> =
-                await this.personenkontextRepo.findByPersonAuthorized(personId, this);
-
-            if (!result.ok) {
-                return false;
-            }
-
-            return result.value.length > 0;
+            return this.hasSystemrechtAtAnyKontextOfTargetPerson(personId, RollenSystemRecht.PERSONEN_VERWALTEN);
         }
     }
 
@@ -185,7 +178,7 @@ export class PersonPermissions {
         return this.cachedRollenFields;
     }
 
-    public async hasSystemrechtAtAnyKontextOfTargetPerson(
+    private hasSystemrechtAtAnyKontextOfTargetPerson(
         targetPersonId: PersonID,
         systemrecht: RollenSystemRecht,
     ): Promise<boolean> {

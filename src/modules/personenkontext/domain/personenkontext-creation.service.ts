@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { Personenkontext } from './personenkontext.js';
 import { PersonenkontextWorkflowFactory } from './personenkontext-workflow.factory.js';
 import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
+import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
+import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
+import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 
 export type PersonPersonenkontext = {
     person: Person<true>;
@@ -19,10 +20,9 @@ export type PersonPersonenkontext = {
 export class PersonenkontextCreationService {
     public constructor(
         private readonly personRepository: PersonRepository,
-        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personFactory: PersonFactory,
-        private readonly personenkontextFactory: PersonenkontextFactory,
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
+        private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
     ) {}
 
     public async createPersonWithPersonenkontext(
@@ -55,16 +55,32 @@ export class PersonenkontextCreationService {
             return savedPerson;
         }
 
-        const personenkontext: Personenkontext<false> = this.personenkontextFactory.createNew(
+        const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
             savedPerson.id,
-            organisationId,
-            rolleId,
+            new Date(),
+            0,
+            [
+                {
+                    personId: savedPerson.id,
+                    organisationId,
+                    rolleId,
+                },
+            ],
+            permissions,
         );
-        //Save Personenkontext
-        const savedPersonenkontext: Personenkontext<true> = await this.personenkontextRepo.save(personenkontext);
+
+        const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
+        if (updateResult instanceof DomainError) {
+            return updateResult;
+        }
+
+        if (updateResult.length !== 1) {
+            return new PersonenkontexteUpdateError('The number of updated personenkontexte is invalid');
+        }
+
         return {
             person: savedPerson,
-            personenkontext: savedPersonenkontext,
+            personenkontext: updateResult[0]!,
         };
     }
 }
