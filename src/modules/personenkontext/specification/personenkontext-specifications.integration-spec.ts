@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import {
     ConfigTestModule,
     DatabaseTestModule,
@@ -35,6 +34,7 @@ function createPersonenkontext<WasPersisted extends boolean>(
         withId ? faker.string.uuid() : undefined,
         withId ? faker.date.past() : undefined,
         withId ? faker.date.recent() : undefined,
+        undefined,
         faker.string.uuid(),
         faker.string.uuid(),
         faker.string.uuid(),
@@ -48,7 +48,7 @@ function createPersonenkontext<WasPersisted extends boolean>(
 describe('PersonenkontextSpecificationsTest', () => {
     let module: TestingModule;
     let orm: MikroORM;
-    let organisationRepoMock: DeepMocked<OrganisationRepo>;
+    let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
 
@@ -75,10 +75,6 @@ describe('PersonenkontextSpecificationsTest', () => {
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
-                    provide: OrganisationRepo,
-                    useValue: createMock<OrganisationRepo>(),
-                },
-                {
                     provide: OrganisationRepository,
                     useValue: createMock<OrganisationRepository>(),
                 },
@@ -91,7 +87,7 @@ describe('PersonenkontextSpecificationsTest', () => {
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
             .compile();
-        organisationRepoMock = module.get(OrganisationRepo);
+        organisationRepoMock = module.get(OrganisationRepository);
         rolleRepoMock = module.get(RolleRepo);
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personFactory = module.get(PersonFactory);
