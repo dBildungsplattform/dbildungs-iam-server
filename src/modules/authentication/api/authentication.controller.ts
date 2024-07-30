@@ -123,11 +123,11 @@ export class AuthenticationController {
         return new UserinfoResponse(permissions, rolleFieldsResponse);
     }
 
-    @Get('set-new-password')
+    @Get('resetPassword')
     @Public()
     @ApiOperation({ summary: 'Redirect to Keycloak password reset.' })
     @ApiResponse({ status: 302, description: 'Redirect to Keycloak password reset page.' })
-    public setNewPassword(@Query('redirectUrl') redirectUrl: string, @Res() res: Response): void {
+    public resetPassword(@Query('redirectUrl') redirectUrl: string, @Res() res: Response): void {
         const clientId: string = this.keyCloakclientRealm.toLowerCase();
         const responseType: string = 'code';
         const scope: string = 'openid';
