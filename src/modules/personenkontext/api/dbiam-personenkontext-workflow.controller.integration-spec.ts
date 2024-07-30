@@ -24,7 +24,7 @@ import { Observable } from 'rxjs';
 import { PassportUser } from '../../authentication/types/user.js';
 import { Request } from 'express';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
@@ -56,33 +56,6 @@ function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rol
     return rolle;
 }
 
-function createPersonenkontext<WasPersisted extends boolean>(
-    this: void,
-    personenkontextFactory: PersonenkontextFactory,
-    withId: WasPersisted,
-    params: Partial<Personenkontext<boolean>> = {},
-): Personenkontext<WasPersisted> {
-    const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
-        withId ? faker.string.uuid() : undefined,
-        withId ? faker.date.past() : undefined,
-        withId ? faker.date.recent() : undefined,
-        faker.string.uuid(),
-        faker.string.uuid(),
-        faker.string.uuid(),
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-    );
-
-    Object.assign(personenkontext, params);
-
-    return personenkontext;
-}
-
 describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let app: INestApplication;
     let orm: MikroORM;
@@ -92,7 +65,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let personRepo: PersonRepository;
     let personenkontextRepo: DBiamPersonenkontextRepo;
-    let personenkontextFactory: PersonenkontextFactory;
     let personenkontextWorkflowMock: DeepMocked<PersonenkontextWorkflowAggregate>;
     let personenkontextWorkflowFactoryMock: DeepMocked<PersonenkontextWorkflowFactory>;
 
@@ -149,7 +121,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
         personRepo = module.get(PersonRepository);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
-        personenkontextFactory = module.get(PersonenkontextFactory);
         personenkontextWorkflowMock = module.get(PersonenkontextWorkflowAggregate);
         personenkontextWorkflowFactoryMock = createMock<PersonenkontextWorkflowFactory>();
 
@@ -465,7 +436,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     return;
                 }
                 const savedPK: Personenkontext<true> = await personenkontextRepo.save(
-                    createPersonenkontext(personenkontextFactory, false, {
+                    DoFactory.createPersonenkontext(false, {
                         personId: person.id,
                         rolleId: rolle.id,
                         updatedAt: new Date(),
@@ -514,7 +485,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     return;
                 }
                 const savedPK: Personenkontext<true> = await personenkontextRepo.save(
-                    createPersonenkontext(personenkontextFactory, false, {
+                    DoFactory.createPersonenkontext(false, {
                         personId: person.id,
                         rolleId: rolle.id,
                         updatedAt: new Date(),
