@@ -34,6 +34,7 @@ export class PersonApiMapper {
                 lokalisierung: person.lokalisierung,
                 vertrauensstufe: person.vertrauensstufe,
                 revision: person.revision,
+                personalnummer: person.personalnummer,
             },
             personenkontexte: kontexte.map((kontext: PersonenkontextDo<true>) =>
                 this.mapToPersonenkontextResponse(kontext),
