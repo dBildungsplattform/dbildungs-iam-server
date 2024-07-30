@@ -36,33 +36,6 @@ import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 
-function createPersonenkontext<WasPersisted extends boolean>(
-    this: void,
-    personenkontextFactory: PersonenkontextFactory,
-    withId: WasPersisted,
-    params: Partial<Personenkontext<boolean>> = {},
-): Personenkontext<WasPersisted> {
-    const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
-        withId ? faker.string.uuid() : undefined,
-        withId ? faker.date.past() : undefined,
-        withId ? faker.date.recent() : undefined,
-        faker.string.uuid(),
-        faker.string.uuid(),
-        faker.string.uuid(),
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-    );
-
-    Object.assign(personenkontext, params);
-
-    return personenkontext;
-}
-
 describe('dbiam Personenkontext API', () => {
     let app: INestApplication;
     let orm: MikroORM;
@@ -149,19 +122,19 @@ describe('dbiam Personenkontext API', () => {
             const [pk1, pk2]: [Personenkontext<true>, Personenkontext<true>, Personenkontext<true>] = await Promise.all(
                 [
                     personenkontextRepo.save(
-                        createPersonenkontext(personenkontextFactory, false, {
+                        DoFactory.createPersonenkontext(false, {
                             personId: personA.id,
                             rolleId: rolleA.id,
                         }),
                     ),
                     personenkontextRepo.save(
-                        createPersonenkontext(personenkontextFactory, false, {
+                        DoFactory.createPersonenkontext(false, {
                             personId: personA.id,
                             rolleId: rolleB.id,
                         }),
                     ),
                     personenkontextRepo.save(
-                        createPersonenkontext(personenkontextFactory, false, {
+                        DoFactory.createPersonenkontext(false, {
                             personId: personB.id,
                             rolleId: rolleC.id,
                         }),
@@ -317,7 +290,7 @@ describe('dbiam Personenkontext API', () => {
         });
 
         it('should return error if references do not exist', async () => {
-            const personenkontext: Personenkontext<false> = createPersonenkontext(personenkontextFactory, false);
+            const personenkontext: Personenkontext<false> = DoFactory.createPersonenkontext(false);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/dbiam/personenkontext')
@@ -497,8 +470,9 @@ describe('dbiam Personenkontext API', () => {
                 }
                 const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                 const savedPK: Personenkontext<true> = await personenkontextRepo.save(
-                    createPersonenkontext(personenkontextFactory, false, { personId: person.id, rolleId: rolle.id }),
+                    DoFactory.createPersonenkontext(false, { personId: person.id, rolleId: rolle.id }),
                 );
+
                 const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
                     createMock<DbiamUpdatePersonenkontexteBodyParams>({
                         count: 1,
@@ -522,7 +496,7 @@ describe('dbiam Personenkontext API', () => {
                 }
                 const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                 const savedPK: Personenkontext<true> = await personenkontextRepo.save(
-                    createPersonenkontext(personenkontextFactory, false, { personId: person.id, rolleId: rolle.id }),
+                    DoFactory.createPersonenkontext(false, { personId: person.id, rolleId: rolle.id }),
                 );
                 const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
                     createMock<DbiamUpdatePersonenkontexteBodyParams>({
