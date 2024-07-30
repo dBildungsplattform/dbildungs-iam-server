@@ -21,6 +21,7 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiNoContentResponse,
     ApiNotFoundResponse,
     ApiOAuth2,
     ApiOkResponse,
@@ -352,7 +353,7 @@ export class OrganisationController {
     @Delete(':organisationId/klasse')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ description: 'Delete an organisation of type Klasse by id.' })
-    @ApiOkResponse({ description: 'The organisation was deleted successfully.' })
+    @ApiNoContentResponse({ description: 'The organisation was deleted successfully.' })
     @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamOrganisationError })
     @ApiNotFoundResponse({ description: 'The organisation that should be deleted does not exist.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to delete the organisation.' })
