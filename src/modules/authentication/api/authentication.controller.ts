@@ -128,7 +128,7 @@ export class AuthenticationController {
     @ApiOperation({ summary: 'Redirect to Keycloak password reset.' })
     @ApiResponse({ status: 302, description: 'Redirect to Keycloak password reset page.' })
     public setNewPassword(@Query('redirectUrl') redirectUrl: string, @Res() res: Response): void {
-        const clientId: string = this.keyCloakclientRealm;
+        const clientId: string = this.keyCloakclientRealm.toLowerCase();
         const responseType: string = 'code';
         const scope: string = 'openid';
         const kcAction: string = 'UPDATE_PASSWORD';
