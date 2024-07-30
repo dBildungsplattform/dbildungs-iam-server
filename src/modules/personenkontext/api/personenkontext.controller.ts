@@ -1,18 +1,4 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
-import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    HttpCode,
-    HttpStatus,
-    Inject,
-    Param,
-    Put,
-    Query,
-    UseFilters,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Put, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -37,7 +23,7 @@ import { PersonenkontextResponse } from './response/personenkontext.response.js'
 import { PersonenkontextdatensatzResponse } from './response/personenkontextdatensatz.response.js';
 import { UpdatePersonenkontextBodyParams } from './param/update-personenkontext.body.params.js';
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
-import { DeletePersonenkontextDto } from './delete-personkontext.dto.js';
+
 import { SystemrechtResponse } from './response/personenkontext-systemrecht.response.js';
 import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
 import { HatSystemrechtQueryParams } from './param/hat-systemrecht.query.params.js';
@@ -70,7 +56,6 @@ import { PersonApiMapper } from '../../person/mapper/person-api.mapper.js';
 @Controller({ path: 'personenkontexte' })
 export class PersonenkontextController {
     public constructor(
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personenkontextService: PersonenkontextService,
         private readonly personService: PersonService,
@@ -303,13 +288,10 @@ export class PersonenkontextController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
             );
         }
-        //!!! rename this
-        const dto: DeletePersonenkontextDto = this.mapper.map(body, DeleteRevisionBodyParams, DeletePersonenkontextDto);
-        dto.id = params.personenkontextId;
 
         const deleteResult: Result<void, DomainError> = await this.personenkontextService.deletePersonenkontextById(
-            dto.id,
-            dto.revision,
+            params.personenkontextId,
+            body.revision,
         );
 
         if (!deleteResult.ok) {
