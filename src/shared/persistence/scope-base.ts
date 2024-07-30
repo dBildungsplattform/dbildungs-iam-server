@@ -1,5 +1,5 @@
 import { AnyEntity, EntityName, QBFilterQuery, QBQueryOrderMap } from '@mikro-orm/core';
-import { EntityManager, QueryBuilder } from '@mikro-orm/postgresql';
+import { EntityManager, QueryBuilder, SelectQueryBuilder } from '@mikro-orm/postgresql';
 import { ScopeOrder, ScopeOperator } from './scope.enums.js';
 
 export abstract class ScopeBase<T extends AnyEntity> {
@@ -21,17 +21,23 @@ export abstract class ScopeBase<T extends AnyEntity> {
     }
 
     public async executeQuery(em: EntityManager): Promise<Counted<T>> {
+        const selectQuery: SelectQueryBuilder<T> = this.getQueryBuilder(em);
+
+        return selectQuery.getResultAndCount();
+    }
+
+    public getQueryBuilder(em: EntityManager): SelectQueryBuilder<T> {
         const qb: QueryBuilder<T> = em.createQueryBuilder(this.entityName);
         const combinedFilters: {
             [x: string]: QBFilterQuery<T>[];
         } = { [this.scopeWhereOperator]: this.queryFilters };
-        const result: Counted<T> = await qb
+        const result: SelectQueryBuilder<T> = qb
             .select('*')
             .where(combinedFilters)
             .orderBy(this.queryOrderMaps)
             .offset(this.offset ?? undefined)
-            .limit(this.limit ?? undefined)
-            .getResultAndCount();
+            .limit(this.limit ?? undefined);
+        //.getResultAndCount();
 
         return result;
     }

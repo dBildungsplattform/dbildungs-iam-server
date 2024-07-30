@@ -5,7 +5,6 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DoFactory,
-    //KeycloakConfigTestModule,
     LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';

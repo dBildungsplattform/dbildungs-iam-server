@@ -11,3 +11,9 @@ export type RolleID = Flavor<string, typeof rolleSymbol>;
 
 declare const personenkontextSymbol: unique symbol;
 export type PersonenkontextID = Flavor<string, typeof personenkontextSymbol>;
+
+declare const serviceProviderSymbol: unique symbol;
+export type ServiceProviderID = Flavor<string, typeof serviceProviderSymbol>;
+
+declare const emailAddressSymbol: unique symbol;
+export type EmailAddressID = Flavor<string, typeof emailAddressSymbol>;
