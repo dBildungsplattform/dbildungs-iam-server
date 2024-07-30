@@ -253,4 +253,18 @@ describe('AuthenticationController', () => {
             expect(result.birthdate!).toBe(permissions.personFields.geburtsdatum?.toISOString());
         });
     });
+
+    describe('ResetPassword', () => {
+        it('should redirect to the correct Keycloak URL', () => {
+            const responseMock: Response = createMock<Response>();
+            const redirectUrl: string = faker.internet.url();
+
+            authController.resetPassword(redirectUrl, responseMock);
+
+            const clientId: string = authController.getKeyCloakclientRealm().toLowerCase();
+            const expectedUrl: string = `${oidcClient.issuer.metadata.authorization_endpoint}?client_id=${clientId}&response_type=code&scope=openid&kc_action=UPDATE_PASSWORD&redirect_uri=${redirectUrl}`;
+
+            expect(responseMock.redirect).toHaveBeenCalledWith(expectedUrl);
+        });
+    });
 });

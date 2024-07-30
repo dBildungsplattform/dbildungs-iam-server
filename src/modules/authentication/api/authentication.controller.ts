@@ -135,4 +135,8 @@ export class AuthenticationController {
         const setNewPasswordUrl: string = `${this.client.issuer.metadata.authorization_endpoint}?client_id=${clientId}&response_type=${responseType}&scope=${scope}&kc_action=${kcAction}&redirect_uri=${redirectUrl}`;
         res.redirect(setNewPasswordUrl);
     }
+
+    public getKeyCloakclientRealm(): string {
+        return this.keyCloakclientRealm;
+    }
 }
