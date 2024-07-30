@@ -18,6 +18,7 @@ import {
     ServiceProviderKategorie,
     ServiceProviderTarget,
 } from '../../src/modules/service-provider/domain/service-provider.enum.js';
+import { Organisation } from '../../src/modules/organisation/domain/organisation.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -152,5 +153,29 @@ export class DoFactory {
             serviceProvider,
             props,
         );
+    }
+
+    public static createOrganisationAggregate<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        params: Partial<Organisation<boolean>> = {},
+    ): Organisation<WasPersisted> {
+        const organisation: Organisation<WasPersisted> = Organisation.construct<boolean>(
+            withId ? faker.string.uuid() : undefined,
+            withId ? faker.date.past() : undefined,
+            withId ? faker.date.recent() : undefined,
+            faker.string.uuid(),
+            faker.string.uuid(),
+            faker.lorem.word(),
+            faker.lorem.word(),
+            faker.lorem.word(),
+            faker.string.uuid(),
+            faker.helpers.enumValue(OrganisationsTyp),
+            faker.helpers.enumValue(Traegerschaft),
+        );
+
+        Object.assign(organisation, params);
+
+        return organisation;
     }
 }
