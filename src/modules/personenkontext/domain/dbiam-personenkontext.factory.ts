@@ -5,7 +5,10 @@ import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkonte
 import { PersonID } from '../../../shared/types/index.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { EventService } from '../../../core/eventbus/index.js';
-import { PersonRepo } from '../../person/persistence/person.repo.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { IPersonPermissions } from '../../authentication/domain/person-permissions.interface.js';
 
 @Injectable()
 export class DbiamPersonenkontextFactory {
@@ -13,7 +16,9 @@ export class DbiamPersonenkontextFactory {
         private personenkontextFactory: PersonenkontextFactory,
         private readonly eventService: EventService,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
-        private readonly personRepo: PersonRepo,
+        private readonly personRepo: PersonRepository,
+        private readonly rolleRepo: RolleRepo,
+        private readonly organisationRepo: OrganisationRepository,
     ) {}
 
     public createNewPersonenkontexteUpdate(
@@ -21,16 +26,20 @@ export class DbiamPersonenkontextFactory {
         lastModified: Date | undefined,
         count: number,
         dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
+        permissions: IPersonPermissions,
     ): PersonenkontexteUpdate {
         return PersonenkontexteUpdate.createNew(
             this.eventService,
-            this.personRepo,
             this.dBiamPersonenkontextRepo,
+            this.personRepo,
+            this.rolleRepo,
+            this.organisationRepo,
             this.personenkontextFactory,
             personId,
             lastModified,
             count,
             dBiamPersonenkontextBodyParams,
+            permissions,
         );
     }
 }

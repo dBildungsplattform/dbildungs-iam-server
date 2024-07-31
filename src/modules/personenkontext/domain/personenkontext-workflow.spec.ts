@@ -649,6 +649,7 @@ describe('PersonenkontextWorkflow', () => {
                 lastModified,
                 count,
                 personenkontexte,
+                personpermissionsMock,
             );
 
             expect(result).toEqual(updateResult);
@@ -670,6 +671,7 @@ describe('PersonenkontextWorkflow', () => {
                 lastModified,
                 count,
                 personenkontexte,
+                personpermissionsMock,
             );
 
             expect(result).toBeInstanceOf(PersonenkontexteUpdateError);
@@ -691,6 +693,7 @@ describe('PersonenkontextWorkflow', () => {
             lastModified,
             count,
             personenkontexte,
+            personpermissionsMock,
         );
 
         expect(result).toEqual([]);
