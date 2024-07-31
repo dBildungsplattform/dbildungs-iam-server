@@ -5,7 +5,7 @@ import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 import { EntityAlreadyExistsError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { NameValidationError } from '../../../shared/error/name-validation.error.js';
+import { NameValidator } from '../../../shared/validation/name-validator.js';
 
 export class Rolle<WasPersisted extends boolean> {
     private constructor(
@@ -22,14 +22,6 @@ export class Rolle<WasPersisted extends boolean> {
         public serviceProviderIds: string[],
     ) {}
 
-    private static validateName(name: string, fieldName: string): Option<DomainError> {
-        const NO_LEADING_TRAILING_WHITESPACE: RegExp = /^(?! ).*(?<! )$/;
-        if (!NO_LEADING_TRAILING_WHITESPACE.test(name) || name.trim().length === 0) {
-            return new NameValidationError(fieldName);
-        }
-        return null;
-    }
-
     public static createNew(
         organisationRepo: OrganisationRepository,
         serviceProviderRepo: ServiceProviderRepo,
@@ -41,7 +33,7 @@ export class Rolle<WasPersisted extends boolean> {
         serviceProviderIds: string[],
     ): Rolle<false> | DomainError {
         // Validate the Rollenname
-        const rollennameValidationError: Option<DomainError> = this.validateName(name, 'Der Rollenname');
+        const rollennameValidationError: Option<DomainError> = NameValidator.validateName(name, 'Der Rollenname');
         if (rollennameValidationError) {
             return rollennameValidationError;
         }

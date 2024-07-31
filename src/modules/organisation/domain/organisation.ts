@@ -1,5 +1,5 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { NameValidationError } from '../../../shared/error/name-validation.error.js';
+import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { OrganisationsTyp, Traegerschaft } from './organisation.enums.js';
 
 export class Organisation<WasPersisted extends boolean> {
@@ -16,14 +16,6 @@ export class Organisation<WasPersisted extends boolean> {
         public typ?: OrganisationsTyp,
         public traegerschaft?: Traegerschaft,
     ) {}
-
-    private static validateName(name: string, fieldName: string): Option<DomainError> {
-        const NO_LEADING_TRAILING_WHITESPACE: RegExp = /^(?! ).*(?<! )$/;
-        if (!NO_LEADING_TRAILING_WHITESPACE.test(name) || name.trim().length === 0) {
-            return new NameValidationError(fieldName);
-        }
-        return null;
-    }
 
     public static construct<WasPersisted extends boolean = false>(
         id: Persisted<string, WasPersisted>,
@@ -64,7 +56,7 @@ export class Organisation<WasPersisted extends boolean> {
         traegerschaft?: Traegerschaft,
     ): Organisation<false> | DomainError {
         if (name) {
-            const organisationsnameValidationError: Option<DomainError> = this.validateName(
+            const organisationsnameValidationError: Option<DomainError> = NameValidator.validateName(
                 name,
                 'Der Organisationsname',
             );
@@ -73,7 +65,10 @@ export class Organisation<WasPersisted extends boolean> {
             }
         }
         if (kennung) {
-            const kennungValidationError: Option<DomainError> = this.validateName(kennung, 'Die Dienstellennummer');
+            const kennungValidationError: Option<DomainError> = NameValidator.validateName(
+                kennung,
+                'Die Dienstellennummer',
+            );
             if (kennungValidationError) {
                 return kennungValidationError;
             }
