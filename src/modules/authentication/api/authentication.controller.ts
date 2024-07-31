@@ -123,7 +123,7 @@ export class AuthenticationController {
         return new UserinfoResponse(permissions, rolleFieldsResponse);
     }
 
-    @Get('resetPassword')
+    @Get('reset-password')
     @Public()
     @ApiOperation({ summary: 'Redirect to Keycloak password reset.' })
     @ApiResponse({ status: 302, description: 'Redirect to Keycloak password reset page.' })
@@ -132,11 +132,8 @@ export class AuthenticationController {
         const responseType: string = 'code';
         const scope: string = 'openid';
         const kcAction: string = 'UPDATE_PASSWORD';
-        const setNewPasswordUrl: string = `${this.client.issuer.metadata.authorization_endpoint}?client_id=${clientId}&response_type=${responseType}&scope=${scope}&kc_action=${kcAction}&redirect_uri=${redirectUrl}`;
+        const endpoint: string | undefined = this.client.issuer.metadata.authorization_endpoint;
+        const setNewPasswordUrl: string = `${endpoint}?client_id=${clientId}&response_type=${responseType}&scope=${scope}&kc_action=${kcAction}&redirect_uri=${redirectUrl}`;
         res.redirect(setNewPasswordUrl);
-    }
-
-    public getKeyCloakclientRealm(): string {
-        return this.keyCloakclientRealm;
     }
 }
