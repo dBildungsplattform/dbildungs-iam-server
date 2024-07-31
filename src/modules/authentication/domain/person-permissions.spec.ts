@@ -88,13 +88,13 @@ describe('PersonPermissions', () => {
             '1',
             '1',
             '1',
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
             '1',
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
         );
     }
 
