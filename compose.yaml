@@ -32,14 +32,14 @@ services:
       - 8443:8443
     volumes:
       - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
-      - source: "${THEMES_DIR:-keycloak/themes}"
-        target: "/opt/keycloak/themes"
+      - source: '${THEMES_DIR:-keycloak/themes}'
+        target: '/opt/keycloak/themes'
         type: bind
 
   redis:
     image: redis:7.2.2
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
     ports:
       - 6379:6379
     command: redis-server --requirepass password
@@ -101,10 +101,10 @@ services:
   openldap-admin:
     image: osixia/phpldapadmin:0.9.0
     container_name: ldap-admin
-    restart: "no"
+    restart: 'no'
     environment:
       PHPLDAPADMIN_LDAP_HOSTS: openldap
-      PHPLDAPADMIN_HTTPS: "false"
+      PHPLDAPADMIN_HTTPS: 'false'
     depends_on:
       - openldap
     ports:
@@ -119,21 +119,41 @@ services:
     environment:
       - PI_ADMIN_USER=admin
       - PI_ADMIN_PASSWORD=admin
-      - PI_DB_TYPE=postgresql
-      - PI_DB_HOST=db
-      - PI_DB_PORT=5432
-      - PI_DB_NAME=privacyidea
+      - PI_DB_TYPE=mysql
+      - PI_DB_HOST=mariadb
+      - PI_DB_PORT=3306
+      - PI_DB_NAME=ducsxqm001
       - PI_DB_USER=admin
       - PI_DB_PASSWORD=password
-      - PI_DB_VENDOR=postgresql
+      - PI_DB_VENDOR=mysql
       - PI_SUPERUSER_REALM="administrator,api"
-      - PI_LOGLEVEL=DEBUG
       - PI_PAGE_TITLE=pivacyIDEA
       - PI_SECRET_KEY=secret
       - PI_PEPPER=pepper
     depends_on:
-      - db
+      maria-db:
+        condition: service_healthy
+
+  maria-db:
+    image: mariadb:latest
+    container_name: mariadb
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=ducsxqm001
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=password
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./mariadb:/var/lib/mysql
+      - ./dump.sql:/docker-entrypoint-initdb.d/dump.sql
 
 volumes:
   db-data:
-
+  mariadb:
