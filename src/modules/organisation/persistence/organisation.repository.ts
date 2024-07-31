@@ -9,6 +9,11 @@ import { OrganisationScope } from './organisation.scope.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
+import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -62,18 +67,11 @@ export class OrganisationRepository {
     }
 
     public async save(organisation: Organisation<boolean>): Promise<Organisation<true>> {
-        const organisationEntity: OrganisationEntity = this.em.create(
-            OrganisationEntity,
-            mapAggregateToData(organisation),
-        );
-
-        await this.em.persistAndFlush(organisationEntity);
-
-        if (organisationEntity.typ === OrganisationsTyp.SCHULE) {
-            this.eventService.publish(new SchuleCreatedEvent(organisationEntity.id));
+        if (organisation.id) {
+            return this.update(organisation);
+        } else {
+            return this.create(organisation);
         }
-
-        return mapEntityToAggregate(organisationEntity);
     }
 
     public async exists(id: OrganisationID): Promise<boolean> {
@@ -97,22 +95,42 @@ export class OrganisationRepository {
         } else {
             // Otherwise, perform the recursive CTE query.
             const query: string = `
-            WITH RECURSIVE sub_organisations AS (
-                SELECT *
-                FROM public.organisation
-                WHERE administriert_von IN (?)
-                UNION ALL
-                SELECT o.*
-                FROM public.organisation o
-                INNER JOIN sub_organisations so ON o.administriert_von = so.id
-            )
-            SELECT DISTINCT ON (id) * FROM sub_organisations;
+                WITH RECURSIVE sub_organisations AS (SELECT *
+                                                     FROM public.organisation
+                                                     WHERE administriert_von IN (?)
+                                                     UNION ALL
+                                                     SELECT o.*
+                                                     FROM public.organisation o
+                                                              INNER JOIN sub_organisations so ON o.administriert_von = so.id)
+                SELECT DISTINCT ON (id) *
+                FROM sub_organisations;
             `;
 
             rawResult = await this.em.execute(query, [ids]);
         }
 
         return rawResult.map(mapEntityToAggregate);
+    }
+
+    public async isOrgaAParentOfOrgaB(
+        organisationIdA: OrganisationID,
+        organisationIdB: OrganisationID,
+    ): Promise<boolean> {
+        const query: string = `
+            WITH RECURSIVE parent_organisations AS (SELECT id, administriert_von
+                                                    FROM public.organisation
+                                                    WHERE id = ?
+                                                    UNION ALL
+                                                    SELECT o.id, o.administriert_von
+                                                    FROM public.organisation o
+                                                             INNER JOIN parent_organisations po ON o.id = po.administriert_von)
+            SELECT EXISTS (SELECT 1
+                           FROM parent_organisations
+                           WHERE id = ?) AS is_parent;
+        `;
+
+        const result: [{ is_parent: boolean }] = await this.em.execute(query, [organisationIdB, organisationIdA]);
+        return result[0].is_parent;
     }
 
     public async findRootDirectChildren(): Promise<
@@ -151,5 +169,63 @@ export class OrganisationRepository {
         });
 
         return organisationMap;
+    }
+
+    public async updateKlassenname(id: string, newName: string): Promise<DomainError | Organisation<true>> {
+        const organisationFound: Option<Organisation<true>> = await this.findById(id);
+
+        if (!organisationFound) {
+            return new EntityNotFoundError('Organisation', id);
+        }
+        if (organisationFound.typ !== OrganisationsTyp.KLASSE) {
+            return new EntityCouldNotBeUpdated('Organisation', id, ['Only the name of Klassen can be updated.']);
+        }
+        //Specifications: it needs to be clarified how the specifications can be checked using DDD principles
+        {
+            if (organisationFound.name !== newName) {
+                organisationFound.name = newName;
+                const specificationError: undefined | OrganisationSpecificationError =
+                    await organisationFound.checkKlasseSpecifications(this);
+
+                if (specificationError) {
+                    return specificationError;
+                }
+            }
+        }
+        const organisationEntity: Organisation<true> = await this.save(organisationFound);
+        this.eventService.publish(new KlasseUpdatedEvent(id));
+
+        return organisationEntity;
+    }
+
+    public async saveSeedData(organisation: Organisation<boolean>): Promise<Organisation<true>> {
+        return this.create(organisation);
+    }
+
+    private async create(organisation: Organisation<boolean>): Promise<Organisation<true>> {
+        const organisationEntity: OrganisationEntity = this.em.create(
+            OrganisationEntity,
+            mapAggregateToData(organisation),
+        );
+
+        await this.em.persistAndFlush(organisationEntity);
+
+        if (organisationEntity.typ === OrganisationsTyp.SCHULE) {
+            this.eventService.publish(new SchuleCreatedEvent(organisationEntity.id));
+        }
+
+        return mapEntityToAggregate(organisationEntity);
+    }
+
+    private async update(organisation: Organisation<true>): Promise<Organisation<true>> {
+        const organisationEntity: Loaded<OrganisationEntity> = await this.em.findOneOrFail(
+            OrganisationEntity,
+            organisation.id,
+        );
+        organisationEntity.assign(mapAggregateToData(organisation));
+
+        await this.em.persistAndFlush(organisationEntity);
+
+        return mapEntityToAggregate(organisationEntity);
     }
 }

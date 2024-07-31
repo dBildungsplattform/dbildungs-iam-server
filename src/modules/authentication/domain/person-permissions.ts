@@ -1,4 +1,3 @@
-import { DomainError } from '../../../shared/error/domain.error.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -8,6 +7,7 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { IPersonPermissions } from './person-permissions.interface.js';
 
 export type PersonFields = Pick<
     Person<true>,
@@ -28,7 +28,7 @@ export type PersonenkontextRolleFields = {
     rolle: RolleFields;
 };
 
-export class PersonPermissions {
+export class PersonPermissions implements IPersonPermissions {
     private cachedPersonenkontextsFields?: PersonKontextFields[];
 
     private cachedPersonFields: PersonFields;
@@ -62,6 +62,9 @@ export class PersonPermissions {
         });
     }
 
+    /**
+     * @deprecated Inefficient
+     */
     public async getOrgIdsWithSystemrecht(
         systemrechte: RollenSystemRecht[],
         withChildren: boolean = false,
@@ -91,24 +94,37 @@ export class PersonPermissions {
         return Array.from(organisationIDs);
     }
 
-    public async hasSystemrechtAtOrganisation(
+    public async hasSystemrechteAtOrganisation(
         organisationId: OrganisationID,
         systemrechte: RollenSystemRecht[],
     ): Promise<boolean> {
-        const orgsWithRecht: OrganisationID[] = await this.getOrgIdsWithSystemrecht(systemrechte, true);
+        const checks: Promise<boolean>[] = systemrechte.map(
+            (systemrecht: RollenSystemRecht): Promise<boolean> =>
+                this.hasSystemrechtAtOrganisation(organisationId, systemrecht),
+        );
+        const results: boolean[] = await Promise.all(checks);
 
-        return orgsWithRecht.includes(organisationId);
+        return results.every((result: boolean): boolean => result);
     }
 
-    public async hasSystemrechtAtRootOrganisation(systemrechte: RollenSystemRecht[]): Promise<boolean> {
-        const orgsWithRecht: OrganisationID[] = await this.getOrgIdsWithSystemrecht(systemrechte, true);
+    public async hasSystemrechteAtRootOrganisation(systemrechte: RollenSystemRecht[]): Promise<boolean> {
+        return this.hasSystemrechteAtOrganisation(this.organisationRepo.ROOT_ORGANISATION_ID, systemrechte);
+    }
 
-        return orgsWithRecht.includes(this.organisationRepo.ROOT_ORGANISATION_ID);
+    public async hasSystemrechtAtOrganisation(
+        organisationId: OrganisationID,
+        systemrecht: RollenSystemRecht,
+    ): Promise<boolean> {
+        return this.personenkontextRepo.hasSystemrechtAtOrganisation(
+            this.cachedPersonFields.id,
+            organisationId,
+            systemrecht,
+        );
     }
 
     public async canModifyPerson(personId: PersonID): Promise<boolean> {
         {
-            const hasModifyRechtAtRoot: boolean = await this.hasSystemrechtAtRootOrganisation([
+            const hasModifyRechtAtRoot: boolean = await this.hasSystemrechteAtRootOrganisation([
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
 
@@ -118,14 +134,7 @@ export class PersonPermissions {
         }
 
         {
-            const result: Result<Personenkontext<true>[], DomainError> =
-                await this.personenkontextRepo.findByPersonAuthorized(personId, this);
-
-            if (!result.ok) {
-                return false;
-            }
-
-            return result.value.length > 0;
+            return this.hasSystemrechtAtAnyKontextOfTargetPerson(personId, RollenSystemRecht.PERSONEN_VERWALTEN);
         }
     }
 
@@ -167,6 +176,17 @@ export class PersonPermissions {
         }
 
         return this.cachedRollenFields;
+    }
+
+    private hasSystemrechtAtAnyKontextOfTargetPerson(
+        targetPersonId: PersonID,
+        systemrecht: RollenSystemRecht,
+    ): Promise<boolean> {
+        return this.personenkontextRepo.hasPersonASystemrechtAtAnyKontextOfPersonB(
+            this.cachedPersonFields.id,
+            targetPersonId,
+            systemrecht,
+        );
     }
 
     public get personFields(): PersonFields {

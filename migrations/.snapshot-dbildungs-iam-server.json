@@ -197,6 +197,7 @@
           "schema": "public",
           "items": [
             "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ]
         },
@@ -388,6 +389,7 @@
           "schema": "public",
           "items": [
             "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ]
         },
@@ -601,6 +603,7 @@
           "schema": "public",
           "items": [
             "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ]
         },
@@ -806,6 +809,7 @@
           "schema": "public",
           "items": [
             "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ]
         },
@@ -1003,6 +1007,7 @@
           "schema": "public",
           "items": [
             "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ]
         },
@@ -1147,6 +1152,26 @@
       "schema": "public",
       "indexes": [
         {
+          "columnNames": [
+            "administriert_von"
+          ],
+          "composite": false,
+          "keyName": "organisation_administriert_von_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "typ"
+          ],
+          "composite": false,
+          "keyName": "organisation_typ_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "organisation_pkey",
           "columnNames": [
             "id"
@@ -1286,6 +1311,7 @@
           "schema": "public",
           "items": [
             "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ]
         },
@@ -1561,6 +1587,28 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "person_keycloak_user_id_unique",
+          "columnNames": [
+            "keycloak_user_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "create unique index \"person_keycloak_user_id_unique\" on \"person\" (\"keycloak_user_id\") nulls not distinct;"
+        },
+        {
+          "keyName": "person_personalnummer_unique",
+          "columnNames": [
+            "personalnummer"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "create unique index \"person_personalnummer_unique\" on \"person\" (\"personalnummer\") nulls distinct;"
+        },
+        {
           "keyName": "person_pkey",
           "columnNames": [
             "id"
@@ -1714,6 +1762,251 @@
           "schema": "public",
           "items": [
             "URL",
+            "EMAIL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
+        "address": {
+          "name": "address",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "uuid"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "boolean"
+        }
+      },
+      "name": "email_address",
+      "schema": "public",
+      "indexes": [
+        {
+          "columnNames": [
+            "address"
+          ],
+          "composite": false,
+          "keyName": "email_address_address_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "email_address_pkey",
+          "columnNames": [
+            "id",
+            "address"
+          ],
+          "composite": true,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "email_address_person_id_foreign": {
+          "constraintName": "email_address_person_id_foreign",
+          "columnNames": [
+            "person_id"
+          ],
+          "localTableName": "public.email_address",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.person",
+          "deleteRule": "set null",
+          "updateRule": "cascade"
+        }
+      },
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ]
         },
@@ -1941,6 +2234,7 @@
           "schema": "public",
           "items": [
             "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ]
         },
@@ -2120,6 +2414,16 @@
       "schema": "public",
       "indexes": [
         {
+          "columnNames": [
+            "person_id"
+          ],
+          "composite": false,
+          "keyName": "personenkontext_person_id_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "personenkontext_person_id_organisation_id_rolle_id_unique",
           "columnNames": [
             "person_id",
@@ -2296,6 +2600,7 @@
           "schema": "public",
           "items": [
             "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ]
         },
@@ -2495,6 +2800,7 @@
           "schema": "public",
           "items": [
             "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ]
         },
@@ -2699,6 +3005,7 @@
           "schema": "public",
           "items": [
             "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ]
         },
@@ -2986,6 +3293,7 @@
           "schema": "public",
           "items": [
             "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ]
         },
@@ -3052,6 +3360,7 @@
           "nativeEnumName": "service_provider_target_enum",
           "enumItems": [
             "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ],
           "mappedType": "enum"
@@ -3271,6 +3580,7 @@
           "schema": "public",
           "items": [
             "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ]
         },
@@ -3477,6 +3787,7 @@
           "schema": "public",
           "items": [
             "URL",
+            "EMAIL",
             "SCHULPORTAL_ADMINISTRATION"
           ]
         },
@@ -3621,6 +3932,7 @@
       "schema": "public",
       "items": [
         "URL",
+        "EMAIL",
         "SCHULPORTAL_ADMINISTRATION"
       ]
     },

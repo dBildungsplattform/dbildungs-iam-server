@@ -6,6 +6,7 @@ import {
     DateTimeType,
     Entity,
     Enum,
+    Index,
     ManyToOne,
     OneToMany,
     Property,
@@ -14,6 +15,7 @@ import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
 import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
+import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 
 @Entity({ tableName: 'person' })
 export class PersonEntity extends TimestampedEntity {
@@ -25,6 +27,11 @@ export class PersonEntity extends TimestampedEntity {
     }
 
     @AutoMap()
+    @Index({
+        name: 'person_keycloak_user_id_unique',
+        expression:
+            'create unique index "person_keycloak_user_id_unique" on "person" ("keycloak_user_id") nulls not distinct;',
+    })
     @Property()
     public keycloakUserId!: string;
 
@@ -112,6 +119,10 @@ export class PersonEntity extends TimestampedEntity {
     public revision!: string;
 
     @AutoMap()
+    @Index({
+        name: 'person_personalnummer_unique',
+        expression: 'create unique index "person_personalnummer_unique" on "person" ("personalnummer") nulls distinct;',
+    })
     @Property({ nullable: true })
     public personalnummer?: string;
 
@@ -122,4 +133,13 @@ export class PersonEntity extends TimestampedEntity {
         orphanRemoval: true,
     })
     public personenKontexte: Collection<PersonenkontextEntity> = new Collection<PersonenkontextEntity>(this);
+
+    @OneToMany({
+        entity: () => EmailAddressEntity,
+        mappedBy: 'personId',
+        cascade: [],
+        orphanRemoval: false,
+        eager: true,
+    })
+    public emailAddresses: Collection<EmailAddressEntity> = new Collection<EmailAddressEntity>(this);
 }

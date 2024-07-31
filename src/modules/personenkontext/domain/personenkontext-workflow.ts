@@ -17,6 +17,7 @@ import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { IPersonPermissions } from '../../authentication/domain/person-permissions.interface.js';
 
 export class PersonenkontextWorkflowAggregate {
     public selectedOrganisationId?: string;
@@ -179,15 +180,17 @@ export class PersonenkontextWorkflowAggregate {
     // This will only be used during "bearbeiten".
     public async commit(
         personId: string,
-        lastModified: Date,
+        lastModified: Date | undefined,
         count: number,
         personenkontexte: DbiamPersonenkontextBodyParams[],
+        permissions: IPersonPermissions,
     ): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
             personId,
             lastModified,
             count,
             personenkontexte,
+            permissions,
         );
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
 
@@ -231,7 +234,7 @@ export class PersonenkontextWorkflowAggregate {
         organisationId: string,
     ): Promise<Option<DomainError>> {
         // Check if logged in person has permission
-        const hasPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(organisationId, [
+        const hasPermissionAtOrga: boolean = await permissions.hasSystemrechteAtOrganisation(organisationId, [
             RollenSystemRecht.PERSONEN_VERWALTEN,
         ]);
 
@@ -290,43 +293,5 @@ export class PersonenkontextWorkflowAggregate {
         );
 
         return orgas.slice(0, limit);
-    }
-
-    public async findAuthorizedRollen(
-        permissions: PersonPermissions,
-        rolleName?: string,
-        limit?: number,
-    ): Promise<Rolle<true>[]> {
-        let rollen: Option<Rolle<true>[]>;
-
-        if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName);
-        } else {
-            rollen = await this.rolleRepo.find();
-        }
-
-        if (!rollen) return [];
-
-        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
-            true,
-        );
-
-        //Landesadmin can view all roles.
-        if (orgsWithRecht.includes(this.organisationRepo.ROOT_ORGANISATION_ID)) {
-            return limit ? rollen.slice(0, limit) : rollen;
-        }
-
-        const allowedRollen: Rolle<true>[] = [];
-        const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-        (await this.organisationRepo.findByIds(orgsWithRecht)).forEach(function (orga: OrganisationDo<true>) {
-            rollen.forEach(function (rolle: Rolle<true>) {
-                if (organisationMatchesRollenart.isSatisfiedBy(orga, rolle) && !allowedRollen.includes(rolle)) {
-                    allowedRollen.push(rolle);
-                }
-            });
-        });
-
-        return limit ? allowedRollen.slice(0, limit) : allowedRollen;
     }
 }
