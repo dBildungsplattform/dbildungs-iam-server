@@ -303,7 +303,7 @@ export class DbSeedService {
         return persistedPersonenkontexte;
     }
 
-    public async getReferencedPerson(seedingId: number): Promise<Person<true>> {
+    private async getReferencedPerson(seedingId: number): Promise<Person<true>> {
         const personUUID: Option<string> = await this.dbSeedReferenceRepo.findUUID(
             seedingId,
             ReferencedEntityType.PERSON,
