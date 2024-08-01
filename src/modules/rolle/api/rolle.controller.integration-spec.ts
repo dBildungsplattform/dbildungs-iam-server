@@ -756,7 +756,7 @@ describe('Rolle API', () => {
             expect(response.status).toBe(400);
             expect(response.body).toEqual({
                 code: 400,
-                i18nKey: 'ROLLENNAME_HAT_LEERZEICHEN',
+                i18nKey: 'ROLLENNAME_ENTHAELT_LEERZEICHEN',
             });
         });
     });

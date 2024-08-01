@@ -28,7 +28,7 @@ export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
             NameForRolleWithTrailingSpaceError.name,
             new DbiamRolleError({
                 code: 400,
-                i18nKey: RolleErrorI18nTypes.ROLLENNAME_HAT_LEERZEICHEN,
+                i18nKey: RolleErrorI18nTypes.ROLLENNAME_ENTHAELT_LEERZEICHEN,
             }),
         ],
     ]);
