@@ -10,6 +10,7 @@ COPY package*.json ./
 RUN npm ci
 
 COPY src/ src/
+COPY migrations/ migrations/
 
 RUN npm run build
 
@@ -26,5 +27,6 @@ COPY config/ ./config/
 RUN npm ci --omit-dev
 
 COPY --from=build /app/dist/ ./dist/
+COPY /seeding/ /app/seeding/
 
 CMD [ "node", "dist/src/server/main.js" ]
