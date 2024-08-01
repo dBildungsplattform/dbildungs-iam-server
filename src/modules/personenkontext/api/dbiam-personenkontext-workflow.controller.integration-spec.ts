@@ -385,12 +385,12 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             const organisationId: string = faker.string.uuid();
             // Create and save an organisation and a rolle
             const organisation: Organisation<true> = await organisationRepo.save(
-                DoFactory.createOrganisation(false, { id: organisationId, typ: OrganisationsTyp.LAND }),
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.LAND }),
             );
 
             const rolle: Rolle<true> = await rolleRepo.save(
                 DoFactory.createRolle(false, {
-                    administeredBySchulstrukturknoten: organisationId,
+                    administeredBySchulstrukturknoten: organisation.id,
                     rollenart: RollenArt.SYSADMIN,
                 }),
             );
