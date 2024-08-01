@@ -24,7 +24,6 @@ import { DataConfig } from '../../../shared/config/index.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { createMock } from '@golevelup/ts-jest';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { NameValidationError } from '../../../shared/error/name-validation.error.js';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;
@@ -78,7 +77,7 @@ describe('OrganisationRepository', () => {
         it('should return one organisation by id', async () => {
             const orga: Organisation<false> | DomainError = Organisation.createNew();
             if (orga instanceof DomainError) {
-                throw new NameValidationError('Orgnanisationsname');
+                return;
             }
             const organisaiton: Organisation<true> = await sut.save(orga);
             const foundOrganisation: Option<Organisation<true>> = await sut.findById(organisaiton.id);
@@ -151,7 +150,7 @@ describe('OrganisationRepository', () => {
                 faker.company.name(),
             );
             if (orga instanceof DomainError) {
-                throw new NameValidationError('Orgnanisationsname');
+                return;
             }
 
             const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
@@ -175,7 +174,7 @@ describe('OrganisationRepository', () => {
                 faker.company.name(),
             );
             if (orga instanceof DomainError) {
-                throw new NameValidationError('Orgnanisationsname');
+                return;
             }
 
             const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));

@@ -20,7 +20,7 @@ import { RolleModule } from '../../../modules/rolle/rolle.module.js';
 import { PersonModule } from '../../../modules/person/person.module.js';
 import { DbSeedModule } from '../db-seed.module.js';
 import { PersonenKontextModule } from '../../../modules/personenkontext/personenkontext.module.js';
-import { NameValidationError } from '../../../shared/error/name-validation.error.js';
+import { VornameForPersonWithTrailingSpaceError } from '../../../modules/person/domain/vorname-with-trailing-space.error.js';
 
 describe('DbSeedServiceIntegration', () => {
     let module: TestingModule;
@@ -118,7 +118,9 @@ describe('DbSeedServiceIntegration', () => {
                     `./seeding/seeding-integration-test/invalidPerson/02_person.json`,
                     'utf-8',
                 );
-                await expect(dbSeedService.seedPerson(fileContentAsStr)).rejects.toThrow(NameValidationError);
+                await expect(dbSeedService.seedPerson(fileContentAsStr)).rejects.toThrow(
+                    VornameForPersonWithTrailingSpaceError,
+                );
             });
         });
     });

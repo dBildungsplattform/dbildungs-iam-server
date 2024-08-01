@@ -31,6 +31,7 @@ import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { KeycloakGroupRoleService } from '../../../modules/keycloak-administration/domain/keycloak-group-role.service.js';
 import { NameForOrganisationWithTrailingSpaceError } from '../../../modules/organisation/specification/error/name-with-trailing-space.error.js';
+import { NameForRolleWithTrailingSpaceError } from '../../../modules/rolle/domain/name-with-trailing-space.error.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -245,7 +246,7 @@ describe('DbSeedService', () => {
             });
         });
         describe('Should throw error', () => {
-            it('should throw NameValidationError if OrganisationFactory.createNew returns DomainError', async () => {
+            it('should throw NameForOrganisationWithTrailingSpaceError if OrganisationFactory.createNew returns DomainError', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
                     `./seeding/seeding-integration-test/organisation/07_organisation_with_invalid_name.json`,
                     'utf-8',
@@ -352,7 +353,9 @@ describe('DbSeedService', () => {
                 organisationRepositoryMock.findById.mockResolvedValue(createMock<OrganisationDo<true>>()); // mock get-SSK
 
                 rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
-                await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(NameValidationError);
+                await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(
+                    NameForRolleWithTrailingSpaceError,
+                );
             });
         });
     });

@@ -151,7 +151,7 @@ export class DbSeedService {
             );
 
             if (rolle instanceof DomainError) {
-                throw new NameValidationError('Rollenname');
+                throw rolle;
             }
 
             const persistedRolle: Rolle<true> = await this.rolleRepo.save(rolle);

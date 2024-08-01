@@ -38,7 +38,6 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { NameValidationError } from '../../../shared/error/name-validation.error.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -176,7 +175,7 @@ describe('dbiam Personenkontext Repo', () => {
         );
 
         if (rolle instanceof DomainError) {
-            throw new NameValidationError('Rollenname');
+            throw rolle;
         }
         const result: Rolle<true> = await rolleRepo.save(rolle);
         return result;

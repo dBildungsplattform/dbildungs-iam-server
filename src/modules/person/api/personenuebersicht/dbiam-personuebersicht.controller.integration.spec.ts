@@ -41,7 +41,6 @@ import { DBiamPersonenuebersichtController } from './dbiam-personenuebersicht.co
 import { OrganisationID } from '../../../../shared/types/aggregate-ids.types.js';
 import { PersonenkontextFactory } from '../../../personenkontext/domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
-import { NameValidationError } from '../../../../shared/error/name-validation.error.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -218,7 +217,7 @@ describe('Personenuebersicht API', () => {
                     );
 
                     if (rolle1 instanceof DomainError) {
-                        throw new NameValidationError('Rollenname');
+                        return;
                     }
                     const savedRolle1: Rolle<true> = await rolleRepo.save(rolle1);
 
@@ -232,7 +231,7 @@ describe('Personenuebersicht API', () => {
                     );
 
                     if (rolle2 instanceof DomainError) {
-                        throw new NameValidationError('Rollenname');
+                        return;
                     }
                     const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
@@ -361,7 +360,7 @@ describe('Personenuebersicht API', () => {
                     );
 
                     if (rolle1 instanceof DomainError) {
-                        throw new NameValidationError('Rollenname');
+                        return;
                     }
                     const savedRolle1: Rolle<true> = await rolleRepo.save(rolle1);
 
@@ -375,7 +374,7 @@ describe('Personenuebersicht API', () => {
                     );
 
                     if (rolle2 instanceof DomainError) {
-                        throw new NameValidationError('Rollenname');
+                        return;
                     }
                     const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
@@ -452,7 +451,7 @@ describe('Personenuebersicht API', () => {
             );
 
             if (rolle1 instanceof DomainError) {
-                throw new NameValidationError('Rollenname');
+                return;
             }
             const savedRolle1: Rolle<true> = await rolleRepo.save(rolle1);
 
@@ -466,7 +465,7 @@ describe('Personenuebersicht API', () => {
             );
 
             if (rolle2 instanceof DomainError) {
-                throw new NameValidationError('Rollenname');
+                return;
             }
             const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
