@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Patch, Post, Put, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -38,13 +38,14 @@ import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { DbiamOrganisationError } from './dbiam-organisation.error.js';
 import { OrganisationExceptionFilter } from './organisation-exception-filter.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -328,5 +329,37 @@ export class OrganisationController {
         if (result) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
         }
+    }
+
+    @Patch(':organisationId/name')
+    @ApiOkResponse({
+        description: 'The organizations were successfully updated.',
+        type: OrganisationResponseLegacy,
+        headers: PagingHeadersObject,
+    })
+    @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
+    public async updateOrganisationName(
+        @Param() params: OrganisationByIdParams,
+        @Body() body: OrganisationByNameBodyParams,
+    ): Promise<OrganisationResponse | DomainError> {
+        const result: DomainError | Organisation<true> = await this.organisationRepository.updateKlassenname(
+            params.organisationId,
+            body.name,
+        );
+
+        if (result instanceof DomainError) {
+            if (result instanceof OrganisationSpecificationError) {
+                throw result;
+            }
+
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
+
+        return new OrganisationResponse(result);
     }
 }

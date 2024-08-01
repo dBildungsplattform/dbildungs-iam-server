@@ -1,4 +1,11 @@
-import { EntityData, EntityManager, EntityName, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import {
+    EntityData,
+    EntityManager,
+    EntityName,
+    ForeignKeyConstraintViolationException,
+    Loaded,
+    RequiredEntityData,
+} from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
 import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
@@ -12,6 +19,9 @@ import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
+import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
+import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -78,6 +88,7 @@ export class RolleRepo {
 
     public constructor(
         protected readonly rolleFactory: RolleFactory,
+        private readonly eventService: EventService,
         protected readonly em: EntityManager,
     ) {}
 
@@ -168,35 +179,46 @@ export class RolleRepo {
         searchStr?: string,
         limit?: number,
         offset?: number,
-    ): Promise<Option<Rolle<true>[]>> {
-        let rollen: Option<RolleEntity[]>;
-        if (searchStr) {
-            rollen = await this.em.find(
-                this.entityName,
-                { name: { $ilike: '%' + searchStr + '%' } },
-                { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit, offset: offset },
-            );
-        } else {
-            rollen = await this.em.findAll(this.entityName, {
-                populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
-                limit: limit,
-                offset: offset,
-            });
-        }
-        if (rollen.length === 0) {
-            return [];
-        }
-
+    ): Promise<[Option<Rolle<true>[]>, number]> {
         const orgIdsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ROLLEN_VERWALTEN],
             true,
         );
 
-        const filteredRollen: RolleEntity[] = rollen.filter((rolle: RolleEntity) =>
-            orgIdsWithRecht.includes(rolle.administeredBySchulstrukturknoten),
-        );
+        if (!orgIdsWithRecht || orgIdsWithRecht.length == 0) {
+            return [[], 0];
+        }
 
-        return filteredRollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
+        let rollen: Option<RolleEntity[]>;
+        let total: number;
+        const organisationWhereClause: {
+            administeredBySchulstrukturknoten: { $in: OrganisationID[] };
+        } = { administeredBySchulstrukturknoten: { $in: orgIdsWithRecht } };
+        if (searchStr) {
+            [rollen, total] = await this.em.findAndCount(
+                this.entityName,
+                {
+                    name: { $ilike: '%' + searchStr + '%' },
+                    ...organisationWhereClause,
+                },
+                { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit, offset: offset },
+            );
+        } else {
+            [rollen, total] = await this.em.findAndCount(
+                this.entityName,
+                { ...organisationWhereClause },
+                {
+                    populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+                    limit: limit,
+                    offset: offset,
+                },
+            );
+        }
+        if (total === 0) {
+            return [[], 0];
+        }
+
+        return [rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory)), total];
     }
 
     public async exists(id: RolleID): Promise<boolean> {
@@ -227,24 +249,29 @@ export class RolleRepo {
         permissions: PersonPermissions,
     ): Promise<Rolle<true> | DomainError> {
         //Reference & Permissions
-        const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
-        if (!authorizedRole.ok) {
-            return authorizedRole.error;
+        const authorizedRoleResult: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
+        if (!authorizedRoleResult.ok) {
+            return authorizedRoleResult.error;
         }
         //Specifications
         {
-            if (isAlreadyAssigned && (merkmale.length > 0 || merkmale.length < authorizedRole.value.merkmale.length)) {
+            if (
+                isAlreadyAssigned &&
+                (merkmale.length > 0 || merkmale.length < authorizedRoleResult.value.merkmale.length)
+            ) {
                 return new UpdateMerkmaleError();
             }
         }
 
+        const authorizedRole: Rolle<true> = authorizedRoleResult.value;
+
         const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(
             id,
-            authorizedRole.value.createdAt,
-            authorizedRole.value.updatedAt,
+            authorizedRole.createdAt,
+            authorizedRole.updatedAt,
             name,
-            authorizedRole.value.administeredBySchulstrukturknoten,
-            authorizedRole.value.rollenart,
+            authorizedRole.administeredBySchulstrukturknoten,
+            authorizedRole.rollenart,
             merkmale,
             systemrechte,
             serviceProviderIds,
@@ -254,7 +281,34 @@ export class RolleRepo {
             return updatedRolle;
         }
         const result: Rolle<true> = await this.save(updatedRolle);
+        this.eventService.publish(
+            new RolleUpdatedEvent(id, authorizedRole.rollenart, merkmale, systemrechte, serviceProviderIds),
+        );
+
         return result;
+    }
+
+    public async deleteAuthorized(id: RolleID, permissions: PersonPermissions): Promise<Option<DomainError>> {
+        //Permissions
+        const authorizedRole: Result<Rolle<true>, DomainError> = await this.findByIdAuthorized(id, permissions);
+        if (!authorizedRole.ok) {
+            return authorizedRole.error;
+        }
+
+        const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, id, {
+            populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+        });
+
+        try {
+            //Cascade removal
+            await this.em.removeAndFlush(rolleEntity);
+        } catch (ex) {
+            if (ex instanceof ForeignKeyConstraintViolationException) {
+                return new RolleHatPersonenkontexteError();
+            }
+        }
+
+        return;
     }
 
     private async create(rolle: Rolle<false>): Promise<Rolle<true>> {

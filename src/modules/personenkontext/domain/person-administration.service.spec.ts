@@ -1,5 +1,3 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
@@ -23,10 +21,6 @@ describe('PersonAdministrationService', () => {
         module = await Test.createTestingModule({
             providers: [
                 PersonAdministrationService,
-                {
-                    provide: getMapperToken(),
-                    useValue: createMock<Mapper>(),
-                },
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
@@ -86,7 +80,7 @@ describe('PersonAdministrationService', () => {
             const rollen: Rolle<true>[] = [rolle, leitRolle, lehrRolle, lernRolle];
             rolleRepoMock.find.mockResolvedValue(rollen);
 
-            const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
+            const organisation: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
                 typ: OrganisationsTyp.SCHULE,
             });
             const organisationMap: Map<string, Organisation<true>> = new Map();
@@ -144,14 +138,14 @@ describe('PersonAdministrationService', () => {
             const rollen: Rolle<true>[] = [rolle, leitRolle, lehrRolle, lernRolle];
             rolleRepoMock.find.mockResolvedValue(rollen);
 
-            const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, {
+            const organisation: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
                 typ: OrganisationsTyp.SCHULE,
             });
             const organisationMap: Map<string, Organisation<true>> = new Map();
-            organisationMap.set(organisationDo.id, organisationDo);
+            organisationMap.set(organisation.id, organisation);
             organisationRepositoryMock.findByIds.mockResolvedValueOnce(organisationMap);
 
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationDo.id]);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
 
             const result: Rolle<true>[] = await sut.findAuthorizedRollen(personpermissionsMock, undefined, 2);
             expect(result).toHaveLength(2);
