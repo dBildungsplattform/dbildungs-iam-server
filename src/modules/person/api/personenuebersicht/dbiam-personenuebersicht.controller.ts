@@ -21,7 +21,6 @@ import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/d
 import { RolleRepo } from '../../../rolle/repo/rolle.repo.js';
 import { OrganisationID, PersonID, RolleID } from '../../../../shared/types/aggregate-ids.types.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
-import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
 import { ApiOkResponsePaginated, PagedResponse, PagingHeadersObject } from '../../../../shared/paging/index.js';
 import { PersonenuebersichtQueryParams } from './personenuebersicht-query.params.js';
 import { Permissions } from '../../../authentication/api/permissions.decorator.js';
@@ -34,6 +33,7 @@ import { RollenSystemRecht } from '../../../rolle/domain/rolle.enums.js';
 import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
 import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
+import { Organisation } from '../../../organisation/domain/organisation.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('dbiam-personenuebersicht')
@@ -101,7 +101,7 @@ export class DBiamPersonenuebersichtController {
                 ),
             );
             const allRollen: Map<string, Rolle<true>> = await this.rolleRepository.findByIds(Array.from(allRollenIds));
-            const allOrganisations: Map<string, OrganisationDo<true>> = await this.organisationRepository.findByIds(
+            const allOrganisations: Map<string, Organisation<true>> = await this.organisationRepository.findByIds(
                 Array.from(allOrganisationIds),
             );
             const dbiamPersonenUebersicht: DbiamPersonenuebersicht = DbiamPersonenuebersicht.createNew(
@@ -114,14 +114,20 @@ export class DBiamPersonenuebersichtController {
 
             persons.forEach((person: Person<true>) => {
                 const personenKontexte: Personenkontext<true>[] = allPersonenKontexte.get(person.id) ?? [];
-                const personenUebersichtenResult: DBiamPersonenzuordnungResponse[] | EntityNotFoundError =
+                const personenUebersichtenResult: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
                     dbiamPersonenUebersicht.createZuordnungenForKontexte(personenKontexte, allRollen, allOrganisations);
                 if (personenUebersichtenResult instanceof EntityNotFoundError) {
                     throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                         SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personenUebersichtenResult),
                     );
                 }
-                items.push(new DBiamPersonenuebersichtResponse(person, personenUebersichtenResult));
+                items.push(
+                    new DBiamPersonenuebersichtResponse(
+                        person,
+                        personenUebersichtenResult[0],
+                        personenUebersichtenResult[1],
+                    ),
+                );
             });
         }
 

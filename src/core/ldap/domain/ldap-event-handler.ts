@@ -1,30 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { EventHandler } from '../../eventbus/decorators/event-handler.decorator.js';
-import { LdapClientService } from './ldap-client.service.js';
+import { LdapClientService, PersonData } from './ldap-client.service.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
-import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
-import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
-import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
-import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
-import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { SchuleDeletedEvent } from '../../../shared/events/schule-deleted.event.js';
-import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
-import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
-import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
+import {
+    PersonenkontextUpdatedData,
+    PersonenkontextUpdatedEvent,
+} from '../../../shared/events/personenkontext-updated.event.js';
 
 @Injectable()
 export class LdapEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly ldapClientService: LdapClientService,
-        private readonly rolleRepo: RolleRepo,
-        private readonly personRepository: PersonRepository,
-        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly organisationRepository: OrganisationRepository,
     ) {}
 
@@ -73,97 +66,40 @@ export class LdapEventHandler {
         }
     }
 
-    @EventHandler(PersonenkontextCreatedEvent)
-    public async handlePersonenkontextCreatedEvent(event: PersonenkontextCreatedEvent): Promise<void> {
+    @EventHandler(PersonenkontextUpdatedEvent)
+    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
-            `Received PersonenkontextCreatedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
+            `Received PersonenkontextCreatedEvent, personId:${event.person.id}, new personenkontexte: ${event.newKontexte.length}, deleted personenkontexte: ${event.removedKontexte.length}`,
         );
 
-        const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.find(
-            event.personId,
-            event.organisationId,
-            event.rolleId,
+        // Delete all removed personenkontexte if rollenart === LEHR
+        await Promise.allSettled(
+            event.removedKontexte
+                .filter((pk: PersonenkontextUpdatedData) => pk.rolle === RollenArt.LEHR)
+                .map(async (pk: PersonenkontextUpdatedData) => {
+                    this.logger.info(`Call LdapClientService because rollenArt is LEHR`);
+                    const deletionResult: Result<PersonData> = await this.ldapClientService.deleteLehrer(event.person, {
+                        kennung: pk.orgaKennung,
+                    });
+                    if (!deletionResult.ok) {
+                        this.logger.error(deletionResult.error.message);
+                    }
+                }),
         );
 
-        if (!personenkontext) {
-            this.logger.error(
-                `PK personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId} could not be found!`,
-            );
-            return;
-        }
-
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(personenkontext.rolleId);
-        const person: Option<Person<true>> = await this.personRepository.findById(personenkontext.personId);
-        const orga: Option<Organisation<true>> = await this.organisationRepository.findById(
-            personenkontext.organisationId,
+        // Create personenkontexte if rollenart === LEHR
+        await Promise.allSettled(
+            event.newKontexte
+                .filter((pk: PersonenkontextUpdatedData) => pk.rolle === RollenArt.LEHR)
+                .map(async (pk: PersonenkontextUpdatedData) => {
+                    this.logger.info(`Call LdapClientService because rollenArt is LEHR`);
+                    const creationResult: Result<PersonData> = await this.ldapClientService.createLehrer(event.person, {
+                        kennung: pk.orgaKennung,
+                    });
+                    if (!creationResult.ok) {
+                        this.logger.error(creationResult.error.message);
+                    }
+                }),
         );
-
-        if (!rolle) {
-            this.logger.error(`Rolle with id ${personenkontext.rolleId} could not be found!`);
-            return;
-        }
-        if (!person) {
-            this.logger.error(`Person with id ${personenkontext.personId} could not be found!`);
-            return;
-        }
-        if (!orga) {
-            this.logger.error(`Organisation with id ${personenkontext.personId} could not be found!`);
-            return;
-        }
-
-        if (rolle.rollenart === RollenArt.LEHR) {
-            this.logger.info(`Call LdapClientService because rollenArt is LEHR`);
-            const creationResult: Result<Person<true>> = await this.ldapClientService.createLehrer(person, orga);
-            if (!creationResult.ok) {
-                this.logger.error(creationResult.error.message);
-            }
-        }
-    }
-
-    @EventHandler(PersonenkontextDeletedEvent)
-    public async handlePersonenkontextDeletedEvent(event: PersonenkontextDeletedEvent): Promise<void> {
-        this.logger.info(
-            `Received PersonenkontextDeletedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
-        );
-
-        const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.find(
-            event.personId,
-            event.organisationId,
-            event.rolleId,
-        );
-
-        if (!personenkontext) {
-            this.logger.error(
-                `PK personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId} could not be found!`,
-            );
-            return;
-        }
-
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(personenkontext.rolleId);
-        const person: Option<Person<true>> = await this.personRepository.findById(personenkontext.personId);
-        const orga: Option<Organisation<true>> = await this.organisationRepository.findById(
-            personenkontext.organisationId,
-        );
-
-        if (!rolle) {
-            this.logger.error(`Rolle with id ${personenkontext.rolleId} could not be found!`);
-            return;
-        }
-        if (!person) {
-            this.logger.error(`Person with id ${personenkontext.personId} could not be found!`);
-            return;
-        }
-        if (!orga) {
-            this.logger.error(`Organisation with id ${personenkontext.personId} could not be found!`);
-            return;
-        }
-
-        if (rolle.rollenart === RollenArt.LEHR) {
-            this.logger.info(`Call LdapClientService because rollenArt is LEHR`);
-            const creationResult: Result<Person<true>> = await this.ldapClientService.deleteLehrer(person, orga);
-            if (!creationResult.ok) {
-                this.logger.error(creationResult.error.message);
-            }
-        }
     }
 }

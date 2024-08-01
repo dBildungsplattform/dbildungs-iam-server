@@ -44,6 +44,7 @@ export class DoFactory {
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
+            personalnummer: faker.string.numeric({ length: 7 }),
             revision: '1',
         };
         return Object.assign(Object.create(Person.prototype) as Person<boolean>, person, props);
@@ -54,7 +55,7 @@ export class DoFactory {
         withId: WasPersisted,
         props?: Partial<Organisation<false>>,
     ): Organisation<WasPersisted> {
-        const organisation: Organisation<false> = {
+        const organisation: Partial<Organisation<WasPersisted>> = {
             id: withId ? faker.string.uuid() : undefined,
             kennung: faker.lorem.word(),
             name: faker.company.name(),
@@ -178,5 +179,29 @@ export class DoFactory {
         };
 
         return Object.assign(new PersonenkontextDo<WasPersisted>(), personenkontext, params);
+    }
+
+    public static createOrganisationAggregate<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        params: Partial<Organisation<boolean>> = {},
+    ): Organisation<WasPersisted> {
+        const organisation: Organisation<WasPersisted> = Organisation.construct<boolean>(
+            withId ? faker.string.uuid() : undefined,
+            withId ? faker.date.past() : undefined,
+            withId ? faker.date.recent() : undefined,
+            faker.string.uuid(),
+            faker.string.uuid(),
+            faker.lorem.word(),
+            faker.lorem.word(),
+            faker.lorem.word(),
+            faker.string.uuid(),
+            faker.helpers.enumValue(OrganisationsTyp),
+            faker.helpers.enumValue(Traegerschaft),
+        );
+
+        Object.assign(organisation, params);
+
+        return organisation;
     }
 }

@@ -430,15 +430,15 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 if (person instanceof DomainError) {
                     return;
                 }
-
-                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                if (rolle instanceof DomainError) {
-                    return;
-                }
+                const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, { systemrechte: [RollenSystemRecht.PERSONEN_VERWALTEN] }),
+                );
                 const savedPK: Personenkontext<true> = await personenkontextRepo.save(
                     DoFactory.createPersonenkontext(false, {
                         personId: person.id,
                         rolleId: rolle.id,
+                        organisationId: orga.id,
                         updatedAt: new Date(),
                     }),
                 );
@@ -448,6 +448,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         lastModified: savedPK.updatedAt,
                         personenkontexte: [],
                     });
+                const personpermissions: DeepMocked<PersonPermissions> = createMock();
+                personpermissions.canModifyPerson.mockResolvedValueOnce(true);
+                personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .put(`/personenkontext-workflow/${person.id}`)
@@ -536,7 +540,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     .put(`/personenkontext-workflow/${params.personId}`)
                     .send(bodyParams);
 
-                expect(response.status).toBe(500);
+                expect(response.status).toBe(400);
             });
         });
     });

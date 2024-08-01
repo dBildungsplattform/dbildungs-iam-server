@@ -17,6 +17,15 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Person } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
+
+export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
+    for (const emailAddress of entity.emailAddresses) {
+        if (emailAddress.enabled) return emailAddress.address;
+    }
+    return undefined;
+}
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
     return {
@@ -73,6 +82,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.vertrauensstufe,
         entity.auskunftssperre,
         entity.personalnummer,
+        getEnabledEmailAddress(entity),
     );
 }
 
@@ -91,6 +101,8 @@ export class PersonRepository {
     public constructor(
         private readonly kcUserService: KeycloakUserService,
         private readonly em: EntityManager,
+        private readonly eventService: EventService,
+        //private readonly emailRepo: EmailRepo,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -187,6 +199,11 @@ export class PersonRepository {
 
         // Delete the person from Keycloak
         await this.kcUserService.delete(person.keycloakUserId);
+
+        // Delete email-addresses if any, must happen before person deletion to get the referred email-address
+        if (person.email) {
+            this.eventService.publish(new PersonDeletedEvent(personId, person.email));
+        }
 
         // Delete the person from the database with all their kontexte
         await this.em.nativeDelete(PersonEntity, person.id);

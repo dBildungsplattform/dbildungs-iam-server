@@ -45,6 +45,7 @@ export class PersonApiMapper {
                 lokalisierung: person.lokalisierung,
                 vertrauensstufe: person.vertrauensstufe,
                 revision: person.revision,
+                personalnummer: person.personalnummer,
             },
             personenkontexte: personenkontexte,
             gruppen: [], // TODO: if the gruppe module is implemented, this should be filled out with EW-656 / EW-697

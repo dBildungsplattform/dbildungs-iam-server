@@ -1,12 +1,14 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces/index.js';
 import { Response } from 'express';
-import { RolleApiError } from './rolle-api.error.js';
 import { AddSystemrechtError } from './add-systemrecht.error.js';
 import { DbiamRolleError, RolleErrorI18nTypes } from './dbiam-rolle.error.js';
+import { RolleDomainError } from '../domain/rolle-domain.error.js';
+import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
+import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 
-@Catch(RolleApiError)
-export class RolleExceptionFilter implements ExceptionFilter<RolleApiError> {
+@Catch(RolleDomainError)
+export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
     private ERROR_MAPPINGS: Map<string, DbiamRolleError> = new Map([
         [
             AddSystemrechtError.name,
@@ -15,20 +17,33 @@ export class RolleExceptionFilter implements ExceptionFilter<RolleApiError> {
                 i18nKey: RolleErrorI18nTypes.ADD_SYSTEMRECHT_ERROR,
             }),
         ],
+        [
+            RolleHatPersonenkontexteError.name,
+            new DbiamRolleError({
+                code: 400,
+                i18nKey: RolleErrorI18nTypes.ROLLE_HAT_PERSONENKONTEXTE_ERROR,
+            }),
+        ],
+        [
+            UpdateMerkmaleError.name,
+            new DbiamRolleError({
+                code: 400,
+                i18nKey: RolleErrorI18nTypes.UPDATE_MERKMALE_ERROR,
+            }),
+        ],
     ]);
 
-    public catch(exception: RolleApiError, host: ArgumentsHost): void {
+    public catch(exception: RolleDomainError, host: ArgumentsHost): void {
         const ctx: HttpArgumentsHost = host.switchToHttp();
         const response: Response = ctx.getResponse<Response>();
-        const status: number = 500; //all errors regarding organisation specifications are InternalServerErrors at the moment
 
         const dbiamRolleError: DbiamRolleError = this.mapDomainErrorToDbiamError(exception);
 
-        response.status(status);
+        response.status(dbiamRolleError.code);
         response.json(dbiamRolleError);
     }
 
-    private mapDomainErrorToDbiamError(error: RolleApiError): DbiamRolleError {
+    private mapDomainErrorToDbiamError(error: RolleDomainError): DbiamRolleError {
         return (
             this.ERROR_MAPPINGS.get(error.constructor.name) ??
             new DbiamRolleError({

@@ -127,6 +127,7 @@ export class PersonController {
             geburtsdatum: params.geburt?.datum,
             geburtsort: params.geburt?.geburtsort,
             username: params.username,
+            personalnummer: params.personalnummer,
             ...params,
         });
         if (person instanceof DomainError) {

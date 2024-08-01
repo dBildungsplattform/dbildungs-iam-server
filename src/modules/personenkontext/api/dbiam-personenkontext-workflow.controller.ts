@@ -1,16 +1,4 @@
-import {
-    BadRequestException,
-    Body,
-    Controller,
-    Get,
-    HttpCode,
-    HttpStatus,
-    Param,
-    Post,
-    Put,
-    Query,
-    UseFilters,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -28,7 +16,6 @@ import { FindPersonenkontextSchulstrukturknotenBodyParams } from './param/find-p
 import { FindSchulstrukturknotenResponse } from './response/find-schulstrukturknoten.response.js';
 import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
@@ -51,8 +38,13 @@ import { PersonenkontextSpecificationError } from '../specification/error/person
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new PersonenkontextExceptionFilter())
+@UseFilters(
+    SchulConnexValidationErrorFilter,
+    new PersonenkontextExceptionFilter(),
+    new PersonenkontexteUpdateExceptionFilter(),
+)
 @ApiTags('personenkontext')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -141,14 +133,21 @@ export class DbiamPersonenkontextWorkflowController {
     public async commit(
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
         @Body() bodyParams: DbiamUpdatePersonenkontexteBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PersonenkontexteUpdateResponse> {
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError =
             await this.personenkontextWorkflowFactory
                 .createNew()
-                .commit(params.personId, bodyParams.lastModified, bodyParams.count, bodyParams.personenkontexte);
+                .commit(
+                    params.personId,
+                    bodyParams.lastModified,
+                    bodyParams.count,
+                    bodyParams.personenkontexte,
+                    permissions,
+                );
 
-        if (updateResult instanceof DomainError) {
-            throw new BadRequestException(updateResult.message);
+        if (updateResult instanceof PersonenkontexteUpdateError) {
+            throw updateResult;
         }
         return new PersonenkontexteUpdateResponse(updateResult);
     }
@@ -170,7 +169,7 @@ export class DbiamPersonenkontextWorkflowController {
     ): Promise<FindSchulstrukturknotenResponse> {
         const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
         const sskName: string = params.sskName ?? '';
-        const ssks: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(
+        const ssks: Organisation<true>[] = await anlage.findSchulstrukturknoten(
             params.rolleId,
             sskName,
             params.limit,

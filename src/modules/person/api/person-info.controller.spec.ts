@@ -99,6 +99,7 @@ describe('PersonInfoController', () => {
                         geschlecht: person.geschlecht,
                         lokalisierung: person.lokalisierung,
                         vertrauensstufe: person.vertrauensstufe,
+                        personalnummer: person.personalnummer,
                         revision: person.revision,
                     },
                     personenkontexte: [],

@@ -20,49 +20,20 @@ import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
-import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
-import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
 import { faker } from '@faker-js/faker';
-import { Rolle } from '../../../modules/rolle/domain/rolle.js';
-import { Person } from '../../../modules/person/domain/person.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
 import { SchuleDeletedEvent } from '../../../shared/events/schule-deleted.event.js';
-import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
-
-function createPersonenkontext<WasPersisted extends boolean>(
-    this: void,
-    withId: WasPersisted,
-    personenkontextFactory: PersonenkontextFactory,
-    params: Partial<Personenkontext<boolean>> = {},
-): Personenkontext<WasPersisted> {
-    const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
-        withId ? faker.string.uuid() : undefined,
-        withId ? faker.date.past() : undefined,
-        withId ? faker.date.recent() : undefined,
-        undefined,
-        faker.string.uuid(),
-        faker.string.uuid(),
-        faker.string.uuid(),
-    );
-
-    Object.assign(personenkontext, params);
-
-    return personenkontext;
-}
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 
 describe('LDAP Event Handler', () => {
     let app: INestApplication;
     let orm: MikroORM;
 
-    let personenkontextFactory: PersonenkontextFactory;
-    let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
-    let personRepositoryMock: DeepMocked<PersonRepository>;
-    let rolleRepoMock: DeepMocked<RolleRepo>;
 
     let ldapEventHandler: LdapEventHandler;
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
@@ -100,11 +71,7 @@ describe('LDAP Event Handler', () => {
 
         orm = module.get(MikroORM);
 
-        personenkontextFactory = module.get(PersonenkontextFactory);
-        dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         organisationRepositoryMock = module.get(OrganisationRepository);
-        personRepositoryMock = module.get(PersonRepository);
-        rolleRepoMock = module.get(RolleRepo);
 
         ldapEventHandler = module.get(LdapEventHandler);
         ldapClientServiceMock = module.get(LdapClientService);
@@ -236,203 +203,121 @@ describe('LDAP Event Handler', () => {
         });
     });
 
-    describe('asyncPersonenkontextCreatedEventHandler', () => {
-        describe('when personenkontext is not found', () => {
-            it('should execute without errors', async () => {
-                const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                );
+    describe('handlePersonenkontextUpdatedEvent', () => {
+        it('should call ldap client for every new personenkontext with correct role', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [
+                    {
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                    },
+                    {
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.EXTERN,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                    },
+                ],
+                [],
+                [],
+            );
 
-                dbiamPersonenkontextRepoMock.find.mockResolvedValueOnce(undefined);
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-                await ldapEventHandler.handlePersonenkontextCreatedEvent(event);
-                expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
-            });
+            expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(1);
         });
 
-        describe('when rolle is not found', () => {
-            it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
-                const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                );
+        it('should call ldap client for every deleted personenkontext with correct role', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [],
+                [
+                    {
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                    },
+                    {
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.EXTERN,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                    },
+                ],
+                [],
+            );
 
-                dbiamPersonenkontextRepoMock.find.mockResolvedValueOnce(personenkontext);
-                rolleRepoMock.findById.mockResolvedValueOnce(undefined);
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-                await ldapEventHandler.handlePersonenkontextCreatedEvent(event);
-                expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
-            });
+            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
         });
 
-        describe('when person is not found', () => {
-            it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
-                const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
+        describe('when ldap client fails', () => {
+            it('should execute without errors, if creation of lehrer fails', async () => {
+                const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                    {
+                        id: faker.string.uuid(),
+                        vorname: faker.person.firstName(),
+                        familienname: faker.person.lastName(),
+                        referrer: faker.internet.userName(),
+                    },
+                    [
+                        {
+                            orgaId: faker.string.uuid(),
+                            rolle: RollenArt.LEHR,
+                            rolleId: faker.string.uuid(),
+                            orgaKennung: faker.string.numeric(7),
+                        },
+                    ],
+                    [],
+                    [],
                 );
-                const rolle: Rolle<true> = createMock<Rolle<true>>();
+                ldapClientServiceMock.createLehrer.mockResolvedValueOnce({ ok: false, error: new Error('Error') });
 
-                dbiamPersonenkontextRepoMock.find.mockResolvedValueOnce(personenkontext);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                personRepositoryMock.findById.mockResolvedValueOnce(undefined);
+                await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-                await ldapEventHandler.handlePersonenkontextCreatedEvent(event);
-                expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
-            });
-        });
-
-        describe('when organisation is not found', () => {
-            it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
-                const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                );
-                const rolle: Rolle<true> = createMock<Rolle<true>>();
-                const person: Person<true> = createMock<Person<true>>();
-
-                dbiamPersonenkontextRepoMock.find.mockResolvedValueOnce(personenkontext);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                personRepositoryMock.findById.mockResolvedValueOnce(person);
-                organisationRepositoryMock.findById.mockResolvedValueOnce(undefined);
-
-                await ldapEventHandler.handlePersonenkontextCreatedEvent(event);
-                expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
-            });
-        });
-
-        describe('when creation of lehrer in LDAP fails', () => {
-            it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
-                const rolle: Rolle<true> = createMock<Rolle<true>>({ rollenart: RollenArt.LEHR });
-                const person: Person<true> = createMock<Person<true>>();
-                const organisation: Organisation<true> = createMock<Organisation<true>>();
-                const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(
-                    personenkontext.id,
-                    organisation.id,
-                    rolle.id,
-                );
-
-                dbiamPersonenkontextRepoMock.find.mockResolvedValueOnce(personenkontext);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                personRepositoryMock.findById.mockResolvedValueOnce(person);
-                organisationRepositoryMock.findById.mockResolvedValueOnce(organisation);
-
-                ldapClientServiceMock.createLehrer.mockResolvedValueOnce({
-                    ok: false,
-                    error: new Error(),
-                });
-                await ldapEventHandler.handlePersonenkontextCreatedEvent(event);
                 expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(1);
             });
         });
-    });
 
-    describe('asyncPersonenkontextDeletedEventHandler', () => {
-        describe('when personenkontext is not found', () => {
-            it('should execute without errors', async () => {
-                const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                );
+        it('should execute without errors, if deletion of lehrer fails', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [],
+                [
+                    {
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                    },
+                ],
+                [],
+            );
+            ldapClientServiceMock.deleteLehrer.mockResolvedValueOnce({ ok: false, error: new Error('Error') });
 
-                dbiamPersonenkontextRepoMock.find.mockResolvedValueOnce(undefined);
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-                await ldapEventHandler.handlePersonenkontextDeletedEvent(event);
-                expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(0);
-            });
-        });
-
-        describe('when rolle is not found', () => {
-            it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
-                const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                );
-
-                dbiamPersonenkontextRepoMock.find.mockResolvedValueOnce(personenkontext);
-                rolleRepoMock.findById.mockResolvedValueOnce(undefined);
-
-                await ldapEventHandler.handlePersonenkontextDeletedEvent(event);
-                expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(0);
-            });
-        });
-
-        describe('when person is not found', () => {
-            it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
-                const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                );
-                const rolle: Rolle<true> = createMock<Rolle<true>>();
-
-                dbiamPersonenkontextRepoMock.find.mockResolvedValueOnce(personenkontext);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                personRepositoryMock.findById.mockResolvedValueOnce(undefined);
-
-                await ldapEventHandler.handlePersonenkontextDeletedEvent(event);
-                expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(0);
-            });
-        });
-
-        describe('when organisation is not found', () => {
-            it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
-                const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                );
-                const rolle: Rolle<true> = createMock<Rolle<true>>();
-                const person: Person<true> = createMock<Person<true>>();
-
-                dbiamPersonenkontextRepoMock.find.mockResolvedValueOnce(personenkontext);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                personRepositoryMock.findById.mockResolvedValueOnce(person);
-                organisationRepositoryMock.findById.mockResolvedValueOnce(undefined);
-
-                await ldapEventHandler.handlePersonenkontextDeletedEvent(event);
-                expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(0);
-            });
-        });
-
-        describe('when creation of lehrer in LDAP fails', () => {
-            it('should execute without errors', async () => {
-                const personenkontext: Personenkontext<true> = createPersonenkontext(true, personenkontextFactory);
-                const rolle: Rolle<true> = createMock<Rolle<true>>({ rollenart: RollenArt.LEHR });
-                const person: Person<true> = createMock<Person<true>>();
-                const organisation: Organisation<true> = createMock<Organisation<true>>();
-                const event: PersonenkontextCreatedEvent = new PersonenkontextCreatedEvent(
-                    person.id,
-                    organisation.id,
-                    rolle.id,
-                );
-
-                dbiamPersonenkontextRepoMock.find.mockResolvedValueOnce(personenkontext);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                personRepositoryMock.findById.mockResolvedValueOnce(person);
-                organisationRepositoryMock.findById.mockResolvedValueOnce(organisation);
-
-                ldapClientServiceMock.deleteLehrer.mockResolvedValueOnce({
-                    ok: false,
-                    error: new Error(),
-                });
-                await ldapEventHandler.handlePersonenkontextDeletedEvent(event);
-                expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
-            });
+            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
         });
     });
 });

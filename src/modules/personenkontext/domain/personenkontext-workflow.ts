@@ -16,6 +16,7 @@ import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js'
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { IPersonPermissions } from '../../authentication/domain/person-permissions.interface.js';
 
 export class PersonenkontextWorkflowAggregate {
     public selectedOrganisationId?: string;
@@ -172,15 +173,17 @@ export class PersonenkontextWorkflowAggregate {
     // This will only be used during "bearbeiten".
     public async commit(
         personId: string,
-        lastModified: Date,
+        lastModified: Date | undefined,
         count: number,
         personenkontexte: DbiamPersonenkontextBodyParams[],
+        permissions: IPersonPermissions,
     ): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
             personId,
             lastModified,
             count,
             personenkontexte,
+            permissions,
         );
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
 
