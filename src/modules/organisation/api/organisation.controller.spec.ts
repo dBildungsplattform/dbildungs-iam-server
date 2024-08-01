@@ -3,7 +3,7 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { plainToClass } from 'class-transformer';
-import { MapperTestModule } from '../../../../test/utils/index.js';
+import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
@@ -28,6 +28,9 @@ import { EventService } from '../../../core/eventbus/index.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
+import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { NameRequiredForKlasseError } from '../specification/error/name-required-for-klasse.error.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -239,7 +242,7 @@ describe('OrganisationController', () => {
 
                 const mockedRepoResponse: Counted<Organisation<true>> = [
                     [
-                        {
+                        DoFactory.createOrganisationAggregate(true, {
                             id: faker.string.uuid(),
                             createdAt: faker.date.recent(),
                             updatedAt: faker.date.recent(),
@@ -251,7 +254,7 @@ describe('OrganisationController', () => {
                             kuerzel: faker.lorem.word(),
                             typ: OrganisationsTyp.SCHULE,
                             traegerschaft: Traegerschaft.LAND,
-                        },
+                        }),
                     ],
                     1,
                 ];
@@ -292,21 +295,7 @@ describe('OrganisationController', () => {
                 };
 
                 const mockedRepoResponse: Counted<Organisation<true>> = [
-                    [
-                        {
-                            id: faker.string.uuid(),
-                            createdAt: faker.date.recent(),
-                            updatedAt: faker.date.recent(),
-                            administriertVon: faker.string.uuid(),
-                            zugehoerigZu: faker.string.uuid(),
-                            kennung: faker.lorem.word(),
-                            name: faker.lorem.word(),
-                            namensergaenzung: faker.lorem.word(),
-                            kuerzel: faker.lorem.word(),
-                            typ: OrganisationsTyp.KLASSE,
-                            traegerschaft: Traegerschaft.LAND,
-                        },
-                    ],
+                    [DoFactory.createOrganisationAggregate(true)],
                     1,
                 ];
 
@@ -606,6 +595,69 @@ describe('OrganisationController', () => {
                 );
 
                 expect(organisationUcMock.setZugehoerigZu).toHaveBeenCalledTimes(1);
+            });
+        });
+    });
+
+    describe('updateOrganisationName', () => {
+        describe('when usecase succeeds', () => {
+            it('should not throw an error', async () => {
+                const oeffentlich: Organisation<true> = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.numeric(),
+                    'Öffentliche Schulen Land Schleswig-Holstein',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.ROOT,
+                    undefined,
+                );
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
+                const body: OrganisationByNameBodyParams = {
+                    name: faker.company.name(),
+                };
+
+                organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(oeffentlich);
+
+                await expect(organisationController.updateOrganisationName(params, body)).resolves.not.toThrow();
+            });
+        });
+
+        describe('when usecase returns a OrganisationSpecificationError', () => {
+            it('should throw a HttpException', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
+                const body: OrganisationByNameBodyParams = {
+                    name: faker.company.name(),
+                };
+                organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(new NameRequiredForKlasseError());
+
+                await expect(organisationController.updateOrganisationName(params, body)).rejects.toThrow(
+                    NameRequiredForKlasseError,
+                );
+            });
+        });
+
+        describe('when usecase returns a SchulConnexError', () => {
+            it('should throw a HttpException', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
+                const body: OrganisationByNameBodyParams = {
+                    name: faker.company.name(),
+                };
+
+                organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(new EntityNotFoundError());
+
+                await expect(organisationController.updateOrganisationName(params, body)).rejects.toThrow(
+                    HttpException,
+                );
             });
         });
     });
