@@ -1,7 +1,7 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
-import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
+import { Collection, EntityManager, MikroORM, rel, RequiredEntityData } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -15,6 +15,7 @@ import { PersonPersistenceMapperProfile } from './person-persistence.mapper.prof
 import { PersonEntity } from './person.entity.js';
 import { PersonRepo } from './person.repo.js';
 import {
+    getEnabledEmailAddress,
     mapAggregateToData,
     mapEntityToAggregate,
     mapEntityToAggregateInplace,
@@ -36,8 +37,11 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 
-describe('PersonRepository', () => {
+describe('PersonRepository Integration', () => {
     let module: TestingModule;
     let sutLegacy: PersonRepo;
     let sut: PersonRepository;
@@ -48,6 +52,7 @@ describe('PersonRepository', () => {
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let configService: ConfigService;
+    let eventServiceMock: DeepMocked<EventService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -57,6 +62,14 @@ describe('PersonRepository', () => {
                 PersonRepo,
                 PersonRepository,
                 ConfigService,
+                {
+                    provide: EmailRepo,
+                    useValue: createMock<EmailRepo>(),
+                },
+                {
+                    provide: EventService,
+                    useValue: createMock<EventService>(),
+                },
                 {
                     provide: UsernameGeneratorService,
                     useValue: createMock<UsernameGeneratorService>(),
@@ -81,6 +94,7 @@ describe('PersonRepository', () => {
         kcUserServiceMock = module.get(KeycloakUserService);
         usernameGeneratorService = module.get(UsernameGeneratorService);
         configService = module.get(ConfigService);
+        eventServiceMock = module.get(EventService);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -590,6 +604,53 @@ describe('PersonRepository', () => {
         });
     });
 
+    describe('getEnabledEmailAddress', () => {
+        let personEntity: PersonEntity;
+
+        beforeEach(() => {
+            personEntity = mapper.map(
+                DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() }),
+                PersonDo,
+                PersonEntity,
+            );
+            personEntity.emailAddresses = new Collection<EmailAddressEntity>(personEntity);
+        });
+
+        describe('when enabled emailAddress is in collection', () => {
+            it('should return address of (first found) enabled address', () => {
+                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+                emailAddressEntity.enabled = true;
+                emailAddressEntity.address = faker.internet.email();
+                personEntity.emailAddresses.add(emailAddressEntity);
+
+                const result: string | undefined = getEnabledEmailAddress(personEntity);
+
+                expect(result).toBeDefined();
+            });
+        });
+
+        describe('when NO enabled emailAddress is in collection', () => {
+            it('should return undefined', () => {
+                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+                emailAddressEntity.enabled = false;
+                emailAddressEntity.address = faker.internet.email();
+                personEntity.emailAddresses.add(emailAddressEntity);
+
+                const result: string | undefined = getEnabledEmailAddress(personEntity);
+
+                expect(result).toBeUndefined();
+            });
+        });
+
+        describe('when NO emailAddress at all is found in collection', () => {
+            it('should return undefined', () => {
+                const result: string | undefined = getEnabledEmailAddress(personEntity);
+
+                expect(result).toBeUndefined();
+            });
+        });
+    });
+
     describe('mapAggregateToData', () => {
         it('should return Person RequiredEntityData', () => {
             const person: Person<true> = Person.construct(
@@ -769,6 +830,45 @@ describe('PersonRepository', () => {
                 );
                 expect(result.ok).toBeTruthy();
             });
+
+            describe('Delete the person and all kontexte and trigger event to delete email', () => {
+                it('should delete the person and trigger PersonDeletedEvent', async () => {
+                    const person: PersonDo<true> = DoFactory.createPerson(true);
+                    personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person.id]);
+
+                    await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
+
+                    const emailAddress: EmailAddressEntity = new EmailAddressEntity();
+                    emailAddress.address = faker.internet.email();
+                    emailAddress.personId = rel(PersonEntity, person.id);
+                    emailAddress.enabled = true;
+
+                    const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
+                    await em.persistAndFlush(pp);
+
+                    await sut.getPersonIfAllowed(person.id, personPermissionsMock);
+                    const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
+                        person.id,
+                        personPermissionsMock,
+                    );
+                    if (!personGetAllowed.ok) {
+                        throw new EntityNotFoundError('Person', person.id);
+                    }
+                    const result: Result<void, DomainError> = await sut.deletePerson(
+                        personGetAllowed.value.id,
+                        personPermissionsMock,
+                    );
+
+                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                        expect.objectContaining({
+                            emailAddress: emailAddress.address,
+                            personId: person.id,
+                        }),
+                    );
+                    expect(result.ok).toBeTruthy();
+                });
+            });
+
             it('should not delete the person because of unsufficient permissions to find the person', async () => {
                 const person1: PersonDo<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);

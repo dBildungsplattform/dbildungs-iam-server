@@ -452,11 +452,15 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         describe('when sending no PKs', () => {
             it('should delete and therefore return 200', async () => {
                 const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const orga: OrganisationDo<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, { systemrechte: [RollenSystemRecht.PERSONEN_VERWALTEN] }),
+                );
                 const savedPK: Personenkontext<true> = await personenkontextRepo.save(
                     createPersonenkontext(personenkontextFactory, false, {
                         personId: person.id,
                         rolleId: rolle.id,
+                        organisationId: orga.id,
                         updatedAt: new Date(),
                     }),
                 );
@@ -466,6 +470,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         lastModified: savedPK.updatedAt,
                         personenkontexte: [],
                     });
+                const personpermissions: DeepMocked<PersonPermissions> = createMock();
+                personpermissions.canModifyPerson.mockResolvedValueOnce(true);
+                personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .put(`/personenkontext-workflow/${person.id}`)

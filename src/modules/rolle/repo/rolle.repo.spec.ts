@@ -4,10 +4,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import {
     ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     LoggingTestModule,
+    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleRepo } from './rolle.repo.js';
@@ -32,7 +33,12 @@ describe('RolleRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
+            imports: [
+                ConfigTestModule,
+                LoggingTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                MapperTestModule,
+            ],
             providers: [RolleRepo, RolleFactory, ServiceProviderRepo, OrganisationRepository, EventService],
         }).compile();
 
@@ -160,9 +166,15 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
 
-            const rolleResult: Option<Rolle<true>[]> = await sut.findRollenAuthorized(permissions, undefined, 10, 0);
+            const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                undefined,
+                10,
+                0,
+            );
 
             expect(rolleResult?.length).toBe(0);
+            expect(total).toBe(0);
         });
 
         it('should return the rollen when permissions are sufficient', async () => {
@@ -172,9 +184,15 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
 
-            const rolleResult: Option<Rolle<true>[]> = await sut.findRollenAuthorized(permissions, undefined, 10, 0);
+            const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                undefined,
+                10,
+                0,
+            );
 
             expect(rolleResult?.length).toBe(1);
+            expect(total).toBe(1);
         });
 
         it('should return empty array when permissions are insufficient', async () => {
@@ -184,9 +202,15 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
-            const rolleResult: Option<Rolle<true>[]> = await sut.findRollenAuthorized(permissions, undefined, 10, 0);
+            const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                undefined,
+                10,
+                0,
+            );
 
             expect(rolleResult?.length).toBe(0);
+            expect(total).toBe(0);
         });
 
         it('should filter rollen based on search string and permissions', async () => {
@@ -204,9 +228,15 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
 
-            const rolleResult: Option<Rolle<true>[]> = await sut.findRollenAuthorized(permissions, 'Test', 10, 0);
+            const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                'Test',
+                10,
+                0,
+            );
 
             expect(rolleResult?.length).toBe(1);
+            expect(total).toBe(1);
         });
 
         it('should return all rollen when no search string is provided and permissions are sufficient', async () => {
@@ -216,9 +246,15 @@ describe('RolleRepo', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
 
-            const rolleResult: Option<Rolle<true>[]> = await sut.findRollenAuthorized(permissions, undefined, 10, 0);
+            const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                undefined,
+                10,
+                0,
+            );
 
             expect(rolleResult?.length).toBe(1);
+            expect(total).toBe(1);
         });
     });
     describe('findByName', () => {
@@ -369,6 +405,43 @@ describe('RolleRepo', () => {
             );
 
             expect(rolleResult).toBeInstanceOf(UpdateMerkmaleError);
+        });
+    });
+
+    describe('deleteAuthorized', () => {
+        describe('should succeed', () => {
+            it('if rolle HAS Merkmale, Systemrechte & Service Providers', async () => {
+                const organisationId: OrganisationID = faker.string.uuid();
+                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                    DoFactory.createServiceProvider(false),
+                );
+                const rolle: Rolle<true> = await sut.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisationId,
+                        serviceProviderIds: [serviceProvider.id],
+                    }),
+                );
+                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
+
+                await sut.deleteAuthorized(rolle.id, permissions);
+
+                const exists: boolean = await sut.exists(rolle.id);
+                expect(exists).toBe(false);
+            });
+        });
+
+        describe('should return error', () => {
+            it('when permissions are insufficient', async () => {
+                const rolle: Rolle<true> = await sut.save(
+                    DoFactory.createRolle(false, { administeredBySchulstrukturknoten: faker.string.uuid() }),
+                );
+                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+
+                const rolleResult: Option<DomainError> = await sut.deleteAuthorized(rolle.id, permissions);
+                expect(rolleResult).toBeInstanceOf(DomainError);
+            });
         });
     });
 });

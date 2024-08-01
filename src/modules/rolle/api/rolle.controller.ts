@@ -18,8 +18,8 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
-    ApiOAuth2,
     ApiNotFoundResponse,
+    ApiOAuth2,
     ApiOkResponse,
     ApiOperation,
     ApiTags,
@@ -54,9 +54,9 @@ import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleDomainError } from '../domain/rolle-domain.error.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
-import { RolleDomainError } from '../domain/rolle-domain.error.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -86,7 +86,7 @@ export class RolleController {
         @Query() queryParams: RolleNameQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
-        const rollen: Option<Rolle<true>[]> = await this.rolleRepo.findRollenAuthorized(
+        const [rollen, total]: [Option<Rolle<true>[]>, number] = await this.rolleRepo.findRollenAuthorized(
             permissions,
             queryParams.searchStr,
             queryParams.limit,
@@ -113,7 +113,7 @@ export class RolleController {
             },
         );
         const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
-            total: rollenWithServiceProvidersResponses.length,
+            total: total,
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? rollenWithServiceProvidersResponses.length,
             items: rollenWithServiceProvidersResponses,
@@ -349,6 +349,32 @@ export class RolleController {
         }
 
         return this.returnRolleWithServiceProvidersResponse(result);
+    }
+
+    @Delete(':rolleId')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiOperation({ description: 'Delete a role by id.' })
+    @ApiOkResponse({ description: 'Role was deleted successfully.' })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamRolleError })
+    @ApiNotFoundResponse({ description: 'The rolle that should be deleted does not exist.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to delete the role.' })
+    public async deleteRolle(
+        @Param() findRolleByIdParams: FindRolleByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        const result: Option<DomainError> = await this.rolleRepo.deleteAuthorized(
+            findRolleByIdParams.rolleId,
+            permissions,
+        );
+        if (result instanceof DomainError) {
+            if (result instanceof RolleDomainError) {
+                throw result;
+            }
+
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
     }
 
     private async returnRolleWithServiceProvidersResponse(

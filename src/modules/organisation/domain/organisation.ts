@@ -1,3 +1,8 @@
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
+import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
+import { NameRequiredForKlasseError } from '../specification/error/name-required-for-klasse.error.js';
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
+import { NameRequiredForKlasse } from '../specification/name-required-for-klasse.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
@@ -80,5 +85,35 @@ export class Organisation<WasPersisted extends boolean> {
             typ,
             traegerschaft,
         );
+    }
+
+    public async checkKlasseSpecifications(
+        organisationRepository: OrganisationRepository,
+    ): Promise<undefined | OrganisationSpecificationError> {
+        const nameRequiredForKlasse: NameRequiredForKlasse = new NameRequiredForKlasse();
+        if (!(await nameRequiredForKlasse.isSatisfiedBy(this))) {
+            return new NameRequiredForKlasseError();
+        }
+        //Refactor this to use KlassenNameAnSchuleEindeutig when ticket SPSH-738 is merged
+        if (!(await this.validateClassNameIsUniqueOnSchool(organisationRepository))) {
+            return new KlassenNameAnSchuleEindeutigError(this.id ?? undefined);
+        }
+
+        return undefined;
+    }
+
+    private async validateClassNameIsUniqueOnSchool(organisationRepository: OrganisationRepository): Promise<boolean> {
+        if (this.typ !== OrganisationsTyp.KLASSE) return true;
+        if (!this.administriertVon) return false;
+        const parent: Option<Organisation<true>> = await organisationRepository.findById(this.administriertVon);
+        if (!parent) return false;
+        //check that parent is of type SCHULE is done in a different specification
+        const otherChildOrgas: Organisation<true>[] = await organisationRepository.findChildOrgasForIds([parent.id]);
+        for (const otherChildOrga of otherChildOrgas) {
+            if (otherChildOrga.typ === OrganisationsTyp.KLASSE) {
+                if (otherChildOrga.name === this.name) return false; //not satisfied if another Klasse already has same name
+            }
+        }
+        return true;
     }
 }
