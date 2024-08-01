@@ -251,8 +251,8 @@ describe('DbSeedService', () => {
                     `./seeding/seeding-integration-test/organisation/07_organisation_with_invalid_name.json`,
                     'utf-8',
                 );
-                const persistedOrganisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
-                const parent: OrganisationDo<true> = createMock<OrganisationDo<true>>();
+                const persistedOrganisation: Organisation<true> = DoFactory.createOrganisationAggregate(true);
+                const parent: Organisation<true> = createMock<Organisation<true>>();
                 organisationRepositoryMock.save.mockResolvedValueOnce(parent);
                 //USE MockResolved instead of MockRecolvedOnce because it's called for administriert and zugehoerigZu
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID of referenced parent
@@ -350,7 +350,7 @@ describe('DbSeedService', () => {
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced serviceProvider
                 serviceProviderRepoMock.findById.mockResolvedValueOnce(serviceProviderMocked);
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced parent
-                organisationRepositoryMock.findById.mockResolvedValue(createMock<OrganisationDo<true>>()); // mock get-SSK
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock get-SSK
 
                 rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
                 await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(
@@ -506,7 +506,7 @@ describe('DbSeedService', () => {
                     personRepoMock.findById.mockResolvedValue(createMock<Person<true>>()); // mock getReferencedPerson
 
                     dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
-                    organisationRepositoryMock.findById.mockResolvedValue(createMock<OrganisationDo<true>>()); // mock getReferencedOrganisation
+                    organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock getReferencedOrganisation
 
                     dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
                     rolleRepoMock.findById.mockResolvedValue(createMock<Rolle<true>>()); // mock getReferencedRolle
