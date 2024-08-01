@@ -61,6 +61,7 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personen')
@@ -74,6 +75,7 @@ export class PersonController {
         private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
         private readonly personFactory: PersonFactory,
+        private keycloakUserService: KeycloakUserService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
     ) {
@@ -420,5 +422,63 @@ export class PersonController {
         }
 
         return { ok: true, value: personResult.value.newPassword! };
+    }
+
+    @Put(':personId/disable')
+    @ApiOkResponse({ description: 'User has been successfully disabled.' })
+    @ApiNotFoundResponse({ description: 'The person was not found.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
+    @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
+    public async disablePerson(
+        @Param('personId') personId: string,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            personId,
+            permissions,
+        );
+
+        if (!personResult.ok) {
+            throw new Error('Person not found or no permissions');
+        }
+
+        if (!personResult.value?.keycloakUserId) {
+            throw new Error('Person not found');
+        }
+        const result: Result<void, DomainError> = await this.keycloakUserService.lockUser(
+            personResult.value.keycloakUserId,
+        );
+        if (!result.ok) {
+            throw new Error('Error while disabling user');
+        }
+    }
+
+    @Put(':personId/enable')
+    @ApiOkResponse({ description: 'User has been successfully enabled.' })
+    @ApiNotFoundResponse({ description: 'The person was not found.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
+    @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
+    public async enablePerson(
+        @Param('personId') personId: string,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            personId,
+            permissions,
+        );
+
+        if (!personResult.ok) {
+            throw new Error('Person not found or no permissions');
+        }
+
+        if (!personResult.value?.keycloakUserId) {
+            throw new Error('Person not found');
+        }
+        const result: Result<void, DomainError> = await this.keycloakUserService.unlockUser(
+            personResult.value.keycloakUserId,
+        );
+        if (!result.ok) {
+            throw new Error('Error while disabling user');
+        }
     }
 }
