@@ -7,7 +7,7 @@ import {
 } from '../../../../test/utils/index.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { GleicheRolleAnKlasseWieSchule } from './gleiche-rolle-an-klasse-wie-schule.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
@@ -25,6 +25,7 @@ import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -125,9 +126,9 @@ describe('PersonenkontextSpecifications Integration', () => {
 
     describe('Gleiche Rolle An Klasse Wie Schule', () => {
         it('should not be satisfied when rolle could not be found', async () => {
-            const klasse: OrganisationDo<true> = createMock<OrganisationDo<true>>();
+            const klasse: Organisation<true> = createMock<Organisation<true>>();
             klasse.typ = OrganisationsTyp.KLASSE;
-            const schule: OrganisationDo<true> = createMock<OrganisationDo<true>>();
+            const schule: Organisation<true> = createMock<Organisation<true>>();
             schule.typ = OrganisationsTyp.SCHULE;
             schule.id = faker.string.uuid();
             klasse.administriertVon = schule.id;
