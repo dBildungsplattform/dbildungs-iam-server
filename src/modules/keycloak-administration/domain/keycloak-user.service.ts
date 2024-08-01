@@ -273,4 +273,28 @@ export class KeycloakUserService {
 
         return { ok: true, value: userDo };
     }
+
+    public async lockUser(userId: string): Promise<Result<void, DomainError>> {
+        return this.setUserEnabled(userId, false);
+    }
+
+    public async unlockUser(userId: string): Promise<Result<void, DomainError>> {
+        return this.setUserEnabled(userId, true);
+    }
+
+    private async setUserEnabled(userId: string, enabled: boolean): Promise<Result<void, DomainError>> {
+        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+            await this.kcAdminService.getAuthedKcAdminClient();
+        if (!kcAdminClientResult.ok) {
+            return kcAdminClientResult;
+        }
+
+        try {
+            await kcAdminClientResult.value.users.update({ id: userId }, { enabled });
+            return { ok: true, value: undefined };
+        } catch (err) {
+            this.logger.error(`Could not update user enabled status, message: ${JSON.stringify(err)}`);
+            return { ok: false, error: new KeycloakClientError('Could not update user enabled status') };
+        }
+    }
 }
