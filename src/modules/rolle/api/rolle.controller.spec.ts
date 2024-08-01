@@ -17,9 +17,9 @@ import { RolleNameQueryParams } from './rolle-name-query.param.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
-import { HttpException } from '@nestjs/common';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -130,7 +130,9 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     value: organisation,
                 });
 
-                await expect(rolleController.createRolle(createRolleParams)).rejects.toThrow(HttpException);
+                await expect(rolleController.createRolle(createRolleParams)).rejects.toThrow(
+                    NameForRolleWithTrailingSpaceError,
+                );
             });
         });
     });

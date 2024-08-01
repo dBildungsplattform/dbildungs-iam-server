@@ -6,7 +6,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
-import { NameValidationError } from '../../../shared/error/name-validation.error.js';
+import { VornameForPersonWithTrailingSpaceError } from './vorname-with-trailing-space.error.js';
+import { FamiliennameForPersonWithTrailingSpaceError } from './familienname-with-trailing-space.error.js';
 
 describe('Person', () => {
     let module: TestingModule;
@@ -133,7 +134,7 @@ describe('Person', () => {
                     usernameGeneratorService,
                     creationParams,
                 );
-                expect(result).toBeInstanceOf(NameValidationError);
+                expect(result).toBeInstanceOf(VornameForPersonWithTrailingSpaceError);
             });
 
             it('should return an error if the familienname ends with whitespace', async () => {
@@ -145,7 +146,7 @@ describe('Person', () => {
                     usernameGeneratorService,
                     creationParams,
                 );
-                expect(result).toBeInstanceOf(NameValidationError);
+                expect(result).toBeInstanceOf(FamiliennameForPersonWithTrailingSpaceError);
             });
 
             it('should return an error if the familienname is only whitespace', async () => {
@@ -157,7 +158,7 @@ describe('Person', () => {
                     usernameGeneratorService,
                     creationParams,
                 );
-                expect(result).toBeInstanceOf(NameValidationError);
+                expect(result).toBeInstanceOf(FamiliennameForPersonWithTrailingSpaceError);
             });
 
             it('should create a new person if names are valid', async () => {
@@ -239,6 +240,40 @@ describe('Person', () => {
                 const result: void | DomainError = person.update('6', undefined, undefined, 'abc');
 
                 expect(result).toBeInstanceOf(DomainError);
+            });
+        });
+
+        describe('name validation', () => {
+            it('should return an error if the vorname starts with whitespace', () => {
+                const person: Person<true> = Person.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    'Mustermann',
+                    'Max',
+                    '5',
+                    faker.lorem.word(),
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                );
+                const result: void | DomainError = person.update('5', undefined, ' vorname', 'abc');
+                expect(result).toBeInstanceOf(VornameForPersonWithTrailingSpaceError);
+            });
+
+            it('should return an error if the familienname ends with whitespace', () => {
+                const person: Person<true> = Person.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    'Mustermann',
+                    'Max',
+                    '5',
+                    faker.lorem.word(),
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                );
+                const result: void | DomainError = person.update('5', 'familienname ', undefined, 'abc');
+                expect(result).toBeInstanceOf(FamiliennameForPersonWithTrailingSpaceError);
             });
         });
     });

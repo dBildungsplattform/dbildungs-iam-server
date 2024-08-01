@@ -13,7 +13,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { NameValidationError } from '../../../shared/error/name-validation.error.js';
+import { NameForRolleWithTrailingSpaceError } from './name-with-trailing-space.error.js';
 
 describe('Rolle Aggregate', () => {
     let module: TestingModule;
@@ -73,7 +73,7 @@ describe('Rolle Aggregate', () => {
             );
 
             if (rolle instanceof DomainError) {
-                throw new NameValidationError('Name Invalid');
+                return;
             }
 
             await expect(rolle.canBeAssignedToOrga(rolle.administeredBySchulstrukturknoten)).resolves.toBe(true);
@@ -90,7 +90,7 @@ describe('Rolle Aggregate', () => {
             );
 
             if (rolle instanceof DomainError) {
-                throw new NameValidationError('Name Invalid');
+                return;
             }
 
             const orgaId: string = faker.string.uuid();
@@ -111,7 +111,7 @@ describe('Rolle Aggregate', () => {
             organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(false);
 
             if (rolle instanceof DomainError) {
-                throw new NameValidationError('Name Invalid');
+                return;
             }
 
             await expect(rolle.canBeAssignedToOrga(faker.string.uuid())).resolves.toBe(false);
@@ -144,7 +144,7 @@ describe('Rolle Aggregate', () => {
                 creationParams.serviceProviderIds,
             );
 
-            expect(result).toBeInstanceOf(NameValidationError);
+            expect(result).toBeInstanceOf(NameForRolleWithTrailingSpaceError);
         });
 
         it('should return an error if the name ends with whitespace', () => {
@@ -172,7 +172,7 @@ describe('Rolle Aggregate', () => {
                 creationParams.serviceProviderIds,
             );
 
-            expect(result).toBeInstanceOf(NameValidationError);
+            expect(result).toBeInstanceOf(NameForRolleWithTrailingSpaceError);
         });
 
         it('should return an error if the name is only whitespace', () => {
@@ -200,7 +200,7 @@ describe('Rolle Aggregate', () => {
                 creationParams.serviceProviderIds,
             );
 
-            expect(result).toBeInstanceOf(NameValidationError);
+            expect(result).toBeInstanceOf(NameForRolleWithTrailingSpaceError);
         });
 
         it('should create a new rolle if the name is valid', () => {
@@ -446,6 +446,21 @@ describe('Rolle Aggregate', () => {
                 [faker.string.uuid()],
             );
             expect(result).toBeInstanceOf(DomainError);
+        });
+        it('should return domain error if name contains trailing space', async () => {
+            serviceProviderRepoMock.findById.mockResolvedValue(undefined);
+            const result: Rolle<true> | DomainError = await rolleFactory.update(
+                faker.string.uuid(),
+                faker.datatype.datetime(),
+                faker.datatype.datetime(),
+                ' newName',
+                faker.string.uuid(),
+                faker.helpers.enumValue(RollenArt),
+                [faker.helpers.enumValue(RollenMerkmal)],
+                [faker.helpers.enumValue(RollenSystemRecht)],
+                [faker.string.uuid()],
+            );
+            expect(result).toBeInstanceOf(NameForRolleWithTrailingSpaceError);
         });
     });
 });

@@ -32,7 +32,6 @@ import { ReferencedEntityType } from '../repo/db-seed-reference.entity.js';
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
-import { NameValidationError } from '../../../shared/error/name-validation.error.js';
 
 @Injectable()
 export class DbSeedService {
@@ -99,7 +98,7 @@ export class DbSeedService {
         );
 
         if (organisation instanceof DomainError) {
-            throw new NameValidationError('Organisationsname');
+            throw organisation;
         }
 
         if (!administriertVon && !zugehoerigZu && data.kuerzel === 'Root') {

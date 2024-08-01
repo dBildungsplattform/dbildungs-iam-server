@@ -3,8 +3,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { Organisation } from './organisation.js';
-import { NameValidationError } from '../../../shared/error/name-validation.error.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
+import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 
 describe('Organisation', () => {
     let module: TestingModule;
@@ -88,7 +89,7 @@ describe('Organisation', () => {
                 undefined,
                 undefined,
             );
-            expect(result).toBeInstanceOf(NameValidationError);
+            expect(result).toBeInstanceOf(NameForOrganisationWithTrailingSpaceError);
         });
 
         it('should return an error if dienststellennummer has leading whitespace', () => {
@@ -102,7 +103,7 @@ describe('Organisation', () => {
                 undefined,
                 undefined,
             );
-            expect(result).toBeInstanceOf(NameValidationError);
+            expect(result).toBeInstanceOf(KennungForOrganisationWithTrailingSpaceError);
         });
     });
 });

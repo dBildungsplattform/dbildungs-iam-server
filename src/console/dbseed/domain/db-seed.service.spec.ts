@@ -30,7 +30,7 @@ import { GleicheRolleAnKlasseWieSchuleError } from '../../../modules/personenkon
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { KeycloakGroupRoleService } from '../../../modules/keycloak-administration/domain/keycloak-group-role.service.js';
-import { NameValidationError } from '../../../shared/error/name-validation.error.js';
+import { NameForOrganisationWithTrailingSpaceError } from '../../../modules/organisation/specification/error/name-with-trailing-space.error.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -258,7 +258,9 @@ describe('DbSeedService', () => {
                 organisationRepositoryMock.findById.mockResolvedValue(parent);
 
                 organisationRepositoryMock.save.mockResolvedValueOnce(persistedOrganisation);
-                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(NameValidationError);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(
+                    NameForOrganisationWithTrailingSpaceError,
+                );
             });
         });
     });

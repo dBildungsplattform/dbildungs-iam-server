@@ -178,6 +178,10 @@ export class RolleController {
         );
 
         if (rolle instanceof DomainError) {
+            if (rolle instanceof RolleDomainError) {
+                throw rolle;
+            }
+
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(rolle),
             );

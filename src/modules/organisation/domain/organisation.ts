@@ -1,5 +1,7 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { NameValidator } from '../../../shared/validation/name-validator.js';
+import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
+import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
 import { OrganisationsTyp, Traegerschaft } from './organisation.enums.js';
 
 export class Organisation<WasPersisted extends boolean> {
@@ -56,21 +58,13 @@ export class Organisation<WasPersisted extends boolean> {
         traegerschaft?: Traegerschaft,
     ): Organisation<false> | DomainError {
         if (name) {
-            const organisationsnameValidationError: Option<DomainError> = NameValidator.validateName(
-                name,
-                'Der Organisationsname',
-            );
-            if (organisationsnameValidationError) {
-                return organisationsnameValidationError;
+            if (!NameValidator.isNameValid(name)) {
+                return new NameForOrganisationWithTrailingSpaceError();
             }
         }
         if (kennung) {
-            const kennungValidationError: Option<DomainError> = NameValidator.validateName(
-                kennung,
-                'Die Dienstellennummer',
-            );
-            if (kennungValidationError) {
-                return kennungValidationError;
+            if (!NameValidator.isNameValid(kennung)) {
+                return new KennungForOrganisationWithTrailingSpaceError();
             }
         }
         return new Organisation(
