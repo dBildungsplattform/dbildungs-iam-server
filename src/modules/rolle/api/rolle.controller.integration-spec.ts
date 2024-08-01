@@ -36,46 +36,27 @@ import { Observable } from 'rxjs';
 import { Request } from 'express';
 import { PassportUser } from '../../authentication/types/user.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
-import { PersonDo } from '../../person/domain/person.do.js';
+
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { KeycloakUserService } from '../../keycloak-administration/domain/keycloak-user.service.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Person } from '../../person/domain/person.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let em: EntityManager;
     let rolleRepo: RolleRepo;
-    let personRepo: PersonRepo;
+    let personRepo: PersonRepository;
     let serviceProviderRepo: ServiceProviderRepo;
     let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
-    let personenkontextFactory: PersonenkontextFactory;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
-
-    function createPersonenkontext<WasPersisted extends boolean>(
-        this: void,
-        withId: WasPersisted,
-        params: Partial<Personenkontext<boolean>> = {},
-    ): Personenkontext<WasPersisted> {
-        const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
-            withId ? faker.string.uuid() : undefined,
-            withId ? faker.date.past() : undefined,
-            withId ? faker.date.recent() : undefined,
-            faker.string.uuid(),
-            faker.string.uuid(),
-            faker.string.uuid(),
-        );
-
-        Object.assign(personenkontext, params);
-
-        return personenkontext;
-    }
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -111,7 +92,7 @@ describe('Rolle API', () => {
                 OrganisationRepository,
                 RolleFactory,
                 ServiceProviderRepo,
-                PersonRepo,
+                PersonRepository,
                 DBiamPersonenkontextRepo,
                 PersonenkontextFactory,
                 PersonRepository,
@@ -137,11 +118,10 @@ describe('Rolle API', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         rolleRepo = module.get(RolleRepo);
-        personRepo = module.get(PersonRepo);
+        personRepo = module.get(PersonRepository);
         serviceProviderRepo = module.get(ServiceProviderRepo);
         dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
-        personenkontextFactory = module.get(PersonenkontextFactory);
 
         personPermissionsMock = createMock<PersonPermissions>();
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personPermissionsMock);
@@ -704,7 +684,11 @@ describe('Rolle API', () => {
 
         describe('Update Merkmale', () => {
             it('should return 400 if rolle is already assigned', async () => {
-                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                const person: Person<true> | DomainError = await personRepo.save(DoFactory.createPerson(false));
+
+                if (person instanceof DomainError) {
+                    return;
+                }
 
                 const organisation: OrganisationEntity = new OrganisationEntity();
                 organisation.typ = OrganisationsTyp.SCHULE;
@@ -719,7 +703,7 @@ describe('Rolle API', () => {
                 );
 
                 await dBiamPersonenkontextRepo.save(
-                    createPersonenkontext(false, {
+                    DoFactory.createPersonenkontext(false, {
                         personId: person.id,
                         rolleId: rolle.id,
                         organisationId: organisation.id,
@@ -757,8 +741,10 @@ describe('Rolle API', () => {
             });
 
             it('if rolle is already assigned to a Personenkontext', async () => {
-                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
-
+                const person: Person<true> | DomainError = await personRepo.save(DoFactory.createPerson(false));
+                if (person instanceof DomainError) {
+                    return;
+                }
                 const organisation: OrganisationEntity = new OrganisationEntity();
                 organisation.typ = OrganisationsTyp.SCHULE;
                 await em.persistAndFlush(organisation);
@@ -772,7 +758,7 @@ describe('Rolle API', () => {
                 );
 
                 await dBiamPersonenkontextRepo.save(
-                    createPersonenkontext(false, {
+                    DoFactory.createPersonenkontext(false, {
                         personId: person.id,
                         rolleId: rolle.id,
                         organisationId: organisation.id,
