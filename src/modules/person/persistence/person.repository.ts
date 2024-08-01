@@ -280,7 +280,8 @@ export class PersonRepository {
         const newVorname: string = person.vorname.toLowerCase();
         const newFamilienname: string = person.familienname.toLowerCase();
 
-        if (oldVorname !== newVorname) return true;
+        //only look for first letter, because username is firstname[0] + lastname
+        if (oldVorname[0] !== newVorname[0]) return true;
 
         return oldFamilienname !== newFamilienname;
     }
