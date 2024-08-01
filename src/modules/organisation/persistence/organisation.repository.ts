@@ -152,6 +152,14 @@ export class OrganisationRepository {
         return [oeffentlich && mapEntityToAggregate(oeffentlich), ersatz && mapEntityToAggregate(ersatz)];
     }
 
+    public async find(limit?: number, offset?: number): Promise<Organisation<true>[]> {
+        const organisations: OrganisationEntity[] = await this.em.findAll(OrganisationEntity, {
+            limit: limit,
+            offset: offset,
+        });
+        return organisations.map(mapEntityToAggregate);
+    }
+
     public async findById(id: string): Promise<Option<Organisation<true>>> {
         const organisation: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
         if (organisation) {

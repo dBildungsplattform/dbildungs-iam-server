@@ -5,7 +5,6 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { NurLehrUndLernAnKlasse } from './nur-lehr-und-lern-an-klasse.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { faker } from '@faker-js/faker';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { GleicheRolleAnKlasseWieSchule } from './gleiche-rolle-an-klasse-wie-schule.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
@@ -13,6 +12,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -87,7 +87,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
 
     describe('Nur LEHR Und LERN An Klasse', () => {
         it('should be satisfied when organisation typ is not KLASSE', async () => {
-            const organisation: OrganisationDo<true> = createMock<OrganisationDo<true>>();
+            const organisation: Organisation<true> = createMock<Organisation<true>>();
             organisation.typ = OrganisationsTyp.SCHULE;
             const specification: NurLehrUndLernAnKlasse = new NurLehrUndLernAnKlasse(
                 organisationRepoMock,
@@ -110,7 +110,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
         });
 
         it('should not be satisfied when rolle could not be found', async () => {
-            const organisation: OrganisationDo<true> = createMock<OrganisationDo<true>>();
+            const organisation: Organisation<true> = createMock<Organisation<true>>();
             organisation.typ = OrganisationsTyp.KLASSE;
             const specification: NurLehrUndLernAnKlasse = new NurLehrUndLernAnKlasse(
                 organisationRepoMock,
@@ -127,7 +127,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
 
     describe('Gleiche Rolle An Klasse Wie Schule', () => {
         it('should be satisfied when organisation type is not KLASSE', async () => {
-            const organisation: OrganisationDo<true> = createMock<OrganisationDo<true>>();
+            const organisation: Organisation<true> = createMock<Organisation<true>>();
             organisation.typ = OrganisationsTyp.SCHULE;
             const specification: GleicheRolleAnKlasseWieSchule = new GleicheRolleAnKlasseWieSchule(
                 organisationRepoMock,
@@ -152,7 +152,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
         });
 
         it('should not be satisfied when organisation type is KLASSE but not administriertVon', async () => {
-            const organisation: OrganisationDo<true> = createMock<OrganisationDo<true>>();
+            const organisation: Organisation<true> = createMock<Organisation<true>>();
             organisation.typ = OrganisationsTyp.KLASSE;
             organisation.administriertVon = undefined;
             const specification: GleicheRolleAnKlasseWieSchule = new GleicheRolleAnKlasseWieSchule(
@@ -167,9 +167,9 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
         });
 
         it('should not be satisfied when rolle could not be found', async () => {
-            const klasse: OrganisationDo<true> = createMock<OrganisationDo<true>>();
+            const klasse: Organisation<true> = createMock<Organisation<true>>();
             klasse.typ = OrganisationsTyp.KLASSE;
-            const schule: OrganisationDo<true> = createMock<OrganisationDo<true>>();
+            const schule: Organisation<true> = createMock<Organisation<true>>();
             schule.typ = OrganisationsTyp.SCHULE;
             klasse.administriertVon = schule.id;
             const specification: GleicheRolleAnKlasseWieSchule = new GleicheRolleAnKlasseWieSchule(
@@ -192,7 +192,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
         });
 
         it('should not be satisfied when rolle objects are not identical', async () => {
-            const organisation: OrganisationDo<true> = createMock<OrganisationDo<true>>();
+            const organisation: Organisation<true> = createMock<Organisation<true>>();
             organisation.typ = OrganisationsTyp.KLASSE;
             const rolle: Rolle<true> = createMock<Rolle<true>>();
             const specification: GleicheRolleAnKlasseWieSchule = new GleicheRolleAnKlasseWieSchule(
