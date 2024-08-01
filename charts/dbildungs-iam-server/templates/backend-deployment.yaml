@@ -35,9 +35,6 @@ spec:
                 name: {{ template "common.names.name" . }}
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
-            - mountPath: /app/dist/migrations
-              name: migration-volume
-              readOnly: true
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         {{- if .Values.backend.dbseeding.enabled }}
         - name: db-seeding
@@ -51,9 +48,6 @@ spec:
           env: {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
-            - mountPath: /app/seeding/dev
-              name: seeding-volume
-              readOnly: true
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         {{end}}
       containers:
