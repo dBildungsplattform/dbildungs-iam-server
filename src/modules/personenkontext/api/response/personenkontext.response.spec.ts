@@ -58,7 +58,7 @@ describe('PersonenkontextResponse', () => {
         describe('when setting loeschung prop', () => {
             it('should create instance of LoeschungResponse', async () => {
                 // Arrange
-
+                const loeschungZeitpunkt: Date = new Date();
                 const personenkontext: Personenkontext<true> = Personenkontext.construct(
                     personRepoMock,
                     organisationRepoMock,
@@ -74,7 +74,7 @@ describe('PersonenkontextResponse', () => {
                     undefined,
                     undefined,
                     undefined,
-                    new Date(),
+                    loeschungZeitpunkt,
                     undefined,
                 );
 
@@ -87,9 +87,9 @@ describe('PersonenkontextResponse', () => {
         });
 
         describe('when setting loeschung prop to undefined', () => {
-            it('should not create instance of LoeschungResponse', async () => {
+            it('should not create instance of LoeschungResponse when loeschungZeitpunkt is undefined', async () => {
                 // Arrage
-
+                const loeschungZeitpunkt: Date | undefined = undefined;
                 const personenkontext: Personenkontext<true> = Personenkontext.construct(
                     personRepoMock,
                     organisationRepoMock,
@@ -105,7 +105,7 @@ describe('PersonenkontextResponse', () => {
                     undefined,
                     undefined,
                     undefined,
-                    undefined,
+                    loeschungZeitpunkt,
                     undefined,
                 );
 
