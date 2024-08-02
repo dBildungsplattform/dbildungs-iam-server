@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { HttpException } from '@nestjs/common';
+import { HttpException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DoFactory, ConfigTestModule } from '../../../../test/utils/index.js';
@@ -27,6 +27,8 @@ import { OrganisationByNameBodyParams } from './organisation-by-name.body.params
 import { NameRequiredForKlasseError } from '../specification/error/name-required-for-klasse.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { OrganisationService } from '../domain/organisation.service.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -179,6 +181,19 @@ describe('OrganisationController', () => {
                     ),
                 ).rejects.toThrow(HttpException);
                 expect(organisationServiceMock.updateOrganisation).toHaveBeenCalledTimes(1);
+            });
+        });
+        describe('when organisation is not found', () => {
+            it('should throw a NotFoundException', async () => {
+                const organisationId: string = faker.string.uuid();
+                organisationRepositoryMock.findById.mockResolvedValueOnce(null);
+                await expect(
+                    organisationController.updateOrganisation(
+                        { organisationId: organisationId } as OrganisationByIdParams,
+                        {} as UpdateOrganisationBodyParams,
+                    ),
+                ).rejects.toThrow(new NotFoundException(`Organisation with ID ${organisationId} not found`));
+                expect(organisationRepositoryMock.findById).toHaveBeenCalledTimes(1);
             });
         });
     });
