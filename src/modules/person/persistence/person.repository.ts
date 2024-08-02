@@ -82,6 +82,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.vertrauensstufe,
         entity.auskunftssperre,
         entity.personalnummer,
+        {},
         getEnabledEmailAddress(entity),
     );
 }
@@ -283,6 +284,8 @@ export class PersonRepository {
             username: person.username,
             id: undefined,
             createdDate: undefined,
+            enabled: true,
+            attributes: {},
         } satisfies UserDo<false>;
         const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
         if (!creationResult.ok) {
@@ -316,6 +319,8 @@ export class PersonRepository {
             username: person.username,
             id: undefined,
             createdDate: undefined,
+            enabled: true,
+            attributes: {},
         } satisfies UserDo<false>;
         const creationResult: Result<string, DomainError> = await kcUserService.createWithHashedPassword(
             userDo,

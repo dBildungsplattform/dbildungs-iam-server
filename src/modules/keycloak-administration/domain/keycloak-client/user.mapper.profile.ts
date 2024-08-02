@@ -23,6 +23,10 @@ export class UserMapperProfile extends AutomapperProfile {
                     mapFrom((src: UserRepresentationDto) => src.id),
                 ),
                 forMember(
+                    (dest: UserDo<boolean>) => dest.username,
+                    mapFrom((src: UserRepresentationDto) => src.username),
+                ),
+                forMember(
                     (dest: UserDo<boolean>) => dest.email,
                     mapFrom((src: UserRepresentationDto) => src.email),
                 ),
@@ -30,7 +34,16 @@ export class UserMapperProfile extends AutomapperProfile {
                     (dest: UserDo<boolean>) => dest.createdDate,
                     mapFrom((src: UserRepresentationDto) => new Date(src.createdTimestamp)),
                 ),
+                forMember(
+                    (dest: UserDo<boolean>) => dest.enabled,
+                    mapFrom((src: UserRepresentationDto) => src.enabled),
+                ),
+                forMember(
+                    (dest: UserDo<boolean>) => dest.attributes,
+                    mapFrom((src: UserRepresentationDto) => src.attributes),
+                ),
             );
+
             createMap(mapper, UserDo, CreateUserRepresentationDto);
         };
     }

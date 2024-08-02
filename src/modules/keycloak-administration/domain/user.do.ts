@@ -12,4 +12,10 @@ export class UserDo<WasPersisted extends boolean> {
 
     @AutoMap()
     public createdDate!: Persisted<Date, WasPersisted>;
+
+    @AutoMap()
+    public enabled!: boolean;
+
+    @AutoMap()
+    public attributes!: Record<string, string>;
 }

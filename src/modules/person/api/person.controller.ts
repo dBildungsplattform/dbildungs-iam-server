@@ -61,7 +61,7 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
 import { LockUserDto } from './lock-user.param.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
@@ -195,7 +195,18 @@ export class PersonController {
                 ),
             );
         }
-        return new PersonendatensatzResponse(personResult.value, false);
+        const response: PersonendatensatzResponse = new PersonendatensatzResponse(personResult.value, false);
+        if (personResult.value.keycloakUserId) {
+            const keyCloakUserDataResponse: Result<UserDo<true>, DomainError> = await this.keycloakUserService.findById(
+                personResult.value.keycloakUserId,
+            );
+            if (keyCloakUserDataResponse.ok) {
+                response.person.attributes = keyCloakUserDataResponse.value.attributes;
+                response.person.isLocked = keyCloakUserDataResponse.value.enabled === false;
+            }
+        }
+
+        return response;
     }
 
     @Post(':personId/personenkontexte')
@@ -426,7 +437,9 @@ export class PersonController {
     }
 
     @Put(':personId/lock-user')
+    @HttpCode(HttpStatus.ACCEPTED)
     @ApiOkResponse({ description: 'User has been successfully updated.' })
+    @ApiAcceptedResponse({ description: 'User has been successfully updated.', type: String })
     @ApiNotFoundResponse({ description: 'The person was not found.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
@@ -447,9 +460,16 @@ export class PersonController {
         if (!personResult.value?.keycloakUserId) {
             throw new Error('Person not found');
         }
+
+        const customAttributes: Record<string, string> = {
+            locked_from: 'Schul test',
+            timestamp: new Date().toISOString(),
+        };
+
         const result: Result<void, DomainError> = await this.keycloakUserService.setUserEnabled(
             personResult.value.keycloakUserId,
             !lockUserDto.lock,
+            customAttributes,
         );
         if (!result.ok) {
             throw new Error('Error while updating user status');

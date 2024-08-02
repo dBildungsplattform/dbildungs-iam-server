@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UserRepresentationDto {
     @AutoMap()
@@ -20,4 +20,11 @@ export class UserRepresentationDto {
     @AutoMap()
     @IsNumber()
     public createdTimestamp!: number;
+
+    @AutoMap()
+    @IsBoolean()
+    public enabled!: boolean;
+
+    @AutoMap()
+    public attributes!: Record<string, string>;
 }
