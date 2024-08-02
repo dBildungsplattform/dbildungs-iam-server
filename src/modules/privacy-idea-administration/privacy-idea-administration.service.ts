@@ -137,7 +137,7 @@ export class PrivacyIdeaAdministrationService {
             const response: AxiosResponse<PrivacyIdeaResponseTokens> = await firstValueFrom(
                 this.httpService.get(url, { headers: headers, params: params }),
             );
-            return response.data.result.value.tokens[0];
+            return response.data.result.value.tokens.filter((x: PrivacyIdeaToken) => x.rollout_state !== 'verify')[0];
         } catch (error) {
             if (error instanceof Error) {
                 throw new Error(`Error getting two auth state: ${error.message}`);
@@ -195,6 +195,35 @@ export class PrivacyIdeaAdministrationService {
                 throw new Error(`Error adding user: ${error.message}`);
             } else {
                 throw new Error(`Error adding user: Unknown error occurred`);
+            }
+        }
+    }
+
+    public async verifyToken(userName: string, otp: string): Promise<void> {
+        //check if user is verifying token for themselves
+        const tokenToVerify: PrivacyIdeaToken | undefined = await this.getTwoAuthState(userName);
+        if (!tokenToVerify) {
+            throw new Error('No token found for user');
+        }
+        const token: string = await this.getJWTToken();
+        const endpoint: string = '/init';
+        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
+        const url: string = baseUrl + endpoint;
+        const headers: { Authorization: string } = {
+            Authorization: `${token}`,
+        };
+        const payload: { serial: string; verify: string } = {
+            serial: tokenToVerify.serial,
+            verify: otp,
+        };
+
+        try {
+            await firstValueFrom(this.httpService.post(url, payload, { headers: headers }));
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`Error verifying token: ${error.message}`);
+            } else {
+                throw new Error(`Error verifying token: Unknown error occurred`);
             }
         }
     }
