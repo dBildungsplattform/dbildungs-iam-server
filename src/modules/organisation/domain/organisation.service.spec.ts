@@ -17,6 +17,8 @@ import { OrganisationsTyp } from './organisation.enums.js';
 import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
 import { NameRequiredForSchuleError } from '../specification/error/name-required-for-schule.error.js';
 import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
+import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
+import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -166,6 +168,15 @@ describe('OrganisationService', () => {
                 error: new EntityCouldNotBeCreated(`Organization could not be created`),
             });
         });
+
+        it('should return domain error if name contains trailing space', async () => {
+            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false, { name: ' name' });
+            const result: Result<OrganisationDo<true>> = await organisationService.createOrganisation(organisationDo);
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new NameForOrganisationWithTrailingSpaceError(),
+            });
+        });
     });
 
     describe('updateOrganisation', () => {
@@ -250,6 +261,15 @@ describe('OrganisationService', () => {
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: false,
                 error: new EntityNotFoundError('Organisation', organisationDo.id),
+            });
+        });
+
+        it('should return domain error if kennung contains trailing space', async () => {
+            const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true, { kennung: 'kennung ' });
+            const result: Result<OrganisationDo<true>> = await organisationService.updateOrganisation(organisationDo);
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new KennungForOrganisationWithTrailingSpaceError(),
             });
         });
     });
