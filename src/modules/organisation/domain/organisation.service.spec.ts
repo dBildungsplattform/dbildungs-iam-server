@@ -171,10 +171,21 @@ describe('OrganisationService', () => {
 
         it('should return domain error if name contains trailing space', async () => {
             const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false, { name: ' name' });
+            organisationRepoMock.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
             const result: Result<OrganisationDo<true>> = await organisationService.createOrganisation(organisationDo);
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: false,
                 error: new NameForOrganisationWithTrailingSpaceError(),
+            });
+        });
+
+        it('should return domain error if kennung contains trailing space', async () => {
+            const organisationDo: OrganisationDo<false> = DoFactory.createOrganisation(false, { kennung: ' ' });
+            organisationRepoMock.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
+            const result: Result<OrganisationDo<true>> = await organisationService.createOrganisation(organisationDo);
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new KennungForOrganisationWithTrailingSpaceError(),
             });
         });
     });
@@ -264,8 +275,19 @@ describe('OrganisationService', () => {
             });
         });
 
+        it('should return domain error if name contains trailing space', async () => {
+            const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true, { name: '  ' });
+            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            const result: Result<OrganisationDo<true>> = await organisationService.updateOrganisation(organisationDo);
+            expect(result).toEqual<Result<OrganisationDo<true>>>({
+                ok: false,
+                error: new NameForOrganisationWithTrailingSpaceError(),
+            });
+        });
+
         it('should return domain error if kennung contains trailing space', async () => {
             const organisationDo: OrganisationDo<true> = DoFactory.createOrganisation(true, { kennung: 'kennung ' });
+            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
             const result: Result<OrganisationDo<true>> = await organisationService.updateOrganisation(organisationDo);
             expect(result).toEqual<Result<OrganisationDo<true>>>({
                 ok: false,
