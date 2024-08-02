@@ -14,7 +14,7 @@ import { TraegerInTraegerError } from '../specification/error/traeger-in-traeger
 import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
 import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
 import { DomainError } from '../../../shared/error/index.js';
-import { faker } from '@faker-js/faker';
+//import { faker } from '@faker-js/faker';
 import { EventModule } from '../../../core/eventbus/index.js';
 import { Organisation } from './organisation.js';
 import { OrganisationsTyp } from './organisation.enums.js';
@@ -122,24 +122,22 @@ describe('OrganisationServiceSpecificationTest', () => {
         });
     });
     describe('update', () => {
-        it('should return DomainError, when klasse specificatons are not satisfied and type is klasse', async () => {
-            const id: string = faker.string.uuid();
-            const klassedo: Organisation<boolean> = DoFactory.createOrganisation(false, {
-                id: id,
+        it('should return DomainError, when klasse specifications are not satisfied and type is klasse', async () => {
+            const klasse: Organisation<boolean> = DoFactory.createOrganisation(false, {
                 name: 'klasse',
                 administriertVon: traeger1.id,
                 zugehoerigZu: traeger1.id,
                 typ: OrganisationsTyp.KLASSE,
             });
-            await organisationRepository.save(klassedo);
+            const klassePersisted: Organisation<true> = await organisationRepository.save(klasse);
 
             const result: Result<Organisation<true>, DomainError> = await organisationService.updateOrganisation(
-                klassedo,
+                klassePersisted,
             );
 
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
-                error: new KlasseNurVonSchuleAdministriertError(id),
+                error: new KlasseNurVonSchuleAdministriertError(klassePersisted.id),
             });
         });
     });
