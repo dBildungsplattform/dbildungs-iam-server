@@ -8,8 +8,8 @@ import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
     DatabaseTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    KeycloakConfigTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
@@ -43,6 +43,8 @@ import { KeycloakUserService } from '../../keycloak-administration/domain/keyclo
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { PersonFactory } from '../../person/domain/person.factory.js';
+import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -54,6 +56,7 @@ describe('Rolle API', () => {
     let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
+    let personFactory: PersonFactory;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -102,13 +105,18 @@ describe('Rolle API', () => {
                     }),
                 },
             ],
-        }).compile();
+        })
+            .overrideModule(KeycloakConfigModule)
+            .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .compile();
 
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         rolleRepo = module.get(RolleRepo);
         personRepo = module.get(PersonRepository);
         serviceProviderRepo = module.get(ServiceProviderRepo);
+        personFactory = module.get(PersonFactory);
+
         dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
@@ -118,7 +126,7 @@ describe('Rolle API', () => {
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+    }, 10000000);
 
     afterAll(async () => {
         await orm.close();
@@ -730,9 +738,19 @@ describe('Rolle API', () => {
             });
 
             it('if rolle is already assigned to a Personenkontext', async () => {
-                const person: Person<true> | DomainError = await personRepo.save(DoFactory.createPerson(false));
+                const personData: Person<false> | DomainError = await personFactory.createNew({
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    username: faker.internet.userName(),
+                    password: faker.string.alphanumeric(8),
+                });
+                if (personData instanceof DomainError) {
+                    throw personData;
+                }
+                const person: Person<true> | DomainError = await personRepo.save(personData);
+
                 if (person instanceof DomainError) {
-                    return;
+                    throw person;
                 }
                 const organisation: OrganisationEntity = new OrganisationEntity();
                 organisation.typ = OrganisationsTyp.SCHULE;
@@ -753,6 +771,9 @@ describe('Rolle API', () => {
                         organisationId: organisation.id,
                     }),
                 );
+                const personpermissions: DeepMocked<PersonPermissions> = createMock();
+                personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .delete(`/rolle/${rolle.id}`)
