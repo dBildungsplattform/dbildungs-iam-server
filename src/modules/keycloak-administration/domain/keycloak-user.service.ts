@@ -274,15 +274,7 @@ export class KeycloakUserService {
         return { ok: true, value: userDo };
     }
 
-    public async lockUser(userId: string): Promise<Result<void, DomainError>> {
-        return this.setUserEnabled(userId, false);
-    }
-
-    public async unlockUser(userId: string): Promise<Result<void, DomainError>> {
-        return this.setUserEnabled(userId, true);
-    }
-
-    private async setUserEnabled(userId: string, enabled: boolean): Promise<Result<void, DomainError>> {
+    public async setUserEnabled(userId: string, enabled: boolean): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
         if (!kcAdminClientResult.ok) {
