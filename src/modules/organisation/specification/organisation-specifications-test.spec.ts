@@ -55,7 +55,6 @@ describe('OrganisationSpecificationTests', () => {
         await DatabaseTestModule.clearDatabase(orm);
 
         let traeger: Organisation<boolean> = DoFactory.createOrganisation(false, {
-            id: 'a10852ab-1d75-45a7-9421-b1cbd8abe693',
             name: 'Traeger1',
             typ: OrganisationsTyp.TRAEGER,
             administriertVon: undefined,
@@ -160,8 +159,7 @@ describe('OrganisationSpecificationTests', () => {
 
         //this case shall not happen, because in running app altering the root-organisation should be forbidden
         it('should be satisfied, circular reference between non-root and root organisation', async () => {
-            let traeger: Organisation<boolean> = DoFactory.createOrganisation(true, {
-                id: 'a10852ab-1d75-45a7-9421-b1cbd8abe693',
+            let traeger: Organisation<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Traeger1',
                 typ: OrganisationsTyp.TRAEGER,
                 administriertVon: undefined,
