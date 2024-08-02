@@ -20,14 +20,12 @@ import { RolleRepo } from '../repo/rolle.repo.js';
 import { RolleApiModule } from '../rolle-api.module.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { RolleResponse } from './rolle.response.js';
-import { RolleFactory } from '../domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { Rolle } from '../domain/rolle.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RolleServiceProviderQueryParams } from './rolle-service-provider.query.params.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
@@ -40,7 +38,6 @@ import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
-import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { KeycloakUserService } from '../../keycloak-administration/domain/keycloak-user.service.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -89,14 +86,6 @@ describe('Rolle API', () => {
                     provide: PersonPermissionsRepo,
                     useValue: createMock<PersonPermissionsRepo>(),
                 },
-                OrganisationRepository,
-                RolleFactory,
-                ServiceProviderRepo,
-                PersonRepository,
-                DBiamPersonenkontextRepo,
-                PersonenkontextFactory,
-                PersonRepository,
-                RolleRepo,
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>({
