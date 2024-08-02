@@ -30,6 +30,7 @@ export type PersonCreationParams = {
     username?: string;
     password?: string;
     personalnummer?: string;
+    attributes?: Record<string, string>[];
 };
 
 export class Person<WasPersisted extends boolean> {
@@ -68,6 +69,7 @@ export class Person<WasPersisted extends boolean> {
         public vertrauensstufe?: Vertrauensstufe,
         public auskunftssperre?: boolean,
         public personalnummer?: string,
+        public attributes?: Record<string, string>,
         public email?: string,
     ) {
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
@@ -107,6 +109,7 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
         personalnummer?: string,
+        attributes?: Record<string, string>,
         email?: string,
     ): Person<WasPersisted> {
         return new Person(
@@ -135,6 +138,7 @@ export class Person<WasPersisted extends boolean> {
             vertrauensstufe,
             auskunftssperre,
             personalnummer,
+            attributes,
             email,
         );
     }
@@ -222,6 +226,7 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
         personalnummer?: string,
+        attributes?: Record<string, string>,
         email?: string,
     ): void | DomainError {
         if (this.revision !== revision) {
@@ -259,6 +264,7 @@ export class Person<WasPersisted extends boolean> {
         this.auskunftssperre = auskunftssperre;
         this.revision = newRevision;
         this.personalnummer = personalnummer;
+        this.attributes = attributes;
         this.email = email;
     }
 

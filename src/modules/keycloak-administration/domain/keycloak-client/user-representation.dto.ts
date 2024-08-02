@@ -1,4 +1,5 @@
-import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { AutoMap } from '@automapper/classes';
+import { IsBoolean, IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UserRepresentationDto {
     @IsString()
@@ -15,4 +16,9 @@ export class UserRepresentationDto {
 
     @IsNumber()
     public createdTimestamp!: number;
+
+    @IsBoolean()
+    public enabled!: boolean;
+
+    public attributes!: Record<string, string>;
 }

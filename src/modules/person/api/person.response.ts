@@ -39,4 +39,10 @@ export class PersonResponse {
 
     @ApiProperty({ nullable: true })
     public personalnummer?: string;
+
+    @ApiProperty({ nullable: true })
+    public isLocked?: boolean;
+
+    @ApiProperty({ nullable: true })
+    public attributes?: Record<string, string>;
 }

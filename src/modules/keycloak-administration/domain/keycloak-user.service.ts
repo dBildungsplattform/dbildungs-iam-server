@@ -274,7 +274,11 @@ export class KeycloakUserService {
         return { ok: true, value: userDo };
     }
 
-    public async setUserEnabled(userId: string, enabled: boolean): Promise<Result<void, DomainError>> {
+    public async setUserEnabled(
+        userId: string,
+        enabled: boolean,
+        customAttributes?: Record<string, string>,
+    ): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
         if (!kcAdminClientResult.ok) {
@@ -282,11 +286,46 @@ export class KeycloakUserService {
         }
 
         try {
-            await kcAdminClientResult.value.users.update({ id: userId }, { enabled });
+            const kcAdminClient: KeycloakAdminClient = kcAdminClientResult.value;
+            await kcAdminClient.users.update({ id: userId }, { enabled });
+            if (customAttributes) {
+                const user: UserRepresentation | undefined = await kcAdminClient.users.findOne({ id: userId });
+                if (user) {
+                    user.attributes = user.attributes || {};
+                    for (const key in customAttributes) {
+                        if (customAttributes.hasOwnProperty(key)) {
+                            user.attributes[key] = [customAttributes[key]];
+                        }
+                    }
+                    await kcAdminClient.users.update({ id: userId }, user);
+                }
+            }
+
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.error(`Could not update user enabled status, message: ${JSON.stringify(err)}`);
-            return { ok: false, error: new KeycloakClientError('Could not update user enabled status') };
+            this.logger.error(
+                `Could not update user enabled status or custom attribute, message: ${JSON.stringify(err)}`,
+            );
+            return {
+                ok: false,
+                error: new KeycloakClientError('Could not update user enabled status or custom attribute'),
+            };
+        }
+    }
+
+    public async getKeyCloakUserData(userId: string): Promise<UserRepresentation | undefined> {
+        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+            await this.kcAdminService.getAuthedKcAdminClient();
+        if (!kcAdminClientResult.ok) {
+            return undefined;
+        }
+        try {
+            const kcAdminClient: KeycloakAdminClient = kcAdminClientResult.value;
+            const user: UserRepresentation | undefined = await kcAdminClient.users.findOne({ id: userId });
+            return user;
+        } catch (err) {
+            this.logger.error(`Could not load keycloak userdata, message: ${JSON.stringify(err)}`);
+            return undefined;
         }
     }
 }
