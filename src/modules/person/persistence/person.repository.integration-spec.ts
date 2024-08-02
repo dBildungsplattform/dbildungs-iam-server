@@ -606,10 +606,9 @@ describe('PersonRepository Integration', () => {
         let personEntity: PersonEntity;
 
         beforeEach(() => {
-            personEntity = mapper.map(
-                DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() }),
-                PersonDo,
+            personEntity = em.create(
                 PersonEntity,
+                mapAggregateToData(DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() })),
             );
             personEntity.emailAddresses = new Collection<EmailAddressEntity>(personEntity);
         });
@@ -698,8 +697,9 @@ describe('PersonRepository Integration', () => {
 
     describe('mapEntityToAggregate', () => {
         it('should return New Aggregate', () => {
-            const personEntity: PersonEntity = createMock<PersonEntity>(
-                DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() }),
+            const personEntity: PersonEntity = em.create(
+                PersonEntity,
+                mapAggregateToData(DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() })),
             );
             const person: Person<true> = mapEntityToAggregate(personEntity);
 
@@ -833,10 +833,12 @@ describe('PersonRepository Integration', () => {
 
             describe('Delete the person and all kontexte and trigger event to delete email', () => {
                 it('should delete the person and trigger PersonDeletedEvent', async () => {
-                    const person: PersonDo<true> = DoFactory.createPerson(true);
+                    const person: Person<true> = DoFactory.createPerson(true);
+                    const personEntity: PersonEntity = em.create(PersonEntity, mapAggregateToData(person));
+                    person.id = personEntity.id;
                     personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person.id]);
 
-                    await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
+                    await em.persistAndFlush(personEntity);
 
                     const emailAddress: EmailAddressEntity = new EmailAddressEntity();
                     emailAddress.address = faker.internet.email();
@@ -845,6 +847,9 @@ describe('PersonRepository Integration', () => {
 
                     const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
                     await em.persistAndFlush(pp);
+
+                    personEntity.emailAddresses.add(emailAddress);
+                    await em.persistAndFlush(personEntity);
 
                     await sut.getPersonIfAllowed(person.id, personPermissionsMock);
                     const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
@@ -862,7 +867,6 @@ describe('PersonRepository Integration', () => {
                     expect(eventServiceMock.publish).toHaveBeenCalledWith(
                         expect.objectContaining({
                             emailAddress: emailAddress.address,
-                            personId: person.id,
                         }),
                     );
                     expect(result.ok).toBeTruthy();
