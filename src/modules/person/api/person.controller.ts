@@ -62,6 +62,7 @@ import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { LockUserDto } from './lock-user.param.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personen')
@@ -424,15 +425,16 @@ export class PersonController {
         return { ok: true, value: personResult.value.newPassword! };
     }
 
-    @Put(':personId/disable')
-    @ApiOkResponse({ description: 'User has been successfully disabled.' })
+    @Put(':personId/lock-user')
+    @ApiOkResponse({ description: 'User has been successfully updated.' })
     @ApiNotFoundResponse({ description: 'The person was not found.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
-    public async disablePerson(
+    public async lockPerson(
         @Param('personId') personId: string,
+        @Body() lockUserDto: LockUserDto,
         @Permissions() permissions: PersonPermissions,
-    ): Promise<void> {
+    ): Promise<{ message: string }> {
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             personId,
             permissions,
@@ -445,40 +447,17 @@ export class PersonController {
         if (!personResult.value?.keycloakUserId) {
             throw new Error('Person not found');
         }
-        const result: Result<void, DomainError> = await this.keycloakUserService.lockUser(
+        const result: Result<void, DomainError> = await this.keycloakUserService.setUserEnabled(
             personResult.value.keycloakUserId,
+            !lockUserDto.lock,
         );
         if (!result.ok) {
-            throw new Error('Error while disabling user');
+            throw new Error('Error while updating user status');
         }
-    }
-
-    @Put(':personId/enable')
-    @ApiOkResponse({ description: 'User has been successfully enabled.' })
-    @ApiNotFoundResponse({ description: 'The person was not found.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
-    @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
-    public async enablePerson(
-        @Param('personId') personId: string,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<void> {
-        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
-            personId,
-            permissions,
-        );
-
-        if (!personResult.ok) {
-            throw new Error('Person not found or no permissions');
-        }
-
-        if (!personResult.value?.keycloakUserId) {
-            throw new Error('Person not found');
-        }
-        const result: Result<void, DomainError> = await this.keycloakUserService.unlockUser(
-            personResult.value.keycloakUserId,
-        );
-        if (!result.ok) {
-            throw new Error('Error while disabling user');
+        if (!lockUserDto.lock) {
+            return { message: 'User has been successfully locked.' };
+        } else {
+            return { message: 'User has been successfully unlocked.' };
         }
     }
 }
