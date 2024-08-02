@@ -580,4 +580,75 @@ describe('OrganisationRepository', () => {
             });
         });
     });
+    describe('find', () => {
+        let organisations: OrganisationEntity[];
+
+        beforeEach(async () => {
+            organisations = Array.from({ length: 5 }).map(() =>
+                em.create(OrganisationEntity, mapAggregateToData(DoFactory.createOrganisation(true))),
+            );
+            await em.persistAndFlush(organisations);
+        });
+
+        it('should return all organisations when no limit and offset are provided', async () => {
+            const result: Organisation<true>[] = await sut.find();
+            expect(result).toHaveLength(5);
+        });
+
+        it('should return limited number of organisations when limit is provided', async () => {
+            const result: Organisation<true>[] = await sut.find(2);
+            expect(result).toHaveLength(2);
+        });
+    });
+    describe('findByNameOrKennung', () => {
+        let organisations: OrganisationEntity[];
+
+        beforeEach(async () => {
+            organisations = [
+                em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(
+                        DoFactory.createOrganisationAggregate(true, { name: 'TestName1', kennung: 'KENNUNG1' }),
+                    ),
+                ),
+                em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(
+                        DoFactory.createOrganisationAggregate(true, { name: 'AnotherTest', kennung: 'KENNUNG2' }),
+                    ),
+                ),
+                em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(
+                        DoFactory.createOrganisationAggregate(true, { name: 'TestName2', kennung: 'DIFFERENTKENNUNG' }),
+                    ),
+                ),
+            ];
+            await em.persistAndFlush(organisations);
+        });
+
+        it('should return organisations that match the search string in name', async () => {
+            const result: Organisation<true>[] = await sut.findByNameOrKennung('TestName');
+            expect(result).toHaveLength(2);
+            expect(result.some((org: Organisation<true>) => org.name === 'TestName1')).toBeTruthy();
+            expect(result.some((org: Organisation<true>) => org.name === 'TestName2')).toBeTruthy();
+        });
+
+        it('should return organisations that match the search string in kennung', async () => {
+            const result: Organisation<true>[] = await sut.findByNameOrKennung('KENNUNG2');
+            expect(result).toHaveLength(1);
+            expect(result[0]?.kennung).toEqual('KENNUNG2');
+        });
+
+        it('should return organisations that match the search string in either name or kennung', async () => {
+            const result: Organisation<true>[] = await sut.findByNameOrKennung('AnotherTest');
+            expect(result).toHaveLength(1);
+            expect(result[0]?.name).toEqual('AnotherTest');
+        });
+
+        it('should return an empty array if no organisations match the search string', async () => {
+            const result: Organisation<true>[] = await sut.findByNameOrKennung('NoMatch');
+            expect(result).toHaveLength(0);
+        });
+    });
 });
