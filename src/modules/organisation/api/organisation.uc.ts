@@ -172,6 +172,8 @@ export class OrganisationUc {
     public async findAdministriertVon(
         parentOrganisationId: string,
         searchFilter?: string,
+        limit?: number,
+        offset?: number,
     ): Promise<Paged<OrganisationResponseLegacy> | SchulConnexError> {
         const parentOrg: Result<
             OrganisationDo<true>,
@@ -184,6 +186,8 @@ export class OrganisationUc {
         const result: Paged<OrganisationDo<true>> = await this.organisationService.findAllAdministriertVon(
             parentOrganisationId,
             searchFilter,
+            offset,
+            limit,
         );
 
         const organisations: OrganisationResponseLegacy[] = this.mapper.mapArray(
