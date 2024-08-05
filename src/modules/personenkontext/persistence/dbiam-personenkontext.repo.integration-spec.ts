@@ -849,4 +849,29 @@ describe('dbiam Personenkontext Repo', () => {
             expect(result).toBeFalsy();
         });
     });
+
+    describe('deleteById', () => {
+        describe('when deleting personenkontext by id', () => {
+            it('should return number of deleted rows', async () => {
+                const person: Person<true> = await createPerson();
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
+                const personenKontext: Personenkontext<true> = await sut.save(
+                    createPersonenkontext(false, { rolleId: rolle.id, personId: person.id }),
+                );
+
+                const result: number = await sut.deleteById(personenKontext.id);
+
+                expect(result).toBe(1);
+            });
+        });
+
+        describe('when no personenkontext was deleted', () => {
+            it('should return 0', async () => {
+                const result: number = await sut.deleteById(faker.string.uuid());
+
+                expect(result).toBe(0);
+            });
+        });
+    });
 });
