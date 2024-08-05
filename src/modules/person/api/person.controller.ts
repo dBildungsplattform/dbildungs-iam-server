@@ -62,7 +62,7 @@ import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { KeycloakUserService, LOCK_KEYS, UserDo } from '../../keycloak-administration/index.js';
-import { LockUserDto } from './lock-user.param.js';
+import { LockUserBodyParams } from './lock-user.body.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personen')
@@ -446,7 +446,7 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
     public async lockPerson(
         @Param('personId') personId: string,
-        @Body() lockUserDto: LockUserDto,
+        @Body() lockUserBodyParams: LockUserBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<{ message: string }> {
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
@@ -463,20 +463,20 @@ export class PersonController {
         }
 
         const tempAttributes: Record<string, string> = {};
-        tempAttributes[LOCK_KEYS[0] as string] = 'Schul test';
+        tempAttributes[LOCK_KEYS[0] as string] = lockUserBodyParams.locked_from;
         tempAttributes[LOCK_KEYS[1] as string] = new Date().toISOString();
 
         const customAttributes: Record<string, string> = tempAttributes;
 
         const result: Result<void, DomainError> = await this.keycloakUserService.updateKeycloakUserStatus(
             personResult.value.keycloakUserId,
-            !lockUserDto.lock,
+            !lockUserBodyParams.lock,
             customAttributes,
         );
         if (!result.ok) {
             throw new Error('Error while updating user status');
         }
-        if (!lockUserDto.lock) {
+        if (!lockUserBodyParams.lock) {
             return { message: 'User has been successfully locked.' };
         } else {
             return { message: 'User has been successfully unlocked.' };
