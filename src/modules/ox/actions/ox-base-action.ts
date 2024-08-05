@@ -3,25 +3,20 @@ import { XMLBuilder, XMLParser } from 'fast-xml-parser';
 import { DomainError } from '../../../shared/error/index.js';
 import { OxError } from '../../../shared/error/ox.error.js';
 
-export type StatusInfo =
-    | {
-          codeMajor: 'failure';
-          severity: 'error';
-      }
-    | {
-          codeMajor: 'success';
-          severity: 'status';
-      };
-
-export type BaseResponse<BodyResponse> = {
+export type OxBaseResponse<BodyResponse> = {
     Envelope: {
-        Header: {
-            syncResponseHeaderInfo: {
-                statusInfo: StatusInfo;
+        Body: BodyResponse;
+    };
+};
+
+export type OxErrorResponse = {
+    Envelope: {
+        Body: {
+            fault: {
+                faultcode: string;
+                faultstring: string;
             };
         };
-
-        Body: BodyResponse;
     };
 };
 
@@ -51,9 +46,12 @@ export abstract class OxBaseAction<ResponseBodyType, ResultType> {
     public abstract parseBody(body: ResponseBodyType): Result<ResultType, DomainError>;
 
     public parseResponse(input: string): Result<ResultType, DomainError> {
-        const result: BaseResponse<ResponseBodyType> = this.xmlParser.parse(input) as BaseResponse<ResponseBodyType>;
+        const result: OxBaseResponse<ResponseBodyType> = this.xmlParser.parse(
+            input,
+        ) as OxBaseResponse<ResponseBodyType>;
+        const errorResult: OxErrorResponse = this.xmlParser.parse(input) as OxErrorResponse;
 
-        if (result.Envelope.Header.syncResponseHeaderInfo.statusInfo.codeMajor === 'failure') {
+        if (errorResult.Envelope.Body.fault) {
             return {
                 ok: false,
                 error: new OxError('Request failed', result),

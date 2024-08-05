@@ -7,20 +7,43 @@ export type CreateUserParams = {
     contextId: string;
 
     anniversary: string;
+    displayName: string;
     email1: string;
-    givenname: string;
-    mailenabled: boolean;
-    name: string;
+    firstname: string;
+    givenName: string;
+    mailEnabled: boolean;
+    lastname: string;
+    primaryEmail: string;
+    userPassword: string;
 
     login: string;
     password: string;
 };
 
-type CreateUserResponseBody = {
-    createPersonResponse: undefined;
+export type CreateUserResponse = {
+    fistname: string;
+    lastname: string;
+    primaryEmail: string;
+    mailenabled: boolean;
 };
 
-export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, void> {
+type CreateUserResponseBody = {
+    createResponse: {
+        return: {
+            'ns2:aliases': [];
+            'ns2:email1': string;
+            'ns2:email2': string;
+            'ns2:email3': string;
+            'ns2:primaryEmail': string;
+
+            'ns2:name': string;
+            'ns2:sur_name': string;
+            'ns2:mailenabled': boolean;
+        };
+    };
+};
+
+export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, CreateUserResponse> {
     public override action: string = 'http://soap.admin.openexchange.com/create';
 
     public constructor(private readonly params: CreateUserParams) {
@@ -40,10 +63,14 @@ export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, void>
 
                 'tns:usrdata': {
                     'ns6:anniversary': this.params.anniversary,
+                    'ns6:display_name': this.params.displayName,
                     'ns6:email1': this.params.email1,
-                    'ns6:givenname': this.params.givenname,
-                    'ns6:mailenabled': this.params.mailenabled,
-                    'ns6:name': this.params.name,
+                    'ns6:given_name': this.params.givenName,
+                    'ns6:mailenabled': this.params.mailEnabled,
+                    'ns6:name': this.params.firstname,
+                    'ns6:sur_name': this.params.lastname,
+                    'ns6:primaryEmail': this.params.primaryEmail,
+                    'ns6:password': this.params.userPassword,
                 },
 
                 'tns:auth': {
@@ -54,11 +81,15 @@ export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, void>
         };
     }
 
-    public override parseBody(): Result<void, DomainError> {
-        // Response does not contain data
+    public override parseBody(body: CreateUserResponseBody): Result<CreateUserResponse, DomainError> {
         return {
             ok: true,
-            value: undefined,
+            value: {
+                fistname: body.createResponse.return['ns2:name'],
+                lastname: body.createResponse.return['ns2:sur_name'],
+                primaryEmail: body.createResponse.return['ns2:primaryEmail'],
+                mailenabled: body.createResponse.return['ns2:mailenabled'],
+            },
         };
     }
 }
