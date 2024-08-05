@@ -44,6 +44,38 @@ describe('PersonApiMapperProfile', () => {
     });
 
     describe('when mapper is initialized', () => {
+        it('should map PersonenkontextDo to CreatedPersonenkontextDto with loeschung and organisation', () => {
+            const personenkontextDo: PersonenkontextDo<true> = {
+                id: faker.string.uuid(),
+                personId: faker.string.uuid(),
+
+                rolleId: faker.string.uuid(),
+                rolle: Rolle.LEHRENDER,
+                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                personenstatus: Personenstatus.AKTIV,
+                referrer: 'referrer',
+                loeschungZeitpunkt: new Date(),
+                organisationId: faker.string.uuid(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                mandant: 'mandant',
+                sichtfreigabe: SichtfreigabeType.JA,
+                revision: '1',
+            };
+
+            const result: CreatedPersonenkontextDto = sut.map(
+                personenkontextDo,
+                PersonenkontextDo,
+                CreatedPersonenkontextDto,
+            );
+
+            expect(result).toBeDefined();
+            expect(result.loeschung).toBeDefined();
+            expect(result.loeschung?.zeitpunkt).toEqual(personenkontextDo.loeschungZeitpunkt);
+            expect(result.organisation).toBeDefined();
+            expect(result.organisation.id).toEqual(personenkontextDo.organisationId);
+        });
+
         it('should map CreatePersonenkontextBodyParams to CreatePersonenkontextDto', () => {
             const body: CreatePersonenkontextBodyParams = {
                 rolle: Rolle.LEHRENDER,
