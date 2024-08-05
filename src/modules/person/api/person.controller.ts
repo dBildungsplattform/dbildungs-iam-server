@@ -66,6 +66,7 @@ import { PersonenkontextService } from '../../personenkontext/domain/personenkon
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
+import { KeycloakUserService, LOCK_KEYS, UserDo } from '../../keycloak-administration/index.js';
 import { LockUserDto } from './lock-user.param.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
@@ -210,7 +211,7 @@ export class PersonController {
                 personResult.value.keycloakUserId,
             );
             if (keyCloakUserDataResponse.ok) {
-                response.person.attributes = keyCloakUserDataResponse.value.attributes;
+                response.person.attributes = keyCloakUserDataResponse.value.attributes as Record<string, string>;
                 response.person.isLocked = keyCloakUserDataResponse.value.enabled === false;
             }
         }
@@ -478,12 +479,13 @@ export class PersonController {
             throw new Error('Person not found');
         }
 
-        const customAttributes: Record<string, string> = {
-            locked_from: 'Schul test',
-            timestamp: new Date().toISOString(),
-        };
+        const tempAttributes: Record<string, string> = {};
+        tempAttributes[LOCK_KEYS[0] as string] = 'Schul test';
+        tempAttributes[LOCK_KEYS[1] as string] = new Date().toISOString();
 
-        const result: Result<void, DomainError> = await this.keycloakUserService.setUserEnabled(
+        const customAttributes: Record<string, string> = tempAttributes;
+
+        const result: Result<void, DomainError> = await this.keycloakUserService.updateKeycloakUserStatus(
             personResult.value.keycloakUserId,
             !lockUserDto.lock,
             customAttributes,

@@ -14,6 +14,8 @@ export type FindUserFilter = {
     email?: string;
 };
 
+export const LOCK_KEYS: string[] = ['lock_locked_from', 'lock_timestamp'];
+
 @Injectable()
 export class KeycloakUserService {
     public constructor(
@@ -274,7 +276,7 @@ export class KeycloakUserService {
         return { ok: true, value: userDo };
     }
 
-    public async setUserEnabled(
+    public async updateKeycloakUserStatus(
         userId: string,
         enabled: boolean,
         customAttributes?: Record<string, string>,
@@ -288,28 +290,52 @@ export class KeycloakUserService {
         try {
             const kcAdminClient: KeycloakAdminClient = kcAdminClientResult.value;
             await kcAdminClient.users.update({ id: userId }, { enabled });
+
             if (customAttributes) {
-                const user: UserRepresentation | undefined = await kcAdminClient.users.findOne({ id: userId });
-                if (user) {
-                    user.attributes = user.attributes || {};
-                    for (const key in customAttributes) {
-                        if (customAttributes.hasOwnProperty(key)) {
-                            user.attributes[key] = [customAttributes[key]];
-                        }
-                    }
-                    await kcAdminClient.users.update({ id: userId }, user);
-                }
+                await this.updateCustomAttributes(kcAdminClient, userId, customAttributes);
+            }
+
+            if (enabled) {
+                await this.removeLockedAttributes(kcAdminClient, userId);
             }
 
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.error(
-                `Could not update user enabled status or custom attribute, message: ${JSON.stringify(err)}`,
-            );
+            this.logger.error(`Could not update user status or custom attributes, message: ${JSON.stringify(err)}`);
             return {
                 ok: false,
-                error: new KeycloakClientError('Could not update user enabled status or custom attribute'),
+                error: new KeycloakClientError('Could not update user status or custom attributes'),
             };
+        }
+    }
+
+    private async updateCustomAttributes(
+        kcAdminClient: KeycloakAdminClient,
+        userId: string,
+        customAttributes: Record<string, string>,
+    ): Promise<void> {
+        const user: UserRepresentation | undefined = await kcAdminClient.users.findOne({ id: userId });
+        if (user) {
+            user.attributes = user.attributes || {};
+            for (const key in customAttributes) {
+                if (customAttributes.hasOwnProperty(key)) {
+                    user.attributes[key] = [customAttributes[key]];
+                }
+            }
+            await kcAdminClient.users.update({ id: userId }, user);
+        }
+    }
+
+    private async removeLockedAttributes(kcAdminClient: KeycloakAdminClient, userId: string): Promise<void> {
+        const user: UserRepresentation | undefined = await kcAdminClient.users.findOne({ id: userId });
+        if (user) {
+            user.attributes = user.attributes || {};
+            const filteredAttributes: Record<string, string[]> = Object.fromEntries(
+                Object.entries(user.attributes).filter(([key]: string[]) => !LOCK_KEYS.includes(key ?? '')),
+            );
+
+            user.attributes = filteredAttributes;
+            await kcAdminClient.users.update({ id: userId }, user);
         }
     }
 
