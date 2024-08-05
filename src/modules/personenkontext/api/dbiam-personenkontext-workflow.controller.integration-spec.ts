@@ -36,6 +36,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { PersonFactory } from '../../person/domain/person.factory.js';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
     const rolle: Rolle<false> = rolleFactory.createNew(
@@ -60,6 +61,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let personRepo: PersonRepository;
     let personenkontextRepo: DBiamPersonenkontextRepo;
+    let personFactory: PersonFactory;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -106,11 +108,30 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
         personRepo = module.get(PersonRepository);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
+        personFactory = module.get(PersonFactory);
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
         await app.init();
     }, 10000000);
+
+    async function createPerson(): Promise<Person<true>> {
+        const personResult: Person<false> | DomainError = await personFactory.createNew({
+            vorname: faker.person.firstName(),
+            familienname: faker.person.lastName(),
+            username: faker.internet.userName(),
+            password: faker.string.alphanumeric(8),
+        });
+        if (personResult instanceof DomainError) {
+            throw personResult;
+        }
+        const person: Person<true> | DomainError = await personRepo.create(personResult);
+        if (person instanceof DomainError) {
+            throw person;
+        }
+
+        return person;
+    }
 
     afterAll(async () => {
         await orm.close();
@@ -239,10 +260,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     describe('/PUT commit', () => {
         describe('when sending no PKs', () => {
             it('should delete and therefore return 200', async () => {
-                const person: Person<true> | DomainError = await personRepo.save(DoFactory.createPerson(false));
-                if (person instanceof DomainError) {
-                    return;
-                }
+                const person: Person<true> = await createPerson();
                 const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
                 const rolle: Rolle<true> = await rolleRepo.save(
                     DoFactory.createRolle(false, { systemrechte: [RollenSystemRecht.PERSONEN_VERWALTEN] }),
@@ -276,14 +294,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
         describe('when errors occur', () => {
             it('should return error because the count is not matching', async () => {
-                const person: Person<true> | DomainError = await personRepo.save(DoFactory.createPerson(false));
-                if (person instanceof DomainError) {
-                    return;
-                }
-
+                const person: Person<true> = await createPerson();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
                 if (rolle instanceof DomainError) {
-                    return;
+                    throw rolle;
                 }
                 const savedPK: Personenkontext<true> = await personenkontextRepo.save(
                     DoFactory.createPersonenkontext(false, {
@@ -312,9 +326,24 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         it('should return all schulstrukturknoten for a personenkontext based on PersonenkontextAnlage', async () => {
             const rolleName: string = faker.string.alpha({ length: 10 });
             const sskName: string = faker.company.name();
-            const rolle: Rolle<true> = await rolleRepo.save(createRolle(rolleFactory, { name: rolleName }));
+            const parentOrga: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.LAND }),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                createRolle(rolleFactory, {
+                    name: rolleName,
+                    rollenart: RollenArt.LEHR,
+                    administeredBySchulstrukturknoten: parentOrga.id,
+                }),
+            );
             const rolleId: string = rolle.id;
-            await organisationRepo.save(DoFactory.createOrganisation(false, { name: sskName }));
+            await organisationRepo.save(
+                DoFactory.createOrganisation(false, {
+                    name: sskName,
+                    administriertVon: parentOrga.id,
+                    typ: OrganisationsTyp.SCHULE,
+                }),
+            );
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/personenkontext-workflow/schulstrukturknoten?rolleId=${rolleId}&sskName=${sskName}&limit=25`)

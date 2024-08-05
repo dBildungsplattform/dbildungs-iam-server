@@ -397,66 +397,67 @@ describe('PersonenkontextController', () => {
                     //expect(result.items[0].personenkontexte[0]?.id).toBe(mockPersonenkontext.personId);
                 }
             });
+        });
+    });
 
-            describe('hatSystemRecht', () => {
-                describe('when verifying user has existing SystemRecht', () => {
-                    it('should return SystemrechtResponse', async () => {
-                        const idParams: PersonByIdParams = { personId: '1' };
-                        const bodyParams: HatSystemrechtQueryParams = {
-                            systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
-                        };
+    describe('hatSystemRecht', () => {
+        describe('when verifying user has existing SystemRecht', () => {
+            it('should return SystemrechtResponse', async () => {
+                const idParams: PersonByIdParams = { personId: '1' };
+                const bodyParams: HatSystemrechtQueryParams = {
+                    systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
+                };
 
-                        const organisations: Organisation<true>[] = [
-                            DoFactory.createOrganisation(true, {
-                                id: 'org1',
-                                name: 'Organisation 1',
-                            }),
-                        ];
+                const organisations: Organisation<true>[] = [
+                    DoFactory.createOrganisation(true, {
+                        id: 'org1',
+                        name: 'Organisation 1',
+                    }),
+                ];
 
-                        const organisationResponses: OrganisationResponseLegacy[] = organisations.map(
-                            (org: Organisation<true>) => new OrganisationResponseLegacy(org),
-                        );
-                        const systemrechtResponse: SystemrechtResponse = {
-                            ROLLEN_VERWALTEN: organisationResponses,
-                        };
+                const organisationResponses: OrganisationResponseLegacy[] = organisations.map(
+                    (org: Organisation<true>) => new OrganisationResponseLegacy(org),
+                );
+                const systemrechtResponse: SystemrechtResponse = {
+                    ROLLEN_VERWALTEN: organisationResponses,
+                };
 
-                        personenkontextService.findPersonenkontexteByPersonId.mockResolvedValue([
-                            DoFactory.createPersonenkontext(true, { rolleId: 'rolle1', organisationId: 'org1' }),
-                        ]);
-                        rolleRepo.findById.mockResolvedValue(
-                            DoFactory.createRolle(true, { hasSystemRecht: () => true }),
-                        );
-                        organisationRepository.findById.mockResolvedValue(organisations[0]);
-                        const pagedOrgas: Paged<Organisation<true>> = {
-                            offset: 0,
-                            limit: 0,
-                            total: 0,
-                            items: [],
-                        };
-                        organisationService.findAllAdministriertVon.mockResolvedValue(pagedOrgas);
+                personenkontextService.findPersonenkontexteByPersonId.mockResolvedValueOnce([
+                    DoFactory.createPersonenkontext(true, { rolleId: 'rolle1', organisationId: 'org1' }),
+                    DoFactory.createPersonenkontext(true, { rolleId: 'rolle2', organisationId: 'org2' }),
+                ]);
+                rolleRepo.findById
+                    .mockResolvedValueOnce(DoFactory.createRolle(true, { hasSystemRecht: () => true }))
+                    .mockResolvedValueOnce(undefined);
+                organisationRepository.findById.mockResolvedValue(organisations[0]);
+                const pagedOrgas: Paged<Organisation<true>> = {
+                    offset: 0,
+                    limit: 0,
+                    total: 0,
+                    items: [],
+                };
+                organisationService.findAllAdministriertVon.mockResolvedValue(pagedOrgas);
 
-                        const response: SystemrechtResponse = await sut.hatSystemRecht(idParams, bodyParams);
-                        expect(response).toEqual(systemrechtResponse);
-                        expect(response.ROLLEN_VERWALTEN).toHaveLength(1);
-                        expect(personenkontextService.findPersonenkontexteByPersonId).toHaveBeenCalledTimes(1);
-                        expect(rolleRepo.findById).toHaveBeenCalledTimes(1);
-                        expect(organisationRepository.findById).toHaveBeenCalledTimes(1);
-                        expect(organisationService.findAllAdministriertVon).toHaveBeenCalledTimes(1);
-                    });
-                });
+                const response: SystemrechtResponse = await sut.hatSystemRecht(idParams, bodyParams);
+                expect(response).toEqual(systemrechtResponse);
+                expect(response.ROLLEN_VERWALTEN).toHaveLength(1);
+                expect(personenkontextService.findPersonenkontexteByPersonId).toHaveBeenCalledTimes(1);
+                expect(rolleRepo.findById).toHaveBeenCalledTimes(2);
+                expect(organisationRepository.findById).toHaveBeenCalledTimes(1);
+                expect(organisationService.findAllAdministriertVon).toHaveBeenCalledTimes(1);
+            });
+        });
 
-                describe('when verifying user has non-existing SystemRecht', () => {
-                    it('should return 404', async () => {
-                        const idParams: PersonByIdParams = {
-                            personId: '1',
-                        };
-                        const queryParams: HatSystemrechtQueryParams = {
-                            systemRecht: 'FALSCHER_RECHTE_NAME',
-                        };
+        describe('when verifying user has non-existing SystemRecht', () => {
+            it('should return 404', async () => {
+                const idParams: PersonByIdParams = {
+                    personId: '1',
+                };
+                const queryParams: HatSystemrechtQueryParams = {
+                    systemRecht: 'FALSCHER_RECHTE_NAME',
+                };
 
-                        await expect(sut.hatSystemRecht(idParams, queryParams)).rejects.toThrow(HttpException);
-                    });
-                });
+                await expect(sut.hatSystemRecht(idParams, queryParams)).rejects.toThrow(HttpException);
             });
         });
     });
