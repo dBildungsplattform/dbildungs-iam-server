@@ -681,10 +681,18 @@ describe('Rolle API', () => {
 
         describe('Update Merkmale', () => {
             it('should return 400 if rolle is already assigned', async () => {
-                const person: Person<true> | DomainError = await personRepo.save(DoFactory.createPerson(false));
-
+                const personData: Person<false> | DomainError = await personFactory.createNew({
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    username: faker.internet.userName(),
+                    password: faker.string.alphanumeric(8),
+                });
+                if (personData instanceof DomainError) {
+                    throw personData;
+                }
+                const person: Person<true> | DomainError = await personRepo.save(personData);
                 if (person instanceof DomainError) {
-                    return;
+                    throw person;
                 }
 
                 const organisation: OrganisationEntity = new OrganisationEntity();
@@ -748,7 +756,6 @@ describe('Rolle API', () => {
                     throw personData;
                 }
                 const person: Person<true> | DomainError = await personRepo.save(personData);
-
                 if (person instanceof DomainError) {
                     throw person;
                 }
