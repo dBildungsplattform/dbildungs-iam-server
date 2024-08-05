@@ -940,4 +940,72 @@ describe('PersonRepository Integration', () => {
             });
         });
     });
+    describe('save', () => {
+        describe('when person has an id', () => {
+            it('should call the update method and return the updated person', async () => {
+                const personEntity: PersonEntity = em.create(
+                    PersonEntity,
+                    mapAggregateToData(DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() })),
+                );
+                await em.persistAndFlush(personEntity);
+                const existingPerson: Person<true> = mapEntityToAggregate(personEntity);
+
+                const updatedPerson: Person<true> = Person.construct(
+                    existingPerson.id,
+                    existingPerson.createdAt,
+                    existingPerson.updatedAt,
+                    faker.person.lastName(),
+                    faker.person.firstName(),
+                    existingPerson.mandant,
+                    existingPerson.stammorganisation,
+                    existingPerson.keycloakUserId,
+                    existingPerson.referrer,
+                );
+
+                const result: Person<true> | DomainError = await sut.save(updatedPerson);
+
+                if (result instanceof DomainError) {
+                    return;
+                }
+                expect(result.vorname).toEqual(updatedPerson.vorname);
+                expect(result.familienname).toEqual(updatedPerson.familienname);
+            });
+
+            describe('when person does not have an id', () => {
+                it('should call the create method and return the created person', async () => {
+                    const newPerson: Person<false> = DoFactory.createPerson(false);
+
+                    const result: Person<true> | DomainError = await sut.save(newPerson);
+
+                    if (result instanceof DomainError) {
+                        return;
+                    }
+                    expect(result.vorname).toEqual(newPerson.vorname);
+                    expect(result.familienname).toEqual(newPerson.familienname);
+                });
+            });
+        });
+    });
+    describe('exists', () => {
+        it('should return true if person exists', async () => {
+            const personEntity: PersonEntity = em.create(
+                PersonEntity,
+                mapAggregateToData(DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() })),
+            );
+            await em.persistAndFlush(personEntity);
+            const person: Person<true> = mapEntityToAggregate(personEntity);
+
+            const exists: boolean = await sut.exists(person.id);
+
+            expect(exists).toBe(true);
+        });
+
+        it('should return false if person does not exist', async () => {
+            const nonExistentId: string = faker.string.uuid();
+
+            const exists: boolean = await sut.exists(nonExistentId);
+
+            expect(exists).toBe(false);
+        });
+    });
 });
