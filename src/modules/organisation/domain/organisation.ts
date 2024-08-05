@@ -62,16 +62,6 @@ export class Organisation<WasPersisted extends boolean> {
         typ?: OrganisationsTyp,
         traegerschaft?: Traegerschaft,
     ): Organisation<false> | DomainError {
-        if (name) {
-            if (!NameValidator.isNameValid(name)) {
-                return new NameForOrganisationWithTrailingSpaceError();
-            }
-        }
-        if (kennung) {
-            if (!NameValidator.isNameValid(kennung)) {
-                return new KennungForOrganisationWithTrailingSpaceError();
-            }
-        }
         const organisation: Organisation<false> = new Organisation(
             undefined,
             undefined,
