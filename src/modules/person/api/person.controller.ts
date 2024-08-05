@@ -205,6 +205,7 @@ export class PersonController {
                 ),
             );
         }
+
         const response: PersonendatensatzResponse = new PersonendatensatzResponse(personResult.value, false);
         if (personResult.value.keycloakUserId) {
             const keyCloakUserDataResponse: Result<UserDo<true>, DomainError> = await this.keycloakUserService.findById(

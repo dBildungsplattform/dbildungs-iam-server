@@ -43,7 +43,7 @@ export class PersonendatensatzResponse {
             revision: person.revision,
             startpasswort: withStartPasswort === true ? person.newPassword : undefined,
             personalnummer: person.personalnummer,
-            isLocked: isLocked ? true : false,
+            isLocked: isLocked,
             attributes: attributes,
         };
 
