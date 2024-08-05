@@ -220,105 +220,33 @@ describe('Organisation', () => {
                 expect(updateError).toBeInstanceOf(NameRequiredForKlasseError);
             });
         });
-    });
 
-    describe('checkKlasseSpecifications', () => {
-        describe('if KlassenNameAnSchuleEindeutig is not valid', () => {
-            it('should return KlassenNameAnSchuleEindeutigError', async () => {
+        describe('if name of updated organisation has trailing whitespace', () => {
+            it('should return NameForOrganisationWithTrailingSpaceError', async () => {
+                const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                    name: ' name',
+                    typ: OrganisationsTyp.KLASSE,
+                });
+
+                const updateError: OrganisationSpecificationError | undefined =
+                    await orga.checkKlasseSpecifications(organisationRepositoryMock);
+
+                expect(updateError).toBeInstanceOf(NameForOrganisationWithTrailingSpaceError);
+            });
+        });
+
+        describe('if kennung of updated organisation has trailing whitespace', () => {
+            it('should return KennungForOrganisationWithTrailingSpaceError', async () => {
                 const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
                     name: 'name',
-                    typ: OrganisationsTyp.KLASSE,
-                    administriertVon: faker.string.uuid(),
-                });
-                const otherOrga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
-                    name: 'name',
-                    typ: OrganisationsTyp.KLASSE,
-                    administriertVon: faker.string.uuid(),
-                });
-                const parentOrga: Organisation<boolean> = DoFactory.createOrganisationAggregate(true, {
-                    typ: OrganisationsTyp.SCHULE,
-                });
-                organisationRepositoryMock.findById.mockResolvedValueOnce(parentOrga);
-                organisationRepositoryMock.findChildOrgasForIds.mockResolvedValueOnce([otherOrga]);
-
-                const updateError: OrganisationSpecificationError | undefined =
-                    await orga.checkKlasseSpecifications(organisationRepositoryMock);
-
-                expect(updateError).toBeInstanceOf(KlassenNameAnSchuleEindeutigError);
-            });
-        });
-
-        describe('if Organisation is not a Klasse', () => {
-            it('should return validated', async () => {
-                const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
-                    name: 'name',
-                    typ: OrganisationsTyp.SCHULE,
-                    administriertVon: faker.string.uuid(),
-                });
-
-                const updateError: OrganisationSpecificationError | undefined =
-                    await orga.checkKlasseSpecifications(organisationRepositoryMock);
-
-                expect(updateError).toBeUndefined();
-            });
-        });
-
-        describe('if Organisation has no Parent', () => {
-            it('should return KlassenNameAnSchuleEindeutigError', async () => {
-                const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
-                    name: 'name',
-                    typ: OrganisationsTyp.KLASSE,
-                    administriertVon: undefined,
-                });
-
-                const updateError: OrganisationSpecificationError | undefined =
-                    await orga.checkKlasseSpecifications(organisationRepositoryMock);
-
-                expect(updateError).toBeInstanceOf(KlassenNameAnSchuleEindeutigError);
-            });
-        });
-
-        describe('if parent of Organisation cannot be found', () => {
-            it('should return KlassenNameAnSchuleEindeutigError', async () => {
-                const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
-                    name: 'name',
-                    typ: OrganisationsTyp.KLASSE,
-                    administriertVon: faker.string.uuid(),
-                });
-                organisationRepositoryMock.findById.mockResolvedValueOnce(undefined);
-                const updateError: OrganisationSpecificationError | undefined =
-                    await orga.checkKlasseSpecifications(organisationRepositoryMock);
-
-                expect(updateError).toBeInstanceOf(KlassenNameAnSchuleEindeutigError);
-            });
-        });
-
-        describe('if Organisation has no ID', () => {
-            it('should return KlassenNameAnSchuleEindeutigError with id=undefined', async () => {
-                const orga: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
-                    name: 'name',
-                    typ: OrganisationsTyp.KLASSE,
-                    administriertVon: undefined,
-                });
-
-                const updateError: OrganisationSpecificationError | undefined =
-                    await orga.checkKlasseSpecifications(organisationRepositoryMock);
-
-                expect(updateError).toBeInstanceOf(KlassenNameAnSchuleEindeutigError);
-            });
-        });
-
-        describe('if NameRequiredForKlasse is not valid', () => {
-            it('should return NameRequiredForKlasseError', async () => {
-                const orga: Organisation<boolean> = DoFactory.createOrganisationAggregate(false, {
-                    name: '',
+                    kennung: 'kennung ',
                     typ: OrganisationsTyp.KLASSE,
                 });
 
                 const updateError: OrganisationSpecificationError | undefined =
                     await orga.checkKlasseSpecifications(organisationRepositoryMock);
 
-                expect(updateError).toBeInstanceOf(NameRequiredForKlasseError);
+                expect(updateError).toBeInstanceOf(KennungForOrganisationWithTrailingSpaceError);
             });
         });
     });

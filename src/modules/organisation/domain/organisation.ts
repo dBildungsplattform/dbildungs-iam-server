@@ -72,7 +72,7 @@ export class Organisation<WasPersisted extends boolean> {
                 return new KennungForOrganisationWithTrailingSpaceError();
             }
         }
-        return new Organisation(
+        const organisation: Organisation<false> = new Organisation(
             undefined,
             undefined,
             undefined,
@@ -85,11 +85,22 @@ export class Organisation<WasPersisted extends boolean> {
             typ,
             traegerschaft,
         );
+
+        const validationError: void | OrganisationSpecificationError = organisation.validateFieldNames();
+        if (validationError) {
+            return validationError;
+        }
+
+        return organisation;
     }
 
     public async checkKlasseSpecifications(
         organisationRepository: OrganisationRepository,
     ): Promise<undefined | OrganisationSpecificationError> {
+        const validationError: void | OrganisationSpecificationError = this.validateFieldNames();
+        if (validationError) {
+            return validationError;
+        }
         const nameRequiredForKlasse: NameRequiredForKlasse = new NameRequiredForKlasse();
         if (!(await nameRequiredForKlasse.isSatisfiedBy(this))) {
             return new NameRequiredForKlasseError();
@@ -115,5 +126,17 @@ export class Organisation<WasPersisted extends boolean> {
             }
         }
         return true;
+    }
+
+    private validateFieldNames(): void | OrganisationSpecificationError {
+        if (this.name && !NameValidator.isNameValid(this.name)) {
+            return new NameForOrganisationWithTrailingSpaceError();
+        }
+
+        if (this.kennung && !NameValidator.isNameValid(this.kennung)) {
+            return new KennungForOrganisationWithTrailingSpaceError();
+        }
+
+        return undefined;
     }
 }
