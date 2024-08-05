@@ -11,8 +11,4 @@ export class FindPersonenkontextByIdParams {
         nullable: false,
     })
     public readonly personenkontextId!: string;
-
-    public constructor(personenkontextId: string) {
-        this.personenkontextId = personenkontextId;
-    }
 }
