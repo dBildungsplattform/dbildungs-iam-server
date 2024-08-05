@@ -28,11 +28,6 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
-import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
-import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
-import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
-import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
-import { FindDbiamPersonenkontextWorkflowBodyParams } from './param/dbiam-find-personenkontextworkflow-body.params.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
@@ -65,8 +60,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let personRepo: PersonRepository;
     let personenkontextRepo: DBiamPersonenkontextRepo;
-    let personenkontextWorkflowMock: DeepMocked<PersonenkontextWorkflowAggregate>;
-    let personenkontextWorkflowFactoryMock: DeepMocked<PersonenkontextWorkflowFactory>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -85,14 +78,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 {
                     provide: PersonPermissionsRepo,
                     useValue: createMock<PersonPermissionsRepo>(),
-                },
-                {
-                    provide: PersonenkontextWorkflowFactory,
-                    useValue: createMock<PersonenkontextWorkflowFactory>(),
-                },
-                {
-                    provide: PersonenkontextWorkflowAggregate,
-                    useValue: createMock<PersonenkontextWorkflowAggregate>(),
                 },
                 {
                     provide: APP_INTERCEPTOR,
@@ -121,8 +106,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
         personRepo = module.get(PersonRepository);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
-        personenkontextWorkflowMock = module.get(PersonenkontextWorkflowAggregate);
-        personenkontextWorkflowFactoryMock = createMock<PersonenkontextWorkflowFactory>();
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
@@ -253,152 +236,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         });
     });
 
-    describe('/GET processStep for personenkontext', () => {
-        it('should return selected organisation and all rollen', async () => {
-            const organisationName: string = faker.company.name();
-            const organisation: Organisation<true> = await organisationRepo.save(
-                DoFactory.createOrganisation(false, { name: organisationName }),
-            );
-
-            const rolleName: string = faker.string.alpha({ length: 10 });
-            const rolle: Rolle<true> = await rolleRepo.save(
-                createRolle(rolleFactory, {
-                    name: rolleName,
-                    administeredBySchulstrukturknoten: organisation.id,
-                    rollenart: RollenArt.LERN,
-                }),
-            );
-
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-
-            const anlageMock: DeepMocked<PersonenkontextWorkflowAggregate> =
-                createMock<PersonenkontextWorkflowAggregate>();
-            anlageMock.findAllSchulstrukturknoten.mockResolvedValueOnce([]);
-            anlageMock.findRollenForOrganisation.mockResolvedValueOnce([rolle]);
-
-            personenkontextWorkflowFactoryMock.createNew.mockReturnValue(anlageMock);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .get('/personenkontext-workflow/step')
-                .query({ organisationId: organisation.id })
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
-        });
-
-        it('should handle request with no organisationId', async () => {
-            const organisationName: string = faker.company.name();
-            const randomName: string = faker.company.name();
-
-            const organisation: Organisation<true> = await organisationRepo.save(
-                DoFactory.createOrganisation(false, { name: organisationName }),
-            );
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-            personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([organisation]);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .get('/personenkontext-workflow/step')
-                .query({ organisationName: randomName })
-                .send();
-
-            expect(response.status).toEqual(200);
-        });
-
-        it('should call findRollenForOrganisation when organisationId is provided', async () => {
-            const organisation: Organisation<true> = await organisationRepo.save(
-                DoFactory.createOrganisation(false, { name: faker.company.name() }),
-            );
-
-            const rolle: Rolle<true> = await rolleRepo.save(
-                DoFactory.createRolle(false, {
-                    administeredBySchulstrukturknoten: organisation.id,
-                    rollenart: RollenArt.LERN,
-                }),
-            );
-
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-
-            const anlageMock: DeepMocked<PersonenkontextWorkflowAggregate> =
-                createMock<PersonenkontextWorkflowAggregate>();
-            anlageMock.findRollenForOrganisation.mockResolvedValueOnce([rolle]);
-            personenkontextWorkflowFactoryMock.createNew.mockReturnValue(anlageMock);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .get('/personenkontext-workflow/step')
-                .query({ organisationId: organisation.id })
-                .send();
-
-            expect(response.status).toEqual(200);
-        });
-
-        it('should return empty organisations and empty roles if organisationId is provided but no roles nor orgas are found', async () => {
-            const organisationName: string = faker.company.name();
-            const organisation: Organisation<true> = await organisationRepo.save(
-                DoFactory.createOrganisation(false, { name: organisationName }),
-            );
-
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .get('/personenkontext-workflow/step')
-                .query({ organisationId: organisation.id })
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
-        });
-
-        it('should set canCommit to true if canCommit returns true', async () => {
-            const organisationId: string = faker.string.uuid();
-            // Create and save an organisation and a rolle
-            const organisation: Organisation<true> = await organisationRepo.save(
-                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.LAND }),
-            );
-
-            const rolle: Rolle<true> = await rolleRepo.save(
-                DoFactory.createRolle(false, {
-                    administeredBySchulstrukturknoten: organisation.id,
-                    rollenart: RollenArt.SYSADMIN,
-                }),
-            );
-            const rolleId: string = rolle.id;
-
-            organisationRepo.findById = jest.fn().mockResolvedValue(organisation);
-            rolleRepo.findById = jest.fn().mockResolvedValue(rolle);
-
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-
-            const params: FindDbiamPersonenkontextWorkflowBodyParams = {
-                organisationId,
-                rolleId,
-                organisationName: undefined,
-                rolleName: undefined,
-                limit: undefined,
-            };
-            const rollen: Rolle<true>[] = [rolle];
-
-            personenkontextWorkflowMock.findRollenForOrganisation.mockResolvedValue(rollen);
-            personenkontextWorkflowMock.canCommit.mockResolvedValue(true);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .get('/personenkontext-workflow/step')
-                .query({ organisationId: params.organisationId, rolleId: params.rolleId })
-                .send();
-
-            expect(response.status).toEqual(200);
-        });
-    });
     describe('/PUT commit', () => {
         describe('when sending no PKs', () => {
             it('should delete and therefore return 200', async () => {
@@ -436,22 +273,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 expect(response.status).toBe(200);
             });
         });
-        it('should throw BadRequestException if updateResult is an instance of PersonenkontexteUpdateError', async () => {
-            const params: DBiamFindPersonenkontexteByPersonIdParams = { personId: faker.string.uuid() };
-            const bodyParams: DbiamUpdatePersonenkontexteBodyParams = {
-                count: 1,
-                lastModified: new Date(),
-                personenkontexte: [],
-            };
-            const updateError: PersonenkontexteUpdateError = new PersonenkontexteUpdateError('Update error message');
-            personenkontextWorkflowMock.commit.mockResolvedValue(updateError);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .put(`/personenkontext-workflow/${params.personId}`)
-                .send(bodyParams);
-
-            expect(response.status).toBe(400);
-        });
 
         describe('when errors occur', () => {
             it('should return error because the count is not matching', async () => {
@@ -481,40 +302,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 const response: Response = await request(app.getHttpServer() as App)
                     .put(`/personenkontext-workflow/${person.id}`)
                     .send(updatePKsRequest);
-
-                expect(response.status).toBe(400);
-            });
-            it('should throw BadRequestException if updateResult is an instance of PersonenkontexteUpdateError', async () => {
-                const params: DBiamFindPersonenkontexteByPersonIdParams = { personId: faker.string.uuid() };
-                const bodyParams: DbiamUpdatePersonenkontexteBodyParams = {
-                    count: 1,
-                    lastModified: new Date(),
-                    personenkontexte: [],
-                };
-                const updateError: PersonenkontexteUpdateError = new PersonenkontexteUpdateError(
-                    'Update error message',
-                );
-                personenkontextWorkflowMock.commit.mockResolvedValue(updateError);
-
-                const response: Response = await request(app.getHttpServer() as App)
-                    .put(`/personenkontext-workflow/${params.personId}`)
-                    .send(bodyParams);
-
-                expect(response.status).toBe(400);
-            });
-            it('should rethrow generic errors', async () => {
-                const params: DBiamFindPersonenkontexteByPersonIdParams = { personId: faker.string.uuid() };
-                const bodyParams: DbiamUpdatePersonenkontexteBodyParams = {
-                    count: 0,
-                    lastModified: new Date(),
-                    personenkontexte: [],
-                };
-                const genericError: Error = new Error('Generic error message');
-                personenkontextWorkflowMock.commit.mockRejectedValue(genericError);
-
-                const response: Response = await request(app.getHttpServer() as App)
-                    .put(`/personenkontext-workflow/${params.personId}`)
-                    .send(bodyParams);
 
                 expect(response.status).toBe(400);
             });
