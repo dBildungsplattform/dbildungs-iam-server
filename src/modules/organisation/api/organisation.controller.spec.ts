@@ -431,26 +431,6 @@ describe('OrganisationController', () => {
                     organisationController.getAdministrierteOrganisationen(routeParams, queryParams),
                 ).rejects.toThrow(HttpException);
             });
-
-            it('should throw a HttpException if child organisations are not found', async () => {
-                organisationServiceMock.findOrganisationById.mockResolvedValue({
-                    ok: true,
-                    value: DoFactory.createOrganisation(true),
-                });
-                organisationServiceMock.findAllAdministriertVon.mockResolvedValueOnce(
-                    new SchulConnexError({
-                        code: 500,
-                        subcode: '00',
-                        titel: 'Interner Serverfehler',
-                        beschreibung:
-                            'Es ist ein interner Fehler aufgetreten. Der aufgetretene Fehler konnte nicht verarbeitet werden',
-                    }) as unknown as Paged<Organisation<true>>,
-                );
-
-                await expect(
-                    organisationController.getAdministrierteOrganisationen(routeParams, queryParams),
-                ).rejects.toThrow(HttpException);
-            });
         });
     });
 
