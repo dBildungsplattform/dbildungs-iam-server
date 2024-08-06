@@ -175,7 +175,7 @@ export class PrivacyIdeaAdministrationService {
 
     private async addUser(userName: string): Promise<void> {
         const token: string = await this.getJWTToken();
-        const endpoint: string = '/user';
+        const endpoint: string = '/user/';
         const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
         const resolver: string = process.env['PI_USER_RESOLVER'] ?? 'deflocal';
         const url: string = baseUrl + endpoint;
