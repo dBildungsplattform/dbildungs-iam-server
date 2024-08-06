@@ -35,12 +35,12 @@ export class UserMapperProfile extends AutomapperProfile {
                     mapFrom((src: UserRepresentationDto) => new Date(src.createdTimestamp)),
                 ),
                 forMember(
-                    (dest: UserDo<boolean>) => dest.enabled as boolean,
-                    mapFrom((src: UserRepresentationDto) => src.enabled as boolean),
+                    (dest: UserDo<boolean>) => dest.enabled,
+                    mapFrom((src: UserRepresentationDto) => src.enabled),
                 ),
                 forMember(
-                    (dest: UserDo<boolean>) => dest.attributes as Record<string, string>,
-                    mapFrom((src: UserRepresentationDto) => src.attributes as Record<string, string>),
+                    (dest: UserDo<boolean>) => dest.attributes,
+                    mapFrom((src: UserRepresentationDto) => src.attributes),
                 ),
             );
 

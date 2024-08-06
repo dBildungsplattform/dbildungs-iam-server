@@ -202,7 +202,7 @@ export class PersonController {
                 personResult.value.keycloakUserId,
             );
             if (keyCloakUserDataResponse.ok) {
-                response.person.attributes = keyCloakUserDataResponse.value.attributes as Record<string, string>;
+                response.person.attributes = keyCloakUserDataResponse.value.attributes;
                 response.person.isLocked = keyCloakUserDataResponse.value.enabled === false;
             }
         }
