@@ -5,5 +5,5 @@ export class TokenInitBodyParams {
     @IsString()
     @IsNotEmpty()
     @ApiProperty({ type: String })
-    public readonly userName!: string;
+    public readonly personId!: string;
 }
