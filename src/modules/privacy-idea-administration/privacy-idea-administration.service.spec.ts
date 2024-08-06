@@ -1,5 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpService } from '@nestjs/axios';
+import {
+    AssignTokenResponse,
+    TokenOTPSerialResponse,
+    TokenVerificationResponse,
+} from './privacy-idea-api.types.js';
+import { AxiosHeaders, AxiosResponse } from 'axios';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { TokenError } from './api/errors/token-error.js';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 
 import { AxiosResponse } from 'axios';
@@ -56,6 +64,174 @@ export const mockUser: User = {
 export const mockJWTTokenResponse = (): Observable<AxiosResponse> =>
     of({ data: { result: { value: { token: `jwt-token` } } } } as AxiosResponse);
 
+const mockErrorMsg: string = 'Mock error';
+
+export const mockTokenVerificationResponse: TokenVerificationResponse = {
+    result: {
+        value: {
+            count: 1,
+            tokens: [
+                {
+                    username: '',
+                    active: false,
+                    count: 0,
+                    count_window: 0,
+                    description: '',
+                    failcount: 0,
+                    id: 0,
+                    info: {
+                        hashlib: '',
+                        timeShift: '',
+                        timeStep: '',
+                        timeWindow: '',
+                        tokenkind: '',
+                    },
+                    locked: false,
+                    maxfail: 0,
+                    otplen: 0,
+                    realms: [],
+                    resolver: '',
+                    revoked: false,
+                    rollout_state: '',
+                    serial: '',
+                    sync_window: 0,
+                    tokengroup: [],
+                    tokentype: '',
+                    user_id: '',
+                    user_realm: '',
+                },
+            ],
+            current: 0,
+            next: null,
+            prev: null,
+        },
+        status: false,
+    },
+    id: 0,
+    jsonrpc: '',
+    time: 0,
+    version: '',
+    versionnumber: '',
+    signature: '',
+};
+
+export const mockTokenVerificationResponseNotFound: TokenVerificationResponse = {
+    result: {
+        value: {
+            count: 0,
+            tokens: [],
+            current: 0,
+            next: null,
+            prev: null,
+        },
+        status: false,
+    },
+    id: 0,
+    jsonrpc: '',
+    time: 0,
+    version: '',
+    versionnumber: '',
+    signature: '',
+};
+
+export const mockTokenVerificationResponseAlreadyAssigned: TokenVerificationResponse = {
+    result: {
+        value: {
+            count: 1,
+            tokens: [
+                {
+                    username: 'user123',
+                    active: false,
+                    count: 0,
+                    count_window: 0,
+                    description: '',
+                    failcount: 0,
+                    id: 0,
+                    info: {
+                        hashlib: '',
+                        timeShift: '',
+                        timeStep: '',
+                        timeWindow: '',
+                        tokenkind: '',
+                    },
+                    locked: false,
+                    maxfail: 0,
+                    otplen: 0,
+                    realms: [],
+                    resolver: '',
+                    revoked: false,
+                    rollout_state: '',
+                    serial: '',
+                    sync_window: 0,
+                    tokengroup: [],
+                    tokentype: '',
+                    user_id: '',
+                    user_realm: '',
+                },
+            ],
+            current: 0,
+            next: null,
+            prev: null,
+        },
+        status: false,
+    },
+    id: 0,
+    jsonrpc: '',
+    time: 0,
+    version: '',
+    versionnumber: '',
+    signature: '',
+};
+
+export const mockTokenOTPSerialResponse: TokenOTPSerialResponse = {
+    result: {
+        value: {
+            serial: 'ABC123456',
+            count: 0,
+        },
+        status: false,
+    },
+    id: 0,
+    jsonrpc: '',
+    time: 0,
+    version: '',
+    versionnumber: '',
+    signature: '',
+};
+
+export const mockTokenOTPSerialResponseInvalid: TokenOTPSerialResponse = {
+    result: {
+        value: {
+            serial: 'INVALID',
+            count: 0,
+        },
+        status: false,
+    },
+    id: 0,
+    jsonrpc: '',
+    time: 0,
+    version: '',
+    versionnumber: '',
+    signature: '',
+};
+
+export const mockJWTTokenResponse = (): Observable<AxiosResponse> =>
+    of({ data: { result: { value: { token: `jwt-token` } } } } as AxiosResponse);
+
+export const mockAssignTokenResponse: AssignTokenResponse = {
+    id: 1,
+    jsonrpc: '2.0',
+    result: {
+        status: true,
+        value: true,
+    },
+    time: 1234567890,
+    version: 'v1',
+    versionnumber: '1.0',
+    signature: 'signature',
+};
+
+describe('PrivacyIdeaAdministrationService', () => {
 export const mockEmptyUserResponse = (): Observable<AxiosResponse> =>
     of({ data: { result: { value: [] } } } as AxiosResponse);
 
@@ -235,4 +411,133 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             );
         });
     });
+        describe('assignHardwareToken', () => {
+            it('should assign hardware token successfully', async () => {
+                httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+                httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenVerificationResponse } as AxiosResponse));
+                httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenOTPSerialResponse } as AxiosResponse));
+                httpServiceMock.post.mockReturnValueOnce(of({ data: mockAssignTokenResponse } as AxiosResponse));
+
+                const result: AssignTokenResponse = await service.assignHardwareToken('ABC123456', 'otp', 'test-user');
+                expect(result).toEqual(mockAssignTokenResponse);
+            });
+
+            it('should throw token-not-found error', async () => {
+                httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+                httpServiceMock.get.mockReturnValueOnce(
+                    of({ data: mockTokenVerificationResponseNotFound } as AxiosResponse),
+                );
+
+                await expect(service.assignHardwareToken('INVALID_SERIAL', 'otp', 'test-user')).rejects.toThrow(
+                    new TokenError(
+                        'Die eingegebene Seriennummer konnte leider nicht gefunden werden. Vergewissern Sie sich bitte, das Sie eine korrekte Seriennummer eingegeben haben.',
+                        'token-not-found',
+                    ),
+                );
+            });
+
+            it('should throw token-already-assigned error', async () => {
+                httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+                httpServiceMock.get.mockReturnValueOnce(
+                    of({ data: mockTokenVerificationResponseAlreadyAssigned } as AxiosResponse),
+                );
+
+                await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
+                    new TokenError(
+                        'Die eingegebene Seriennummer wird bereits aktiv verwendet. Bitte überprüfen Sie ihre Eingabe und versuchen Sie es erneut.',
+                        'token-already-assigned',
+                    ),
+                );
+            });
+
+            it('should throw token-otp-not-valid error', async () => {
+                httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+                httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenVerificationResponse } as AxiosResponse));
+                httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenOTPSerialResponseInvalid } as AxiosResponse));
+
+                await expect(service.assignHardwareToken('ABC123456', 'invalid-otp', 'test-user')).rejects.toThrow(
+                    new TokenError('Ungültiger Code. Bitte versuchen Sie es erneut.', 'token-otp-not-valid'),
+                );
+            });
+
+            it('should throw general-token-error on verifyTokenStatus error', async () => {
+                httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+                httpServiceMock.get.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
+
+                await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
+                    new TokenError(
+                        'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
+                        'general-token-error',
+                    ),
+                );
+            });
+
+            it('should throw general-token-error on getSerialWithOTP error', async () => {
+                httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+                httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenVerificationResponse } as AxiosResponse));
+                httpServiceMock.get.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
+
+                await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
+                    new TokenError(
+                        'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
+                        'general-token-error',
+                    ),
+                );
+            });
+
+            it('should throw general-token-error on assignToken error', async () => {
+                httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+                httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenVerificationResponse } as AxiosResponse));
+                httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenOTPSerialResponse } as AxiosResponse));
+                httpServiceMock.post.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
+
+                await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
+                    new TokenError(
+                        'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
+                        'general-token-error',
+                    ),
+                );
+            });
+        });
+            describe('unassignToken', () => {
+                it('should unassign token successfully', async () => {
+                    const mockSerial: string = 'mockSerial';
+                    const mockToken: string = 'mockJWTToken';
+                    const mockResetTokenResponse: ResetTokenResponse = {
+                        id: 1,
+                        jsonrpc: 'test_json',
+                        result: {
+                            status: true,
+                            value: 1,
+                        },
+                        time: 0,
+                        version: 'test',
+                        versionNumber: 'test_number',
+                        signature: 'signature',
+                    };
+                    const mockResponse: AxiosResponse<ResetTokenResponse> = {
+                        data: mockResetTokenResponse,
+                        status: 200,
+                        statusText: 'OK',
+                        headers: {},
+                        config: {
+                            headers: new AxiosHeaders({ 'Content-Type': 'application/json' }),
+                        },
+                    };
+                    jest.spyOn(httpServiceMock, 'post').mockReturnValue(of(mockResponse));
+
+                    const response: ResetTokenResponse = await service.unassignToken(mockSerial, mockToken);
+                    expect(response).toEqual(mockResetTokenResponse);
+                });
+
+                it('should throw an error if unassignToken fails', async () => {
+                    const mockSerial: string = 'mockSerial';
+                    const mockToken: string = 'mockJWTToken';
+
+                    jest.spyOn(httpServiceMock, 'post').mockReturnValue(throwError(new Error('unassignToken error')));
+
+                    await expect(service.unassignToken(mockSerial, mockToken)).rejects.toThrow('Error initializing token: ');
+                });
+            });
+
 });
