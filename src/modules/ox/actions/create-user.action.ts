@@ -6,7 +6,6 @@ import { OxBaseAction } from './ox-base-action.js';
 export type CreateUserParams = {
     contextId: string;
 
-    anniversary: string;
     displayName: string;
     email1: string;
     firstname: string;
@@ -62,7 +61,6 @@ export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, Creat
                 },
 
                 'tns:usrdata': {
-                    'ns6:anniversary': this.params.anniversary,
                     'ns6:display_name': this.params.displayName,
                     'ns6:email1': this.params.email1,
                     'ns6:given_name': this.params.givenName,

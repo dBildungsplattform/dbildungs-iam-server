@@ -11,7 +11,6 @@ describe('CreateUserAction', () => {
 
             const action: CreateUserAction = new CreateUserAction({
                 contextId: faker.string.uuid(),
-                anniversary: faker.date.past().toISOString(),
                 displayName: firstname,
                 email1: email,
                 givenName: firstname,
@@ -36,7 +35,6 @@ describe('CreateUserAction', () => {
 
             const action: CreateUserAction = new CreateUserAction({
                 contextId: faker.string.uuid(),
-                anniversary: faker.date.past().toISOString(),
                 displayName: firstname,
                 email1: email,
                 givenName: firstname,

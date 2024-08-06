@@ -19,6 +19,8 @@ import { EmailAddress } from './email-address.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
 
 @Injectable()
 export class EmailEventHandler {
@@ -29,6 +31,7 @@ export class EmailEventHandler {
         private readonly rolleRepo: RolleRepo,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly dbiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly eventService: EventService,
     ) {}
 
     @EventHandler(PersonenkontextCreatedEvent)
@@ -129,6 +132,14 @@ export class EmailEventHandler {
                 const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(existingEmail);
                 if (persistenceResult instanceof EmailAddress) {
                     this.logger.info(`Enabled and saved address:${persistenceResult.currentAddress}`);
+                    this.eventService.publish(
+                        new EmailAddressGeneratedEvent(
+                            personId,
+                            persistenceResult.id,
+                            persistenceResult.address,
+                            persistenceResult.enabled,
+                        ),
+                    );
                 } else {
                     this.logger.error(`Could not enable email, error is ${persistenceResult.message}`);
                 }
@@ -149,6 +160,14 @@ export class EmailEventHandler {
         const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email.value);
         if (persistenceResult instanceof EmailAddress) {
             this.logger.info(`Successfully persisted email with new address:${persistenceResult.currentAddress}`);
+            this.eventService.publish(
+                new EmailAddressGeneratedEvent(
+                    personId,
+                    persistenceResult.id,
+                    persistenceResult.address,
+                    persistenceResult.enabled,
+                ),
+            );
         } else {
             this.logger.error(`Could not persist email, error is ${persistenceResult.message}`);
         }
