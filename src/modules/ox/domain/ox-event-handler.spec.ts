@@ -17,7 +17,7 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
 import { Person } from '../../person/domain/person.js';
-import {EmailAddressGeneratedEvent} from "../../../shared/events/email-address-generated.event.js";
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
