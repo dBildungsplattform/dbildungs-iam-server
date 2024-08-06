@@ -85,7 +85,7 @@ describe('OxEventHandler', () => {
             await sut.handlePersonenkontextCreatedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateUserAction));
-            expect(loggerMock.error).toHaveBeenLastCalledWith(`Could not create user in Ox: Request failed`);
+            expect(loggerMock.error).toHaveBeenLastCalledWith(`Could not create user in OX, error: Request failed`);
         });
     });
 });

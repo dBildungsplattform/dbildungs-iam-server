@@ -12,7 +12,7 @@ export type OxBaseResponse<BodyResponse> = {
 export type OxErrorResponse = {
     Envelope: {
         Body: {
-            fault: {
+            Fault: {
                 faultcode: string;
                 faultstring: string;
             };
@@ -51,7 +51,7 @@ export abstract class OxBaseAction<ResponseBodyType, ResultType> {
         ) as OxBaseResponse<ResponseBodyType>;
         const errorResult: OxErrorResponse = this.xmlParser.parse(input) as OxErrorResponse;
 
-        if (errorResult.Envelope.Body.fault) {
+        if (errorResult.Envelope.Body.Fault) {
             return {
                 ok: false,
                 error: new OxError('Request failed', result),

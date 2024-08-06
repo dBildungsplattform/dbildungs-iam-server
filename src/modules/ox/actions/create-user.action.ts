@@ -21,13 +21,13 @@ export type CreateUserParams = {
 };
 
 export type CreateUserResponse = {
-    fistname: string;
+    firstname: string;
     lastname: string;
     primaryEmail: string;
     mailenabled: boolean;
 };
 
-type CreateUserResponseBody = {
+export type CreateUserResponseBody = {
     createResponse: {
         return: {
             'ns2:aliases': [];
@@ -85,7 +85,7 @@ export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, Creat
         return {
             ok: true,
             value: {
-                fistname: body.createResponse.return['ns2:name'],
+                firstname: body.createResponse.return['ns2:name'],
                 lastname: body.createResponse.return['ns2:sur_name'],
                 primaryEmail: body.createResponse.return['ns2:primaryEmail'],
                 mailenabled: body.createResponse.return['ns2:mailenabled'],
