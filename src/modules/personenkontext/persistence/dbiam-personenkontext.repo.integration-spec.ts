@@ -862,7 +862,7 @@ describe('dbiam Personenkontext Repo', () => {
 
                 const result: boolean = await sut.deleteById(personenKontext.id);
 
-                expect(result).toBe(1);
+                expect(result).toBeTruthy();
             });
         });
 
@@ -870,7 +870,7 @@ describe('dbiam Personenkontext Repo', () => {
             it('should return 0', async () => {
                 const result: boolean = await sut.deleteById(faker.string.uuid());
 
-                expect(result).toBe(0);
+                expect(result).toBeFalsy();
             });
         });
     });

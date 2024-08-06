@@ -109,7 +109,8 @@ describe('PersonRepository Integration', () => {
             it('should return found person', async () => {
                 const keycloakUserId: string = faker.string.uuid();
                 const person: Person<true> = DoFactory.createPerson(true, { keycloakUserId: keycloakUserId });
-                await sut.save(person);
+                const entity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(entity.assign(mapAggregateToData(person)));
 
                 const foundPerson: Option<Person<true>> = await sut.findByKeycloakUserId(keycloakUserId);
 
@@ -130,9 +131,10 @@ describe('PersonRepository Integration', () => {
         describe('when found by Id', () => {
             it('should return found person', async () => {
                 const person: Person<true> = DoFactory.createPerson(true);
-                await sut.save(person);
+                const entity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(entity.assign(mapAggregateToData(person)));
 
-                const foundPerson: Option<Person<true>> = await sut.findById(person.id);
+                const foundPerson: Option<Person<true>> = await sut.findById(entity.id);
 
                 expect(foundPerson).toBeInstanceOf(Person);
             });
@@ -152,9 +154,9 @@ describe('PersonRepository Integration', () => {
                 const person2: Person<true> = DoFactory.createPerson(true);
                 const person3: Person<true> = DoFactory.createPerson(true);
 
-                await sut.save(person1);
-                await sut.save(person2);
-                await sut.save(person3);
+                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
+                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person2)));
+                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person3)));
 
                 const scope: PersonScope = new PersonScope()
                     .findBy({
@@ -517,9 +519,10 @@ describe('PersonRepository Integration', () => {
                 describe('when keycloak operation succeeds', () => {
                     it('should return updated person', async () => {
                         const existingPerson: Person<true> = DoFactory.createPerson(true);
-                        await sut.save(existingPerson);
+                        const personEntity: PersonEntity = new PersonEntity();
+                        await em.persistAndFlush(personEntity.assign(mapAggregateToData(existingPerson)));
                         const person: Person<true> = Person.construct(
-                            existingPerson.id,
+                            personEntity.id,
                             faker.date.past(),
                             faker.date.recent(),
                             faker.person.lastName(),
@@ -550,9 +553,10 @@ describe('PersonRepository Integration', () => {
                 describe('when keycloak operation fails', () => {
                     it('should return updated person', async () => {
                         const existingPerson: Person<true> = DoFactory.createPerson(true);
-                        await sut.save(existingPerson);
+                        const personEntity: PersonEntity = new PersonEntity();
+                        await em.persistAndFlush(personEntity.assign(mapAggregateToData(existingPerson)));
                         const person: Person<true> = Person.construct(
-                            existingPerson.id,
+                            personEntity.id,
                             faker.date.past(),
                             faker.date.recent(),
                             faker.person.lastName(),
@@ -732,10 +736,9 @@ describe('PersonRepository Integration', () => {
             it('should return person', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
-
-                await sut.save(person1);
-
-                person1.id = person1.id;
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
 
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
@@ -749,9 +752,13 @@ describe('PersonRepository Integration', () => {
                 const fakeOrganisationId: string = configService.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
 
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([fakeOrganisationId]);
-                await sut.save(person1);
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
 
-                const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+                const result: Result<Person<true>> = await sut.getPersonIfAllowed(
+                    personEntity.id,
+                    personPermissionsMock,
+                );
 
                 expect(result.ok).toBeTruthy();
             });
@@ -762,8 +769,9 @@ describe('PersonRepository Integration', () => {
             it('should delete with no error', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
-                await sut.save(person1);
-
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
 
@@ -776,7 +784,7 @@ describe('PersonRepository Integration', () => {
 
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
-                await sut.save(person1);
+                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
                 const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
 
@@ -788,7 +796,7 @@ describe('PersonRepository Integration', () => {
 
             personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
-            await sut.save(person1);
+            await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
             const result: Result<Person<true>, Error> = await sut.checkIfDeleteIsAllowed(
                 person1.id,
@@ -805,8 +813,9 @@ describe('PersonRepository Integration', () => {
             it('should delete the person', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
-                await sut.save(person1);
-
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
                     person1.id,
@@ -868,7 +877,7 @@ describe('PersonRepository Integration', () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
-                await sut.save(person1);
+                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
                 const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
 
@@ -877,7 +886,9 @@ describe('PersonRepository Integration', () => {
             it('should not delete the person because of unsufficient permissions to delete the person', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
-                await sut.save(person1);
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
 
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
@@ -909,8 +920,9 @@ describe('PersonRepository Integration', () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 person1.keycloakUserId = '';
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
-
-                await sut.save(person1);
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
 
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(

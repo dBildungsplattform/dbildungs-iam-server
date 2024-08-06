@@ -115,17 +115,11 @@ describe('PersonenkontextController', () => {
 
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
 
-                const personenkontextResultMock: Result<Personenkontext<true>, DomainError> = {
-                    ok: true,
-                    value: createMock<Personenkontext<true>>(),
-                };
-
                 const personResultMock: Result<Person<true>, DomainError> = {
                     ok: true,
                     value: createMock<Person<true>>(),
                 };
 
-                personenkontextService.findPersonenkontextById.mockResolvedValue(personenkontextResultMock);
                 personService.findPersonById.mockResolvedValue(personResultMock);
 
                 const response: PersonendatensatzResponseAutomapper = await sut.findPersonenkontextById(
@@ -134,7 +128,7 @@ describe('PersonenkontextController', () => {
                 );
 
                 expect(response).toBeInstanceOf(PersonendatensatzResponseAutomapper);
-                expect(personenkontextService.findPersonenkontextById).toBeCalledTimes(1);
+
                 expect(personService.findPersonById).toBeCalledTimes(1);
             });
         });
@@ -144,13 +138,13 @@ describe('PersonenkontextController', () => {
                 // Mock Auth check
                 personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
                     ok: true,
-                    value: createMock(),
+                    value: createMock<Personenkontext<true>>(),
                 });
                 const params: FindPersonenkontextByIdParams = {
                     personenkontextId: faker.string.uuid(),
                 };
 
-                personenkontextService.findPersonenkontextById.mockResolvedValue({
+                personService.findPersonById.mockResolvedValue({
                     ok: false,
                     error: createMock<DomainError>(),
                 });
@@ -389,10 +383,6 @@ describe('PersonenkontextController', () => {
                 expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
                     [RollenSystemRecht.PERSONEN_VERWALTEN],
                     true,
-                );
-                expect(personenkontextService.findAllPersonenkontexte).toHaveBeenCalledWith(
-                    queryParams,
-                    permissionsMock,
                 );
                 expect(result.items.length).toBe(1);
                 if (result.items[0]) {
