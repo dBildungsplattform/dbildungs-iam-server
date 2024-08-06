@@ -298,7 +298,7 @@ export class OrganisationController {
             routeParams.organisationId,
             queryParams.searchFilter,
         );
-
+        //I do not think that we need to check if this result can be an error.
         if (result instanceof SchulConnexError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
         }
@@ -365,7 +365,7 @@ export class OrganisationController {
         const result: Paged<Organisation<true>> = await this.organisationService.findAllZugehoerigZu(
             params.organisationId,
         );
-
+        //I do not think that we need to check if this result can be an error.
         if (result instanceof SchulConnexError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
         }
