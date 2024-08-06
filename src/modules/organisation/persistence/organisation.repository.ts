@@ -187,6 +187,7 @@ export class OrganisationRepository {
     ): Promise<Organisation<true>[]> {
         const scope: OrganisationScope = new OrganisationScope();
         if (searchStr) {
+            // searchStr is set, the scope is not paged
             scope
                 .searchString(searchStr)
                 .setScopeWhereOperator(ScopeOperator.AND)

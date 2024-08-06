@@ -49,7 +49,6 @@ describe('OrganisationController', () => {
             imports: [ConfigTestModule],
             providers: [
                 OrganisationController,
-                // OrganisationApiMapperProfile,
                 {
                     provide: OrganisationService,
                     useValue: createMock<OrganisationService>(),

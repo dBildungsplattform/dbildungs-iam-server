@@ -115,7 +115,6 @@ describe('PersonenkontextService', () => {
 
         describe('when personenkontext is saved successfully', () => {
             it('should return PersonenkontextDo in result', async () => {
-                // const personDo: PersonDo<true> = DoFactory.createPerson(true);
                 const personenkontextDo: PersonenkontextDo<false> = DoFactory.createPersonenkontextDo(false);
 
                 personRepoMock.findById.mockResolvedValueOnce(createMock<PersonDo<true>>());

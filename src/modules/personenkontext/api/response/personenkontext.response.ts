@@ -21,8 +21,6 @@ export class PersonenkontextResponse {
     @ApiProperty({ type: CreatedPersonenkontextOrganisation })
     public organisation!: CreatedPersonenkontextOrganisation;
 
-    // @ApiProperty({ enum: Rolle }) public rolle!: Rolle;
-
     @AutoMap()
     @ApiProperty({ nullable: true })
     public roleName?: string;
@@ -52,7 +50,6 @@ export class PersonenkontextResponse {
         this.referrer = props.referrer;
         this.mandant = props.mandant!;
         this.organisation = props.organisation;
-        // this.rolle = props.rolle;
         this.personenstatus = props.personenstatus;
         this.jahrgangsstufe = props.jahrgangsstufe;
         this.sichtfreigabe = props.sichtfreigabe;

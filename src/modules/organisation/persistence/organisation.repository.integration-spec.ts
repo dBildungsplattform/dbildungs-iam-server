@@ -31,7 +31,6 @@ describe('OrganisationRepository', () => {
     let orm: MikroORM;
     let em: EntityManager;
     let config: ConfigService<ServerConfig>;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let ROOT_ORGANISATION_ID: string;
 
     beforeAll(async () => {
@@ -581,13 +580,18 @@ describe('OrganisationRepository', () => {
         });
     });
     describe('find', () => {
-        let organisations: OrganisationEntity[];
+        let organisations: Organisation<false>[];
 
         beforeEach(async () => {
             organisations = Array.from({ length: 5 }).map(() =>
-                em.create(OrganisationEntity, mapAggregateToData(DoFactory.createOrganisation(true))),
+                DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.SONSTIGE,
+                    name: 'test',
+                }),
             );
-            await em.persistAndFlush(organisations);
+            for (const organisation of organisations) {
+                await sut.save(organisation);
+            }
         });
 
         it('should return all organisations when no limit and offset are provided', async () => {
@@ -601,30 +605,21 @@ describe('OrganisationRepository', () => {
         });
     });
     describe('findByNameOrKennung', () => {
-        let organisations: OrganisationEntity[];
+        let organisations: Organisation<false>[];
 
         beforeEach(async () => {
             organisations = [
-                em.create(
-                    OrganisationEntity,
-                    mapAggregateToData(
-                        DoFactory.createOrganisationAggregate(true, { name: 'TestName1', kennung: 'KENNUNG1' }),
-                    ),
-                ),
-                em.create(
-                    OrganisationEntity,
-                    mapAggregateToData(
-                        DoFactory.createOrganisationAggregate(true, { name: 'AnotherTest', kennung: 'KENNUNG2' }),
-                    ),
-                ),
-                em.create(
-                    OrganisationEntity,
-                    mapAggregateToData(
-                        DoFactory.createOrganisationAggregate(true, { name: 'TestName2', kennung: 'DIFFERENTKENNUNG' }),
-                    ),
-                ),
+                DoFactory.createOrganisationAggregate(false, {
+                    name: 'TestName1',
+                    kennung: 'KENNUNG1',
+                }),
+                DoFactory.createOrganisationAggregate(false, { name: 'AnotherTest', kennung: 'KENNUNG2' }),
+                DoFactory.createOrganisationAggregate(false, { name: 'TestName2', kennung: 'DIFFERENTKENNUNG' }),
             ];
-            await em.persistAndFlush(organisations);
+
+            for (const organisation of organisations) {
+                await sut.save(organisation);
+            }
         });
 
         it('should return organisations that match the search string in name', async () => {

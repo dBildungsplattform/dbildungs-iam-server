@@ -12,7 +12,6 @@ import { DoFactory } from '../../../../../test/utils/do-factory.js';
 import { PersonApiMapper } from '../../../person/mapper/person-api.mapper.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
 import { faker } from '@faker-js/faker';
-//import { DeepMocked } from '@golevelup/ts-jest';
 
 describe('PersonenkontextResponse', () => {
     let module: TestingModule;

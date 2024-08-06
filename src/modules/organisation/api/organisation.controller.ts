@@ -55,9 +55,7 @@ import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 @Controller({ path: 'organisationen' })
 export class OrganisationController {
     public constructor(
-        // private readonly uc: OrganisationUc,
         private readonly organisationRepository: OrganisationRepository,
-        //@Inject(getMapperToken()) private readonly mapper: Mapper,
         private readonly config: ConfigService<ServerConfig>,
         private readonly organisationService: OrganisationService,
     ) {}

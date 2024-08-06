@@ -14,7 +14,6 @@ import { TraegerInTraegerError } from '../specification/error/traeger-in-traeger
 import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
 import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
 import { DomainError } from '../../../shared/error/index.js';
-//import { faker } from '@faker-js/faker';
 import { EventModule } from '../../../core/eventbus/index.js';
 import { Organisation } from './organisation.js';
 import { OrganisationsTyp } from './organisation.enums.js';

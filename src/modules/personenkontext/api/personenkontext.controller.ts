@@ -79,7 +79,7 @@ export class PersonenkontextController {
         @Param() params: FindPersonenkontextByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponseAutomapper> {
-        const result: Result<unknown, DomainError> = await this.personenkontextRepo.findByIDAuthorized(
+        const result: Result<Personenkontext<true>, DomainError> = await this.personenkontextRepo.findByIDAuthorized(
             params.personenkontextId,
             permissions,
         );
@@ -89,19 +89,10 @@ export class PersonenkontextController {
             );
         }
 
-        const personenkontextResult: Result<
-            Personenkontext<true>,
-            DomainError
-        > = await this.personenkontextService.findPersonenkontextById(params.personenkontextId);
-
-        if (!personenkontextResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personenkontextResult.error),
-            );
-        }
+        const personenkontext: Personenkontext<true> = result.value;
 
         const personResult: Result<Person<true>, DomainError> = await this.personService.findPersonById(
-            personenkontextResult.value.personId,
+            personenkontext.personId,
         );
 
         if (!personResult.ok) {
@@ -111,7 +102,7 @@ export class PersonenkontextController {
         }
 
         return new PersonendatensatzResponseAutomapper(new PersonResponseAutomapper(personResult.value), [
-            await this.personApiMapper.mapToPersonenkontextResponse(personenkontextResult.value),
+            await this.personApiMapper.mapToPersonenkontextResponse(personenkontext),
         ]);
     }
 

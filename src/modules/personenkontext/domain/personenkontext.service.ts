@@ -24,7 +24,9 @@ export class PersonenkontextService {
         private readonly personRepo: PersonRepo,
     ) {}
 
-    //NOTE not going to be used anymore because current implmentation needs org id and rolle id
+    /**
+     * @deprecated not going to be used anymore because current implmentation needs org id and rolle id
+     */
     public async createPersonenkontext(
         personenkontextDo: PersonenkontextDo<false>,
     ): Promise<Result<PersonenkontextDo<true>, DomainError>> {

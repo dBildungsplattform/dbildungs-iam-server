@@ -389,9 +389,9 @@ export class DBiamPersonenkontextRepo {
         return result[0].has_systemrecht_at_orga as boolean;
     }
 
-    public async deleteById(id: string): Promise<number> {
+    public async deleteById(id: string): Promise<boolean> {
         const deletedPersons: number = await this.em.nativeDelete(PersonenkontextEntity, { id });
-        return deletedPersons;
+        return deletedPersons > 0;
     }
 
     public async hasPersonASystemrechtAtAnyKontextOfPersonB(
