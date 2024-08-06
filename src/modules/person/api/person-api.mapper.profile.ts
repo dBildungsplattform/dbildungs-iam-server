@@ -1,7 +1,6 @@
 import { constructUsing, createMap, forMember, ignore, mapFrom, Mapper, MappingProfile } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
 import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/param/create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from '../../personenkontext/api/create-personenkontext.dto.js';
@@ -68,8 +67,6 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                 ),
             );
 
-            createMap(mapper, OrganisationDo, CreatedPersonenkontextOrganisation);
-
             createMap(
                 mapper,
                 CreatedPersonenkontextDto,
@@ -92,6 +89,7 @@ export class PersonApiMapperProfile extends AutomapperProfile {
                             revision: src.revision,
                         }),
                 ),
+
                 forMember(
                     (dest: PersonenkontextResponse) => dest.loeschung,
                     mapFrom((src: CreatedPersonenkontextDto) => src.loeschung),

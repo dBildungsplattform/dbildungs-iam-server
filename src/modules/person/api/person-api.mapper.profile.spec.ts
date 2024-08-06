@@ -76,6 +76,38 @@ describe('PersonApiMapperProfile', () => {
             expect(result.organisation.id).toEqual(personenkontextDo.organisationId);
         });
 
+        it('should map PersonenkontextDo to CreatedPersonenkontextDto when loeschung is undefined', () => {
+            const personenkontextDo: PersonenkontextDo<true> = {
+                id: faker.string.uuid(),
+                personId: faker.string.uuid(),
+
+                rolleId: faker.string.uuid(),
+                rolle: Rolle.LEHRENDER,
+                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                personenstatus: Personenstatus.AKTIV,
+                referrer: 'referrer',
+                loeschungZeitpunkt: undefined,
+                organisationId: faker.string.uuid(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                mandant: 'mandant',
+                sichtfreigabe: SichtfreigabeType.JA,
+                revision: '1',
+            };
+
+            const result: CreatedPersonenkontextDto = sut.map(
+                personenkontextDo,
+                PersonenkontextDo,
+                CreatedPersonenkontextDto,
+            );
+
+            expect(result).toBeDefined();
+            expect(result.loeschung).toBeUndefined();
+            expect(result.loeschung?.zeitpunkt).toBeUndefined();
+            expect(result.organisation).toBeDefined();
+            expect(result.organisation.id).toEqual(personenkontextDo.organisationId);
+        });
+
         it('should map CreatePersonenkontextBodyParams to CreatePersonenkontextDto', () => {
             const body: CreatePersonenkontextBodyParams = {
                 rolle: Rolle.LEHRENDER,
@@ -103,6 +135,34 @@ describe('PersonApiMapperProfile', () => {
             expect(() =>
                 sut.map({} as CreatedPersonenkontextDto, CreatedPersonenkontextDto, PersonenkontextResponse),
             ).not.toThrow(MappingError);
+        });
+
+        it('should map CreatedPersonenkontextDto to PersonenkontextResponse when loeschung is undefined', () => {
+            const createdPersonenkontextDto: CreatedPersonenkontextDto = {
+                id: faker.string.uuid(),
+
+                rolle: Rolle.LEHRENDER,
+                jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+                personenstatus: Personenstatus.AKTIV,
+                referrer: 'referrer',
+                loeschung: undefined,
+                organisation: { id: faker.string.uuid() },
+                mandant: 'mandant',
+                sichtfreigabe: SichtfreigabeType.JA,
+                revision: '1',
+            };
+
+            const result: PersonenkontextResponse = sut.map(
+                createdPersonenkontextDto,
+                CreatedPersonenkontextDto,
+                PersonenkontextResponse,
+            );
+
+            expect(result).toBeDefined();
+            expect(result.loeschung).toBeUndefined();
+            expect(result.loeschung?.zeitpunkt).toBeUndefined();
+            expect(result.organisation).toBeDefined();
+            expect(result.organisation.id).toEqual(createdPersonenkontextDto.organisation.id);
         });
 
         it('should map PersonenkontextQueryParams to FindPersonenkontextDto', () => {
