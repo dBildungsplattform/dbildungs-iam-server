@@ -151,6 +151,22 @@ describe('PrivacyIdeaAdministrationController', () => {
             expect(response).toEqual(new TokenStateResponse(mockTokenState));
         });
 
+        it('should successfully retrieve empty token state when user is undefined', async () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+            const person: Person<true> = getPerson();
+
+            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+                ok: true,
+                value: person,
+            });
+
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            jest.spyOn(serviceMock, 'getTwoAuthState').mockResolvedValue(undefined);
+            const response: TokenStateResponse = await sut.getTwoAuthState('user1', personPermissionsMock);
+            expect(response).toEqual(new TokenStateResponse(undefined));
+        });
+
         it('should return forbidden insufficient permissions', async () => {
             personPermissionsMock = createMock<PersonPermissions>();
 
