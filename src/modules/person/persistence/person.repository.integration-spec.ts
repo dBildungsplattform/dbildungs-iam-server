@@ -132,7 +132,7 @@ describe('PersonRepository Integration', () => {
                 const person: Person<true> = DoFactory.createPerson(true);
                 await sut.save(person);
 
-                const foundPerson: Option<Person<true>> = await sut.findById(entity.id);
+                const foundPerson: Option<Person<true>> = await sut.findById(person.id);
 
                 expect(foundPerson).toBeInstanceOf(Person);
             });
