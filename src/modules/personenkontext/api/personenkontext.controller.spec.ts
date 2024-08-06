@@ -379,22 +379,25 @@ describe('PersonenkontextController', () => {
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
                 permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([mockPersonenkontext.organisationId]);
 
+                personenkontextService.findAllPersonenkontexte.mockResolvedValue(personenkontexte);
+
                 const result: PagedResponse<PersonenkontextdatensatzResponse> = await sut.findPersonenkontexte(
                     queryParams,
                     permissionsMock,
                 );
+
                 expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
                     [RollenSystemRecht.PERSONEN_VERWALTEN],
                     true,
                 );
-                expect(mockPersonenkontext).toBeDefined();
-                expect(personenkontextService.findAllPersonenkontexte.mockResolvedValue(personenkontexte)).toHaveLength(
-                    1,
+                expect(personenkontextService.findAllPersonenkontexte).toHaveBeenCalledWith(
+                    queryParams,
+                    permissionsMock,
                 );
                 expect(result.items.length).toBe(1);
                 if (result.items[0]) {
                     expect(result.items[0].person.id).toBe(mockPersonenkontext.personId);
-                    expect(result.items[0].personenkontexte.length).toHaveLength(1);
+                    expect(result.items[0].personenkontexte).toHaveLength(1);
                 }
             });
         });

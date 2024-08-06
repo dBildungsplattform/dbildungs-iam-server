@@ -332,7 +332,7 @@ describe('PersonenkontextService', () => {
         describe('when personenkontext is deleted successfully', () => {
             it('should return void', async () => {
                 dbiamPersonenKontextRepoMock.findByID.mockResolvedValue(personenkontext);
-                dbiamPersonenKontextRepoMock.deleteById.mockResolvedValue(1);
+                dbiamPersonenKontextRepoMock.deleteById.mockResolvedValue(true);
 
                 const result: Result<void, DomainError> = await personenkontextService.deletePersonenkontextById(
                     personenkontext.id,
@@ -380,7 +380,7 @@ describe('PersonenkontextService', () => {
             it('should return EntityCouldNotBeDeleted', async () => {
                 // AI next 11 lines
                 dbiamPersonenKontextRepoMock.findByID.mockResolvedValue(personenkontext);
-                dbiamPersonenKontextRepoMock.deleteById.mockResolvedValue(0);
+                dbiamPersonenKontextRepoMock.deleteById.mockResolvedValue(false);
 
                 const response: Result<void, DomainError> = await personenkontextService.deletePersonenkontextById(
                     personenkontext.id,
