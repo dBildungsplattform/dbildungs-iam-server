@@ -155,7 +155,9 @@ export class DoFactory {
         );
     }
 
-    //Remove this when PersonenkontextDo is remove dor set to deprecated
+    /**
+     * @deprecated Remove this when PersonenkontextDo is removed or set to deprecated
+     */
     public static createPersonenkontextDo<WasPersisted extends boolean>(
         this: void,
         withId: WasPersisted,

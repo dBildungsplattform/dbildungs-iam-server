@@ -278,7 +278,7 @@ describe('PersonScope', () => {
                     .paged(0, 10);
                 const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
 
-                expect(total).toEqual(1);
+                expect(total).toBe(1);
                 expect(persons).toHaveLength(1);
             });
         });
