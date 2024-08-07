@@ -61,8 +61,10 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { PersonDomainError } from '../domain/person-domain.error.js';
+import { PersonExceptionFilter } from './person-exception-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
+@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -128,6 +130,10 @@ export class PersonController {
             ...params,
         });
         if (person instanceof DomainError) {
+            if (person instanceof PersonDomainError) {
+                throw person;
+            }
+
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(person),
             );
@@ -379,6 +385,10 @@ export class PersonController {
             body.auskunftssperre,
         );
         if (updateResult instanceof DomainError) {
+            if (updateResult instanceof PersonDomainError) {
+                throw updateResult;
+            }
+
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updateResult),
             );
