@@ -207,12 +207,33 @@ describe('Personenuebersicht API', () => {
                         return;
                     }
 
-                    const savedRolle1: Rolle<true> = await rolleRepo.save(
-                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LEHR, [], [], []),
+                    const rolle1: Rolle<false> | DomainError = rolleFactory.createNew(
+                        faker.string.alpha(5),
+                        faker.string.uuid(),
+                        RollenArt.LEHR,
+                        [],
+                        [],
+                        [],
                     );
-                    const savedRolle2: Rolle<true> = await rolleRepo.save(
-                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LERN, [], [], []),
+
+                    if (rolle1 instanceof DomainError) {
+                        return;
+                    }
+                    const savedRolle1: Rolle<true> = await rolleRepo.save(rolle1);
+
+                    const rolle2: Rolle<false> | DomainError = rolleFactory.createNew(
+                        faker.string.alpha(5),
+                        faker.string.uuid(),
+                        RollenArt.LEHR,
+                        [],
+                        [],
+                        [],
                     );
+
+                    if (rolle2 instanceof DomainError) {
+                        return;
+                    }
+                    const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
                     const savedOrganisation1: OrganisationDo<true> = await organisationRepo.save(
                         DoFactory.createOrganisation(true),
@@ -329,12 +350,33 @@ describe('Personenuebersicht API', () => {
                         return;
                     }
 
-                    const savedRolle1: Rolle<true> = await rolleRepo.save(
-                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LEHR, [], [], []),
+                    const rolle1: Rolle<false> | DomainError = rolleFactory.createNew(
+                        faker.string.alpha(5),
+                        faker.string.uuid(),
+                        RollenArt.LEHR,
+                        [],
+                        [],
+                        [],
                     );
-                    const savedRolle2: Rolle<true> = await rolleRepo.save(
-                        rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LERN, [], [], []),
+
+                    if (rolle1 instanceof DomainError) {
+                        return;
+                    }
+                    const savedRolle1: Rolle<true> = await rolleRepo.save(rolle1);
+
+                    const rolle2: Rolle<false> | DomainError = rolleFactory.createNew(
+                        faker.string.alpha(5),
+                        faker.string.uuid(),
+                        RollenArt.LERN,
+                        [],
+                        [],
+                        [],
                     );
+
+                    if (rolle2 instanceof DomainError) {
+                        return;
+                    }
+                    const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
                     const unsavedOrganisation1: OrganisationDo<true> = DoFactory.createOrganisation(true);
                     const savedOrganisation2: OrganisationDo<true> = await organisationRepo.save(
@@ -399,12 +441,33 @@ describe('Personenuebersicht API', () => {
                 return;
             }
 
-            const savedRolle1: Rolle<true> = await rolleRepo.save(
-                rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LEHR, [], [], []),
+            const rolle1: Rolle<false> | DomainError = rolleFactory.createNew(
+                faker.string.alpha(5),
+                faker.string.uuid(),
+                RollenArt.LEHR,
+                [],
+                [],
+                [],
             );
-            const savedRolle2: Rolle<true> = await rolleRepo.save(
-                rolleFactory.createNew(faker.string.alpha(5), faker.string.uuid(), RollenArt.LERN, [], [], []),
+
+            if (rolle1 instanceof DomainError) {
+                return;
+            }
+            const savedRolle1: Rolle<true> = await rolleRepo.save(rolle1);
+
+            const rolle2: Rolle<false> | DomainError = rolleFactory.createNew(
+                faker.string.alpha(5),
+                faker.string.uuid(),
+                RollenArt.LERN,
+                [],
+                [],
+                [],
             );
+
+            if (rolle2 instanceof DomainError) {
+                return;
+            }
+            const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
             const savedOrganisation1: OrganisationDo<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(true, { id: ROOT_ORGANISATION_ID }),

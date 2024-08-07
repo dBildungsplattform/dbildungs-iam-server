@@ -86,7 +86,7 @@ export class DbSeedService {
             zugehoerigZu = zugehoerigZuOrganisation.id;
         }
 
-        const organisation: Organisation<false> = Organisation.createNew(
+        const organisation: Organisation<false> | DomainError = Organisation.createNew(
             administriertVon,
             zugehoerigZu,
             data.kennung,
@@ -96,6 +96,10 @@ export class DbSeedService {
             data.typ,
             data.traegerschaft,
         );
+
+        if (organisation instanceof DomainError) {
+            throw organisation;
+        }
 
         if (!administriertVon && !zugehoerigZu && data.kuerzel === 'Root') {
             organisation.id = this.ROOT_ORGANISATION_ID;
@@ -137,7 +141,7 @@ export class DbSeedService {
             const referencedOrga: OrganisationDo<true> = await this.getReferencedOrganisation(
                 file.administeredBySchulstrukturknoten,
             );
-            const rolle: Rolle<false> = this.rolleFactory.createNew(
+            const rolle: Rolle<false> | DomainError = this.rolleFactory.createNew(
                 file.name,
                 referencedOrga.id,
                 file.rollenart,
@@ -145,6 +149,10 @@ export class DbSeedService {
                 file.systemrechte,
                 serviceProviderUUIDs,
             );
+
+            if (rolle instanceof DomainError) {
+                throw rolle;
+            }
 
             const persistedRolle: Rolle<true> = await this.rolleRepo.save(rolle);
             if (persistedRolle && file.id != null) {
