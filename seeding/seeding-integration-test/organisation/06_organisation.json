@@ -1,0 +1,85 @@
+{
+	"entityName": "Organisation",
+	"entities": [
+		{
+			"id": 13,
+			"kennung": "1111113",
+			"name": "Testschule-13",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-13",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 15,
+			"kennung": "1111113-1A",
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-13-1A",
+			"typ": "KLASSE",
+			"administriertVon": 13,
+			"zugehoerigZu": 13
+		},
+		{
+			"id": 16,
+			"kennung": "1111113-1B",
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-13-1B",
+			"typ": "KLASSE",
+			"administriertVon": 13,
+			"zugehoerigZu": 13
+		},
+		{
+			"id": 17,
+			"kennung": "1111113-1C",
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-13-1C",
+			"typ": "KLASSE",
+			"administriertVon": 13,
+			"zugehoerigZu": 13
+		},
+		{
+			"id": 14,
+			"kennung": "1111114",
+			"name": "Testschule-14",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-14",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 18,
+			"kennung": "1111114-1A",
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-14-1A",
+			"typ": "KLASSE",
+			"administriertVon": 14,
+			"zugehoerigZu": 14
+		},
+		{
+			"id": 19,
+			"kennung": "1111114-1B",
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-14-1B",
+			"typ": "KLASSE",
+			"administriertVon": 14,
+			"zugehoerigZu": 14
+		},
+		{
+			"id": 20,
+			"kennung": "1111114-1C",
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-14-1C",
+			"typ": "KLASSE",
+			"administriertVon": 14,
+			"zugehoerigZu": 14
+		}
+	]
+}
