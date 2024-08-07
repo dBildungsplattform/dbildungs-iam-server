@@ -733,6 +733,41 @@ describe('Rolle API', () => {
                 });
             });
         });
+
+        it('should return error if new name has trailing space', async () => {
+            const organisation: OrganisationEntity = new OrganisationEntity();
+            await em.persistAndFlush(organisation);
+
+            await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+
+            const params: UpdateRolleBodyParams = {
+                name: ' newName ',
+                merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                serviceProviderIds: [serviceProvider.id],
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .put(`/rolle/${rolle.id}`)
+                .send(params);
+
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({
+                code: 400,
+                i18nKey: 'ROLLENNAME_ENTHAELT_LEERZEICHEN',
+            });
+        });
     });
 
     describe('/DELETE rolleId', () => {

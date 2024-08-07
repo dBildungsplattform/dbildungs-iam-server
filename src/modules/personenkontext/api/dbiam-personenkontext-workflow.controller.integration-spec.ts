@@ -31,6 +31,7 @@ import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-pers
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -39,7 +40,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
-    const rolle: Rolle<false> = rolleFactory.createNew(
+    const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
         faker.string.alpha(),
         faker.string.uuid(),
         faker.helpers.enumValue(RollenArt),
@@ -49,6 +50,9 @@ function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rol
     );
     Object.assign(rolle, params);
 
+    if (rolle instanceof DomainError) {
+        throw rolle;
+    }
     return rolle;
 }
 

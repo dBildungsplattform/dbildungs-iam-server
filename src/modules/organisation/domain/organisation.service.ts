@@ -28,6 +28,9 @@ import { NameRequiredForSchuleError } from '../specification/error/name-required
 import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { SchuleKennungEindeutig } from '../specification/schule-kennung-eindeutig.js';
 import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
+import { NameValidator } from '../../../shared/validation/name-validator.js';
+import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
+import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 import { Organisation } from './organisation.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 
@@ -50,6 +53,11 @@ export class OrganisationService {
                 ok: false,
                 error: new EntityNotFoundError('Organisation', organisationDo.zugehoerigZu),
             };
+        }
+
+        const validationFieldnamesResult: void | DomainError = this.validateFieldNames(organisationDo);
+        if (validationFieldnamesResult) {
+            return { ok: false, error: validationFieldnamesResult };
         }
 
         let validationResult: Result<void, DomainError> = await this.validateKennungRequiredForSchule(organisationDo);
@@ -83,6 +91,11 @@ export class OrganisationService {
         const storedOrganisation: Option<Organisation<true>> = await this.organisationRepo.findById(organisationDo.id);
         if (!storedOrganisation) {
             return { ok: false, error: new EntityNotFoundError('Organisation', organisationDo.id) };
+        }
+
+        const validationFieldnamesResult: void | DomainError = this.validateFieldNames(organisationDo);
+        if (validationFieldnamesResult) {
+            return { ok: false, error: validationFieldnamesResult };
         }
 
         let validationResult: Result<void, DomainError> = await this.validateKennungRequiredForSchule(organisationDo);
@@ -325,6 +338,18 @@ export class OrganisationService {
             return { ok: false, error: new ZyklusInOrganisationenError(childOrganisation.id) };
         }
         return { ok: true, value: true };
+    }
+
+    private validateFieldNames(organisation: OrganisationDo<boolean>): void | OrganisationSpecificationError {
+        if (organisation.name && !NameValidator.isNameValid(organisation.name)) {
+            return new NameForOrganisationWithTrailingSpaceError();
+        }
+
+        if (organisation.kennung && !NameValidator.isNameValid(organisation.kennung)) {
+            return new KennungForOrganisationWithTrailingSpaceError();
+        }
+
+        return undefined;
     }
 
     public async findAllAdministriertVon(

@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, MapperTestModule } from '../../../../test/utils/index.js';
+import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
@@ -16,11 +16,16 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { RolleNameQueryParams } from './rolle-name-query.param.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { CreateRolleBodyParams } from './create-rolle.body.params.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let rolleController: RolleController;
+    let organisationServiceMock: DeepMocked<OrganisationService>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -50,6 +55,14 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
+                {
+                    provide: RolleFactory,
+                    useValue: createMock<RolleFactory>(),
+                },
+                {
+                    provide: OrganisationService,
+                    useValue: createMock<OrganisationService>(),
+                },
                 RolleController,
                 RolleFactory,
             ],
@@ -58,6 +71,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
         rolleRepoMock = module.get(RolleRepo);
         serviceProviderRepoMock = module.get(ServiceProviderRepo);
         rolleController = module.get(RolleController);
+        organisationServiceMock = module.get(OrganisationService);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
@@ -98,6 +112,27 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                 //mock call to get sp (direct in controller-method)
                 serviceProviderRepoMock.findById.mockResolvedValueOnce(undefined);
                 await expect(rolleController.findRollen(params, permissions)).resolves.not.toThrow(Error);
+            });
+        });
+        describe('createRolle', () => {
+            it('should throw an HTTP exception when rolleFactory.createNew returns DomainError', async () => {
+                const createRolleParams: CreateRolleBodyParams = {
+                    name: ' SuS',
+                    administeredBySchulstrukturknoten: faker.string.uuid(),
+                    rollenart: RollenArt.LEHR,
+                    merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
+                    systemrechte: [RollenSystemRecht.KLASSEN_VERWALTEN],
+                };
+
+                const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+                organisationServiceMock.findOrganisationById.mockResolvedValueOnce({
+                    ok: true,
+                    value: organisation,
+                });
+
+                await expect(rolleController.createRolle(createRolleParams)).rejects.toThrow(
+                    NameForRolleWithTrailingSpaceError,
+                );
             });
         });
     });

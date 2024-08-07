@@ -32,6 +32,8 @@ import { OrganisationID } from '../../../shared/types/index.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
 import { ConfigService } from '@nestjs/config';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
+import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
@@ -244,6 +246,24 @@ describe('PersonController', () => {
                     HttpException,
                 );
                 expect(personRepositoryMock.create).not.toHaveBeenCalled();
+            });
+
+            it('should throw FamiliennameForPersonWithTrailingSpaceError when familienname has trailing space', async () => {
+                const person: Person<true> = getPerson();
+                const bodyParams: CreatePersonBodyParams = {
+                    name: {
+                        vorname: 'vorname',
+                        familienname: 'familienname ',
+                    },
+                    geburt: {},
+                };
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([faker.string.uuid()]);
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+
+                await expect(personController.createPerson(bodyParams, personPermissionsMock)).rejects.toThrow(
+                    FamiliennameForPersonWithTrailingSpaceError,
+                );
+                expect(personRepositoryMock.create).toHaveBeenCalledTimes(0);
             });
         });
     });
@@ -698,6 +718,31 @@ describe('PersonController', () => {
                     HttpException,
                 );
                 expect(personRepositoryMock.findById).toHaveBeenCalledTimes(0);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when updated vorname has trailing space', () => {
+            const person: Person<true> = getPerson();
+            const bodyParams: UpdatePersonBodyParams = {
+                stammorganisation: faker.string.uuid(),
+                referrer: 'referrer',
+                name: {
+                    vorname: ' john',
+                    familienname: 'doe',
+                },
+                geburt: {},
+                lokalisierung: 'de-DE',
+                revision: '1',
+            };
+
+            it('should throw VornameForPersonWithTrailingSpaceError', async () => {
+                personRepositoryMock.findById.mockResolvedValue(person);
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+
+                await expect(personController.updatePerson(params, bodyParams, personPermissionsMock)).rejects.toThrow(
+                    VornameForPersonWithTrailingSpaceError,
+                );
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });

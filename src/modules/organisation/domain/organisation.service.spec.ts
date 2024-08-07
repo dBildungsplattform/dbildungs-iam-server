@@ -17,6 +17,8 @@ import { NameRequiredForSchuleError } from '../specification/error/name-required
 import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { Organisation } from './organisation.js';
+import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
+import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -166,6 +168,46 @@ describe('OrganisationService', () => {
                 error: new EntityCouldNotBeCreated(`Organization could not be created`),
             });
         });
+
+        it('should return domain error if name contains trailing space', async () => {
+            const organisationDo: Organisation<false> = DoFactory.createOrganisation(false, { name: ' name' });
+            organisationRepositoryMock.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisationDo);
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new NameForOrganisationWithTrailingSpaceError(),
+            });
+        });
+
+        it('should return domain error if kennung contains trailing space', async () => {
+            const organisationDo: Organisation<false> = DoFactory.createOrganisation(false, { kennung: ' ' });
+            organisationRepositoryMock.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisationDo);
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new KennungForOrganisationWithTrailingSpaceError(),
+            });
+        });
+
+        it('should return domain error if name contains trailing space', async () => {
+            const organisationDo: Organisation<false> = DoFactory.createOrganisation(false, { name: ' name' });
+            organisationRepositoryMock.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisationDo);
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new NameForOrganisationWithTrailingSpaceError(),
+            });
+        });
+
+        it('should return domain error if kennung contains trailing space', async () => {
+            const organisationDo: Organisation<false> = DoFactory.createOrganisation(false, { kennung: ' ' });
+            organisationRepositoryMock.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisationDo);
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new KennungForOrganisationWithTrailingSpaceError(),
+            });
+        });
     });
 
     describe('updateOrganisation', () => {
@@ -250,6 +292,46 @@ describe('OrganisationService', () => {
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new EntityNotFoundError('Organisation', organisation.id),
+            });
+        });
+
+        it('should return domain error if name contains trailing space', async () => {
+            const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, { name: '  ' });
+            organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisationDo);
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new NameForOrganisationWithTrailingSpaceError(),
+            });
+        });
+
+        it('should return domain error if kennung contains trailing space', async () => {
+            const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, { kennung: 'kennung ' });
+            organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisationDo);
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new KennungForOrganisationWithTrailingSpaceError(),
+            });
+        });
+
+        it('should return domain error if name contains trailing space', async () => {
+            const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, { name: '  ' });
+            organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisationDo);
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new NameForOrganisationWithTrailingSpaceError(),
+            });
+        });
+
+        it('should return domain error if kennung contains trailing space', async () => {
+            const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, { kennung: 'kennung ' });
+            organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisationDo);
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new KennungForOrganisationWithTrailingSpaceError(),
             });
         });
     });
