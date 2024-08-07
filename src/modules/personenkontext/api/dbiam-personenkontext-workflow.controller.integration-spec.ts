@@ -34,7 +34,6 @@ import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-con
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
