@@ -10,6 +10,9 @@ import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klasse
 import { NameRequiredForKlasseError } from '../specification/error/name-required-for-klasse.error.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
+import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 
 describe('Organisation', () => {
     let module: TestingModule;
@@ -59,7 +62,7 @@ describe('Organisation', () => {
 
     describe('createNew', () => {
         it('should return non pesisted organisation', () => {
-            const organisation: Organisation<false> = Organisation.createNew(
+            const organisation: Organisation<false> | DomainError = Organisation.createNew(
                 faker.string.uuid(),
                 faker.string.uuid(),
                 faker.lorem.word(),
@@ -72,6 +75,49 @@ describe('Organisation', () => {
 
             expect(organisation).toBeDefined();
             expect(organisation).toBeInstanceOf(Organisation<false>);
+        });
+        it('should return non persisted organisation', () => {
+            const organisation: Organisation<false> | DomainError = Organisation.createNew(
+                faker.string.uuid(),
+                faker.string.uuid(),
+                'kennung',
+                'name',
+                faker.lorem.word(),
+                faker.string.uuid(),
+                undefined,
+                undefined,
+            );
+
+            expect(organisation).toBeDefined();
+            expect(organisation).toBeInstanceOf(Organisation<false>);
+        });
+
+        it('should return an error if name has leading whitespace', () => {
+            const result: DomainError | Organisation<false> = Organisation.createNew(
+                faker.string.uuid(),
+                faker.string.uuid(),
+                'kennung',
+                ' Test',
+                faker.lorem.word(),
+                faker.string.uuid(),
+                undefined,
+                undefined,
+            );
+            expect(result).toBeInstanceOf(NameForOrganisationWithTrailingSpaceError);
+        });
+
+        it('should return an error if dienststellennummer has leading whitespace', () => {
+            const result: DomainError | Organisation<false> = Organisation.createNew(
+                faker.string.uuid(),
+                faker.string.uuid(),
+                ' Test',
+                'name',
+                faker.lorem.word(),
+                faker.string.uuid(),
+                undefined,
+                undefined,
+            );
+            expect(result).toBeInstanceOf(KennungForOrganisationWithTrailingSpaceError);
         });
     });
 
@@ -172,6 +218,35 @@ describe('Organisation', () => {
                     await orga.checkKlasseSpecifications(organisationRepositoryMock);
 
                 expect(updateError).toBeInstanceOf(NameRequiredForKlasseError);
+            });
+        });
+
+        describe('if name of updated organisation has trailing whitespace', () => {
+            it('should return NameForOrganisationWithTrailingSpaceError', async () => {
+                const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                    name: ' name',
+                    typ: OrganisationsTyp.KLASSE,
+                });
+
+                const updateError: OrganisationSpecificationError | undefined =
+                    await orga.checkKlasseSpecifications(organisationRepositoryMock);
+
+                expect(updateError).toBeInstanceOf(NameForOrganisationWithTrailingSpaceError);
+            });
+        });
+
+        describe('if kennung of updated organisation has trailing whitespace', () => {
+            it('should return KennungForOrganisationWithTrailingSpaceError', async () => {
+                const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                    name: 'name',
+                    kennung: 'kennung ',
+                    typ: OrganisationsTyp.KLASSE,
+                });
+
+                const updateError: OrganisationSpecificationError | undefined =
+                    await orga.checkKlasseSpecifications(organisationRepositoryMock);
+
+                expect(updateError).toBeInstanceOf(KennungForOrganisationWithTrailingSpaceError);
             });
         });
     });
