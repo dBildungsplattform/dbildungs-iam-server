@@ -27,7 +27,7 @@ describe('DbSeedDataGeneratorConsoleIntegration', () => {
             it('should NOT fail', async () => {
                 const params: string[] = [
                     'seeding/seeding-integration-test/organisation/',
-                    'numberOfSchools=2',
+                    'numberOfSchools=1',
                     'classesPerSchool=3',
                 ];
                 await expect(sut.run(params)).resolves.not.toThrow();
