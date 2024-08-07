@@ -107,14 +107,62 @@ describe('PersonRepository Integration', () => {
     describe('findByKeycloakUserId', () => {
         describe('when found by keycloakUserId', () => {
             it('should return found person', async () => {
-                const keycloakUserId: string = faker.string.uuid();
-                const person: Person<true> = DoFactory.createPerson(true, { keycloakUserId: keycloakUserId });
-                const entity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(entity.assign(mapAggregateToData(person)));
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
+                const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                });
+                const personWithKeycloak: Person<false> | DomainError = await Person.createNew(
+                    usernameGeneratorService,
+                    {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    },
+                );
+                expect(person).not.toBeInstanceOf(DomainError);
+                expect(personWithKeycloak).not.toBeInstanceOf(DomainError);
+                if (person instanceof DomainError || personWithKeycloak instanceof DomainError) {
+                    return;
+                }
 
-                const foundPerson: Option<Person<true>> = await sut.findByKeycloakUserId(keycloakUserId);
+                personWithKeycloak.keycloakUserId = faker.string.uuid();
+                const keycloakUserId: string = personWithKeycloak.keycloakUserId;
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: keycloakUserId,
+                });
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.delete.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+                //         const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
+                // if (!creationResult.ok) {
+                //     return creationResult.error;
+                // }
+                // person.keycloakUserId = creationResult.value;
 
-                expect(foundPerson).toBeInstanceOf(Person);
+                // const setPasswordResult: Result<string, DomainError> = await kcUserService.setPassword(
+                //     person.keycloakUserId,
+                //     person.newPassword,
+                //     person.isNewPasswordTemporary,
+                // );
+
+                const person1: Person<true> | DomainError = await sut.save(person);
+
+                if (!(person1 instanceof DomainError)) {
+                    if (person1.keycloakUserId) {
+                        const foundPerson: Option<Person<true>> = await sut.findByKeycloakUserId(
+                            person1.keycloakUserId,
+                        );
+                        expect(foundPerson).toBeInstanceOf(Person);
+                    } else {
+                        throw new Error();
+                    }
+                }
             });
         });
 
@@ -973,12 +1021,12 @@ describe('PersonRepository Integration', () => {
 
             describe('when person does not have an id', () => {
                 it('should call the create method and return the created person', async () => {
-                    const newPerson: Person<false> = DoFactory.createPerson(false);
+                    const newPerson: Person<false> = DoFactory.createPerson(false, { keycloakUserId: undefined });
 
                     const result: Person<true> | DomainError = await sut.save(newPerson);
 
                     if (result instanceof DomainError) {
-                        return;
+                        throw result;
                     }
                     expect(result.vorname).toEqual(newPerson.vorname);
                     expect(result.familienname).toEqual(newPerson.familienname);
