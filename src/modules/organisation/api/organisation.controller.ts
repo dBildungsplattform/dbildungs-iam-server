@@ -362,10 +362,6 @@ export class OrganisationController {
         const result: Paged<Organisation<true>> = await this.organisationService.findAllZugehoerigZu(
             params.organisationId,
         );
-        //I do not think that we need to check if this result can be an error.
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
-        }
 
         const organisations: OrganisationResponse[] = result.items.map(
             (item: Organisation<true>) => new OrganisationResponse(item),
