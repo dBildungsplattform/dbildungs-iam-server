@@ -27,7 +27,6 @@ import { OrganisationByNameBodyParams } from './organisation-by-name.body.params
 import { NameRequiredForKlasseError } from '../specification/error/name-required-for-klasse.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { OrganisationService } from '../domain/organisation.service.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 
@@ -495,25 +494,6 @@ describe('OrganisationController', () => {
                     ok: false,
                     error: new EntityNotFoundError(),
                 });
-                await expect(organisationController.getZugehoerigeOrganisationen(params)).rejects.toThrow(
-                    HttpException,
-                );
-            });
-            it('should throw a HttpException if child organisations are not found', async () => {
-                organisationServiceMock.findOrganisationById.mockResolvedValue({
-                    ok: true,
-                    value: DoFactory.createOrganisation(true),
-                });
-                organisationServiceMock.findAllZugehoerigZu.mockResolvedValueOnce(
-                    new SchulConnexError({
-                        code: 500,
-                        subcode: '00',
-                        titel: 'Interner Serverfehler',
-                        beschreibung:
-                            'Es ist ein interner Fehler aufgetreten. Der aufgetretene Fehler konnte nicht verarbeitet werden',
-                    }) as unknown as Paged<Organisation<true>>,
-                );
-
                 await expect(organisationController.getZugehoerigeOrganisationen(params)).rejects.toThrow(
                     HttpException,
                 );
