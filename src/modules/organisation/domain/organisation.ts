@@ -3,6 +3,10 @@ import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klasse
 import { NameRequiredForKlasseError } from '../specification/error/name-required-for-klasse.error.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { NameRequiredForKlasse } from '../specification/name-required-for-klasse.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { NameValidator } from '../../../shared/validation/name-validator.js';
+import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
+import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
 import { OrganisationsTyp, Traegerschaft } from './organisation.enums.js';
 
 export class Organisation<WasPersisted extends boolean> {
@@ -57,8 +61,8 @@ export class Organisation<WasPersisted extends boolean> {
         kuerzel?: string,
         typ?: OrganisationsTyp,
         traegerschaft?: Traegerschaft,
-    ): Organisation<false> {
-        return new Organisation(
+    ): Organisation<false> | DomainError {
+        const organisation: Organisation<false> = new Organisation(
             undefined,
             undefined,
             undefined,
@@ -71,11 +75,22 @@ export class Organisation<WasPersisted extends boolean> {
             typ,
             traegerschaft,
         );
+
+        const validationError: void | OrganisationSpecificationError = organisation.validateFieldNames();
+        if (validationError) {
+            return validationError;
+        }
+
+        return organisation;
     }
 
     public async checkKlasseSpecifications(
         organisationRepository: OrganisationRepository,
     ): Promise<undefined | OrganisationSpecificationError> {
+        const validationError: void | OrganisationSpecificationError = this.validateFieldNames();
+        if (validationError) {
+            return validationError;
+        }
         const nameRequiredForKlasse: NameRequiredForKlasse = new NameRequiredForKlasse();
         if (!(await nameRequiredForKlasse.isSatisfiedBy(this))) {
             return new NameRequiredForKlasseError();
@@ -101,5 +116,17 @@ export class Organisation<WasPersisted extends boolean> {
             }
         }
         return true;
+    }
+
+    private validateFieldNames(): void | OrganisationSpecificationError {
+        if (this.name && !NameValidator.isNameValid(this.name)) {
+            return new NameForOrganisationWithTrailingSpaceError();
+        }
+
+        if (this.kennung && !NameValidator.isNameValid(this.kennung)) {
+            return new KennungForOrganisationWithTrailingSpaceError();
+        }
+
+        return undefined;
     }
 }
