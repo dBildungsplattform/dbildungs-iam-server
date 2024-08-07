@@ -340,7 +340,7 @@ export class OrganisationService {
         return { ok: true, value: true };
     }
 
-    private validateFieldNames(organisation: OrganisationDo<boolean>): void | OrganisationSpecificationError {
+    private validateFieldNames(organisation: Organisation<boolean>): void | OrganisationSpecificationError {
         if (organisation.name && !NameValidator.isNameValid(organisation.name)) {
             return new NameForOrganisationWithTrailingSpaceError();
         }

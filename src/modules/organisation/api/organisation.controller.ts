@@ -69,7 +69,7 @@ export class OrganisationController {
     public async createOrganisation(@Body() params: CreateOrganisationBodyParams): Promise<OrganisationResponse> {
         const ROOT_ORGANISATION_ID: string = this.config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
 
-        const organisation: Organisation<false> = Organisation.createNew(
+        const organisation: Organisation<false> | DomainError = Organisation.createNew(
             params.administriertVon ?? ROOT_ORGANISATION_ID,
             params.zugehoerigZu ?? ROOT_ORGANISATION_ID,
             params.kennung,
@@ -79,6 +79,9 @@ export class OrganisationController {
             params.typ,
             params.traegerschaft,
         );
+        if (organisation instanceof DomainError) {
+            throw organisation;
+        }
         const result: Result<Organisation<true>, DomainError> = await this.organisationService.createOrganisation(
             organisation,
         );
