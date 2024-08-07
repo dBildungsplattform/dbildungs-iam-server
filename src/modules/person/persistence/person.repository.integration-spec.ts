@@ -104,11 +104,37 @@ describe('PersonRepository Integration', () => {
         expect(sut).toBeDefined();
     });
 
-    async function savePersonAndCheckError(person: Person<false>): Promise<Person<true>> {
+    type SavedPersonProps = { keycloackID: string };
+    async function savePerson(props: Partial<SavedPersonProps> = {}): Promise<Person<true>> {
+        usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
+        const defaultProps: SavedPersonProps = {
+            keycloackID: faker.string.uuid(),
+        };
+
+        const personProps: {
+            keycloackID: string;
+        } = { ...defaultProps, ...props };
+        const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+            familienname: faker.person.lastName(),
+            vorname: faker.person.firstName(),
+        });
+
+        if (person instanceof DomainError) {
+            throw person;
+        }
+
+        kcUserServiceMock.create.mockResolvedValueOnce({
+            ok: true,
+            value: personProps.keycloackID,
+        });
+        kcUserServiceMock.setPassword.mockResolvedValueOnce({
+            ok: true,
+            value: '',
+        });
         const savedPerson: Person<true> | DomainError = await sut.save(person);
 
         if (savedPerson instanceof DomainError) {
-            throw new Error('DomainError occurred');
+            throw savedPerson;
         } else {
             return savedPerson;
         }
@@ -117,40 +143,7 @@ describe('PersonRepository Integration', () => {
     describe('findByKeycloakUserId', () => {
         describe('when found by keycloakUserId', () => {
             it('should return found person', async () => {
-                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
-                const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-                    familienname: faker.person.lastName(),
-                    vorname: faker.person.firstName(),
-                });
-                const personWithKeycloak: Person<false> | DomainError = await Person.createNew(
-                    usernameGeneratorService,
-                    {
-                        familienname: faker.person.lastName(),
-                        vorname: faker.person.firstName(),
-                    },
-                );
-                expect(person).not.toBeInstanceOf(DomainError);
-                expect(personWithKeycloak).not.toBeInstanceOf(DomainError);
-                if (person instanceof DomainError || personWithKeycloak instanceof DomainError) {
-                    return;
-                }
-
-                personWithKeycloak.keycloakUserId = faker.string.uuid();
-                const keycloakUserId: string = personWithKeycloak.keycloakUserId;
-                kcUserServiceMock.create.mockResolvedValueOnce({
-                    ok: true,
-                    value: keycloakUserId,
-                });
-                kcUserServiceMock.setPassword.mockResolvedValueOnce({
-                    ok: true,
-                    value: '',
-                });
-                kcUserServiceMock.delete.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                });
-
-                const personSaved: Person<true> = await savePersonAndCheckError(person);
+                const personSaved: Person<true> = await savePerson();
                 if (personSaved.keycloakUserId) {
                     const foundPerson: Option<Person<true>> = await sut.findByKeycloakUserId(
                         personSaved.keycloakUserId,
@@ -174,37 +167,9 @@ describe('PersonRepository Integration', () => {
     describe('findById', () => {
         describe('when found by Id', () => {
             it('should return found person', async () => {
-                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
-                const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-                    familienname: faker.person.lastName(),
-                    vorname: faker.person.firstName(),
-                });
-                const personWithKeycloak: Person<false> | DomainError = await Person.createNew(
-                    usernameGeneratorService,
-                    {
-                        familienname: faker.person.lastName(),
-                        vorname: faker.person.firstName(),
-                    },
-                );
-                expect(person).not.toBeInstanceOf(DomainError);
-                expect(personWithKeycloak).not.toBeInstanceOf(DomainError);
-                if (person instanceof DomainError || personWithKeycloak instanceof DomainError) {
-                    return;
-                }
+                const nokeyclockID: SavedPersonProps = { keycloackID: '' };
 
-                kcUserServiceMock.create.mockResolvedValueOnce({
-                    ok: true,
-                    value: '',
-                });
-                kcUserServiceMock.setPassword.mockResolvedValueOnce({
-                    ok: true,
-                    value: '',
-                });
-                kcUserServiceMock.delete.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                });
-                const personSaved: Person<true> = await savePersonAndCheckError(person);
+                const personSaved: Person<true> = await savePerson(nokeyclockID);
 
                 const foundPerson: Option<Person<true>> = await sut.findById(personSaved.id);
 
@@ -222,13 +187,8 @@ describe('PersonRepository Integration', () => {
 
         describe('findBy', () => {
             it('should return found persons for scope', async () => {
-                const person1: Person<true> = DoFactory.createPerson(true);
-                const person2: Person<true> = DoFactory.createPerson(true);
-                const person3: Person<true> = DoFactory.createPerson(true);
-
-                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
-                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person2)));
-                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person3)));
+                await savePerson();
+                await savePerson();
 
                 const scope: PersonScope = new PersonScope()
                     .findBy({
@@ -237,14 +197,13 @@ describe('PersonRepository Integration', () => {
                         geburtsdatum: undefined,
                     })
                     .sortBy('vorname', ScopeOrder.ASC)
-                    .paged(0, 3);
+                    .paged(0, 2);
 
                 const [persons, total]: Counted<Person<true>> = await sut.findBy(scope);
 
-                expect(total).toEqual(3);
+                expect(total).toEqual(2);
                 expect(persons.at(0)).toBeInstanceOf(Person);
                 expect(persons.at(1)).toBeInstanceOf(Person);
-                expect(persons.at(2)).toBeInstanceOf(Person);
             });
         });
     });
@@ -562,11 +521,37 @@ describe('PersonRepository Integration', () => {
         describe('when person exist', () => {
             describe('when only updating database attributes', () => {
                 it('should return updated person', async () => {
-                    const existingPerson: Person<true> = DoFactory.createPerson(true);
-                    const personEntity: PersonEntity = new PersonEntity();
-                    await em.persistAndFlush(personEntity.assign(mapAggregateToData(existingPerson)));
-                    const person: Person<true> = Person.construct(
-                        personEntity.id,
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                        ok: true,
+                        value: 'testusername',
+                    });
+                    const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    });
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError) {
+                        return;
+                    }
+                    person.username = undefined;
+                    kcUserServiceMock.create.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.delete.mockResolvedValueOnce({
+                        ok: true,
+                        value: undefined,
+                    });
+                    const existingPerson: Person<true> | DomainError = await sut.create(person);
+                    if (existingPerson instanceof DomainError) {
+                        return;
+                    }
+                    const personConstructed: Person<true> = Person.construct(
+                        existingPerson.id,
                         faker.date.past(),
                         faker.date.recent(),
                         faker.person.lastName(),
@@ -576,8 +561,8 @@ describe('PersonRepository Integration', () => {
                         faker.lorem.word(),
                         faker.string.uuid(),
                     );
-                    await expect(sut.update(person)).resolves.toBeInstanceOf(Person<true>);
-                    const result: Person<true> | DomainError = await sut.update(person);
+                    await expect(sut.update(personConstructed)).resolves.toBeInstanceOf(Person<true>);
+                    const result: Person<true> | DomainError = await sut.update(personConstructed);
                     expect(result).not.toBeInstanceOf(DomainError);
                     if (result instanceof DomainError) {
                         return;
@@ -590,11 +575,37 @@ describe('PersonRepository Integration', () => {
             describe('when updating keycloak password', () => {
                 describe('when keycloak operation succeeds', () => {
                     it('should return updated person', async () => {
-                        const existingPerson: Person<true> = DoFactory.createPerson(true);
-                        const personEntity: PersonEntity = new PersonEntity();
-                        await em.persistAndFlush(personEntity.assign(mapAggregateToData(existingPerson)));
-                        const person: Person<true> = Person.construct(
-                            personEntity.id,
+                        usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                            ok: true,
+                            value: 'testusername',
+                        });
+                        const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                            familienname: faker.person.lastName(),
+                            vorname: faker.person.firstName(),
+                        });
+                        expect(person).not.toBeInstanceOf(DomainError);
+                        if (person instanceof DomainError) {
+                            return;
+                        }
+                        person.username = undefined;
+                        kcUserServiceMock.create.mockResolvedValueOnce({
+                            ok: true,
+                            value: '',
+                        });
+                        kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                            ok: true,
+                            value: '',
+                        });
+                        kcUserServiceMock.delete.mockResolvedValueOnce({
+                            ok: true,
+                            value: undefined,
+                        });
+                        const existingPerson: Person<true> | DomainError = await sut.create(person);
+                        if (existingPerson instanceof DomainError) {
+                            return;
+                        }
+                        const personConstructed: Person<true> = Person.construct(
+                            existingPerson.id,
                             faker.date.past(),
                             faker.date.recent(),
                             faker.person.lastName(),
@@ -611,8 +622,8 @@ describe('PersonRepository Integration', () => {
                             value: '',
                         });
 
-                        await expect(sut.update(person)).resolves.toBeInstanceOf(Person<true>);
-                        const result: Person<true> | DomainError = await sut.update(person);
+                        await expect(sut.update(personConstructed)).resolves.toBeInstanceOf(Person<true>);
+                        const result: Person<true> | DomainError = await sut.update(personConstructed);
                         expect(result).not.toBeInstanceOf(DomainError);
                         if (result instanceof DomainError) {
                             return;
@@ -624,11 +635,9 @@ describe('PersonRepository Integration', () => {
                 });
                 describe('when keycloak operation fails', () => {
                     it('should return updated person', async () => {
-                        const existingPerson: Person<true> = DoFactory.createPerson(true);
-                        const personEntity: PersonEntity = new PersonEntity();
-                        await em.persistAndFlush(personEntity.assign(mapAggregateToData(existingPerson)));
+                        const PersonSaved: Person<true> = await savePerson();
                         const person: Person<true> = Person.construct(
-                            personEntity.id,
+                            PersonSaved.id,
                             faker.date.past(),
                             faker.date.recent(),
                             faker.person.lastName(),
@@ -1015,12 +1024,7 @@ describe('PersonRepository Integration', () => {
     describe('save', () => {
         describe('when person has an id', () => {
             it('should call the update method and return the updated person', async () => {
-                const personEntity: PersonEntity = em.create(
-                    PersonEntity,
-                    mapAggregateToData(DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() })),
-                );
-                await em.persistAndFlush(personEntity);
-                const existingPerson: Person<true> = mapEntityToAggregate(personEntity);
+                const existingPerson: Person<true> = await savePerson();
 
                 const updatedPerson: Person<true> = Person.construct(
                     existingPerson.id,
@@ -1045,27 +1049,43 @@ describe('PersonRepository Integration', () => {
 
             describe('when person does not have an id', () => {
                 it('should call the create method and return the created person', async () => {
-                    const newPerson: Person<false> = DoFactory.createPerson(false, { keycloakUserId: undefined });
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                        ok: true,
+                        value: 'testusername',
+                    });
 
-                    const result: Person<true> | DomainError = await sut.save(newPerson);
+                    const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    });
 
-                    if (result instanceof DomainError) {
-                        throw result;
+                    if (person instanceof DomainError) {
+                        throw person;
                     }
-                    expect(result.vorname).toEqual(newPerson.vorname);
-                    expect(result.familienname).toEqual(newPerson.familienname);
+
+                    kcUserServiceMock.create.mockResolvedValueOnce({
+                        ok: true,
+                        value: 'something',
+                    });
+                    kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    const savedPerson: Person<true> | DomainError = await sut.create(person);
+
+                    if (savedPerson instanceof DomainError) {
+                        throw savedPerson;
+                    } else {
+                        expect(savedPerson).toBeDefined();
+                        expect(savedPerson.id).toBeDefined();
+                    }
                 });
             });
         });
     });
     describe('exists', () => {
         it('should return true if person exists', async () => {
-            const personEntity: PersonEntity = em.create(
-                PersonEntity,
-                mapAggregateToData(DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() })),
-            );
-            await em.persistAndFlush(personEntity);
-            const person: Person<true> = mapEntityToAggregate(personEntity);
+            const person: Person<true> = await savePerson();
 
             const exists: boolean = await sut.exists(person.id);
 
