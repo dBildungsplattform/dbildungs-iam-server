@@ -31,6 +31,7 @@ import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { NameRequiredForKlasseError } from '../specification/error/name-required-for-klasse.error.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -65,6 +66,10 @@ describe('OrganisationController', () => {
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
+                },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
             ],
         }).compile();
