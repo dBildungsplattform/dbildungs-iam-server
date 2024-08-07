@@ -28,8 +28,8 @@ import { NameRequiredForKlasseError } from '../specification/error/name-required
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { OrganisationService } from '../domain/organisation.service.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { Domain } from 'domain';
+
+import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -96,11 +96,32 @@ describe('OrganisationController', () => {
                 };
                 const returnedValue: Organisation<true> = DoFactory.createOrganisation(true);
 
-                organisationServiceMock.createOrganisation.mockResolvedValue({ ok: true, value: returnedValue });
+                organisationServiceMock.createOrganisation.mockResolvedValueOnce({ ok: true, value: returnedValue });
                 await expect(organisationController.createOrganisation(params)).resolves.not.toThrow();
                 expect(organisationServiceMock.createOrganisation).toHaveBeenCalledTimes(1);
             });
         });
+        it('should throw an error if Organisation.createNew returns a DomainError', async () => {
+            const params: CreateOrganisationBodyParams = {
+                administriertVon: faker.string.uuid(),
+                zugehoerigZu: faker.string.uuid(),
+                kennung: ' Test', // This should trigger the error
+                name: faker.lorem.word(),
+                namensergaenzung: faker.lorem.word(),
+                kuerzel: faker.lorem.word(),
+                typ: OrganisationsTyp.ANBIETER,
+                traegerschaft: undefined,
+            };
+
+            try {
+                await organisationController.createOrganisation(params);
+
+                fail('Expected error was not thrown');
+            } catch (error) {
+                expect(error).toBeInstanceOf(KennungForOrganisationWithTrailingSpaceError);
+            }
+        });
+
         describe('when usecase returns a OrganisationSpecificationError', () => {
             it('should throw a HttpException', async () => {
                 organisationServiceMock.createOrganisation.mockResolvedValueOnce({
@@ -113,19 +134,7 @@ describe('OrganisationController', () => {
                 expect(organisationServiceMock.createOrganisation).toHaveBeenCalledTimes(1);
             });
         });
-        describe('when usecase returns a DomainError', () => {
-            it('should throw the DomainError', async () => {
-                organisationServiceMock.createOrganisation.mockResolvedValueOnce({
-                    ok: false,
-                    error: new EntityNotFoundError(),
-                });
-                await expect(
-                    organisationController.createOrganisation({} as CreateOrganisationBodyParams),
-                ).rejects.toThrow(EntityNotFoundError);
-                expect(organisationServiceMock.createOrganisation).toHaveBeenCalledTimes(1);
-            });
-            });
-        });
+
         describe('when usecase returns a SchulConnexError', () => {
             it('should throw a HttpException', async () => {
                 organisationServiceMock.createOrganisation.mockResolvedValue({
