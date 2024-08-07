@@ -104,6 +104,16 @@ describe('PersonRepository Integration', () => {
         expect(sut).toBeDefined();
     });
 
+    async function savePersonAndCheckError(person: Person<false>): Promise<Person<true>> {
+        const savedPerson: Person<true> | DomainError = await sut.save(person);
+
+        if (savedPerson instanceof DomainError) {
+            throw new Error('DomainError occurred');
+        } else {
+            return savedPerson;
+        }
+    }
+
     describe('findByKeycloakUserId', () => {
         describe('when found by keycloakUserId', () => {
             it('should return found person', async () => {
@@ -139,29 +149,15 @@ describe('PersonRepository Integration', () => {
                     ok: true,
                     value: undefined,
                 });
-                //         const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
-                // if (!creationResult.ok) {
-                //     return creationResult.error;
-                // }
-                // person.keycloakUserId = creationResult.value;
 
-                // const setPasswordResult: Result<string, DomainError> = await kcUserService.setPassword(
-                //     person.keycloakUserId,
-                //     person.newPassword,
-                //     person.isNewPasswordTemporary,
-                // );
-
-                const person1: Person<true> | DomainError = await sut.save(person);
-
-                if (!(person1 instanceof DomainError)) {
-                    if (person1.keycloakUserId) {
-                        const foundPerson: Option<Person<true>> = await sut.findByKeycloakUserId(
-                            person1.keycloakUserId,
-                        );
-                        expect(foundPerson).toBeInstanceOf(Person);
-                    } else {
-                        throw new Error();
-                    }
+                const personSaved: Person<true> = await savePersonAndCheckError(person);
+                if (personSaved.keycloakUserId) {
+                    const foundPerson: Option<Person<true>> = await sut.findByKeycloakUserId(
+                        personSaved.keycloakUserId,
+                    );
+                    expect(foundPerson).toBeInstanceOf(Person);
+                } else {
+                    throw new Error();
                 }
             });
         });
@@ -178,11 +174,39 @@ describe('PersonRepository Integration', () => {
     describe('findById', () => {
         describe('when found by Id', () => {
             it('should return found person', async () => {
-                const person: Person<true> = DoFactory.createPerson(true);
-                const entity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(entity.assign(mapAggregateToData(person)));
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
+                const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                });
+                const personWithKeycloak: Person<false> | DomainError = await Person.createNew(
+                    usernameGeneratorService,
+                    {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    },
+                );
+                expect(person).not.toBeInstanceOf(DomainError);
+                expect(personWithKeycloak).not.toBeInstanceOf(DomainError);
+                if (person instanceof DomainError || personWithKeycloak instanceof DomainError) {
+                    return;
+                }
 
-                const foundPerson: Option<Person<true>> = await sut.findById(entity.id);
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.delete.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+                const personSaved: Person<true> = await savePersonAndCheckError(person);
+
+                const foundPerson: Option<Person<true>> = await sut.findById(personSaved.id);
 
                 expect(foundPerson).toBeInstanceOf(Person);
             });
