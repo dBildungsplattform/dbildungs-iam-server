@@ -28,6 +28,8 @@ import { NameRequiredForKlasseError } from '../specification/error/name-required
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { OrganisationService } from '../domain/organisation.service.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { Domain } from 'domain';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -109,6 +111,19 @@ describe('OrganisationController', () => {
                     organisationController.createOrganisation({} as CreateOrganisationBodyParams),
                 ).rejects.toThrow(OrganisationSpecificationError);
                 expect(organisationServiceMock.createOrganisation).toHaveBeenCalledTimes(1);
+            });
+        });
+        describe('when usecase returns a DomainError', () => {
+            it('should throw the DomainError', async () => {
+                organisationServiceMock.createOrganisation.mockResolvedValueOnce({
+                    ok: false,
+                    error: new EntityNotFoundError(),
+                });
+                await expect(
+                    organisationController.createOrganisation({} as CreateOrganisationBodyParams),
+                ).rejects.toThrow(EntityNotFoundError);
+                expect(organisationServiceMock.createOrganisation).toHaveBeenCalledTimes(1);
+            });
             });
         });
         describe('when usecase returns a SchulConnexError', () => {
