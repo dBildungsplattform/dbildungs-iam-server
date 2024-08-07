@@ -9,7 +9,7 @@ export type CreateUserParams = {
     displayName: string;
     email1: string;
     firstname: string;
-    givenName: string;
+    givenname: string;
     mailEnabled: boolean;
     lastname: string;
     primaryEmail: string;
@@ -20,8 +20,10 @@ export type CreateUserParams = {
 };
 
 export type CreateUserResponse = {
+    id: string;
     firstname: string;
     lastname: string;
+    username: string;
     primaryEmail: string;
     mailenabled: boolean;
 };
@@ -29,6 +31,7 @@ export type CreateUserResponse = {
 export type CreateUserResponseBody = {
     createResponse: {
         return: {
+            'ns2:id': string;
             'ns2:aliases': [];
             'ns2:email1': string;
             'ns2:email2': string;
@@ -36,6 +39,7 @@ export type CreateUserResponseBody = {
             'ns2:primaryEmail': string;
 
             'ns2:name': string;
+            'ns2:given_name': string;
             'ns2:sur_name': string;
             'ns2:mailenabled': boolean;
         };
@@ -63,7 +67,7 @@ export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, Creat
                 'tns:usrdata': {
                     'ns6:display_name': this.params.displayName,
                     'ns6:email1': this.params.email1,
-                    'ns6:given_name': this.params.givenName,
+                    'ns6:given_name': this.params.givenname,
                     'ns6:mailenabled': this.params.mailEnabled,
                     'ns6:name': this.params.firstname,
                     'ns6:sur_name': this.params.lastname,
@@ -83,8 +87,10 @@ export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, Creat
         return {
             ok: true,
             value: {
-                firstname: body.createResponse.return['ns2:name'],
+                id: body.createResponse.return['ns2:id'],
+                firstname: body.createResponse.return['ns2:given_name'],
                 lastname: body.createResponse.return['ns2:sur_name'],
+                username: body.createResponse.return['ns2:name'],
                 primaryEmail: body.createResponse.return['ns2:primaryEmail'],
                 mailenabled: body.createResponse.return['ns2:mailenabled'],
             },

@@ -16,6 +16,7 @@ import { PersonID } from '../../../shared/types/index.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
+import { ExistsUserAction, ExistsUserParams, ExistsUserResponse } from '../actions/exists-user.action.js';
 
 @Injectable()
 export class OxEventHandler extends PersonenkontextCreatedEventHandler {
@@ -67,12 +68,29 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
             this.logger.error(`Person with personId:${personId} has no email-address`);
             return;
         }
+
+        const existsParams: ExistsUserParams = {
+            contextId: '1',
+            username: person.vorname,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const existsAction: ExistsUserAction = new ExistsUserAction(existsParams);
+
+        const existsResult: Result<ExistsUserResponse, DomainError> = await this.oxService.send(existsAction);
+
+        if (existsResult.ok && existsResult.value.exists) {
+            this.logger.error(`Cannot create user in OX, user with name:${person.vorname} already exists`);
+            return;
+        }
+
         const params: CreateUserParams = {
             contextId: '1',
             displayName: person.vorname + person.familienname,
             email1: person.email,
             firstname: person.vorname,
-            givenName: person.vorname,
+            givenname: person.vorname,
             mailEnabled: true,
             lastname: person.familienname,
             primaryEmail: person.email,
@@ -80,8 +98,6 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
             login: this.authUser,
             password: this.authPassword,
         };
-
-        //maybe check if user already exists in OX?
 
         const action: CreateUserAction = new CreateUserAction(params);
 

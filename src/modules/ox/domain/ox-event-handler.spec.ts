@@ -18,6 +18,7 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
 import { Person } from '../../person/domain/person.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
+import { ExistsUserAction } from '../actions/exists-user.action.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
@@ -132,6 +133,28 @@ describe('OxEventHandler', () => {
             expect(loggerMock.info).toHaveBeenLastCalledWith(`Person with id:${personId} does not need an email`);
         });
 
+        it('should log error when person already exists in OX', async () => {
+            dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
+            rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
+            serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    exists: true,
+                },
+            });
+
+            await sut.handlePersonenkontextCreatedEvent(event);
+
+            expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(ExistsUserAction));
+            expect(oxServiceMock.send).toHaveBeenCalledTimes(1);
+            expect(loggerMock.error).toHaveBeenLastCalledWith(
+                `Cannot create user in OX, user with name:${person.vorname} already exists`,
+            );
+        });
+
         it('should log error when person cannot be found in DB', async () => {
             dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
             rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
@@ -165,6 +188,13 @@ describe('OxEventHandler', () => {
 
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
+                value: {
+                    exists: false,
+                },
+            });
+
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
                 value: undefined,
             });
             await sut.handlePersonenkontextCreatedEvent(event);
@@ -178,6 +208,13 @@ describe('OxEventHandler', () => {
             rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
             serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
             personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    exists: false,
+                },
+            });
 
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: false,

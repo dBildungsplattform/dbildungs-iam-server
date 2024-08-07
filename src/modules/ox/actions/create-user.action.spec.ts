@@ -13,7 +13,7 @@ describe('CreateUserAction', () => {
                 contextId: faker.string.uuid(),
                 displayName: firstname,
                 email1: email,
-                givenName: firstname,
+                givenname: firstname,
                 mailEnabled: true,
                 firstname: firstname,
                 lastname: lastname,
@@ -28,7 +28,7 @@ describe('CreateUserAction', () => {
     });
 
     describe('parseBody', () => {
-        it('should return void result', () => {
+        it('should return CreateUserResponse', () => {
             const firstname: string = faker.person.firstName();
             const lastname: string = faker.person.lastName();
             const email: string = firstname + '.' + lastname + '@test.de';
@@ -37,7 +37,7 @@ describe('CreateUserAction', () => {
                 contextId: faker.string.uuid(),
                 displayName: firstname,
                 email1: email,
-                givenName: firstname,
+                givenname: firstname,
                 mailEnabled: true,
                 firstname: firstname,
                 lastname: lastname,
@@ -55,18 +55,22 @@ describe('CreateUserAction', () => {
                         'ns2:email2': 'string',
                         'ns2:email3': 'string',
                         'ns2:primaryEmail': 'string',
-
-                        'ns2:name': 'string',
-                        'ns2:sur_name': 'string',
                         'ns2:mailenabled': true,
+
+                        'ns2:id': 'id',
+                        'ns2:given_name': 'firstname',
+                        'ns2:sur_name': 'lastname',
+                        'ns2:name': 'username',
                     },
                 },
             };
             expect(action.parseBody(cub)).toEqual({
                 ok: true,
                 value: {
-                    firstname: 'string',
-                    lastname: 'string',
+                    firstname: 'firstname',
+                    lastname: 'lastname',
+                    username: 'username',
+                    id: 'id',
                     primaryEmail: 'string',
                     mailenabled: true,
                 },
