@@ -37,7 +37,7 @@ export class PersonenkontextResponse {
     @ApiProperty({ enum: SichtfreigabeType, nullable: true })
     public sichtfreigabe?: SichtfreigabeType;
 
-    @AutoMap(() => String)
+    @AutoMap(() => LoeschungResponse)
     @ApiProperty({ type: LoeschungResponse, nullable: true })
     public loeschung?: LoeschungResponse;
 

@@ -225,13 +225,13 @@ export class PersonenkontextController {
         }
 
         //!!! Note: rename this
-        const dto: UpdatePersonenkontextBodyParams = body;
-        dto.id = params.personenkontextId;
+        const updateParams: UpdatePersonenkontextBodyParams = body;
+        updateParams.id = params.personenkontextId;
 
         const updateResult: Result<
             Personenkontext<true>,
             DomainError
-        > = await this.personenkontextService.updatePersonenkontext(dto);
+        > = await this.personenkontextService.updatePersonenkontext(updateParams);
 
         if (!updateResult.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
