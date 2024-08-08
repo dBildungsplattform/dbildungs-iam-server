@@ -11,12 +11,12 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
 import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
+import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from './personenkontext.enums.js';
 
 export type PersonenkontextPartial = Pick<
     Personenkontext<boolean>,
     'id' | 'createdAt' | 'updatedAt' | 'personId' | 'organisationId' | 'rolleId'
 >;
-
 export function mapAggregateToPartial(personenkontext: Personenkontext<boolean>): PersonenkontextPartial {
     return {
         id: personenkontext.id,
@@ -39,6 +39,14 @@ export class Personenkontext<WasPersisted extends boolean> {
         public readonly personId: PersonID,
         public readonly organisationId: OrganisationID,
         public readonly rolleId: RolleID,
+        // new
+        public readonly referrer: string | undefined,
+        public readonly mandant: string | undefined,
+        public readonly personenstatus: Personenstatus | undefined,
+        public readonly jahrgangsstufe: Jahrgangsstufe | undefined,
+        public readonly sichtfreigabe: SichtfreigabeType | undefined,
+        public readonly loeschungZeitpunkt: Date | undefined,
+        public readonly revision: Persisted<string, WasPersisted>,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
@@ -51,6 +59,14 @@ export class Personenkontext<WasPersisted extends boolean> {
         personId: PersonID,
         organisationId: OrganisationID,
         rolleId: RolleID,
+        // new params
+        referrer: string | undefined = undefined,
+        mandant: string | undefined = undefined,
+        personenstatus: Personenstatus | undefined = undefined,
+        jahrgangsstufe: Jahrgangsstufe | undefined = undefined,
+        sichtfreigabe: SichtfreigabeType | undefined = undefined,
+        loeschungZeitpunkt: Date | undefined = undefined,
+        revision: Persisted<string, WasPersisted> = '1',
     ): Personenkontext<WasPersisted> {
         return new Personenkontext(
             personRepo,
@@ -62,6 +78,14 @@ export class Personenkontext<WasPersisted extends boolean> {
             personId,
             organisationId,
             rolleId,
+            // new fields
+            referrer,
+            mandant,
+            personenstatus,
+            jahrgangsstufe,
+            sichtfreigabe,
+            loeschungZeitpunkt,
+            revision,
         );
     }
 
@@ -72,6 +96,13 @@ export class Personenkontext<WasPersisted extends boolean> {
         personId: PersonID,
         organisationId: OrganisationID,
         rolleId: RolleID,
+        // new fields
+        referrer: string | undefined = undefined,
+        mandant: string | undefined = undefined,
+        personenstatus: Personenstatus | undefined = undefined,
+        jahrgangsstufe: Jahrgangsstufe | undefined = undefined,
+        sichtfreigabe: SichtfreigabeType | undefined = undefined,
+        loeschungZeitpunkt: Date | undefined = undefined,
     ): Personenkontext<false> {
         return new Personenkontext(
             personRepo,
@@ -83,6 +114,14 @@ export class Personenkontext<WasPersisted extends boolean> {
             personId,
             organisationId,
             rolleId,
+            // new
+            referrer,
+            mandant,
+            personenstatus,
+            jahrgangsstufe,
+            sichtfreigabe,
+            loeschungZeitpunkt,
+            undefined,
         );
     }
 
@@ -144,5 +183,9 @@ export class Personenkontext<WasPersisted extends boolean> {
         }
 
         return undefined;
+    }
+
+    public async getRolle(): Promise<Option<Rolle<true>>> {
+        return this.rolleRepo.findById(this.rolleId);
     }
 }

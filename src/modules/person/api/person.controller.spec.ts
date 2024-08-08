@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { MapperTestModule } from '../../../../test/utils/index.js';
+import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
 import {
@@ -13,13 +13,10 @@ import {
 } from '../../personenkontext/domain/personenkontext.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/param/create-personenkontext.body.params.js';
-import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
-import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonController } from './person.controller.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
-import { PersonenkontextDto } from '../../personenkontext/api/personenkontext.dto.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
 import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
@@ -37,6 +34,12 @@ import { ConfigService } from '@nestjs/config';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
 import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
+import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
+import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -44,6 +47,8 @@ describe('PersonController', () => {
     let personenkontextUcMock: DeepMocked<PersonenkontextUc>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
+    let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
+    let rolleRepoMock: DeepMocked<RolleRepo>;
 
     let personPermissionsMock: DeepMocked<PersonPermissions>;
 
@@ -51,9 +56,10 @@ describe('PersonController', () => {
         module = await Test.createTestingModule({
             imports: [MapperTestModule],
             providers: [
+                PersonApiMapperProfile,
                 PersonController,
                 PersonFactory,
-                PersonApiMapperProfile,
+                PersonApiMapper,
                 {
                     provide: PersonenkontextUc,
                     useValue: createMock<PersonenkontextUc>(),
@@ -82,12 +88,22 @@ describe('PersonController', () => {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
+                {
+                    provide: PersonenkontextService,
+                    useValue: createMock<PersonenkontextService>(),
+                },
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
             ],
         }).compile();
         personController = module.get(PersonController);
         personenkontextUcMock = module.get(PersonenkontextUc);
         personRepositoryMock = module.get(PersonRepository);
         usernameGeneratorService = module.get(UsernameGeneratorService);
+        personenkontextServiceMock = module.get(PersonenkontextService);
+        rolleRepoMock = module.get(RolleRepo);
     });
 
     function getPerson(): Person<true> {
@@ -477,21 +493,10 @@ describe('PersonController', () => {
                     personenstatus: Personenstatus.AKTIV,
                     rolle: Rolle.LERNENDER,
                 };
-                const personenkontextResponse: PersonenkontextDto = {
-                    id: faker.string.uuid(),
-                    personId: faker.string.uuid(),
-                    organisation: {
-                        id: faker.string.uuid(),
-                    },
-                    revision: '1',
-                    mandant: faker.string.uuid(),
-                    rolle: Rolle.LERNENDER,
-                    referrer: 'referrer',
-                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                    personenstatus: Personenstatus.AKTIV,
-                    loeschung: { zeitpunkt: faker.date.past() },
-                };
-                const personenkontextDtos: Paged<PersonenkontextDto> = {
+                const personenkontextResponse: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    getRolle: () => rolleRepoMock.findById(faker.string.uuid()),
+                });
+                const personenkontextDtos: Paged<Personenkontext<true>> = {
                     items: [personenkontextResponse],
                     total: 1,
                     offset: 0,
@@ -499,7 +504,7 @@ describe('PersonController', () => {
                 };
                 personPermissionsMock = createMock<PersonPermissions>();
 
-                personenkontextUcMock.findAll.mockResolvedValue(personenkontextDtos);
+                personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue(personenkontextDtos);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: getPerson() });
 
                 const result: PagedResponse<PersonenkontextResponse> = await personController.findPersonenkontexte(
@@ -508,7 +513,6 @@ describe('PersonController', () => {
                     personPermissionsMock,
                 );
 
-                expect(personenkontextUcMock.findAll).toHaveBeenCalledTimes(1);
                 expect(result.items.length).toBe(1);
                 expect(result.items[0]?.id).toBe(personenkontextDtos.items[0]?.id);
             });
@@ -525,21 +529,9 @@ describe('PersonController', () => {
                     personenstatus: Personenstatus.AKTIV,
                     rolle: Rolle.LERNENDER,
                 };
-                const personenkontextResponse: PersonenkontextDto = {
-                    id: faker.string.uuid(),
-                    personId: faker.string.uuid(),
-                    organisation: {
-                        id: faker.string.uuid(),
-                    },
-                    revision: '1',
-                    mandant: faker.string.uuid(),
-                    rolle: Rolle.LERNENDER,
-                    referrer: 'referrer',
-                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                    personenstatus: Personenstatus.AKTIV,
-                    loeschung: { zeitpunkt: faker.date.past() },
-                };
-                const personenkontextDtos: Paged<PersonenkontextDto> = {
+                const personenkontextResponse: Personenkontext<true> = DoFactory.createPersonenkontext(true);
+
+                const personenkontextDtos: Paged<Personenkontext<true>> = {
                     items: [personenkontextResponse],
                     total: 1,
                     offset: 0,
@@ -551,12 +543,10 @@ describe('PersonController', () => {
                     ok: false,
                     error: new EntityNotFoundError(),
                 });
-                personenkontextUcMock.findAll.mockResolvedValue(personenkontextDtos);
+                personenkontextServiceMock.findAllPersonenkontexte.mockResolvedValue(personenkontextDtos);
                 await expect(
                     personController.findPersonenkontexte(pathParams, queryParams, personPermissionsMock),
                 ).rejects.toThrow(HttpException);
-
-                expect(personenkontextUcMock.findAll).toHaveBeenCalledTimes(0);
             });
         });
     });

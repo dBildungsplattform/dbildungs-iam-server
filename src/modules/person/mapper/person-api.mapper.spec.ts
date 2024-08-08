@@ -1,13 +1,28 @@
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonInfoResponse } from '../api/person-info.response.js';
-import { PersonDo } from '../domain/person.do.js';
+import { Person } from '../domain/person.js';
 import { PersonApiMapper } from './person-api.mapper.js';
+import { Test, TestingModule } from '@nestjs/testing';
+import { faker } from '@faker-js/faker';
 
 describe('PersonApiMapper', () => {
+    let module: TestingModule;
     let sut: PersonApiMapper;
+    let rolleRepoMock: DeepMocked<RolleRepo>;
 
-    beforeAll(() => {
+    beforeAll(async () => {
+        module = await Test.createTestingModule({
+            providers: [
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
+            ],
+        }).compile();
+        rolleRepoMock = module.get(RolleRepo);
         sut = new PersonApiMapper();
     });
 
@@ -17,16 +32,19 @@ describe('PersonApiMapper', () => {
 
     describe('toPersonInfoResponse', () => {
         describe('when mapping to PersonInfoResponse', () => {
-            it('should return PersonInfoResponse', () => {
+            it('should return PersonInfoResponse', async () => {
                 // Arrange
-                const person: PersonDo<true> = DoFactory.createPerson(true);
-                const kontext: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true, {
+                const person: Person<true> = DoFactory.createPerson(true);
+                rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
+
+                const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                     loeschungZeitpunkt: new Date(),
+                    getRolle: () => rolleRepoMock.findById(faker.string.uuid()),
                 });
-                const kontexte: PersonenkontextDo<true>[] = [kontext];
+                const kontexte: Personenkontext<true>[] = [kontext];
 
                 // Act
-                const result: PersonInfoResponse = sut.mapToPersonInfoResponse(person, kontexte);
+                const result: PersonInfoResponse = await sut.mapToPersonInfoResponse(person, kontexte);
 
                 // Assert
                 expect(result).toBeInstanceOf(PersonInfoResponse);
@@ -63,11 +81,10 @@ describe('PersonApiMapper', () => {
                         {
                             id: kontext.id,
                             referrer: kontext.referrer,
-                            mandant: kontext.mandant,
+                            mandant: kontext.mandant ?? '',
                             organisation: {
                                 id: kontext.organisationId,
                             },
-                            rolle: kontext.rolle,
                             personenstatus: kontext.personenstatus,
                             jahrgangsstufe: kontext.jahrgangsstufe,
                             sichtfreigabe: kontext.sichtfreigabe,
@@ -80,16 +97,19 @@ describe('PersonApiMapper', () => {
             });
         });
 
-        it('should return PersonInfoResponse and leave loeschung empty', () => {
+        it('should return PersonInfoResponse and leave loeschung empty', async () => {
             // Arrange
-            const person: PersonDo<true> = DoFactory.createPerson(true);
-            const kontext: PersonenkontextDo<true> = DoFactory.createPersonenkontext(true, {
+            const person: Person<true> = DoFactory.createPerson(true);
+            rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
+
+            const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                 loeschungZeitpunkt: undefined,
+                getRolle: () => rolleRepoMock.findById(faker.string.uuid()),
             });
-            const kontexte: PersonenkontextDo<true>[] = [kontext];
+            const kontexte: Personenkontext<true>[] = [kontext];
 
             // Act
-            const result: PersonInfoResponse = sut.mapToPersonInfoResponse(person, kontexte);
+            const result: PersonInfoResponse = await sut.mapToPersonInfoResponse(person, kontexte);
 
             // Assert
             expect(result).toBeInstanceOf(PersonInfoResponse);
