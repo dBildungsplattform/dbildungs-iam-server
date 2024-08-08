@@ -18,8 +18,9 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+
 import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -124,7 +125,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     systemrechte: [RollenSystemRecht.KLASSEN_VERWALTEN],
                 };
 
-                const organisation: OrganisationDo<true> = DoFactory.createOrganisation(true);
+                const organisation: Organisation<true> = DoFactory.createOrganisation(true);
                 organisationServiceMock.findOrganisationById.mockResolvedValueOnce({
                     ok: true,
                     value: organisation,

@@ -1,4 +1,4 @@
-import { Mapper, MappingProfile, createMap, forMember, mapFrom, ignore } from '@automapper/core';
+import { Mapper, MappingProfile, createMap, forMember, ignore } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
@@ -43,35 +43,10 @@ export class OrganisationApiMapperProfile extends AutomapperProfile {
                 forMember((dest: OrganisationDo<boolean>) => dest.createdAt, ignore()),
                 forMember((dest: OrganisationDo<boolean>) => dest.updatedAt, ignore()),
             );
-            createMap(
-                mapper,
-                OrganisationDo<true>,
-                CreatedOrganisationDto,
-                forMember(
-                    (dest: CreatedOrganisationDto) => dest.id,
-                    mapFrom((src: OrganisationDo<true>) => src.id),
-                ),
-            );
-            createMap(
-                mapper,
-                OrganisationDo<true>,
-                UpdatedOrganisationDto,
-                forMember(
-                    (dest: UpdatedOrganisationDto) => dest.id,
-                    mapFrom((src: OrganisationDo<true>) => src.id),
-                ),
-            );
+
             createMap(mapper, CreatedOrganisationDto, OrganisationResponseLegacy);
             createMap(mapper, UpdatedOrganisationDto, OrganisationResponseLegacy);
-            createMap(
-                mapper,
-                OrganisationDo,
-                OrganisationResponseLegacy,
-                forMember(
-                    (dest: OrganisationResponseLegacy) => dest.id,
-                    mapFrom((src: OrganisationDo<true>) => src.id),
-                ),
-            );
+
             createMap(mapper, FindOrganisationQueryParams, FindOrganisationDto);
             createMap(
                 mapper,

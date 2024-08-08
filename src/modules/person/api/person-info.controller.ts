@@ -16,12 +16,11 @@ import { PersonInfoResponse } from './person-info.response.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
-import { PersonRepo } from '../persistence/person.repo.js';
-import { PersonDo } from '../domain/person.do.js';
-import { PersonenkontextRepo } from '../../personenkontext/persistence/personenkontext.repo.js';
 import { PersonenkontextScope } from '../../personenkontext/persistence/personenkontext.scope.js';
-import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonRepository } from '../persistence/person.repository.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiBearerAuth()
@@ -31,8 +30,8 @@ import { AuthenticationExceptionFilter } from '../../authentication/api/authenti
 export class PersonInfoController {
     public constructor(
         private readonly logger: ClassLogger,
-        private readonly personRepo: PersonRepo,
-        private readonly personenkontextRepo: PersonenkontextRepo,
+        private readonly personRepo: PersonRepository,
+        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly mapper: PersonApiMapper,
     ) {
         this.logger.info(`Creating ${PersonInfoController.name}`);
@@ -44,7 +43,7 @@ export class PersonInfoController {
     @ApiOkResponse({ description: 'Returns info about the person.', type: PersonInfoResponse })
     public async info(@Permissions() permissions: PersonPermissions): Promise<PersonInfoResponse> {
         const personId: string = permissions.personFields.id;
-        const person: Option<PersonDo<true>> = await this.personRepo.findById(personId);
+        const person: Option<Person<true>> = await this.personRepo.findById(personId);
 
         if (!person) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -53,8 +52,8 @@ export class PersonInfoController {
         }
 
         const scope: PersonenkontextScope = new PersonenkontextScope().findBy({ personId });
-        const [kontexte]: Counted<PersonenkontextDo<true>> = await this.personenkontextRepo.findBy(scope);
-        const response: PersonInfoResponse = this.mapper.mapToPersonInfoResponse(person, kontexte);
+        const [kontexte]: Counted<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findBy(scope);
+        const response: PersonInfoResponse = await this.mapper.mapToPersonInfoResponse(person, kontexte);
 
         return response;
     }
