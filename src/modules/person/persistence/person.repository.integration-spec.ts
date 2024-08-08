@@ -36,6 +36,7 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -572,6 +573,62 @@ describe('PersonRepository Integration', () => {
                     expect(kcUserServiceMock.setPassword).not.toHaveBeenCalled();
                 });
             });
+
+            describe('when lastname has changed', () => {
+                it('should trigger PersonRenamedEvent', async () => {
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                        ok: true,
+                        value: 'testusername',
+                    });
+                    const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                    });
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError) {
+                        return;
+                    }
+                    person.username = 'name';
+                    //person.keycloakUserId = faker.string.uuid();
+                    kcUserServiceMock.create.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                        ok: true,
+                        value: '',
+                    });
+                    kcUserServiceMock.delete.mockResolvedValueOnce({
+                        ok: true,
+                        value: undefined,
+                    });
+                    const existingPerson: Person<true> | DomainError = await sut.create(person);
+                    if (existingPerson instanceof DomainError) {
+                        return;
+                    }
+                    const personConstructed: Person<true> = Person.construct(
+                        existingPerson.id,
+                        faker.date.past(),
+                        faker.date.recent(),
+                        faker.person.lastName(),
+                        person.vorname,
+                        '1',
+                        faker.lorem.word(),
+                        faker.lorem.word(),
+                        faker.string.uuid(),
+                    );
+                    await expect(sut.update(personConstructed)).resolves.toBeInstanceOf(Person<true>);
+                    const result: Person<true> | DomainError = await sut.update(personConstructed);
+                    expect(result).not.toBeInstanceOf(DomainError);
+                    if (result instanceof DomainError) {
+                        return;
+                    }
+                    expect(eventServiceMock.publish).toHaveBeenCalledWith(expect.any(PersonRenamedEvent));
+                    expect(result.vorname).toEqual(person.vorname);
+                    expect(result.familienname).not.toEqual(person.familienname);
+                });
+            });
+
             describe('when updating keycloak password', () => {
                 describe('when keycloak operation succeeds', () => {
                     it('should return updated person', async () => {
