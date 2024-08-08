@@ -128,8 +128,22 @@ export class PrivacyIdeaAdministrationService {
     }
 
     public async getTwoAuthState(userName: string): Promise<PrivacyIdeaToken | undefined> {
+        try {
+            return (await this.getUserTokens(userName)).filter(
+                (x: PrivacyIdeaToken) => x.rollout_state !== 'verify',
+            )[0];
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`Error getting two auth state: ${error.message}`);
+            } else {
+                throw new Error(`Error getting two auth state: Unknown error occurred`);
+            }
+        }
+    }
+
+    private async getUserTokens(userName: string): Promise<PrivacyIdeaToken[]> {
         if (!(await this.checkUserExists(userName))) {
-            return undefined;
+            return [];
         }
         const token: string = await this.getJWTToken();
         const endpoint: string = '/token';
@@ -145,12 +159,12 @@ export class PrivacyIdeaAdministrationService {
             const response: AxiosResponse<PrivacyIdeaResponseTokens> = await firstValueFrom(
                 this.httpService.get(url, { headers: headers, params: params }),
             );
-            return response.data.result.value.tokens.filter((x: PrivacyIdeaToken) => x.rollout_state !== 'verify')[0];
+            return response.data.result.value.tokens;
         } catch (error) {
             if (error instanceof Error) {
-                throw new Error(`Error getting two auth state: ${error.message}`);
+                throw new Error(`Error getting user tokens: ${error.message}`);
             } else {
-                throw new Error(`Error getting two auth state: Unknown error occurred`);
+                throw new Error(`Error getting user tokens: Unknown error occurred`);
             }
         }
     }
@@ -237,9 +251,7 @@ export class PrivacyIdeaAdministrationService {
             );
             return response ? response.data.result.status : false;
         } catch (error) {
-            if (error instanceof AxiosError) {
-                return false;
-            } else if (error instanceof Error) {
+            if (error instanceof Error) {
                 throw new Error(`Error verifying token: ${error.message}`);
             } else {
                 throw new Error(`Error verifying token: Unknown error occurred`);
@@ -248,24 +260,8 @@ export class PrivacyIdeaAdministrationService {
     }
 
     private async getTokenToVerify(userName: string): Promise<PrivacyIdeaToken | undefined> {
-        if (!(await this.checkUserExists(userName))) {
-            return undefined;
-        }
-        const token: string = await this.getJWTToken();
-        const endpoint: string = '/token';
-        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
-        const url: string = baseUrl + endpoint;
-        const headers: { Authorization: string } = {
-            Authorization: `${token}`,
-        };
-        const params: { user: string } = {
-            user: userName,
-        };
         try {
-            const response: AxiosResponse<PrivacyIdeaResponseTokens> = await firstValueFrom(
-                this.httpService.get(url, { headers: headers, params: params }),
-            );
-            return response.data.result.value.tokens.filter((x: PrivacyIdeaToken) => x.rollout_state == 'verify')[0];
+            return (await this.getUserTokens(userName)).filter((x: PrivacyIdeaToken) => x.rollout_state == 'verify')[0];
         } catch (error) {
             if (error instanceof Error) {
                 throw new Error(`Error getting two auth state: ${error.message}`);
