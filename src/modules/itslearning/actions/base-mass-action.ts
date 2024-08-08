@@ -64,7 +64,7 @@ export abstract class IMSESMassAction<ResponseBodyType, ResultType> {
             return {
                 ok: false,
                 error: new ItsLearningError(
-                    `${failed.length} of ${result.Envelope.Header.syncResponseHeaderInfo.statusInfoSet.statusInfo.length} Requests failed'`,
+                    `${failed.length} of ${result.Envelope.Header.syncResponseHeaderInfo.statusInfoSet.statusInfo.length} Requests failed`,
                     result,
                 ),
             };
