@@ -19,6 +19,7 @@ import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
@@ -251,7 +252,7 @@ export class PersonRepository {
 
     public async update(person: Person<true>): Promise<Person<true> | DomainError> {
         const personEntity: Loaded<PersonEntity> = await this.em.findOneOrFail(PersonEntity, person.id);
-
+        const isPersonRenamedEventNecessary: boolean = this.hasChangedNames(personEntity, person);
         if (person.newPassword) {
             const setPasswordResult: Result<string, DomainError> = await this.kcUserService.setPassword(
                 person.keycloakUserId!,
@@ -266,7 +267,23 @@ export class PersonRepository {
         personEntity.assign(mapAggregateToData(person));
         await this.em.persistAndFlush(personEntity);
 
+        if (isPersonRenamedEventNecessary) {
+            this.eventService.publish(new PersonRenamedEvent(person.id));
+        }
+
         return mapEntityToAggregate(personEntity);
+    }
+
+    private hasChangedNames(personEntity: PersonEntity, person: Person<true>): boolean {
+        const oldVorname: string = personEntity.vorname.toLowerCase();
+        const oldFamilienname: string = personEntity.familienname.toLowerCase();
+        const newVorname: string = person.vorname.toLowerCase();
+        const newFamilienname: string = person.familienname.toLowerCase();
+
+        //only look for first letter, because username is firstname[0] + lastname
+        if (oldVorname[0] !== newVorname[0]) return true;
+
+        return oldFamilienname !== newFamilienname;
     }
 
     private async createKeycloakUser(
