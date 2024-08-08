@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
-import { AxiosResponse } from 'axios';
+import { catchError, firstValueFrom, lastValueFrom, of } from 'rxjs';
+import { AxiosError, AxiosResponse } from 'axios';
 import {
     InitSoftwareToken,
     InitSoftwareTokenPayload,
@@ -9,6 +9,7 @@ import {
     PrivacyIdeaToken,
     AuthenticaitonResponse,
     UserResponse,
+    VerificationResponse,
 } from './privacy-idea-api.types.js';
 
 @Injectable()
@@ -21,14 +22,19 @@ export class PrivacyIdeaAdministrationService {
 
     public constructor(private readonly httpService: HttpService) {}
 
-    public async initializeSoftwareToken(user: string): Promise<string> {
+    public async initializeSoftwareToken(user: string, selfService: boolean): Promise<string> {
         try {
             const token: string = await this.getJWTToken();
 
             if (!(await this.checkUserExists(user))) {
                 await this.addUser(user);
+            } else {
+                const tokenToVerify: PrivacyIdeaToken | undefined = await this.getTokenToVerify(user);
+                if (tokenToVerify) {
+                    await this.deleteToken(tokenToVerify.serial);
+                }
             }
-            const response: InitSoftwareToken = await this.initToken(user, token);
+            const response: InitSoftwareToken = await this.initToken(user, token, selfService);
             return response.detail.googleurl.img;
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -74,6 +80,7 @@ export class PrivacyIdeaAdministrationService {
     private async initToken(
         user: string,
         token: string,
+        selfService: boolean = false,
         genkey: number = 1,
         keysize: number = 20,
         description: string = 'Description of the token',
@@ -87,9 +94,10 @@ export class PrivacyIdeaAdministrationService {
         const endpoint: string = '/token/init';
         const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
         const url: string = baseUrl + endpoint;
-        const headers: { Authorization: string; 'Content-Type': string } = {
+        const headers: { Authorization: string; 'Content-Type': string; SelfService: boolean } = {
             Authorization: `${token}`,
             'Content-Type': 'application/json',
+            SelfService: selfService,
         };
 
         const payload: InitSoftwareTokenPayload = {
@@ -199,14 +207,13 @@ export class PrivacyIdeaAdministrationService {
         }
     }
 
-    public async verifyToken(userName: string, otp: string): Promise<void> {
-        //check if user is verifying token for themselves
-        const tokenToVerify: PrivacyIdeaToken | undefined = await this.getTwoAuthState(userName);
+    public async verifyToken(userName: string, otp: string): Promise<boolean> {
+        const tokenToVerify: PrivacyIdeaToken | undefined = await this.getTokenToVerify(userName);
         if (!tokenToVerify) {
-            throw new Error('No token found for user');
+            throw new Error('No token to verify');
         }
         const token: string = await this.getJWTToken();
-        const endpoint: string = '/init';
+        const endpoint: string = '/token/init';
         const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
         const url: string = baseUrl + endpoint;
         const headers: { Authorization: string } = {
@@ -218,12 +225,72 @@ export class PrivacyIdeaAdministrationService {
         };
 
         try {
-            await firstValueFrom(this.httpService.post(url, payload, { headers: headers }));
+            const response: AxiosResponse<VerificationResponse> | null = await lastValueFrom(
+                this.httpService.post(url, payload, { headers: headers }).pipe(
+                    catchError((error: AxiosError<VerificationResponse>) => {
+                        if (error.response?.data.result.error?.code == 905) {
+                            return of(null);
+                        }
+                        throw new Error(`Error verifying token:`);
+                    }),
+                ),
+            );
+            return response ? response.data.result.status : false;
         } catch (error) {
-            if (error instanceof Error) {
+            if (error instanceof AxiosError) {
+                return false;
+            } else if (error instanceof Error) {
                 throw new Error(`Error verifying token: ${error.message}`);
             } else {
                 throw new Error(`Error verifying token: Unknown error occurred`);
+            }
+        }
+    }
+
+    private async getTokenToVerify(userName: string): Promise<PrivacyIdeaToken | undefined> {
+        if (!(await this.checkUserExists(userName))) {
+            return undefined;
+        }
+        const token: string = await this.getJWTToken();
+        const endpoint: string = '/token';
+        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
+        const url: string = baseUrl + endpoint;
+        const headers: { Authorization: string } = {
+            Authorization: `${token}`,
+        };
+        const params: { user: string } = {
+            user: userName,
+        };
+        try {
+            const response: AxiosResponse<PrivacyIdeaResponseTokens> = await firstValueFrom(
+                this.httpService.get(url, { headers: headers, params: params }),
+            );
+            return response.data.result.value.tokens.filter((x: PrivacyIdeaToken) => x.rollout_state == 'verify')[0];
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`Error getting two auth state: ${error.message}`);
+            } else {
+                throw new Error(`Error getting two auth state: Unknown error occurred`);
+            }
+        }
+    }
+
+    private async deleteToken(serial: string): Promise<void> {
+        const token: string = await this.getJWTToken();
+        const endpoint: string = '/token/' + serial;
+        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
+        const url: string = baseUrl + endpoint;
+        const headers: { Authorization: string } = {
+            Authorization: `${token}`,
+        };
+
+        try {
+            await firstValueFrom(this.httpService.delete(url, { headers: headers }));
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`Error deleting token: ${error.message}`);
+            } else {
+                throw new Error(`Error deleting token: Unknown error occurred`);
             }
         }
     }

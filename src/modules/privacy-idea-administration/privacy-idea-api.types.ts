@@ -163,3 +163,31 @@ export type UserResponse = {
     versionnumber: string;
     signature: string;
 };
+
+export type VerificationResponse = {
+    detail: Detail | null;
+    id: number;
+    jsonrpc: string;
+    result: Result;
+    time: number;
+    version: string;
+    versionnumber?: string;
+    signature: string;
+};
+
+type Detail = {
+    rollout_state: string;
+    serial: string;
+    threadid: number;
+};
+
+type Result = {
+    status: boolean;
+    value?: boolean;
+    error?: ErrorDetail;
+};
+
+type ErrorDetail = {
+    code: number;
+    message: string;
+};

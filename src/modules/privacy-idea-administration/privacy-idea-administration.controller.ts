@@ -57,7 +57,9 @@ export class PrivacyIdeaAdministrationController {
             throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
         }
 
-        return this.privacyIdeaAdministrationService.initializeSoftwareToken(personResult.value.referrer);
+        const selfService: boolean = params.personId === personResult.value.id;
+
+        return this.privacyIdeaAdministrationService.initializeSoftwareToken(personResult.value.referrer, selfService);
     }
 
     @Get('state')
@@ -93,14 +95,34 @@ export class PrivacyIdeaAdministrationController {
 
     @Post('verify')
     @HttpCode(HttpStatus.CREATED)
-    @ApiCreatedResponse({ description: 'The token was successfully verified.', type: String })
+    @ApiCreatedResponse({ description: 'The token was successfully verified.', type: Boolean })
     @ApiBadRequestResponse({ description: 'A username was not given or not found.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to verify token.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to verify token.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to verify token.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while verifying a token.' })
     @Public()
-    public async verifyToken(@Body() params: TokenVerifyBodyParams): Promise<void> {
-        await this.privacyIdeaAdministrationService.verifyToken(params.userName, params.otp);
+    public async verifyToken(
+        @Body() params: TokenVerifyBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<boolean> {
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            params.personId,
+            permissions,
+        );
+
+        if (!personResult.ok) {
+            throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
+        }
+
+        if (personResult.value.referrer === undefined) {
+            throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
+        }
+        const suceess: boolean = await this.privacyIdeaAdministrationService.verifyToken(
+            personResult.value.referrer,
+            params.otp,
+        );
+
+        return suceess;
     }
 }

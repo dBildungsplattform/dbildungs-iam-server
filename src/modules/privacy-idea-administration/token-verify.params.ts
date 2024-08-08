@@ -5,7 +5,7 @@ export class TokenVerifyBodyParams {
     @IsString()
     @IsNotEmpty()
     @ApiProperty({ type: String })
-    public readonly userName!: string;
+    public readonly personId!: string;
 
     @IsString()
     @IsNotEmpty()
