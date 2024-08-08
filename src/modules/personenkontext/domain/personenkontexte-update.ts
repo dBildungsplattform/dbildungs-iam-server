@@ -18,10 +18,11 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { Person } from '../../person/domain/person.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { IPersonPermissions } from '../../authentication/domain/person-permissions.interface.js';
+import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rollenart-for-lern.error.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -237,6 +238,38 @@ export class PersonenkontexteUpdate {
         return createdPKs;
     }
 
+    private async validationForRollenartLern(
+        existingPKs: Personenkontext<true>[],
+        sentPKs: Personenkontext<boolean>[],
+    ): Promise<Option<PersonenkontexteUpdateError>> {
+        if (await this.hasAnyPersonenkontextWithRollenartLern(existingPKs)) {
+            const sentRollen: Rolle<true>[] = await this.getUniqueRollenFromPersonenkontexte(sentPKs);
+            const hasOnlyRollenartLern: boolean = sentRollen.every(
+                (rolle: Rolle<true>) => rolle.rollenart === RollenArt.LERN,
+            );
+            if (!hasOnlyRollenartLern) {
+                return new UpdateInvalidRollenartForLernError();
+            }
+        }
+
+        return undefined;
+    }
+
+    private async getUniqueRollenFromPersonenkontexte(
+        personenkontexte: Personenkontext<true>[],
+    ): Promise<Rolle<true>[]> {
+        const uniquesRolleIds: RolleID[] = Array.from(
+            new Set(personenkontexte.map((pk: Personenkontext<true>) => pk.rolleId)),
+        );
+        const mapRollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(uniquesRolleIds);
+        return Array.from(mapRollen.values());
+    }
+
+    private async hasAnyPersonenkontextWithRollenartLern(personenkontexte: Personenkontext<true>[]): Promise<boolean> {
+        const foundRollen: Rolle<true>[] = await this.getUniqueRollenFromPersonenkontexte(personenkontexte);
+        return foundRollen.some((rolle: Rolle<true>) => rolle.rollenart === RollenArt.LERN);
+    }
+
     public async update(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
         const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
         if (sentPKs instanceof PersonenkontexteUpdateError) {
@@ -244,6 +277,13 @@ export class PersonenkontexteUpdate {
         }
 
         const existingPKs: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(this.personId);
+        const validationForLernError: Option<PersonenkontexteUpdateError> = await this.validationForRollenartLern(
+            existingPKs,
+            sentPKs,
+        );
+        if (validationForLernError) {
+            return validationForLernError;
+        }
         const validationError: Option<PersonenkontexteUpdateError> = await this.validate(existingPKs);
         if (validationError) {
             return validationError;
