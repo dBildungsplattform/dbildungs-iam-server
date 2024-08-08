@@ -16,7 +16,7 @@ import {
 export class PrivacyIdeaAdministrationService {
     private jwtToken: string | null = null;
 
-    private tokenExpiry: number = 0;
+    private tokenExpiryTimestampMs: number = 0;
 
     private static AUTHORIZATION_TIMEBOX_MS: number = 59 * 60 * 1000;
 
@@ -47,7 +47,7 @@ export class PrivacyIdeaAdministrationService {
 
     private async getJWTToken(): Promise<string> {
         const now: number = Date.now();
-        if (this.jwtToken && now < this.tokenExpiry) {
+        if (this.jwtToken && now < this.tokenExpiryTimestampMs) {
             return this.jwtToken;
         }
 
@@ -65,7 +65,7 @@ export class PrivacyIdeaAdministrationService {
                     headers: { 'Content-Type': 'application/json' },
                 }),
             );
-            this.tokenExpiry = now + PrivacyIdeaAdministrationService.AUTHORIZATION_TIMEBOX_MS;
+            this.tokenExpiryTimestampMs = now + PrivacyIdeaAdministrationService.AUTHORIZATION_TIMEBOX_MS;
             this.jwtToken = response.data.result.value.token;
             return this.jwtToken;
         } catch (error) {
