@@ -1,5 +1,3 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
 import { MikroORM } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -11,7 +9,6 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { PersonDo } from '../domain/person.do.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { faker } from '@faker-js/faker';
@@ -24,18 +21,18 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { mapAggregateToData } from './person.repository.js';
 
 describe('PersonScope', () => {
     let module: TestingModule;
     let orm: MikroORM;
     let em: EntityManager;
-    let mapper: Mapper;
     let kontextRepo: DBiamPersonenkontextRepo;
     let rolleRepo: RolleRepo;
     let personenkontextFactory: PersonenkontextFactory;
 
     const createPersonEntity = (): PersonEntity => {
-        const person: PersonEntity = mapper.map(DoFactory.createPerson(false), PersonDo, PersonEntity);
+        const person: PersonEntity = new PersonEntity().assign(mapAggregateToData(DoFactory.createPerson(false)));
         return person;
     };
 
@@ -60,7 +57,6 @@ describe('PersonScope', () => {
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
-        mapper = module.get(getMapperToken());
         kontextRepo = module.get(DBiamPersonenkontextRepo);
         rolleRepo = module.get(RolleRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
@@ -81,7 +77,9 @@ describe('PersonScope', () => {
         describe('when filtering for persons', () => {
             beforeEach(async () => {
                 const persons: PersonEntity[] = Array.from({ length: 110 }, (_v: unknown, i: number) =>
-                    mapper.map(DoFactory.createPerson(false, { vorname: `John #${i}` }), PersonDo, PersonEntity),
+                    new PersonEntity().assign(
+                        mapAggregateToData(DoFactory.createPerson(false, { vorname: `John #${i}` })),
+                    ),
                 );
 
                 await em.persistAndFlush(persons);
@@ -104,7 +102,9 @@ describe('PersonScope', () => {
 
             beforeEach(async () => {
                 const persons: PersonEntity[] = Array.from({ length: 20 }, () =>
-                    mapper.map(DoFactory.createPerson(false, { geburtsdatum: birthday }), PersonDo, PersonEntity),
+                    new PersonEntity().assign(
+                        mapAggregateToData(DoFactory.createPerson(false, { geburtsdatum: birthday })),
+                    ),
                 );
 
                 await em.persistAndFlush(persons);
@@ -126,15 +126,11 @@ describe('PersonScope', () => {
             const suchFilter: string = 'Max';
 
             beforeEach(async () => {
-                const person1: PersonEntity = mapper.map(
-                    DoFactory.createPerson(false, { vorname: 'Max' }),
-                    PersonDo,
-                    PersonEntity,
+                const person1: PersonEntity = new PersonEntity().assign(
+                    mapAggregateToData(DoFactory.createPerson(false, { vorname: 'Max' })),
                 );
-                const person2: PersonEntity = mapper.map(
-                    DoFactory.createPerson(false, { vorname: 'John' }),
-                    PersonDo,
-                    PersonEntity,
+                const person2: PersonEntity = new PersonEntity().assign(
+                    mapAggregateToData(DoFactory.createPerson(false, { vorname: 'John' })),
                 );
                 await em.persistAndFlush([person1, person2]);
             });
@@ -155,7 +151,7 @@ describe('PersonScope', () => {
         describe('when filtering for organisations', () => {
             beforeEach(async () => {
                 const persons: PersonEntity[] = Array.from({ length: 110 }, () =>
-                    mapper.map(DoFactory.createPerson(false), PersonDo, PersonEntity),
+                    new PersonEntity().assign(mapAggregateToData(DoFactory.createPerson(false))),
                 );
 
                 await em.persistAndFlush(persons);
@@ -264,15 +260,15 @@ describe('PersonScope', () => {
         });
 
         describe('when filtering for ids', () => {
-            const knownId: string = faker.string.uuid();
+            let knownId: string = faker.string.uuid();
             beforeEach(async () => {
-                const persons: PersonEntity[] = Array.from({ length: 9 }, () =>
-                    mapper.map(DoFactory.createPerson(false), PersonDo, PersonEntity),
-                );
+                const persons: PersonEntity[] = Array.from({ length: 9 }, () => createPersonEntity());
+                const knownEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(persons);
                 await em.persistAndFlush(
-                    mapper.map(DoFactory.createPerson(true, { id: knownId }), PersonDo, PersonEntity),
+                    knownEntity.assign(mapAggregateToData(DoFactory.createPerson(false, { id: knownId }))),
                 );
+                knownId = knownEntity.id;
             });
 
             it('should return found persons', async () => {
