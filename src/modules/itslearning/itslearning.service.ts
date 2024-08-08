@@ -9,6 +9,7 @@ import { lastValueFrom } from 'rxjs';
 import { ItsLearningConfig, ServerConfig } from '../../shared/config/index.js';
 import { DomainError, ItsLearningError } from '../../shared/error/index.js';
 import { IMSESAction } from './actions/base-action.js';
+import { IMSESMassAction } from './actions/base-mass-action.js';
 
 @Injectable()
 export class ItsLearningIMSESService {
@@ -32,7 +33,7 @@ export class ItsLearningIMSESService {
     }
 
     public async send<ResponseBody, ResultType>(
-        action: IMSESAction<ResponseBody, ResultType>,
+        action: IMSESAction<ResponseBody, ResultType> | IMSESMassAction<ResponseBody, ResultType>,
     ): Promise<Result<ResultType, DomainError>> {
         const body: object = action.buildRequest();
         const message: string = this.createMessage(body);

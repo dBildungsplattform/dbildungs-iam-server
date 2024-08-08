@@ -232,8 +232,8 @@ export class PersonenkontexteUpdate {
                         existingPK.rolleId == sentPK.rolleId,
                 )
             ) {
-                await this.dBiamPersonenkontextRepo.save(sentPK);
-                createdPKs.push(sentPK);
+                const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(sentPK);
+                createdPKs.push(savedPK);
                 this.eventService.publish(
                     new PersonenkontextCreatedEvent(sentPK.personId, sentPK.organisationId, sentPK.rolleId),
                 );
