@@ -8,8 +8,8 @@ import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
     DatabaseTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    KeycloakConfigTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
@@ -20,14 +20,12 @@ import { RolleRepo } from '../repo/rolle.repo.js';
 import { RolleApiModule } from '../rolle-api.module.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { RolleResponse } from './rolle.response.js';
-import { RolleFactory } from '../domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { Rolle } from '../domain/rolle.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RolleServiceProviderQueryParams } from './rolle-service-provider.query.params.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
@@ -36,46 +34,29 @@ import { Observable } from 'rxjs';
 import { Request } from 'express';
 import { PassportUser } from '../../authentication/types/user.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
-import { PersonDo } from '../../person/domain/person.do.js';
+
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
+
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { KeycloakUserService } from '../../keycloak-administration/domain/keycloak-user.service.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Person } from '../../person/domain/person.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { PersonFactory } from '../../person/domain/person.factory.js';
+import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let em: EntityManager;
     let rolleRepo: RolleRepo;
-    let personRepo: PersonRepo;
+    let personRepo: PersonRepository;
     let serviceProviderRepo: ServiceProviderRepo;
     let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
-    let personenkontextFactory: PersonenkontextFactory;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
-
-    function createPersonenkontext<WasPersisted extends boolean>(
-        this: void,
-        withId: WasPersisted,
-        params: Partial<Personenkontext<boolean>> = {},
-    ): Personenkontext<WasPersisted> {
-        const personenkontext: Personenkontext<WasPersisted> = personenkontextFactory.construct<boolean>(
-            withId ? faker.string.uuid() : undefined,
-            withId ? faker.date.past() : undefined,
-            withId ? faker.date.recent() : undefined,
-            faker.string.uuid(),
-            faker.string.uuid(),
-            faker.string.uuid(),
-        );
-
-        Object.assign(personenkontext, params);
-
-        return personenkontext;
-    }
+    let personFactory: PersonFactory;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -108,14 +89,6 @@ describe('Rolle API', () => {
                     provide: PersonPermissionsRepo,
                     useValue: createMock<PersonPermissionsRepo>(),
                 },
-                OrganisationRepository,
-                RolleFactory,
-                ServiceProviderRepo,
-                PersonRepo,
-                DBiamPersonenkontextRepo,
-                PersonenkontextFactory,
-                PersonRepository,
-                RolleRepo,
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>({
@@ -132,16 +105,20 @@ describe('Rolle API', () => {
                     }),
                 },
             ],
-        }).compile();
+        })
+            .overrideModule(KeycloakConfigModule)
+            .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .compile();
 
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         rolleRepo = module.get(RolleRepo);
-        personRepo = module.get(PersonRepo);
+        personRepo = module.get(PersonRepository);
         serviceProviderRepo = module.get(ServiceProviderRepo);
+        personFactory = module.get(PersonFactory);
+
         dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
-        personenkontextFactory = module.get(PersonenkontextFactory);
 
         personPermissionsMock = createMock<PersonPermissions>();
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personPermissionsMock);
@@ -149,7 +126,7 @@ describe('Rolle API', () => {
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+    }, 10000000);
 
     afterAll(async () => {
         await orm.close();
@@ -704,7 +681,19 @@ describe('Rolle API', () => {
 
         describe('Update Merkmale', () => {
             it('should return 400 if rolle is already assigned', async () => {
-                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                const personData: Person<false> | DomainError = await personFactory.createNew({
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    username: faker.internet.userName(),
+                    password: faker.string.alphanumeric(8),
+                });
+                if (personData instanceof DomainError) {
+                    throw personData;
+                }
+                const person: Person<true> | DomainError = await personRepo.save(personData);
+                if (person instanceof DomainError) {
+                    throw person;
+                }
 
                 const organisation: OrganisationEntity = new OrganisationEntity();
                 organisation.typ = OrganisationsTyp.SCHULE;
@@ -719,7 +708,7 @@ describe('Rolle API', () => {
                 );
 
                 await dBiamPersonenkontextRepo.save(
-                    createPersonenkontext(false, {
+                    DoFactory.createPersonenkontext(false, {
                         personId: person.id,
                         rolleId: rolle.id,
                         organisationId: organisation.id,
@@ -792,8 +781,19 @@ describe('Rolle API', () => {
             });
 
             it('if rolle is already assigned to a Personenkontext', async () => {
-                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
-
+                const personData: Person<false> | DomainError = await personFactory.createNew({
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    username: faker.internet.userName(),
+                    password: faker.string.alphanumeric(8),
+                });
+                if (personData instanceof DomainError) {
+                    throw personData;
+                }
+                const person: Person<true> | DomainError = await personRepo.save(personData);
+                if (person instanceof DomainError) {
+                    throw person;
+                }
                 const organisation: OrganisationEntity = new OrganisationEntity();
                 organisation.typ = OrganisationsTyp.SCHULE;
                 await em.persistAndFlush(organisation);
@@ -807,12 +807,15 @@ describe('Rolle API', () => {
                 );
 
                 await dBiamPersonenkontextRepo.save(
-                    createPersonenkontext(false, {
+                    DoFactory.createPersonenkontext(false, {
                         personId: person.id,
                         rolleId: rolle.id,
                         organisationId: organisation.id,
                     }),
                 );
+                const personpermissions: DeepMocked<PersonPermissions> = createMock();
+                personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .delete(`/rolle/${rolle.id}`)

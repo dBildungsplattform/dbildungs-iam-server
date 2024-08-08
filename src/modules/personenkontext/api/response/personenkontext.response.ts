@@ -1,8 +1,8 @@
-import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
-import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../../domain/personenkontext.enums.js';
-import { CreatedPersonenkontextOrganisationDto } from '../created-personenkontext-organisation.dto.js';
+import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from '../../domain/personenkontext.enums.js';
+import { CreatedPersonenkontextOrganisation } from '../created-personenkontext-organisation.js';
 import { LoeschungResponse } from '../../../person/api/loeschung.response.js';
+import { AutoMap } from '@automapper/classes';
 
 export class PersonenkontextResponse {
     @AutoMap()
@@ -17,13 +17,13 @@ export class PersonenkontextResponse {
     @ApiProperty()
     public mandant!: string;
 
-    @AutoMap(() => CreatedPersonenkontextOrganisationDto)
-    @ApiProperty({ type: CreatedPersonenkontextOrganisationDto })
-    public organisation!: CreatedPersonenkontextOrganisationDto;
+    @AutoMap(() => CreatedPersonenkontextOrganisation)
+    @ApiProperty({ type: CreatedPersonenkontextOrganisation })
+    public organisation!: CreatedPersonenkontextOrganisation;
 
-    @AutoMap(() => String)
-    @ApiProperty({ enum: Rolle })
-    public rolle!: Rolle;
+    @AutoMap()
+    @ApiProperty({ nullable: true })
+    public roleName?: string;
 
     @AutoMap(() => String)
     @ApiProperty({ enum: Personenstatus, nullable: true })
@@ -45,22 +45,15 @@ export class PersonenkontextResponse {
     @ApiProperty()
     public revision!: string;
 
-    public static new(props: Readonly<PersonenkontextResponse>): PersonenkontextResponse {
-        const response: PersonenkontextResponse = new PersonenkontextResponse();
-
-        response.id = props.id;
-        response.referrer = props.referrer;
-        response.mandant = props.mandant;
-        response.organisation = CreatedPersonenkontextOrganisationDto.new(props.organisation);
-        response.rolle = props.rolle;
-        response.personenstatus = props.personenstatus;
-        response.jahrgangsstufe = props.jahrgangsstufe;
-        response.sichtfreigabe = props.sichtfreigabe;
-        response.loeschung = props.loeschung
-            ? LoeschungResponse.new({ zeitpunkt: props.loeschung.zeitpunkt })
-            : undefined;
-        response.revision = props.revision;
-
-        return response;
+    public constructor(props: Readonly<PersonenkontextResponse>) {
+        this.id = props.id;
+        this.referrer = props.referrer;
+        this.mandant = props.mandant!;
+        this.organisation = props.organisation;
+        this.personenstatus = props.personenstatus;
+        this.jahrgangsstufe = props.jahrgangsstufe;
+        this.sichtfreigabe = props.sichtfreigabe;
+        this.loeschung = props.loeschung;
+        this.revision = props.revision;
     }
 }

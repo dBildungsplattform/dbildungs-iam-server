@@ -19,6 +19,7 @@ import { PersonenkontextFactory } from './domain/personenkontext.factory.js';
 import { PersonenkontextCreationService } from './domain/personenkontext-creation.service.js';
 import { PersonAdministrationService } from './domain/person-administration.service.js';
 import { PersonAdministrationController } from './api/person-administration.controller.js';
+import { PersonApiMapper } from '../person/mapper/person-api.mapper.js';
 
 @Module({
     imports: [
@@ -40,6 +41,7 @@ import { PersonAdministrationController } from './api/person-administration.cont
         PersonenkontextFactory,
         PersonenkontextCreationService,
         PersonAdministrationService,
+        PersonApiMapper,
     ],
     controllers: [
         PersonenkontextController,

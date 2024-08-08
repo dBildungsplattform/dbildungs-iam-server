@@ -1,7 +1,5 @@
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -17,6 +15,7 @@ import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 import { IPersonPermissions } from '../../authentication/domain/person-permissions.interface.js';
 
 export class PersonenkontextWorkflowAggregate {
@@ -26,23 +25,16 @@ export class PersonenkontextWorkflowAggregate {
 
     private constructor(
         private readonly rolleRepo: RolleRepo,
-        private readonly organisationRepo: OrganisationRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
     ) {}
 
     public static createNew(
         rolleRepo: RolleRepo,
-        organisationRepo: OrganisationRepo,
         organisationRepository: OrganisationRepository,
         dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
     ): PersonenkontextWorkflowAggregate {
-        return new PersonenkontextWorkflowAggregate(
-            rolleRepo,
-            organisationRepo,
-            organisationRepository,
-            dbiamPersonenkontextFactory,
-        );
+        return new PersonenkontextWorkflowAggregate(rolleRepo, organisationRepository, dbiamPersonenkontextFactory);
     }
 
     // Initialize the aggregate with the selected Organisation and Rolle
@@ -56,15 +48,16 @@ export class PersonenkontextWorkflowAggregate {
         permissions: PersonPermissions,
         organisationName: string | undefined,
         limit?: number,
-    ): Promise<OrganisationDo<true>[]> {
-        let allOrganisationsExceptKlassen: OrganisationDo<boolean>[] = [];
+    ): Promise<Organisation<true>[]> {
+        let allOrganisationsExceptKlassen: Organisation<boolean>[] = [];
         // If the search string for organisation is present then search for Name or Kennung
 
-        allOrganisationsExceptKlassen = await this.organisationRepo.findByNameOrKennungAndExcludeByOrganisationType(
-            OrganisationsTyp.KLASSE,
-            organisationName,
-            limit,
-        );
+        allOrganisationsExceptKlassen =
+            await this.organisationRepository.findByNameOrKennungAndExcludeByOrganisationType(
+                OrganisationsTyp.KLASSE,
+                organisationName,
+                limit,
+            );
 
         if (allOrganisationsExceptKlassen.length === 0) return [];
 
@@ -73,12 +66,12 @@ export class PersonenkontextWorkflowAggregate {
             true,
         );
         // Return only the orgas that the admin have rights on
-        const filteredOrganisations: OrganisationDo<boolean>[] = allOrganisationsExceptKlassen.filter(
-            (orga: OrganisationDo<boolean>) => orgsWithRecht.includes(orga.id as OrganisationID),
+        const filteredOrganisations: Organisation<boolean>[] = allOrganisationsExceptKlassen.filter(
+            (orga: Organisation<boolean>) => orgsWithRecht.includes(orga.id as OrganisationID),
         );
 
         // Sort the filtered organizations, handling undefined kennung and name
-        filteredOrganisations.sort((a: OrganisationDo<boolean>, b: OrganisationDo<boolean>) => {
+        filteredOrganisations.sort((a: Organisation<boolean>, b: Organisation<boolean>) => {
             if (a.name && b.name) {
                 const aTitle: string = a.kennung ? `${a.kennung} (${a.name})` : a.name;
                 const bTitle: string = b.kennung ? `${b.kennung} (${b.name})` : b.name;
@@ -121,10 +114,10 @@ export class PersonenkontextWorkflowAggregate {
             return [];
         }
 
-        let organisation: Option<OrganisationDo<true>>;
+        let organisation: Option<Organisation<true>>;
         if (this.selectedOrganisationId) {
             // The organisation that was selected and that will be the base for the returned roles
-            organisation = await this.organisationRepo.findById(this.selectedOrganisationId);
+            organisation = await this.organisationRepository.findById(this.selectedOrganisationId);
         }
         // If the organisation was not found with the provided selected Id then just return an array of empty orgas
         if (!organisation) {
@@ -202,7 +195,7 @@ export class PersonenkontextWorkflowAggregate {
 
     // Checks if the rolle can be assigned to the target organisation
     public async checkReferences(organisationId: string, rolleId: string): Promise<Option<DomainError>> {
-        const [orga, rolle]: [Option<OrganisationDo<true>>, Option<Rolle<true>>] = await Promise.all([
+        const [orga, rolle]: [Option<Organisation<true>>, Option<Rolle<true>>] = await Promise.all([
             this.organisationRepository.findById(organisationId),
             this.rolleRepo.findById(rolleId),
         ]);
@@ -251,18 +244,19 @@ export class PersonenkontextWorkflowAggregate {
         sskName: string,
         limit?: number,
         excludeKlassen: boolean = false,
-    ): Promise<OrganisationDo<true>[]> {
+    ): Promise<Organisation<true>[]> {
         this.selectedRolleId = rolleId;
 
-        let organisationsFoundByName: OrganisationDo<boolean>[] = [];
+        let organisationsFoundByName: Organisation<boolean>[] = [];
 
         if (excludeKlassen) {
-            organisationsFoundByName = await this.organisationRepo.findByNameOrKennungAndExcludeByOrganisationType(
-                OrganisationsTyp.KLASSE,
-                sskName,
-            );
+            organisationsFoundByName =
+                await this.organisationRepository.findByNameOrKennungAndExcludeByOrganisationType(
+                    OrganisationsTyp.KLASSE,
+                    sskName,
+                );
         } else {
-            organisationsFoundByName = await this.organisationRepo.findByNameOrKennung(sskName);
+            organisationsFoundByName = await this.organisationRepository.findByNameOrKennung(sskName);
         }
 
         if (organisationsFoundByName.length === 0) return [];
@@ -270,25 +264,25 @@ export class PersonenkontextWorkflowAggregate {
         const rolleResult: Option<Rolle<true>> = await this.rolleRepo.findById(rolleId);
         if (!rolleResult) return [];
 
-        const organisationsRoleIsAvalableIn: OrganisationDo<true>[] = [];
+        const organisationsRoleIsAvalableIn: Organisation<true>[] = [];
 
-        const parentOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(
+        const parentOrganisation: Option<Organisation<true>> = await this.organisationRepository.findById(
             rolleResult.administeredBySchulstrukturknoten,
         );
         if (!parentOrganisation) return [];
         organisationsRoleIsAvalableIn.push(parentOrganisation);
 
-        const childOrganisations: OrganisationDo<true>[] = await this.organisationRepo.findChildOrgasForIds([
+        const childOrganisations: Organisation<true>[] = await this.organisationRepository.findChildOrgasForIds([
             rolleResult.administeredBySchulstrukturknoten,
         ]);
         organisationsRoleIsAvalableIn.push(...childOrganisations);
 
-        let orgas: OrganisationDo<true>[] = organisationsFoundByName.filter((ssk: OrganisationDo<true>) =>
-            organisationsRoleIsAvalableIn.some((organisation: OrganisationDo<true>) => ssk.id === organisation.id),
+        let orgas: Organisation<true>[] = organisationsFoundByName.filter((ssk: Organisation<true>) =>
+            organisationsRoleIsAvalableIn.some((organisation: Organisation<true>) => ssk.id === organisation.id),
         );
 
         const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-        orgas = orgas.filter((orga: OrganisationDo<true>) =>
+        orgas = orgas.filter((orga: Organisation<true>) =>
             organisationMatchesRollenart.isSatisfiedBy(orga, rolleResult),
         );
 
