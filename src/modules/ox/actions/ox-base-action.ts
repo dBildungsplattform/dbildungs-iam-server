@@ -3,6 +3,18 @@ import { XMLBuilder, XMLParser } from 'fast-xml-parser';
 import { DomainError } from '../../../shared/error/index.js';
 import { OxError } from '../../../shared/error/ox.error.js';
 
+export type OXRequestStatus =
+    | {
+          code: 'success';
+      }
+    | {
+          code: 'failure';
+      };
+export type AuthParams = {
+    login: string;
+    password: string;
+};
+
 export type OxBaseResponse<BodyResponse> = {
     Envelope: {
         Body: BodyResponse;
@@ -31,6 +43,8 @@ export abstract class OxBaseAction<ResponseBodyType, ResultType> {
     });
 
     public abstract action: string;
+
+    public abstract soapServiceName: string;
 
     public abstract buildRequest(): object;
 

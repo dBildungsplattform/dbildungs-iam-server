@@ -1,9 +1,9 @@
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../schemas.js';
-import { OxBaseAction } from './ox-base-action.js';
+import { DomainError } from '../../../../shared/error/domain.error.js';
+import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../../schemas.js';
+import { AuthParams, OxBaseAction } from '../ox-base-action.js';
 
 // Incomplete
-export type CreateUserParams = {
+export type CreateUserParams = AuthParams & {
     contextId: string;
 
     displayName: string;
@@ -14,9 +14,6 @@ export type CreateUserParams = {
     lastname: string;
     primaryEmail: string;
     userPassword: string;
-
-    login: string;
-    password: string;
 };
 
 export type CreateUserResponse = {
@@ -31,23 +28,25 @@ export type CreateUserResponse = {
 export type CreateUserResponseBody = {
     createResponse: {
         return: {
-            'ns2:id': string;
-            'ns2:aliases': [];
-            'ns2:email1': string;
-            'ns2:email2': string;
-            'ns2:email3': string;
-            'ns2:primaryEmail': string;
+            id: string;
+            aliases: [];
+            email1: string;
+            email2: string;
+            email3: string;
+            primaryEmail: string;
 
-            'ns2:name': string;
-            'ns2:given_name': string;
-            'ns2:sur_name': string;
-            'ns2:mailenabled': boolean;
+            name: string;
+            given_name: string;
+            sur_name: string;
+            mailenabled: boolean;
         };
     };
 };
 
 export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, CreateUserResponse> {
     public override action: string = 'http://soap.admin.openexchange.com/create';
+
+    public override soapServiceName: string = 'OXUserService';
 
     public constructor(private readonly params: CreateUserParams) {
         super();
@@ -76,8 +75,8 @@ export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, Creat
                 },
 
                 'tns:auth': {
-                    'ns2:login': this.params.login,
-                    'ns2:password': this.params.password,
+                    login: this.params.login,
+                    password: this.params.password,
                 },
             },
         };
@@ -87,12 +86,12 @@ export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, Creat
         return {
             ok: true,
             value: {
-                id: body.createResponse.return['ns2:id'],
-                firstname: body.createResponse.return['ns2:given_name'],
-                lastname: body.createResponse.return['ns2:sur_name'],
-                username: body.createResponse.return['ns2:name'],
-                primaryEmail: body.createResponse.return['ns2:primaryEmail'],
-                mailenabled: body.createResponse.return['ns2:mailenabled'],
+                id: body.createResponse.return.id,
+                firstname: body.createResponse.return.given_name,
+                lastname: body.createResponse.return.sur_name,
+                username: body.createResponse.return.name,
+                primaryEmail: body.createResponse.return.primaryEmail,
+                mailenabled: body.createResponse.return.mailenabled,
             },
         };
     }

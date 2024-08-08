@@ -44,12 +44,13 @@ describe('OxService', () => {
             const mockAction: DeepMocked<OxBaseAction<unknown, unknown>> = createMock<OxBaseAction<unknown, unknown>>();
             mockAction.buildRequest.mockReturnValueOnce({});
             mockAction.action = 'testAction';
+            mockAction.soapServiceName = 'TestService';
             httpServiceMock.post.mockReturnValueOnce(of({} as AxiosResponse));
 
             await sut.send(mockAction);
 
             expect(httpServiceMock.post).toHaveBeenCalledWith(
-                'https://ox_ip:ox_port/webservices/OXUserService',
+                'https://ox_ip:ox_port/webservices/TestService',
                 expect.stringContaining('username'),
                 {
                     headers: {
@@ -65,6 +66,8 @@ describe('OxService', () => {
             mockAction.buildRequest.mockReturnValueOnce({});
             mockAction.parseResponse.mockReturnValueOnce({ ok: true, value: 'TestResult' });
             mockAction.action = 'testAction';
+            mockAction.soapServiceName = 'TestService';
+
             httpServiceMock.post.mockReturnValueOnce(of({} as AxiosResponse));
 
             const result: Result<string, DomainError> = await sut.send(mockAction);

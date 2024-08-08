@@ -55,7 +55,7 @@
     },
     "OX": {
         "ENABLED": "false",
-        "ENDPOINT": "https://ox_ip:ox_port/webservices/OXUserService",
+        "ENDPOINT": "https://ox_ip:ox_port/webservices/",
         "USERNAME": "username",
         "PASSWORD": "password"
     }

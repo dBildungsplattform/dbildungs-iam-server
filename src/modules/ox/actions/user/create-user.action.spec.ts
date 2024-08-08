@@ -47,24 +47,24 @@ describe('CreateUserAction', () => {
                 password: '',
             });
 
-            const cub: CreateUserResponseBody = {
+            const body: CreateUserResponseBody = {
                 createResponse: {
                     return: {
-                        'ns2:aliases': [],
-                        'ns2:email1': 'string',
-                        'ns2:email2': 'string',
-                        'ns2:email3': 'string',
-                        'ns2:primaryEmail': 'string',
-                        'ns2:mailenabled': true,
+                        aliases: [],
+                        email1: 'string',
+                        email2: 'string',
+                        email3: 'string',
+                        primaryEmail: 'string',
+                        mailenabled: true,
 
-                        'ns2:id': 'id',
-                        'ns2:given_name': 'firstname',
-                        'ns2:sur_name': 'lastname',
-                        'ns2:name': 'username',
+                        id: 'id',
+                        given_name: 'firstname',
+                        sur_name: 'lastname',
+                        name: 'username',
                     },
                 },
             };
-            expect(action.parseBody(cub)).toEqual({
+            expect(action.parseBody(body)).toEqual({
                 ok: true,
                 value: {
                     firstname: 'firstname',

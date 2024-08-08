@@ -364,6 +364,8 @@ type DummyResponse = {
 class TestAction extends OxBaseAction<DummyResponse, string> {
     public action: string = faker.internet.url();
 
+    public soapServiceName: string = 'TestService';
+
     public buildRequest(): object {
         return {};
     }

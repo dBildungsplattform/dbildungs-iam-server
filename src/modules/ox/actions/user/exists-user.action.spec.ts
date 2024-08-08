@@ -28,12 +28,12 @@ describe('ExistsUserAction', () => {
                 password: '',
             });
 
-            const cub: ExistsUserResponseBody = {
+            const body: ExistsUserResponseBody = {
                 existsResponse: {
                     return: true,
                 },
             };
-            expect(action.parseBody(cub)).toEqual({
+            expect(action.parseBody(body)).toEqual({
                 ok: true,
                 value: {
                     exists: true,

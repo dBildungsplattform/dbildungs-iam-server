@@ -6,7 +6,7 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonID, RolleID } from '../../../shared/types/index.js';
 import { OxEventHandler } from './ox-event-handler.js';
 import { OxService } from './ox.service.js';
-import { CreateUserAction } from '../actions/create-user.action.js';
+import { CreateUserAction } from '../actions/user/create-user.action.js';
 import { OxError } from '../../../shared/error/ox.error.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
@@ -18,7 +18,7 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
 import { Person } from '../../person/domain/person.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
-import { ExistsUserAction } from '../actions/exists-user.action.js';
+import { ExistsUserAction } from '../actions/user/exists-user.action.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;

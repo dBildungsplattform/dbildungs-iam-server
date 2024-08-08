@@ -1,15 +1,12 @@
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../schemas.js';
-import { OxBaseAction } from './ox-base-action.js';
+import { DomainError } from '../../../../shared/error/domain.error.js';
+import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../../schemas.js';
+import { AuthParams, OxBaseAction } from '../ox-base-action.js';
 
 // Incomplete
-export type ExistsUserParams = {
+export type ExistsUserParams = AuthParams & {
     contextId: string;
 
     username: string;
-
-    login: string;
-    password: string;
 };
 
 export type ExistsUserResponse = {
@@ -24,6 +21,8 @@ export type ExistsUserResponseBody = {
 
 export class ExistsUserAction extends OxBaseAction<ExistsUserResponseBody, ExistsUserResponse> {
     public override action: string = 'http://soap.admin.openexchange.com/exists';
+
+    public override soapServiceName: string = 'OXUserService';
 
     public constructor(private readonly params: ExistsUserParams) {
         super();

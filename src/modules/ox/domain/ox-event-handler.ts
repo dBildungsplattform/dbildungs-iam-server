@@ -7,7 +7,7 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { OxConfig } from '../../../shared/config/ox.config.js';
 import { OxService } from './ox.service.js';
-import { CreateUserAction, CreateUserParams, CreateUserResponse } from '../actions/create-user.action.js';
+import { CreateUserAction, CreateUserParams, CreateUserResponse } from '../actions/user/create-user.action.js';
 import { PersonenkontextCreatedEventHandler } from '../../../shared/events/personenkontext-created-event-handler.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
@@ -16,7 +16,7 @@ import { PersonID } from '../../../shared/types/index.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
-import { ExistsUserAction, ExistsUserParams, ExistsUserResponse } from '../actions/exists-user.action.js';
+import { ExistsUserAction, ExistsUserParams, ExistsUserResponse } from '../actions/user/exists-user.action.js';
 
 @Injectable()
 export class OxEventHandler extends PersonenkontextCreatedEventHandler {
@@ -68,6 +68,19 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
             this.logger.error(`Person with personId:${personId} has no email-address`);
             return;
         }
+
+        /*  //
+        const params0: ListAllUsersParams = {
+            contextId: '1',
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const action0: ListAllUsersAction = new ListAllUsersAction(params0);
+
+        const r0: Result<ListAllUsersResponse, DomainError> = await this.oxService.send(action0);
+        console.log(r0);
+        //*/
 
         const existsParams: ExistsUserParams = {
             contextId: '1',

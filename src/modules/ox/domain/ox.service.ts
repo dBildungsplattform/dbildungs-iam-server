@@ -41,7 +41,7 @@ export class OxService {
 
         try {
             const response: AxiosResponse<string> = await lastValueFrom(
-                this.httpService.post(this.endpoint, message, {
+                this.httpService.post(this.endpoint + action.soapServiceName, message, {
                     headers: {
                         'Content-Type': 'text/xml;charset=UTF-8',
                         SOAPAction: `"${action.action}"`,
@@ -80,7 +80,6 @@ export class OxService {
             'wsse:Security': {
                 '@_xmlns:wsse': 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd',
                 '@_xmlns:wsu': 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd',
-                //'@_soapenv:mustUnderstand': 1,
 
                 'wsse:UsernameToken': {
                     'wsse:Username': this.username,
