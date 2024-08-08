@@ -13,7 +13,7 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { CreatePersonAction } from '../actions/create-person.action.js';
 import { DeletePersonAction } from '../actions/delete-person.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
-import { ItsLearningRoleType } from '../types/role.enum.js';
+import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 import { ItsLearningPersonsEventHandler } from './itslearning-persons.event-handler.js';
 
 describe('ItsLearning Persons Event Handler', () => {
@@ -142,7 +142,7 @@ describe('ItsLearning Persons Event Handler', () => {
             it('should skip creation', async () => {
                 itsLearningServiceMock.send.mockResolvedValueOnce({
                     ok: true,
-                    value: { institutionRole: ItsLearningRoleType.STAFF },
+                    value: { institutionRole: IMSESInstitutionRoleType.STAFF },
                 });
 
                 await sut.updatePerson(person, [createMock<PersonenkontextUpdatedData>({ rolle: RollenArt.LEHR })]);
