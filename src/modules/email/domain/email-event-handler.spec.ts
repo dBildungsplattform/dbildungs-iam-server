@@ -154,7 +154,6 @@ describe('Email Event Handler', () => {
             fakePersonId = faker.string.uuid();
             fakeRolleId = faker.string.uuid();
             fakeEmailAddressString = faker.internet.email();
-            //emailAddressId = faker.string.uuid();
             event = new PersonenkontextCreatedEvent(fakePersonId, faker.string.uuid(), faker.string.uuid());
 
             personenkontexte = [createMock<Personenkontext<true>>()];
