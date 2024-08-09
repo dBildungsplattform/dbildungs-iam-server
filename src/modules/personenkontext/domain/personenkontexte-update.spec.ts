@@ -469,13 +469,13 @@ describe('PersonenkontexteUpdate', () => {
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]); //mock: only one PK is found
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
 
                 const mapRollen: Map<string, Rolle<true>> = new Map();
                 mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
-                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }))
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
