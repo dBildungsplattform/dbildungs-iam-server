@@ -1,16 +1,8 @@
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../../schemas.js';
-import { AuthParams, OxBaseAction, OXRequestStatus } from '../ox-base-action.js';
+import { OxBaseAction, OXRequestStatus } from '../ox-base-action.js';
 import { AddMemberToGroupResponseBody } from './add-member-to-group.action.js';
-
-// Incomplete
-export type RemoveMemberFromGroupParams = AuthParams & {
-    contextId: string;
-
-    groupId: string;
-
-    memberId: string;
-};
+import { GroupMemberParams } from './ox-group.types.js';
 
 export type RemoveMemberFromGroupResponse = {
     status: OXRequestStatus;
@@ -29,7 +21,7 @@ export class RemoveMemberFromGroupAction extends OxBaseAction<
 
     public override soapServiceName: string = 'OXGroupService';
 
-    public constructor(private readonly params: RemoveMemberFromGroupParams) {
+    public constructor(private readonly params: GroupMemberParams) {
         super();
     }
 

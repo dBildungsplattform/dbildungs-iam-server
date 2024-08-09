@@ -1,15 +1,7 @@
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../../schemas.js';
-import { AuthParams, OxBaseAction, OXRequestStatus } from '../ox-base-action.js';
-
-// Incomplete
-export type AddMemberToGroupParams = AuthParams & {
-    contextId: string;
-
-    groupId: string;
-
-    memberId: string;
-};
+import { OxBaseAction, OXRequestStatus } from '../ox-base-action.js';
+import { GroupMemberParams } from './ox-group.types.js';
 
 export type AddMemberToGroupResponse = {
     status: OXRequestStatus;
@@ -25,7 +17,7 @@ export class AddMemberToGroupAction extends OxBaseAction<AddMemberToGroupRespons
 
     public override soapServiceName: string = 'OXGroupService';
 
-    public constructor(private readonly params: AddMemberToGroupParams) {
+    public constructor(private readonly params: GroupMemberParams) {
         super();
     }
 

@@ -121,6 +121,6 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
             return;
         }
 
-        this.logger.info(`User created in OX`);
+        this.logger.info(`User created in OX, userId:${result.value.id}, email:${result.value.primaryEmail}`);
     }
 }

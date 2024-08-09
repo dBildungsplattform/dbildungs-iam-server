@@ -1,13 +1,7 @@
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../../schemas.js';
 import { AuthParams, OxBaseAction } from '../ox-base-action.js';
-
-type OXUser = {
-    id: string;
-    email1: string;
-    name: string;
-    primaryEmail: string;
-};
+import { OXUser } from './ox-user.types.js';
 
 // Incomplete
 export type ListAllUsersParams = AuthParams & {

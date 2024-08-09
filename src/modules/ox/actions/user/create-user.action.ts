@@ -75,8 +75,8 @@ export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, Creat
                 },
 
                 'tns:auth': {
-                    login: this.params.login,
-                    password: this.params.password,
+                    'ns2:login': this.params.login,
+                    'ns2:password': this.params.password,
                 },
             },
         };

@@ -1,14 +1,8 @@
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../../schemas.js';
 import { AuthParams, OxBaseAction } from '../ox-base-action.js';
+import { OXGroup } from './ox-group.types.js';
 
-type OXGroup = {
-    displayname: string;
-    id: string;
-    name: string;
-    memberIds: string[];
-};
-// Incomplete
 export type ListAllGroupsParams = AuthParams & {
     contextId: string;
 };

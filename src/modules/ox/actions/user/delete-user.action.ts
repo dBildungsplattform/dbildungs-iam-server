@@ -1,13 +1,7 @@
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../../schemas.js';
-import { AuthParams, OxBaseAction } from '../ox-base-action.js';
-
-// Incomplete
-export type DeleteUserParams = AuthParams & {
-    contextId: string;
-
-    userId: string;
-};
+import { OxBaseAction } from '../ox-base-action.js';
+import { UserIdParams } from './ox-user.types.js';
 
 export type DeleteUserResponse = {
     id: string;
@@ -41,7 +35,7 @@ export class DeleteUserAction extends OxBaseAction<DeleteUserResponseBody, Delet
 
     public override soapServiceName: string = 'OXUserService';
 
-    public constructor(private readonly params: DeleteUserParams) {
+    public constructor(private readonly params: UserIdParams) {
         super();
     }
 

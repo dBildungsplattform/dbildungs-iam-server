@@ -192,15 +192,24 @@ describe('OxEventHandler', () => {
                     exists: false,
                 },
             });
-
+            const fakeOXUserId: string = faker.string.uuid();
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
-                value: undefined,
+                value: {
+                    id: fakeOXUserId,
+                    firstname: 'firstname',
+                    lastname: 'lastname',
+                    username: 'username',
+                    primaryEmail: event.address,
+                    mailenabled: true,
+                },
             });
             await sut.handlePersonenkontextCreatedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateUserAction));
-            expect(loggerMock.info).toHaveBeenLastCalledWith(`User created in OX`);
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `User created in OX, userId:${fakeOXUserId}, email:${event.address}`,
+            );
         });
 
         it('should log error on failure', async () => {
