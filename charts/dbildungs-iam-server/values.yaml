@@ -44,6 +44,10 @@ auth:
   itslearning_endpoint: ""
   itslearning_username: ""
   itslearning_password: ""
+  pi_base_url: ""
+  pi_admin_user: ""
+  pi_admin_password: ""
+  pi_user_resolver: ""
 
 
 backend:
