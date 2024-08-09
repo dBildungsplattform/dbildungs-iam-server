@@ -232,7 +232,7 @@ export class OrganisationRepository {
             }
         }
         const organisationEntity: Organisation<true> = await this.save(organisationFound);
-        this.eventService.publish(new KlasseUpdatedEvent(id));
+        this.eventService.publish(new KlasseUpdatedEvent(id, newName, organisationFound.administriertVon));
 
         return organisationEntity;
     }

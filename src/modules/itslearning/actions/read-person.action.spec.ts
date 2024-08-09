@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { ReadPersonAction } from './read-person.action.js';
-import { ItsLearningRoleType } from '../types/role.enum.js';
+import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 
 describe('ReadPersonAction', () => {
     describe('buildRequest', () => {
@@ -25,7 +25,7 @@ describe('ReadPersonAction', () => {
             const firstName: string = faker.person.firstName();
             const lastName: string = faker.person.lastName();
             const email: string = faker.internet.email();
-            const institutionRole: ItsLearningRoleType = faker.helpers.enumValue(ItsLearningRoleType);
+            const institutionRole: IMSESInstitutionRoleType = faker.helpers.enumValue(IMSESInstitutionRoleType);
             const primaryRoleType: boolean = faker.datatype.boolean();
             const action: ReadPersonAction = new ReadPersonAction(userId);
 
