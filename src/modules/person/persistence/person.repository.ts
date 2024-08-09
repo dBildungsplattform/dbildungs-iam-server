@@ -83,6 +83,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.vertrauensstufe,
         entity.auskunftssperre,
         entity.personalnummer,
+        {},
         getEnabledEmailAddress(entity),
     );
 }

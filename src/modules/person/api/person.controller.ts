@@ -68,6 +68,8 @@ import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
 import { KeycloakUserService, LOCK_KEYS, UserDo } from '../../keycloak-administration/index.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
+import { KeycloakUserService, LOCK_KEYS, UserDo } from '../../keycloak-administration/index.js';
+import { LockUserBodyParams } from './lock-user.body.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -82,6 +84,7 @@ export class PersonController {
         private readonly personRepository: PersonRepository,
         private readonly personFactory: PersonFactory,
         private readonly personenkontextService: PersonenkontextService,
+        private keycloakUserService: KeycloakUserService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
         private readonly personApiMapper: PersonApiMapper,
