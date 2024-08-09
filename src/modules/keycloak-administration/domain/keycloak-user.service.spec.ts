@@ -6,10 +6,9 @@ import { faker } from '@faker-js/faker';
 import { ConfigTestModule, DoFactory, LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
-import { UserMapperProfile } from './keycloak-client/user.mapper.profile.js';
 import { type FindUserFilter, KeycloakUserService } from './keycloak-user.service.js';
-import { UserDo } from './user.do.js';
 import { PersonService } from '../../person/domain/person.service.js';
+import { User } from './user.js';
 
 describe('KeycloakUserService', () => {
     let module: TestingModule;
@@ -24,7 +23,6 @@ describe('KeycloakUserService', () => {
             imports: [ConfigTestModule, MapperTestModule, LoggingTestModule],
             providers: [
                 KeycloakUserService,
-                UserMapperProfile,
                 {
                     provide: KeycloakAdministrationService,
                     useValue: createMock<KeycloakAdministrationService>({
@@ -63,7 +61,7 @@ describe('KeycloakUserService', () => {
     describe('createUser', () => {
         describe('when user does not exist', () => {
             it('should return user id', async () => {
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
                 kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
 
                 const res: Result<string> = await service.create({
@@ -82,7 +80,7 @@ describe('KeycloakUserService', () => {
 
         describe('when user is created with password', () => {
             it('should call KeycloakAdminClient.users.create with correct props', async () => {
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
                 const password: string = faker.internet.password();
                 kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
 
@@ -107,7 +105,7 @@ describe('KeycloakUserService', () => {
 
         describe('when username and email already exists', () => {
             it('should return error result', async () => {
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
                 kcUsersMock.find.mockResolvedValueOnce([
                     {
                         username: user.username,
@@ -134,7 +132,7 @@ describe('KeycloakUserService', () => {
         describe('when user could not be created', () => {
             it('should return error result', async () => {
                 kcUsersMock.create.mockRejectedValueOnce(new Error());
-                const user: UserDo<false> = DoFactory.createUser(false);
+                const user: User<false> = DoFactory.createUser(false);
 
                 const res: Result<string> = await service.create(user);
 
@@ -153,7 +151,7 @@ describe('KeycloakUserService', () => {
                 };
 
                 adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
-                const user: UserDo<false> = DoFactory.createUser(false);
+                const user: User<false> = DoFactory.createUser(false);
 
                 const res: Result<string> = await service.create(user);
 
@@ -165,7 +163,7 @@ describe('KeycloakUserService', () => {
     describe('createUserWithHashedPassword', () => {
         describe('when user does not exist & HashAlgo is Valid BCRYPT', () => {
             it('should return user id', async () => {
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
                 kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
 
                 const res: Result<string> = await service.createWithHashedPassword(
@@ -187,7 +185,7 @@ describe('KeycloakUserService', () => {
         });
         describe('when user does not exist & HashAlgo is Valid CRYPT', () => {
             it('should return user id', async () => {
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
                 kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
 
                 const res: Result<string> = await service.createWithHashedPassword(
@@ -209,7 +207,7 @@ describe('KeycloakUserService', () => {
         });
         describe('when user does not exist & HashAlgo is Invalid BCRYPT', () => {
             it('should return user id', async () => {
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
 
                 const res: Result<string> = await service.createWithHashedPassword(
                     {
@@ -230,7 +228,7 @@ describe('KeycloakUserService', () => {
         });
         describe('when user does not exist & HashAlgo is Invalid crypt', () => {
             it('should return user id', async () => {
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
 
                 const res: Result<string> = await service.createWithHashedPassword(
                     {
@@ -251,7 +249,7 @@ describe('KeycloakUserService', () => {
         });
         describe('when user does not exist & HashAlgo is not supported', () => {
             it('should return user id', async () => {
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
 
                 const res: Result<string> = await service.createWithHashedPassword(
                     {
@@ -273,7 +271,7 @@ describe('KeycloakUserService', () => {
 
         describe('when username and email already exists', () => {
             it('should return error result', async () => {
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
                 kcUsersMock.find.mockResolvedValueOnce([
                     {
                         username: user.username,
@@ -311,7 +309,7 @@ describe('KeycloakUserService', () => {
                         createdTimestamp: faker.date.recent(),
                     },
                 ] as unknown as UserRepresentation[]);
-                const user: UserDo<false> = DoFactory.createUser(false);
+                const user: User<false> = DoFactory.createUser(false);
                 kcUsersMock.create.mockRejectedValueOnce(new Error());
 
                 const res: Result<string> = await service.createWithHashedPassword(
@@ -335,7 +333,7 @@ describe('KeycloakUserService', () => {
                 };
 
                 adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
-                const user: UserDo<false> = DoFactory.createUser(false);
+                const user: User<false> = DoFactory.createUser(false);
 
                 const res: Result<string> = await service.createWithHashedPassword(
                     user,
@@ -386,8 +384,8 @@ describe('KeycloakUserService', () => {
 
     describe('findById', () => {
         describe('when user exists', () => {
-            it('should return result with UserDo', async () => {
-                const user: UserDo<true> = DoFactory.createUser(true);
+            it('should return result with User', async () => {
+                const user: User<true> = DoFactory.createUser(true);
                 kcUsersMock.findOne.mockResolvedValueOnce({
                     username: user.username,
                     email: user.email,
@@ -395,9 +393,9 @@ describe('KeycloakUserService', () => {
                     createdTimestamp: user.createdDate.getTime(),
                 } as unknown as UserRepresentation);
 
-                const res: Result<UserDo<true>> = await service.findById(user.id);
+                const res: Result<User<true>> = await service.findById(user.id);
 
-                expect(res).toStrictEqual<Result<UserDo<true>>>({
+                expect(res).toStrictEqual<Result<User<true>>>({
                     ok: true,
                     value: user,
                 });
@@ -406,12 +404,12 @@ describe('KeycloakUserService', () => {
 
         describe('when user does not exist', () => {
             it('should return error result', async () => {
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
                 kcUsersMock.findOne.mockResolvedValueOnce(undefined);
 
-                const res: Result<UserDo<true>> = await service.findById(user.id);
+                const res: Result<User<true>> = await service.findById(user.id);
 
-                expect(res).toStrictEqual<Result<UserDo<true>>>({
+                expect(res).toStrictEqual<Result<User<true>>>({
                     ok: false,
                     error: new EntityNotFoundError(`Keycloak User with the following ID ${user.id} does not exist`),
                 });
@@ -426,9 +424,9 @@ describe('KeycloakUserService', () => {
                 };
 
                 adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
 
-                const res: Result<UserDo<true>> = await service.findById(user.id);
+                const res: Result<User<true>> = await service.findById(user.id);
 
                 expect(res).toBe(error);
             });
@@ -437,11 +435,11 @@ describe('KeycloakUserService', () => {
         describe('when KeycloakAdminClient throws', () => {
             it('should return error result', async () => {
                 kcUsersMock.findOne.mockRejectedValueOnce(new Error());
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
 
-                const res: Result<UserDo<true>> = await service.findById(user.id);
+                const res: Result<User<true>> = await service.findById(user.id);
 
-                expect(res).toStrictEqual<Result<UserDo<true>>>({
+                expect(res).toStrictEqual<Result<User<true>>>({
                     ok: false,
                     error: new KeycloakClientError('Keycloak request failed'),
                 });
@@ -453,11 +451,11 @@ describe('KeycloakUserService', () => {
                 kcUsersMock.findOne.mockResolvedValueOnce({
                     username: 'TEST',
                 });
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
 
-                const res: Result<UserDo<true>> = await service.findById(user.id);
+                const res: Result<User<true>> = await service.findById(user.id);
 
-                expect(res).toStrictEqual<Result<UserDo<true>>>({
+                expect(res).toStrictEqual<Result<User<true>>>({
                     ok: false,
                     error: new KeycloakClientError('Response is invalid'),
                 });
@@ -467,8 +465,8 @@ describe('KeycloakUserService', () => {
 
     describe('findOne', () => {
         describe('when user exists', () => {
-            it('should return result with UserDo', async () => {
-                const user: UserDo<true> = DoFactory.createUser(true);
+            it('should return result with User', async () => {
+                const user: User<true> = DoFactory.createUser(true);
                 kcUsersMock.find.mockResolvedValueOnce([
                     {
                         username: user.username,
@@ -478,12 +476,12 @@ describe('KeycloakUserService', () => {
                     },
                 ] as unknown as UserRepresentation[]);
 
-                const res: Result<UserDo<true>> = await service.findOne({
+                const res: Result<User<true>> = await service.findOne({
                     username: user.username,
                     email: user.email,
                 } as unknown as FindUserFilter);
 
-                expect(res).toStrictEqual<Result<UserDo<true>>>({
+                expect(res).toStrictEqual<Result<User<true>>>({
                     ok: true,
                     value: user,
                 });
@@ -492,15 +490,15 @@ describe('KeycloakUserService', () => {
 
         describe('when user does not exist', () => {
             it('should return error result', async () => {
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
                 kcUsersMock.find.mockResolvedValueOnce([]);
 
-                const res: Result<UserDo<true>> = await service.findOne({
+                const res: Result<User<true>> = await service.findOne({
                     username: user.username,
                     email: user.email,
                 } as unknown as FindUserFilter);
 
-                expect(res).toStrictEqual<Result<UserDo<true>>>({
+                expect(res).toStrictEqual<Result<User<true>>>({
                     ok: false,
                     error: new EntityNotFoundError('Keycloak User could not be found'),
                 });
@@ -515,9 +513,9 @@ describe('KeycloakUserService', () => {
                 };
 
                 adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
-                const user: UserDo<true> = DoFactory.createUser(true);
+                const user: User<true> = DoFactory.createUser(true);
 
-                const res: Result<UserDo<true>> = await service.findOne({
+                const res: Result<User<true>> = await service.findOne({
                     username: user.username,
                     email: user.email,
                 } as unknown as FindUserFilter);
@@ -529,13 +527,13 @@ describe('KeycloakUserService', () => {
         describe('when KeycloakAdminClient throws', () => {
             it('should return error result', async () => {
                 kcUsersMock.find.mockRejectedValueOnce(new Error());
-                const user: UserDo<true> = DoFactory.createUser(true);
-                const res: Result<UserDo<true>> = await service.findOne({
+                const user: User<true> = DoFactory.createUser(true);
+                const res: Result<User<true>> = await service.findOne({
                     username: user.username,
                     email: user.email,
                 } as unknown as FindUserFilter);
 
-                expect(res).toStrictEqual<Result<UserDo<true>>>({
+                expect(res).toStrictEqual<Result<User<true>>>({
                     ok: false,
                     error: new KeycloakClientError('Keycloak request failed'),
                 });

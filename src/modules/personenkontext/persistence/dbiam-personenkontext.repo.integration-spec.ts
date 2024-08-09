@@ -62,6 +62,7 @@ describe('dbiam Personenkontext Repo', () => {
             withId ? faker.string.uuid() : undefined,
             withId ? faker.date.past() : undefined,
             withId ? faker.date.recent() : undefined,
+            undefined,
             faker.string.uuid(),
             faker.string.uuid(),
             faker.string.uuid(),
@@ -164,7 +165,18 @@ describe('dbiam Personenkontext Repo', () => {
         rollenart: RollenArt,
         rechte: RollenSystemRecht[],
     ): Promise<Rolle<true>> {
-        const rolle: Rolle<false> = rolleFactory.createNew(faker.word.noun(), orgaId, rollenart, [], rechte, []);
+        const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
+            faker.word.noun(),
+            orgaId,
+            rollenart,
+            [],
+            rechte,
+            [],
+        );
+
+        if (rolle instanceof DomainError) {
+            throw rolle;
+        }
         const result: Rolle<true> = await rolleRepo.save(rolle);
         return result;
     }
@@ -846,6 +858,31 @@ describe('dbiam Personenkontext Repo', () => {
             const result: boolean = await sut.isRolleAlreadyAssigned(faker.string.uuid());
 
             expect(result).toBeFalsy();
+        });
+    });
+
+    describe('deleteById', () => {
+        describe('when deleting personenkontext by id', () => {
+            it('should return number of deleted rows', async () => {
+                const person: Person<true> = await createPerson();
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
+                const personenKontext: Personenkontext<true> = await sut.save(
+                    createPersonenkontext(false, { rolleId: rolle.id, personId: person.id }),
+                );
+
+                const result: boolean = await sut.deleteById(personenKontext.id);
+
+                expect(result).toBeTruthy();
+            });
+        });
+
+        describe('when no personenkontext was deleted', () => {
+            it('should return 0', async () => {
+                const result: boolean = await sut.deleteById(faker.string.uuid());
+
+                expect(result).toBeFalsy();
+            });
         });
     });
 });

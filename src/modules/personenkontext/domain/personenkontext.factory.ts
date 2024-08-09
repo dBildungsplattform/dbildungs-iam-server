@@ -4,6 +4,7 @@ import { Personenkontext } from './personenkontext.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from './personenkontext.enums.js';
 
 @Injectable()
 export class PersonenkontextFactory {
@@ -17,9 +18,16 @@ export class PersonenkontextFactory {
         id: Persisted<string, WasPersisted>,
         createdAt: Persisted<Date, WasPersisted>,
         updatedAt: Persisted<Date, WasPersisted>,
+        revision: Persisted<string, WasPersisted>,
         personId: PersonID,
         organisationId: OrganisationID,
         rolleId: RolleID,
+        referrer?: string,
+        mandant?: string,
+        personenstatus?: Personenstatus,
+        jahrgangsstufe?: Jahrgangsstufe,
+        sichtfreigabe?: SichtfreigabeType,
+        loeschungZeitpunkt?: Date,
     ): Personenkontext<WasPersisted> {
         return Personenkontext.construct(
             this.personRepo,
@@ -31,10 +39,27 @@ export class PersonenkontextFactory {
             personId,
             organisationId,
             rolleId,
+            referrer,
+            mandant,
+            personenstatus,
+            jahrgangsstufe,
+            sichtfreigabe,
+            loeschungZeitpunkt,
+            revision,
         );
     }
 
-    public createNew(personId: PersonID, organisationId: OrganisationID, rolleId: RolleID): Personenkontext<false> {
+    public createNew(
+        personId: PersonID,
+        organisationId: OrganisationID,
+        rolleId: RolleID,
+        referrer: string | undefined = undefined,
+        mandant: string | undefined = undefined,
+        personenstatus: Personenstatus | undefined = undefined,
+        jahrgangsstufe: Jahrgangsstufe | undefined = undefined,
+        sichtfreigabe: SichtfreigabeType | undefined = undefined,
+        loeschungZeitpunkt: Date | undefined = undefined,
+    ): Personenkontext<false> {
         return Personenkontext.createNew(
             this.personRepo,
             this.organisationRepo,
@@ -42,6 +67,12 @@ export class PersonenkontextFactory {
             personId,
             organisationId,
             rolleId,
+            referrer,
+            mandant,
+            personenstatus,
+            jahrgangsstufe,
+            sichtfreigabe,
+            loeschungZeitpunkt,
         );
     }
 }
