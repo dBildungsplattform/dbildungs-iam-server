@@ -1,16 +1,4 @@
-import {
-    Body,
-    Controller,
-    Get,
-    HttpCode,
-    HttpStatus,
-    Inject,
-    Param,
-    Post,
-    Put,
-    Query,
-    UseFilters,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -28,11 +16,8 @@ import { FindPersonenkontextSchulstrukturknotenBodyParams } from './param/find-p
 import { FindSchulstrukturknotenResponse } from './response/find-schulstrukturknoten.response.js';
 import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
-import { getMapperToken } from '@automapper/nestjs';
-import { Mapper } from '@automapper/core';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { FindDbiamPersonenkontextWorkflowBodyParams } from './param/dbiam-find-personenkontextworkflow-body.params.js';
@@ -52,6 +37,7 @@ import { PersonenkontextCommitError } from '../domain/error/personenkontext-comm
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
 
 @UseFilters(
@@ -67,7 +53,6 @@ export class DbiamPersonenkontextWorkflowController {
     public constructor(
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly personenkontextCreationService: PersonenkontextCreationService,
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
     ) {}
 
     @Get('step')
@@ -95,7 +80,7 @@ export class DbiamPersonenkontextWorkflowController {
         anlage.initialize(params.organisationId, params.rolleId);
 
         // Find all possible SSKs (Possibly through name if the name was given)
-        const organisations: OrganisationDo<true>[] = await anlage.findAllSchulstrukturknoten(
+        const organisations: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
             permissions,
             params.organisationName,
             params.limit,
@@ -106,10 +91,8 @@ export class DbiamPersonenkontextWorkflowController {
             ? await anlage.findRollenForOrganisation(permissions, params.rolleName, params.limit)
             : [];
 
-        const organisationsResponse: OrganisationResponseLegacy[] = this.mapper.mapArray(
-            organisations,
-            OrganisationDo,
-            OrganisationResponseLegacy,
+        const organisationsResponse: OrganisationResponseLegacy[] = organisations.map(
+            (org: Organisation<true>) => new OrganisationResponseLegacy(org),
         );
 
         // Determine canCommit status, by default it's always false unless both the rolle and orga are selected
@@ -186,16 +169,15 @@ export class DbiamPersonenkontextWorkflowController {
     ): Promise<FindSchulstrukturknotenResponse> {
         const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
         const sskName: string = params.sskName ?? '';
-        const ssks: OrganisationDo<true>[] = await anlage.findSchulstrukturknoten(
+        const ssks: Organisation<true>[] = await anlage.findSchulstrukturknoten(
             params.rolleId,
             sskName,
             params.limit,
             true,
         );
-        const sskResponses: OrganisationResponseLegacy[] = this.mapper.mapArray(
-            ssks,
-            OrganisationDo,
-            OrganisationResponseLegacy,
+
+        const sskResponses: OrganisationResponseLegacy[] = ssks.map(
+            (org: Organisation<true>) => new OrganisationResponseLegacy(org),
         );
         const response: FindSchulstrukturknotenResponse = new FindSchulstrukturknotenResponse(
             sskResponses,

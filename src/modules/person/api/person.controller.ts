@@ -39,11 +39,9 @@ import { CreatePersonBodyParams } from './create-person.body.params.js';
 import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/param/create-personenkontext.body.params.js';
 import { CreatePersonenkontextDto } from '../../personenkontext/api/create-personenkontext.dto.js';
 import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
-import { FindPersonenkontextDto } from '../../personenkontext/api/find-personenkontext.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
-import { PersonenkontextDto } from '../../personenkontext/api/personenkontext.dto.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
 import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
@@ -63,6 +61,9 @@ import { ConfigService } from '@nestjs/config';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { PersonDomainError } from '../domain/person-domain.error.js';
 import { PersonExceptionFilter } from './person-exception-filter.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
+import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -76,8 +77,10 @@ export class PersonController {
         private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
         private readonly personFactory: PersonFactory,
+        private readonly personenkontextService: PersonenkontextService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
+        private readonly personApiMapper: PersonApiMapper,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
@@ -201,6 +204,9 @@ export class PersonController {
         return new PersonendatensatzResponse(personResult.value, false);
     }
 
+    /**
+     * @deprecated This endpoint is no longer used.
+     */
     @Post(':personId/personenkontexte')
     @HttpCode(200)
     @ApiOkResponse({ description: 'The personenkontext was successfully created.' })
@@ -257,12 +263,7 @@ export class PersonController {
         @Query() queryParams: PersonenkontextQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<PersonenkontextResponse>> {
-        const findPersonenkontextDto: FindPersonenkontextDto = this.mapper.map(
-            queryParams,
-            PersonenkontextQueryParams,
-            FindPersonenkontextDto,
-        );
-        //check that logged-in user is allowed to update person
+        // check that logged-in user is allowed to update person
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             pathParams.personId,
             permissions,
@@ -274,22 +275,28 @@ export class PersonController {
                 ),
             );
         }
-        findPersonenkontextDto.personId = personResult.value.id;
 
-        const personenkontextDtos: Paged<PersonenkontextDto> =
-            await this.personenkontextUc.findAll(findPersonenkontextDto);
-        // AI next 5 lines
-        const responseItems: PersonenkontextResponse[] = this.mapper.mapArray(
-            personenkontextDtos.items,
-            PersonenkontextDto,
-            PersonenkontextResponse,
+        const updatedQueryParams: PersonenkontextQueryParams = { ...queryParams, personId: personResult.value.id };
+        // orgnisationID is undefined
+        const personenkontexts: Paged<Personenkontext<true>> =
+            await this.personenkontextService.findAllPersonenkontexte(
+                updatedQueryParams,
+                undefined,
+                updatedQueryParams.offset,
+                updatedQueryParams.limit,
+            );
+
+        const responseItems: PersonenkontextResponse[] = await Promise.all(
+            personenkontexts.items.map(async (item: Personenkontext<true>) =>
+                this.personApiMapper.mapToPersonenkontextResponse(item),
+            ),
         );
 
         return new PagedResponse({
             items: responseItems,
-            offset: personenkontextDtos.offset,
-            limit: personenkontextDtos.limit,
-            total: personenkontextDtos.total,
+            offset: personenkontexts.offset,
+            limit: personenkontexts.limit,
+            total: personenkontexts.total,
         });
     }
 

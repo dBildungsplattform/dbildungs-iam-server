@@ -1,9 +1,9 @@
-import { AutoMap } from '@automapper/classes';
 import { Cascade, DateTimeType, Entity, Enum, Index, ManyToOne, Opt, Property, Ref, Unique } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
+import { AutoMap } from '@automapper/classes';
 
 @Entity({ tableName: 'personenkontext' })
 @Unique({ properties: ['personId', 'organisationId', 'rolleId'] })
@@ -39,6 +39,7 @@ export class PersonenkontextEntity extends TimestampedEntity {
     public referrer?: string;
 
     // TODO EW-636: mandant is related to organizations so it is not set for now. When implemented should be set to nullable: false
+
     @AutoMap()
     @Property({ nullable: true })
     public mandant?: string;

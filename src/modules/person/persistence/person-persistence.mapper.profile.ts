@@ -1,10 +1,10 @@
 import { Mapper, MappingProfile, beforeMap, createMap, forMember, ignore, mapFrom } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
-import { ref } from '@mikro-orm/core';
 import { PersonDo } from '../domain/person.do.js';
-import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
 import { PersonEntity } from '../persistence/person.entity.js';
+import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
+import { ref } from '@mikro-orm/core';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 

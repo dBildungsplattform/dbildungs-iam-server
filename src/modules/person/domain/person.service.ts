@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
-import { PersonDo } from '../domain/person.do.js';
-import { PersonRepo } from '../persistence/person.repo.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { Person } from './person.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { PersonRepository } from '../persistence/person.repository.js';
 
 export type PersonPersonenkontext = {
     person: Person<true>;
@@ -15,10 +14,10 @@ export type PersonPersonenkontext = {
 
 @Injectable()
 export class PersonService {
-    public constructor(private readonly personRepo: PersonRepo) {}
+    public constructor(private readonly personRepository: PersonRepository) {}
 
-    public async findPersonById(id: string): Promise<Result<PersonDo<true>, DomainError>> {
-        const person: Option<PersonDo<true>> = await this.personRepo.findById(id);
+    public async findPersonById(id: string): Promise<Result<Person<true>, DomainError>> {
+        const person: Option<Person<true>> = await this.personRepository.findById(id);
         if (person) {
             return { ok: true, value: person };
         }
@@ -26,10 +25,10 @@ export class PersonService {
     }
 
     public async findAllPersons(
-        personDo: Partial<PersonDo<false>>,
+        personDo: Partial<Person<false>>,
         offset?: number,
         limit?: number,
-    ): Promise<Paged<PersonDo<true>>> {
+    ): Promise<Paged<Person<true>>> {
         const scope: PersonScope = new PersonScope()
             .findBy({
                 vorname: personDo.vorname,
@@ -38,7 +37,7 @@ export class PersonService {
             })
             .sortBy('vorname', ScopeOrder.ASC)
             .paged(offset, limit);
-        const [persons, total]: Counted<PersonDo<true>> = await this.personRepo.findBy(scope);
+        const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
 
         return {
             total,
