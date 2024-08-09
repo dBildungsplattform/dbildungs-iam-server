@@ -13,6 +13,7 @@ import {
 import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
 import { UpdateInvalidLastModifiedError } from '../domain/error/update-invalid-last-modified.error.js';
 import { UpdatePersonNotFoundError } from '../domain/error/update-person-not-found.error.js';
+import { UpdateInvalidRollenartForLernError } from '../domain/error/update-invalid-rollenart-for-lern.error.js';
 
 @Catch(PersonenkontexteUpdateError)
 export class PersonenkontexteUpdateExceptionFilter implements ExceptionFilter<PersonenkontexteUpdateError> {
@@ -57,6 +58,13 @@ export class PersonenkontexteUpdateExceptionFilter implements ExceptionFilter<Pe
             new DbiamPersonenkontexteUpdateError({
                 code: 400,
                 i18nKey: PersonenkontexteUpdateErrorI18nTypes.PERSON_NOT_FOUND,
+            }),
+        ],
+        [
+            UpdateInvalidRollenartForLernError.name,
+            new DbiamPersonenkontexteUpdateError({
+                code: 400,
+                i18nKey: PersonenkontexteUpdateErrorI18nTypes.INVALID_PERSONENKONTEXT_FOR_PERSON_WITH_ROLLENART_LERN,
             }),
         ],
     ]);
