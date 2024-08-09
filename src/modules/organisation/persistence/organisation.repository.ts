@@ -15,6 +15,7 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
+import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -250,7 +251,22 @@ export class OrganisationRepository {
         await this.em.persistAndFlush(organisationEntity);
 
         if (organisationEntity.typ === OrganisationsTyp.SCHULE) {
-            this.eventService.publish(new SchuleCreatedEvent(organisationEntity.id));
+            this.eventService.publish(
+                new SchuleCreatedEvent(
+                    organisationEntity.id,
+                    organisationEntity.kennung,
+                    organisationEntity.name,
+                    organisationEntity.administriertVon,
+                ),
+            );
+        } else if (organisationEntity.typ === OrganisationsTyp.KLASSE) {
+            this.eventService.publish(
+                new KlasseCreatedEvent(
+                    organisationEntity.id,
+                    organisationEntity.name,
+                    organisationEntity.administriertVon,
+                ),
+            );
         }
 
         return mapEntityToAggregate(organisationEntity);

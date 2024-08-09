@@ -32,7 +32,14 @@ export class OrganisationRepo {
         const organisation: OrganisationEntity = this.mapper.map(organisationDo, OrganisationDo, OrganisationEntity);
         await this.em.persistAndFlush(organisation);
         if (organisationDo.typ === OrganisationsTyp.SCHULE) {
-            this.eventService.publish(new SchuleCreatedEvent(organisation.id));
+            this.eventService.publish(
+                new SchuleCreatedEvent(
+                    organisation.id,
+                    organisation.kennung,
+                    organisation.name,
+                    organisation.administriertVon,
+                ),
+            );
         } else if (organisationDo.typ === OrganisationsTyp.KLASSE) {
             this.eventService.publish(
                 new KlasseCreatedEvent(organisation.id, organisation.name, organisation.administriertVon),

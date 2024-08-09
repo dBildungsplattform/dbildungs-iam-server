@@ -67,14 +67,11 @@ describe('ItsLearning Organisations Event Handler', () => {
             const orgaId: OrganisationID = faker.string.uuid();
             const schuleName: OrganisationID = faker.word.noun();
             const oldParentId: OrganisationID = faker.string.uuid();
-            const event: SchuleCreatedEvent = new SchuleCreatedEvent(orgaId);
-            orgaRepoMock.findById.mockResolvedValueOnce(
-                createMock<Organisation<true>>({
-                    id: orgaId,
-                    typ: OrganisationsTyp.SCHULE,
-                    name: schuleName,
-                    administriertVon: configRootOeffentlich,
-                }),
+            const event: SchuleCreatedEvent = new SchuleCreatedEvent(
+                orgaId,
+                faker.string.uuid(),
+                schuleName,
+                configRootOeffentlich,
             );
             orgaRepoMock.findById.mockResolvedValueOnce(
                 createMock<Organisation<true>>({ id: configRootOeffentlich, typ: OrganisationsTyp.LAND }),
@@ -99,13 +96,11 @@ describe('ItsLearning Organisations Event Handler', () => {
             const orgaId: OrganisationID = faker.string.uuid();
             const schuleName: OrganisationID = faker.word.noun();
             const oldParentId: OrganisationID = faker.string.uuid();
-            const event: SchuleCreatedEvent = new SchuleCreatedEvent(orgaId);
-            orgaRepoMock.findById.mockResolvedValueOnce(
-                createMock<Organisation<true>>({
-                    typ: OrganisationsTyp.SCHULE,
-                    name: schuleName,
-                    administriertVon: configRootOeffentlich,
-                }),
+            const event: SchuleCreatedEvent = new SchuleCreatedEvent(
+                orgaId,
+                faker.string.uuid(),
+                schuleName,
+                configRootOeffentlich,
             );
             orgaRepoMock.findById.mockResolvedValueOnce(
                 createMock<Organisation<true>>({ id: configRootOeffentlich, typ: OrganisationsTyp.LAND }),
@@ -127,7 +122,12 @@ describe('ItsLearning Organisations Event Handler', () => {
 
         it('should skip event, if not enabled', async () => {
             sut.ENABLED = false;
-            const event: SchuleCreatedEvent = new SchuleCreatedEvent(faker.string.uuid());
+            const event: SchuleCreatedEvent = new SchuleCreatedEvent(
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.word.noun(),
+                faker.string.uuid(),
+            );
 
             await sut.createSchuleEventHandler(event);
 
@@ -136,37 +136,13 @@ describe('ItsLearning Organisations Event Handler', () => {
             expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
         });
 
-        it('should log error, if the organisation does not exist', async () => {
-            const orgaId: OrganisationID = faker.string.uuid();
-            const event: SchuleCreatedEvent = new SchuleCreatedEvent(orgaId);
-            orgaRepoMock.findById.mockResolvedValueOnce(undefined);
-
-            await sut.createSchuleEventHandler(event);
-
-            expect(loggerMock.error).toHaveBeenCalledWith(`Organisation with id ${orgaId} could not be found!`);
-            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
-        });
-
-        it('should skip event, if orga is not schule', async () => {
-            const orgaId: OrganisationID = faker.string.uuid();
-            const event: SchuleCreatedEvent = new SchuleCreatedEvent(orgaId);
-            orgaRepoMock.findById.mockResolvedValueOnce(
-                createMock<Organisation<true>>({ typ: OrganisationsTyp.UNBEST }),
-            );
-
-            await sut.createSchuleEventHandler(event);
-
-            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
-        });
-
         it('should skip event, if schule is ersatzschule', async () => {
             const orgaId: OrganisationID = faker.string.uuid();
-            const event: SchuleCreatedEvent = new SchuleCreatedEvent(orgaId);
-            orgaRepoMock.findById.mockResolvedValueOnce(
-                createMock<Organisation<true>>({
-                    typ: OrganisationsTyp.SCHULE,
-                    administriertVon: configRootOeffentlich,
-                }),
+            const event: SchuleCreatedEvent = new SchuleCreatedEvent(
+                orgaId,
+                faker.string.uuid(),
+                faker.word.noun(),
+                configRootOeffentlich,
             );
             orgaRepoMock.findById.mockResolvedValueOnce(
                 createMock<Organisation<true>>({ id: configRootErsatz, typ: OrganisationsTyp.LAND }),
@@ -185,13 +161,11 @@ describe('ItsLearning Organisations Event Handler', () => {
         it('should log error on failed creation', async () => {
             const orgaId: OrganisationID = faker.string.uuid();
             const schuleName: OrganisationID = faker.word.noun();
-            const event: SchuleCreatedEvent = new SchuleCreatedEvent(orgaId);
-            orgaRepoMock.findById.mockResolvedValueOnce(
-                createMock<Organisation<true>>({
-                    typ: OrganisationsTyp.SCHULE,
-                    name: schuleName,
-                    administriertVon: configRootOeffentlich,
-                }),
+            const event: SchuleCreatedEvent = new SchuleCreatedEvent(
+                orgaId,
+                faker.string.uuid(),
+                schuleName,
+                configRootOeffentlich,
             );
             orgaRepoMock.findById.mockResolvedValueOnce(
                 createMock<Organisation<true>>({ id: configRootOeffentlich, typ: OrganisationsTyp.LAND }),
@@ -213,13 +187,11 @@ describe('ItsLearning Organisations Event Handler', () => {
 
         it('should use "Öffentlich" as default, when no parent can be found', async () => {
             const orgaId: OrganisationID = faker.string.uuid();
-            const event: SchuleCreatedEvent = new SchuleCreatedEvent(orgaId);
-            orgaRepoMock.findById.mockResolvedValueOnce(
-                createMock<Organisation<true>>({
-                    typ: OrganisationsTyp.SCHULE,
-                    administriertVon: configRootOeffentlich,
-                    name: undefined,
-                }),
+            const event: SchuleCreatedEvent = new SchuleCreatedEvent(
+                orgaId,
+                faker.string.uuid(),
+                undefined,
+                configRootOeffentlich,
             );
             orgaRepoMock.findById.mockResolvedValueOnce(
                 createMock<Organisation<true>>({ id: faker.string.uuid(), administriertVon: configRootOeffentlich }),

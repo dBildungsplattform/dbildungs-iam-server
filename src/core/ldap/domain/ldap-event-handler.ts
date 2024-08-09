@@ -25,22 +25,15 @@ export class LdapEventHandler {
     public async handleSchuleCreatedEvent(event: SchuleCreatedEvent): Promise<void> {
         this.logger.info(`Received SchuleCreatedEvent, organisationId:${event.organisationId}`);
 
-        const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
-            event.organisationId,
-        );
-        if (!organisation) {
-            this.logger.error(`Organisation with id ${event.organisationId} could not be found!`);
-            return;
+        if (!event.kennung) {
+            return this.logger.error('Schule has no kennung. Aborting.');
         }
-        this.logger.info(`Kennung of organisation is:${organisation.kennung}`);
+        this.logger.info(`Kennung of organisation is:${event.kennung}`);
 
-        if (organisation.typ == OrganisationsTyp.SCHULE) {
-            this.logger.info(`Call LdapClientService because ${organisation.name} type is SCHULE`);
-            const creationResult: Result<Organisation<true>> =
-                await this.ldapClientService.createOrganisation(organisation);
-            if (!creationResult.ok) {
-                this.logger.error(creationResult.error.message);
-            }
+        this.logger.info(`Call LdapClientService because ${event.name} type is SCHULE`);
+        const creationResult: Result<void> = await this.ldapClientService.createOrganisation(event.kennung);
+        if (!creationResult.ok) {
+            this.logger.error(creationResult.error.message);
         }
     }
 

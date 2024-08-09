@@ -8,7 +8,6 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { CreateGroupAction, CreateGroupParams } from '../actions/create-group.action.js';
@@ -47,51 +46,40 @@ export class ItsLearningOrganisationsEventHandler {
             return;
         }
 
-        const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
-            event.organisationId,
-        );
+        const parent: OrganisationID | undefined = await this.findParentId(event.administriertVon);
 
-        if (!organisation) {
-            this.logger.error(`Organisation with id ${event.organisationId} could not be found!`);
+        if (parent === this.ROOT_ERSATZ) {
+            this.logger.error(`Ersatzschule, ignoring.`);
             return;
         }
 
-        if (organisation.typ === OrganisationsTyp.SCHULE) {
-            const parent: OrganisationID | undefined = await this.findParentId(organisation);
+        const params: CreateGroupParams = {
+            id: event.organisationId,
+            name: `${event.kennung} (${event.name ?? 'Unbenannte Schule'})`,
+            type: 'School',
+            parentId: parent,
+        };
 
-            if (parent === this.ROOT_ERSATZ) {
-                this.logger.error(`Ersatzschule, ignoring.`);
-                return;
+        {
+            // Check if school already exists in itsLearning
+            const readAction: ReadGroupAction = new ReadGroupAction(event.organisationId);
+            const result: Result<GroupResponse, DomainError> = await this.itsLearningService.send(readAction);
+
+            if (result.ok) {
+                // School already exists, keep relationship
+                params.parentId = result.value.parentId;
             }
-
-            const params: CreateGroupParams = {
-                id: organisation.id,
-                name: `${organisation.kennung} (${organisation.name ?? 'Unbenannte Schule'})`,
-                type: 'School',
-                parentId: parent,
-            };
-
-            {
-                // Check if school already exists in itsLearning
-                const readAction: ReadGroupAction = new ReadGroupAction(organisation.id);
-                const result: Result<GroupResponse, DomainError> = await this.itsLearningService.send(readAction);
-
-                if (result.ok) {
-                    // School already exists, keep relationship
-                    params.parentId = result.value.parentId;
-                }
-            }
-
-            const action: CreateGroupAction = new CreateGroupAction(params);
-
-            const result: Result<void, DomainError> = await this.itsLearningService.send(action);
-
-            if (!result.ok) {
-                return this.logger.error(`Could not create Schule in itsLearning: ${result.error.message}`);
-            }
-
-            this.logger.info(`Schule with ID ${organisation.id} created.`);
         }
+
+        const action: CreateGroupAction = new CreateGroupAction(params);
+
+        const result: Result<void, DomainError> = await this.itsLearningService.send(action);
+
+        if (!result.ok) {
+            return this.logger.error(`Could not create Schule in itsLearning: ${result.error.message}`);
+        }
+
+        this.logger.info(`Schule with ID ${event.organisationId} created.`);
     }
 
     @EventHandler(KlasseCreatedEvent)
@@ -142,11 +130,12 @@ export class ItsLearningOrganisationsEventHandler {
         this.logger.info(`Klasse with ID ${event.id} created.`);
     }
 
-    private async findParentId(organisation: Organisation<true>): Promise<OrganisationID> {
+    //TODO: Mit Philipp über das Refactoring in eine Recursive Query sprechen
+    private async findParentId(organisationId: OrganisationID | undefined): Promise<OrganisationID> {
         const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
             await this.organisationRepository.findRootDirectChildren();
 
-        let parentOrgaId: OrganisationID | undefined = organisation.administriertVon;
+        let parentOrgaId: OrganisationID | undefined = organisationId;
 
         while (parentOrgaId) {
             const result: Option<Organisation<true>> = await this.organisationRepository.findById(parentOrgaId);
