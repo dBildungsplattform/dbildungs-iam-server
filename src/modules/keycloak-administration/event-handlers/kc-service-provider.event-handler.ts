@@ -24,13 +24,14 @@ export class KeyclockServiceProviderEventHandler {
         return `rolleId: ${kontext.rolleId}, rolle: ${kontext.rolle}, orgaId: ${kontext.orgaId}, orgaTyp: ${kontext.orgaTyp}, orgaKennung: ${kontext.orgaKennung}`;
     }
 
-    @EventHandler(PersonenkontextUpdatedEvent)
-    public async updatePersonenkontexteKCandSP(event: PersonenkontextUpdatedEvent): Promise<void> {
-        this.logger.info(`Received PersonenkontextUpdatedEvent, ${event.person.id}`);
+    private async getServiceProviderNames(event: PersonenkontextUpdatedEvent): Promise<string[]> {
         const kontexteStrings: string = event.currentKontexte
             .map((kontext: PersonenkontextUpdatedData) => this.kontextToString(kontext))
             .join('; ');
         this.logger.info(`Received PersonenkontextUpdatedEvent, ${kontexteStrings}`);
+
+        const serviceProviderNames: string[] = [];
+
         const rolleId: RolleID | undefined = event.currentKontexte[0]?.rolleId;
         if (rolleId) {
             const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(rolleId);
@@ -42,14 +43,21 @@ export class KeyclockServiceProviderEventHandler {
             if (serviceProvidersMap) {
                 const serviceProviders: ServiceProvider<true>[] = Array.from(
                     serviceProvidersMap.values(),
-                    (value: ServiceProvider<true>) => {
-                        return value;
-                    },
+                    (value: ServiceProvider<true>) => value,
                 );
                 serviceProviders.forEach((serviceProvider: ServiceProvider<true>) => {
                     this.logger.info(`ServiceProvider: ${JSON.stringify(serviceProvider.name)}`);
+                    serviceProviderNames.push(serviceProvider.name);
                 });
             }
         }
+
+        return serviceProviderNames;
+    }
+
+    @EventHandler(PersonenkontextUpdatedEvent)
+    public async updatePersonenkontexteKCandSP(event: PersonenkontextUpdatedEvent): Promise<void> {
+        this.logger.info(`Received PersonenkontextUpdatedEvent, ${event.person.id}`);
+        const serviceProviders: string[] = await this.getServiceProviderNames(event);
     }
 }
