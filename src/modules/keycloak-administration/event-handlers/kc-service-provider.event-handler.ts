@@ -12,12 +12,17 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { KeycloakUserService } from '../domain/keycloak-user.service.js';
+import { Person } from '../../person/domain/person.js';
 
 @Injectable()
 export class KeyclockServiceProviderEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly rolleRepo: RolleRepo,
+        private readonly personRepo: PersonRepository,
+        private readonly keycloackUserService: KeycloakUserService,
     ) {}
 
     public kontextToString(kontext: PersonenkontextUpdatedData): string {
@@ -59,5 +64,13 @@ export class KeyclockServiceProviderEventHandler {
     public async updatePersonenkontexteKCandSP(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(`Received PersonenkontextUpdatedEvent, ${event.person.id}`);
         const serviceProviders: string[] = await this.getServiceProviderNames(event);
+
+        const person: Option<Person<true>> = await this.personRepo.findById(event.person.id);
+        if (person && person.keycloakUserId) {
+            const serviceProviderName: string | undefined = serviceProviders[0];
+            if (serviceProviderName) {
+                await this.keycloackUserService.assignRealmRoleToUser(person.keycloakUserId, serviceProviderName);
+            }
+        }
     }
 }

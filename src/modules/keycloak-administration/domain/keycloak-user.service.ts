@@ -274,6 +274,7 @@ export class KeycloakUserService {
         return { ok: true, value: userDo };
     }
 
+    // TODO add role names instead of roleName
     public async assignRealmRoleToUser(usernameId: string, roleName: string): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
@@ -291,7 +292,7 @@ export class KeycloakUserService {
 
         try {
             const role: RoleRepresentation | undefined = await kcAdminClientResult.value.roles.findOneByName({
-                name: roleName,
+                name: `${roleName}-user`,
             });
 
             if (!role || !role.id || !role.name) {
