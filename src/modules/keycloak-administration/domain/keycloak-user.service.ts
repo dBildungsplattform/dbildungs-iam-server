@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { KeycloakAdminClient, type UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
+import { KeycloakAdminClient, RoleRepresentation, type UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
 import { plainToClass } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 
@@ -272,5 +272,49 @@ export class KeycloakUserService {
         );
 
         return { ok: true, value: userDo };
+    }
+
+    public async assignRealmRoleToUser(usernameId: string, roleName: string): Promise<Result<void, DomainError>> {
+        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+            await this.kcAdminService.getAuthedKcAdminClient();
+
+        if (!kcAdminClientResult.ok) {
+            return kcAdminClientResult;
+        }
+
+        const userResult: Result<User<true>, DomainError> = await this.findById(usernameId);
+        if (!userResult.ok) {
+            return userResult;
+        }
+
+        const userId: string = userResult.value.id;
+
+        try {
+            const role: RoleRepresentation | undefined = await kcAdminClientResult.value.roles.findOneByName({
+                name: roleName,
+            });
+
+            if (!role || !role.id || !role.name) {
+                return {
+                    ok: false,
+                    error: new EntityNotFoundError(`Role with name ${roleName} not found or invalid role data`),
+                };
+            }
+
+            await kcAdminClientResult.value.users.addRealmRoleMappings({
+                id: userId,
+                roles: [
+                    {
+                        id: role.id,
+                        name: role.name,
+                    },
+                ],
+            });
+
+            return { ok: true, value: undefined };
+        } catch (err) {
+            this.logger.error(`Failed to assign role ${roleName} to user ${usernameId}: ${JSON.stringify(err)}`);
+            return { ok: false, error: new KeycloakClientError('Failed to assign role') };
+        }
     }
 }
