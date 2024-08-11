@@ -67,10 +67,7 @@ export class KeyclockServiceProviderEventHandler {
 
         const person: Option<Person<true>> = await this.personRepo.findById(event.person.id);
         if (person && person.keycloakUserId) {
-            const serviceProviderName: string | undefined = serviceProviders[0];
-            if (serviceProviderName) {
-                await this.keycloackUserService.assignRealmRoleToUser(person.keycloakUserId, serviceProviderName);
-            }
+            await this.keycloackUserService.assignRealmRolesToUser(person.keycloakUserId, serviceProviders);
         }
     }
 }

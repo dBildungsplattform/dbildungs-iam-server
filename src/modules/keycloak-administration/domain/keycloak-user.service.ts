@@ -274,6 +274,8 @@ export class KeycloakUserService {
         return { ok: true, value: userDo };
     }
 
+    // TODO if the user aledy has the role dont update
+    //TODO if the user is deleting the role check the other PK is that the user has if they have keep the ones that the user has in the other role
     public async assignRealmRolesToUser(usernameId: string, roleNames: string[]): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
@@ -290,14 +292,13 @@ export class KeycloakUserService {
         const userId: string = userResult.value.id;
 
         try {
-            // return all roles instead of calling the DB multiple times KC does not support finding all the roles with one call
             const allRoles: RoleRepresentation[] = await kcAdminClientResult.value.roles.find();
-
-            const roles: RoleRepresentation[] = allRoles.filter((role: RoleRepresentation) =>
+            // return all roles instead of calling the DB multiple times KC does not support finding all the roles with one call
+            const rolesToAssign: RoleRepresentation[] = allRoles.filter((role: RoleRepresentation) =>
                 roleNames.some((roleName: string) => role.name === `${roleName}-user`),
             );
 
-            const validRoles: RoleRepresentation[] = roles.filter(
+            const validRoles: RoleRepresentation[] = rolesToAssign.filter(
                 (role: RoleRepresentation | undefined): role is RoleRepresentation =>
                     role !== undefined && role.id !== undefined && role.name !== undefined,
             );
@@ -308,11 +309,24 @@ export class KeycloakUserService {
                     error: new EntityNotFoundError(`No valid roles found for the provided role names`),
                 };
             }
+            // remains to be seen if important or not
+            const userCurrentRoles: RoleRepresentation[] = await kcAdminClientResult.value.users.listRealmRoleMappings({
+                id: userId,
+            });
+
+            const newRolesToAssign: RoleRepresentation[] = validRoles.filter(
+                (role: RoleRepresentation) =>
+                    !userCurrentRoles.some((userRole: RoleRepresentation) => userRole.id === role.id),
+            );
+
+            if (newRolesToAssign.length === 0) {
+                return { ok: true, value: undefined };
+            }
 
             const roleMappings: {
                 id: string;
                 name: string;
-            }[] = validRoles.map((role: RoleRepresentation) => ({
+            }[] = newRolesToAssign.map((role: RoleRepresentation) => ({
                 id: role.id!,
                 name: role.name!,
             }));
