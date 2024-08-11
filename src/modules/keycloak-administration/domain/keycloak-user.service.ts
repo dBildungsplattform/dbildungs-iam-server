@@ -342,4 +342,69 @@ export class KeycloakUserService {
             return { ok: false, error: new KeycloakClientError('Failed to assign roles') };
         }
     }
+
+    public async removeRealmRolesFromUser(usernameId: string, roleNames: string[]): Promise<Result<void, DomainError>> {
+        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+            await this.kcAdminService.getAuthedKcAdminClient();
+
+        if (!kcAdminClientResult.ok) {
+            return kcAdminClientResult;
+        }
+
+        const userResult: Result<User<true>, DomainError> = await this.findById(usernameId);
+        if (!userResult.ok) {
+            return userResult;
+        }
+
+        const userId: string = userResult.value.id;
+
+        try {
+            const allRoles: RoleRepresentation[] = await kcAdminClientResult.value.roles.find();
+            const rolesToRemove: RoleRepresentation[] = allRoles.filter((role: RoleRepresentation) =>
+                roleNames.some((roleName: string) => role.name === `${roleName}-user`),
+            );
+
+            const validRoles: RoleRepresentation[] = rolesToRemove.filter(
+                (role: RoleRepresentation | undefined): role is RoleRepresentation =>
+                    role !== undefined && role.id !== undefined && role.name !== undefined,
+            );
+
+            if (validRoles.length === 0) {
+                return {
+                    ok: false,
+                    error: new EntityNotFoundError(`No valid roles found for the provided role names`),
+                };
+            }
+
+            const userCurrentRoles: RoleRepresentation[] = await kcAdminClientResult.value.users.listRealmRoleMappings({
+                id: userId,
+            });
+
+            const rolesToUnassign: RoleRepresentation[] = validRoles.filter((role: RoleRepresentation) =>
+                userCurrentRoles.some((userRole: RoleRepresentation) => userRole.id === role.id),
+            );
+
+            if (rolesToUnassign.length === 0) {
+                return { ok: true, value: undefined };
+            }
+
+            const roleMappings: {
+                id: string;
+                name: string;
+            }[] = rolesToUnassign.map((role: RoleRepresentation) => ({
+                id: role.id!,
+                name: role.name!,
+            }));
+
+            await kcAdminClientResult.value.users.delRealmRoleMappings({
+                id: userId,
+                roles: roleMappings,
+            });
+
+            return { ok: true, value: undefined };
+        } catch (err) {
+            this.logger.error(`Failed to remove roles from user ${usernameId}: ${JSON.stringify(err)}`);
+            return { ok: false, error: new KeycloakClientError('Failed to remove roles') };
+        }
+    }
 }
