@@ -274,8 +274,7 @@ export class KeycloakUserService {
         return { ok: true, value: userDo };
     }
 
-    // TODO add role names instead of roleName
-    public async assignRealmRoleToUser(usernameId: string, roleName: string): Promise<Result<void, DomainError>> {
+    public async assignRealmRolesToUser(usernameId: string, roleNames: string[]): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
 
@@ -291,31 +290,42 @@ export class KeycloakUserService {
         const userId: string = userResult.value.id;
 
         try {
-            const role: RoleRepresentation | undefined = await kcAdminClientResult.value.roles.findOneByName({
-                name: `${roleName}-user`,
-            });
+            // return all roles instead of calling the DB multiple times KC does not support finding all the roles with one call
+            const allRoles: RoleRepresentation[] = await kcAdminClientResult.value.roles.find();
 
-            if (!role || !role.id || !role.name) {
+            const roles: RoleRepresentation[] = allRoles.filter((role: RoleRepresentation) =>
+                roleNames.some((roleName: string) => role.name === `${roleName}-user`),
+            );
+
+            const validRoles: RoleRepresentation[] = roles.filter(
+                (role: RoleRepresentation | undefined): role is RoleRepresentation =>
+                    role !== undefined && role.id !== undefined && role.name !== undefined,
+            );
+
+            if (validRoles.length === 0) {
                 return {
                     ok: false,
-                    error: new EntityNotFoundError(`Role with name ${roleName} not found or invalid role data`),
+                    error: new EntityNotFoundError(`No valid roles found for the provided role names`),
                 };
             }
 
+            const roleMappings: {
+                id: string;
+                name: string;
+            }[] = validRoles.map((role: RoleRepresentation) => ({
+                id: role.id!,
+                name: role.name!,
+            }));
+
             await kcAdminClientResult.value.users.addRealmRoleMappings({
                 id: userId,
-                roles: [
-                    {
-                        id: role.id,
-                        name: role.name,
-                    },
-                ],
+                roles: roleMappings,
             });
 
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.error(`Failed to assign role ${roleName} to user ${usernameId}: ${JSON.stringify(err)}`);
-            return { ok: false, error: new KeycloakClientError('Failed to assign role') };
+            this.logger.error(`Failed to assign roles to user ${usernameId}: ${JSON.stringify(err)}`);
+            return { ok: false, error: new KeycloakClientError('Failed to assign roles') };
         }
     }
 }
