@@ -140,7 +140,9 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
 
-                const result: Result<void> = await ldapClientService.createOrganisation(ouKennung);
+                const result: Result<void> = await ldapClientService.createOrganisation({
+                    kennung: faker.string.numeric({ length: 7 }),
+                });
 
                 expect(result.ok).toBeFalsy();
             });
@@ -156,7 +158,9 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
 
-                const result: Result<void> = await ldapClientService.createOrganisation(ouKennung);
+                const result: Result<void> = await ldapClientService.createOrganisation({
+                    kennung: faker.string.numeric({ length: 7 }),
+                });
 
                 expect(result.ok).toBeTruthy();
             });
@@ -167,7 +171,9 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<void> = await ldapClientService.createOrganisation('');
+                const result: Result<void> = await ldapClientService.createOrganisation({
+                    kennung: undefined,
+                });
 
                 expect(result).toEqual({
                     ok: false,

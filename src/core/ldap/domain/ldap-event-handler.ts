@@ -27,7 +27,9 @@ export class LdapEventHandler {
         this.logger.info(`Kennung of organisation is:${event.kennung}`);
 
         this.logger.info(`Call LdapClientService because ${event.name} type is SCHULE`);
-        const creationResult: Result<void> = await this.ldapClientService.createOrganisation(event.kennung);
+        const creationResult: Result<void> = await this.ldapClientService.createOrganisation({
+            kennung: event.kennung,
+        });
         if (!creationResult.ok) {
             this.logger.error(creationResult.error.message);
         }

@@ -130,7 +130,7 @@ export class ItsLearningOrganisationsEventHandler {
         this.logger.info(`Klasse with ID ${event.id} created.`);
     }
 
-    //TODO: Mit Philipp über das Refactoring in eine Recursive Query sprechen
+    //TODO: Mit den Architekten abklären
     private async findParentId(organisationId: OrganisationID | undefined): Promise<OrganisationID> {
         const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
             await this.organisationRepository.findRootDirectChildren();

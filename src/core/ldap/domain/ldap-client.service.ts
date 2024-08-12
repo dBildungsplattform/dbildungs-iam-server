@@ -49,27 +49,35 @@ export class LdapClientService {
         }
     }
 
-    public async createOrganisation(kennung: string): Promise<Result<void>> {
+    public async createOrganisation(organisationData: OrganisationData): Promise<Result<void>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: createOrganisation');
-            if (!kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
+            if (!organisationData.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
             const organisationEntry: LdapOrganisationEntry = {
-                ou: kennung,
+                ou: organisationData.kennung,
                 objectclass: ['organizationalUnit'],
             };
             const roleEntry: LdapRoleEntry = {
                 cn: 'lehrer',
-                ou: kennung,
+                ou: organisationData.kennung,
                 objectclass: ['organizationalRole'],
             };
-            await client.add(`ou=${kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, organisationEntry);
-            this.logger.info(`LDAP: Successfully created organisation ou=${kennung}`);
+            await client.add(
+                `ou=${organisationData.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
+                organisationEntry,
+            );
+            this.logger.info(`LDAP: Successfully created organisation ou=${organisationData.kennung}`);
 
-            await client.add(`cn=lehrer,ou=${kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, roleEntry);
-            this.logger.info(`LDAP: Successfully created corresponding lehrer rolle for ou=${kennung}`);
+            await client.add(
+                `cn=lehrer,ou=${organisationData.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
+                roleEntry,
+            );
+            this.logger.info(
+                `LDAP: Successfully created corresponding lehrer rolle for ou=${organisationData.kennung}`,
+            );
 
             return { ok: true, value: undefined };
         });

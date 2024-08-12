@@ -101,7 +101,6 @@ describe('LDAP Event Handler', () => {
                     ok: true,
                     value: undefined,
                 };
-
                 ldapClientServiceMock.createOrganisation.mockResolvedValueOnce(result);
 
                 await ldapEventHandler.handleSchuleCreatedEvent(event);
@@ -121,8 +120,6 @@ describe('LDAP Event Handler', () => {
                     ok: false,
                     error: new Error(),
                 };
-
-                // organisationRepositoryMock.findById.mockResolvedValueOnce(organisation);
                 ldapClientServiceMock.createOrganisation.mockResolvedValueOnce(result);
 
                 await ldapEventHandler.handleSchuleCreatedEvent(event);
