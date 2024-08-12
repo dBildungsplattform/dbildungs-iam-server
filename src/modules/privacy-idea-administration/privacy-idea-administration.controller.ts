@@ -57,7 +57,7 @@ export class PrivacyIdeaAdministrationController {
             throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
         }
 
-        const selfService: boolean = params.personId === personResult.value.id;
+        const selfService: boolean = personResult.value.id === permissions.personFields.id;
 
         return this.privacyIdeaAdministrationService.initializeSoftwareToken(personResult.value.referrer, selfService);
     }
