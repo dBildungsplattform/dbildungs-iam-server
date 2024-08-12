@@ -13,6 +13,8 @@ import { OrganisationRepository } from '../organisation/persistence/organisation
 import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { KeyclockServiceProviderEventHandler } from './event-handlers/keycloack-service-provider.event-handler.js';
+import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonenkontextFactory } from '../personenkontext/domain/personenkontext.factory.js';
 
 @Module({
     imports: [LoggerModule.register(KeycloakAdministrationModule.name), KeycloakConfigModule],
@@ -27,6 +29,8 @@ import { KeyclockServiceProviderEventHandler } from './event-handlers/keycloack-
         OrganisationRepository,
         ServiceProviderRepo,
         PersonRepository,
+        DBiamPersonenkontextRepo,
+        PersonenkontextFactory,
     ],
     exports: [KeycloakUserService, KeycloakGroupRoleService],
 })

@@ -16,6 +16,8 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { KeycloakUserService } from '../domain/keycloak-user.service.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 
 @Injectable()
 export class KeyclockServiceProviderEventHandler {
@@ -23,6 +25,7 @@ export class KeyclockServiceProviderEventHandler {
         private readonly logger: ClassLogger,
         private readonly rolleRepo: RolleRepo,
         private readonly personRepo: PersonRepository,
+        private readonly personKontextRepo: DBiamPersonenkontextRepo,
         private readonly keycloackUserService: KeycloakUserService,
     ) {}
 
@@ -77,6 +80,11 @@ export class KeyclockServiceProviderEventHandler {
         this.logger.info(`Received PersonenkontextUpdatedEvent for deletion, ${event.personId}`);
 
         const serviceProviderNames: string[] = [];
+
+        const persons: Personenkontext<true>[] = await this.personKontextRepo.findByPerson(event.personId);
+        if (persons) {
+            this.logger.info(`Personsssss ${JSON.stringify(persons)}}`);
+        }
 
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(event.rolleId);
         this.logger.info(
