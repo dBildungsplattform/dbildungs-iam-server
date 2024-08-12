@@ -78,7 +78,7 @@ export class KeyclockServiceProviderEventHandler {
     @EventHandler(PersonenkontextUpdatedEvent)
     public async updatePersonenkontexteKCandSP(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(`Received PersonenkontextUpdatedEvent, ${event.person.id}`);
-        const serviceProviders: string[] = await this.personKontextRepo.getServiceProviderNames(event);
+        const serviceProviders = await this.personKontextRepo.getServiceProviderKeycloakRoles(event);
 
         const person: Option<Person<true>> = await this.personRepo.findById(event.person.id);
         if (person && person.keycloakUserId) {
