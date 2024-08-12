@@ -1,55 +1,57 @@
-import { AutoMap } from '@automapper/classes';
-import { PersonNameParams } from './person-name.params.js';
 import { ApiProperty } from '@nestjs/swagger';
+import { PersonNameParams } from './person-name.params.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { Vertrauensstufe, VertrauensstufeTypName } from '../domain/person.enums.js';
 
 export class PersonResponseAutomapper {
-    @AutoMap()
     @ApiProperty()
     public id!: string;
 
-    @AutoMap()
     @ApiProperty()
     public referrer?: string;
 
-    @AutoMap()
     @ApiProperty()
     public mandant: string = '';
 
-    @AutoMap(() => PersonNameParams)
     @ApiProperty({ type: PersonNameParams })
     public name!: PersonNameParams;
 
-    @AutoMap(() => PersonBirthParams)
     @ApiProperty({ type: PersonBirthParams })
     public geburt!: PersonBirthParams;
 
-    @AutoMap()
     @ApiProperty()
     public readonly stammorganisation?: string;
 
-    @AutoMap()
     @ApiProperty()
     public geschlecht!: string;
 
-    @AutoMap()
     @ApiProperty()
     public lokalisierung!: string;
 
-    @AutoMap(() => String)
     @ApiProperty({ enum: Vertrauensstufe, enumName: VertrauensstufeTypName })
     public vertrauensstufe!: Vertrauensstufe;
 
-    @AutoMap()
     @ApiProperty()
     public revision!: string;
 
-    @AutoMap()
     @ApiProperty({ description: 'Initiales Benutzerpasswort, muss nach der ersten Anmeldung geändert werden' })
     public startpasswort?: string;
 
-    @AutoMap()
     @ApiProperty()
     public personalnummer?: string;
+
+    public constructor(props: Partial<PersonResponseAutomapper>) {
+        this.id = props.id!;
+        this.referrer = props.referrer;
+        this.mandant = props.mandant!;
+        this.name = props.name!;
+        this.geburt = props.geburt!;
+        this.stammorganisation = props.stammorganisation;
+        this.geschlecht = props.geschlecht!;
+        this.lokalisierung = props.lokalisierung!;
+        this.vertrauensstufe = props.vertrauensstufe!;
+        this.revision = props.revision!;
+        this.startpasswort = props.startpasswort;
+        this.personalnummer = props.personalnummer;
+    }
 }

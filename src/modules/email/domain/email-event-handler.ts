@@ -16,6 +16,7 @@ import { EmailAddressNotFoundError } from '../error/email-address-not-found.erro
 import { EmailRepo } from '../persistence/email.repo.js';
 import { EmailFactory } from './email.factory.js';
 import { EmailAddress } from './email-address.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
@@ -37,6 +38,47 @@ export class EmailEventHandler {
             `Received PersonenkontextCreatedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
         );
         await this.handlePerson(event.personId);
+    }
+
+    @EventHandler(PersonRenamedEvent)
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async handlePersonRenamedEvent(event: PersonRenamedEvent): Promise<void> {
+        this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}`);
+
+        const rollen: Rolle<true>[] = await this.getRollenForPerson(event.personId);
+        if (await this.anyRolleReferencesEmailServiceProvider(rollen)) {
+            const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(event.personId);
+            if (existingEmail) {
+                this.logger.info(
+                    `Existing email found for personId:${event.personId}, address:${existingEmail.currentAddress}`,
+                );
+                if (existingEmail.enabled) {
+                    existingEmail.disable();
+                    const persistenceResult: EmailAddress<true> | DomainError =
+                        await this.emailRepo.save(existingEmail);
+                    if (persistenceResult instanceof EmailAddress) {
+                        this.logger.info(`Disabled and saved address:${persistenceResult.currentAddress}`);
+                    } else {
+                        this.logger.error(`Could not disable email, error is ${persistenceResult.message}`);
+                    }
+                }
+            }
+            this.logger.info(`Creating new email-address for personId:${event.personId}, due to PersonRenamedEvent`);
+            await this.createNewEmail(event.personId);
+        }
+    }
+
+    private async getRollenForPerson(personId: PersonID): Promise<Rolle<true>[]> {
+        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
+        const rollenIds: string[] = [];
+        for (const personenkontext of personenkontexte) {
+            rollenIds.push(personenkontext.rolleId);
+        }
+        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
+
+        return Array.from(rollenMap.values(), (value: Rolle<true>) => {
+            return value;
+        });
     }
 
     @EventHandler(PersonenkontextDeletedEvent)

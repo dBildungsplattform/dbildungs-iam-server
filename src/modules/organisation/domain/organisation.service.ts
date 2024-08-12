@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { OrganisationRepo } from '../persistence/organisation.repo.js';
 import {
     DomainError,
     EntityCouldNotBeCreated,
     EntityCouldNotBeUpdated,
     EntityNotFoundError,
 } from '../../../shared/error/index.js';
-import { OrganisationDo } from './organisation.do.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { RootOrganisationImmutableError } from '../specification/error/root-organisation-immutable.error.js';
@@ -33,14 +31,16 @@ import { SchuleKennungEindeutigError } from '../specification/error/schule-kennu
 import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
+import { Organisation } from './organisation.js';
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
 
 @Injectable()
 export class OrganisationService {
-    public constructor(private readonly organisationRepo: OrganisationRepo) {}
+    public constructor(private readonly organisationRepo: OrganisationRepository) {}
 
     public async createOrganisation(
-        organisationDo: OrganisationDo<false>,
-    ): Promise<Result<OrganisationDo<true>, DomainError>> {
+        organisationDo: Organisation<false>,
+    ): Promise<Result<Organisation<true>, DomainError>> {
         if (organisationDo.administriertVon && !(await this.organisationRepo.exists(organisationDo.administriertVon))) {
             return {
                 ok: false,
@@ -78,7 +78,7 @@ export class OrganisationService {
             return { ok: false, error: validateKlassen.error };
         }
 
-        const organisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
+        const organisation: Organisation<true> = await this.organisationRepo.save(organisationDo);
         if (organisation) {
             return { ok: true, value: organisation };
         }
@@ -86,11 +86,9 @@ export class OrganisationService {
     }
 
     public async updateOrganisation(
-        organisationDo: OrganisationDo<true>,
-    ): Promise<Result<OrganisationDo<true>, DomainError>> {
-        const storedOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(
-            organisationDo.id,
-        );
+        organisationDo: Organisation<true>,
+    ): Promise<Result<Organisation<true>, DomainError>> {
+        const storedOrganisation: Option<Organisation<true>> = await this.organisationRepo.findById(organisationDo.id);
         if (!storedOrganisation) {
             return { ok: false, error: new EntityNotFoundError('Organisation', organisationDo.id) };
         }
@@ -118,7 +116,7 @@ export class OrganisationService {
             return { ok: false, error: validateKlassen.error };
         }
 
-        const organisation: OrganisationDo<true> = await this.organisationRepo.save(organisationDo);
+        const organisation: Organisation<true> = await this.organisationRepo.save(organisationDo);
         if (organisation) {
             return { ok: true, value: organisation };
         }
@@ -130,7 +128,7 @@ export class OrganisationService {
     }
 
     private async validateKennungRequiredForSchule(
-        organisation: OrganisationDo<boolean>,
+        organisation: Organisation<boolean>,
     ): Promise<Result<void, DomainError>> {
         const kennungRequiredForSchule: KennungRequiredForSchule = new KennungRequiredForSchule();
         if (!(await kennungRequiredForSchule.isSatisfiedBy(organisation))) {
@@ -141,7 +139,7 @@ export class OrganisationService {
     }
 
     private async validateNameRequiredForSchule(
-        organisation: OrganisationDo<boolean>,
+        organisation: Organisation<boolean>,
     ): Promise<Result<void, DomainError>> {
         const nameRequiredForSchule: NameRequiredForSchule = new NameRequiredForSchule();
         if (!(await nameRequiredForSchule.isSatisfiedBy(organisation))) {
@@ -151,9 +149,7 @@ export class OrganisationService {
         return { ok: true, value: undefined };
     }
 
-    private async validateSchuleKennungUnique(
-        organisation: OrganisationDo<boolean>,
-    ): Promise<Result<void, DomainError>> {
+    private async validateSchuleKennungUnique(organisation: Organisation<boolean>): Promise<Result<void, DomainError>> {
         const schuleKennungEindeutig: SchuleKennungEindeutig = new SchuleKennungEindeutig(this.organisationRepo);
         if (!(await schuleKennungEindeutig.isSatisfiedBy(organisation))) {
             return { ok: false, error: new SchuleKennungEindeutigError() };
@@ -162,8 +158,8 @@ export class OrganisationService {
         return { ok: true, value: undefined };
     }
 
-    public async findOrganisationById(id: string): Promise<Result<OrganisationDo<true>, DomainError>> {
-        const organisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(id);
+    public async findOrganisationById(id: string): Promise<Result<Organisation<true>, DomainError>> {
+        const organisation: Option<Organisation<true>> = await this.organisationRepo.findById(id);
         if (organisation) {
             return { ok: true, value: organisation };
         }
@@ -171,10 +167,10 @@ export class OrganisationService {
     }
 
     public async findAllOrganizations(
-        organisationDo: Partial<OrganisationDo<false>>,
+        organisationDo: Partial<Organisation<false>>,
         offset?: number,
         limit?: number,
-    ): Promise<Paged<OrganisationDo<true>>> {
+    ): Promise<Paged<Organisation<true>>> {
         const scope: OrganisationScope = new OrganisationScope()
             .findBy({
                 kennung: organisationDo.kennung,
@@ -182,7 +178,7 @@ export class OrganisationService {
                 typ: organisationDo.typ,
             })
             .paged(offset, limit);
-        const [organisations, total]: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);
+        const [organisations, total]: Counted<Organisation<true>> = await this.organisationRepo.findBy(scope);
 
         return {
             total,
@@ -204,7 +200,7 @@ export class OrganisationService {
             };
         }
 
-        const childOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(childId);
+        const childOrganisation: Option<Organisation<true>> = await this.organisationRepo.findById(childId);
         if (!childOrganisation) {
             return {
                 ok: false,
@@ -231,7 +227,7 @@ export class OrganisationService {
     }
 
     private async validateAdministriertVon(
-        childOrganisation: OrganisationDo<true>,
+        childOrganisation: Organisation<true>,
         parentId: string,
     ): Promise<Result<boolean, OrganisationSpecificationError>> {
         //check version from DB before administriertVon is altered
@@ -258,7 +254,7 @@ export class OrganisationService {
             };
         }
 
-        const childOrganisation: Option<OrganisationDo<true>> = await this.organisationRepo.findById(childId);
+        const childOrganisation: Option<Organisation<true>> = await this.organisationRepo.findById(childId);
         if (!childOrganisation) {
             return {
                 ok: false,
@@ -286,7 +282,7 @@ export class OrganisationService {
     }
 
     private async validateZugehoerigZu(
-        childOrganisation: OrganisationDo<true>,
+        childOrganisation: Organisation<true>,
         parentId: string,
     ): Promise<Result<boolean, OrganisationSpecificationError>> {
         //check version from DB before zugehoerigZu is altered
@@ -305,7 +301,7 @@ export class OrganisationService {
     }
 
     private async validateKlassenSpecifications(
-        childOrganisation: OrganisationDo<boolean>,
+        childOrganisation: Organisation<boolean>,
     ): Promise<Result<boolean, OrganisationSpecificationError>> {
         const klasseNurVonSchuleAdministriert: KlasseNurVonSchuleAdministriert = new KlasseNurVonSchuleAdministriert(
             this.organisationRepo,
@@ -323,7 +319,7 @@ export class OrganisationService {
     }
 
     private async validateStructureSpecifications(
-        childOrganisation: OrganisationDo<true>,
+        childOrganisation: Organisation<true>,
     ): Promise<Result<boolean, OrganisationSpecificationError>> {
         const schuleUnterTraeger: SchuleUnterTraeger = new SchuleUnterTraeger(this.organisationRepo);
         if (!(await schuleUnterTraeger.isSatisfiedBy(childOrganisation))) {
@@ -344,7 +340,7 @@ export class OrganisationService {
         return { ok: true, value: true };
     }
 
-    private validateFieldNames(organisation: OrganisationDo<boolean>): void | OrganisationSpecificationError {
+    private validateFieldNames(organisation: Organisation<boolean>): void | OrganisationSpecificationError {
         if (organisation.name && !NameValidator.isNameValid(organisation.name)) {
             return new NameForOrganisationWithTrailingSpaceError();
         }
@@ -361,14 +357,14 @@ export class OrganisationService {
         searchFilter?: string,
         offset?: number,
         limit?: number,
-    ): Promise<Paged<OrganisationDo<true>>> {
+    ): Promise<Paged<Organisation<true>>> {
         const scope: OrganisationScope = new OrganisationScope()
             .setScopeWhereOperator(ScopeOperator.AND)
             .findAdministrierteVon(parentOrganisationID)
             .searchStringAdministriertVon(searchFilter)
             .paged(offset, limit);
 
-        const [organisations, total]: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);
+        const [organisations, total]: Counted<Organisation<true>> = await this.organisationRepo.findBy(scope);
 
         return {
             total,
@@ -382,12 +378,12 @@ export class OrganisationService {
         parentOrganisationID: string,
         offset?: number,
         limit?: number,
-    ): Promise<Paged<OrganisationDo<true>>> {
+    ): Promise<Paged<Organisation<true>>> {
         const scope: OrganisationScope = new OrganisationScope()
             .findZugehoerigeZu(parentOrganisationID)
             .paged(offset, limit);
 
-        const [organisations, total]: Counted<OrganisationDo<true>> = await this.organisationRepo.findBy(scope);
+        const [organisations, total]: Counted<Organisation<true>> = await this.organisationRepo.findBy(scope);
 
         return {
             total,
