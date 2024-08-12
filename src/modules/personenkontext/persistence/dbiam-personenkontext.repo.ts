@@ -19,10 +19,7 @@ import { MismatchedRevisionError } from '../../../shared/error/mismatched-revisi
 import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
-import {
-    PersonenkontextUpdatedData,
-    PersonenkontextUpdatedEvent,
-} from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
@@ -448,27 +445,45 @@ export class DBiamPersonenkontextRepo {
     public async getServiceProviderKeycloakRoles(
         event: PersonenkontextUpdatedEvent,
     ): Promise<{ keycloak_role: string; keycloak_user_id: string }[]> {
-        const currentKontext: PersonenkontextUpdatedData | undefined = event.currentKontexte[0];
-        if (!currentKontext) {
+        const personId = event.person.id;
+        const rolleId = event.currentKontexte[0]?.rolleId;
+
+        if (!personId || !rolleId) {
             return [];
         }
 
         const query: string = `
-        SELECT sp.keycloak_role, p.keycloak_user_id
-        FROM public.personenkontext pk
-        JOIN public.rolle r ON pk.rolle_id = r.id
-        JOIN public.rolle_service_provider rsp ON rsp.rolle_id = r.id
-        JOIN public.service_provider sp ON sp.id = rsp.service_provider_id
-        JOIN public.person p ON pk.person_id = p.id
-        WHERE pk.rolle_id = ? AND pk.person_id = ?
-    `;
+            WITH RelevantRoles AS (
+                SELECT sp.keycloak_role, p.keycloak_user_id
+                FROM public.personenkontext pk
+                JOIN public.rolle r ON pk.rolle_id = r.id
+                JOIN public.rolle_service_provider rsp ON rsp.rolle_id = r.id
+                JOIN public.service_provider sp ON sp.id = rsp.service_provider_id
+                JOIN public.person p ON pk.person_id = p.id
+                WHERE pk.person_id = ? AND pk.rolle_id = ?
+            ),
+            OverlappingRoles AS (
+                SELECT DISTINCT sp.keycloak_role
+                FROM public.personenkontext pk
+                JOIN public.rolle r ON pk.rolle_id = r.id
+                JOIN public.rolle_service_provider rsp ON rsp.rolle_id = r.id
+                JOIN public.service_provider sp ON sp.id = rsp.service_provider_id
+                WHERE pk.person_id = ? AND pk.rolle_id != ?
+            )
+            SELECT DISTINCT rr.keycloak_role, rr.keycloak_user_id
+            FROM RelevantRoles rr
+            LEFT JOIN OverlappingRoles orl ON rr.keycloak_role = orl.keycloak_role
+            WHERE orl.keycloak_role IS NULL;
+        `;
 
         const result: { keycloak_role: string; keycloak_user_id: string }[] = await this.em.execute(query, [
-            currentKontext.rolleId,
-            event.person.id,
+            personId,
+            rolleId,
+            personId,
+            rolleId,
         ]);
 
-        return result.map((row: { keycloak_role: string; keycloak_user_id: string }) => ({
+        return result.map((row) => ({
             keycloak_role: row.keycloak_role,
             keycloak_user_id: row.keycloak_user_id,
         }));
