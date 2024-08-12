@@ -462,8 +462,7 @@ export class PersonController {
 
     @Put(':personId/lock-user')
     @HttpCode(HttpStatus.ACCEPTED)
-    @ApiOkResponse({ description: 'User has been successfully updated.' })
-    @ApiAcceptedResponse({ description: 'User has been successfully updated.', type: String })
+    @ApiOkResponse({ description: 'User has been successfully updated.', type: PersonLockResponse })
     @ApiNotFoundResponse({ description: 'The person was not found.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
