@@ -445,27 +445,33 @@ export class DBiamPersonenkontextRepo {
         return (await this.findByRolle(id)).length > 0;
     }
 
-    public async getServiceProviderKeycloakRoles(event: PersonenkontextUpdatedEvent): Promise<string[]> {
+    public async getServiceProviderKeycloakRoles(
+        event: PersonenkontextUpdatedEvent,
+    ): Promise<{ keycloak_role: string; keycloak_user_id: string }[]> {
         const currentKontext: PersonenkontextUpdatedData | undefined = event.currentKontexte[0];
         if (!currentKontext) {
             return [];
         }
 
         const query: string = `
-            SELECT sp.keycloak_role
-            FROM public.personenkontext pk
-            JOIN public.rolle r ON pk.rolle_id = r.id
-            JOIN public.rolle_service_provider rsp ON rsp.rolle_id = r.id
-            JOIN public.service_provider sp ON sp.id = rsp.service_provider_id
-            WHERE pk.rolle_id = ? AND pk.person_id = ?
-        `;
+        SELECT sp.keycloak_role, p.keycloak_user_id
+        FROM public.personenkontext pk
+        JOIN public.rolle r ON pk.rolle_id = r.id
+        JOIN public.rolle_service_provider rsp ON rsp.rolle_id = r.id
+        JOIN public.service_provider sp ON sp.id = rsp.service_provider_id
+        JOIN public.person p ON pk.person_id = p.id
+        WHERE pk.rolle_id = ? AND pk.person_id = ?
+    `;
 
-        const result: { keycloak_role: string }[] = await this.em.execute(query, [
+        const result: { keycloak_role: string; keycloak_user_id: string }[] = await this.em.execute(query, [
             currentKontext.rolleId,
             event.person.id,
         ]);
 
-        return result.map((row: { keycloak_role: string }) => row.keycloak_role);
+        return result.map((row: { keycloak_role: string; keycloak_user_id: string }) => ({
+            keycloak_role: row.keycloak_role,
+            keycloak_user_id: row.keycloak_user_id,
+        }));
     }
 
     // public async getServiceProviderNamesTest(): Promise<void> {
