@@ -445,14 +445,14 @@ export class DBiamPersonenkontextRepo {
         return (await this.findByRolle(id)).length > 0;
     }
 
-    public async getServiceProviderNames(event: PersonenkontextUpdatedEvent): Promise<string[]> {
+    public async getServiceProviderKeycloakRoles(event: PersonenkontextUpdatedEvent): Promise<string[]> {
         const currentKontext: PersonenkontextUpdatedData | undefined = event.currentKontexte[0];
         if (!currentKontext) {
             return [];
         }
 
         const query: string = `
-            SELECT sp.name
+            SELECT sp.keycloak_role
             FROM public.personenkontext pk
             JOIN public.rolle r ON pk.rolle_id = r.id
             JOIN public.rolle_service_provider rsp ON rsp.rolle_id = r.id
@@ -460,9 +460,12 @@ export class DBiamPersonenkontextRepo {
             WHERE pk.rolle_id = ? AND pk.person_id = ?
         `;
 
-        const result: { name: string }[] = await this.em.execute(query, [currentKontext.rolleId, event.person.id]);
+        const result: { keycloak_role: string }[] = await this.em.execute(query, [
+            currentKontext.rolleId,
+            event.person.id,
+        ]);
 
-        return result.map((row: { name: string }) => row.name);
+        return result.map((row: { keycloak_role: string }) => row.keycloak_role);
     }
 
     // public async getServiceProviderNamesTest(): Promise<void> {
