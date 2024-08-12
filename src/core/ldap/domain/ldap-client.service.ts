@@ -3,7 +3,6 @@ import { ClassLogger } from '../../logging/class-logger.js';
 import { Client, SearchResult } from 'ldapts';
 import { LdapEntityType, LdapOrganisationEntry, LdapPersonEntry, LdapRoleEntry } from './ldap.types.js';
 import { KennungRequiredForSchuleError } from '../../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
-import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { LdapClient } from './ldap-client.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
@@ -76,23 +75,25 @@ export class LdapClientService {
         });
     }
 
-    public async deleteOrganisation(organisation: Organisation<true>): Promise<Result<Organisation<true>>> {
+    public async deleteOrganisation(organisationData: OrganisationData): Promise<Result<void>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteOrganisation');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
-            if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
+            if (!organisationData.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
 
             this.logger.info('LDAP: Successfully connected to LDAP');
 
-            await client.del(`cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`);
-            this.logger.info(`LDAP: Successfully deleted corresponding lehrer rolle for ou=${organisation.kennung}`);
+            await client.del(`cn=lehrer,ou=${organisationData.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`);
+            this.logger.info(
+                `LDAP: Successfully deleted corresponding lehrer rolle for ou=${organisationData.kennung}`,
+            );
 
-            await client.del(`ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`);
-            this.logger.info(`LDAP: Successfully deleted organisation ou=${organisation.kennung}`);
+            await client.del(`ou=${organisationData.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`);
+            this.logger.info(`LDAP: Successfully deleted organisation ou=${organisationData.kennung}`);
 
-            return { ok: true, value: organisation };
+            return { ok: true, value: undefined };
         });
     }
 

@@ -326,7 +326,9 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
 
-                const result: Result<Organisation<true>> = await ldapClientService.deleteOrganisation(organisation);
+                const result: Result<void> = await ldapClientService.deleteOrganisation({
+                    kennung: faker.string.numeric({ length: 7 }),
+                });
 
                 expect(result.ok).toBeTruthy();
             });
@@ -337,10 +339,15 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<Organisation<true>> =
-                    await ldapClientService.deleteOrganisation(invalidOrganisation);
 
-                expect(result.ok).toBeFalsy();
+                const result: Result<void> = await ldapClientService.deleteOrganisation({
+                    kennung: undefined,
+                });
+
+                expect(result).toEqual({
+                    ok: false,
+                    error: new KennungRequiredForSchuleError(),
+                });
             });
 
             it('when bind returns error', async () => {
@@ -349,8 +356,9 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<Organisation<true>> =
-                    await ldapClientService.deleteOrganisation(invalidOrganisation);
+                const result: Result<void> = await ldapClientService.deleteOrganisation({
+                    kennung: faker.string.numeric({ length: 7 }),
+                });
 
                 expect(result.ok).toBeFalsy();
             });
