@@ -7,13 +7,11 @@ import { ItsLearningConfig } from '../../../shared/config/itslearning.config.js'
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { CreateGroupAction, CreateGroupParams } from '../actions/create-group.action.js';
 import { GroupResponse, ReadGroupAction } from '../actions/read-group.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
+import { RootDirectChildrenType } from '../../organisation/domain/organisation.enums.js';
 
 @Injectable()
 export class ItsLearningOrganisationsEventHandler {
@@ -21,12 +19,9 @@ export class ItsLearningOrganisationsEventHandler {
 
     private readonly ROOT_OEFFENTLICH: string;
 
-    private readonly ROOT_ERSATZ: string;
-
     public constructor(
         private readonly logger: ClassLogger,
         private readonly itsLearningService: ItsLearningIMSESService,
-        private readonly organisationRepository: OrganisationRepository,
         configService: ConfigService<ServerConfig>,
     ) {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
@@ -34,7 +29,6 @@ export class ItsLearningOrganisationsEventHandler {
         this.ENABLED = itsLearningConfig.ENABLED === 'true';
 
         this.ROOT_OEFFENTLICH = itsLearningConfig.ROOT_OEFFENTLICH;
-        this.ROOT_ERSATZ = itsLearningConfig.ROOT_ERSATZ;
     }
 
     @EventHandler(SchuleCreatedEvent)
@@ -46,9 +40,7 @@ export class ItsLearningOrganisationsEventHandler {
             return;
         }
 
-        const parent: OrganisationID | undefined = await this.findParentId(event.administriertVon);
-
-        if (parent === this.ROOT_ERSATZ) {
+        if (event.rootDirectChildrenZuordnung === RootDirectChildrenType.ERSATZ) {
             this.logger.error(`Ersatzschule, ignoring.`);
             return;
         }
@@ -57,7 +49,7 @@ export class ItsLearningOrganisationsEventHandler {
             id: event.organisationId,
             name: `${event.kennung} (${event.name ?? 'Unbenannte Schule'})`,
             type: 'School',
-            parentId: parent,
+            parentId: this.ROOT_OEFFENTLICH,
         };
 
         {
@@ -128,27 +120,5 @@ export class ItsLearningOrganisationsEventHandler {
         }
 
         this.logger.info(`Klasse with ID ${event.id} created.`);
-    }
-
-    //TODO: Mit den Architekten abklären
-    private async findParentId(organisationId: OrganisationID | undefined): Promise<OrganisationID> {
-        const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
-            await this.organisationRepository.findRootDirectChildren();
-
-        let parentOrgaId: OrganisationID | undefined = organisationId;
-
-        while (parentOrgaId) {
-            const result: Option<Organisation<true>> = await this.organisationRepository.findById(parentOrgaId);
-
-            if (result?.id === oeffentlich?.id) {
-                return this.ROOT_OEFFENTLICH;
-            } else if (result?.id === ersatz?.id) {
-                return this.ROOT_ERSATZ;
-            }
-
-            parentOrgaId = result?.administriertVon;
-        }
-
-        return this.ROOT_OEFFENTLICH;
     }
 }

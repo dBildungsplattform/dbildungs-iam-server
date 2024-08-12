@@ -11,7 +11,7 @@ import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { EventService } from '../../../core/eventbus/index.js';
-import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { OrganisationsTyp, RootDirectChildrenType } from '../domain/organisation.enums.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
 import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 
@@ -37,7 +37,7 @@ export class OrganisationRepo {
                     organisation.id,
                     organisation.kennung,
                     organisation.name,
-                    organisation.administriertVon,
+                    RootDirectChildrenType.OEFFENTLICH, //The create method in the organisation.repo is not being used, and should be soon deleted.
                 ),
             );
         } else if (organisationDo.typ === OrganisationsTyp.KLASSE) {
