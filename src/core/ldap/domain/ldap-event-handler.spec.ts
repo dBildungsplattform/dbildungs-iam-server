@@ -27,6 +27,7 @@ import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persi
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { ClassLogger } from '../../logging/class-logger.js';
+import { RootDirectChildrenType } from '../../../modules/organisation/domain/organisation.enums.js';
 
 describe('LDAP Event Handler', () => {
     let app: INestApplication;
@@ -95,7 +96,7 @@ describe('LDAP Event Handler', () => {
                     faker.string.uuid(),
                     faker.string.uuid(),
                     faker.word.noun(),
-                    faker.string.uuid(),
+                    RootDirectChildrenType.OEFFENTLICH,
                 );
                 const result: Result<void> = {
                     ok: true,
@@ -114,7 +115,7 @@ describe('LDAP Event Handler', () => {
                     faker.string.uuid(),
                     faker.string.uuid(),
                     faker.word.noun(),
-                    faker.string.uuid(),
+                    RootDirectChildrenType.OEFFENTLICH,
                 );
                 const result: Result<Organisation<true>> = {
                     ok: false,
@@ -133,7 +134,7 @@ describe('LDAP Event Handler', () => {
                 organisationId,
                 undefined,
                 faker.word.noun(),
-                faker.string.uuid(),
+                RootDirectChildrenType.OEFFENTLICH,
             );
 
             await ldapEventHandler.handleSchuleCreatedEvent(event);
