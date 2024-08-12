@@ -193,4 +193,49 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
     });
+
+    describe('PrivacyIdeaAdministrationController verify', () => {
+        it('should successfully verify token', async () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+            const person: Person<true> = getPerson();
+
+            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+                ok: true,
+                value: person,
+            });
+
+            jest.spyOn(serviceMock, 'verifyToken').mockResolvedValue(true);
+            const response: boolean = await sut.verifyToken(
+                { personId: 'user1', otp: '123456' },
+                personPermissionsMock,
+            );
+            expect(response).toEqual(true);
+        });
+
+        it('should return forbidden insufficient permissions', async () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+                ok: false,
+                error: new Error('Forbidden access'),
+            });
+
+            await expect(sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock)).rejects.toThrow(
+                new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
+            );
+        });
+
+        it('should return user not found if referrer is undefined', async () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+                ok: true,
+                value: getPerson(true),
+            });
+
+            await expect(sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock)).rejects.toThrow(
+                new HttpException('User not found.', HttpStatus.BAD_REQUEST),
+            );
+        });
+    });
 });
