@@ -1,28 +1,28 @@
 import { CompositeSpecification } from '../../specification/specifications.js';
-import { OrganisationDo } from '../domain/organisation.do.js';
-import { OrganisationRepo } from '../persistence/organisation.repo.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { Organisation } from '../domain/organisation.js';
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
 
-export class SchuleUnterTraeger extends CompositeSpecification<OrganisationDo<true>> {
-    public constructor(private readonly organisationRepo: OrganisationRepo) {
+export class SchuleUnterTraeger extends CompositeSpecification<Organisation<true>> {
+    public constructor(private readonly organisationRepo: OrganisationRepository) {
         super();
     }
 
-    public async isSatisfiedBy(t: OrganisationDo<true>): Promise<boolean> {
+    public async isSatisfiedBy(t: Organisation<true>): Promise<boolean> {
         if (t.typ !== OrganisationsTyp.SCHULE) return true;
         return (await this.validateAdministriertVon(t)) && (await this.validateZugehoerigZu(t));
     }
 
-    private async validateAdministriertVon(t: OrganisationDo<true>): Promise<boolean> {
+    private async validateAdministriertVon(t: Organisation<true>): Promise<boolean> {
         if (!t.administriertVon) return false;
-        const parent: Option<OrganisationDo<true>> = await this.organisationRepo.findById(t.administriertVon);
+        const parent: Option<Organisation<true>> = await this.organisationRepo.findById(t.administriertVon);
         if (!parent) return false;
         return parent.typ === OrganisationsTyp.TRAEGER || parent.typ === OrganisationsTyp.LAND;
     }
 
-    private async validateZugehoerigZu(t: OrganisationDo<true>): Promise<boolean> {
+    private async validateZugehoerigZu(t: Organisation<true>): Promise<boolean> {
         if (!t.zugehoerigZu) return false;
-        const parent: Option<OrganisationDo<true>> = await this.organisationRepo.findById(t.zugehoerigZu);
+        const parent: Option<Organisation<true>> = await this.organisationRepo.findById(t.zugehoerigZu);
         if (!parent) return false;
         return parent.typ === OrganisationsTyp.TRAEGER || parent.typ === OrganisationsTyp.LAND;
     }

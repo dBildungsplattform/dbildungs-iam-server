@@ -1,4 +1,3 @@
-import { AutoMap } from '@automapper/classes';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import {
@@ -7,8 +6,12 @@ import {
     Personenstatus,
     PersonenstatusTypName,
 } from '../../domain/personenkontext.enums.js';
+import { AutoMap } from '@automapper/classes';
 
 export class UpdatePersonenkontextBodyParams {
+    @IsString()
+    public id!: string;
+
     @AutoMap()
     @IsString()
     @IsOptional()

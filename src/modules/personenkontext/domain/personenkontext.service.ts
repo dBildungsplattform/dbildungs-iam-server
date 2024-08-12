@@ -13,6 +13,8 @@ import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonenkontextQueryParams } from '../api/param/personenkontext-query.params.js';
+import { UpdatePersonenkontextDto } from '../api/update-personenkontext.dto.js';
 
 @Injectable()
 export class PersonenkontextService {
@@ -22,6 +24,9 @@ export class PersonenkontextService {
         private readonly personRepo: PersonRepo,
     ) {}
 
+    /**
+     * @deprecated not going to be used anymore because current implmentation needs org id and rolle id
+     */
     public async createPersonenkontext(
         personenkontextDo: PersonenkontextDo<false>,
     ): Promise<Result<PersonenkontextDo<true>, DomainError>> {
@@ -38,26 +43,26 @@ export class PersonenkontextService {
     }
 
     public async findAllPersonenkontexte(
-        personenkontextDo: PersonenkontextDo<false>,
+        personenkontext: PersonenkontextQueryParams,
         organisationIDs?: OrganisationID[] | undefined,
         offset?: number,
         limit?: number,
-    ): Promise<Paged<PersonenkontextDo<true>>> {
+    ): Promise<Paged<Personenkontext<true>>> {
         const scope: PersonenkontextScope = new PersonenkontextScope()
             .setScopeWhereOperator(ScopeOperator.AND)
             .byOrganisations(organisationIDs)
             .findBy({
-                personId: personenkontextDo.personId,
-                referrer: personenkontextDo.referrer,
-                rolle: personenkontextDo.rolle,
-                personenstatus: personenkontextDo.personenstatus,
-                sichtfreigabe: personenkontextDo.sichtfreigabe,
+                personId: personenkontext.personId,
+                referrer: personenkontext.referrer,
+                rolle: personenkontext.rolle,
+                personenstatus: personenkontext.personenstatus,
+                sichtfreigabe: personenkontext.sichtfreigabe,
             })
             .sortBy('id', ScopeOrder.ASC)
             .paged(offset, limit);
 
-        const [personenkontexte, total]: Counted<PersonenkontextDo<true>> =
-            await this.personenkontextRepo.findBy(scope);
+        const [personenkontexte, total]: Counted<Personenkontext<true>> =
+            await this.dBiamPersonenkontextRepo.findBy(scope);
 
         return {
             offset: offset ?? 0,
@@ -67,9 +72,9 @@ export class PersonenkontextService {
         };
     }
 
-    public async findPersonenkontextById(id: string): Promise<Result<PersonenkontextDo<true>, DomainError>> {
-        const personenkontext: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.findById(id);
-        const result: Result<PersonenkontextDo<true>, DomainError> = personenkontext
+    public async findPersonenkontextById(id: string): Promise<Result<Personenkontext<true>, DomainError>> {
+        const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findByID(id);
+        const result: Result<Personenkontext<true>, DomainError> = personenkontext
             ? { ok: true, value: personenkontext }
             : { ok: false, error: new EntityNotFoundError('Personenkontext', id) };
 
@@ -82,9 +87,9 @@ export class PersonenkontextService {
     }
 
     public async updatePersonenkontext(
-        personenkontextDo: PersonenkontextDo<true>,
-    ): Promise<Result<PersonenkontextDo<true>, DomainError>> {
-        const storedPersonenkontext: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.findById(
+        personenkontextDo: UpdatePersonenkontextDto,
+    ): Promise<Result<Personenkontext<true>, DomainError>> {
+        const storedPersonenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findByID(
             personenkontextDo.id,
         );
 
@@ -102,14 +107,14 @@ export class PersonenkontextService {
         }
 
         const newRevision: string = (parseInt(storedPersonenkontext.revision) + 1).toString();
-        const newData: Partial<PersonenkontextDo<true>> = {
+        const newData: Partial<Personenkontext<true>> = {
             referrer: personenkontextDo.referrer,
             personenstatus: personenkontextDo.personenstatus,
             jahrgangsstufe: personenkontextDo.jahrgangsstufe,
             revision: newRevision,
         };
-        const updatedPersonenkontextDo: PersonenkontextDo<true> = Object.assign(storedPersonenkontext, newData);
-        const saved: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.save(updatedPersonenkontextDo);
+        const updatedPersonenkontextDo: Personenkontext<true> = Object.assign(storedPersonenkontext, newData);
+        const saved: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.save(updatedPersonenkontextDo);
 
         if (!saved) {
             return { ok: false, error: new EntityCouldNotBeUpdated('Personenkontext', updatedPersonenkontextDo.id) };
@@ -119,7 +124,7 @@ export class PersonenkontextService {
     }
 
     public async deletePersonenkontextById(id: string, revision: string): Promise<Result<void, DomainError>> {
-        const personenkontext: Option<PersonenkontextDo<true>> = await this.personenkontextRepo.findById(id);
+        const personenkontext: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.findByID(id);
 
         if (!personenkontext) {
             return { ok: false, error: new EntityNotFoundError('Personenkontext', id) };
@@ -129,9 +134,9 @@ export class PersonenkontextService {
             return { ok: false, error: new MismatchedRevisionError('Personenkontext') };
         }
 
-        const deletedPersons: number = await this.personenkontextRepo.deleteById(id);
+        const deletedPersons: boolean = await this.dBiamPersonenkontextRepo.deleteById(id);
 
-        if (deletedPersons === 0) {
+        if (deletedPersons === false) {
             return { ok: false, error: new EntityCouldNotBeDeleted('Personenkontext', id) };
         }
 
