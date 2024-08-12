@@ -49,7 +49,7 @@ export class DbSeedDataGeneratorConsole extends CommandRunner {
 
         const organisations: OrganisationFile[] = [];
         const klassen: string[] = ['A', 'B', 'C'];
-        const lastOrgaId: number = 12;
+        const lastOrgaId: number = 14;
         let klassenIdIndex: number = 1;
 
         for (let i: number = 1; i <= schoolCount; i++) {

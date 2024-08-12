@@ -2,44 +2,44 @@
 	"entityName": "Organisation",
 	"entities": [
 		{
-			"id": 13,
-			"kennung": "1111113",
-			"name": "Testschule-13",
+			"id": 15,
+			"kennung": "1111115",
+			"name": "Testschule-15",
 			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13",
+			"kuerzel": "Testschule-15",
 			"typ": "SCHULE",
 			"administriertVon": 1,
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 14,
-			"kennung": "1111113-1A",
+			"id": 16,
+			"kennung": "1111115-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-1A",
+			"kuerzel": "Testschule-15-1A",
 			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
+			"administriertVon": 15,
+			"zugehoerigZu": 15
 		},
 		{
-			"id": 15,
-			"kennung": "1111113-1B",
+			"id": 17,
+			"kennung": "1111115-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-1B",
+			"kuerzel": "Testschule-15-1B",
 			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
+			"administriertVon": 15,
+			"zugehoerigZu": 15
 		},
 		{
-			"id": 16,
-			"kennung": "1111113-1C",
+			"id": 18,
+			"kennung": "1111115-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-1C",
+			"kuerzel": "Testschule-15-1C",
 			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
+			"administriertVon": 15,
+			"zugehoerigZu": 15
 		}
 	]
 }

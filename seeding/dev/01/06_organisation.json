@@ -2,266 +2,6 @@
 	"entityName": "Organisation",
 	"entities": [
 		{
-			"id": 13,
-			"kennung": "1111113",
-			"name": "Testschule-13",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13",
-			"typ": "SCHULE",
-			"administriertVon": 1,
-			"zugehoerigZu": 1
-		},
-		{
-			"id": 63,
-			"kennung": "1111113-1A",
-			"name": "1A",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-1A",
-			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
-		},
-		{
-			"id": 64,
-			"kennung": "1111113-1B",
-			"name": "1B",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-1B",
-			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
-		},
-		{
-			"id": 65,
-			"kennung": "1111113-1C",
-			"name": "1C",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-1C",
-			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
-		},
-		{
-			"id": 66,
-			"kennung": "1111113-2A",
-			"name": "2A",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-2A",
-			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
-		},
-		{
-			"id": 67,
-			"kennung": "1111113-2B",
-			"name": "2B",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-2B",
-			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
-		},
-		{
-			"id": 68,
-			"kennung": "1111113-2C",
-			"name": "2C",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-2C",
-			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
-		},
-		{
-			"id": 69,
-			"kennung": "1111113-3A",
-			"name": "3A",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-3A",
-			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
-		},
-		{
-			"id": 70,
-			"kennung": "1111113-3B",
-			"name": "3B",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-3B",
-			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
-		},
-		{
-			"id": 71,
-			"kennung": "1111113-3C",
-			"name": "3C",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-3C",
-			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
-		},
-		{
-			"id": 72,
-			"kennung": "1111113-4A",
-			"name": "4A",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-4A",
-			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
-		},
-		{
-			"id": 73,
-			"kennung": "1111113-4B",
-			"name": "4B",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-4B",
-			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
-		},
-		{
-			"id": 74,
-			"kennung": "1111113-4C",
-			"name": "4C",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-13-4C",
-			"typ": "KLASSE",
-			"administriertVon": 13,
-			"zugehoerigZu": 13
-		},
-		{
-			"id": 14,
-			"kennung": "1111114",
-			"name": "Testschule-14",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-14",
-			"typ": "SCHULE",
-			"administriertVon": 1,
-			"zugehoerigZu": 1
-		},
-		{
-			"id": 75,
-			"kennung": "1111114-1A",
-			"name": "1A",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-14-1A",
-			"typ": "KLASSE",
-			"administriertVon": 14,
-			"zugehoerigZu": 14
-		},
-		{
-			"id": 76,
-			"kennung": "1111114-1B",
-			"name": "1B",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-14-1B",
-			"typ": "KLASSE",
-			"administriertVon": 14,
-			"zugehoerigZu": 14
-		},
-		{
-			"id": 77,
-			"kennung": "1111114-1C",
-			"name": "1C",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-14-1C",
-			"typ": "KLASSE",
-			"administriertVon": 14,
-			"zugehoerigZu": 14
-		},
-		{
-			"id": 78,
-			"kennung": "1111114-2A",
-			"name": "2A",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-14-2A",
-			"typ": "KLASSE",
-			"administriertVon": 14,
-			"zugehoerigZu": 14
-		},
-		{
-			"id": 79,
-			"kennung": "1111114-2B",
-			"name": "2B",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-14-2B",
-			"typ": "KLASSE",
-			"administriertVon": 14,
-			"zugehoerigZu": 14
-		},
-		{
-			"id": 80,
-			"kennung": "1111114-2C",
-			"name": "2C",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-14-2C",
-			"typ": "KLASSE",
-			"administriertVon": 14,
-			"zugehoerigZu": 14
-		},
-		{
-			"id": 81,
-			"kennung": "1111114-3A",
-			"name": "3A",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-14-3A",
-			"typ": "KLASSE",
-			"administriertVon": 14,
-			"zugehoerigZu": 14
-		},
-		{
-			"id": 82,
-			"kennung": "1111114-3B",
-			"name": "3B",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-14-3B",
-			"typ": "KLASSE",
-			"administriertVon": 14,
-			"zugehoerigZu": 14
-		},
-		{
-			"id": 83,
-			"kennung": "1111114-3C",
-			"name": "3C",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-14-3C",
-			"typ": "KLASSE",
-			"administriertVon": 14,
-			"zugehoerigZu": 14
-		},
-		{
-			"id": 84,
-			"kennung": "1111114-4A",
-			"name": "4A",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-14-4A",
-			"typ": "KLASSE",
-			"administriertVon": 14,
-			"zugehoerigZu": 14
-		},
-		{
-			"id": 85,
-			"kennung": "1111114-4B",
-			"name": "4B",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-14-4B",
-			"typ": "KLASSE",
-			"administriertVon": 14,
-			"zugehoerigZu": 14
-		},
-		{
-			"id": 86,
-			"kennung": "1111114-4C",
-			"name": "4C",
-			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-14-4C",
-			"typ": "KLASSE",
-			"administriertVon": 14,
-			"zugehoerigZu": 14
-		},
-		{
 			"id": 15,
 			"kennung": "1111115",
 			"name": "Testschule-15",
@@ -272,7 +12,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 87,
+			"id": 65,
 			"kennung": "1111115-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -282,7 +22,7 @@
 			"zugehoerigZu": 15
 		},
 		{
-			"id": 88,
+			"id": 66,
 			"kennung": "1111115-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -292,7 +32,7 @@
 			"zugehoerigZu": 15
 		},
 		{
-			"id": 89,
+			"id": 67,
 			"kennung": "1111115-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -302,7 +42,7 @@
 			"zugehoerigZu": 15
 		},
 		{
-			"id": 90,
+			"id": 68,
 			"kennung": "1111115-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -312,7 +52,7 @@
 			"zugehoerigZu": 15
 		},
 		{
-			"id": 91,
+			"id": 69,
 			"kennung": "1111115-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -322,7 +62,7 @@
 			"zugehoerigZu": 15
 		},
 		{
-			"id": 92,
+			"id": 70,
 			"kennung": "1111115-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -332,7 +72,7 @@
 			"zugehoerigZu": 15
 		},
 		{
-			"id": 93,
+			"id": 71,
 			"kennung": "1111115-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -342,7 +82,7 @@
 			"zugehoerigZu": 15
 		},
 		{
-			"id": 94,
+			"id": 72,
 			"kennung": "1111115-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -352,7 +92,7 @@
 			"zugehoerigZu": 15
 		},
 		{
-			"id": 95,
+			"id": 73,
 			"kennung": "1111115-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -362,7 +102,7 @@
 			"zugehoerigZu": 15
 		},
 		{
-			"id": 96,
+			"id": 74,
 			"kennung": "1111115-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -372,7 +112,7 @@
 			"zugehoerigZu": 15
 		},
 		{
-			"id": 97,
+			"id": 75,
 			"kennung": "1111115-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -382,7 +122,7 @@
 			"zugehoerigZu": 15
 		},
 		{
-			"id": 98,
+			"id": 76,
 			"kennung": "1111115-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -402,7 +142,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 99,
+			"id": 77,
 			"kennung": "1111116-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -412,7 +152,7 @@
 			"zugehoerigZu": 16
 		},
 		{
-			"id": 100,
+			"id": 78,
 			"kennung": "1111116-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -422,7 +162,7 @@
 			"zugehoerigZu": 16
 		},
 		{
-			"id": 101,
+			"id": 79,
 			"kennung": "1111116-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -432,7 +172,7 @@
 			"zugehoerigZu": 16
 		},
 		{
-			"id": 102,
+			"id": 80,
 			"kennung": "1111116-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -442,7 +182,7 @@
 			"zugehoerigZu": 16
 		},
 		{
-			"id": 103,
+			"id": 81,
 			"kennung": "1111116-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -452,7 +192,7 @@
 			"zugehoerigZu": 16
 		},
 		{
-			"id": 104,
+			"id": 82,
 			"kennung": "1111116-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -462,7 +202,7 @@
 			"zugehoerigZu": 16
 		},
 		{
-			"id": 105,
+			"id": 83,
 			"kennung": "1111116-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -472,7 +212,7 @@
 			"zugehoerigZu": 16
 		},
 		{
-			"id": 106,
+			"id": 84,
 			"kennung": "1111116-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -482,7 +222,7 @@
 			"zugehoerigZu": 16
 		},
 		{
-			"id": 107,
+			"id": 85,
 			"kennung": "1111116-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -492,7 +232,7 @@
 			"zugehoerigZu": 16
 		},
 		{
-			"id": 108,
+			"id": 86,
 			"kennung": "1111116-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -502,7 +242,7 @@
 			"zugehoerigZu": 16
 		},
 		{
-			"id": 109,
+			"id": 87,
 			"kennung": "1111116-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -512,7 +252,7 @@
 			"zugehoerigZu": 16
 		},
 		{
-			"id": 110,
+			"id": 88,
 			"kennung": "1111116-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -532,7 +272,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 111,
+			"id": 89,
 			"kennung": "1111117-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -542,7 +282,7 @@
 			"zugehoerigZu": 17
 		},
 		{
-			"id": 112,
+			"id": 90,
 			"kennung": "1111117-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -552,7 +292,7 @@
 			"zugehoerigZu": 17
 		},
 		{
-			"id": 113,
+			"id": 91,
 			"kennung": "1111117-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -562,7 +302,7 @@
 			"zugehoerigZu": 17
 		},
 		{
-			"id": 114,
+			"id": 92,
 			"kennung": "1111117-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -572,7 +312,7 @@
 			"zugehoerigZu": 17
 		},
 		{
-			"id": 115,
+			"id": 93,
 			"kennung": "1111117-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -582,7 +322,7 @@
 			"zugehoerigZu": 17
 		},
 		{
-			"id": 116,
+			"id": 94,
 			"kennung": "1111117-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -592,7 +332,7 @@
 			"zugehoerigZu": 17
 		},
 		{
-			"id": 117,
+			"id": 95,
 			"kennung": "1111117-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -602,7 +342,7 @@
 			"zugehoerigZu": 17
 		},
 		{
-			"id": 118,
+			"id": 96,
 			"kennung": "1111117-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -612,7 +352,7 @@
 			"zugehoerigZu": 17
 		},
 		{
-			"id": 119,
+			"id": 97,
 			"kennung": "1111117-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -622,7 +362,7 @@
 			"zugehoerigZu": 17
 		},
 		{
-			"id": 120,
+			"id": 98,
 			"kennung": "1111117-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -632,7 +372,7 @@
 			"zugehoerigZu": 17
 		},
 		{
-			"id": 121,
+			"id": 99,
 			"kennung": "1111117-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -642,7 +382,7 @@
 			"zugehoerigZu": 17
 		},
 		{
-			"id": 122,
+			"id": 100,
 			"kennung": "1111117-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -662,7 +402,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 123,
+			"id": 101,
 			"kennung": "1111118-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -672,7 +412,7 @@
 			"zugehoerigZu": 18
 		},
 		{
-			"id": 124,
+			"id": 102,
 			"kennung": "1111118-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -682,7 +422,7 @@
 			"zugehoerigZu": 18
 		},
 		{
-			"id": 125,
+			"id": 103,
 			"kennung": "1111118-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -692,7 +432,7 @@
 			"zugehoerigZu": 18
 		},
 		{
-			"id": 126,
+			"id": 104,
 			"kennung": "1111118-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -702,7 +442,7 @@
 			"zugehoerigZu": 18
 		},
 		{
-			"id": 127,
+			"id": 105,
 			"kennung": "1111118-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -712,7 +452,7 @@
 			"zugehoerigZu": 18
 		},
 		{
-			"id": 128,
+			"id": 106,
 			"kennung": "1111118-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -722,7 +462,7 @@
 			"zugehoerigZu": 18
 		},
 		{
-			"id": 129,
+			"id": 107,
 			"kennung": "1111118-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -732,7 +472,7 @@
 			"zugehoerigZu": 18
 		},
 		{
-			"id": 130,
+			"id": 108,
 			"kennung": "1111118-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -742,7 +482,7 @@
 			"zugehoerigZu": 18
 		},
 		{
-			"id": 131,
+			"id": 109,
 			"kennung": "1111118-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -752,7 +492,7 @@
 			"zugehoerigZu": 18
 		},
 		{
-			"id": 132,
+			"id": 110,
 			"kennung": "1111118-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -762,7 +502,7 @@
 			"zugehoerigZu": 18
 		},
 		{
-			"id": 133,
+			"id": 111,
 			"kennung": "1111118-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -772,7 +512,7 @@
 			"zugehoerigZu": 18
 		},
 		{
-			"id": 134,
+			"id": 112,
 			"kennung": "1111118-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -792,7 +532,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 135,
+			"id": 113,
 			"kennung": "1111119-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -802,7 +542,7 @@
 			"zugehoerigZu": 19
 		},
 		{
-			"id": 136,
+			"id": 114,
 			"kennung": "1111119-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -812,7 +552,7 @@
 			"zugehoerigZu": 19
 		},
 		{
-			"id": 137,
+			"id": 115,
 			"kennung": "1111119-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -822,7 +562,7 @@
 			"zugehoerigZu": 19
 		},
 		{
-			"id": 138,
+			"id": 116,
 			"kennung": "1111119-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -832,7 +572,7 @@
 			"zugehoerigZu": 19
 		},
 		{
-			"id": 139,
+			"id": 117,
 			"kennung": "1111119-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -842,7 +582,7 @@
 			"zugehoerigZu": 19
 		},
 		{
-			"id": 140,
+			"id": 118,
 			"kennung": "1111119-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -852,7 +592,7 @@
 			"zugehoerigZu": 19
 		},
 		{
-			"id": 141,
+			"id": 119,
 			"kennung": "1111119-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -862,7 +602,7 @@
 			"zugehoerigZu": 19
 		},
 		{
-			"id": 142,
+			"id": 120,
 			"kennung": "1111119-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -872,7 +612,7 @@
 			"zugehoerigZu": 19
 		},
 		{
-			"id": 143,
+			"id": 121,
 			"kennung": "1111119-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -882,7 +622,7 @@
 			"zugehoerigZu": 19
 		},
 		{
-			"id": 144,
+			"id": 122,
 			"kennung": "1111119-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -892,7 +632,7 @@
 			"zugehoerigZu": 19
 		},
 		{
-			"id": 145,
+			"id": 123,
 			"kennung": "1111119-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -902,7 +642,7 @@
 			"zugehoerigZu": 19
 		},
 		{
-			"id": 146,
+			"id": 124,
 			"kennung": "1111119-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -922,7 +662,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 147,
+			"id": 125,
 			"kennung": "1111120-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -932,7 +672,7 @@
 			"zugehoerigZu": 20
 		},
 		{
-			"id": 148,
+			"id": 126,
 			"kennung": "1111120-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -942,7 +682,7 @@
 			"zugehoerigZu": 20
 		},
 		{
-			"id": 149,
+			"id": 127,
 			"kennung": "1111120-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -952,7 +692,7 @@
 			"zugehoerigZu": 20
 		},
 		{
-			"id": 150,
+			"id": 128,
 			"kennung": "1111120-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -962,7 +702,7 @@
 			"zugehoerigZu": 20
 		},
 		{
-			"id": 151,
+			"id": 129,
 			"kennung": "1111120-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -972,7 +712,7 @@
 			"zugehoerigZu": 20
 		},
 		{
-			"id": 152,
+			"id": 130,
 			"kennung": "1111120-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -982,7 +722,7 @@
 			"zugehoerigZu": 20
 		},
 		{
-			"id": 153,
+			"id": 131,
 			"kennung": "1111120-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -992,7 +732,7 @@
 			"zugehoerigZu": 20
 		},
 		{
-			"id": 154,
+			"id": 132,
 			"kennung": "1111120-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -1002,7 +742,7 @@
 			"zugehoerigZu": 20
 		},
 		{
-			"id": 155,
+			"id": 133,
 			"kennung": "1111120-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -1012,7 +752,7 @@
 			"zugehoerigZu": 20
 		},
 		{
-			"id": 156,
+			"id": 134,
 			"kennung": "1111120-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -1022,7 +762,7 @@
 			"zugehoerigZu": 20
 		},
 		{
-			"id": 157,
+			"id": 135,
 			"kennung": "1111120-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -1032,7 +772,7 @@
 			"zugehoerigZu": 20
 		},
 		{
-			"id": 158,
+			"id": 136,
 			"kennung": "1111120-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -1052,7 +792,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 159,
+			"id": 137,
 			"kennung": "1111121-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -1062,7 +802,7 @@
 			"zugehoerigZu": 21
 		},
 		{
-			"id": 160,
+			"id": 138,
 			"kennung": "1111121-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -1072,7 +812,7 @@
 			"zugehoerigZu": 21
 		},
 		{
-			"id": 161,
+			"id": 139,
 			"kennung": "1111121-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -1082,7 +822,7 @@
 			"zugehoerigZu": 21
 		},
 		{
-			"id": 162,
+			"id": 140,
 			"kennung": "1111121-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -1092,7 +832,7 @@
 			"zugehoerigZu": 21
 		},
 		{
-			"id": 163,
+			"id": 141,
 			"kennung": "1111121-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -1102,7 +842,7 @@
 			"zugehoerigZu": 21
 		},
 		{
-			"id": 164,
+			"id": 142,
 			"kennung": "1111121-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -1112,7 +852,7 @@
 			"zugehoerigZu": 21
 		},
 		{
-			"id": 165,
+			"id": 143,
 			"kennung": "1111121-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -1122,7 +862,7 @@
 			"zugehoerigZu": 21
 		},
 		{
-			"id": 166,
+			"id": 144,
 			"kennung": "1111121-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -1132,7 +872,7 @@
 			"zugehoerigZu": 21
 		},
 		{
-			"id": 167,
+			"id": 145,
 			"kennung": "1111121-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -1142,7 +882,7 @@
 			"zugehoerigZu": 21
 		},
 		{
-			"id": 168,
+			"id": 146,
 			"kennung": "1111121-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -1152,7 +892,7 @@
 			"zugehoerigZu": 21
 		},
 		{
-			"id": 169,
+			"id": 147,
 			"kennung": "1111121-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -1162,7 +902,7 @@
 			"zugehoerigZu": 21
 		},
 		{
-			"id": 170,
+			"id": 148,
 			"kennung": "1111121-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -1182,7 +922,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 171,
+			"id": 149,
 			"kennung": "1111122-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -1192,7 +932,7 @@
 			"zugehoerigZu": 22
 		},
 		{
-			"id": 172,
+			"id": 150,
 			"kennung": "1111122-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -1202,7 +942,7 @@
 			"zugehoerigZu": 22
 		},
 		{
-			"id": 173,
+			"id": 151,
 			"kennung": "1111122-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -1212,7 +952,7 @@
 			"zugehoerigZu": 22
 		},
 		{
-			"id": 174,
+			"id": 152,
 			"kennung": "1111122-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -1222,7 +962,7 @@
 			"zugehoerigZu": 22
 		},
 		{
-			"id": 175,
+			"id": 153,
 			"kennung": "1111122-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -1232,7 +972,7 @@
 			"zugehoerigZu": 22
 		},
 		{
-			"id": 176,
+			"id": 154,
 			"kennung": "1111122-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -1242,7 +982,7 @@
 			"zugehoerigZu": 22
 		},
 		{
-			"id": 177,
+			"id": 155,
 			"kennung": "1111122-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -1252,7 +992,7 @@
 			"zugehoerigZu": 22
 		},
 		{
-			"id": 178,
+			"id": 156,
 			"kennung": "1111122-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -1262,7 +1002,7 @@
 			"zugehoerigZu": 22
 		},
 		{
-			"id": 179,
+			"id": 157,
 			"kennung": "1111122-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -1272,7 +1012,7 @@
 			"zugehoerigZu": 22
 		},
 		{
-			"id": 180,
+			"id": 158,
 			"kennung": "1111122-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -1282,7 +1022,7 @@
 			"zugehoerigZu": 22
 		},
 		{
-			"id": 181,
+			"id": 159,
 			"kennung": "1111122-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -1292,7 +1032,7 @@
 			"zugehoerigZu": 22
 		},
 		{
-			"id": 182,
+			"id": 160,
 			"kennung": "1111122-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -1312,7 +1052,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 183,
+			"id": 161,
 			"kennung": "1111123-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -1322,7 +1062,7 @@
 			"zugehoerigZu": 23
 		},
 		{
-			"id": 184,
+			"id": 162,
 			"kennung": "1111123-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -1332,7 +1072,7 @@
 			"zugehoerigZu": 23
 		},
 		{
-			"id": 185,
+			"id": 163,
 			"kennung": "1111123-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -1342,7 +1082,7 @@
 			"zugehoerigZu": 23
 		},
 		{
-			"id": 186,
+			"id": 164,
 			"kennung": "1111123-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -1352,7 +1092,7 @@
 			"zugehoerigZu": 23
 		},
 		{
-			"id": 187,
+			"id": 165,
 			"kennung": "1111123-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -1362,7 +1102,7 @@
 			"zugehoerigZu": 23
 		},
 		{
-			"id": 188,
+			"id": 166,
 			"kennung": "1111123-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -1372,7 +1112,7 @@
 			"zugehoerigZu": 23
 		},
 		{
-			"id": 189,
+			"id": 167,
 			"kennung": "1111123-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -1382,7 +1122,7 @@
 			"zugehoerigZu": 23
 		},
 		{
-			"id": 190,
+			"id": 168,
 			"kennung": "1111123-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -1392,7 +1132,7 @@
 			"zugehoerigZu": 23
 		},
 		{
-			"id": 191,
+			"id": 169,
 			"kennung": "1111123-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -1402,7 +1142,7 @@
 			"zugehoerigZu": 23
 		},
 		{
-			"id": 192,
+			"id": 170,
 			"kennung": "1111123-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -1412,7 +1152,7 @@
 			"zugehoerigZu": 23
 		},
 		{
-			"id": 193,
+			"id": 171,
 			"kennung": "1111123-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -1422,7 +1162,7 @@
 			"zugehoerigZu": 23
 		},
 		{
-			"id": 194,
+			"id": 172,
 			"kennung": "1111123-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -1442,7 +1182,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 195,
+			"id": 173,
 			"kennung": "1111124-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -1452,7 +1192,7 @@
 			"zugehoerigZu": 24
 		},
 		{
-			"id": 196,
+			"id": 174,
 			"kennung": "1111124-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -1462,7 +1202,7 @@
 			"zugehoerigZu": 24
 		},
 		{
-			"id": 197,
+			"id": 175,
 			"kennung": "1111124-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -1472,7 +1212,7 @@
 			"zugehoerigZu": 24
 		},
 		{
-			"id": 198,
+			"id": 176,
 			"kennung": "1111124-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -1482,7 +1222,7 @@
 			"zugehoerigZu": 24
 		},
 		{
-			"id": 199,
+			"id": 177,
 			"kennung": "1111124-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -1492,7 +1232,7 @@
 			"zugehoerigZu": 24
 		},
 		{
-			"id": 200,
+			"id": 178,
 			"kennung": "1111124-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -1502,7 +1242,7 @@
 			"zugehoerigZu": 24
 		},
 		{
-			"id": 201,
+			"id": 179,
 			"kennung": "1111124-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -1512,7 +1252,7 @@
 			"zugehoerigZu": 24
 		},
 		{
-			"id": 202,
+			"id": 180,
 			"kennung": "1111124-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -1522,7 +1262,7 @@
 			"zugehoerigZu": 24
 		},
 		{
-			"id": 203,
+			"id": 181,
 			"kennung": "1111124-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -1532,7 +1272,7 @@
 			"zugehoerigZu": 24
 		},
 		{
-			"id": 204,
+			"id": 182,
 			"kennung": "1111124-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -1542,7 +1282,7 @@
 			"zugehoerigZu": 24
 		},
 		{
-			"id": 205,
+			"id": 183,
 			"kennung": "1111124-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -1552,7 +1292,7 @@
 			"zugehoerigZu": 24
 		},
 		{
-			"id": 206,
+			"id": 184,
 			"kennung": "1111124-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -1572,7 +1312,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 207,
+			"id": 185,
 			"kennung": "1111125-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -1582,7 +1322,7 @@
 			"zugehoerigZu": 25
 		},
 		{
-			"id": 208,
+			"id": 186,
 			"kennung": "1111125-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -1592,7 +1332,7 @@
 			"zugehoerigZu": 25
 		},
 		{
-			"id": 209,
+			"id": 187,
 			"kennung": "1111125-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -1602,7 +1342,7 @@
 			"zugehoerigZu": 25
 		},
 		{
-			"id": 210,
+			"id": 188,
 			"kennung": "1111125-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -1612,7 +1352,7 @@
 			"zugehoerigZu": 25
 		},
 		{
-			"id": 211,
+			"id": 189,
 			"kennung": "1111125-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -1622,7 +1362,7 @@
 			"zugehoerigZu": 25
 		},
 		{
-			"id": 212,
+			"id": 190,
 			"kennung": "1111125-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -1632,7 +1372,7 @@
 			"zugehoerigZu": 25
 		},
 		{
-			"id": 213,
+			"id": 191,
 			"kennung": "1111125-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -1642,7 +1382,7 @@
 			"zugehoerigZu": 25
 		},
 		{
-			"id": 214,
+			"id": 192,
 			"kennung": "1111125-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -1652,7 +1392,7 @@
 			"zugehoerigZu": 25
 		},
 		{
-			"id": 215,
+			"id": 193,
 			"kennung": "1111125-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -1662,7 +1402,7 @@
 			"zugehoerigZu": 25
 		},
 		{
-			"id": 216,
+			"id": 194,
 			"kennung": "1111125-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -1672,7 +1412,7 @@
 			"zugehoerigZu": 25
 		},
 		{
-			"id": 217,
+			"id": 195,
 			"kennung": "1111125-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -1682,7 +1422,7 @@
 			"zugehoerigZu": 25
 		},
 		{
-			"id": 218,
+			"id": 196,
 			"kennung": "1111125-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -1702,7 +1442,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 219,
+			"id": 197,
 			"kennung": "1111126-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -1712,7 +1452,7 @@
 			"zugehoerigZu": 26
 		},
 		{
-			"id": 220,
+			"id": 198,
 			"kennung": "1111126-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -1722,7 +1462,7 @@
 			"zugehoerigZu": 26
 		},
 		{
-			"id": 221,
+			"id": 199,
 			"kennung": "1111126-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -1732,7 +1472,7 @@
 			"zugehoerigZu": 26
 		},
 		{
-			"id": 222,
+			"id": 200,
 			"kennung": "1111126-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -1742,7 +1482,7 @@
 			"zugehoerigZu": 26
 		},
 		{
-			"id": 223,
+			"id": 201,
 			"kennung": "1111126-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -1752,7 +1492,7 @@
 			"zugehoerigZu": 26
 		},
 		{
-			"id": 224,
+			"id": 202,
 			"kennung": "1111126-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -1762,7 +1502,7 @@
 			"zugehoerigZu": 26
 		},
 		{
-			"id": 225,
+			"id": 203,
 			"kennung": "1111126-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -1772,7 +1512,7 @@
 			"zugehoerigZu": 26
 		},
 		{
-			"id": 226,
+			"id": 204,
 			"kennung": "1111126-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -1782,7 +1522,7 @@
 			"zugehoerigZu": 26
 		},
 		{
-			"id": 227,
+			"id": 205,
 			"kennung": "1111126-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -1792,7 +1532,7 @@
 			"zugehoerigZu": 26
 		},
 		{
-			"id": 228,
+			"id": 206,
 			"kennung": "1111126-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -1802,7 +1542,7 @@
 			"zugehoerigZu": 26
 		},
 		{
-			"id": 229,
+			"id": 207,
 			"kennung": "1111126-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -1812,7 +1552,7 @@
 			"zugehoerigZu": 26
 		},
 		{
-			"id": 230,
+			"id": 208,
 			"kennung": "1111126-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -1832,7 +1572,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 231,
+			"id": 209,
 			"kennung": "1111127-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -1842,7 +1582,7 @@
 			"zugehoerigZu": 27
 		},
 		{
-			"id": 232,
+			"id": 210,
 			"kennung": "1111127-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -1852,7 +1592,7 @@
 			"zugehoerigZu": 27
 		},
 		{
-			"id": 233,
+			"id": 211,
 			"kennung": "1111127-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -1862,7 +1602,7 @@
 			"zugehoerigZu": 27
 		},
 		{
-			"id": 234,
+			"id": 212,
 			"kennung": "1111127-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -1872,7 +1612,7 @@
 			"zugehoerigZu": 27
 		},
 		{
-			"id": 235,
+			"id": 213,
 			"kennung": "1111127-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -1882,7 +1622,7 @@
 			"zugehoerigZu": 27
 		},
 		{
-			"id": 236,
+			"id": 214,
 			"kennung": "1111127-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -1892,7 +1632,7 @@
 			"zugehoerigZu": 27
 		},
 		{
-			"id": 237,
+			"id": 215,
 			"kennung": "1111127-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -1902,7 +1642,7 @@
 			"zugehoerigZu": 27
 		},
 		{
-			"id": 238,
+			"id": 216,
 			"kennung": "1111127-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -1912,7 +1652,7 @@
 			"zugehoerigZu": 27
 		},
 		{
-			"id": 239,
+			"id": 217,
 			"kennung": "1111127-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -1922,7 +1662,7 @@
 			"zugehoerigZu": 27
 		},
 		{
-			"id": 240,
+			"id": 218,
 			"kennung": "1111127-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -1932,7 +1672,7 @@
 			"zugehoerigZu": 27
 		},
 		{
-			"id": 241,
+			"id": 219,
 			"kennung": "1111127-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -1942,7 +1682,7 @@
 			"zugehoerigZu": 27
 		},
 		{
-			"id": 242,
+			"id": 220,
 			"kennung": "1111127-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -1962,7 +1702,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 243,
+			"id": 221,
 			"kennung": "1111128-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -1972,7 +1712,7 @@
 			"zugehoerigZu": 28
 		},
 		{
-			"id": 244,
+			"id": 222,
 			"kennung": "1111128-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -1982,7 +1722,7 @@
 			"zugehoerigZu": 28
 		},
 		{
-			"id": 245,
+			"id": 223,
 			"kennung": "1111128-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -1992,7 +1732,7 @@
 			"zugehoerigZu": 28
 		},
 		{
-			"id": 246,
+			"id": 224,
 			"kennung": "1111128-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -2002,7 +1742,7 @@
 			"zugehoerigZu": 28
 		},
 		{
-			"id": 247,
+			"id": 225,
 			"kennung": "1111128-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -2012,7 +1752,7 @@
 			"zugehoerigZu": 28
 		},
 		{
-			"id": 248,
+			"id": 226,
 			"kennung": "1111128-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -2022,7 +1762,7 @@
 			"zugehoerigZu": 28
 		},
 		{
-			"id": 249,
+			"id": 227,
 			"kennung": "1111128-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -2032,7 +1772,7 @@
 			"zugehoerigZu": 28
 		},
 		{
-			"id": 250,
+			"id": 228,
 			"kennung": "1111128-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -2042,7 +1782,7 @@
 			"zugehoerigZu": 28
 		},
 		{
-			"id": 251,
+			"id": 229,
 			"kennung": "1111128-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -2052,7 +1792,7 @@
 			"zugehoerigZu": 28
 		},
 		{
-			"id": 252,
+			"id": 230,
 			"kennung": "1111128-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -2062,7 +1802,7 @@
 			"zugehoerigZu": 28
 		},
 		{
-			"id": 253,
+			"id": 231,
 			"kennung": "1111128-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -2072,7 +1812,7 @@
 			"zugehoerigZu": 28
 		},
 		{
-			"id": 254,
+			"id": 232,
 			"kennung": "1111128-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -2092,7 +1832,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 255,
+			"id": 233,
 			"kennung": "1111129-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -2102,7 +1842,7 @@
 			"zugehoerigZu": 29
 		},
 		{
-			"id": 256,
+			"id": 234,
 			"kennung": "1111129-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -2112,7 +1852,7 @@
 			"zugehoerigZu": 29
 		},
 		{
-			"id": 257,
+			"id": 235,
 			"kennung": "1111129-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -2122,7 +1862,7 @@
 			"zugehoerigZu": 29
 		},
 		{
-			"id": 258,
+			"id": 236,
 			"kennung": "1111129-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -2132,7 +1872,7 @@
 			"zugehoerigZu": 29
 		},
 		{
-			"id": 259,
+			"id": 237,
 			"kennung": "1111129-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -2142,7 +1882,7 @@
 			"zugehoerigZu": 29
 		},
 		{
-			"id": 260,
+			"id": 238,
 			"kennung": "1111129-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -2152,7 +1892,7 @@
 			"zugehoerigZu": 29
 		},
 		{
-			"id": 261,
+			"id": 239,
 			"kennung": "1111129-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -2162,7 +1902,7 @@
 			"zugehoerigZu": 29
 		},
 		{
-			"id": 262,
+			"id": 240,
 			"kennung": "1111129-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -2172,7 +1912,7 @@
 			"zugehoerigZu": 29
 		},
 		{
-			"id": 263,
+			"id": 241,
 			"kennung": "1111129-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -2182,7 +1922,7 @@
 			"zugehoerigZu": 29
 		},
 		{
-			"id": 264,
+			"id": 242,
 			"kennung": "1111129-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -2192,7 +1932,7 @@
 			"zugehoerigZu": 29
 		},
 		{
-			"id": 265,
+			"id": 243,
 			"kennung": "1111129-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -2202,7 +1942,7 @@
 			"zugehoerigZu": 29
 		},
 		{
-			"id": 266,
+			"id": 244,
 			"kennung": "1111129-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -2222,7 +1962,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 267,
+			"id": 245,
 			"kennung": "1111130-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -2232,7 +1972,7 @@
 			"zugehoerigZu": 30
 		},
 		{
-			"id": 268,
+			"id": 246,
 			"kennung": "1111130-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -2242,7 +1982,7 @@
 			"zugehoerigZu": 30
 		},
 		{
-			"id": 269,
+			"id": 247,
 			"kennung": "1111130-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -2252,7 +1992,7 @@
 			"zugehoerigZu": 30
 		},
 		{
-			"id": 270,
+			"id": 248,
 			"kennung": "1111130-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -2262,7 +2002,7 @@
 			"zugehoerigZu": 30
 		},
 		{
-			"id": 271,
+			"id": 249,
 			"kennung": "1111130-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -2272,7 +2012,7 @@
 			"zugehoerigZu": 30
 		},
 		{
-			"id": 272,
+			"id": 250,
 			"kennung": "1111130-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -2282,7 +2022,7 @@
 			"zugehoerigZu": 30
 		},
 		{
-			"id": 273,
+			"id": 251,
 			"kennung": "1111130-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -2292,7 +2032,7 @@
 			"zugehoerigZu": 30
 		},
 		{
-			"id": 274,
+			"id": 252,
 			"kennung": "1111130-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -2302,7 +2042,7 @@
 			"zugehoerigZu": 30
 		},
 		{
-			"id": 275,
+			"id": 253,
 			"kennung": "1111130-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -2312,7 +2052,7 @@
 			"zugehoerigZu": 30
 		},
 		{
-			"id": 276,
+			"id": 254,
 			"kennung": "1111130-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -2322,7 +2062,7 @@
 			"zugehoerigZu": 30
 		},
 		{
-			"id": 277,
+			"id": 255,
 			"kennung": "1111130-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -2332,7 +2072,7 @@
 			"zugehoerigZu": 30
 		},
 		{
-			"id": 278,
+			"id": 256,
 			"kennung": "1111130-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -2352,7 +2092,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 279,
+			"id": 257,
 			"kennung": "1111131-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -2362,7 +2102,7 @@
 			"zugehoerigZu": 31
 		},
 		{
-			"id": 280,
+			"id": 258,
 			"kennung": "1111131-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -2372,7 +2112,7 @@
 			"zugehoerigZu": 31
 		},
 		{
-			"id": 281,
+			"id": 259,
 			"kennung": "1111131-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -2382,7 +2122,7 @@
 			"zugehoerigZu": 31
 		},
 		{
-			"id": 282,
+			"id": 260,
 			"kennung": "1111131-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -2392,7 +2132,7 @@
 			"zugehoerigZu": 31
 		},
 		{
-			"id": 283,
+			"id": 261,
 			"kennung": "1111131-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -2402,7 +2142,7 @@
 			"zugehoerigZu": 31
 		},
 		{
-			"id": 284,
+			"id": 262,
 			"kennung": "1111131-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -2412,7 +2152,7 @@
 			"zugehoerigZu": 31
 		},
 		{
-			"id": 285,
+			"id": 263,
 			"kennung": "1111131-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -2422,7 +2162,7 @@
 			"zugehoerigZu": 31
 		},
 		{
-			"id": 286,
+			"id": 264,
 			"kennung": "1111131-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -2432,7 +2172,7 @@
 			"zugehoerigZu": 31
 		},
 		{
-			"id": 287,
+			"id": 265,
 			"kennung": "1111131-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -2442,7 +2182,7 @@
 			"zugehoerigZu": 31
 		},
 		{
-			"id": 288,
+			"id": 266,
 			"kennung": "1111131-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -2452,7 +2192,7 @@
 			"zugehoerigZu": 31
 		},
 		{
-			"id": 289,
+			"id": 267,
 			"kennung": "1111131-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -2462,7 +2202,7 @@
 			"zugehoerigZu": 31
 		},
 		{
-			"id": 290,
+			"id": 268,
 			"kennung": "1111131-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -2482,7 +2222,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 291,
+			"id": 269,
 			"kennung": "1111132-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -2492,7 +2232,7 @@
 			"zugehoerigZu": 32
 		},
 		{
-			"id": 292,
+			"id": 270,
 			"kennung": "1111132-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -2502,7 +2242,7 @@
 			"zugehoerigZu": 32
 		},
 		{
-			"id": 293,
+			"id": 271,
 			"kennung": "1111132-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -2512,7 +2252,7 @@
 			"zugehoerigZu": 32
 		},
 		{
-			"id": 294,
+			"id": 272,
 			"kennung": "1111132-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -2522,7 +2262,7 @@
 			"zugehoerigZu": 32
 		},
 		{
-			"id": 295,
+			"id": 273,
 			"kennung": "1111132-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -2532,7 +2272,7 @@
 			"zugehoerigZu": 32
 		},
 		{
-			"id": 296,
+			"id": 274,
 			"kennung": "1111132-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -2542,7 +2282,7 @@
 			"zugehoerigZu": 32
 		},
 		{
-			"id": 297,
+			"id": 275,
 			"kennung": "1111132-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -2552,7 +2292,7 @@
 			"zugehoerigZu": 32
 		},
 		{
-			"id": 298,
+			"id": 276,
 			"kennung": "1111132-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -2562,7 +2302,7 @@
 			"zugehoerigZu": 32
 		},
 		{
-			"id": 299,
+			"id": 277,
 			"kennung": "1111132-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -2572,7 +2312,7 @@
 			"zugehoerigZu": 32
 		},
 		{
-			"id": 300,
+			"id": 278,
 			"kennung": "1111132-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -2582,7 +2322,7 @@
 			"zugehoerigZu": 32
 		},
 		{
-			"id": 301,
+			"id": 279,
 			"kennung": "1111132-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -2592,7 +2332,7 @@
 			"zugehoerigZu": 32
 		},
 		{
-			"id": 302,
+			"id": 280,
 			"kennung": "1111132-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -2612,7 +2352,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 303,
+			"id": 281,
 			"kennung": "1111133-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -2622,7 +2362,7 @@
 			"zugehoerigZu": 33
 		},
 		{
-			"id": 304,
+			"id": 282,
 			"kennung": "1111133-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -2632,7 +2372,7 @@
 			"zugehoerigZu": 33
 		},
 		{
-			"id": 305,
+			"id": 283,
 			"kennung": "1111133-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -2642,7 +2382,7 @@
 			"zugehoerigZu": 33
 		},
 		{
-			"id": 306,
+			"id": 284,
 			"kennung": "1111133-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -2652,7 +2392,7 @@
 			"zugehoerigZu": 33
 		},
 		{
-			"id": 307,
+			"id": 285,
 			"kennung": "1111133-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -2662,7 +2402,7 @@
 			"zugehoerigZu": 33
 		},
 		{
-			"id": 308,
+			"id": 286,
 			"kennung": "1111133-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -2672,7 +2412,7 @@
 			"zugehoerigZu": 33
 		},
 		{
-			"id": 309,
+			"id": 287,
 			"kennung": "1111133-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -2682,7 +2422,7 @@
 			"zugehoerigZu": 33
 		},
 		{
-			"id": 310,
+			"id": 288,
 			"kennung": "1111133-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -2692,7 +2432,7 @@
 			"zugehoerigZu": 33
 		},
 		{
-			"id": 311,
+			"id": 289,
 			"kennung": "1111133-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -2702,7 +2442,7 @@
 			"zugehoerigZu": 33
 		},
 		{
-			"id": 312,
+			"id": 290,
 			"kennung": "1111133-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -2712,7 +2452,7 @@
 			"zugehoerigZu": 33
 		},
 		{
-			"id": 313,
+			"id": 291,
 			"kennung": "1111133-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -2722,7 +2462,7 @@
 			"zugehoerigZu": 33
 		},
 		{
-			"id": 314,
+			"id": 292,
 			"kennung": "1111133-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -2742,7 +2482,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 315,
+			"id": 293,
 			"kennung": "1111134-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -2752,7 +2492,7 @@
 			"zugehoerigZu": 34
 		},
 		{
-			"id": 316,
+			"id": 294,
 			"kennung": "1111134-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -2762,7 +2502,7 @@
 			"zugehoerigZu": 34
 		},
 		{
-			"id": 317,
+			"id": 295,
 			"kennung": "1111134-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -2772,7 +2512,7 @@
 			"zugehoerigZu": 34
 		},
 		{
-			"id": 318,
+			"id": 296,
 			"kennung": "1111134-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -2782,7 +2522,7 @@
 			"zugehoerigZu": 34
 		},
 		{
-			"id": 319,
+			"id": 297,
 			"kennung": "1111134-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -2792,7 +2532,7 @@
 			"zugehoerigZu": 34
 		},
 		{
-			"id": 320,
+			"id": 298,
 			"kennung": "1111134-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -2802,7 +2542,7 @@
 			"zugehoerigZu": 34
 		},
 		{
-			"id": 321,
+			"id": 299,
 			"kennung": "1111134-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -2812,7 +2552,7 @@
 			"zugehoerigZu": 34
 		},
 		{
-			"id": 322,
+			"id": 300,
 			"kennung": "1111134-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -2822,7 +2562,7 @@
 			"zugehoerigZu": 34
 		},
 		{
-			"id": 323,
+			"id": 301,
 			"kennung": "1111134-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -2832,7 +2572,7 @@
 			"zugehoerigZu": 34
 		},
 		{
-			"id": 324,
+			"id": 302,
 			"kennung": "1111134-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -2842,7 +2582,7 @@
 			"zugehoerigZu": 34
 		},
 		{
-			"id": 325,
+			"id": 303,
 			"kennung": "1111134-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -2852,7 +2592,7 @@
 			"zugehoerigZu": 34
 		},
 		{
-			"id": 326,
+			"id": 304,
 			"kennung": "1111134-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -2872,7 +2612,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 327,
+			"id": 305,
 			"kennung": "1111135-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -2882,7 +2622,7 @@
 			"zugehoerigZu": 35
 		},
 		{
-			"id": 328,
+			"id": 306,
 			"kennung": "1111135-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -2892,7 +2632,7 @@
 			"zugehoerigZu": 35
 		},
 		{
-			"id": 329,
+			"id": 307,
 			"kennung": "1111135-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -2902,7 +2642,7 @@
 			"zugehoerigZu": 35
 		},
 		{
-			"id": 330,
+			"id": 308,
 			"kennung": "1111135-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -2912,7 +2652,7 @@
 			"zugehoerigZu": 35
 		},
 		{
-			"id": 331,
+			"id": 309,
 			"kennung": "1111135-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -2922,7 +2662,7 @@
 			"zugehoerigZu": 35
 		},
 		{
-			"id": 332,
+			"id": 310,
 			"kennung": "1111135-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -2932,7 +2672,7 @@
 			"zugehoerigZu": 35
 		},
 		{
-			"id": 333,
+			"id": 311,
 			"kennung": "1111135-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -2942,7 +2682,7 @@
 			"zugehoerigZu": 35
 		},
 		{
-			"id": 334,
+			"id": 312,
 			"kennung": "1111135-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -2952,7 +2692,7 @@
 			"zugehoerigZu": 35
 		},
 		{
-			"id": 335,
+			"id": 313,
 			"kennung": "1111135-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -2962,7 +2702,7 @@
 			"zugehoerigZu": 35
 		},
 		{
-			"id": 336,
+			"id": 314,
 			"kennung": "1111135-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -2972,7 +2712,7 @@
 			"zugehoerigZu": 35
 		},
 		{
-			"id": 337,
+			"id": 315,
 			"kennung": "1111135-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -2982,7 +2722,7 @@
 			"zugehoerigZu": 35
 		},
 		{
-			"id": 338,
+			"id": 316,
 			"kennung": "1111135-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -3002,7 +2742,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 339,
+			"id": 317,
 			"kennung": "1111136-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -3012,7 +2752,7 @@
 			"zugehoerigZu": 36
 		},
 		{
-			"id": 340,
+			"id": 318,
 			"kennung": "1111136-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -3022,7 +2762,7 @@
 			"zugehoerigZu": 36
 		},
 		{
-			"id": 341,
+			"id": 319,
 			"kennung": "1111136-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -3032,7 +2772,7 @@
 			"zugehoerigZu": 36
 		},
 		{
-			"id": 342,
+			"id": 320,
 			"kennung": "1111136-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -3042,7 +2782,7 @@
 			"zugehoerigZu": 36
 		},
 		{
-			"id": 343,
+			"id": 321,
 			"kennung": "1111136-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -3052,7 +2792,7 @@
 			"zugehoerigZu": 36
 		},
 		{
-			"id": 344,
+			"id": 322,
 			"kennung": "1111136-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -3062,7 +2802,7 @@
 			"zugehoerigZu": 36
 		},
 		{
-			"id": 345,
+			"id": 323,
 			"kennung": "1111136-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -3072,7 +2812,7 @@
 			"zugehoerigZu": 36
 		},
 		{
-			"id": 346,
+			"id": 324,
 			"kennung": "1111136-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -3082,7 +2822,7 @@
 			"zugehoerigZu": 36
 		},
 		{
-			"id": 347,
+			"id": 325,
 			"kennung": "1111136-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -3092,7 +2832,7 @@
 			"zugehoerigZu": 36
 		},
 		{
-			"id": 348,
+			"id": 326,
 			"kennung": "1111136-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -3102,7 +2842,7 @@
 			"zugehoerigZu": 36
 		},
 		{
-			"id": 349,
+			"id": 327,
 			"kennung": "1111136-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -3112,7 +2852,7 @@
 			"zugehoerigZu": 36
 		},
 		{
-			"id": 350,
+			"id": 328,
 			"kennung": "1111136-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -3132,7 +2872,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 351,
+			"id": 329,
 			"kennung": "1111137-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -3142,7 +2882,7 @@
 			"zugehoerigZu": 37
 		},
 		{
-			"id": 352,
+			"id": 330,
 			"kennung": "1111137-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -3152,7 +2892,7 @@
 			"zugehoerigZu": 37
 		},
 		{
-			"id": 353,
+			"id": 331,
 			"kennung": "1111137-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -3162,7 +2902,7 @@
 			"zugehoerigZu": 37
 		},
 		{
-			"id": 354,
+			"id": 332,
 			"kennung": "1111137-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -3172,7 +2912,7 @@
 			"zugehoerigZu": 37
 		},
 		{
-			"id": 355,
+			"id": 333,
 			"kennung": "1111137-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -3182,7 +2922,7 @@
 			"zugehoerigZu": 37
 		},
 		{
-			"id": 356,
+			"id": 334,
 			"kennung": "1111137-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -3192,7 +2932,7 @@
 			"zugehoerigZu": 37
 		},
 		{
-			"id": 357,
+			"id": 335,
 			"kennung": "1111137-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -3202,7 +2942,7 @@
 			"zugehoerigZu": 37
 		},
 		{
-			"id": 358,
+			"id": 336,
 			"kennung": "1111137-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -3212,7 +2952,7 @@
 			"zugehoerigZu": 37
 		},
 		{
-			"id": 359,
+			"id": 337,
 			"kennung": "1111137-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -3222,7 +2962,7 @@
 			"zugehoerigZu": 37
 		},
 		{
-			"id": 360,
+			"id": 338,
 			"kennung": "1111137-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -3232,7 +2972,7 @@
 			"zugehoerigZu": 37
 		},
 		{
-			"id": 361,
+			"id": 339,
 			"kennung": "1111137-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -3242,7 +2982,7 @@
 			"zugehoerigZu": 37
 		},
 		{
-			"id": 362,
+			"id": 340,
 			"kennung": "1111137-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -3262,7 +3002,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 363,
+			"id": 341,
 			"kennung": "1111138-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -3272,7 +3012,7 @@
 			"zugehoerigZu": 38
 		},
 		{
-			"id": 364,
+			"id": 342,
 			"kennung": "1111138-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -3282,7 +3022,7 @@
 			"zugehoerigZu": 38
 		},
 		{
-			"id": 365,
+			"id": 343,
 			"kennung": "1111138-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -3292,7 +3032,7 @@
 			"zugehoerigZu": 38
 		},
 		{
-			"id": 366,
+			"id": 344,
 			"kennung": "1111138-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -3302,7 +3042,7 @@
 			"zugehoerigZu": 38
 		},
 		{
-			"id": 367,
+			"id": 345,
 			"kennung": "1111138-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -3312,7 +3052,7 @@
 			"zugehoerigZu": 38
 		},
 		{
-			"id": 368,
+			"id": 346,
 			"kennung": "1111138-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -3322,7 +3062,7 @@
 			"zugehoerigZu": 38
 		},
 		{
-			"id": 369,
+			"id": 347,
 			"kennung": "1111138-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -3332,7 +3072,7 @@
 			"zugehoerigZu": 38
 		},
 		{
-			"id": 370,
+			"id": 348,
 			"kennung": "1111138-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -3342,7 +3082,7 @@
 			"zugehoerigZu": 38
 		},
 		{
-			"id": 371,
+			"id": 349,
 			"kennung": "1111138-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -3352,7 +3092,7 @@
 			"zugehoerigZu": 38
 		},
 		{
-			"id": 372,
+			"id": 350,
 			"kennung": "1111138-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -3362,7 +3102,7 @@
 			"zugehoerigZu": 38
 		},
 		{
-			"id": 373,
+			"id": 351,
 			"kennung": "1111138-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -3372,7 +3112,7 @@
 			"zugehoerigZu": 38
 		},
 		{
-			"id": 374,
+			"id": 352,
 			"kennung": "1111138-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -3392,7 +3132,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 375,
+			"id": 353,
 			"kennung": "1111139-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -3402,7 +3142,7 @@
 			"zugehoerigZu": 39
 		},
 		{
-			"id": 376,
+			"id": 354,
 			"kennung": "1111139-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -3412,7 +3152,7 @@
 			"zugehoerigZu": 39
 		},
 		{
-			"id": 377,
+			"id": 355,
 			"kennung": "1111139-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -3422,7 +3162,7 @@
 			"zugehoerigZu": 39
 		},
 		{
-			"id": 378,
+			"id": 356,
 			"kennung": "1111139-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -3432,7 +3172,7 @@
 			"zugehoerigZu": 39
 		},
 		{
-			"id": 379,
+			"id": 357,
 			"kennung": "1111139-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -3442,7 +3182,7 @@
 			"zugehoerigZu": 39
 		},
 		{
-			"id": 380,
+			"id": 358,
 			"kennung": "1111139-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -3452,7 +3192,7 @@
 			"zugehoerigZu": 39
 		},
 		{
-			"id": 381,
+			"id": 359,
 			"kennung": "1111139-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -3462,7 +3202,7 @@
 			"zugehoerigZu": 39
 		},
 		{
-			"id": 382,
+			"id": 360,
 			"kennung": "1111139-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -3472,7 +3212,7 @@
 			"zugehoerigZu": 39
 		},
 		{
-			"id": 383,
+			"id": 361,
 			"kennung": "1111139-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -3482,7 +3222,7 @@
 			"zugehoerigZu": 39
 		},
 		{
-			"id": 384,
+			"id": 362,
 			"kennung": "1111139-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -3492,7 +3232,7 @@
 			"zugehoerigZu": 39
 		},
 		{
-			"id": 385,
+			"id": 363,
 			"kennung": "1111139-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -3502,7 +3242,7 @@
 			"zugehoerigZu": 39
 		},
 		{
-			"id": 386,
+			"id": 364,
 			"kennung": "1111139-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -3522,7 +3262,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 387,
+			"id": 365,
 			"kennung": "1111140-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -3532,7 +3272,7 @@
 			"zugehoerigZu": 40
 		},
 		{
-			"id": 388,
+			"id": 366,
 			"kennung": "1111140-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -3542,7 +3282,7 @@
 			"zugehoerigZu": 40
 		},
 		{
-			"id": 389,
+			"id": 367,
 			"kennung": "1111140-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -3552,7 +3292,7 @@
 			"zugehoerigZu": 40
 		},
 		{
-			"id": 390,
+			"id": 368,
 			"kennung": "1111140-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -3562,7 +3302,7 @@
 			"zugehoerigZu": 40
 		},
 		{
-			"id": 391,
+			"id": 369,
 			"kennung": "1111140-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -3572,7 +3312,7 @@
 			"zugehoerigZu": 40
 		},
 		{
-			"id": 392,
+			"id": 370,
 			"kennung": "1111140-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -3582,7 +3322,7 @@
 			"zugehoerigZu": 40
 		},
 		{
-			"id": 393,
+			"id": 371,
 			"kennung": "1111140-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -3592,7 +3332,7 @@
 			"zugehoerigZu": 40
 		},
 		{
-			"id": 394,
+			"id": 372,
 			"kennung": "1111140-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -3602,7 +3342,7 @@
 			"zugehoerigZu": 40
 		},
 		{
-			"id": 395,
+			"id": 373,
 			"kennung": "1111140-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -3612,7 +3352,7 @@
 			"zugehoerigZu": 40
 		},
 		{
-			"id": 396,
+			"id": 374,
 			"kennung": "1111140-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -3622,7 +3362,7 @@
 			"zugehoerigZu": 40
 		},
 		{
-			"id": 397,
+			"id": 375,
 			"kennung": "1111140-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -3632,7 +3372,7 @@
 			"zugehoerigZu": 40
 		},
 		{
-			"id": 398,
+			"id": 376,
 			"kennung": "1111140-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -3652,7 +3392,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 399,
+			"id": 377,
 			"kennung": "1111141-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -3662,7 +3402,7 @@
 			"zugehoerigZu": 41
 		},
 		{
-			"id": 400,
+			"id": 378,
 			"kennung": "1111141-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -3672,7 +3412,7 @@
 			"zugehoerigZu": 41
 		},
 		{
-			"id": 401,
+			"id": 379,
 			"kennung": "1111141-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -3682,7 +3422,7 @@
 			"zugehoerigZu": 41
 		},
 		{
-			"id": 402,
+			"id": 380,
 			"kennung": "1111141-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -3692,7 +3432,7 @@
 			"zugehoerigZu": 41
 		},
 		{
-			"id": 403,
+			"id": 381,
 			"kennung": "1111141-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -3702,7 +3442,7 @@
 			"zugehoerigZu": 41
 		},
 		{
-			"id": 404,
+			"id": 382,
 			"kennung": "1111141-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -3712,7 +3452,7 @@
 			"zugehoerigZu": 41
 		},
 		{
-			"id": 405,
+			"id": 383,
 			"kennung": "1111141-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -3722,7 +3462,7 @@
 			"zugehoerigZu": 41
 		},
 		{
-			"id": 406,
+			"id": 384,
 			"kennung": "1111141-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -3732,7 +3472,7 @@
 			"zugehoerigZu": 41
 		},
 		{
-			"id": 407,
+			"id": 385,
 			"kennung": "1111141-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -3742,7 +3482,7 @@
 			"zugehoerigZu": 41
 		},
 		{
-			"id": 408,
+			"id": 386,
 			"kennung": "1111141-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -3752,7 +3492,7 @@
 			"zugehoerigZu": 41
 		},
 		{
-			"id": 409,
+			"id": 387,
 			"kennung": "1111141-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -3762,7 +3502,7 @@
 			"zugehoerigZu": 41
 		},
 		{
-			"id": 410,
+			"id": 388,
 			"kennung": "1111141-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -3782,7 +3522,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 411,
+			"id": 389,
 			"kennung": "1111142-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -3792,7 +3532,7 @@
 			"zugehoerigZu": 42
 		},
 		{
-			"id": 412,
+			"id": 390,
 			"kennung": "1111142-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -3802,7 +3542,7 @@
 			"zugehoerigZu": 42
 		},
 		{
-			"id": 413,
+			"id": 391,
 			"kennung": "1111142-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -3812,7 +3552,7 @@
 			"zugehoerigZu": 42
 		},
 		{
-			"id": 414,
+			"id": 392,
 			"kennung": "1111142-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -3822,7 +3562,7 @@
 			"zugehoerigZu": 42
 		},
 		{
-			"id": 415,
+			"id": 393,
 			"kennung": "1111142-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -3832,7 +3572,7 @@
 			"zugehoerigZu": 42
 		},
 		{
-			"id": 416,
+			"id": 394,
 			"kennung": "1111142-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -3842,7 +3582,7 @@
 			"zugehoerigZu": 42
 		},
 		{
-			"id": 417,
+			"id": 395,
 			"kennung": "1111142-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -3852,7 +3592,7 @@
 			"zugehoerigZu": 42
 		},
 		{
-			"id": 418,
+			"id": 396,
 			"kennung": "1111142-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -3862,7 +3602,7 @@
 			"zugehoerigZu": 42
 		},
 		{
-			"id": 419,
+			"id": 397,
 			"kennung": "1111142-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -3872,7 +3612,7 @@
 			"zugehoerigZu": 42
 		},
 		{
-			"id": 420,
+			"id": 398,
 			"kennung": "1111142-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -3882,7 +3622,7 @@
 			"zugehoerigZu": 42
 		},
 		{
-			"id": 421,
+			"id": 399,
 			"kennung": "1111142-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -3892,7 +3632,7 @@
 			"zugehoerigZu": 42
 		},
 		{
-			"id": 422,
+			"id": 400,
 			"kennung": "1111142-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -3912,7 +3652,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 423,
+			"id": 401,
 			"kennung": "1111143-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -3922,7 +3662,7 @@
 			"zugehoerigZu": 43
 		},
 		{
-			"id": 424,
+			"id": 402,
 			"kennung": "1111143-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -3932,7 +3672,7 @@
 			"zugehoerigZu": 43
 		},
 		{
-			"id": 425,
+			"id": 403,
 			"kennung": "1111143-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -3942,7 +3682,7 @@
 			"zugehoerigZu": 43
 		},
 		{
-			"id": 426,
+			"id": 404,
 			"kennung": "1111143-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -3952,7 +3692,7 @@
 			"zugehoerigZu": 43
 		},
 		{
-			"id": 427,
+			"id": 405,
 			"kennung": "1111143-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -3962,7 +3702,7 @@
 			"zugehoerigZu": 43
 		},
 		{
-			"id": 428,
+			"id": 406,
 			"kennung": "1111143-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -3972,7 +3712,7 @@
 			"zugehoerigZu": 43
 		},
 		{
-			"id": 429,
+			"id": 407,
 			"kennung": "1111143-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -3982,7 +3722,7 @@
 			"zugehoerigZu": 43
 		},
 		{
-			"id": 430,
+			"id": 408,
 			"kennung": "1111143-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -3992,7 +3732,7 @@
 			"zugehoerigZu": 43
 		},
 		{
-			"id": 431,
+			"id": 409,
 			"kennung": "1111143-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -4002,7 +3742,7 @@
 			"zugehoerigZu": 43
 		},
 		{
-			"id": 432,
+			"id": 410,
 			"kennung": "1111143-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -4012,7 +3752,7 @@
 			"zugehoerigZu": 43
 		},
 		{
-			"id": 433,
+			"id": 411,
 			"kennung": "1111143-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -4022,7 +3762,7 @@
 			"zugehoerigZu": 43
 		},
 		{
-			"id": 434,
+			"id": 412,
 			"kennung": "1111143-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -4042,7 +3782,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 435,
+			"id": 413,
 			"kennung": "1111144-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -4052,7 +3792,7 @@
 			"zugehoerigZu": 44
 		},
 		{
-			"id": 436,
+			"id": 414,
 			"kennung": "1111144-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -4062,7 +3802,7 @@
 			"zugehoerigZu": 44
 		},
 		{
-			"id": 437,
+			"id": 415,
 			"kennung": "1111144-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -4072,7 +3812,7 @@
 			"zugehoerigZu": 44
 		},
 		{
-			"id": 438,
+			"id": 416,
 			"kennung": "1111144-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -4082,7 +3822,7 @@
 			"zugehoerigZu": 44
 		},
 		{
-			"id": 439,
+			"id": 417,
 			"kennung": "1111144-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -4092,7 +3832,7 @@
 			"zugehoerigZu": 44
 		},
 		{
-			"id": 440,
+			"id": 418,
 			"kennung": "1111144-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -4102,7 +3842,7 @@
 			"zugehoerigZu": 44
 		},
 		{
-			"id": 441,
+			"id": 419,
 			"kennung": "1111144-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -4112,7 +3852,7 @@
 			"zugehoerigZu": 44
 		},
 		{
-			"id": 442,
+			"id": 420,
 			"kennung": "1111144-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -4122,7 +3862,7 @@
 			"zugehoerigZu": 44
 		},
 		{
-			"id": 443,
+			"id": 421,
 			"kennung": "1111144-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -4132,7 +3872,7 @@
 			"zugehoerigZu": 44
 		},
 		{
-			"id": 444,
+			"id": 422,
 			"kennung": "1111144-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -4142,7 +3882,7 @@
 			"zugehoerigZu": 44
 		},
 		{
-			"id": 445,
+			"id": 423,
 			"kennung": "1111144-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -4152,7 +3892,7 @@
 			"zugehoerigZu": 44
 		},
 		{
-			"id": 446,
+			"id": 424,
 			"kennung": "1111144-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -4172,7 +3912,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 447,
+			"id": 425,
 			"kennung": "1111145-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -4182,7 +3922,7 @@
 			"zugehoerigZu": 45
 		},
 		{
-			"id": 448,
+			"id": 426,
 			"kennung": "1111145-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -4192,7 +3932,7 @@
 			"zugehoerigZu": 45
 		},
 		{
-			"id": 449,
+			"id": 427,
 			"kennung": "1111145-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -4202,7 +3942,7 @@
 			"zugehoerigZu": 45
 		},
 		{
-			"id": 450,
+			"id": 428,
 			"kennung": "1111145-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -4212,7 +3952,7 @@
 			"zugehoerigZu": 45
 		},
 		{
-			"id": 451,
+			"id": 429,
 			"kennung": "1111145-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -4222,7 +3962,7 @@
 			"zugehoerigZu": 45
 		},
 		{
-			"id": 452,
+			"id": 430,
 			"kennung": "1111145-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -4232,7 +3972,7 @@
 			"zugehoerigZu": 45
 		},
 		{
-			"id": 453,
+			"id": 431,
 			"kennung": "1111145-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -4242,7 +3982,7 @@
 			"zugehoerigZu": 45
 		},
 		{
-			"id": 454,
+			"id": 432,
 			"kennung": "1111145-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -4252,7 +3992,7 @@
 			"zugehoerigZu": 45
 		},
 		{
-			"id": 455,
+			"id": 433,
 			"kennung": "1111145-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -4262,7 +4002,7 @@
 			"zugehoerigZu": 45
 		},
 		{
-			"id": 456,
+			"id": 434,
 			"kennung": "1111145-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -4272,7 +4012,7 @@
 			"zugehoerigZu": 45
 		},
 		{
-			"id": 457,
+			"id": 435,
 			"kennung": "1111145-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -4282,7 +4022,7 @@
 			"zugehoerigZu": 45
 		},
 		{
-			"id": 458,
+			"id": 436,
 			"kennung": "1111145-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -4302,7 +4042,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 459,
+			"id": 437,
 			"kennung": "1111146-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -4312,7 +4052,7 @@
 			"zugehoerigZu": 46
 		},
 		{
-			"id": 460,
+			"id": 438,
 			"kennung": "1111146-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -4322,7 +4062,7 @@
 			"zugehoerigZu": 46
 		},
 		{
-			"id": 461,
+			"id": 439,
 			"kennung": "1111146-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -4332,7 +4072,7 @@
 			"zugehoerigZu": 46
 		},
 		{
-			"id": 462,
+			"id": 440,
 			"kennung": "1111146-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -4342,7 +4082,7 @@
 			"zugehoerigZu": 46
 		},
 		{
-			"id": 463,
+			"id": 441,
 			"kennung": "1111146-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -4352,7 +4092,7 @@
 			"zugehoerigZu": 46
 		},
 		{
-			"id": 464,
+			"id": 442,
 			"kennung": "1111146-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -4362,7 +4102,7 @@
 			"zugehoerigZu": 46
 		},
 		{
-			"id": 465,
+			"id": 443,
 			"kennung": "1111146-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -4372,7 +4112,7 @@
 			"zugehoerigZu": 46
 		},
 		{
-			"id": 466,
+			"id": 444,
 			"kennung": "1111146-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -4382,7 +4122,7 @@
 			"zugehoerigZu": 46
 		},
 		{
-			"id": 467,
+			"id": 445,
 			"kennung": "1111146-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -4392,7 +4132,7 @@
 			"zugehoerigZu": 46
 		},
 		{
-			"id": 468,
+			"id": 446,
 			"kennung": "1111146-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -4402,7 +4142,7 @@
 			"zugehoerigZu": 46
 		},
 		{
-			"id": 469,
+			"id": 447,
 			"kennung": "1111146-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -4412,7 +4152,7 @@
 			"zugehoerigZu": 46
 		},
 		{
-			"id": 470,
+			"id": 448,
 			"kennung": "1111146-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -4432,7 +4172,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 471,
+			"id": 449,
 			"kennung": "1111147-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -4442,7 +4182,7 @@
 			"zugehoerigZu": 47
 		},
 		{
-			"id": 472,
+			"id": 450,
 			"kennung": "1111147-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -4452,7 +4192,7 @@
 			"zugehoerigZu": 47
 		},
 		{
-			"id": 473,
+			"id": 451,
 			"kennung": "1111147-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -4462,7 +4202,7 @@
 			"zugehoerigZu": 47
 		},
 		{
-			"id": 474,
+			"id": 452,
 			"kennung": "1111147-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -4472,7 +4212,7 @@
 			"zugehoerigZu": 47
 		},
 		{
-			"id": 475,
+			"id": 453,
 			"kennung": "1111147-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -4482,7 +4222,7 @@
 			"zugehoerigZu": 47
 		},
 		{
-			"id": 476,
+			"id": 454,
 			"kennung": "1111147-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -4492,7 +4232,7 @@
 			"zugehoerigZu": 47
 		},
 		{
-			"id": 477,
+			"id": 455,
 			"kennung": "1111147-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -4502,7 +4242,7 @@
 			"zugehoerigZu": 47
 		},
 		{
-			"id": 478,
+			"id": 456,
 			"kennung": "1111147-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -4512,7 +4252,7 @@
 			"zugehoerigZu": 47
 		},
 		{
-			"id": 479,
+			"id": 457,
 			"kennung": "1111147-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -4522,7 +4262,7 @@
 			"zugehoerigZu": 47
 		},
 		{
-			"id": 480,
+			"id": 458,
 			"kennung": "1111147-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -4532,7 +4272,7 @@
 			"zugehoerigZu": 47
 		},
 		{
-			"id": 481,
+			"id": 459,
 			"kennung": "1111147-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -4542,7 +4282,7 @@
 			"zugehoerigZu": 47
 		},
 		{
-			"id": 482,
+			"id": 460,
 			"kennung": "1111147-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -4562,7 +4302,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 483,
+			"id": 461,
 			"kennung": "1111148-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -4572,7 +4312,7 @@
 			"zugehoerigZu": 48
 		},
 		{
-			"id": 484,
+			"id": 462,
 			"kennung": "1111148-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -4582,7 +4322,7 @@
 			"zugehoerigZu": 48
 		},
 		{
-			"id": 485,
+			"id": 463,
 			"kennung": "1111148-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -4592,7 +4332,7 @@
 			"zugehoerigZu": 48
 		},
 		{
-			"id": 486,
+			"id": 464,
 			"kennung": "1111148-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -4602,7 +4342,7 @@
 			"zugehoerigZu": 48
 		},
 		{
-			"id": 487,
+			"id": 465,
 			"kennung": "1111148-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -4612,7 +4352,7 @@
 			"zugehoerigZu": 48
 		},
 		{
-			"id": 488,
+			"id": 466,
 			"kennung": "1111148-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -4622,7 +4362,7 @@
 			"zugehoerigZu": 48
 		},
 		{
-			"id": 489,
+			"id": 467,
 			"kennung": "1111148-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -4632,7 +4372,7 @@
 			"zugehoerigZu": 48
 		},
 		{
-			"id": 490,
+			"id": 468,
 			"kennung": "1111148-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -4642,7 +4382,7 @@
 			"zugehoerigZu": 48
 		},
 		{
-			"id": 491,
+			"id": 469,
 			"kennung": "1111148-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -4652,7 +4392,7 @@
 			"zugehoerigZu": 48
 		},
 		{
-			"id": 492,
+			"id": 470,
 			"kennung": "1111148-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -4662,7 +4402,7 @@
 			"zugehoerigZu": 48
 		},
 		{
-			"id": 493,
+			"id": 471,
 			"kennung": "1111148-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -4672,7 +4412,7 @@
 			"zugehoerigZu": 48
 		},
 		{
-			"id": 494,
+			"id": 472,
 			"kennung": "1111148-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -4692,7 +4432,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 495,
+			"id": 473,
 			"kennung": "1111149-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -4702,7 +4442,7 @@
 			"zugehoerigZu": 49
 		},
 		{
-			"id": 496,
+			"id": 474,
 			"kennung": "1111149-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -4712,7 +4452,7 @@
 			"zugehoerigZu": 49
 		},
 		{
-			"id": 497,
+			"id": 475,
 			"kennung": "1111149-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -4722,7 +4462,7 @@
 			"zugehoerigZu": 49
 		},
 		{
-			"id": 498,
+			"id": 476,
 			"kennung": "1111149-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -4732,7 +4472,7 @@
 			"zugehoerigZu": 49
 		},
 		{
-			"id": 499,
+			"id": 477,
 			"kennung": "1111149-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -4742,7 +4482,7 @@
 			"zugehoerigZu": 49
 		},
 		{
-			"id": 500,
+			"id": 478,
 			"kennung": "1111149-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -4752,7 +4492,7 @@
 			"zugehoerigZu": 49
 		},
 		{
-			"id": 501,
+			"id": 479,
 			"kennung": "1111149-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -4762,7 +4502,7 @@
 			"zugehoerigZu": 49
 		},
 		{
-			"id": 502,
+			"id": 480,
 			"kennung": "1111149-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -4772,7 +4512,7 @@
 			"zugehoerigZu": 49
 		},
 		{
-			"id": 503,
+			"id": 481,
 			"kennung": "1111149-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -4782,7 +4522,7 @@
 			"zugehoerigZu": 49
 		},
 		{
-			"id": 504,
+			"id": 482,
 			"kennung": "1111149-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -4792,7 +4532,7 @@
 			"zugehoerigZu": 49
 		},
 		{
-			"id": 505,
+			"id": 483,
 			"kennung": "1111149-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -4802,7 +4542,7 @@
 			"zugehoerigZu": 49
 		},
 		{
-			"id": 506,
+			"id": 484,
 			"kennung": "1111149-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -4822,7 +4562,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 507,
+			"id": 485,
 			"kennung": "1111150-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -4832,7 +4572,7 @@
 			"zugehoerigZu": 50
 		},
 		{
-			"id": 508,
+			"id": 486,
 			"kennung": "1111150-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -4842,7 +4582,7 @@
 			"zugehoerigZu": 50
 		},
 		{
-			"id": 509,
+			"id": 487,
 			"kennung": "1111150-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -4852,7 +4592,7 @@
 			"zugehoerigZu": 50
 		},
 		{
-			"id": 510,
+			"id": 488,
 			"kennung": "1111150-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -4862,7 +4602,7 @@
 			"zugehoerigZu": 50
 		},
 		{
-			"id": 511,
+			"id": 489,
 			"kennung": "1111150-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -4872,7 +4612,7 @@
 			"zugehoerigZu": 50
 		},
 		{
-			"id": 512,
+			"id": 490,
 			"kennung": "1111150-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -4882,7 +4622,7 @@
 			"zugehoerigZu": 50
 		},
 		{
-			"id": 513,
+			"id": 491,
 			"kennung": "1111150-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -4892,7 +4632,7 @@
 			"zugehoerigZu": 50
 		},
 		{
-			"id": 514,
+			"id": 492,
 			"kennung": "1111150-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -4902,7 +4642,7 @@
 			"zugehoerigZu": 50
 		},
 		{
-			"id": 515,
+			"id": 493,
 			"kennung": "1111150-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -4912,7 +4652,7 @@
 			"zugehoerigZu": 50
 		},
 		{
-			"id": 516,
+			"id": 494,
 			"kennung": "1111150-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -4922,7 +4662,7 @@
 			"zugehoerigZu": 50
 		},
 		{
-			"id": 517,
+			"id": 495,
 			"kennung": "1111150-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -4932,7 +4672,7 @@
 			"zugehoerigZu": 50
 		},
 		{
-			"id": 518,
+			"id": 496,
 			"kennung": "1111150-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -4952,7 +4692,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 519,
+			"id": 497,
 			"kennung": "1111151-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -4962,7 +4702,7 @@
 			"zugehoerigZu": 51
 		},
 		{
-			"id": 520,
+			"id": 498,
 			"kennung": "1111151-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -4972,7 +4712,7 @@
 			"zugehoerigZu": 51
 		},
 		{
-			"id": 521,
+			"id": 499,
 			"kennung": "1111151-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -4982,7 +4722,7 @@
 			"zugehoerigZu": 51
 		},
 		{
-			"id": 522,
+			"id": 500,
 			"kennung": "1111151-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -4992,7 +4732,7 @@
 			"zugehoerigZu": 51
 		},
 		{
-			"id": 523,
+			"id": 501,
 			"kennung": "1111151-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -5002,7 +4742,7 @@
 			"zugehoerigZu": 51
 		},
 		{
-			"id": 524,
+			"id": 502,
 			"kennung": "1111151-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -5012,7 +4752,7 @@
 			"zugehoerigZu": 51
 		},
 		{
-			"id": 525,
+			"id": 503,
 			"kennung": "1111151-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -5022,7 +4762,7 @@
 			"zugehoerigZu": 51
 		},
 		{
-			"id": 526,
+			"id": 504,
 			"kennung": "1111151-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -5032,7 +4772,7 @@
 			"zugehoerigZu": 51
 		},
 		{
-			"id": 527,
+			"id": 505,
 			"kennung": "1111151-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -5042,7 +4782,7 @@
 			"zugehoerigZu": 51
 		},
 		{
-			"id": 528,
+			"id": 506,
 			"kennung": "1111151-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -5052,7 +4792,7 @@
 			"zugehoerigZu": 51
 		},
 		{
-			"id": 529,
+			"id": 507,
 			"kennung": "1111151-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -5062,7 +4802,7 @@
 			"zugehoerigZu": 51
 		},
 		{
-			"id": 530,
+			"id": 508,
 			"kennung": "1111151-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -5082,7 +4822,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 531,
+			"id": 509,
 			"kennung": "1111152-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -5092,7 +4832,7 @@
 			"zugehoerigZu": 52
 		},
 		{
-			"id": 532,
+			"id": 510,
 			"kennung": "1111152-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -5102,7 +4842,7 @@
 			"zugehoerigZu": 52
 		},
 		{
-			"id": 533,
+			"id": 511,
 			"kennung": "1111152-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -5112,7 +4852,7 @@
 			"zugehoerigZu": 52
 		},
 		{
-			"id": 534,
+			"id": 512,
 			"kennung": "1111152-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -5122,7 +4862,7 @@
 			"zugehoerigZu": 52
 		},
 		{
-			"id": 535,
+			"id": 513,
 			"kennung": "1111152-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -5132,7 +4872,7 @@
 			"zugehoerigZu": 52
 		},
 		{
-			"id": 536,
+			"id": 514,
 			"kennung": "1111152-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -5142,7 +4882,7 @@
 			"zugehoerigZu": 52
 		},
 		{
-			"id": 537,
+			"id": 515,
 			"kennung": "1111152-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -5152,7 +4892,7 @@
 			"zugehoerigZu": 52
 		},
 		{
-			"id": 538,
+			"id": 516,
 			"kennung": "1111152-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -5162,7 +4902,7 @@
 			"zugehoerigZu": 52
 		},
 		{
-			"id": 539,
+			"id": 517,
 			"kennung": "1111152-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -5172,7 +4912,7 @@
 			"zugehoerigZu": 52
 		},
 		{
-			"id": 540,
+			"id": 518,
 			"kennung": "1111152-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -5182,7 +4922,7 @@
 			"zugehoerigZu": 52
 		},
 		{
-			"id": 541,
+			"id": 519,
 			"kennung": "1111152-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -5192,7 +4932,7 @@
 			"zugehoerigZu": 52
 		},
 		{
-			"id": 542,
+			"id": 520,
 			"kennung": "1111152-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -5212,7 +4952,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 543,
+			"id": 521,
 			"kennung": "1111153-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -5222,7 +4962,7 @@
 			"zugehoerigZu": 53
 		},
 		{
-			"id": 544,
+			"id": 522,
 			"kennung": "1111153-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -5232,7 +4972,7 @@
 			"zugehoerigZu": 53
 		},
 		{
-			"id": 545,
+			"id": 523,
 			"kennung": "1111153-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -5242,7 +4982,7 @@
 			"zugehoerigZu": 53
 		},
 		{
-			"id": 546,
+			"id": 524,
 			"kennung": "1111153-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -5252,7 +4992,7 @@
 			"zugehoerigZu": 53
 		},
 		{
-			"id": 547,
+			"id": 525,
 			"kennung": "1111153-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -5262,7 +5002,7 @@
 			"zugehoerigZu": 53
 		},
 		{
-			"id": 548,
+			"id": 526,
 			"kennung": "1111153-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -5272,7 +5012,7 @@
 			"zugehoerigZu": 53
 		},
 		{
-			"id": 549,
+			"id": 527,
 			"kennung": "1111153-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -5282,7 +5022,7 @@
 			"zugehoerigZu": 53
 		},
 		{
-			"id": 550,
+			"id": 528,
 			"kennung": "1111153-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -5292,7 +5032,7 @@
 			"zugehoerigZu": 53
 		},
 		{
-			"id": 551,
+			"id": 529,
 			"kennung": "1111153-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -5302,7 +5042,7 @@
 			"zugehoerigZu": 53
 		},
 		{
-			"id": 552,
+			"id": 530,
 			"kennung": "1111153-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -5312,7 +5052,7 @@
 			"zugehoerigZu": 53
 		},
 		{
-			"id": 553,
+			"id": 531,
 			"kennung": "1111153-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -5322,7 +5062,7 @@
 			"zugehoerigZu": 53
 		},
 		{
-			"id": 554,
+			"id": 532,
 			"kennung": "1111153-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -5342,7 +5082,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 555,
+			"id": 533,
 			"kennung": "1111154-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -5352,7 +5092,7 @@
 			"zugehoerigZu": 54
 		},
 		{
-			"id": 556,
+			"id": 534,
 			"kennung": "1111154-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -5362,7 +5102,7 @@
 			"zugehoerigZu": 54
 		},
 		{
-			"id": 557,
+			"id": 535,
 			"kennung": "1111154-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -5372,7 +5112,7 @@
 			"zugehoerigZu": 54
 		},
 		{
-			"id": 558,
+			"id": 536,
 			"kennung": "1111154-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -5382,7 +5122,7 @@
 			"zugehoerigZu": 54
 		},
 		{
-			"id": 559,
+			"id": 537,
 			"kennung": "1111154-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -5392,7 +5132,7 @@
 			"zugehoerigZu": 54
 		},
 		{
-			"id": 560,
+			"id": 538,
 			"kennung": "1111154-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -5402,7 +5142,7 @@
 			"zugehoerigZu": 54
 		},
 		{
-			"id": 561,
+			"id": 539,
 			"kennung": "1111154-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -5412,7 +5152,7 @@
 			"zugehoerigZu": 54
 		},
 		{
-			"id": 562,
+			"id": 540,
 			"kennung": "1111154-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -5422,7 +5162,7 @@
 			"zugehoerigZu": 54
 		},
 		{
-			"id": 563,
+			"id": 541,
 			"kennung": "1111154-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -5432,7 +5172,7 @@
 			"zugehoerigZu": 54
 		},
 		{
-			"id": 564,
+			"id": 542,
 			"kennung": "1111154-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -5442,7 +5182,7 @@
 			"zugehoerigZu": 54
 		},
 		{
-			"id": 565,
+			"id": 543,
 			"kennung": "1111154-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -5452,7 +5192,7 @@
 			"zugehoerigZu": 54
 		},
 		{
-			"id": 566,
+			"id": 544,
 			"kennung": "1111154-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -5472,7 +5212,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 567,
+			"id": 545,
 			"kennung": "1111155-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -5482,7 +5222,7 @@
 			"zugehoerigZu": 55
 		},
 		{
-			"id": 568,
+			"id": 546,
 			"kennung": "1111155-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -5492,7 +5232,7 @@
 			"zugehoerigZu": 55
 		},
 		{
-			"id": 569,
+			"id": 547,
 			"kennung": "1111155-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -5502,7 +5242,7 @@
 			"zugehoerigZu": 55
 		},
 		{
-			"id": 570,
+			"id": 548,
 			"kennung": "1111155-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -5512,7 +5252,7 @@
 			"zugehoerigZu": 55
 		},
 		{
-			"id": 571,
+			"id": 549,
 			"kennung": "1111155-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -5522,7 +5262,7 @@
 			"zugehoerigZu": 55
 		},
 		{
-			"id": 572,
+			"id": 550,
 			"kennung": "1111155-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -5532,7 +5272,7 @@
 			"zugehoerigZu": 55
 		},
 		{
-			"id": 573,
+			"id": 551,
 			"kennung": "1111155-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -5542,7 +5282,7 @@
 			"zugehoerigZu": 55
 		},
 		{
-			"id": 574,
+			"id": 552,
 			"kennung": "1111155-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -5552,7 +5292,7 @@
 			"zugehoerigZu": 55
 		},
 		{
-			"id": 575,
+			"id": 553,
 			"kennung": "1111155-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -5562,7 +5302,7 @@
 			"zugehoerigZu": 55
 		},
 		{
-			"id": 576,
+			"id": 554,
 			"kennung": "1111155-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -5572,7 +5312,7 @@
 			"zugehoerigZu": 55
 		},
 		{
-			"id": 577,
+			"id": 555,
 			"kennung": "1111155-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -5582,7 +5322,7 @@
 			"zugehoerigZu": 55
 		},
 		{
-			"id": 578,
+			"id": 556,
 			"kennung": "1111155-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -5602,7 +5342,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 579,
+			"id": 557,
 			"kennung": "1111156-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -5612,7 +5352,7 @@
 			"zugehoerigZu": 56
 		},
 		{
-			"id": 580,
+			"id": 558,
 			"kennung": "1111156-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -5622,7 +5362,7 @@
 			"zugehoerigZu": 56
 		},
 		{
-			"id": 581,
+			"id": 559,
 			"kennung": "1111156-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -5632,7 +5372,7 @@
 			"zugehoerigZu": 56
 		},
 		{
-			"id": 582,
+			"id": 560,
 			"kennung": "1111156-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -5642,7 +5382,7 @@
 			"zugehoerigZu": 56
 		},
 		{
-			"id": 583,
+			"id": 561,
 			"kennung": "1111156-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -5652,7 +5392,7 @@
 			"zugehoerigZu": 56
 		},
 		{
-			"id": 584,
+			"id": 562,
 			"kennung": "1111156-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -5662,7 +5402,7 @@
 			"zugehoerigZu": 56
 		},
 		{
-			"id": 585,
+			"id": 563,
 			"kennung": "1111156-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -5672,7 +5412,7 @@
 			"zugehoerigZu": 56
 		},
 		{
-			"id": 586,
+			"id": 564,
 			"kennung": "1111156-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -5682,7 +5422,7 @@
 			"zugehoerigZu": 56
 		},
 		{
-			"id": 587,
+			"id": 565,
 			"kennung": "1111156-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -5692,7 +5432,7 @@
 			"zugehoerigZu": 56
 		},
 		{
-			"id": 588,
+			"id": 566,
 			"kennung": "1111156-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -5702,7 +5442,7 @@
 			"zugehoerigZu": 56
 		},
 		{
-			"id": 589,
+			"id": 567,
 			"kennung": "1111156-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -5712,7 +5452,7 @@
 			"zugehoerigZu": 56
 		},
 		{
-			"id": 590,
+			"id": 568,
 			"kennung": "1111156-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -5732,7 +5472,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 591,
+			"id": 569,
 			"kennung": "1111157-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -5742,7 +5482,7 @@
 			"zugehoerigZu": 57
 		},
 		{
-			"id": 592,
+			"id": 570,
 			"kennung": "1111157-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -5752,7 +5492,7 @@
 			"zugehoerigZu": 57
 		},
 		{
-			"id": 593,
+			"id": 571,
 			"kennung": "1111157-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -5762,7 +5502,7 @@
 			"zugehoerigZu": 57
 		},
 		{
-			"id": 594,
+			"id": 572,
 			"kennung": "1111157-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -5772,7 +5512,7 @@
 			"zugehoerigZu": 57
 		},
 		{
-			"id": 595,
+			"id": 573,
 			"kennung": "1111157-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -5782,7 +5522,7 @@
 			"zugehoerigZu": 57
 		},
 		{
-			"id": 596,
+			"id": 574,
 			"kennung": "1111157-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -5792,7 +5532,7 @@
 			"zugehoerigZu": 57
 		},
 		{
-			"id": 597,
+			"id": 575,
 			"kennung": "1111157-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -5802,7 +5542,7 @@
 			"zugehoerigZu": 57
 		},
 		{
-			"id": 598,
+			"id": 576,
 			"kennung": "1111157-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -5812,7 +5552,7 @@
 			"zugehoerigZu": 57
 		},
 		{
-			"id": 599,
+			"id": 577,
 			"kennung": "1111157-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -5822,7 +5562,7 @@
 			"zugehoerigZu": 57
 		},
 		{
-			"id": 600,
+			"id": 578,
 			"kennung": "1111157-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -5832,7 +5572,7 @@
 			"zugehoerigZu": 57
 		},
 		{
-			"id": 601,
+			"id": 579,
 			"kennung": "1111157-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -5842,7 +5582,7 @@
 			"zugehoerigZu": 57
 		},
 		{
-			"id": 602,
+			"id": 580,
 			"kennung": "1111157-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -5862,7 +5602,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 603,
+			"id": 581,
 			"kennung": "1111158-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -5872,7 +5612,7 @@
 			"zugehoerigZu": 58
 		},
 		{
-			"id": 604,
+			"id": 582,
 			"kennung": "1111158-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -5882,7 +5622,7 @@
 			"zugehoerigZu": 58
 		},
 		{
-			"id": 605,
+			"id": 583,
 			"kennung": "1111158-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -5892,7 +5632,7 @@
 			"zugehoerigZu": 58
 		},
 		{
-			"id": 606,
+			"id": 584,
 			"kennung": "1111158-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -5902,7 +5642,7 @@
 			"zugehoerigZu": 58
 		},
 		{
-			"id": 607,
+			"id": 585,
 			"kennung": "1111158-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -5912,7 +5652,7 @@
 			"zugehoerigZu": 58
 		},
 		{
-			"id": 608,
+			"id": 586,
 			"kennung": "1111158-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -5922,7 +5662,7 @@
 			"zugehoerigZu": 58
 		},
 		{
-			"id": 609,
+			"id": 587,
 			"kennung": "1111158-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -5932,7 +5672,7 @@
 			"zugehoerigZu": 58
 		},
 		{
-			"id": 610,
+			"id": 588,
 			"kennung": "1111158-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -5942,7 +5682,7 @@
 			"zugehoerigZu": 58
 		},
 		{
-			"id": 611,
+			"id": 589,
 			"kennung": "1111158-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -5952,7 +5692,7 @@
 			"zugehoerigZu": 58
 		},
 		{
-			"id": 612,
+			"id": 590,
 			"kennung": "1111158-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -5962,7 +5702,7 @@
 			"zugehoerigZu": 58
 		},
 		{
-			"id": 613,
+			"id": 591,
 			"kennung": "1111158-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -5972,7 +5712,7 @@
 			"zugehoerigZu": 58
 		},
 		{
-			"id": 614,
+			"id": 592,
 			"kennung": "1111158-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -5992,7 +5732,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 615,
+			"id": 593,
 			"kennung": "1111159-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -6002,7 +5742,7 @@
 			"zugehoerigZu": 59
 		},
 		{
-			"id": 616,
+			"id": 594,
 			"kennung": "1111159-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -6012,7 +5752,7 @@
 			"zugehoerigZu": 59
 		},
 		{
-			"id": 617,
+			"id": 595,
 			"kennung": "1111159-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -6022,7 +5762,7 @@
 			"zugehoerigZu": 59
 		},
 		{
-			"id": 618,
+			"id": 596,
 			"kennung": "1111159-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -6032,7 +5772,7 @@
 			"zugehoerigZu": 59
 		},
 		{
-			"id": 619,
+			"id": 597,
 			"kennung": "1111159-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -6042,7 +5782,7 @@
 			"zugehoerigZu": 59
 		},
 		{
-			"id": 620,
+			"id": 598,
 			"kennung": "1111159-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -6052,7 +5792,7 @@
 			"zugehoerigZu": 59
 		},
 		{
-			"id": 621,
+			"id": 599,
 			"kennung": "1111159-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -6062,7 +5802,7 @@
 			"zugehoerigZu": 59
 		},
 		{
-			"id": 622,
+			"id": 600,
 			"kennung": "1111159-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -6072,7 +5812,7 @@
 			"zugehoerigZu": 59
 		},
 		{
-			"id": 623,
+			"id": 601,
 			"kennung": "1111159-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -6082,7 +5822,7 @@
 			"zugehoerigZu": 59
 		},
 		{
-			"id": 624,
+			"id": 602,
 			"kennung": "1111159-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -6092,7 +5832,7 @@
 			"zugehoerigZu": 59
 		},
 		{
-			"id": 625,
+			"id": 603,
 			"kennung": "1111159-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -6102,7 +5842,7 @@
 			"zugehoerigZu": 59
 		},
 		{
-			"id": 626,
+			"id": 604,
 			"kennung": "1111159-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -6122,7 +5862,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 627,
+			"id": 605,
 			"kennung": "1111160-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -6132,7 +5872,7 @@
 			"zugehoerigZu": 60
 		},
 		{
-			"id": 628,
+			"id": 606,
 			"kennung": "1111160-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -6142,7 +5882,7 @@
 			"zugehoerigZu": 60
 		},
 		{
-			"id": 629,
+			"id": 607,
 			"kennung": "1111160-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -6152,7 +5892,7 @@
 			"zugehoerigZu": 60
 		},
 		{
-			"id": 630,
+			"id": 608,
 			"kennung": "1111160-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -6162,7 +5902,7 @@
 			"zugehoerigZu": 60
 		},
 		{
-			"id": 631,
+			"id": 609,
 			"kennung": "1111160-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -6172,7 +5912,7 @@
 			"zugehoerigZu": 60
 		},
 		{
-			"id": 632,
+			"id": 610,
 			"kennung": "1111160-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -6182,7 +5922,7 @@
 			"zugehoerigZu": 60
 		},
 		{
-			"id": 633,
+			"id": 611,
 			"kennung": "1111160-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -6192,7 +5932,7 @@
 			"zugehoerigZu": 60
 		},
 		{
-			"id": 634,
+			"id": 612,
 			"kennung": "1111160-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -6202,7 +5942,7 @@
 			"zugehoerigZu": 60
 		},
 		{
-			"id": 635,
+			"id": 613,
 			"kennung": "1111160-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -6212,7 +5952,7 @@
 			"zugehoerigZu": 60
 		},
 		{
-			"id": 636,
+			"id": 614,
 			"kennung": "1111160-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -6222,7 +5962,7 @@
 			"zugehoerigZu": 60
 		},
 		{
-			"id": 637,
+			"id": 615,
 			"kennung": "1111160-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -6232,7 +5972,7 @@
 			"zugehoerigZu": 60
 		},
 		{
-			"id": 638,
+			"id": 616,
 			"kennung": "1111160-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -6252,7 +5992,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 639,
+			"id": 617,
 			"kennung": "1111161-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -6262,7 +6002,7 @@
 			"zugehoerigZu": 61
 		},
 		{
-			"id": 640,
+			"id": 618,
 			"kennung": "1111161-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -6272,7 +6012,7 @@
 			"zugehoerigZu": 61
 		},
 		{
-			"id": 641,
+			"id": 619,
 			"kennung": "1111161-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -6282,7 +6022,7 @@
 			"zugehoerigZu": 61
 		},
 		{
-			"id": 642,
+			"id": 620,
 			"kennung": "1111161-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -6292,7 +6032,7 @@
 			"zugehoerigZu": 61
 		},
 		{
-			"id": 643,
+			"id": 621,
 			"kennung": "1111161-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -6302,7 +6042,7 @@
 			"zugehoerigZu": 61
 		},
 		{
-			"id": 644,
+			"id": 622,
 			"kennung": "1111161-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -6312,7 +6052,7 @@
 			"zugehoerigZu": 61
 		},
 		{
-			"id": 645,
+			"id": 623,
 			"kennung": "1111161-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -6322,7 +6062,7 @@
 			"zugehoerigZu": 61
 		},
 		{
-			"id": 646,
+			"id": 624,
 			"kennung": "1111161-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -6332,7 +6072,7 @@
 			"zugehoerigZu": 61
 		},
 		{
-			"id": 647,
+			"id": 625,
 			"kennung": "1111161-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -6342,7 +6082,7 @@
 			"zugehoerigZu": 61
 		},
 		{
-			"id": 648,
+			"id": 626,
 			"kennung": "1111161-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -6352,7 +6092,7 @@
 			"zugehoerigZu": 61
 		},
 		{
-			"id": 649,
+			"id": 627,
 			"kennung": "1111161-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -6362,7 +6102,7 @@
 			"zugehoerigZu": 61
 		},
 		{
-			"id": 650,
+			"id": 628,
 			"kennung": "1111161-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -6382,7 +6122,7 @@
 			"zugehoerigZu": 1
 		},
 		{
-			"id": 651,
+			"id": 629,
 			"kennung": "1111162-1A",
 			"name": "1A",
 			"namensergaenzung": "Keine",
@@ -6392,7 +6132,7 @@
 			"zugehoerigZu": 62
 		},
 		{
-			"id": 652,
+			"id": 630,
 			"kennung": "1111162-1B",
 			"name": "1B",
 			"namensergaenzung": "Keine",
@@ -6402,7 +6142,7 @@
 			"zugehoerigZu": 62
 		},
 		{
-			"id": 653,
+			"id": 631,
 			"kennung": "1111162-1C",
 			"name": "1C",
 			"namensergaenzung": "Keine",
@@ -6412,7 +6152,7 @@
 			"zugehoerigZu": 62
 		},
 		{
-			"id": 654,
+			"id": 632,
 			"kennung": "1111162-2A",
 			"name": "2A",
 			"namensergaenzung": "Keine",
@@ -6422,7 +6162,7 @@
 			"zugehoerigZu": 62
 		},
 		{
-			"id": 655,
+			"id": 633,
 			"kennung": "1111162-2B",
 			"name": "2B",
 			"namensergaenzung": "Keine",
@@ -6432,7 +6172,7 @@
 			"zugehoerigZu": 62
 		},
 		{
-			"id": 656,
+			"id": 634,
 			"kennung": "1111162-2C",
 			"name": "2C",
 			"namensergaenzung": "Keine",
@@ -6442,7 +6182,7 @@
 			"zugehoerigZu": 62
 		},
 		{
-			"id": 657,
+			"id": 635,
 			"kennung": "1111162-3A",
 			"name": "3A",
 			"namensergaenzung": "Keine",
@@ -6452,7 +6192,7 @@
 			"zugehoerigZu": 62
 		},
 		{
-			"id": 658,
+			"id": 636,
 			"kennung": "1111162-3B",
 			"name": "3B",
 			"namensergaenzung": "Keine",
@@ -6462,7 +6202,7 @@
 			"zugehoerigZu": 62
 		},
 		{
-			"id": 659,
+			"id": 637,
 			"kennung": "1111162-3C",
 			"name": "3C",
 			"namensergaenzung": "Keine",
@@ -6472,7 +6212,7 @@
 			"zugehoerigZu": 62
 		},
 		{
-			"id": 660,
+			"id": 638,
 			"kennung": "1111162-4A",
 			"name": "4A",
 			"namensergaenzung": "Keine",
@@ -6482,7 +6222,7 @@
 			"zugehoerigZu": 62
 		},
 		{
-			"id": 661,
+			"id": 639,
 			"kennung": "1111162-4B",
 			"name": "4B",
 			"namensergaenzung": "Keine",
@@ -6492,7 +6232,7 @@
 			"zugehoerigZu": 62
 		},
 		{
-			"id": 662,
+			"id": 640,
 			"kennung": "1111162-4C",
 			"name": "4C",
 			"namensergaenzung": "Keine",
@@ -6500,6 +6240,266 @@
 			"typ": "KLASSE",
 			"administriertVon": 62,
 			"zugehoerigZu": 62
+		},
+		{
+			"id": 63,
+			"kennung": "1111163",
+			"name": "Testschule-63",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-63",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 641,
+			"kennung": "1111163-1A",
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-63-1A",
+			"typ": "KLASSE",
+			"administriertVon": 63,
+			"zugehoerigZu": 63
+		},
+		{
+			"id": 642,
+			"kennung": "1111163-1B",
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-63-1B",
+			"typ": "KLASSE",
+			"administriertVon": 63,
+			"zugehoerigZu": 63
+		},
+		{
+			"id": 643,
+			"kennung": "1111163-1C",
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-63-1C",
+			"typ": "KLASSE",
+			"administriertVon": 63,
+			"zugehoerigZu": 63
+		},
+		{
+			"id": 644,
+			"kennung": "1111163-2A",
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-63-2A",
+			"typ": "KLASSE",
+			"administriertVon": 63,
+			"zugehoerigZu": 63
+		},
+		{
+			"id": 645,
+			"kennung": "1111163-2B",
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-63-2B",
+			"typ": "KLASSE",
+			"administriertVon": 63,
+			"zugehoerigZu": 63
+		},
+		{
+			"id": 646,
+			"kennung": "1111163-2C",
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-63-2C",
+			"typ": "KLASSE",
+			"administriertVon": 63,
+			"zugehoerigZu": 63
+		},
+		{
+			"id": 647,
+			"kennung": "1111163-3A",
+			"name": "3A",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-63-3A",
+			"typ": "KLASSE",
+			"administriertVon": 63,
+			"zugehoerigZu": 63
+		},
+		{
+			"id": 648,
+			"kennung": "1111163-3B",
+			"name": "3B",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-63-3B",
+			"typ": "KLASSE",
+			"administriertVon": 63,
+			"zugehoerigZu": 63
+		},
+		{
+			"id": 649,
+			"kennung": "1111163-3C",
+			"name": "3C",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-63-3C",
+			"typ": "KLASSE",
+			"administriertVon": 63,
+			"zugehoerigZu": 63
+		},
+		{
+			"id": 650,
+			"kennung": "1111163-4A",
+			"name": "4A",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-63-4A",
+			"typ": "KLASSE",
+			"administriertVon": 63,
+			"zugehoerigZu": 63
+		},
+		{
+			"id": 651,
+			"kennung": "1111163-4B",
+			"name": "4B",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-63-4B",
+			"typ": "KLASSE",
+			"administriertVon": 63,
+			"zugehoerigZu": 63
+		},
+		{
+			"id": 652,
+			"kennung": "1111163-4C",
+			"name": "4C",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-63-4C",
+			"typ": "KLASSE",
+			"administriertVon": 63,
+			"zugehoerigZu": 63
+		},
+		{
+			"id": 64,
+			"kennung": "1111164",
+			"name": "Testschule-64",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-64",
+			"typ": "SCHULE",
+			"administriertVon": 1,
+			"zugehoerigZu": 1
+		},
+		{
+			"id": 653,
+			"kennung": "1111164-1A",
+			"name": "1A",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-64-1A",
+			"typ": "KLASSE",
+			"administriertVon": 64,
+			"zugehoerigZu": 64
+		},
+		{
+			"id": 654,
+			"kennung": "1111164-1B",
+			"name": "1B",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-64-1B",
+			"typ": "KLASSE",
+			"administriertVon": 64,
+			"zugehoerigZu": 64
+		},
+		{
+			"id": 655,
+			"kennung": "1111164-1C",
+			"name": "1C",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-64-1C",
+			"typ": "KLASSE",
+			"administriertVon": 64,
+			"zugehoerigZu": 64
+		},
+		{
+			"id": 656,
+			"kennung": "1111164-2A",
+			"name": "2A",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-64-2A",
+			"typ": "KLASSE",
+			"administriertVon": 64,
+			"zugehoerigZu": 64
+		},
+		{
+			"id": 657,
+			"kennung": "1111164-2B",
+			"name": "2B",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-64-2B",
+			"typ": "KLASSE",
+			"administriertVon": 64,
+			"zugehoerigZu": 64
+		},
+		{
+			"id": 658,
+			"kennung": "1111164-2C",
+			"name": "2C",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-64-2C",
+			"typ": "KLASSE",
+			"administriertVon": 64,
+			"zugehoerigZu": 64
+		},
+		{
+			"id": 659,
+			"kennung": "1111164-3A",
+			"name": "3A",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-64-3A",
+			"typ": "KLASSE",
+			"administriertVon": 64,
+			"zugehoerigZu": 64
+		},
+		{
+			"id": 660,
+			"kennung": "1111164-3B",
+			"name": "3B",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-64-3B",
+			"typ": "KLASSE",
+			"administriertVon": 64,
+			"zugehoerigZu": 64
+		},
+		{
+			"id": 661,
+			"kennung": "1111164-3C",
+			"name": "3C",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-64-3C",
+			"typ": "KLASSE",
+			"administriertVon": 64,
+			"zugehoerigZu": 64
+		},
+		{
+			"id": 662,
+			"kennung": "1111164-4A",
+			"name": "4A",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-64-4A",
+			"typ": "KLASSE",
+			"administriertVon": 64,
+			"zugehoerigZu": 64
+		},
+		{
+			"id": 663,
+			"kennung": "1111164-4B",
+			"name": "4B",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-64-4B",
+			"typ": "KLASSE",
+			"administriertVon": 64,
+			"zugehoerigZu": 64
+		},
+		{
+			"id": 664,
+			"kennung": "1111164-4C",
+			"name": "4C",
+			"namensergaenzung": "Keine",
+			"kuerzel": "Testschule-64-4C",
+			"typ": "KLASSE",
+			"administriertVon": 64,
+			"zugehoerigZu": 64
 		}
 	]
 }
