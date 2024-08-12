@@ -46,7 +46,12 @@ import { PersonenkontextResponse } from '../../personenkontext/api/response/pers
 import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { PersonRepository } from '../persistence/person.repository.js';
-import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import {
+    DomainError,
+    EntityCouldNotBeUpdated,
+    EntityNotFoundError,
+    MissingPermissionsError,
+} from '../../../shared/error/index.js';
 import { Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
@@ -64,12 +69,9 @@ import { PersonExceptionFilter } from './person-exception-filter.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
-import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
-import { KeycloakUserService, LOCK_KEYS, UserDo } from '../../keycloak-administration/index.js';
+import { KeycloakUserService, LOCK_KEYS, User } from '../../keycloak-administration/index.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
-import { KeycloakUserService, LOCK_KEYS, UserDo } from '../../keycloak-administration/index.js';
-import { LockUserBodyParams } from './lock-user.body.params.js';
+import { PersonLockResponse } from './person-lock.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -211,7 +213,7 @@ export class PersonController {
 
         const response: PersonendatensatzResponse = new PersonendatensatzResponse(personResult.value, false);
         if (personResult.value.keycloakUserId) {
-            const keyCloakUserDataResponse: Result<UserDo<true>, DomainError> = await this.keycloakUserService.findById(
+            const keyCloakUserDataResponse: Result<User<true>, DomainError> = await this.keycloakUserService.findById(
                 personResult.value.keycloakUserId,
             );
             if (keyCloakUserDataResponse.ok) {
@@ -469,18 +471,24 @@ export class PersonController {
         @Param('personId') personId: string,
         @Body() lockUserBodyParams: LockUserBodyParams,
         @Permissions() permissions: PersonPermissions,
-    ): Promise<{ message: string }> {
+    ): Promise<PersonLockResponse> {
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             personId,
             permissions,
         );
 
         if (!personResult.ok) {
-            throw new Error('Person not found or no permissions');
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Person not found or no permissions.'),
+                ),
+            );
         }
 
         if (!personResult.value?.keycloakUserId) {
-            throw new Error('Person not found');
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Person', personId)),
+            );
         }
 
         const tempAttributes: Record<string, string> = {};
@@ -495,12 +503,16 @@ export class PersonController {
             customAttributes,
         );
         if (!result.ok) {
-            throw new Error('Error while updating user status');
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityCouldNotBeUpdated('Person', personId),
+                ),
+            );
         }
         if (!lockUserBodyParams.lock) {
-            return { message: 'User has been successfully locked.' };
+            return new PersonLockResponse('User has been successfully locked.');
         } else {
-            return { message: 'User has been successfully unlocked.' };
+            return new PersonLockResponse('User has been successfully unlocked.');
         }
     }
 }

@@ -69,6 +69,8 @@ describe('KeycloakUserService', () => {
                     createdDate: undefined,
                     username: user.username,
                     email: user.email,
+                    enabled: user.enabled,
+                    attributes: user.attributes,
                 });
 
                 expect(res).toStrictEqual<Result<string>>({
@@ -90,6 +92,8 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     password,
                 );
@@ -112,6 +116,8 @@ describe('KeycloakUserService', () => {
                         email: user.email,
                         id: user.id,
                         createdTimestamp: user.createdDate.getTime(),
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                 ] as unknown as UserRepresentation[]);
 
@@ -120,6 +126,8 @@ describe('KeycloakUserService', () => {
                     createdDate: undefined,
                     username: user.username,
                     email: user.email,
+                    enabled: user.enabled,
+                    attributes: user.attributes,
                 });
 
                 expect(res).toStrictEqual<Result<string>>({
@@ -172,6 +180,8 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{BCRYPT}$2b$12$hqG5T3z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
                     GgKOau`,
@@ -194,6 +204,8 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{crypt}$6$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
                     sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
@@ -215,6 +227,8 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{BCRYPT}xxxxxhqG5T3$z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
                     GgKOau`,
@@ -236,6 +250,8 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{crypt}$$x$$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
                     sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
@@ -257,6 +273,8 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{notsupported}$6$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
                     sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
@@ -278,6 +296,8 @@ describe('KeycloakUserService', () => {
                         email: user.email,
                         id: user.id,
                         createdTimestamp: user.createdDate.getTime(),
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                 ] as unknown as UserRepresentation[]);
 
@@ -287,6 +307,8 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{BCRYPT}$2b$12$hqG5T3z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
                     GgKOau`,
@@ -391,6 +413,8 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     id: user.id,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: user.enabled,
+                    attributes: user.attributes,
                 } as unknown as UserRepresentation);
 
                 const res: Result<User<true>> = await service.findById(user.id);
@@ -473,6 +497,8 @@ describe('KeycloakUserService', () => {
                         email: user.email,
                         id: user.id,
                         createdTimestamp: user.createdDate.getTime(),
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                 ] as unknown as UserRepresentation[]);
 

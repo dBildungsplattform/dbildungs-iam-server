@@ -391,6 +391,8 @@ describe('DbSeedService', () => {
                     'testusername',
                     'test@example.com',
                     faker.date.recent(),
+                    true,
+                    {},
                 );
 
                 kcUserService.findOne.mockResolvedValueOnce({ ok: true, value: existingUser });

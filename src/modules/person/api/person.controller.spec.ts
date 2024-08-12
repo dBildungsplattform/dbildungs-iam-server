@@ -40,6 +40,7 @@ import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-per
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
+import { LockUserBodyParams } from './lock-user.body.params.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -49,6 +50,7 @@ describe('PersonController', () => {
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
+    let keycloakUserService: DeepMocked<KeycloakUserService>;
 
     let personPermissionsMock: DeepMocked<PersonPermissions>;
 
@@ -104,6 +106,7 @@ describe('PersonController', () => {
         usernameGeneratorService = module.get(UsernameGeneratorService);
         personenkontextServiceMock = module.get(PersonenkontextService);
         rolleRepoMock = module.get(RolleRepo);
+        keycloakUserService = module.get(KeycloakUserService);
     });
 
     function getPerson(): Person<true> {
@@ -744,6 +747,114 @@ describe('PersonController', () => {
                     VornameForPersonWithTrailingSpaceError,
                 );
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
+            });
+        });
+    });
+    describe('lockPerson', () => {
+        const params: PersonByIdParams = {
+            personId: faker.string.uuid(),
+        };
+        personPermissionsMock = createMock<PersonPermissions>();
+
+        describe('when locking a user is successful', () => {
+            const person: Person<true> = getPerson();
+            const lockUserBodyParams: LockUserBodyParams = {
+                lock: false,
+                locked_from: '2024-01-01T00:00:00Z',
+            };
+            it('should return a success message', async () => {
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
+
+                const response: { message: string } = await personController.lockPerson(
+                    params.personId,
+                    lockUserBodyParams,
+                    personPermissionsMock,
+                );
+
+                expect(response).toEqual({ message: 'User has been successfully locked.' });
+                expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
+                expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when unlocking a user is successful', () => {
+            const person: Person<true> = getPerson();
+            const lockUserBodyParams: LockUserBodyParams = {
+                lock: true,
+                locked_from: '2024-01-01T00:00:00Z',
+            };
+            it('should return a success message', async () => {
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
+
+                const response: { message: string } = await personController.lockPerson(
+                    params.personId,
+                    lockUserBodyParams,
+                    personPermissionsMock,
+                );
+
+                expect(response).toEqual({ message: 'User has been successfully unlocked.' });
+                expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
+                expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when person does not exist or no permissions', () => {
+            const lockUserBodyParams: LockUserBodyParams = {
+                lock: false,
+                locked_from: '2024-01-01T00:00:00Z',
+            };
+            it('should throw an error', async () => {
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
+                    ok: false,
+                    error: new EntityNotFoundError('Person'),
+                });
+                await expect(
+                    personController.lockPerson(params.personId, lockUserBodyParams, personPermissionsMock),
+                ).rejects.toThrow(HttpException);
+            });
+        });
+
+        describe('when keycloakUserId is missing', () => {
+            const lockUserBodyParams: LockUserBodyParams = {
+                lock: false,
+                locked_from: '2024-01-01T00:00:00Z',
+            };
+            const person: Person<true> = getPerson();
+            person.keycloakUserId = undefined;
+
+            it('should throw an error', async () => {
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
+                    ok: true,
+                    value: person,
+                });
+                await expect(
+                    personController.lockPerson(params.personId, lockUserBodyParams, personPermissionsMock),
+                ).rejects.toThrow(HttpException);
+            });
+        });
+
+        describe('when updating user status fails', () => {
+            const person: Person<true> = getPerson();
+            person.keycloakUserId = 'keycloak-12345';
+
+            it('should throw an error', async () => {
+                const lockUserBodyParams: LockUserBodyParams = {
+                    lock: false,
+                    locked_from: '2024-01-01T00:00:00Z',
+                };
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
+                    ok: true,
+                    value: person,
+                });
+                keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({
+                    ok: false,
+                    error: new KeycloakClientError('Could not update user status or custom attributes'),
+                });
+                await expect(
+                    personController.lockPerson(params.personId, lockUserBodyParams, personPermissionsMock),
+                ).rejects.toThrow(HttpException);
             });
         });
     });
