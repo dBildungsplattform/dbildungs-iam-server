@@ -118,11 +118,11 @@ export class PrivacyIdeaAdministrationController {
         if (personResult.value.referrer === undefined) {
             throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
         }
-        const suceess: boolean = await this.privacyIdeaAdministrationService.verifyToken(
+        const success: boolean = await this.privacyIdeaAdministrationService.verifyToken(
             personResult.value.referrer,
             params.otp,
         );
 
-        return suceess;
+        return success;
     }
 }
