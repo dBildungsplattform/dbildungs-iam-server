@@ -722,8 +722,7 @@ describe('OrganisationRepository', () => {
                         organisationId: result.id,
                         kennung: result.kennung,
                         name: result.name,
-                        organisationsBaumZuordnung: RootDirectChildrenType.OEFFENTLICH,
-                        createdAt: expect.any(Date),
+                        rootDirectChildrenZuordnung: RootDirectChildrenType.OEFFENTLICH,
                     }),
                 );
             });
@@ -747,8 +746,7 @@ describe('OrganisationRepository', () => {
                         organisationId: result.id,
                         kennung: result.kennung,
                         name: result.name,
-                        organisationsBaumZuordnung: RootDirectChildrenType.ERSATZ,
-                        createdAt: expect.any(Date),
+                        rootDirectChildrenZuordnung: RootDirectChildrenType.ERSATZ,
                     }),
                 );
             });
@@ -767,8 +765,7 @@ describe('OrganisationRepository', () => {
                         organisationId: result.id,
                         kennung: result.kennung,
                         name: result.name,
-                        organisationsBaumZuordnung: RootDirectChildrenType.OEFFENTLICH,
-                        createdAt: expect.any(Date),
+                        rootDirectChildrenZuordnung: RootDirectChildrenType.OEFFENTLICH,
                     }),
                 );
             });
