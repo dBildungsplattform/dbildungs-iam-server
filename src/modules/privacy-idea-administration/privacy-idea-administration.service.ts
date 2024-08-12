@@ -94,10 +94,10 @@ export class PrivacyIdeaAdministrationService {
         const endpoint: string = '/token/init';
         const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
         const url: string = baseUrl + endpoint;
-        const headers: { Authorization: string; 'Content-Type': string; SelfService: boolean } = {
+        const headers: { Authorization: string; 'Content-Type': string; SelfService: string } = {
             Authorization: `${token}`,
             'Content-Type': 'application/json',
-            SelfService: selfService,
+            SelfService: selfService.toString(),
         };
 
         const payload: InitSoftwareTokenPayload = {
