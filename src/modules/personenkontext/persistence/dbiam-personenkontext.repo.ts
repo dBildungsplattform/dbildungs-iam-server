@@ -19,6 +19,10 @@ import { MismatchedRevisionError } from '../../../shared/error/mismatched-revisi
 import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
+import {
+    PersonenkontextUpdatedData,
+    PersonenkontextUpdatedEvent,
+} from '../../../shared/events/personenkontext-updated.event.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
@@ -440,4 +444,38 @@ export class DBiamPersonenkontextRepo {
     public async isRolleAlreadyAssigned(id: RolleID): Promise<boolean> {
         return (await this.findByRolle(id)).length > 0;
     }
+
+    public async getServiceProviderNames(event: PersonenkontextUpdatedEvent): Promise<string[]> {
+        const currentKontext: PersonenkontextUpdatedData | undefined = event.currentKontexte[0];
+        if (!currentKontext) {
+            return [];
+        }
+
+        const query: string = `
+            SELECT sp.name
+            FROM public.personenkontext pk
+            JOIN public.rolle r ON pk.rolle_id = r.id
+            JOIN public.rolle_service_provider rsp ON rsp.rolle_id = r.id
+            JOIN public.service_provider sp ON sp.id = rsp.service_provider_id
+            WHERE pk.rolle_id = ? AND pk.person_id = ?
+        `;
+
+        const result: { name: string }[] = await this.em.execute(query, [currentKontext.rolleId, event.person.id]);
+
+        return result.map((row: { name: string }) => row.name);
+    }
+
+    // public async getServiceProviderNamesTest(): Promise<void> {
+    //     // Query to select all data from the personenkontext table
+    //     const query: string = `
+    //         SELECT *
+    //         FROM public.personenkontext
+    //     `;
+
+    //     // Execute the query
+    //     const result: EntityData<Personenkontext<true>>[] = await this.em.execute(query);
+    //     console.log(result);
+    //     // Return the result
+    //     return undefined;
+    // }
 }
