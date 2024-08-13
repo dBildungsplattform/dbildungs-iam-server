@@ -48,12 +48,11 @@ describe('ItsLearning Organisations Event Handler', () => {
     describe('createSchuleEventHandler', () => {
         it('should log on success', async () => {
             const orgaId: OrganisationID = faker.string.uuid();
-            const schuleName: OrganisationID = faker.word.noun();
             const oldParentId: OrganisationID = faker.string.uuid();
             const event: SchuleCreatedEvent = new SchuleCreatedEvent(
                 orgaId,
                 faker.string.uuid(),
-                schuleName,
+                faker.word.noun(),
                 RootDirectChildrenType.OEFFENTLICH,
             );
             itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: { parentId: oldParentId } }); // ReadGroupAction
@@ -69,13 +68,11 @@ describe('ItsLearning Organisations Event Handler', () => {
         });
 
         it('should keep existing hierarchy', async () => {
-            const orgaId: OrganisationID = faker.string.uuid();
-            const schuleName: OrganisationID = faker.word.noun();
             const oldParentId: OrganisationID = faker.string.uuid();
             const event: SchuleCreatedEvent = new SchuleCreatedEvent(
-                orgaId,
                 faker.string.uuid(),
-                schuleName,
+                faker.string.uuid(),
+                undefined,
                 RootDirectChildrenType.OEFFENTLICH,
             );
             itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: { parentId: oldParentId } }); // ReadGroupAction
@@ -105,9 +102,8 @@ describe('ItsLearning Organisations Event Handler', () => {
         });
 
         it('should skip event, if schule is ersatzschule', async () => {
-            const orgaId: OrganisationID = faker.string.uuid();
             const event: SchuleCreatedEvent = new SchuleCreatedEvent(
-                orgaId,
+                faker.string.uuid(),
                 faker.string.uuid(),
                 faker.word.noun(),
                 RootDirectChildrenType.ERSATZ,
@@ -120,12 +116,10 @@ describe('ItsLearning Organisations Event Handler', () => {
         });
 
         it('should log error on failed creation', async () => {
-            const orgaId: OrganisationID = faker.string.uuid();
-            const schuleName: OrganisationID = faker.word.noun();
             const event: SchuleCreatedEvent = new SchuleCreatedEvent(
-                orgaId,
                 faker.string.uuid(),
-                schuleName,
+                faker.string.uuid(),
+                faker.word.noun(),
                 RootDirectChildrenType.OEFFENTLICH,
             );
             itsLearningServiceMock.send.mockResolvedValueOnce({ ok: false, error: createMock() }); // ReadGroupAction
