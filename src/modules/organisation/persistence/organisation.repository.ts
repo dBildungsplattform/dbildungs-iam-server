@@ -9,6 +9,7 @@ import { OrganisationScope } from './organisation.scope.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
@@ -151,6 +152,14 @@ export class OrganisationRepository {
         return [oeffentlich && mapEntityToAggregate(oeffentlich), ersatz && mapEntityToAggregate(ersatz)];
     }
 
+    public async find(limit?: number, offset?: number): Promise<Organisation<true>[]> {
+        const organisations: OrganisationEntity[] = await this.em.findAll(OrganisationEntity, {
+            limit: limit,
+            offset: offset,
+        });
+        return organisations.map(mapEntityToAggregate);
+    }
+
     public async findById(id: string): Promise<Option<Organisation<true>>> {
         const organisation: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
         if (organisation) {
@@ -169,6 +178,36 @@ export class OrganisationRepository {
         });
 
         return organisationMap;
+    }
+
+    public async findByNameOrKennungAndExcludeByOrganisationType(
+        excludeOrganisationType: OrganisationsTyp,
+        searchStr?: string,
+        limit?: number,
+    ): Promise<Organisation<true>[]> {
+        const scope: OrganisationScope = new OrganisationScope();
+        if (searchStr) {
+            // searchStr is set, the scope is not paged
+            scope
+                .searchString(searchStr)
+                .setScopeWhereOperator(ScopeOperator.AND)
+                .excludeTyp([excludeOrganisationType]);
+        } else {
+            scope.excludeTyp([excludeOrganisationType]).paged(0, limit);
+        }
+
+        let foundOrganisations: Organisation<true>[] = [];
+        [foundOrganisations] = await this.findBy(scope);
+
+        return foundOrganisations;
+    }
+
+    public async findByNameOrKennung(searchStr: string): Promise<Organisation<true>[]> {
+        const organisations: OrganisationEntity[] = await this.em.find(OrganisationEntity, {
+            $or: [{ name: { $ilike: '%' + searchStr + '%' } }, { kennung: { $ilike: '%' + searchStr + '%' } }],
+        });
+
+        return organisations.map(mapEntityToAggregate);
     }
 
     public async updateKlassenname(id: string, newName: string): Promise<DomainError | Organisation<true>> {

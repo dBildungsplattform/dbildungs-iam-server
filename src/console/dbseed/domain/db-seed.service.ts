@@ -7,7 +7,6 @@ import { ConstructorCall, EntityFile } from '../db-seed.console.js';
 import { ServiceProvider } from '../../../modules/service-provider/domain/service-provider.js';
 import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
 import { plainToInstance } from 'class-transformer';
-import { OrganisationDo } from '../../../modules/organisation/domain/organisation.do.js';
 import { Person, PersonCreationParams } from '../../../modules/person/domain/person.js';
 import { PersonFile } from '../file/person-file.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
@@ -24,7 +23,7 @@ import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persi
 import { ServiceProviderFactory } from '../../../modules/service-provider/domain/service-provider.factory.js';
 import { ServiceProviderRepo } from '../../../modules/service-provider/repo/service-provider.repo.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
-import { FindUserFilter, KeycloakUserService, UserDo } from '../../../modules/keycloak-administration/index.js';
+import { FindUserFilter, KeycloakUserService, User } from '../../../modules/keycloak-administration/index.js';
 import { DBiamPersonenkontextService } from '../../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
 import { DbSeedReferenceRepo } from '../repo/db-seed-reference.repo.js';
 import { DbSeedReference } from './db-seed-reference.js';
@@ -74,19 +73,19 @@ export class DbSeedService {
         let zugehoerigZu: string | undefined = undefined;
 
         if (data.administriertVon != null) {
-            const adminstriertVonOrganisation: OrganisationDo<true> = await this.getReferencedOrganisation(
+            const adminstriertVonOrganisation: Organisation<true> = await this.getReferencedOrganisation(
                 data.administriertVon,
             );
             administriertVon = adminstriertVonOrganisation.id;
         }
         if (data.zugehoerigZu != null) {
-            const zugehoerigZuOrganisation: OrganisationDo<true> = await this.getReferencedOrganisation(
+            const zugehoerigZuOrganisation: Organisation<true> = await this.getReferencedOrganisation(
                 data.zugehoerigZu,
             );
             zugehoerigZu = zugehoerigZuOrganisation.id;
         }
 
-        const organisation: Organisation<false> = Organisation.createNew(
+        const organisation: Organisation<false> | DomainError = Organisation.createNew(
             administriertVon,
             zugehoerigZu,
             data.kennung,
@@ -96,6 +95,10 @@ export class DbSeedService {
             data.typ,
             data.traegerschaft,
         );
+
+        if (organisation instanceof DomainError) {
+            throw organisation;
+        }
 
         if (!administriertVon && !zugehoerigZu && data.kuerzel === 'Root') {
             organisation.id = this.ROOT_ORGANISATION_ID;
@@ -134,10 +137,10 @@ export class DbSeedService {
                 const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(spId);
                 serviceProviderUUIDs.push(sp.id);
             }
-            const referencedOrga: OrganisationDo<true> = await this.getReferencedOrganisation(
+            const referencedOrga: Organisation<true> = await this.getReferencedOrganisation(
                 file.administeredBySchulstrukturknoten,
             );
-            const rolle: Rolle<false> = this.rolleFactory.createNew(
+            const rolle: Rolle<false> | DomainError = this.rolleFactory.createNew(
                 file.name,
                 referencedOrga.id,
                 file.rollenart,
@@ -145,6 +148,10 @@ export class DbSeedService {
                 file.systemrechte,
                 serviceProviderUUIDs,
             );
+
+            if (rolle instanceof DomainError) {
+                throw rolle;
+            }
 
             const persistedRolle: Rolle<true> = await this.rolleRepo.save(rolle);
             if (persistedRolle && file.id != null) {
@@ -168,7 +175,7 @@ export class DbSeedService {
         ) as EntityFile<ServiceProviderFile>;
         const files: ServiceProviderFile[] = plainToInstance(ServiceProviderFile, serviceProviderFile.entities);
         for (const file of files) {
-            const referencedOrga: OrganisationDo<true> = await this.getReferencedOrganisation(
+            const referencedOrga: Organisation<true> = await this.getReferencedOrganisation(
                 file.providedOnSchulstrukturknoten,
             );
             const serviceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
@@ -237,7 +244,7 @@ export class DbSeedService {
                 username: person.username,
             };
 
-            const existingKcUser: Result<UserDo<true>, DomainError> = await this.kcUserService.findOne(filter);
+            const existingKcUser: Result<User<true>, DomainError> = await this.kcUserService.findOne(filter);
             if (existingKcUser.ok) {
                 await this.kcUserService.delete(existingKcUser.value.id); //When kcUser exists delete it
                 this.logger.warning(
@@ -269,12 +276,13 @@ export class DbSeedService {
         const persistedPersonenkontexte: Personenkontext<true>[] = [];
         for (const file of files) {
             const referencedPerson: Person<true> = await this.getReferencedPerson(file.personId);
-            const referencedOrga: OrganisationDo<true> = await this.getReferencedOrganisation(file.organisationId);
+            const referencedOrga: Organisation<true> = await this.getReferencedOrganisation(file.organisationId);
             const referencedRolle: Rolle<true> = await this.getReferencedRolle(file.rolleId);
             const personenKontext: Personenkontext<false> = this.personenkontextFactory.construct(
                 undefined,
                 new Date(),
                 new Date(),
+                undefined,
                 referencedPerson.id,
                 referencedOrga.id,
                 referencedRolle.id,
@@ -307,13 +315,13 @@ export class DbSeedService {
         return person;
     }
 
-    private async getReferencedOrganisation(seedingId: number): Promise<OrganisationDo<true>> {
+    private async getReferencedOrganisation(seedingId: number): Promise<Organisation<true>> {
         const organisationUUID: Option<string> = await this.dbSeedReferenceRepo.findUUID(
             seedingId,
             ReferencedEntityType.ORGANISATION,
         );
         if (!organisationUUID) throw new EntityNotFoundError('Organisation', seedingId.toString());
-        const organisation: Option<OrganisationDo<true>> = await this.organisationRepository.findById(organisationUUID);
+        const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(organisationUUID);
         if (!organisation) throw new EntityNotFoundError('Organisation', seedingId.toString());
 
         return organisation;
