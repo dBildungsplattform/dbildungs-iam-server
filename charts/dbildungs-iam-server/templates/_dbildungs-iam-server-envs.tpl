@@ -46,4 +46,24 @@
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: ldap-admin-password
+          - name: PI_BASE_URL
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: pi-base-url
+          - name: PI_ADMIN_USER
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: pi-admin-user
+          - name: PI_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: pi-admin-password
+          - name: PI_USER_RESOLVER
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: pi-user-resolver
 {{- end}}
