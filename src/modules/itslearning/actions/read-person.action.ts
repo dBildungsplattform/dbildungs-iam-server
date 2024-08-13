@@ -9,7 +9,7 @@ export type PersonResponse = {
     userId: string;
 };
 
-// Incomplete
+// Partial, actual structure contains more data
 type ReadPersonResponseBody = {
     readPersonResponse: {
         person: {
