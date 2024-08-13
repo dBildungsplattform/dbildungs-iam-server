@@ -2,7 +2,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { IMS_COMMON_SCHEMA, IMS_GROUP_MAN_DATA_SCHEMA, IMS_GROUP_MAN_MESS_SCHEMA } from '../schemas.js';
 import { IMSESAction } from './base-action.js';
 
-// Incomplete
+// Partial, actual structure contains more data
 export type UpdateGroupParams = {
     id: string;
 
