@@ -9,6 +9,8 @@ import {
     PrivacyIdeaToken,
     AuthenticaitonResponse,
     UserResponse,
+    ResetTokenPayload,
+    ResetTokenResponse,
 } from './privacy-idea-api.types.js';
 
 @Injectable()
@@ -196,6 +198,45 @@ export class PrivacyIdeaAdministrationService {
             } else {
                 throw new Error(`Error adding user: Unknown error occurred`);
             }
+        }
+    }
+
+    public async resetToken(user: string): Promise<ResetTokenResponse> {
+        const token: string = await this.getJWTToken();
+
+        const twoAuthState: PrivacyIdeaToken | undefined = await this.getTwoAuthState(user);
+        if (!twoAuthState) {
+            throw new Error('Error getting two-factor auth state.');
+        }
+        const serial: string = twoAuthState.serial;
+        try {
+            const response: ResetTokenResponse = await this.unassignToken(serial, token);
+            return response;
+        } catch (error) {
+            throw new Error(`Error initializing token: `);
+        }
+    }
+
+    public async unassignToken(serial: string, token: string): Promise<ResetTokenResponse> {
+        const endpoint: string = '/token/unassign';
+        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
+        const url: string = baseUrl + endpoint;
+        const headers: { Authorization: string; 'Content-Type': string } = {
+            Authorization: `${token}`,
+            'Content-Type': 'application/json',
+        };
+
+        const payload: ResetTokenPayload = {
+            serial,
+        };
+
+        try {
+            const response: AxiosResponse<ResetTokenResponse> = await firstValueFrom(
+                this.httpService.post(url, payload, { headers }),
+            );
+            return response.data;
+        } catch (error) {
+            throw new Error(`Error initializing token: `);
         }
     }
 }
