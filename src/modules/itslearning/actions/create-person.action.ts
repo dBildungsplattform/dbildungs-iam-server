@@ -3,7 +3,7 @@ import { IMS_COMMON_SCHEMA, IMS_PERSON_MAN_DATA_SCHEMA, IMS_PERSON_MAN_MESS_SCHE
 import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 import { IMSESAction } from './base-action.js';
 
-// Incomplete
+// Partial, actual structure contains more data
 export type CreatePersonParams = {
     id: string;
 

@@ -3,7 +3,7 @@ import { IMS_COMMON_SCHEMA, IMS_MEMBER_MAN_DATA_SCHEMA, IMS_MEMBER_MAN_MESS_SCHE
 import { IMSESRoleType } from '../types/role.enum.js';
 import { IMSESMassAction } from './base-mass-action.js';
 
-// Incomplete
+// Partial, actual structure contains more data
 export type CreateMembershipParams = {
     id: string;
 
