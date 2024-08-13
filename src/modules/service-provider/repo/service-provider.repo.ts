@@ -176,4 +176,52 @@ export class ServiceProviderRepo {
 
         return serviceProvidersNames;
     }
+
+    public async fetchFilteredRolesDifference(personId: string, rolleId: string): Promise<(string | undefined)[]> {
+        const allRolleServiceProviders = await this.em.find(
+            RolleServiceProviderEntity,
+            {
+                rolle: {
+                    personenKontexte: {
+                        personId: personId,
+                    },
+                },
+            },
+            {
+                populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
+            },
+        );
+
+        const specificRolleServiceProviders = await this.em.find(
+            RolleServiceProviderEntity,
+            {
+                rolle: {
+                    id: rolleId,
+                    personenKontexte: {
+                        personId: personId,
+                    },
+                },
+            },
+            {
+                populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
+            },
+        );
+
+        const allServiceProvidersNames = new Set(
+            allRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
+        );
+        const specificServiceProvidersNames = new Set(
+            specificRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
+        );
+
+        const rolesToUpdate = Array.from(specificServiceProvidersNames).filter(
+            (role) => !allServiceProvidersNames.has(role),
+        );
+
+        if (specificServiceProvidersNames.size === 0) {
+            return Array.from(allServiceProvidersNames);
+        }
+
+        return rolesToUpdate;
+    }
 }
