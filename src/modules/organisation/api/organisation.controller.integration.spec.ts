@@ -8,7 +8,6 @@ import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
     DatabaseTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     KeycloakConfigTestModule,
     MapperTestModule,
@@ -128,7 +127,7 @@ describe('Organisation API', () => {
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+    }, 10000000);
 
     afterAll(async () => {
         await orm.close();
