@@ -3,7 +3,7 @@ import { PrivacyIdeaAdministrationController } from './privacy-idea-administrati
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { TokenStateResponse } from './token-state.response.js';
-import { PrivacyIdeaToken } from './privacy-idea-api.types.js';
+import { PrivacyIdeaToken, ResetTokenResponse } from './privacy-idea-api.types.js';
 import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { Person } from '../person/domain/person.js';
@@ -190,6 +190,66 @@ describe('PrivacyIdeaAdministrationController', () => {
 
             await expect(sut.getTwoAuthState('user1', personPermissionsMock)).rejects.toThrow(
                 new HttpException('User not found.', HttpStatus.BAD_REQUEST),
+            );
+        });
+    });
+    describe('PrivacyIdeaAdministrationController resetToken', () => {
+        it('should successfully reset a token', async () => {
+            const userName: string = 'user1';
+            const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
+            jest.spyOn(serviceMock, 'resetToken').mockResolvedValue(mockResetTokenResponse);
+
+            const response: ResetTokenResponse | undefined = await sut.resetToken(userName);
+
+            expect(response).toEqual(mockResetTokenResponse);
+            expect(serviceMock.resetToken).toHaveBeenCalledWith(userName);
+        });
+
+        it('should return bad request if username is not given or not found', async () => {
+            const userName: string = '';
+
+            jest.spyOn(serviceMock, 'resetToken').mockRejectedValue(
+                new HttpException('A username was not given or not found.', HttpStatus.BAD_REQUEST),
+            );
+
+            await expect(sut.resetToken(userName)).rejects.toThrow(
+                new HttpException('A username was not given or not found.', HttpStatus.BAD_REQUEST),
+            );
+        });
+
+        it('should return unauthorized if not authorized to reset token', async () => {
+            const userName: string = 'user1';
+
+            jest.spyOn(serviceMock, 'resetToken').mockRejectedValue(
+                new HttpException('Not authorized to reset token.', HttpStatus.UNAUTHORIZED),
+            );
+
+            await expect(sut.resetToken(userName)).rejects.toThrow(
+                new HttpException('Not authorized to reset token.', HttpStatus.UNAUTHORIZED),
+            );
+        });
+
+        it('should return forbidden if insufficient permissions to reset token', async () => {
+            const userName: string = 'user1';
+
+            jest.spyOn(serviceMock, 'resetToken').mockRejectedValue(
+                new HttpException('Insufficient permissions to reset token.', HttpStatus.FORBIDDEN),
+            );
+
+            await expect(sut.resetToken(userName)).rejects.toThrow(
+                new HttpException('Insufficient permissions to reset token.', HttpStatus.FORBIDDEN),
+            );
+        });
+
+        it('should return internal server error for unexpected error', async () => {
+            const userName: string = 'user1';
+
+            jest.spyOn(serviceMock, 'resetToken').mockRejectedValue(
+                new HttpException('Internal server error while reseting a token.', HttpStatus.INTERNAL_SERVER_ERROR),
+            );
+
+            await expect(sut.resetToken(userName)).rejects.toThrow(
+                new HttpException('Internal server error while reseting a token.', HttpStatus.INTERNAL_SERVER_ERROR),
             );
         });
     });

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Query } from '@nestjs/common';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { Public } from '../authentication/api/public.decorator.js';
-import { PrivacyIdeaToken } from './privacy-idea-api.types.js';
+import { PrivacyIdeaToken, ResetTokenResponse } from './privacy-idea-api.types.js';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -88,5 +88,18 @@ export class PrivacyIdeaAdministrationController {
             personResult.value.referrer,
         );
         return new TokenStateResponse(piToken);
+    }
+
+    @Get('reset')
+    @HttpCode(HttpStatus.OK)
+    @ApiCreatedResponse({ description: 'The token was successfully reset.', type: PrivacyIdeaAdministrationService })
+    @ApiBadRequestResponse({ description: 'A username was not given or not found.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to reset token.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to reset token.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to reset token.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while reseting a token.' })
+    @Public()
+    public async resetToken(@Query('userName') userName: string): Promise<ResetTokenResponse | undefined> {
+        return this.privacyIdeaAdministrationService.resetToken(userName);
     }
 }
