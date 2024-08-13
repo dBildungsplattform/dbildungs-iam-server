@@ -10,6 +10,7 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    KeycloakConfigTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
@@ -20,25 +21,29 @@ import { PersonPermissionsRepo } from '../../authentication/domain/person-permis
 import { PassportUser } from '../../authentication/types/user.js';
 import { Request } from 'express';
 import { OrganisationApiModule } from '../organisation-api.module.js';
-import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonDo } from '../../person/domain/person.do.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { KeycloakUserService } from '../../keycloak-administration/domain/keycloak-user.service.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Person } from '../../person/domain/person.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { PersonFactory } from '../../person/domain/person.factory.js';
+import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 
 describe('Organisation API', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let em: EntityManager;
     let rolleRepo: RolleRepo;
-    let personRepo: PersonRepo;
+    let personRepo: PersonRepository;
     let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
     let personenkontextFactory: PersonenkontextFactory;
+    let personFactory: PersonFactory;
 
     function createPersonenkontext<WasPersisted extends boolean>(
         this: void,
@@ -49,6 +54,7 @@ describe('Organisation API', () => {
             withId ? faker.string.uuid() : undefined,
             withId ? faker.date.past() : undefined,
             withId ? faker.date.recent() : undefined,
+            '',
             faker.string.uuid(),
             faker.string.uuid(),
             faker.string.uuid(),
@@ -106,14 +112,18 @@ describe('Organisation API', () => {
                     }),
                 },
             ],
-        }).compile();
+        })
+            .overrideModule(KeycloakConfigModule)
+            .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .compile();
 
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         rolleRepo = module.get(RolleRepo);
-        personRepo = module.get(PersonRepo);
+        personRepo = module.get(PersonRepository);
         personenkontextFactory = module.get(PersonenkontextFactory);
         dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
+        personFactory = module.get(PersonFactory);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
@@ -153,7 +163,19 @@ describe('Organisation API', () => {
             });
 
             it('if organisation is already assigned to a Personenkontext', async () => {
-                const person: PersonDo<true> = await personRepo.save(DoFactory.createPerson(false));
+                const personData: Person<false> | DomainError = await personFactory.createNew({
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    username: faker.internet.userName(),
+                    password: faker.string.alphanumeric(8),
+                });
+                if (personData instanceof DomainError) {
+                    throw personData;
+                }
+                const person: Person<true> | DomainError = await personRepo.save(personData);
+                if (person instanceof DomainError) {
+                    throw person;
+                }
 
                 const organisation: OrganisationEntity = new OrganisationEntity();
                 organisation.typ = OrganisationsTyp.KLASSE;
