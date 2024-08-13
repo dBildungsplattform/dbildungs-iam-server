@@ -27,7 +27,8 @@
         8,
         9,
         10,
-        11
+        11,
+        12
       ]
     },
     {
@@ -38,7 +39,8 @@
       "merkmale": [],
       "systemrechte": [],
       "serviceProviderIds": [
-        3
+        3,
+        12
       ]
     },
     {
@@ -61,7 +63,8 @@
         8,
         9,
         10,
-        11
+        11,
+        12
       ]
     },
     {
@@ -85,7 +88,8 @@
         8,
         9,
         10,
-        11
+        11,
+        12
       ]
     },
     {
@@ -99,32 +103,34 @@
         "SCHULEN_VERWALTEN",
         "KLASSEN_VERWALTEN"
       ],
-      "serviceProviderIds": [5]
+      "serviceProviderIds": [
+        5
+      ]
     },
     {
-        "id": 5,
-        "administeredBySchulstrukturknoten": 0,
-        "name": "Migration",
-        "rollenart": "SYSADMIN",
-        "merkmale": [],
-        "systemrechte": [
-          "ROLLEN_VERWALTEN",
-          "PERSONEN_VERWALTEN",
-          "SCHULEN_VERWALTEN",
-          "KLASSEN_VERWALTEN",
-          "SCHULTRAEGER_VERWALTEN",
-          "MIGRATION_DURCHFUEHREN"
-        ],
-        "serviceProviderIds": []
-      },
-      {
-        "id": 6,
-        "administeredBySchulstrukturknoten": 0,
-        "name": "Schulbegleitung",
-        "rollenart": "LERN",
-        "merkmale": [],
-        "systemrechte": [],
-        "serviceProviderIds": []
-      }
+      "id": 5,
+      "administeredBySchulstrukturknoten": 0,
+      "name": "Migration",
+      "rollenart": "SYSADMIN",
+      "merkmale": [],
+      "systemrechte": [
+        "ROLLEN_VERWALTEN",
+        "PERSONEN_VERWALTEN",
+        "SCHULEN_VERWALTEN",
+        "KLASSEN_VERWALTEN",
+        "SCHULTRAEGER_VERWALTEN",
+        "MIGRATION_DURCHFUEHREN"
+      ],
+      "serviceProviderIds": []
+    },
+    {
+      "id": 6,
+      "administeredBySchulstrukturknoten": 0,
+      "name": "Schulbegleitung",
+      "rollenart": "LERN",
+      "merkmale": [],
+      "systemrechte": [],
+      "serviceProviderIds": []
+    }
   ]
 }
