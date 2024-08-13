@@ -1,29 +1,12 @@
-import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enums.js';
-import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
-import { OrganisationID, PersonID, RolleID } from '../types/index.js';
 import { BaseEvent } from './base-event.js';
 
 import { type Organisation } from '../../modules/organisation/domain/organisation.js';
 import { type Person } from '../../modules/person/domain/person.js';
 import { type Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { type Rolle } from '../../modules/rolle/domain/rolle.js';
+import { PersonenkontextEventKontextData, PersonenkontextEventPersonData } from './personenkontext-event.types.js';
 
-export type PersonenkontextUpdatedPersonData = {
-    id: PersonID;
-    vorname: string;
-    familienname: string;
-    referrer?: string;
-};
-
-export type PersonenkontextUpdatedData = {
-    rolleId: RolleID;
-    rolle: RollenArt;
-    orgaId: OrganisationID;
-    orgaTyp?: OrganisationsTyp;
-    orgaKennung?: string;
-};
-
-function mapPersonToData(person: Person<true>): PersonenkontextUpdatedPersonData {
+function mapPersonToData(person: Person<true>): PersonenkontextEventPersonData {
     return {
         id: person.id,
         vorname: person.vorname,
@@ -36,7 +19,7 @@ function mapPersonenkontextAndRolleAggregateToData([pk, orga, rolle]: [
     Personenkontext<true>,
     Organisation<true>,
     Rolle<true>,
-]): PersonenkontextUpdatedData {
+]): PersonenkontextEventKontextData {
     return {
         rolleId: pk.rolleId,
         rolle: rolle.rollenart,
@@ -48,10 +31,10 @@ function mapPersonenkontextAndRolleAggregateToData([pk, orga, rolle]: [
 
 export class PersonenkontextUpdatedEvent extends BaseEvent {
     public constructor(
-        public readonly person: PersonenkontextUpdatedPersonData,
-        public readonly newKontexte: PersonenkontextUpdatedData[],
-        public readonly removedKontexte: PersonenkontextUpdatedData[],
-        public readonly currentKontexte: PersonenkontextUpdatedData[],
+        public readonly person: PersonenkontextEventPersonData,
+        public readonly newKontexte: PersonenkontextEventKontextData[],
+        public readonly removedKontexte: PersonenkontextEventKontextData[],
+        public readonly currentKontexte: PersonenkontextEventKontextData[],
     ) {
         super();
     }

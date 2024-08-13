@@ -26,6 +26,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { DBiamPersonenkontextHelperRepo } from '../../person/persistence/dbiam-personenkontext-helper.repo.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -73,6 +74,7 @@ describe('PersonenkontextSpecifications Integration', () => {
                 PersonFactory,
                 UsernameGeneratorService,
                 PersonenkontextFactory,
+                DBiamPersonenkontextHelperRepo,
                 {
                     provide: EmailRepo,
                     useValue: createMock<EmailRepo>(),

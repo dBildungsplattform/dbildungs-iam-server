@@ -20,6 +20,9 @@ import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
+import { DBiamPersonenkontextHelperRepo } from './dbiam-personenkontext-helper.repo.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
@@ -103,6 +106,7 @@ export class PersonRepository {
         private readonly kcUserService: KeycloakUserService,
         private readonly em: EntityManager,
         private readonly eventService: EventService,
+        private readonly dBiamPersonenkontextHelperRepo: DBiamPersonenkontextHelperRepo,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -200,6 +204,15 @@ export class PersonRepository {
         // Delete the person from Keycloak
         await this.kcUserService.delete(person.keycloakUserId);
 
+        const personPKs: Option<Personenkontext<true>[]> = await this.dBiamPersonenkontextHelperRepo.findByPersonID(
+            this,
+            personId,
+        );
+        if (personPKs) {
+            personPKs.forEach((pk: Personenkontext<true>) => {
+                this.eventService.publish(new PersonenkontextDeletedEvent(pk.personId, pk.organisationId, pk.rolleId));
+            });
+        }
         // Delete email-addresses if any, must happen before person deletion to get the referred email-address
         if (person.email) {
             this.eventService.publish(new PersonDeletedEvent(personId, person.email));

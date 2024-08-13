@@ -37,6 +37,10 @@ import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { DBiamPersonenkontextHelperRepo } from './dbiam-personenkontext-helper.repo.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+/*import {OrganisationRepository} from "../../organisation/persistence/organisation.repository.js";
+import {RolleRepo} from "../../rolle/repo/rolle.repo.js";*/
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -48,6 +52,32 @@ describe('PersonRepository Integration', () => {
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let configService: ConfigService;
     let eventServiceMock: DeepMocked<EventService>;
+    let dBiamPersonenkontextHelperRepoMock: DeepMocked<DBiamPersonenkontextHelperRepo>;
+    /*    let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
+    let rolleRepoMock: DeepMocked<RolleRepo>;*/
+
+    /* function createPersonenkontext<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        params: Partial<Personenkontext<boolean>> = {},
+    ): Personenkontext<WasPersisted> {
+        const personenkontext: Personenkontext<WasPersisted> = Personenkontext.construct<boolean>(
+            sut,
+            organisationRepositoryMock,
+            rolleRepoMock,
+            withId ? faker.string.uuid() : undefined,
+            withId ? faker.date.past() : undefined,
+            withId ? faker.date.recent() : undefined,
+            faker.string.uuid(),
+            faker.string.uuid(),
+            faker.string.uuid(),
+            faker.string.uuid(),
+        );
+
+        Object.assign(personenkontext, params);
+
+        return personenkontext;
+    }*/
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -76,6 +106,18 @@ describe('PersonRepository Integration', () => {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
+                {
+                    provide: DBiamPersonenkontextHelperRepo,
+                    useValue: createMock<DBiamPersonenkontextHelperRepo>(),
+                },
+                /*     {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
+                },
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },*/
             ],
         }).compile();
         sut = module.get(PersonRepository);
@@ -87,6 +129,9 @@ describe('PersonRepository Integration', () => {
         usernameGeneratorService = module.get(UsernameGeneratorService);
         configService = module.get(ConfigService);
         eventServiceMock = module.get(EventService);
+        dBiamPersonenkontextHelperRepoMock = module.get(DBiamPersonenkontextHelperRepo);
+        /*     organisationRepositoryMock = module.get(OrganisationRepository);
+        rolleRepoMock = module.get(RolleRepo);*/
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -1005,6 +1050,56 @@ describe('PersonRepository Integration', () => {
                     expect(eventServiceMock.publish).toHaveBeenCalledWith(
                         expect.objectContaining({
                             emailAddress: emailAddress.address,
+                        }),
+                    );
+                    expect(result.ok).toBeTruthy();
+                });
+            });
+
+            describe('Delete the person and trigger PersonenkontextDeletedEvents for each PK of person', () => {
+                it('should delete the person and trigger PersonenkontextDeletedEvents', async () => {
+                    const person: Person<true> = DoFactory.createPerson(true);
+                    const personEntity: PersonEntity = em.create(PersonEntity, mapAggregateToData(person));
+                    person.id = personEntity.id;
+                    personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person.id]);
+
+                    await em.persistAndFlush(personEntity);
+
+                    const emailAddress: EmailAddressEntity = new EmailAddressEntity();
+                    emailAddress.address = faker.internet.email();
+                    emailAddress.personId = rel(PersonEntity, person.id);
+                    emailAddress.enabled = true;
+
+                    const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
+                    await em.persistAndFlush(pp);
+
+                    personEntity.emailAddresses.add(emailAddress);
+                    await em.persistAndFlush(personEntity);
+
+                    //hier
+                    /*  const personenkontextMock: Personenkontext<true> = createPersonenkontext(true, { personId: person.id, });
+                    dBiamPersonenkontextHelperRepoMock.findByPersonID.mockResolvedValue([personenkontextMock]);*/
+                    const personenkontextMock: Personenkontext<true> = createMock<Personenkontext<true>>({
+                        personId: person.id,
+                    });
+                    dBiamPersonenkontextHelperRepoMock.findByPersonID.mockResolvedValue([personenkontextMock]);
+
+                    await sut.getPersonIfAllowed(person.id, personPermissionsMock);
+                    const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
+                        person.id,
+                        personPermissionsMock,
+                    );
+                    if (!personGetAllowed.ok) {
+                        throw new EntityNotFoundError('Person', person.id);
+                    }
+                    const result: Result<void, DomainError> = await sut.deletePerson(
+                        personGetAllowed.value.id,
+                        personPermissionsMock,
+                    );
+
+                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                        expect.objectContaining({
+                            personId: person.id,
                         }),
                     );
                     expect(result.ok).toBeTruthy();

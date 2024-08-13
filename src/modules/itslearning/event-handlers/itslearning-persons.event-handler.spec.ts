@@ -4,17 +4,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import {
-    PersonenkontextUpdatedData,
-    PersonenkontextUpdatedEvent,
-    PersonenkontextUpdatedPersonData,
-} from '../../../shared/events/personenkontext-updated.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { CreatePersonAction } from '../actions/create-person.action.js';
 import { DeletePersonAction } from '../actions/delete-person.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
 import { ItsLearningRoleType } from '../types/role.enum.js';
 import { ItsLearningPersonsEventHandler } from './itslearning-persons.event-handler.js';
+import {
+    PersonenkontextEventKontextData,
+    PersonenkontextEventPersonData,
+} from '../../../shared/events/personenkontext-event.types.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 
 describe('ItsLearning Persons Event Handler', () => {
     let module: TestingModule;
@@ -59,7 +59,7 @@ describe('ItsLearning Persons Event Handler', () => {
             );
             const updatePersonSpy: jest.SpyInstance<
                 Promise<void>,
-                [person: PersonenkontextUpdatedPersonData, personenkontexte: PersonenkontextUpdatedData[]]
+                [person: PersonenkontextEventPersonData, personenkontexte: PersonenkontextEventKontextData[]]
             > = jest.spyOn(sut, 'updatePerson');
             updatePersonSpy.mockResolvedValueOnce(undefined);
 
@@ -78,7 +78,7 @@ describe('ItsLearning Persons Event Handler', () => {
             );
             const updatePersonSpy: jest.SpyInstance<
                 Promise<void>,
-                [person: PersonenkontextUpdatedPersonData, personenkontexte: PersonenkontextUpdatedData[]]
+                [person: PersonenkontextEventPersonData, personenkontexte: PersonenkontextEventKontextData[]]
             > = jest.spyOn(sut, 'updatePerson');
             updatePersonSpy.mockResolvedValueOnce(undefined);
 
@@ -90,7 +90,7 @@ describe('ItsLearning Persons Event Handler', () => {
     });
 
     describe('updatePerson', () => {
-        const person: PersonenkontextUpdatedPersonData = {
+        const person: PersonenkontextEventPersonData = {
             id: faker.string.uuid(),
             vorname: faker.person.firstName(),
             familienname: faker.person.lastName(),
@@ -130,7 +130,7 @@ describe('ItsLearning Persons Event Handler', () => {
                 });
 
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { referrer, ...personWithoutReferrer }: PersonenkontextUpdatedPersonData = person;
+                const { referrer, ...personWithoutReferrer }: PersonenkontextEventPersonData = person;
 
                 await sut.updatePerson(personWithoutReferrer, [createMock()]);
 
@@ -145,7 +145,9 @@ describe('ItsLearning Persons Event Handler', () => {
                     value: { institutionRole: ItsLearningRoleType.STAFF },
                 });
 
-                await sut.updatePerson(person, [createMock<PersonenkontextUpdatedData>({ rolle: RollenArt.LEHR })]);
+                await sut.updatePerson(person, [
+                    createMock<PersonenkontextEventKontextData>({ rolle: RollenArt.LEHR }),
+                ]);
 
                 expect(loggerMock.info).toHaveBeenCalledWith('Person already exists with correct role');
             });

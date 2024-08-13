@@ -9,7 +9,7 @@ import { PersonenkontexteUpdateError } from './error/personenkontexte-update.err
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
-import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
+//import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { UpdatePersonNotFoundError } from './error/update-person-not-found.error.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -234,9 +234,9 @@ export class PersonenkontexteUpdate {
             ) {
                 await this.dBiamPersonenkontextRepo.save(sentPK);
                 createdPKs.push(sentPK);
-                this.eventService.publish(
+                /*  this.eventService.publish(
                     new PersonenkontextCreatedEvent(sentPK.personId, sentPK.organisationId, sentPK.rolleId),
-                );
+                );*/
             }
         }
 

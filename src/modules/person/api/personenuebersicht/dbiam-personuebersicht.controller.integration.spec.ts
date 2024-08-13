@@ -41,6 +41,7 @@ import { DBiamPersonenuebersichtController } from './dbiam-personenuebersicht.co
 import { OrganisationID } from '../../../../shared/types/aggregate-ids.types.js';
 import { PersonenkontextFactory } from '../../../personenkontext/domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
+import { DBiamPersonenkontextHelperRepo } from '../../persistence/dbiam-personenkontext-helper.repo.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -98,6 +99,7 @@ describe('Personenuebersicht API', () => {
                 PersonenkontextFactory,
                 PersonRepository,
                 OrganisationRepository,
+                DBiamPersonenkontextHelperRepo,
                 {
                     provide: APP_INTERCEPTOR,
                     useValue: {

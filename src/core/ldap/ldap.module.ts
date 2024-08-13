@@ -8,6 +8,7 @@ import { PersonModule } from '../../modules/person/person.module.js';
 import { LdapConfigModule } from './ldap-config.module.js';
 import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
 import { LdapClient } from './domain/ldap-client.js';
+import { LdapEventAdapter } from './domain/ldap-event-adapter.js';
 
 @Module({
     imports: [
@@ -18,7 +19,7 @@ import { LdapClient } from './domain/ldap-client.js';
         OrganisationModule,
         PersonenKontextModule,
     ],
-    providers: [LdapEventHandler, LdapClientService, LdapClient],
+    providers: [LdapEventHandler, LdapEventAdapter, LdapClientService, LdapClient],
     exports: [LdapEventHandler, LdapClientService, LdapClient],
 })
 export class LdapModule {}

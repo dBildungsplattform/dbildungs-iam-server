@@ -6,17 +6,17 @@ import { EventHandler } from '../../../core/eventbus/decorators/event-handler.de
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ItsLearningConfig, ServerConfig } from '../../../shared/config/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import {
-    PersonenkontextUpdatedData,
-    PersonenkontextUpdatedEvent,
-    PersonenkontextUpdatedPersonData,
-} from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { CreatePersonAction } from '../actions/create-person.action.js';
 import { DeletePersonAction } from '../actions/delete-person.action.js';
 import { PersonResponse, ReadPersonAction } from '../actions/read-person.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
 import { ItsLearningRoleType } from '../types/role.enum.js';
+import {
+    PersonenkontextEventKontextData,
+    PersonenkontextEventPersonData,
+} from '../../../shared/events/personenkontext-event.types.js';
 
 // Maps our roles to itsLearning roles
 const ROLLENART_TO_ITSLEARNING_ROLE: Record<RollenArt, ItsLearningRoleType> = {
@@ -70,8 +70,8 @@ export class ItsLearningPersonsEventHandler {
      * Updates the person based on the current personenkontexte
      */
     public async updatePerson(
-        person: PersonenkontextUpdatedPersonData,
-        personenkontexte: PersonenkontextUpdatedData[],
+        person: PersonenkontextEventPersonData,
+        personenkontexte: PersonenkontextEventKontextData[],
     ): Promise<void> {
         // Use mutex because multiple personenkontexte can be created at once
         return this.mutex.runExclusive(async () => {
@@ -130,7 +130,7 @@ export class ItsLearningPersonsEventHandler {
      * @param personenkontexte
      * @returns
      */
-    private determineItsLearningRole(personenkontexte: PersonenkontextUpdatedData[]): ItsLearningRoleType {
+    private determineItsLearningRole(personenkontexte: PersonenkontextEventKontextData[]): ItsLearningRoleType {
         let highestRole: number = 0;
 
         for (const { rolle } of personenkontexte) {

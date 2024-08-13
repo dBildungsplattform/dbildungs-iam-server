@@ -37,6 +37,7 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { DBiamPersonenkontextHelperRepo } from '../../person/persistence/dbiam-personenkontext-helper.repo.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -85,6 +86,7 @@ describe('dbiam Personenkontext Repo', () => {
             ],
             providers: [
                 DBiamPersonenkontextRepo,
+                DBiamPersonenkontextHelperRepo,
                 PersonPersistenceMapperProfile,
                 PersonFactory,
                 PersonRepository,

@@ -15,7 +15,7 @@ import { OrganisationApiModule } from '../../../modules/organisation/organisatio
 import { PersonenKontextApiModule } from '../../../modules/personenkontext/personenkontext-api.module.js';
 import { LdapEventHandler } from './ldap-event-handler.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { LdapClientService } from './ldap-client.service.js';
+import { LdapClientService, PersonData } from './ldap-client.service.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
@@ -28,6 +28,9 @@ import { OrganisationRepository } from '../../../modules/organisation/persistenc
 import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { ClassLogger } from '../../logging/class-logger.js';
+import { PersonenkontextDeleted2Event } from '../../../shared/events/personenkontext-deleted2.event.js';
+import { KennungRequiredForSchuleError } from '../../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
 
 describe('LDAP Event Handler', () => {
     let app: INestApplication;
@@ -37,6 +40,7 @@ describe('LDAP Event Handler', () => {
 
     let ldapEventHandler: LdapEventHandler;
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -55,6 +59,8 @@ describe('LDAP Event Handler', () => {
                 },
             ],
         })
+            .overrideProvider(ClassLogger)
+            .useValue(createMock<ClassLogger>())
             .overrideProvider(LdapClientService)
             .useValue(createMock<LdapClientService>())
             .overrideProvider(OrganisationRepository)
@@ -72,6 +78,7 @@ describe('LDAP Event Handler', () => {
         orm = module.get(MikroORM);
 
         organisationRepositoryMock = module.get(OrganisationRepository);
+        loggerMock = module.get(ClassLogger);
 
         ldapEventHandler = module.get(LdapEventHandler);
         ldapClientServiceMock = module.get(LdapClientService);
@@ -91,7 +98,7 @@ describe('LDAP Event Handler', () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
 
-    describe('asyncSchuleCreatedEventHandler', () => {
+    describe('handleSchuleCreatedEvent', () => {
         describe('when type is SCHULE and creation is successful', () => {
             it('should execute without errors', async () => {
                 const organisation: Organisation<true> = createMock<Organisation<true>>({
@@ -146,7 +153,7 @@ describe('LDAP Event Handler', () => {
         });
     });
 
-    describe('asyncSchuleDeletedEventHandler', () => {
+    describe('handleSchuleDeletedEvent', () => {
         describe('when type is SCHULE and deletion is successful', () => {
             it('should execute without errors', async () => {
                 const organisation: Organisation<true> = createMock<Organisation<true>>({
@@ -199,6 +206,42 @@ describe('LDAP Event Handler', () => {
 
                 await ldapEventHandler.handleSchuleDeletedEvent(event);
                 expect(ldapClientServiceMock.deleteOrganisation).toHaveBeenCalledTimes(0);
+            });
+        });
+    });
+
+    describe('handlePersonenkontextDeleted2Event', () => {
+        describe('when calling LdapClientService.deleteLehrer is successful', () => {
+            it('should NOT log errors', async () => {
+                const deletionResult: Result<PersonData> = {
+                    ok: true,
+                    value: {
+                        vorname: faker.person.firstName(),
+                        familienname: faker.person.lastName(),
+                        referrer: faker.internet.userName(),
+                    },
+                };
+                ldapClientServiceMock.deleteLehrer.mockResolvedValueOnce(deletionResult);
+
+                await ldapEventHandler.handlePersonenkontextDeleted2Event(createMock<PersonenkontextDeleted2Event>());
+
+                expect(loggerMock.error).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when calling LdapClientService.deleteLehrer is return error', () => {
+            it('should log errors', async () => {
+                const error: KennungRequiredForSchuleError = new KennungRequiredForSchuleError();
+                const deletionResult: Result<PersonData> = {
+                    ok: false,
+                    error: error,
+                };
+                ldapClientServiceMock.deleteLehrer.mockResolvedValueOnce(deletionResult);
+
+                await ldapEventHandler.handlePersonenkontextDeleted2Event(createMock<PersonenkontextDeleted2Event>());
+
+                expect(loggerMock.error).toHaveBeenCalledTimes(1);
+                expect(loggerMock.error).toHaveBeenCalledWith(error.message);
             });
         });
     });
