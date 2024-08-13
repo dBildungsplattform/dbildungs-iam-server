@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Query } from '@nestjs/common';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { Public } from '../authentication/api/public.decorator.js';
-import { PrivacyIdeaToken } from './privacy-idea-api.types.js';
+import { AssignTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,

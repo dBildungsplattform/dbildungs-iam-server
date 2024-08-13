@@ -3,12 +3,15 @@ import { PrivacyIdeaAdministrationController } from './privacy-idea-administrati
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { TokenStateResponse } from './token-state.response.js';
-import { PrivacyIdeaToken } from './privacy-idea-api.types.js';
+import { AssignTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
 import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { Person } from '../person/domain/person.js';
 import { faker } from '@faker-js/faker';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { AssignHardwareTokenBodyParams } from './api/assign-hardware-token.body.params.js';
+import { AssignHardwareTokenResponse } from './api/assign-hardware-token.response.js';
+import { TokenError } from './api/error/token-error.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
@@ -190,6 +193,62 @@ describe('PrivacyIdeaAdministrationController', () => {
 
             await expect(sut.getTwoAuthState('user1', personPermissionsMock)).rejects.toThrow(
                 new HttpException('User not found.', HttpStatus.BAD_REQUEST),
+            );
+        });
+    });
+    describe('PrivacyIdeaAdministrationController assignHardwareToken', () => {
+        it('should successfully assign a hardware token', async () => {
+            const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
+            const mockAssignTokenResponse: AssignTokenResponse = createMock<AssignTokenResponse>();
+
+            jest.spyOn(serviceMock, 'assignHardwareToken').mockResolvedValue(mockAssignTokenResponse);
+            const response: AssignHardwareTokenResponse | undefined = await sut.assignHardwareToken(mockParams);
+
+            expect(response).toEqual(
+                new AssignHardwareTokenResponse(
+                    mockAssignTokenResponse.id,
+                    mockAssignTokenResponse.jsonrpc,
+                    mockAssignTokenResponse.time,
+                    mockAssignTokenResponse.version,
+                    mockAssignTokenResponse.versionnumber,
+                    mockAssignTokenResponse.signature,
+                    'Token wurde erfolgreich zugeordnet.',
+                ),
+            );
+        });
+
+        it('should return bad request for token error', async () => {
+            const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
+            const mockError: TokenError = new TokenError('Invalid token', 'test');
+
+            jest.spyOn(serviceMock, 'assignHardwareToken').mockRejectedValue(mockError);
+
+            await expect(sut.assignHardwareToken(mockParams)).rejects.toThrow(
+                new HttpException(
+                    {
+                        statusCode: HttpStatus.BAD_REQUEST,
+                        message: mockError.message,
+                        code: mockError.name,
+                    },
+                    HttpStatus.BAD_REQUEST,
+                ),
+            );
+        });
+
+        it('should return internal server error for unexpected error', async () => {
+            const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
+            const unexpectedError: Error = new Error('Unexpected error');
+
+            jest.spyOn(serviceMock, 'assignHardwareToken').mockRejectedValue(unexpectedError);
+
+            await expect(sut.assignHardwareToken(mockParams)).rejects.toThrow(
+                new HttpException(
+                    {
+                        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                        message: 'An unexpected error occurred.',
+                    },
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                ),
             );
         });
     });

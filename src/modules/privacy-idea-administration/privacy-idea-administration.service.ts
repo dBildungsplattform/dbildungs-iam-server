@@ -8,15 +8,13 @@ import {
     PrivacyIdeaResponseTokens,
     PrivacyIdeaToken,
     AuthenticaitonResponse,
-    ResetTokenResponse,
-    ResetTokenPayload,
     TokenOTPSerialResponse,
     AssignTokenResponse,
     AssignTokenPayload,
     TokenVerificationResponse,
     UserResponse,
 } from './privacy-idea-api.types.js';
-import { TokenError } from './api/errors/token-error.js';
+import { TokenError } from './api/error/token-error.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {

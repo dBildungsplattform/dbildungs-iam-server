@@ -1,5 +1,19 @@
-export type AssignHardwareTokenBodyParams = {
-    serial: string;
-    otp: string;
-    user: string;
-};
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString } from 'class-validator';
+
+export class AssignHardwareTokenBodyParams {
+    @IsNotEmpty()
+    @IsString()
+    @ApiProperty({ required: true })
+    public serial!: string;
+
+    @IsNotEmpty()
+    @IsString()
+    @ApiProperty({ required: true })
+    public otp!: string;
+
+    @IsNotEmpty()
+    @IsString()
+    @ApiProperty({ required: true })
+    public user!: string;
+}
