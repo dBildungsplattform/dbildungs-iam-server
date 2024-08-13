@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Query } from '@nestjs/common';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { Public } from '../authentication/api/public.decorator.js';
-import { PrivacyIdeaToken } from './privacy-idea-api.types.js';
+import { AssignTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -19,6 +19,9 @@ import { PersonPermissions } from '../authentication/domain/person-permissions.j
 import { Permissions } from '../authentication/api/permissions.decorator.js';
 import { Person } from '../person/domain/person.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
+import { AssignHardwareTokenBodyParams } from './api/assign-hardware-token.body.params.js';
+import { AssignHardwareTokenResponse } from './api/assign-hardware-token.response.js';
+import { TokenError } from './api/error/token-error.js';
 
 @ApiTags('2FA')
 @ApiBearerAuth()
@@ -88,5 +91,58 @@ export class PrivacyIdeaAdministrationController {
             personResult.value.referrer,
         );
         return new TokenStateResponse(piToken);
+    }
+
+    @Post('assign/hardwareToken')
+    @HttpCode(HttpStatus.OK)
+    @ApiCreatedResponse({
+        description: 'The hardware token was successfully assigned.',
+        type: AssignHardwareTokenResponse,
+    })
+    @ApiBadRequestResponse({ description: 'Not found.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to assign hardware token.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to reset token.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to assign hardware token.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while assigning a hardware token.' })
+    @Public()
+    public async assignHardwareToken(
+        @Body() params: AssignHardwareTokenBodyParams,
+    ): Promise<AssignHardwareTokenResponse | undefined> {
+        try {
+            const result: AssignTokenResponse = await this.privacyIdeaAdministrationService.assignHardwareToken(
+                params.serial,
+                params.otp,
+                params.user,
+            );
+            return new AssignHardwareTokenResponse(
+                result.id,
+                result.jsonrpc,
+                result.time,
+                result.version,
+                result.versionnumber,
+                result.signature,
+                'Token wurde erfolgreich zugeordnet.',
+            );
+        } catch (error) {
+            if (error instanceof TokenError) {
+                // Return structured error response with code and message
+                throw new HttpException(
+                    {
+                        statusCode: HttpStatus.BAD_REQUEST,
+                        message: error.message,
+                        code: error.name,
+                    },
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+            // Handle other unexpected errors
+            throw new HttpException(
+                {
+                    statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                    message: 'An unexpected error occurred.',
+                },
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
     }
 }
