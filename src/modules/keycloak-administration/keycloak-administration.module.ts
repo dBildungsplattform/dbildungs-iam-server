@@ -12,9 +12,10 @@ import { RolleFactory } from '../rolle/domain/rolle.factory.js';
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
 import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
-import { KeyclockServiceProviderEventHandler } from './event-handlers/keycloack-service-provider.event-handler.js';
+//import { KeyclockServiceProviderEventHandler } from './event-handlers/keycloack-service-provider.event-handler.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextFactory } from '../personenkontext/domain/personenkontext.factory.js';
+import { KCtest } from './event-handlers/KY-test.js';
 
 @Module({
     imports: [LoggerModule.register(KeycloakAdministrationModule.name), KeycloakConfigModule],
@@ -23,7 +24,7 @@ import { PersonenkontextFactory } from '../personenkontext/domain/personenkontex
         KeycloakUserService,
         KeycloakGroupRoleService,
         KeycloakAdministrationService,
-        KeyclockServiceProviderEventHandler,
+        //KeyclockServiceProviderEventHandler,
         RolleRepo,
         RolleFactory,
         OrganisationRepository,
@@ -31,6 +32,7 @@ import { PersonenkontextFactory } from '../personenkontext/domain/personenkontex
         PersonRepository,
         DBiamPersonenkontextRepo,
         PersonenkontextFactory,
+        KCtest,
     ],
     exports: [KeycloakUserService, KeycloakGroupRoleService],
 })

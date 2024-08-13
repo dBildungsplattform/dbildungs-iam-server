@@ -6,6 +6,8 @@ import { ServiceProviderEntity } from './service-provider.entity.js';
 import { CreateGroupAndRoleEvent } from '../../../shared/events/kc-group-and-role-event.js';
 import { EventService } from '../../../core/eventbus/index.js';
 
+import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
  */
@@ -128,5 +130,50 @@ export class ServiceProviderRepo {
         await this.em.persistAndFlush(serviceProviderEntity);
 
         return mapEntityToAggregate(serviceProviderEntity);
+    }
+
+    public async fetchall(personId: string): Promise<(string | undefined)[]> {
+        const rolleServiceProviders = await this.em.find(
+            RolleServiceProviderEntity,
+            {
+                rolle: {
+                    personenKontexte: {
+                        personId: personId,
+                    },
+                },
+            },
+            {
+                populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
+            },
+        );
+
+        const serviceProviders = rolleServiceProviders.map((rsp) => rsp.serviceProvider);
+
+        const serviceProvidersNames = serviceProviders.map((sp) => sp.keycloakRole);
+
+        return serviceProvidersNames;
+    }
+
+    public async fetchfilteredroles(personId: string, rolleId: string): Promise<(string | undefined)[]> {
+        const rolleServiceProviders = await this.em.find(
+            RolleServiceProviderEntity,
+            {
+                rolle: {
+                    id: rolleId,
+                    personenKontexte: {
+                        personId: personId,
+                    },
+                },
+            },
+            {
+                populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
+            },
+        );
+
+        const serviceProviders = rolleServiceProviders.map((rsp) => rsp.serviceProvider);
+
+        const serviceProvidersNames = serviceProviders.map((sp) => sp.keycloakRole);
+
+        return serviceProvidersNames;
     }
 }
