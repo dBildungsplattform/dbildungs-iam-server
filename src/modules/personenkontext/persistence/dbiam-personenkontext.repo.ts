@@ -41,9 +41,16 @@ function mapEntityToAggregate(
         entity.id,
         entity.createdAt,
         entity.updatedAt,
+        entity.revision,
         entity.personId.id,
         entity.organisationId,
         entity.rolleId.id,
+        entity.referrer,
+        entity.mandant,
+        entity.personenstatus,
+        entity.jahrgangsstufe,
+        entity.sichtfreigabe,
+        entity.loeschungZeitpunkt,
     );
 }
 
@@ -380,6 +387,11 @@ export class DBiamPersonenkontextRepo {
         const result: any[] = await this.em.execute(query, [organisationId, personId, systemrecht]);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         return result[0].has_systemrecht_at_orga as boolean;
+    }
+
+    public async deleteById(id: string): Promise<boolean> {
+        const deletedPersons: number = await this.em.nativeDelete(PersonenkontextEntity, { id });
+        return deletedPersons > 0;
     }
 
     public async hasPersonASystemrechtAtAnyKontextOfPersonB(

@@ -2,6 +2,9 @@ import { faker } from '@faker-js/faker';
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
+import { NameValidator } from '../../../shared/validation/name-validator.js';
+import { VornameForPersonWithTrailingSpaceError } from './vorname-with-trailing-space.error.js';
+import { FamiliennameForPersonWithTrailingSpaceError } from './familienname-with-trailing-space.error.js';
 
 type PasswordInternalState = { passwordInternal: string | undefined; isTemporary: boolean };
 
@@ -79,9 +82,9 @@ export class Person<WasPersisted extends boolean> {
     }
 
     public static construct<WasPersisted extends boolean = false>(
-        id: string,
-        createdAt: Date,
-        updatedAt: Date,
+        id: Persisted<string, WasPersisted>,
+        createdAt: Persisted<Date, WasPersisted>,
+        updatedAt: Persisted<Date, WasPersisted>,
         familienname: string,
         vorname: string,
         revision: string,
@@ -140,6 +143,13 @@ export class Person<WasPersisted extends boolean> {
         usernameGenerator: UsernameGeneratorService,
         creationParams: PersonCreationParams,
     ): Promise<Person<false> | DomainError> {
+        // Validate the Vor - and Nachname
+        if (!NameValidator.isNameValid(creationParams.vorname)) {
+            return new VornameForPersonWithTrailingSpaceError();
+        }
+        if (!NameValidator.isNameValid(creationParams.familienname)) {
+            return new FamiliennameForPersonWithTrailingSpaceError();
+        }
         const person: Person<false> = new Person(
             undefined,
             undefined,
@@ -221,6 +231,13 @@ export class Person<WasPersisted extends boolean> {
         }
 
         const newRevision: string = (parseInt(this.revision) + 1).toString();
+
+        if (vorname && !NameValidator.isNameValid(vorname)) {
+            return new VornameForPersonWithTrailingSpaceError();
+        }
+        if (familienname && !NameValidator.isNameValid(familienname)) {
+            return new FamiliennameForPersonWithTrailingSpaceError();
+        }
 
         this.familienname = familienname ?? this.familienname;
         this.vorname = vorname ?? this.vorname;

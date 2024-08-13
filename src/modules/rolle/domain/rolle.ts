@@ -5,6 +5,8 @@ import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 import { EntityAlreadyExistsError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { NameValidator } from '../../../shared/validation/name-validator.js';
+import { NameForRolleWithTrailingSpaceError } from './name-with-trailing-space.error.js';
 
 export class Rolle<WasPersisted extends boolean> {
     private constructor(
@@ -30,7 +32,11 @@ export class Rolle<WasPersisted extends boolean> {
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
-    ): Rolle<false> {
+    ): Rolle<false> | DomainError {
+        // Validate the Rollenname
+        if (!NameValidator.isNameValid(name)) {
+            return new NameForRolleWithTrailingSpaceError();
+        }
         return new Rolle(
             organisationRepo,
             serviceProviderRepo,
@@ -59,6 +65,9 @@ export class Rolle<WasPersisted extends boolean> {
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
     ): Promise<Rolle<true> | DomainError> {
+        if (!NameValidator.isNameValid(name)) {
+            return new NameForRolleWithTrailingSpaceError();
+        }
         const rolleToUpdate: Rolle<true> = new Rolle(
             organisationRepo,
             serviceProviderRepo,

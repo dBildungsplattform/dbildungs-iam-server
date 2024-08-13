@@ -20,7 +20,7 @@ import { RolleFactory } from '../../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../../modules/service-provider/repo/service-provider.repo.js';
 import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ServiceProviderFactory } from '../../../modules/service-provider/domain/service-provider.factory.js';
-import { KeycloakUserService, UserDo } from '../../../modules/keycloak-administration/index.js';
+import { KeycloakUserService, User } from '../../../modules/keycloak-administration/index.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { DBiamPersonenkontextService } from '../../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
 import { DbSeedReferenceRepo } from '../repo/db-seed-reference.repo.js';
@@ -30,6 +30,8 @@ import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { KeycloakGroupRoleService } from '../../../modules/keycloak-administration/domain/keycloak-group-role.service.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
+import { NameForOrganisationWithTrailingSpaceError } from '../../../modules/organisation/specification/error/name-with-trailing-space.error.js';
+import { NameForRolleWithTrailingSpaceError } from '../../../modules/rolle/domain/name-with-trailing-space.error.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -243,6 +245,25 @@ describe('DbSeedService', () => {
                 );
             });
         });
+        describe('Should throw error', () => {
+            it('should throw NameForOrganisationWithTrailingSpaceError if OrganisationFactory.createNew returns DomainError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/organisation/07_organisation_with_invalid_name.json`,
+                    'utf-8',
+                );
+                const persistedOrganisation: Organisation<true> = DoFactory.createOrganisationAggregate(true);
+                const parent: Organisation<true> = createMock<Organisation<true>>();
+                organisationRepositoryMock.save.mockResolvedValueOnce(parent);
+                //USE MockResolved instead of MockRecolvedOnce because it's called for administriert and zugehoerigZu
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID of referenced parent
+                organisationRepositoryMock.findById.mockResolvedValue(parent);
+
+                organisationRepositoryMock.save.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).rejects.toThrow(
+                    NameForOrganisationWithTrailingSpaceError,
+                );
+            });
+        });
     });
 
     describe('seedRolle', () => {
@@ -316,6 +337,27 @@ describe('DbSeedService', () => {
                 await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
             });
         });
+
+        describe('should throw error', () => {
+            it('should throw NameValidationError if OrganisationFactory.createNew returns DomainError', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/rolle/08_rolle-with-invalid-name.json`,
+                    'utf-8',
+                );
+                const persistedRolle: Rolle<true> = DoFactory.createRolle(true);
+                const serviceProviderMocked: ServiceProvider<true> = createMock<ServiceProvider<true>>();
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced serviceProvider
+                serviceProviderRepoMock.findById.mockResolvedValueOnce(serviceProviderMocked);
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced parent
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock get-SSK
+
+                rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
+                await expect(dbSeedService.seedRolle(fileContentAsStr)).rejects.toThrow(
+                    NameForRolleWithTrailingSpaceError,
+                );
+            });
+        });
     });
 
     describe('seedServiceProvider', () => {
@@ -344,10 +386,12 @@ describe('DbSeedService', () => {
                 );
 
                 const person: Person<true> = createMock<Person<true>>();
-                const existingUser: UserDo<true> = new UserDo<true>();
-                existingUser.id = faker.string.uuid();
-                existingUser.createdDate = faker.date.recent();
-                existingUser.username = 'testusername';
+                const existingUser: User<true> = User.construct<true>(
+                    faker.string.uuid(),
+                    'testusername',
+                    'test@example.com',
+                    faker.date.recent(),
+                );
 
                 kcUserService.findOne.mockResolvedValueOnce({ ok: true, value: existingUser });
                 kcUserService.delete.mockResolvedValueOnce({ ok: true, value: undefined });
@@ -435,6 +479,47 @@ describe('DbSeedService', () => {
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(undefined); //mock UUID for rolle, found via seeding-ref-table
 
                 await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(EntityNotFoundError);
+            });
+        });
+        describe('seedPersonenkontext', () => {
+            describe('when person UUID cannot be found', () => {
+                it('should throw EntityNotFoundError', async () => {
+                    const fileContentAsStr: string = fs.readFileSync(
+                        `./seeding/seeding-integration-test/personenkontext/05_personenkontext.json`,
+                        'utf-8',
+                    );
+
+                    // Mock dbSeedReferenceRepo to return undefined for the person UUID
+                    dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(undefined);
+
+                    await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(
+                        EntityNotFoundError,
+                    );
+                });
+            });
+
+            describe('with violated Personenkontext Klasse specification', () => {
+                it('should throw GleicheRolleAnKlasseWieSchuleError', async () => {
+                    const fileContentAsStr: string = fs.readFileSync(
+                        `./seeding/seeding-integration-test/personenkontext/05_personenkontext.json`,
+                        'utf-8',
+                    );
+                    dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                    personRepoMock.findById.mockResolvedValue(createMock<Person<true>>()); // mock getReferencedPerson
+
+                    dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                    organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock getReferencedOrganisation
+
+                    dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                    rolleRepoMock.findById.mockResolvedValue(createMock<Rolle<true>>()); // mock getReferencedRolle
+
+                    personenkontextServiceMock.checkSpecifications.mockResolvedValueOnce(
+                        new GleicheRolleAnKlasseWieSchuleError(),
+                    );
+                    await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(
+                        GleicheRolleAnKlasseWieSchuleError,
+                    );
+                });
             });
         });
 

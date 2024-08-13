@@ -4,7 +4,7 @@ import { Geschlecht, Vertrauensstufe } from './person.enums.js';
 
 export class PersonDo<WasPersisted extends boolean> implements DoBase<WasPersisted> {
     /**
-     * @deprecated This constructor is for automapper only.
+     * @deprecated This constructor is for automapper only only used in an deprecated depricated endpoint.
      */
     // eslint-disable-next-line @typescript-eslint/no-useless-constructor, @typescript-eslint/no-empty-function
     public constructor() {}

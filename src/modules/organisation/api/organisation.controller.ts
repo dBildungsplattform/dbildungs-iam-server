@@ -1,5 +1,3 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
 import {
     Body,
     Controller,
@@ -7,7 +5,7 @@ import {
     Get,
     HttpCode,
     HttpStatus,
-    Inject,
+    NotFoundException,
     Param,
     Patch,
     Post,
@@ -30,20 +28,13 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Paged, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
-import { CreateOrganisationDto } from './create-organisation.dto.js';
-import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
 import { OrganisationByIdParams } from './organisation-by-id.params.js';
-import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
-import { OrganisationUc } from './organisation.uc.js';
 import { UpdateOrganisationBodyParams } from './update-organisation.body.params.js';
-import { UpdateOrganisationDto } from './update-organisation.dto.js';
-import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
@@ -60,10 +51,15 @@ import { OrganisationExceptionFilter } from './organisation-exception-filter.js'
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { ConfigService } from '@nestjs/config';
+import { ServerConfig } from '../../../shared/config/server.config.js';
+import { OrganisationService } from '../domain/organisation.service.js';
+import { DataConfig } from '../../../shared/config/data.config.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { OrganisationIstBereitsZugewiesenError } from '../domain/organisation-ist-bereits-zugewiesen.error.js';
 import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
+import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -76,40 +72,53 @@ import { OrganisationByNameBodyParams } from './organisation-by-name.body.params
 @Controller({ path: 'organisationen' })
 export class OrganisationController {
     public constructor(
-        private readonly uc: OrganisationUc,
         private readonly organisationRepository: OrganisationRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
+        private readonly config: ConfigService<ServerConfig>,
+        private readonly organisationService: OrganisationService,
     ) {}
 
     @Post()
-    @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponseLegacy })
+    @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponse })
     @ApiBadRequestResponse({ description: 'The organisation already exists.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
-    public async createOrganisation(@Body() params: CreateOrganisationBodyParams): Promise<OrganisationResponseLegacy> {
-        const organisationDto: CreateOrganisationDto = this.mapper.map(
-            params,
-            CreateOrganisationBodyParams,
-            CreateOrganisationDto,
-        );
-        const result: CreatedOrganisationDto | SchulConnexError | OrganisationSpecificationError =
-            await this.uc.createOrganisation(organisationDto);
+    public async createOrganisation(@Body() params: CreateOrganisationBodyParams): Promise<OrganisationResponse> {
+        const ROOT_ORGANISATION_ID: string = this.config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
 
-        if (result instanceof CreatedOrganisationDto) {
-            return this.mapper.map(result, CreatedOrganisationDto, OrganisationResponseLegacy);
+        const organisation: Organisation<false> | DomainError = Organisation.createNew(
+            params.administriertVon ?? ROOT_ORGANISATION_ID,
+            params.zugehoerigZu ?? ROOT_ORGANISATION_ID,
+            params.kennung,
+            params.name,
+            params.namensergaenzung,
+            params.kuerzel,
+            params.typ,
+            params.traegerschaft,
+        );
+        if (organisation instanceof DomainError) {
+            throw organisation;
         }
-        if (result instanceof OrganisationSpecificationError) {
-            throw result;
+        const result: Result<Organisation<true>, DomainError> = await this.organisationService.createOrganisation(
+            organisation,
+        );
+        if (!result.ok) {
+            if (result.error instanceof OrganisationSpecificationError) {
+                throw result.error;
+            }
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
+            );
         }
-        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+
+        return new OrganisationResponse(result.value);
     }
 
     @Put(':organisationId')
     @ApiOkResponse({
         description: 'The organisation was successfully updated.',
-        type: OrganisationResponseLegacy,
+        type: OrganisationResponse,
     })
     @ApiBadRequestResponse({ description: 'Request has wrong format.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
@@ -119,36 +128,61 @@ export class OrganisationController {
     public async updateOrganisation(
         @Param() params: OrganisationByIdParams,
         @Body() body: UpdateOrganisationBodyParams,
-    ): Promise<OrganisationResponseLegacy> {
-        const dto: UpdateOrganisationDto = this.mapper.map(body, UpdateOrganisationBodyParams, UpdateOrganisationDto);
-        dto.id = params.organisationId;
+    ): Promise<OrganisationResponse> {
+        const existingOrganisation: Option<Organisation<true>> = await this.organisationRepository.findById(
+            params.organisationId,
+        );
 
-        const response: UpdatedOrganisationDto | SchulConnexError | OrganisationSpecificationError =
-            await this.uc.updateOrganisation(dto);
+        if (!existingOrganisation) {
+            throw new NotFoundException(`Organisation with ID ${params.organisationId} not found`);
+        }
 
-        if (response instanceof UpdatedOrganisationDto) {
-            return this.mapper.map(response, UpdatedOrganisationDto, OrganisationResponseLegacy);
+        existingOrganisation.id = params.organisationId;
+        existingOrganisation.administriertVon = body.administriertVon;
+        existingOrganisation.zugehoerigZu = body.zugehoerigZu;
+        existingOrganisation.kennung = body.kennung;
+        existingOrganisation.name = body.name;
+        existingOrganisation.namensergaenzung = body.namensergaenzung;
+        existingOrganisation.kuerzel = body.kuerzel;
+        existingOrganisation.typ = body.typ;
+        existingOrganisation.traegerschaft = body.traegerschaft;
+        existingOrganisation.updatedAt = new Date();
+
+        const result: Result<Organisation<true>, DomainError> = await this.organisationService.updateOrganisation(
+            existingOrganisation,
+        );
+
+        if (result.ok) {
+            return new OrganisationResponse(result.value);
+        } else {
+            if (result.error instanceof OrganisationSpecificationError) {
+                throw result.error;
+            }
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
+            );
         }
-        if (response instanceof OrganisationSpecificationError) {
-            throw response;
-        }
-        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
     }
 
     @Get('root')
-    @ApiOkResponse({ description: 'The organization was successfully pulled.', type: OrganisationResponseLegacy })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to get the organization.' })
-    @ApiNotFoundResponse({ description: 'The organization does not exist.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
-    public async getRootOrganisation(): Promise<OrganisationResponseLegacy> {
-        const result: OrganisationResponseLegacy | SchulConnexError = await this.uc.findRootOrganisation();
+    @ApiOkResponse({ description: 'The root organization was successfully retrieved.', type: OrganisationResponse })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get the root organization.' })
+    @ApiNotFoundResponse({ description: 'The root organization does not exist.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get the root organization.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the root organization.' })
+    public async getRootOrganisation(): Promise<OrganisationResponse> {
+        const ROOT_ORGANISATION_ID: string = this.config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+        const result: Result<Organisation<true>, DomainError> = await this.organisationService.findOrganisationById(
+            ROOT_ORGANISATION_ID,
+        );
 
-        if (result instanceof OrganisationResponseLegacy) {
-            return result;
+        if (result.ok) {
+            return new OrganisationResponse(result.value);
         }
 
-        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+            SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
+        );
     }
 
     @Get('root/children')
@@ -175,21 +209,24 @@ export class OrganisationController {
     }
 
     @Get(':organisationId')
-    @ApiOkResponse({ description: 'The organization was successfully pulled.', type: OrganisationResponseLegacy })
+    @ApiOkResponse({ description: 'The organization was successfully pulled.', type: OrganisationResponse })
     @ApiBadRequestResponse({ description: 'Organization ID is required' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the organization.' })
     @ApiNotFoundResponse({ description: 'The organization does not exist.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
-    public async findOrganisationById(@Param() params: OrganisationByIdParams): Promise<OrganisationResponseLegacy> {
-        const result: OrganisationResponseLegacy | SchulConnexError = await this.uc.findOrganisationById(
+    public async findOrganisationById(@Param() params: OrganisationByIdParams): Promise<OrganisationResponse> {
+        const result: Result<Organisation<true>, DomainError> = await this.organisationService.findOrganisationById(
             params.organisationId,
         );
 
-        if (result instanceof OrganisationResponseLegacy) {
-            return result;
+        if (result.ok) {
+            return new OrganisationResponse(result.value);
+        } else {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
+            );
         }
-        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
     }
 
     @Get()
@@ -257,7 +294,7 @@ export class OrganisationController {
     @Get(':organisationId/administriert')
     @ApiOkResponse({
         description: 'The organizations were successfully returned.',
-        type: [OrganisationResponseLegacy],
+        type: [OrganisationResponse],
         headers: PagingHeadersObject,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get organizations.' })
@@ -266,16 +303,31 @@ export class OrganisationController {
     public async getAdministrierteOrganisationen(
         @Param() routeParams: OrganisationByIdParams,
         @Query() queryParams: OrganisationByIdQueryParams,
-    ): Promise<PagedResponse<OrganisationResponseLegacy>> {
-        const result: Paged<OrganisationResponseLegacy> | SchulConnexError = await this.uc.findAdministriertVon(
+    ): Promise<PagedResponse<OrganisationResponse>> {
+        const parentOrg: Result<Organisation<true>, DomainError> = await this.organisationService.findOrganisationById(
+            routeParams.organisationId,
+        );
+        if (!parentOrg.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(parentOrg.error),
+            );
+        }
+
+        const result: Paged<Organisation<true>> = await this.organisationService.findAllAdministriertVon(
             routeParams.organisationId,
             queryParams.searchFilter,
         );
 
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
-        }
-        const response: PagedResponse<OrganisationResponseLegacy> = new PagedResponse(result);
+        const organisations: OrganisationResponse[] = result.items.map(
+            (item: Organisation<true>) => new OrganisationResponse(item),
+        );
+
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse({
+            total: result.total,
+            offset: result.offset,
+            limit: result.limit,
+            items: organisations,
+        });
 
         return response;
     }
@@ -290,23 +342,24 @@ export class OrganisationController {
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByIdBodyParams,
     ): Promise<void> {
-        const result: void | SchulConnexError | OrganisationSpecificationError = await this.uc.setAdministriertVon(
-            params.organisationId,
-            body.organisationId,
-        );
+        const res: Result<void, OrganisationSpecificationError | DomainError> =
+            await this.organisationService.setAdministriertVon(params.organisationId, body.organisationId);
 
-        if (result instanceof OrganisationSpecificationError) {
-            throw result;
-        }
-        if (result) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        if (!res.ok) {
+            // Avoid passing OrganisationSpecificationError to SchulConnexErrorMapper
+            if (res.error instanceof OrganisationSpecificationError) {
+                throw res.error;
+            }
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(res.error),
+            );
         }
     }
 
     @Get(':organisationId/zugehoerig')
     @ApiOkResponse({
         description: 'The organizations were successfully returned.',
-        type: [OrganisationResponseLegacy],
+        type: [OrganisationResponse],
         headers: PagingHeadersObject,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get organizations.' })
@@ -314,15 +367,30 @@ export class OrganisationController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
     public async getZugehoerigeOrganisationen(
         @Param() params: OrganisationByIdParams,
-    ): Promise<PagedResponse<OrganisationResponseLegacy>> {
-        const result: Paged<OrganisationResponseLegacy> | SchulConnexError = await this.uc.findZugehoerigZu(
+    ): Promise<PagedResponse<OrganisationResponse>> {
+        const parentOrg: Result<Organisation<true>, DomainError> = await this.organisationService.findOrganisationById(
+            params.organisationId,
+        );
+        if (!parentOrg.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(parentOrg.error),
+            );
+        }
+
+        const result: Paged<Organisation<true>> = await this.organisationService.findAllZugehoerigZu(
             params.organisationId,
         );
 
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
-        }
-        const response: PagedResponse<OrganisationResponseLegacy> = new PagedResponse(result);
+        const organisations: OrganisationResponse[] = result.items.map(
+            (item: Organisation<true>) => new OrganisationResponse(item),
+        );
+
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse({
+            total: result.total,
+            offset: result.offset,
+            limit: result.limit,
+            items: organisations,
+        });
 
         return response;
     }
@@ -337,16 +405,19 @@ export class OrganisationController {
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByIdBodyParams,
     ): Promise<void> {
-        const result: void | SchulConnexError | OrganisationSpecificationError = await this.uc.setZugehoerigZu(
+        const res: Result<void, DomainError> = await this.organisationService.setZugehoerigZu(
             params.organisationId,
             body.organisationId,
         );
 
-        if (result instanceof OrganisationSpecificationError) {
-            throw result;
-        }
-        if (result) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        if (!res.ok) {
+            // Avoid passing OrganisationSpecificationError to SchulConnexErrorMapper
+            if (res.error instanceof OrganisationSpecificationError) {
+                throw res.error;
+            }
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(res.error),
+            );
         }
     }
 

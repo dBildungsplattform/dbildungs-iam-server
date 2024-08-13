@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GlobalValidationPipe } from './global-validation.pipe.js';
 import { DetailedValidationError } from './detailed-validation.error.js';
-import { CreatePersonBodyParams } from '../../modules/person/api/create-person.body.params.js';
-import { PersonNameParams } from '../../modules/person/api/person-name.params.js';
-import { CreatePersonDto } from '../../modules/person/api/create-person.dto.js';
+
+import { CreatedOrganisationDto } from '../../modules/organisation/api/created-organisation.dto.js';
+import { CreateOrganisationBodyParams } from '../../modules/organisation/api/create-organisation.body.params.js';
+import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enums.js';
 
 describe('GlobalValidationPipe', () => {
     let module: TestingModule;
@@ -25,15 +26,15 @@ describe('GlobalValidationPipe', () => {
     });
 
     it('should throw DetailedValidation error on failure', () => {
-        const person: CreatePersonBodyParams = {
-            email: 'testgmail.com',
-            name: new PersonNameParams(),
+        const organisation: CreateOrganisationBodyParams = {
+            name: '',
+            typ: OrganisationsTyp.UNBEST,
         };
 
         return validationPipe
-            .transform(person, {
+            .transform(organisation, {
                 type: 'body',
-                metatype: CreatePersonDto,
+                metatype: CreatedOrganisationDto,
             })
             .then(() => fail('should have thrown DetailedValidationError'))
             .catch((error: Error) => {
