@@ -172,6 +172,12 @@ describe('ItsLearning Persons Event Handler', () => {
             rolleId: faker.string.uuid(),
         };
 
+        it('should not do anything when nothing has to be done', async () => {
+            await sut.deleteMemberships(person, []);
+
+            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+        });
+
         it('should send removed memberships to itsLearning', async () => {
             itsLearningServiceMock.send.mockResolvedValueOnce({
                 ok: true,
@@ -212,6 +218,12 @@ describe('ItsLearning Persons Event Handler', () => {
             rolle: faker.helpers.enumValue(RollenArt),
             rolleId: faker.string.uuid(),
         };
+
+        it('should not do anything when nothing has to be done', async () => {
+            await sut.addMemberships(person, []);
+
+            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+        });
 
         it('should send new memberships to itsLearning', async () => {
             itsLearningServiceMock.send.mockResolvedValueOnce({
