@@ -31,6 +31,7 @@ export type PersonCreationParams = {
     password?: string;
     personalnummer?: string;
     attributes?: Record<string, string>[];
+    isLocked?: boolean;
 };
 
 export class Person<WasPersisted extends boolean> {
@@ -70,6 +71,7 @@ export class Person<WasPersisted extends boolean> {
         public auskunftssperre?: boolean,
         public personalnummer?: string,
         public attributes?: Record<string, string>,
+        public isLocked?: boolean,
         public email?: string,
     ) {
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
@@ -110,6 +112,7 @@ export class Person<WasPersisted extends boolean> {
         auskunftssperre?: boolean,
         personalnummer?: string,
         attributes?: Record<string, string>,
+        isLocked?: boolean,
         email?: string,
     ): Person<WasPersisted> {
         return new Person(
@@ -139,6 +142,7 @@ export class Person<WasPersisted extends boolean> {
             auskunftssperre,
             personalnummer,
             attributes,
+            isLocked,
             email,
         );
     }
@@ -227,6 +231,7 @@ export class Person<WasPersisted extends boolean> {
         auskunftssperre?: boolean,
         personalnummer?: string,
         attributes?: Record<string, string>,
+        isLocked?: boolean,
         email?: string,
     ): void | DomainError {
         if (this.revision !== revision) {
@@ -265,6 +270,7 @@ export class Person<WasPersisted extends boolean> {
         this.revision = newRevision;
         this.personalnummer = personalnummer;
         this.attributes = attributes;
+        this.isLocked = isLocked;
         this.email = email;
     }
 

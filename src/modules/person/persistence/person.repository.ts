@@ -84,6 +84,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.auskunftssperre,
         entity.personalnummer,
         {},
+        undefined,
         getEnabledEmailAddress(entity),
     );
 }
@@ -148,11 +149,26 @@ export class PersonRepository {
         scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);
-        const person: Person<true> | undefined = persons[0];
-
+        let person: Person<true> | undefined = persons[0];
         if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
+        person = await this.extendPersonWithKeycloakData(person);
 
         return { ok: true, value: person };
+    }
+
+    public async extendPersonWithKeycloakData(person: Person<true>): Promise<Person<true>> {
+        if (!person.keycloakUserId) {
+            return person;
+        }
+
+        const keyCloakUserDataResponse: Result<User<true>, DomainError> = await this.kcUserService.findById(
+            person.keycloakUserId,
+        );
+        if (keyCloakUserDataResponse.ok) {
+            person.attributes = keyCloakUserDataResponse.value.attributes as Record<string, string>;
+            person.isLocked = keyCloakUserDataResponse.value.enabled === false;
+        }
+        return person;
     }
 
     public async checkIfDeleteIsAllowed(

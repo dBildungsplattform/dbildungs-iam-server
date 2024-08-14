@@ -69,7 +69,7 @@ import { PersonExceptionFilter } from './person-exception-filter.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
-import { KeycloakUserService, LOCK_KEYS, User } from '../../keycloak-administration/index.js';
+import { KeycloakUserService, LOCK_KEYS } from '../../keycloak-administration/index.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonLockResponse } from './person-lock.response.js';
 
@@ -212,16 +212,6 @@ export class PersonController {
         }
 
         const response: PersonendatensatzResponse = new PersonendatensatzResponse(personResult.value, false);
-        if (personResult.value.keycloakUserId) {
-            const keyCloakUserDataResponse: Result<User<true>, DomainError> = await this.keycloakUserService.findById(
-                personResult.value.keycloakUserId,
-            );
-            if (keyCloakUserDataResponse.ok) {
-                response.person.attributes = keyCloakUserDataResponse.value.attributes;
-                response.person.isLocked = keyCloakUserDataResponse.value.enabled === false;
-            }
-        }
-
         return response;
     }
 

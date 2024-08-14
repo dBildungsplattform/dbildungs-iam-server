@@ -8,12 +8,7 @@ export class PersonendatensatzResponse {
     @ApiProperty()
     public person!: PersonResponse;
 
-    public constructor(
-        person: Person<true>,
-        withStartPasswort: boolean,
-        isLocked?: boolean,
-        attributes?: Record<string, string>,
-    ) {
+    public constructor(person: Person<true>, withStartPasswort: boolean) {
         const personResponseName: PersonNameParams = {
             familienname: person.familienname,
             vorname: person.vorname,
@@ -43,8 +38,8 @@ export class PersonendatensatzResponse {
             revision: person.revision,
             startpasswort: withStartPasswort === true ? person.newPassword : undefined,
             personalnummer: person.personalnummer,
-            isLocked: isLocked,
-            attributes: attributes,
+            isLocked: person.isLocked,
+            attributes: person.attributes,
         };
 
         this.person = personResponse;
