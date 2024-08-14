@@ -109,6 +109,8 @@ services:
       - 4443:443
 
   privacy-idea:
+    profiles:
+     - 2fa
     image: khalibre/privacyidea:latest
     container_name: privacy-idea
     ports:
@@ -132,6 +134,8 @@ services:
         condition: service_healthy
 
   maria-db:
+    profiles:
+     - 2fa
     image: mariadb:latest
     container_name: mariadb
     ports:
