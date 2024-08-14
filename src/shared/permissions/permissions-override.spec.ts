@@ -78,6 +78,22 @@ describe('PermissionsOverride', () => {
                 expect(permissionsMock.canModifyPerson).not.toHaveBeenCalled();
             });
 
+            it('should not call underlying permissions, if all rechte were granted in multiple steps', async () => {
+                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const orgaId: OrganisationID = faker.string.uuid();
+
+                const canModify: boolean = await new PermissionsOverride(permissionsMock)
+                    .grantSystemrechteAtOrga(orgaId, [RollenSystemRecht.ROLLEN_VERWALTEN])
+                    .grantSystemrechteAtOrga(orgaId, [RollenSystemRecht.PERSONEN_VERWALTEN])
+                    .hasSystemrechteAtOrganisation(orgaId, [
+                        RollenSystemRecht.ROLLEN_VERWALTEN,
+                        RollenSystemRecht.PERSONEN_VERWALTEN,
+                    ]);
+
+                expect(canModify).toBe(true);
+                expect(permissionsMock.canModifyPerson).not.toHaveBeenCalled();
+            });
+
             it('should use underlying permissions to check remaining systemrechte', async () => {
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
                 const orgaID: OrganisationID = faker.string.uuid();

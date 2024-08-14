@@ -27,13 +27,17 @@ export class PermissionsOverride implements IPersonPermissions {
 
     public constructor(private readonly underlyingPermissions: IPersonPermissions) {}
 
-    // Overrides
-
+    /**
+     * Grant permissions to modify a person
+     */
     public grantPersonModifyPermission(personID: PersonID): this {
         this.modifyPersonOverride.add(personID);
         return this;
     }
 
+    /**
+     * Adds specific systemrechte to the permissions
+     */
     public grantSystemrechteAtOrga(orga: OrganisationID, rechte: RollenSystemRecht[]): this {
         const systemrechte: RollenSystemRecht[] | undefined = this.organisationSystemrechteOverride.get(orga);
 
