@@ -165,7 +165,7 @@ export class PersonRepository {
             person.keycloakUserId,
         );
         if (keyCloakUserDataResponse.ok) {
-            person.attributes = keyCloakUserDataResponse.value.attributes as Record<string, string>;
+            person.attributes = keyCloakUserDataResponse.value.attributes;
             person.isLocked = keyCloakUserDataResponse.value.enabled === false;
         }
         return person;
