@@ -10,7 +10,7 @@ import { PersonFactory } from '../../person/domain/person.factory.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
-import { PermissionsOverride } from '../../../shared/permissions/permissions-wrapper.js';
+import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
 
 export type PersonPersonenkontext = {
     person: Person<true>;

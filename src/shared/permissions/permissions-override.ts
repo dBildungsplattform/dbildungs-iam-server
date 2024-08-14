@@ -6,6 +6,7 @@ export class PermissionsOverride implements IPersonPermissions {
     // The set of PersonIDs, for which the permissions should explicitly return true
     private readonly modifyPersonOverride: Set<PersonID> = new Set();
 
+    // Organisations and permissions which have been explicitly granted
     private readonly organisationSystemrechteOverride: Map<OrganisationID, RollenSystemRecht[]> = new Map();
 
     public constructor(private readonly underlyingPermissions: IPersonPermissions) {}
