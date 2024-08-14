@@ -204,12 +204,14 @@ describe('LDAP Event Handler', () => {
                 },
                 [
                     {
+                        id: faker.string.uuid(),
                         orgaId: faker.string.uuid(),
                         rolle: RollenArt.LEHR,
                         rolleId: faker.string.uuid(),
                         orgaKennung: faker.string.numeric(7),
                     },
                     {
+                        id: faker.string.uuid(),
                         orgaId: faker.string.uuid(),
                         rolle: RollenArt.EXTERN,
                         rolleId: faker.string.uuid(),
@@ -236,12 +238,14 @@ describe('LDAP Event Handler', () => {
                 [],
                 [
                     {
+                        id: faker.string.uuid(),
                         orgaId: faker.string.uuid(),
                         rolle: RollenArt.LEHR,
                         rolleId: faker.string.uuid(),
                         orgaKennung: faker.string.numeric(7),
                     },
                     {
+                        id: faker.string.uuid(),
                         orgaId: faker.string.uuid(),
                         rolle: RollenArt.EXTERN,
                         rolleId: faker.string.uuid(),
@@ -267,6 +271,7 @@ describe('LDAP Event Handler', () => {
                     },
                     [
                         {
+                            id: faker.string.uuid(),
                             orgaId: faker.string.uuid(),
                             rolle: RollenArt.LEHR,
                             rolleId: faker.string.uuid(),
@@ -295,6 +300,7 @@ describe('LDAP Event Handler', () => {
                 [],
                 [
                     {
+                        id: faker.string.uuid(),
                         orgaId: faker.string.uuid(),
                         rolle: RollenArt.LEHR,
                         rolleId: faker.string.uuid(),
