@@ -48,96 +48,25 @@ describe('ItsLearning Persons Event Handler', () => {
 
     beforeEach(() => {
         sut.ENABLED = true;
-        jest.restoreAllMocks();
     });
 
-    describe('updatePersonenkontexteEventHandler', () => {
-        it('should call updatePerson with ID', async () => {
-            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
-                { id: faker.string.uuid(), vorname: faker.person.firstName(), familienname: faker.person.lastName() },
-                [],
-                [],
-                [],
-            );
-            const updatePersonSpy: jest.SpyInstance<
-                Promise<void>,
-                [person: PersonenkontextUpdatedPersonData, personenkontexte: PersonenkontextUpdatedData[]]
-            > = jest.spyOn(sut, 'updatePerson');
-            updatePersonSpy.mockResolvedValueOnce(undefined);
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
 
-            await sut.updatePersonenkontexteEventHandler(event);
+    describe('deletePerson', () => {
+        it('should delete person in itsLearning', async () => {
+            await sut.deletePerson(faker.string.uuid());
 
-            expect(updatePersonSpy).toHaveBeenCalledWith(event.person, event.currentKontexte);
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(DeletePersonAction));
         });
 
-        it('should call deleteMemberships', async () => {
-            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
-                { id: faker.string.uuid(), vorname: faker.person.firstName(), familienname: faker.person.lastName() },
-                [],
-                [
-                    {
-                        id: faker.string.uuid(),
-                        orgaId: faker.string.uuid(),
-                        rolle: faker.helpers.enumValue(RollenArt),
-                        rolleId: faker.string.uuid(),
-                    },
-                ],
-                [],
-            );
-            const deleteMembershipsSpy: jest.SpyInstance<
-                Promise<void>,
-                [person: PersonenkontextUpdatedPersonData, personenkontexte: PersonenkontextUpdatedData[]]
-            > = jest.spyOn(sut, 'deleteMemberships');
-            deleteMembershipsSpy.mockResolvedValueOnce(undefined);
+        it('should log error if person could not be deleted', async () => {
+            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: false, error: createMock() });
 
-            await sut.updatePersonenkontexteEventHandler(event);
+            await sut.deletePerson(faker.string.uuid());
 
-            expect(deleteMembershipsSpy).toHaveBeenCalledWith(event.person, event.removedKontexte);
-        });
-
-        it('should call addMemberships', async () => {
-            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
-                { id: faker.string.uuid(), vorname: faker.person.firstName(), familienname: faker.person.lastName() },
-                [
-                    {
-                        id: faker.string.uuid(),
-                        orgaId: faker.string.uuid(),
-                        rolle: faker.helpers.enumValue(RollenArt),
-                        rolleId: faker.string.uuid(),
-                    },
-                ],
-                [],
-                [],
-            );
-            const addMembershipsSpy: jest.SpyInstance<
-                Promise<void>,
-                [person: PersonenkontextUpdatedPersonData, personenkontexte: PersonenkontextUpdatedData[]]
-            > = jest.spyOn(sut, 'addMemberships');
-            addMembershipsSpy.mockResolvedValueOnce(undefined);
-
-            await sut.updatePersonenkontexteEventHandler(event);
-
-            expect(addMembershipsSpy).toHaveBeenCalledWith(event.person, event.newKontexte);
-        });
-
-        it('should skip event, if not enabled', async () => {
-            sut.ENABLED = false;
-            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
-                { id: faker.string.uuid(), vorname: faker.person.firstName(), familienname: faker.person.lastName() },
-                [],
-                [],
-                [],
-            );
-            const updatePersonSpy: jest.SpyInstance<
-                Promise<void>,
-                [person: PersonenkontextUpdatedPersonData, personenkontexte: PersonenkontextUpdatedData[]]
-            > = jest.spyOn(sut, 'updatePerson');
-            updatePersonSpy.mockResolvedValueOnce(undefined);
-
-            await sut.updatePersonenkontexteEventHandler(event);
-
-            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
-            expect(updatePersonSpy).not.toHaveBeenCalled();
+            expect(loggerMock.error).toHaveBeenCalledWith('Could not delete person from itsLearning.');
         });
     });
 
@@ -153,7 +82,11 @@ describe('ItsLearning Persons Event Handler', () => {
             itsLearningServiceMock.send.mockResolvedValueOnce({
                 ok: false,
                 error: createMock(),
-            });
+            }); // Read person
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            }); // Send person
 
             await sut.updatePerson(person, [createMock()]);
 
@@ -204,26 +137,22 @@ describe('ItsLearning Persons Event Handler', () => {
         });
 
         describe('when person has no personenkontexte', () => {
-            it('should delete person in itsLearning', async () => {
-                await sut.updatePerson(person, []);
-
-                expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(DeletePersonAction));
-            });
-
             it('should log info if person was deleted', async () => {
                 itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: undefined });
 
                 await sut.updatePerson(person, []);
 
-                expect(loggerMock.info).toHaveBeenCalledWith('Person deleted.');
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `No Personenkontexte found for Person ${person.id}, deleting from itsLearning.`,
+                );
             });
 
-            it('should log error if person could not be deleted', async () => {
-                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: false, error: createMock() });
+            it('should return true', async () => {
+                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                await sut.updatePerson(person, []);
+                const result: boolean = await sut.updatePerson(person, []);
 
-                expect(loggerMock.error).toHaveBeenCalledWith('Could not delete person from itsLearning.');
+                expect(result).toBe(true);
             });
         });
     });
@@ -242,6 +171,12 @@ describe('ItsLearning Persons Event Handler', () => {
             rolle: faker.helpers.enumValue(RollenArt),
             rolleId: faker.string.uuid(),
         };
+
+        it('should not do anything when nothing has to be done', async () => {
+            await sut.deleteMemberships(person, []);
+
+            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+        });
 
         it('should send removed memberships to itsLearning', async () => {
             itsLearningServiceMock.send.mockResolvedValueOnce({
@@ -284,6 +219,12 @@ describe('ItsLearning Persons Event Handler', () => {
             rolleId: faker.string.uuid(),
         };
 
+        it('should not do anything when nothing has to be done', async () => {
+            await sut.addMemberships(person, []);
+
+            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+        });
+
         it('should send new memberships to itsLearning', async () => {
             itsLearningServiceMock.send.mockResolvedValueOnce({
                 ok: true,
@@ -307,6 +248,38 @@ describe('ItsLearning Persons Event Handler', () => {
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `Error while creating 1 memberships for person ${person.id}!`,
             );
+        });
+    });
+
+    describe('updatePersonenkontexteEventHandler', () => {
+        it('should not throw', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                { id: faker.string.uuid(), vorname: faker.person.firstName(), familienname: faker.person.lastName() },
+                [],
+                [],
+                [],
+            );
+
+            jest.spyOn(sut, 'updatePerson').mockResolvedValueOnce(true);
+            jest.spyOn(sut, 'deleteMemberships').mockResolvedValueOnce(undefined);
+            jest.spyOn(sut, 'addMemberships').mockResolvedValueOnce(undefined);
+            jest.spyOn(sut, 'deletePerson').mockResolvedValueOnce(undefined);
+
+            await sut.updatePersonenkontexteEventHandler(event);
+        });
+
+        it('should skip event, if not enabled', async () => {
+            sut.ENABLED = false;
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                { id: faker.string.uuid(), vorname: faker.person.firstName(), familienname: faker.person.lastName() },
+                [],
+                [],
+                [],
+            );
+
+            await sut.updatePersonenkontexteEventHandler(event);
+
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
         });
     });
 });
