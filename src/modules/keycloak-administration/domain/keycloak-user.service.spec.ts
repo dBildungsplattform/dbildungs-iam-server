@@ -749,4 +749,49 @@ describe('KeycloakUserService', () => {
             });
         });
     });
+
+    describe('getKeyCloakUserData', () => {
+        const userId: string = 'userid';
+        describe('when getAuthedKcAdminClient fails', () => {
+            it('should return', async () => {
+                const error: Result<KeycloakAdminClient, DomainError> = {
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                };
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
+                const actual: UserRepresentation | undefined = await service.getKeyCloakUserData(userId);
+                expect(actual).toBeUndefined();
+            });
+        });
+        describe('when retrieval from keycloak', () => {
+            describe('succeeds', () => {
+                it('should return UserRepresentation', async () => {
+                    kcUsersMock.findOne.mockImplementationOnce((payload?: { id: string; realm?: string }) => {
+                        return Promise.resolve({ id: payload?.id });
+                    });
+
+                    const actual: UserRepresentation | undefined = await service.getKeyCloakUserData(userId);
+                    expect(actual).toEqual({ id: userId });
+                });
+            });
+            describe('fails', () => {
+                it('should return', async () => {
+                    const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
+                        users: {
+                            findOne: jest.fn().mockRejectedValueOnce(new Error('Retrieval failed')),
+                        },
+                    });
+                    adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                        ok: true,
+                        value: keyCloakAdminClient,
+                    });
+
+                    const actual: UserRepresentation | undefined = await service.getKeyCloakUserData(userId);
+                    expect(keyCloakAdminClient.users.findOne).toHaveBeenCalledWith({ id: userId });
+                    expect(actual).toBeUndefined();
+                });
+            });
+        });
+    });
 });
