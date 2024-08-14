@@ -11,6 +11,7 @@ import {
     PersonenkontextUpdatedEvent,
     PersonenkontextUpdatedPersonData,
 } from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { CreateMembershipsAction } from '../actions/create-memberships.action.js';
 import { CreatePersonAction } from '../actions/create-person.action.js';
@@ -18,7 +19,7 @@ import { DeleteMembershipsAction } from '../actions/delete-memberships.action.js
 import { DeletePersonAction } from '../actions/delete-person.action.js';
 import { PersonResponse, ReadPersonAction } from '../actions/read-person.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
-import { IMSESRoleType, IMSESInstitutionRoleType } from '../types/role.enum.js';
+import { IMSESInstitutionRoleType, IMSESRoleType } from '../types/role.enum.js';
 
 // Maps our roles to itsLearning roles
 const ROLLENART_TO_ITSLEARNING_ROLE: Record<RollenArt, IMSESInstitutionRoleType> = {
@@ -75,37 +76,32 @@ export class ItsLearningPersonsEventHandler {
             return this.logger.info('Not enabled, ignoring event.');
         }
 
-        await this.updatePerson(event.person, event.currentKontexte);
+        const shouldDelete: boolean = await this.updatePerson(event.person, event.currentKontexte);
 
         await this.deleteMemberships(event.person, event.removedKontexte);
 
         await this.addMemberships(event.person, event.newKontexte);
+
+        if (shouldDelete) {
+            await this.deletePerson(event.person.id);
+        }
     }
 
     /**
      * Updates the person based on the current personenkontexte
+     * @returns Returns true, if the person should be deleted
      */
     public async updatePerson(
         person: PersonenkontextUpdatedPersonData,
         personenkontexte: PersonenkontextUpdatedData[],
-    ): Promise<void> {
+    ): Promise<boolean> {
         // Use mutex because multiple personenkontexte can be created at once
         return this.mutex.runExclusive(async () => {
             // If no personenkontexte exist, delete the person from itsLearning
             if (personenkontexte.length === 0) {
                 this.logger.info(`No Personenkontexte found for Person ${person.id}, deleting from itsLearning.`);
 
-                const deleteResult: Result<void, DomainError> = await this.itsLearningService.send(
-                    new DeletePersonAction(person.id),
-                );
-
-                if (deleteResult.ok) {
-                    this.logger.info(`Person deleted.`);
-                } else {
-                    this.logger.error(`Could not delete person from itsLearning.`);
-                }
-
-                return;
+                return true;
             }
 
             const targetRole: IMSESInstitutionRoleType = this.determineItsLearningRole(personenkontexte);
@@ -116,11 +112,13 @@ export class ItsLearningPersonsEventHandler {
 
             // If user already exists in itsLearning and has the correct role, don't send update
             if (personResult.ok && personResult.value.institutionRole === targetRole) {
-                return this.logger.info('Person already exists with correct role');
+                this.logger.info('Person already exists with correct role');
+                return false;
             }
 
             if (!person.referrer) {
-                return this.logger.error(`Person with ID ${person.id} has no username!`);
+                this.logger.error(`Person with ID ${person.id} has no username!`);
+                return false;
             }
 
             const createAction: CreatePersonAction = new CreatePersonAction({
@@ -134,10 +132,12 @@ export class ItsLearningPersonsEventHandler {
             const createResult: Result<void, DomainError> = await this.itsLearningService.send(createAction);
 
             if (!createResult.ok) {
-                return this.logger.error(`Person with ID ${person.id} could not be sent to itsLearning!`);
+                this.logger.error(`Person with ID ${person.id} could not be sent to itsLearning!`);
+                return false;
             }
 
-            return this.logger.info(`Person with ID ${person.id} created in itsLearning!`);
+            this.logger.info(`Person with ID ${person.id} created in itsLearning!`);
+            return false;
         });
     }
 
@@ -195,6 +195,20 @@ export class ItsLearningPersonsEventHandler {
             }
 
             return this.logger.info(`Created ${newPersonenkontexte.length} memberships for person ${person.id}!`);
+        });
+    }
+
+    public async deletePerson(personID: PersonID): Promise<void> {
+        return this.mutex.runExclusive(async () => {
+            const deleteResult: Result<void, DomainError> = await this.itsLearningService.send(
+                new DeletePersonAction(personID),
+            );
+
+            if (deleteResult.ok) {
+                this.logger.info(`Person deleted.`);
+            } else {
+                this.logger.error(`Could not delete person from itsLearning.`);
+            }
         });
     }
 

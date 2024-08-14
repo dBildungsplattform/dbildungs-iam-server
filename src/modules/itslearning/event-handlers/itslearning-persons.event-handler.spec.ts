@@ -60,10 +60,10 @@ describe('ItsLearning Persons Event Handler', () => {
                 [],
             );
             const updatePersonSpy: jest.SpyInstance<
-                Promise<void>,
+                Promise<boolean>,
                 [person: PersonenkontextUpdatedPersonData, personenkontexte: PersonenkontextUpdatedData[]]
             > = jest.spyOn(sut, 'updatePerson');
-            updatePersonSpy.mockResolvedValueOnce(undefined);
+            updatePersonSpy.mockResolvedValueOnce(false);
 
             await sut.updatePersonenkontexteEventHandler(event);
 
@@ -120,6 +120,25 @@ describe('ItsLearning Persons Event Handler', () => {
             expect(addMembershipsSpy).toHaveBeenCalledWith(event.person, event.newKontexte);
         });
 
+        it('should call deletePerson with ID', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                { id: faker.string.uuid(), vorname: faker.person.firstName(), familienname: faker.person.lastName() },
+                [],
+                [],
+                [],
+            );
+
+            const deletePersonSpy: jest.SpyInstance<Promise<void>, [personID: string]> = jest.spyOn(
+                sut,
+                'deletePerson',
+            );
+            deletePersonSpy.mockResolvedValueOnce(undefined);
+
+            await sut.updatePersonenkontexteEventHandler(event);
+
+            expect(deletePersonSpy).toHaveBeenCalledWith(event.person.id);
+        });
+
         it('should skip event, if not enabled', async () => {
             sut.ENABLED = false;
             const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
@@ -129,10 +148,10 @@ describe('ItsLearning Persons Event Handler', () => {
                 [],
             );
             const updatePersonSpy: jest.SpyInstance<
-                Promise<void>,
+                Promise<boolean>,
                 [person: PersonenkontextUpdatedPersonData, personenkontexte: PersonenkontextUpdatedData[]]
             > = jest.spyOn(sut, 'updatePerson');
-            updatePersonSpy.mockResolvedValueOnce(undefined);
+            updatePersonSpy.mockResolvedValueOnce(false);
 
             await sut.updatePersonenkontexteEventHandler(event);
 
@@ -204,12 +223,6 @@ describe('ItsLearning Persons Event Handler', () => {
         });
 
         describe('when person has no personenkontexte', () => {
-            it('should delete person in itsLearning', async () => {
-                await sut.updatePerson(person, []);
-
-                expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(DeletePersonAction));
-            });
-
             it('should log info if person was deleted', async () => {
                 itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: undefined });
 
@@ -218,13 +231,29 @@ describe('ItsLearning Persons Event Handler', () => {
                 expect(loggerMock.info).toHaveBeenCalledWith('Person deleted.');
             });
 
-            it('should log error if person could not be deleted', async () => {
-                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: false, error: createMock() });
+            it('should return true', async () => {
+                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                await sut.updatePerson(person, []);
+                const result: boolean = await sut.updatePerson(person, []);
 
-                expect(loggerMock.error).toHaveBeenCalledWith('Could not delete person from itsLearning.');
+                expect(result).toBe(true);
             });
+        });
+    });
+
+    describe('deletePerson', () => {
+        it('should delete person in itsLearning', async () => {
+            await sut.deletePerson(faker.string.uuid());
+
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(DeletePersonAction));
+        });
+
+        it('should log error if person could not be deleted', async () => {
+            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: false, error: createMock() });
+
+            await sut.deletePerson(faker.string.uuid());
+
+            expect(loggerMock.error).toHaveBeenCalledWith('Could not delete person from itsLearning.');
         });
     });
 
