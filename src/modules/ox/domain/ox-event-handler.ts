@@ -69,19 +69,6 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
             return;
         }
 
-        /*  //
-        const params0: ListAllUsersParams = {
-            contextId: '1',
-            login: this.authUser,
-            password: this.authPassword,
-        };
-
-        const action0: ListAllUsersAction = new ListAllUsersAction(params0);
-
-        const r0: Result<ListAllUsersResponse, DomainError> = await this.oxService.send(action0);
-        console.log(r0);
-        //*/
-
         const existsParams: ExistsUserParams = {
             contextId: '1',
             username: person.vorname,
