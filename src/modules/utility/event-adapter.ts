@@ -1,22 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { EventHandler } from '../../eventbus/decorators/event-handler.decorator.js';
-import { ClassLogger } from '../../logging/class-logger.js';
-import { Organisation } from '../../../modules/organisation/domain/organisation.js';
-import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
-import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
-import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
-import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
-import { Person } from '../../../modules/person/domain/person.js';
-import { Rolle } from '../../../modules/rolle/domain/rolle.js';
-import { EventService } from '../../eventbus/services/event.service.js';
-import { PersonenkontextDeleted2Event } from '../../../shared/events/personenkontext-deleted2.event.js';
+import { EventHandler } from '../../core/eventbus/decorators/event-handler.decorator.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
+import { Organisation } from '../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
+import { SimplePersonenkontextDeletedEvent } from '../../shared/events/simple-personenkontext-deleted.event.js';
+import { RolleRepo } from '../rolle/repo/rolle.repo.js';
+import { PersonRepository } from '../person/persistence/person.repository.js';
+import { Person } from '../person/domain/person.js';
+import { Rolle } from '../rolle/domain/rolle.js';
+import { EventService } from '../../core/eventbus/services/event.service.js';
+import { PersonenkontextDeletedEvent } from '../../shared/events/personenkontext-deleted.event.js';
 import {
     PersonenkontextEventKontextData,
     PersonenkontextEventPersonData,
-} from '../../../shared/events/personenkontext-event.types.js';
+} from '../../shared/events/personenkontext-event.types.js';
 
 @Injectable()
-export class LdapEventAdapter {
+export class EventAdapter {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly eventService: EventService,
@@ -25,8 +25,8 @@ export class LdapEventAdapter {
         private readonly rolleRepo: RolleRepo,
     ) {}
 
-    @EventHandler(PersonenkontextDeletedEvent)
-    public async handlePersonenkontextDeletedEvent(event: PersonenkontextDeletedEvent): Promise<void> {
+    @EventHandler(SimplePersonenkontextDeletedEvent)
+    public async handlePersonenkontextDeletedEvent(event: SimplePersonenkontextDeletedEvent): Promise<void> {
         this.logger.info(
             `Received PersonenkontextDeletedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
         );
@@ -57,11 +57,11 @@ export class LdapEventAdapter {
             orgaKennung: orga.kennung,
         };
 
-        const personenkontextDeleted2Event: PersonenkontextDeleted2Event = new PersonenkontextDeleted2Event(
+        const personenkontextDeletedEvent: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(
             personData,
             kontextData,
         );
 
-        this.eventService.publish(personenkontextDeleted2Event);
+        this.eventService.publish(personenkontextDeletedEvent);
     }
 }

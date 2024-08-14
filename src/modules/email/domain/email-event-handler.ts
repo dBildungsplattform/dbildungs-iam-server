@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
-import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
+import { SimplePersonenkontextDeletedEvent } from '../../../shared/events/simple-personenkontext-deleted.event.js';
 import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
@@ -81,9 +81,9 @@ export class EmailEventHandler {
         });
     }
 
-    @EventHandler(PersonenkontextDeletedEvent)
+    @EventHandler(SimplePersonenkontextDeletedEvent)
     // eslint-disable-next-line @typescript-eslint/require-await
-    public async handlePersonenkontextDeletedEvent(event: PersonenkontextDeletedEvent): Promise<void> {
+    public async handlePersonenkontextDeletedEvent(event: SimplePersonenkontextDeletedEvent): Promise<void> {
         this.logger.info(
             `Received PersonenkontextDeletedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
         );

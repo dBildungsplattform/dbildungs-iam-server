@@ -9,7 +9,7 @@ import { Organisation } from '../../../modules/organisation/domain/organisation.
 import { SchuleDeletedEvent } from '../../../shared/events/schule-deleted.event.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { PersonenkontextDeleted2Event } from '../../../shared/events/personenkontext-deleted2.event.js';
+import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 
 @Injectable()
@@ -65,10 +65,10 @@ export class LdapEventHandler {
         }
     }
 
-    @EventHandler(PersonenkontextDeleted2Event)
-    public async handlePersonenkontextDeleted2Event(event: PersonenkontextDeleted2Event): Promise<void> {
+    @EventHandler(PersonenkontextDeletedEvent)
+    public async handlePersonenkontextDeletedEvent(event: PersonenkontextDeletedEvent): Promise<void> {
         this.logger.info(
-            `Received PersonenkontextDeleted2Event, personId:${event.personData.id}, orgaId:${event.kontextData.orgaId}, rolleId:${event.kontextData.rolleId}`,
+            `Received PersonenkontextDeletedEvent, personId:${event.personData.id}, orgaId:${event.kontextData.orgaId}, rolleId:${event.kontextData.rolleId}`,
         );
         const deletionResult: Result<PersonData> = await this.ldapClientService.deleteLehrer(event.personData, {
             kennung: event.kontextData.orgaKennung,

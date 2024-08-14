@@ -29,7 +29,7 @@ import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persi
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { PersonenkontextDeleted2Event } from '../../../shared/events/personenkontext-deleted2.event.js';
+import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
 import { KennungRequiredForSchuleError } from '../../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
 
 describe('LDAP Event Handler', () => {
@@ -210,7 +210,7 @@ describe('LDAP Event Handler', () => {
         });
     });
 
-    describe('handlePersonenkontextDeleted2Event', () => {
+    describe('handlePersonenkontextDeletedEvent', () => {
         describe('when calling LdapClientService.deleteLehrer is successful', () => {
             it('should NOT log errors', async () => {
                 const deletionResult: Result<PersonData> = {
@@ -223,7 +223,7 @@ describe('LDAP Event Handler', () => {
                 };
                 ldapClientServiceMock.deleteLehrer.mockResolvedValueOnce(deletionResult);
 
-                await ldapEventHandler.handlePersonenkontextDeleted2Event(createMock<PersonenkontextDeleted2Event>());
+                await ldapEventHandler.handlePersonenkontextDeletedEvent(createMock<PersonenkontextDeletedEvent>());
 
                 expect(loggerMock.error).toHaveBeenCalledTimes(0);
             });
@@ -238,7 +238,7 @@ describe('LDAP Event Handler', () => {
                 };
                 ldapClientServiceMock.deleteLehrer.mockResolvedValueOnce(deletionResult);
 
-                await ldapEventHandler.handlePersonenkontextDeleted2Event(createMock<PersonenkontextDeleted2Event>());
+                await ldapEventHandler.handlePersonenkontextDeletedEvent(createMock<PersonenkontextDeletedEvent>());
 
                 expect(loggerMock.error).toHaveBeenCalledTimes(1);
                 expect(loggerMock.error).toHaveBeenCalledWith(error.message);

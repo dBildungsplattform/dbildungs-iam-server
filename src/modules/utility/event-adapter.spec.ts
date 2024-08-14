@@ -5,29 +5,29 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     MapperTestModule,
-} from '../../../../test/utils/index.js';
-import { LdapModule } from '../ldap.module.js';
+} from '../../../test/utils/index.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
-import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
+import { PersonRepository } from '../person/persistence/person.repository.js';
+import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { faker } from '@faker-js/faker';
-import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
-import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
-import { LdapEventAdapter } from './ldap-event-adapter.js';
-import { ClassLogger } from '../../logging/class-logger.js';
+import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
+import { SimplePersonenkontextDeletedEvent } from '../../shared/events/simple-personenkontext-deleted.event.js';
+import { EventAdapter } from './event-adapter.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 import { APP_PIPE } from '@nestjs/core';
-import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
-import { EventService } from '../../eventbus/services/event.service.js';
-import { Person } from '../../../modules/person/domain/person.js';
-import { Organisation } from '../../../modules/organisation/domain/organisation.js';
-import { Rolle } from '../../../modules/rolle/domain/rolle.js';
-import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
-import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
+import { GlobalValidationPipe } from '../../shared/validation/global-validation.pipe.js';
+import { EventService } from '../../core/eventbus/services/event.service.js';
+import { Person } from '../person/domain/person.js';
+import { Organisation } from '../organisation/domain/organisation.js';
+import { Rolle } from '../rolle/domain/rolle.js';
+import { RollenArt } from '../rolle/domain/rolle.enums.js';
+import { OrganisationsTyp } from '../organisation/domain/organisation.enums.js';
+import { UtilityModule } from './utility.module.js';
 
-describe('LDAP Event Adapter', () => {
+describe('Event Adapter', () => {
     let app: INestApplication;
 
-    let sut: LdapEventAdapter;
+    let sut: EventAdapter;
 
     let eventServiceMock: DeepMocked<EventService>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
@@ -41,7 +41,7 @@ describe('LDAP Event Adapter', () => {
                 ConfigTestModule,
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
-                LdapModule,
+                UtilityModule,
             ],
             providers: [
                 {
@@ -72,14 +72,13 @@ describe('LDAP Event Adapter', () => {
         rolleRepoMock = module.get(RolleRepo);
         loggerMock = module.get(ClassLogger);
 
-        sut = module.get(LdapEventAdapter);
+        sut = module.get(EventAdapter);
 
         app = module.createNestApplication();
         await app.init();
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
-        //await orm.close();
         await app.close();
     });
 
@@ -88,12 +87,18 @@ describe('LDAP Event Adapter', () => {
     });
 
     describe('handlePersonenkontextDeletedEvent', () => {
-        describe('when every entity is found in DB', () => {
-            it('should info and trigger PersonenkontextDeleted2Event', async () => {
-                const fakePersonId: string = faker.string.uuid();
-                const fakeOrgaId: string = faker.string.uuid();
-                const fakeRolleId: string = faker.string.uuid();
+        let fakePersonId: string;
+        let fakeOrgaId: string;
+        let fakeRolleId: string;
 
+        beforeEach(() => {
+            fakePersonId = faker.string.uuid();
+            fakeOrgaId = faker.string.uuid();
+            fakeRolleId = faker.string.uuid();
+        });
+
+        describe('when every entity is found in DB', () => {
+            it('should info and trigger PersonenkontextDeletedEvent', async () => {
                 const fakePerson: Person<true> = createMock<Person<true>>({
                     id: fakePersonId,
                     vorname: faker.person.firstName(),
@@ -113,7 +118,7 @@ describe('LDAP Event Adapter', () => {
                 organisationRepositoryMock.findById.mockResolvedValueOnce(fakeOrga);
                 rolleRepoMock.findById.mockResolvedValueOnce(fakeRolle);
 
-                const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(
+                const event: SimplePersonenkontextDeletedEvent = new SimplePersonenkontextDeletedEvent(
                     fakePersonId,
                     fakeOrgaId,
                     fakeRolleId,
@@ -146,13 +151,9 @@ describe('LDAP Event Adapter', () => {
 
         describe('when person cannot be found', () => {
             it('should log error', async () => {
-                const fakePersonId: string = faker.string.uuid();
-                const fakeOrgaId: string = faker.string.uuid();
-                const fakeRolleId: string = faker.string.uuid();
-
                 personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
-                const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(
+                const event: SimplePersonenkontextDeletedEvent = new SimplePersonenkontextDeletedEvent(
                     fakePersonId,
                     fakeOrgaId,
                     fakeRolleId,
@@ -169,14 +170,10 @@ describe('LDAP Event Adapter', () => {
 
         describe('when organisation cannot be found', () => {
             it('should log error', async () => {
-                const fakePersonId: string = faker.string.uuid();
-                const fakeOrgaId: string = faker.string.uuid();
-                const fakeRolleId: string = faker.string.uuid();
-
                 personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>());
                 organisationRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
-                const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(
+                const event: SimplePersonenkontextDeletedEvent = new SimplePersonenkontextDeletedEvent(
                     fakePersonId,
                     fakeOrgaId,
                     fakeRolleId,
@@ -195,15 +192,11 @@ describe('LDAP Event Adapter', () => {
 
         describe('when rolle cannot be found', () => {
             it('should log error', async () => {
-                const fakePersonId: string = faker.string.uuid();
-                const fakeOrgaId: string = faker.string.uuid();
-                const fakeRolleId: string = faker.string.uuid();
-
                 personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>());
                 organisationRepositoryMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>());
                 rolleRepoMock.findById.mockResolvedValueOnce(undefined);
 
-                const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(
+                const event: SimplePersonenkontextDeletedEvent = new SimplePersonenkontextDeletedEvent(
                     fakePersonId,
                     fakeOrgaId,
                     fakeRolleId,

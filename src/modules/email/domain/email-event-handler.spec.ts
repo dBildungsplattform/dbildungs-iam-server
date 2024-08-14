@@ -12,7 +12,7 @@ import { EmailEventHandler } from './email-event-handler.js';
 import { faker } from '@faker-js/faker';
 import { EmailModule } from '../email.module.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
+import { SimplePersonenkontextDeletedEvent } from '../../../shared/events/simple-personenkontext-deleted.event.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
@@ -443,7 +443,7 @@ describe('Email Event Handler', () => {
     describe('handlePersonenkontextDeletedEvent', () => {
         describe('when rolle exists and service provider with kategorie email is found', () => {
             it('should execute without errors', async () => {
-                const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(
+                const event: SimplePersonenkontextDeletedEvent = new SimplePersonenkontextDeletedEvent(
                     faker.string.uuid(),
                     faker.string.uuid(),
                     faker.string.uuid(),
@@ -466,7 +466,7 @@ describe('Email Event Handler', () => {
 
         describe('when rolle does NOT exists', () => {
             it('should execute without errors', async () => {
-                const event: PersonenkontextDeletedEvent = new PersonenkontextDeletedEvent(
+                const event: SimplePersonenkontextDeletedEvent = new SimplePersonenkontextDeletedEvent(
                     faker.string.uuid(),
                     faker.string.uuid(),
                     faker.string.uuid(),

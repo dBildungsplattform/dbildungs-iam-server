@@ -17,6 +17,8 @@ import {
     PersonenkontextEventKontextData,
     PersonenkontextEventPersonData,
 } from '../../../shared/events/personenkontext-event.types.js';
+import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
+import { PersonID } from '../../../shared/types/index.js';
 
 // Maps our roles to itsLearning roles
 const ROLLENART_TO_ITSLEARNING_ROLE: Record<RollenArt, ItsLearningRoleType> = {
@@ -55,6 +57,19 @@ export class ItsLearningPersonsEventHandler {
         this.ENABLED = itsLearningConfig.ENABLED === 'true';
     }
 
+    @EventHandler(PersonenkontextDeletedEvent)
+    public async handlePersonenkontextDeletedEvent(event: PersonenkontextDeletedEvent): Promise<void> {
+        this.logger.info(
+            `Received PersonenkontextDeletedEvent, personId:${event.personData.id}, orgaId:${event.kontextData.orgaId}, rolleId:${event.kontextData.rolleId}`,
+        );
+
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event.');
+        }
+
+        await this.deletePerson(event.personData.id);
+    }
+
     @EventHandler(PersonenkontextUpdatedEvent)
     public async updatePersonenkontexteEventHandler(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(`Received PersonenkontextUpdatedEvent, ${event.person.id}`);
@@ -79,15 +94,7 @@ export class ItsLearningPersonsEventHandler {
             if (personenkontexte.length === 0) {
                 this.logger.info(`No Personenkontexte found for Person ${person.id}, deleting from itsLearning.`);
 
-                const deleteResult: Result<void, DomainError> = await this.itsLearningService.send(
-                    new DeletePersonAction(person.id),
-                );
-
-                if (deleteResult.ok) {
-                    this.logger.info(`Person deleted.`);
-                } else {
-                    this.logger.error(`Could not delete person from itsLearning.`);
-                }
+                await this.deletePerson(person.id);
 
                 return;
             }
@@ -139,5 +146,17 @@ export class ItsLearningPersonsEventHandler {
 
         // Null assertion is valid here, highestRole can never be OOB
         return ROLLENART_TO_ITSLEARNING_ROLE[ROLLENART_ORDER[highestRole]!];
+    }
+
+    private async deletePerson(personId: PersonID): Promise<void> {
+        const deleteResult: Result<void, DomainError> = await this.itsLearningService.send(
+            new DeletePersonAction(personId),
+        );
+
+        if (deleteResult.ok) {
+            this.logger.info(`Person deleted.`);
+        } else {
+            this.logger.error(`Could not delete person from itsLearning.`);
+        }
     }
 }

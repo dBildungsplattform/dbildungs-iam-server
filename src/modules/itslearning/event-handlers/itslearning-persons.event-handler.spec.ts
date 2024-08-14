@@ -15,6 +15,8 @@ import {
     PersonenkontextEventPersonData,
 } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
 describe('ItsLearning Persons Event Handler', () => {
     let module: TestingModule;
@@ -47,6 +49,67 @@ describe('ItsLearning Persons Event Handler', () => {
     beforeEach(() => {
         sut.ENABLED = true;
         jest.restoreAllMocks();
+    });
+
+    describe('handlePersonenkontextDeletedEvent', () => {
+        let event: PersonenkontextDeletedEvent;
+
+        beforeEach(() => {
+            event = new PersonenkontextDeletedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                {
+                    orgaId: faker.string.uuid(),
+                    orgaTyp: OrganisationsTyp.SCHULE,
+                    orgaKennung: faker.string.alpha({ length: 6 }),
+                    rolleId: faker.string.uuid(),
+                    rolle: RollenArt.LEHR,
+                },
+            );
+        });
+
+        it('should call updatePerson with ID and log info on success', async () => {
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: createMock(),
+            });
+
+            await sut.handlePersonenkontextDeletedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Received PersonenkontextDeletedEvent, personId:${event.personData.id}, orgaId:${event.kontextData.orgaId}, rolleId:${event.kontextData.rolleId}`,
+            );
+            expect(loggerMock.info).toHaveBeenCalledWith(`Person deleted.`);
+
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(DeletePersonAction));
+        });
+
+        it('should call updatePerson with ID and log error on failure', async () => {
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: false,
+                error: createMock(),
+            });
+
+            await sut.handlePersonenkontextDeletedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Received PersonenkontextDeletedEvent, personId:${event.personData.id}, orgaId:${event.kontextData.orgaId}, rolleId:${event.kontextData.rolleId}`,
+            );
+            expect(loggerMock.error).toHaveBeenCalledWith(`Could not delete person from itsLearning.`);
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(DeletePersonAction));
+        });
+
+        it('should skip event, if not enabled', async () => {
+            sut.ENABLED = false;
+
+            await sut.handlePersonenkontextDeletedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
+        });
     });
 
     describe('updatePersonenkontexteEventHandler', () => {
