@@ -29,9 +29,9 @@ export class PrivacyIdeaAdministrationService {
             if (!(await this.checkUserExists(user))) {
                 await this.addUser(user);
             } else {
-                const tokenToVerify: PrivacyIdeaToken | undefined = await this.getTokenToVerify(user);
-                if (tokenToVerify) {
-                    await this.deleteToken(tokenToVerify.serial);
+                const oldTokenToVerify: PrivacyIdeaToken | undefined = await this.getTokenToVerify(user);
+                if (oldTokenToVerify) {
+                    await this.deleteToken(oldTokenToVerify.serial);
                 }
             }
             const response: InitSoftwareToken = await this.initToken(user, token, selfService);
@@ -80,7 +80,7 @@ export class PrivacyIdeaAdministrationService {
     private async initToken(
         user: string,
         token: string,
-        selfService: boolean = false,
+        selfService: boolean,
         genkey: number = 1,
         keysize: number = 20,
         description: string = 'Description of the token',
@@ -245,7 +245,7 @@ export class PrivacyIdeaAdministrationService {
                         if (error.response?.data.result.error?.code == 905) {
                             return of(null);
                         }
-                        throw new Error(`Error verifying token:`);
+                        throw error;
                     }),
                 ),
             );
@@ -260,15 +260,7 @@ export class PrivacyIdeaAdministrationService {
     }
 
     private async getTokenToVerify(userName: string): Promise<PrivacyIdeaToken | undefined> {
-        try {
-            return (await this.getUserTokens(userName)).filter((x: PrivacyIdeaToken) => x.rollout_state == 'verify')[0];
-        } catch (error) {
-            if (error instanceof Error) {
-                throw new Error(`Error getting two auth state: ${error.message}`);
-            } else {
-                throw new Error(`Error getting two auth state: Unknown error occurred`);
-            }
-        }
+        return (await this.getUserTokens(userName)).filter((x: PrivacyIdeaToken) => x.rollout_state == 'verify')[0];
     }
 
     private async deleteToken(serial: string): Promise<void> {
