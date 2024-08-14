@@ -2,6 +2,22 @@ import { RollenSystemRecht } from '../../modules/rolle/domain/rolle.enums.js';
 import { OrganisationID, PersonID } from '../types/index.js';
 import { IPersonPermissions } from './person-permissions.interface.js';
 
+/**
+ * This class can be used to selectively override permissions.
+ *
+ * @example
+ * ```
+ * const overriddenPermissions = new PermissionsOverride(originalPermissionObject);
+ *
+ * overriddenPermissions.grandPersonModifyPermission("person-id-example");
+ *
+ * // Will return true
+ * overriddenPermissions.canModifyPerson("person-id-example");
+ *
+ * // Will call the original permissions to validate
+ * overriddenPermissions.canModifyPerson("some-other-person-id");
+ * ```
+ */
 export class PermissionsOverride implements IPersonPermissions {
     // The set of PersonIDs, for which the permissions should explicitly return true
     private readonly modifyPersonOverride: Set<PersonID> = new Set();
