@@ -4,7 +4,6 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { EmailRepo } from './email.repo.js';
 import { EmailFactory } from '../domain/email.factory.js';
@@ -21,7 +20,7 @@ import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { MikroORM } from '@mikro-orm/core';
 import { EmailAddress } from '../domain/email-address.js';
-import { PersonModule } from '../../person/person.module.js';
+import { DBiamPersonenkontextHelperRepo } from '../../person/persistence/dbiam-personenkontext-helper.repo.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -33,19 +32,17 @@ describe('EmailRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [
-                ConfigTestModule,
-                MapperTestModule,
-                PersonModule,
-                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-            ],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 UsernameGeneratorService,
                 EmailRepo,
                 EmailFactory,
-                /*PersonFactory,
+                PersonFactory,
                 PersonRepository,
-                DBiamPersonenkontextHelperRepo,*/
+                {
+                    provide: DBiamPersonenkontextHelperRepo,
+                    useValue: createMock<DBiamPersonenkontextHelperRepo>(),
+                },
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),

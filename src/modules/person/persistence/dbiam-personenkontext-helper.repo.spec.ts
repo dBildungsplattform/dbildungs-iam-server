@@ -22,7 +22,7 @@ import { DBiamPersonenkontextHelperRepo } from '../../person/persistence/dbiam-p
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonModule } from '../person.module.js';
+import {UsernameGeneratorService} from "../domain/username-generator.service.js";
 
 describe('DbiamPersonenkontextHelperRepo', () => {
     let module: TestingModule;
@@ -63,14 +63,17 @@ describe('DbiamPersonenkontextHelperRepo', () => {
                 ConfigTestModule,
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                PersonModule,
                 RolleModule,
                 OrganisationModule,
                 LoggingTestModule,
             ],
             providers: [
+                UsernameGeneratorService,
                 DBiamPersonenkontextRepo,
+                DBiamPersonenkontextHelperRepo,
                 PersonenkontextFactory,
+                PersonRepository,
+                PersonFactory,
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>({
