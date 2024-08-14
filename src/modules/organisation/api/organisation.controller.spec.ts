@@ -29,6 +29,7 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { OrganisationService } from '../domain/organisation.service.js';
 
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -62,6 +63,10 @@ describe('OrganisationController', () => {
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
+                },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
             ],
         }).compile();
