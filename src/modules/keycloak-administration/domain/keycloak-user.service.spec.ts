@@ -655,5 +655,91 @@ describe('KeycloakUserService', () => {
                 });
             });
         });
+
+        describe('updateKeycloakUserStatus', () => {
+            it('should update user status successfully', async () => {
+                const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
+                    users: {
+                        update: jest.fn().mockResolvedValueOnce(undefined),
+                        findOne: jest.fn().mockResolvedValueOnce({ attributes: {} }),
+                    },
+                });
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                    ok: true,
+                    value: keyCloakAdminClient,
+                });
+
+                const result: Result<void, DomainError> = await service.updateKeycloakUserStatus('user-id', true);
+                expect(result).toStrictEqual({ ok: true, value: undefined });
+                expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: true });
+            });
+
+            it('should update user status and custom attributes successfully', async () => {
+                const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
+                    users: {
+                        update: jest.fn().mockResolvedValueOnce(undefined),
+                        findOne: jest.fn().mockResolvedValueOnce({ attributes: {} }),
+                    },
+                });
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                    ok: true,
+                    value: keyCloakAdminClient,
+                });
+
+                const customAttributes: Record<string, string> = { attribute1: 'value1' };
+                const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
+                    'user-id',
+                    true,
+                    customAttributes,
+                );
+
+                expect(result).toStrictEqual({ ok: true, value: undefined });
+                expect(keyCloakAdminClient.users.update).toHaveBeenCalledTimes(2);
+            });
+
+            it('should remove locked attributes when user is enabled', async () => {
+                kcUsersMock.update.mockResolvedValueOnce(undefined);
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    attributes: {
+                        lock_locked_from: ['value'],
+                        someOtherAttribute: ['someValue'],
+                    },
+                });
+
+                const result = await service.updateKeycloakUserStatus('user-id', true);
+
+                expect(result).toStrictEqual({ ok: true, value: undefined });
+                expect(kcUsersMock.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: true });
+                expect(kcUsersMock.update).toHaveBeenCalledWith(
+                    { id: 'user-id' },
+                    { attributes: { someOtherAttribute: ['someValue'] } },
+                );
+            });
+
+            it('should return error if update fails', async () => {
+                kcUsersMock.update.mockRejectedValueOnce(new Error('Update failed'));
+
+                const result = await service.updateKeycloakUserStatus('user-id', true);
+
+                expect(result).toStrictEqual({
+                    ok: false,
+                    error: new KeycloakClientError('Could not update user status or custom attributes'),
+                });
+            });
+
+            it('should return error if getAuthedKcAdminClient fails', async () => {
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                });
+
+                const result = await service.updateKeycloakUserStatus('user-id', true);
+
+                expect(result).toStrictEqual({
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                });
+            });
+        });
     });
 });
