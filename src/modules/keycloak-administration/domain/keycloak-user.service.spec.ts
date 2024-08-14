@@ -687,6 +687,9 @@ describe('KeycloakUserService', () => {
                 });
 
                 const customAttributes: Record<string, string> = { attribute1: 'value1' };
+                const expectedAttributes: Record<string, string[]> = {
+                    attribute1: [customAttributes['attribute1'] ?? ''],
+                };
                 const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                     'user-id',
                     true,
@@ -695,6 +698,10 @@ describe('KeycloakUserService', () => {
 
                 expect(result).toStrictEqual({ ok: true, value: undefined });
                 expect(keyCloakAdminClient.users.update).toHaveBeenCalledTimes(2);
+                expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith(
+                    { id: 'user-id' },
+                    { attributes: expectedAttributes },
+                );
             });
 
             it('should remove locked attributes when user is enabled', async () => {
