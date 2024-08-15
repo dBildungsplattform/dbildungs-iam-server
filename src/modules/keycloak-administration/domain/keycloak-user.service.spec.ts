@@ -712,6 +712,7 @@ describe('KeycloakUserService', () => {
                     attributes: {
                         lock_locked_from: ['value'],
                         someOtherAttribute: ['someValue'],
+                        '': ['empty'],
                     },
                 },
                 {},
@@ -727,7 +728,12 @@ describe('KeycloakUserService', () => {
                     expect(kcUsersMock.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: true });
                     expect(kcUsersMock.update).toHaveBeenCalledWith(
                         { id: 'user-id' },
-                        { attributes: { someOtherAttribute: ['someValue'] } },
+                        {
+                            attributes: {
+                                someOtherAttribute: ['someValue'],
+                                '': ['empty'],
+                            },
+                        },
                     );
                 },
             );

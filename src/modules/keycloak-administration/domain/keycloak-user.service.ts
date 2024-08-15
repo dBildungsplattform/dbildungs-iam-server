@@ -333,7 +333,7 @@ export class KeycloakUserService {
         if (user) {
             user.attributes = user.attributes ?? {};
             const filteredAttributes: Record<string, string[]> = Object.fromEntries(
-                Object.entries(user.attributes).filter(([key]: string[]) => !LOCK_KEYS.includes(key ?? '')),
+                Object.entries(user.attributes).filter(([key]: string[]) => !LOCK_KEYS.includes(key!)),
             );
 
             user.attributes = filteredAttributes;
