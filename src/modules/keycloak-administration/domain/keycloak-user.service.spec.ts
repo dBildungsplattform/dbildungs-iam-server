@@ -721,7 +721,7 @@ describe('KeycloakUserService', () => {
                     kcUsersMock.update.mockResolvedValueOnce(undefined);
                     kcUsersMock.findOne.mockResolvedValueOnce(findOneResponse);
 
-                    const result = await service.updateKeycloakUserStatus('user-id', true);
+                    const result: Result<void, DomainError> = await service.updateKeycloakUserStatus('user-id', true);
 
                     expect(result).toStrictEqual({ ok: true, value: undefined });
                     expect(kcUsersMock.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: true });
@@ -735,7 +735,7 @@ describe('KeycloakUserService', () => {
             it('should return error if update fails', async () => {
                 kcUsersMock.update.mockRejectedValueOnce(new Error('Update failed'));
 
-                const result = await service.updateKeycloakUserStatus('user-id', true);
+                const result: Result<void, DomainError> = await service.updateKeycloakUserStatus('user-id', true);
 
                 expect(result).toStrictEqual({
                     ok: false,
@@ -749,7 +749,7 @@ describe('KeycloakUserService', () => {
                     error: new KeycloakClientError('Could not authenticate'),
                 });
 
-                const result = await service.updateKeycloakUserStatus('user-id', true);
+                const result: Result<void, DomainError> = await service.updateKeycloakUserStatus('user-id', true);
 
                 expect(result).toStrictEqual({
                     ok: false,
