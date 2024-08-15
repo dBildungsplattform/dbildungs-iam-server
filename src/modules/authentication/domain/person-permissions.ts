@@ -7,7 +7,7 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { IPersonPermissions } from './person-permissions.interface.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export type PersonFields = Pick<
     Person<true>,
