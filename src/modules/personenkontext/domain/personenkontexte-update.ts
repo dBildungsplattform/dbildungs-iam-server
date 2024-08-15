@@ -21,7 +21,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { IPersonPermissions } from '../../authentication/domain/person-permissions.interface.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -232,8 +232,8 @@ export class PersonenkontexteUpdate {
                         existingPK.rolleId == sentPK.rolleId,
                 )
             ) {
-                await this.dBiamPersonenkontextRepo.save(sentPK);
-                createdPKs.push(sentPK);
+                const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(sentPK);
+                createdPKs.push(savedPK);
                 this.eventService.publish(
                     new PersonenkontextCreatedEvent(sentPK.personId, sentPK.organisationId, sentPK.rolleId),
                 );

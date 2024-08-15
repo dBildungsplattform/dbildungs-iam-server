@@ -58,6 +58,11 @@ describe('configloader', () => {
                     ROOT_OEFFENTLICH: 'oeffentlich',
                     ROOT_ERSATZ: 'ersatz',
                 },
+                OX: {
+                    ENABLED: 'true',
+                    ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
+                    USERNAME: 'username',
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -67,6 +72,9 @@ describe('configloader', () => {
                 FRONTEND: { SESSION_SECRET: 'SessionSecret' },
                 REDIS: { PASSWORD: 'password' },
                 ITSLEARNING: {
+                    PASSWORD: 'password',
+                },
+                OX: {
                     PASSWORD: 'password',
                 },
             };
@@ -142,6 +150,12 @@ describe('configloader', () => {
                     PASSWORD: 'password',
                     ROOT_OEFFENTLICH: 'oeffentlich',
                     ROOT_ERSATZ: 'ersatz',
+                },
+                OX: {
+                    ENABLED: 'true',
+                    ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
+                    USERNAME: 'username',
+                    PASSWORD: 'password',
                 },
             };
 

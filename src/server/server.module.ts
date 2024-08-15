@@ -33,6 +33,7 @@ import { EventModule } from '../core/eventbus/index.js';
 import { ItsLearningModule } from '../modules/itslearning/itslearning.module.js';
 import { LdapModule } from '../core/ldap/ldap.module.js';
 import { EmailModule } from '../modules/email/email.module.js';
+import { OxModule } from '../modules/ox/ox.module.js';
 
 @Module({
     imports: [
@@ -86,6 +87,7 @@ import { EmailModule } from '../modules/email/email.module.js';
         ItsLearningModule,
         LdapModule,
         EmailModule,
+        OxModule,
         PrivacyIdeaAdministrationModule,
     ],
     providers: [

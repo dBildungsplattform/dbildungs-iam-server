@@ -1,15 +1,15 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { IMS_COMMON_SCHEMA, IMS_PERSON_MAN_MESS_SCHEMA } from '../schemas.js';
-import { ItsLearningRoleType } from '../types/role.enum.js';
+import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 import { IMSESAction } from './base-action.js';
 
 export type PersonResponse = {
-    institutionRole: ItsLearningRoleType;
+    institutionRole: IMSESInstitutionRoleType;
     primaryRoleType: boolean;
     userId: string;
 };
 
-// Incomplete
+// Partial, actual structure contains more data
 type ReadPersonResponseBody = {
     readPersonResponse: {
         person: {
@@ -24,7 +24,7 @@ type ReadPersonResponseBody = {
                 userIdValue: string;
             };
             institutionRole: {
-                institutionRoleType: ItsLearningRoleType;
+                institutionRoleType: IMSESInstitutionRoleType;
                 primaryRoleType: boolean;
             };
         };
