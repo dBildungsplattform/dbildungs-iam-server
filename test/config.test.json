@@ -52,5 +52,11 @@
         "PASSWORD": "password",
         "ROOT_OEFFENTLICH": "oeffentlich",
         "ROOT_ERSATZ": "ersatz"
+    },
+    "OX": {
+        "ENABLED": "false",
+        "ENDPOINT": "https://ox_ip:ox_port/webservices/",
+        "USERNAME": "username",
+        "PASSWORD": "password"
     }
 }

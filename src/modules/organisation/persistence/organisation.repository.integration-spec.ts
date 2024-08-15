@@ -1,5 +1,3 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -13,16 +11,15 @@ import {
 import { OrganisationRepository, mapAggregateToData, mapEntityToAggregate } from './organisation.repository.js';
 import { OrganisationPersistenceMapperProfile } from './organisation-persistence.mapper.profile.js';
 import { OrganisationEntity } from './organisation.entity.js';
-import { OrganisationDo } from '../domain/organisation.do.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationScope } from './organisation.scope.js';
-import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { RootDirectChildrenType, OrganisationsTyp } from '../domain/organisation.enums.js';
 import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DataConfig } from '../../../shared/config/index.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
@@ -33,10 +30,9 @@ describe('OrganisationRepository', () => {
     let sut: OrganisationRepository;
     let orm: MikroORM;
     let em: EntityManager;
-    let mapper: Mapper;
     let config: ConfigService<ServerConfig>;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let ROOT_ORGANISATION_ID: string;
+    let eventServiceMock: DeepMocked<EventService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -53,8 +49,8 @@ describe('OrganisationRepository', () => {
         sut = module.get(OrganisationRepository);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
-        mapper = module.get(getMapperToken());
         config = module.get(ConfigService<ServerConfig>);
+        eventServiceMock = module.get(EventService);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -78,7 +74,10 @@ describe('OrganisationRepository', () => {
 
     describe('findById', () => {
         it('should return one organisation by id', async () => {
-            const orga: Organisation<false> = Organisation.createNew();
+            const orga: Organisation<false> | DomainError = Organisation.createNew();
+            if (orga instanceof DomainError) {
+                return;
+            }
             const organisaiton: Organisation<true> = await sut.save(orga);
             const foundOrganisation: Option<Organisation<true>> = await sut.findById(organisaiton.id);
 
@@ -130,10 +129,9 @@ describe('OrganisationRepository', () => {
 
     describe('mapEntityToAggregate', () => {
         it('should return New Aggregate', () => {
-            const organisationEntity: OrganisationEntity = mapper.map(
-                DoFactory.createOrganisation(true),
-                OrganisationDo,
+            const organisationEntity: OrganisationEntity = em.create(
                 OrganisationEntity,
+                mapAggregateToData(DoFactory.createOrganisation(true)),
             );
             const organisation: Organisation<true> = mapEntityToAggregate(organisationEntity);
 
@@ -143,20 +141,21 @@ describe('OrganisationRepository', () => {
 
     describe('exists', () => {
         it('should return true if the orga exists', async () => {
-            const orga: OrganisationEntity = em.create(
-                OrganisationEntity,
-                mapAggregateToData(
-                    Organisation.createNew(
-                        sut.ROOT_ORGANISATION_ID,
-                        sut.ROOT_ORGANISATION_ID,
-                        faker.string.numeric(6),
-                        faker.company.name(),
-                    ),
-                ),
+            const orga: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                faker.string.numeric(6),
+                faker.company.name(),
             );
-            await em.persistAndFlush(orga);
+            if (orga instanceof DomainError) {
+                return;
+            }
 
-            await expect(sut.exists(orga.id)).resolves.toBe(true);
+            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+
+            await em.persistAndFlush(mappedOrga);
+
+            await expect(sut.exists(mappedOrga.id)).resolves.toBe(true);
         });
 
         it('should return false if the orga does not exists', async () => {
@@ -166,20 +165,21 @@ describe('OrganisationRepository', () => {
 
     describe('findById', () => {
         it('should return the organisation if it exists', async () => {
-            const orga: OrganisationEntity = em.create(
-                OrganisationEntity,
-                mapAggregateToData(
-                    Organisation.createNew(
-                        sut.ROOT_ORGANISATION_ID,
-                        sut.ROOT_ORGANISATION_ID,
-                        faker.string.numeric(6),
-                        faker.company.name(),
-                    ),
-                ),
+            const orga: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                faker.string.numeric(6),
+                faker.company.name(),
             );
-            await em.persistAndFlush(orga);
+            if (orga instanceof DomainError) {
+                return;
+            }
 
-            await expect(sut.findById(orga.id)).resolves.toBeInstanceOf(Organisation);
+            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+
+            await em.persistAndFlush(mappedOrga);
+
+            await expect(sut.findById(mappedOrga.id)).resolves.toBeInstanceOf(Organisation);
         });
 
         it('should return null', async () => {
@@ -246,7 +246,7 @@ describe('OrganisationRepository', () => {
         });
         describe('When Called Only With searchString', () => {
             it('should return Correct Aggregates By SearchString', async () => {
-                const [result]: Counted<OrganisationDo<true>> = await sut.findBy(
+                const [result]: Counted<Organisation<true>> = await sut.findBy(
                     new OrganisationScope().searchString(organisation1.kennung),
                 );
 
@@ -256,7 +256,7 @@ describe('OrganisationRepository', () => {
             });
 
             it('should return Correct Aggregates By SearchString', async () => {
-                const [result]: Counted<OrganisationDo<true>> = await sut.findBy(
+                const [result]: Counted<Organisation<true>> = await sut.findBy(
                     new OrganisationScope().searchString('Name2'),
                 );
 
@@ -266,7 +266,7 @@ describe('OrganisationRepository', () => {
             });
 
             it('should return Correct Aggregates By SearchString', async () => {
-                const [result]: Counted<OrganisationDo<true>> = await sut.findBy(
+                const [result]: Counted<Organisation<true>> = await sut.findBy(
                     new OrganisationScope().searchString('Name'),
                 );
 
@@ -276,7 +276,7 @@ describe('OrganisationRepository', () => {
         });
         describe('When Called Only With filters', () => {
             it('should return Correct Aggregates By Filters', async () => {
-                const [result]: Counted<OrganisationDo<true>> = await sut.findBy(
+                const [result]: Counted<Organisation<true>> = await sut.findBy(
                     new OrganisationScope().findBy({
                         kennung: organisation1.kennung as string,
                     }),
@@ -288,7 +288,7 @@ describe('OrganisationRepository', () => {
             });
 
             it('should return Correct Aggregates By Filters', async () => {
-                const [result]: Counted<OrganisationDo<true>> = await sut.findBy(
+                const [result]: Counted<Organisation<true>> = await sut.findBy(
                     new OrganisationScope().findBy({
                         typ: OrganisationsTyp.SCHULE as string,
                     }),
@@ -300,7 +300,7 @@ describe('OrganisationRepository', () => {
         });
         describe('When Called With searchString & filters and scopeWhere Operator AND', () => {
             it('should return Correct Aggregates By Filters AND searchString', async () => {
-                const [result]: Counted<OrganisationDo<true>> = await sut.findBy(
+                const [result]: Counted<Organisation<true>> = await sut.findBy(
                     new OrganisationScope()
                         .findBy({
                             typ: OrganisationsTyp.SCHULE as string,
@@ -317,7 +317,7 @@ describe('OrganisationRepository', () => {
 
         describe('When Called With searchString & filters and scopeWhere Operator OR', () => {
             it('should return Correct Aggregates By Filters OR searchString', async () => {
-                const [result]: Counted<OrganisationDo<true>> = await sut.findBy(
+                const [result]: Counted<Organisation<true>> = await sut.findBy(
                     new OrganisationScope()
                         .findBy({
                             typ: OrganisationsTyp.SCHULE as string,
@@ -479,6 +479,43 @@ describe('OrganisationRepository', () => {
         });
     });
 
+    describe('deleteKlasse', () => {
+        describe('when all validations succeed', () => {
+            it('should succeed', async () => {
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.KLASSE,
+                });
+                const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
+
+                await sut.deleteKlasse(savedOrganisaiton.id);
+                const exists: boolean = await sut.exists(savedOrganisaiton.id);
+
+                expect(exists).toBe(false);
+            });
+        });
+
+        describe('when organisation does not exist', () => {
+            it('should return EntityNotFoundError', async () => {
+                const id: string = faker.string.uuid();
+                const result: Option<DomainError> = await sut.deleteKlasse(id);
+                expect(result).toEqual(new EntityNotFoundError('Organisation', id));
+            });
+        });
+
+        describe('when organisation is not a Klasse', () => {
+            it('should return EntityCouldNotBeUpdated', async () => {
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.SONSTIGE,
+                    name: 'test',
+                });
+                const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
+
+                const result: Option<DomainError> = await sut.deleteKlasse(savedOrganisaiton.id);
+
+                expect(result).toBeInstanceOf(EntityCouldNotBeUpdated);
+            });
+        });
+    });
     describe('updateKlassenname', () => {
         describe('when organisation does not exist', () => {
             it('should return EntityNotFoundError', async () => {
@@ -583,6 +620,191 @@ describe('OrganisationRepository', () => {
                 );
 
                 expect(result).not.toBeInstanceOf(DomainError);
+            });
+        });
+    });
+    describe('find', () => {
+        let organisations: Organisation<false>[];
+
+        beforeEach(async () => {
+            organisations = Array.from({ length: 5 }).map(() =>
+                DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.SONSTIGE,
+                    name: 'test',
+                }),
+            );
+            for (const organisation of organisations) {
+                await sut.save(organisation);
+            }
+        });
+
+        it('should return all organisations when no limit and offset are provided', async () => {
+            const result: Organisation<true>[] = await sut.find();
+            expect(result).toHaveLength(5);
+        });
+
+        it('should return limited number of organisations when limit is provided', async () => {
+            const result: Organisation<true>[] = await sut.find(2);
+            expect(result).toHaveLength(2);
+        });
+    });
+    describe('findByNameOrKennung', () => {
+        let organisations: Organisation<false>[];
+
+        beforeEach(async () => {
+            organisations = [
+                DoFactory.createOrganisationAggregate(false, {
+                    name: 'TestName1',
+                    kennung: 'KENNUNG1',
+                }),
+                DoFactory.createOrganisationAggregate(false, { name: 'AnotherTest', kennung: 'KENNUNG2' }),
+                DoFactory.createOrganisationAggregate(false, { name: 'TestName2', kennung: 'DIFFERENTKENNUNG' }),
+            ];
+
+            for (const organisation of organisations) {
+                await sut.save(organisation);
+            }
+        });
+
+        it('should return organisations that match the search string in name', async () => {
+            const result: Organisation<true>[] = await sut.findByNameOrKennung('TestName');
+            expect(result).toHaveLength(2);
+            expect(result.some((org: Organisation<true>) => org.name === 'TestName1')).toBeTruthy();
+            expect(result.some((org: Organisation<true>) => org.name === 'TestName2')).toBeTruthy();
+        });
+
+        it('should return organisations that match the search string in kennung', async () => {
+            const result: Organisation<true>[] = await sut.findByNameOrKennung('KENNUNG2');
+            expect(result).toHaveLength(1);
+            expect(result[0]?.kennung).toEqual('KENNUNG2');
+        });
+
+        it('should return organisations that match the search string in either name or kennung', async () => {
+            const result: Organisation<true>[] = await sut.findByNameOrKennung('AnotherTest');
+            expect(result).toHaveLength(1);
+            expect(result[0]?.name).toEqual('AnotherTest');
+        });
+
+        it('should return an empty array if no organisations match the search string', async () => {
+            const result: Organisation<true>[] = await sut.findByNameOrKennung('NoMatch');
+            expect(result).toHaveLength(0);
+        });
+    });
+
+    describe('Save', () => {
+        let root: Organisation<false>;
+        let oeffentlich: Organisation<false>;
+        let ersatz: Organisation<false>;
+        let organisationEntity1: OrganisationEntity;
+        let organisationEntity2: OrganisationEntity;
+        let organisationEntity3: OrganisationEntity;
+
+        beforeEach(async () => {
+            root = Organisation.construct(
+                ROOT_ORGANISATION_ID,
+                faker.date.past(),
+                faker.date.recent(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.numeric(),
+                'Root',
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.SCHULE,
+                undefined,
+            );
+            oeffentlich = Organisation.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                ROOT_ORGANISATION_ID,
+                faker.string.uuid(),
+                faker.string.numeric(),
+                'Öffentliche Schulen Land Schleswig-Holstein',
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.ROOT,
+                undefined,
+            );
+            ersatz = Organisation.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                ROOT_ORGANISATION_ID,
+                faker.string.uuid(),
+                faker.string.numeric(),
+                'Ersatzschulen Land Schleswig-Holstein',
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.SCHULE,
+                undefined,
+            );
+            organisationEntity1 = em.create(OrganisationEntity, mapAggregateToData(root));
+            organisationEntity2 = em.create(OrganisationEntity, mapAggregateToData(oeffentlich));
+            organisationEntity3 = em.create(OrganisationEntity, mapAggregateToData(ersatz));
+            await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
+        });
+
+        describe('When create is called', () => {
+            it('should set oeffentlich as OrganisationsBaumZuordnung successfully', async () => {
+                const schule: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    administriertVon: organisationEntity2.id,
+                    typ: OrganisationsTyp.SCHULE,
+                });
+                const result: Organisation<true> = await sut.save(schule);
+
+                expect(result).toBeInstanceOf(Organisation);
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        organisationId: result.id,
+                        kennung: result.kennung,
+                        name: result.name,
+                        rootDirectChildrenZuordnung: RootDirectChildrenType.OEFFENTLICH,
+                    }),
+                );
+            });
+
+            it('should set ersatz as OrganisationsBaumZuordnung successfully', async () => {
+                const traeger: Organisation<true> = await sut.save(
+                    DoFactory.createOrganisationAggregate(false, {
+                        administriertVon: organisationEntity3.id,
+                        typ: OrganisationsTyp.TRAEGER,
+                    }),
+                );
+                const schule: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    administriertVon: traeger.id,
+                    typ: OrganisationsTyp.SCHULE,
+                });
+                const result: Organisation<true> = await sut.save(schule);
+
+                expect(result).toBeInstanceOf(Organisation);
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        organisationId: result.id,
+                        kennung: result.kennung,
+                        name: result.name,
+                        rootDirectChildrenZuordnung: RootDirectChildrenType.ERSATZ,
+                    }),
+                );
+            });
+
+            it('should set oeffentlich as OrganisationsBaumZuordnung per default successfully', async () => {
+                const result: Organisation<true> = await sut.save(
+                    DoFactory.createOrganisationAggregate(false, {
+                        administriertVon: undefined,
+                        typ: OrganisationsTyp.SCHULE,
+                    }),
+                );
+
+                expect(result).toBeInstanceOf(Organisation);
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        organisationId: result.id,
+                        kennung: result.kennung,
+                        name: result.name,
+                        rootDirectChildrenZuordnung: RootDirectChildrenType.OEFFENTLICH,
+                    }),
+                );
             });
         });
     });

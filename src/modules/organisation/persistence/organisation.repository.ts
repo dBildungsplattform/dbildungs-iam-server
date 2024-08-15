@@ -6,14 +6,17 @@ import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationScope } from './organisation.scope.js';
-import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { OrganisationsTyp, RootDirectChildrenType } from '../domain/organisation.enums.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
+import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
+import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -151,6 +154,14 @@ export class OrganisationRepository {
         return [oeffentlich && mapEntityToAggregate(oeffentlich), ersatz && mapEntityToAggregate(ersatz)];
     }
 
+    public async find(limit?: number, offset?: number): Promise<Organisation<true>[]> {
+        const organisations: OrganisationEntity[] = await this.em.findAll(OrganisationEntity, {
+            limit: limit,
+            offset: offset,
+        });
+        return organisations.map(mapEntityToAggregate);
+    }
+
     public async findById(id: string): Promise<Option<Organisation<true>>> {
         const organisation: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
         if (organisation) {
@@ -169,6 +180,52 @@ export class OrganisationRepository {
         });
 
         return organisationMap;
+    }
+
+    public async findByNameOrKennungAndExcludeByOrganisationType(
+        excludeOrganisationType: OrganisationsTyp,
+        searchStr?: string,
+        limit?: number,
+    ): Promise<Organisation<true>[]> {
+        const scope: OrganisationScope = new OrganisationScope();
+        if (searchStr) {
+            // searchStr is set, the scope is not paged
+            scope
+                .searchString(searchStr)
+                .setScopeWhereOperator(ScopeOperator.AND)
+                .excludeTyp([excludeOrganisationType]);
+        } else {
+            scope.excludeTyp([excludeOrganisationType]).paged(0, limit);
+        }
+
+        let foundOrganisations: Organisation<true>[] = [];
+        [foundOrganisations] = await this.findBy(scope);
+
+        return foundOrganisations;
+    }
+
+    public async findByNameOrKennung(searchStr: string): Promise<Organisation<true>[]> {
+        const organisations: OrganisationEntity[] = await this.em.find(OrganisationEntity, {
+            $or: [{ name: { $ilike: '%' + searchStr + '%' } }, { kennung: { $ilike: '%' + searchStr + '%' } }],
+        });
+
+        return organisations.map(mapEntityToAggregate);
+    }
+
+    public async deleteKlasse(id: OrganisationID): Promise<Option<DomainError>> {
+        const organisationEntity: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
+        if (!organisationEntity) {
+            return new EntityNotFoundError('Organisation', id);
+        }
+
+        if (organisationEntity.typ !== OrganisationsTyp.KLASSE) {
+            return new EntityCouldNotBeUpdated('Organisation', id, ['Only Klassen can be deleted.']);
+        }
+
+        await this.em.removeAndFlush(organisationEntity);
+        this.eventService.publish(new KlasseDeletedEvent(organisationEntity.id));
+
+        return;
     }
 
     public async updateKlassenname(id: string, newName: string): Promise<DomainError | Organisation<true>> {
@@ -211,7 +268,25 @@ export class OrganisationRepository {
         await this.em.persistAndFlush(organisationEntity);
 
         if (organisationEntity.typ === OrganisationsTyp.SCHULE) {
-            this.eventService.publish(new SchuleCreatedEvent(organisationEntity.id));
+            const orgaBaumZuordnung: RootDirectChildrenType = await this.findOrganisationZuordnungErsatzOderOeffentlich(
+                organisationEntity.id,
+            );
+            this.eventService.publish(
+                new SchuleCreatedEvent(
+                    organisationEntity.id,
+                    organisationEntity.kennung,
+                    organisationEntity.name,
+                    orgaBaumZuordnung,
+                ),
+            );
+        } else if (organisationEntity.typ === OrganisationsTyp.KLASSE) {
+            this.eventService.publish(
+                new KlasseCreatedEvent(
+                    organisationEntity.id,
+                    organisationEntity.name,
+                    organisationEntity.administriertVon,
+                ),
+            );
         }
 
         return mapEntityToAggregate(organisationEntity);
@@ -227,5 +302,28 @@ export class OrganisationRepository {
         await this.em.persistAndFlush(organisationEntity);
 
         return mapEntityToAggregate(organisationEntity);
+    }
+
+    private async findOrganisationZuordnungErsatzOderOeffentlich(
+        organisationId: OrganisationID | undefined,
+    ): Promise<RootDirectChildrenType> {
+        const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
+            await this.findRootDirectChildren();
+
+        let parentOrgaId: OrganisationID | undefined = organisationId;
+
+        while (parentOrgaId) {
+            const result: Option<Organisation<true>> = await this.findById(parentOrgaId);
+
+            if (result?.id === oeffentlich?.id) {
+                return RootDirectChildrenType.OEFFENTLICH;
+            } else if (result?.id === ersatz?.id) {
+                return RootDirectChildrenType.ERSATZ;
+            }
+
+            parentOrgaId = result?.administriertVon;
+        }
+
+        return RootDirectChildrenType.OEFFENTLICH;
     }
 }

@@ -37,6 +37,7 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -62,6 +63,7 @@ describe('dbiam Personenkontext Repo', () => {
             withId ? faker.string.uuid() : undefined,
             withId ? faker.date.past() : undefined,
             withId ? faker.date.recent() : undefined,
+            undefined,
             faker.string.uuid(),
             faker.string.uuid(),
             faker.string.uuid(),
@@ -164,7 +166,18 @@ describe('dbiam Personenkontext Repo', () => {
         rollenart: RollenArt,
         rechte: RollenSystemRecht[],
     ): Promise<Rolle<true>> {
-        const rolle: Rolle<false> = rolleFactory.createNew(faker.word.noun(), orgaId, rollenart, [], rechte, []);
+        const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
+            faker.word.noun(),
+            orgaId,
+            rollenart,
+            [],
+            rechte,
+            [],
+        );
+
+        if (rolle instanceof DomainError) {
+            throw rolle;
+        }
         const result: Rolle<true> = await rolleRepo.save(rolle);
         return result;
     }
@@ -831,6 +844,26 @@ describe('dbiam Personenkontext Repo', () => {
         });
     });
 
+    describe('isOrganisationAlreadyAssigned', () => {
+        it('should return true if there is any personenkontext for an organisation', async () => {
+            const person: Person<true> = await createPerson();
+            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+            const organisation: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                typ: OrganisationsTyp.KLASSE,
+            });
+            await sut.save(
+                createPersonenkontext(false, {
+                    rolleId: rolle.id,
+                    personId: person.id,
+                    organisationId: organisation.id,
+                }),
+            );
+
+            const result: boolean = await sut.isOrganisationAlreadyAssigned(organisation.id);
+            expect(result).toBeTruthy();
+        });
+    });
+
     describe('isRolleAlreadyAssigned', () => {
         it('should return true if there is any personenkontext for a rolle', async () => {
             const person: Person<true> = await createPerson();
@@ -842,10 +875,40 @@ describe('dbiam Personenkontext Repo', () => {
             expect(result).toBeTruthy();
         });
 
+        it('should return false if there is no  personenkontext for an organisation', async () => {
+            const result: boolean = await sut.isOrganisationAlreadyAssigned(faker.string.uuid());
+            expect(result).toBeFalsy();
+        });
+
         it('should return false if there is no  personenkontext for a rolle', async () => {
             const result: boolean = await sut.isRolleAlreadyAssigned(faker.string.uuid());
 
             expect(result).toBeFalsy();
+        });
+    });
+
+    describe('deleteById', () => {
+        describe('when deleting personenkontext by id', () => {
+            it('should return number of deleted rows', async () => {
+                const person: Person<true> = await createPerson();
+                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
+                const personenKontext: Personenkontext<true> = await sut.save(
+                    createPersonenkontext(false, { rolleId: rolle.id, personId: person.id }),
+                );
+
+                const result: boolean = await sut.deleteById(personenKontext.id);
+
+                expect(result).toBeTruthy();
+            });
+        });
+
+        describe('when no personenkontext was deleted', () => {
+            it('should return 0', async () => {
+                const result: boolean = await sut.deleteById(faker.string.uuid());
+
+                expect(result).toBeFalsy();
+            });
         });
     });
 });

@@ -41,9 +41,16 @@ function mapEntityToAggregate(
         entity.id,
         entity.createdAt,
         entity.updatedAt,
+        entity.revision,
         entity.personId.id,
         entity.organisationId,
         entity.rolleId.id,
+        entity.referrer,
+        entity.mandant,
+        entity.personenstatus,
+        entity.jahrgangsstufe,
+        entity.sichtfreigabe,
+        entity.loeschungZeitpunkt,
     );
 }
 
@@ -382,6 +389,11 @@ export class DBiamPersonenkontextRepo {
         return result[0].has_systemrecht_at_orga as boolean;
     }
 
+    public async deleteById(id: string): Promise<boolean> {
+        const deletedPersons: number = await this.em.nativeDelete(PersonenkontextEntity, { id });
+        return deletedPersons > 0;
+    }
+
     public async hasPersonASystemrechtAtAnyKontextOfPersonB(
         personIdA: PersonID,
         personIdB: PersonID,
@@ -423,6 +435,14 @@ export class DBiamPersonenkontextRepo {
             systemrecht,
         ]);
         return result[0].has_persona_systemrecht_at_any_kontext_of_personb;
+    }
+
+    public async isOrganisationAlreadyAssigned(organisationId: string): Promise<boolean> {
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
+            organisationId,
+        });
+
+        return personenKontexte.length > 0;
     }
 
     public async isRolleAlreadyAssigned(id: RolleID): Promise<boolean> {

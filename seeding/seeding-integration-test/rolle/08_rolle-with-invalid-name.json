@@ -1,0 +1,13 @@
+{
+    "entityName": "Rolle",
+    "entities": [
+        {
+            "name": " Lehrer",
+            "administeredBySchulstrukturknoten": 0,
+            "rollenart": "LERN",
+            "merkmale": [],
+            "systemrechte": [],
+            "serviceProviderIds": [10]
+        }
+    ]
+}

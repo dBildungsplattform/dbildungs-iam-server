@@ -15,7 +15,6 @@ import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
-import { PersonDo } from '../../person/domain/person.do.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
@@ -24,6 +23,7 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { faker } from '@faker-js/faker';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { EventModule } from '../../../core/eventbus/event.module.js';
+import { mapAggregateToData } from '../../person/persistence/person.repository.js';
 
 describe('PersonenkontextScope', () => {
     let module: TestingModule;
@@ -31,6 +31,11 @@ describe('PersonenkontextScope', () => {
     let em: EntityManager;
     let mapper: Mapper;
     let rolleRepo: RolleRepo;
+
+    const createPersonEntity = (): PersonEntity => {
+        const person: PersonEntity = new PersonEntity().assign(mapAggregateToData(DoFactory.createPerson(false)));
+        return person;
+    };
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -68,14 +73,14 @@ describe('PersonenkontextScope', () => {
     describe('findBy', () => {
         describe('when filtering for personenkontexte', () => {
             beforeEach(async () => {
-                const person: PersonDo<true> = DoFactory.createPerson(true);
+                const person: PersonEntity = createPersonEntity();
 
-                await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
+                await em.persistAndFlush(person);
 
                 const dos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
                     30,
                     false,
-                    DoFactory.createPersonenkontext,
+                    DoFactory.createPersonenkontextDo,
                     { personId: person.id },
                 );
                 for (const doObj of dos) {
@@ -109,14 +114,14 @@ describe('PersonenkontextScope', () => {
             const orgaId: string = faker.string.uuid();
 
             beforeEach(async () => {
-                const person: PersonDo<true> = DoFactory.createPerson(true);
+                const person: PersonEntity = createPersonEntity();
 
-                await em.persistAndFlush(mapper.map(person, PersonDo, PersonEntity));
+                await em.persistAndFlush(person);
 
                 const dos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
                     30,
                     false,
-                    DoFactory.createPersonenkontext,
+                    DoFactory.createPersonenkontextDo,
                     { personId: person.id, organisationId: orgaId },
                 );
                 for (const doObj of dos) {

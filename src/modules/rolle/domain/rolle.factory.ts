@@ -45,7 +45,7 @@ export class RolleFactory {
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds?: string[],
-    ): Rolle<false> {
+    ): Rolle<false> | DomainError {
         return Rolle.createNew(
             this.organisationRepo,
             this.serviceProviderRepo,

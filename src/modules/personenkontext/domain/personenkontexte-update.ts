@@ -82,6 +82,12 @@ export class PersonenkontexteUpdate {
                     pkBodyParam.personId,
                     pkBodyParam.organisationId,
                     pkBodyParam.rolleId,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
                 );
                 personenKontexte.push(newPK); // New
             } else {
@@ -226,8 +232,8 @@ export class PersonenkontexteUpdate {
                         existingPK.rolleId == sentPK.rolleId,
                 )
             ) {
-                await this.dBiamPersonenkontextRepo.save(sentPK);
-                createdPKs.push(sentPK);
+                const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(sentPK);
+                createdPKs.push(savedPK);
                 this.eventService.publish(
                     new PersonenkontextCreatedEvent(sentPK.personId, sentPK.organisationId, sentPK.rolleId),
                 );

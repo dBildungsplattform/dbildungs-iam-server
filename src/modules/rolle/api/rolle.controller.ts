@@ -18,6 +18,7 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiNoContentResponse,
     ApiNotFoundResponse,
     ApiOAuth2,
     ApiOkResponse,
@@ -169,13 +170,17 @@ export class RolleController {
             );
         }
 
-        const rolle: Rolle<false> = this.rolleFactory.createNew(
+        const rolle: DomainError | Rolle<false> = this.rolleFactory.createNew(
             params.name,
             params.administeredBySchulstrukturknoten,
             params.rollenart,
             params.merkmale,
             params.systemrechte,
         );
+
+        if (rolle instanceof DomainError) {
+            throw rolle;
+        }
 
         const result: Rolle<true> = await this.rolleRepo.save(rolle);
 
@@ -344,7 +349,7 @@ export class RolleController {
     @Delete(':rolleId')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ description: 'Delete a role by id.' })
-    @ApiOkResponse({ description: 'Role was deleted successfully.' })
+    @ApiNoContentResponse({ description: 'Role was deleted successfully.' })
     @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamRolleError })
     @ApiNotFoundResponse({ description: 'The rolle that should be deleted does not exist.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to delete the role.' })

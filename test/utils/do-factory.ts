@@ -1,9 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { UserDo } from '../../src/modules/keycloak-administration/domain/user.do.js';
-import { OrganisationDo } from '../../src/modules/organisation/domain/organisation.do.js';
+import { User } from '../../src/modules/keycloak-administration/domain/user.js';
 import { OrganisationsTyp, Traegerschaft } from '../../src/modules/organisation/domain/organisation.enums.js';
-import { PersonDo } from '../../src/modules/person/domain/person.do.js';
-import { PersonenkontextDo } from '../../src/modules/personenkontext/domain/personenkontext.do.js';
 import {
     Jahrgangsstufe,
     Personenstatus,
@@ -18,7 +15,10 @@ import {
     ServiceProviderKategorie,
     ServiceProviderTarget,
 } from '../../src/modules/service-provider/domain/service-provider.enum.js';
+import { Person } from '../../src/modules/person/domain/person.js';
+import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
 import { Organisation } from '../../src/modules/organisation/domain/organisation.js';
+import { PersonenkontextDo } from '../../src/modules/personenkontext/domain/personenkontext.do.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -34,9 +34,9 @@ export class DoFactory {
     public static createPerson<WasPersisted extends boolean>(
         this: void,
         withId: WasPersisted,
-        props?: Partial<PersonDo<false>>,
-    ): PersonDo<WasPersisted> {
-        const person: PersonDo<false> = {
+        props?: Partial<Person<WasPersisted>>,
+    ): Person<WasPersisted> {
+        const person: Partial<Person<WasPersisted>> = {
             keycloakUserId: faker.string.uuid(),
             mandant: faker.string.uuid(),
             familienname: faker.person.lastName(),
@@ -47,15 +47,15 @@ export class DoFactory {
             personalnummer: faker.string.numeric({ length: 7 }),
             revision: '1',
         };
-        return Object.assign(new PersonDo<WasPersisted>(), person, props);
+        return Object.assign(Object.create(Person.prototype) as Person<boolean>, person, props);
     }
 
     public static createOrganisation<WasPersisted extends boolean>(
         this: void,
         withId: WasPersisted,
-        props?: Partial<OrganisationDo<false>>,
-    ): OrganisationDo<WasPersisted> {
-        const organisation: OrganisationDo<false> = {
+        props?: Partial<Organisation<false>>,
+    ): Organisation<WasPersisted> {
+        const organisation: Partial<Organisation<WasPersisted>> = {
             id: withId ? faker.string.uuid() : undefined,
             kennung: faker.lorem.word(),
             name: faker.company.name(),
@@ -66,30 +66,30 @@ export class DoFactory {
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
         };
-        return Object.assign(new OrganisationDo<WasPersisted>(), organisation, props);
+        return Object.assign(Object.create(Organisation.prototype) as Organisation<boolean>, organisation, props);
     }
 
     public static createUser<WasPersisted extends boolean>(
         this: void,
         withId: WasPersisted,
-        props?: Partial<UserDo<WasPersisted>>,
-    ): UserDo<WasPersisted> {
-        const user: UserDo<false> = {
+        props?: Partial<User<WasPersisted>>,
+    ): User<WasPersisted> {
+        const user: User<false> = {
             id: withId ? faker.string.uuid() : undefined,
             createdDate: withId ? faker.date.past() : undefined,
             username: faker.internet.userName(),
             email: faker.internet.email(),
         };
 
-        return Object.assign(new UserDo<WasPersisted>(), user, props);
+        return Object.assign(Object.create(User.prototype) as User<boolean>, user, props);
     }
 
     public static createPersonenkontext<WasPersisted extends boolean>(
         this: void,
         withId: WasPersisted,
-        props?: Partial<PersonenkontextDo<WasPersisted>>,
-    ): PersonenkontextDo<WasPersisted> {
-        const user: PersonenkontextDo<false> = {
+        props?: Partial<Personenkontext<WasPersisted>>,
+    ): Personenkontext<WasPersisted> {
+        const pk: Partial<Personenkontext<false>> = {
             id: withId ? faker.string.uuid() : undefined,
             mandant: faker.string.uuid(),
             personId: faker.string.uuid(),
@@ -97,7 +97,6 @@ export class DoFactory {
             updatedAt: withId ? faker.date.recent() : undefined,
             organisationId: faker.string.uuid(),
             revision: '1',
-            rolle: Rolle.LEHRENDER,
             rolleId: faker.string.uuid(),
             jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
             personenstatus: Personenstatus.AKTIV,
@@ -106,7 +105,7 @@ export class DoFactory {
             loeschungZeitpunkt: faker.date.anytime(),
         };
 
-        return Object.assign(new PersonenkontextDo<WasPersisted>(), user, props);
+        return Object.assign(Object.create(Personenkontext.prototype) as Personenkontext<boolean>, pk, props);
     }
 
     public static createRolle<WasPersisted extends boolean>(
@@ -154,6 +153,34 @@ export class DoFactory {
             serviceProvider,
             props,
         );
+    }
+
+    /**
+     * @deprecated Remove this when PersonenkontextDo is removed or set to deprecated
+     */
+    public static createPersonenkontextDo<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        params: Partial<PersonenkontextDo<boolean>> = {},
+    ): PersonenkontextDo<WasPersisted> {
+        const personenkontext: PersonenkontextDo<false> = {
+            id: withId ? faker.string.uuid() : undefined,
+            mandant: faker.string.uuid(),
+            personId: faker.string.uuid(),
+            createdAt: withId ? faker.date.past() : undefined,
+            updatedAt: withId ? faker.date.recent() : undefined,
+            organisationId: faker.string.uuid(),
+            revision: '1',
+            rolle: Rolle.LEHRENDER,
+            rolleId: faker.string.uuid(),
+            jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
+            personenstatus: Personenstatus.AKTIV,
+            referrer: 'referrer',
+            sichtfreigabe: SichtfreigabeType.JA,
+            loeschungZeitpunkt: faker.date.anytime(),
+        };
+
+        return Object.assign(new PersonenkontextDo<WasPersisted>(), personenkontext, params);
     }
 
     public static createOrganisationAggregate<WasPersisted extends boolean>(
