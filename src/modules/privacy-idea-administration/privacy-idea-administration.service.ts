@@ -213,7 +213,11 @@ export class PrivacyIdeaAdministrationService {
             const response: ResetTokenResponse = await this.unassignToken(serial, token);
             return response;
         } catch (error) {
-            throw new Error(`Error initializing token: `);
+            if (error instanceof Error) {
+                throw new Error(`Error resetting token: ${error.message}`);
+            } else {
+                throw new Error(`Error resetting token: Unknown error occurred`);
+            }
         }
     }
 
@@ -236,7 +240,11 @@ export class PrivacyIdeaAdministrationService {
             );
             return response.data;
         } catch (error) {
-            throw new Error(`Error initializing token: `);
+            if (error instanceof Error) {
+                throw new Error(`Error unassigning token: ${error.message}`);
+            } else {
+                throw new Error(`Error unassigning token: Unknown error occurred`);
+            }
         }
     }
 }
