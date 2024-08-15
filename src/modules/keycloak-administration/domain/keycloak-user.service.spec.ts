@@ -674,54 +674,63 @@ describe('KeycloakUserService', () => {
                 expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: true });
             });
 
-            it('should update user status and custom attributes successfully', async () => {
-                const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
-                    users: {
-                        update: jest.fn().mockResolvedValueOnce(undefined),
-                        findOne: jest.fn().mockResolvedValueOnce({ attributes: {} }),
-                    },
-                });
-                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
-                    ok: true,
-                    value: keyCloakAdminClient,
-                });
+            it.each([{ attributes: {} }, {}])(
+                'should update user status and custom attributes successfully',
+                async (findOneResponse: Record<string, string> | object) => {
+                    const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
+                        users: {
+                            update: jest.fn().mockResolvedValueOnce(undefined),
+                            findOne: jest.fn().mockResolvedValueOnce(findOneResponse),
+                        },
+                    });
+                    adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                        ok: true,
+                        value: keyCloakAdminClient,
+                    });
 
-                const customAttributes: Record<string, string> = { attribute1: 'value1' };
-                const expectedAttributes: Record<string, string[]> = {
-                    attribute1: [customAttributes['attribute1'] ?? ''],
-                };
-                const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
-                    'user-id',
-                    true,
-                    customAttributes,
-                );
+                    const customAttributes: Record<string, string> = { attribute1: 'value1' };
+                    const expectedAttributes: Record<string, string[]> = {
+                        attribute1: [customAttributes['attribute1'] ?? ''],
+                    };
+                    const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
+                        'user-id',
+                        true,
+                        customAttributes,
+                    );
 
-                expect(result).toStrictEqual({ ok: true, value: undefined });
-                expect(keyCloakAdminClient.users.update).toHaveBeenCalledTimes(2);
-                expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith(
-                    { id: 'user-id' },
-                    { attributes: expectedAttributes },
-                );
-            });
+                    expect(result).toStrictEqual({ ok: true, value: undefined });
+                    expect(keyCloakAdminClient.users.update).toHaveBeenCalledTimes(2);
+                    expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith(
+                        { id: 'user-id' },
+                        { attributes: expectedAttributes },
+                    );
+                },
+            );
 
-            it('should remove locked attributes when user is enabled', async () => {
-                kcUsersMock.update.mockResolvedValueOnce(undefined);
-                kcUsersMock.findOne.mockResolvedValueOnce({
+            it.each([
+                {
                     attributes: {
                         lock_locked_from: ['value'],
                         someOtherAttribute: ['someValue'],
                     },
-                });
+                },
+                {},
+            ])(
+                'should remove locked attributes when user is enabled',
+                async (findOneResponse: Record<string, string> | object) => {
+                    kcUsersMock.update.mockResolvedValueOnce(undefined);
+                    kcUsersMock.findOne.mockResolvedValueOnce(findOneResponse);
 
-                const result = await service.updateKeycloakUserStatus('user-id', true);
+                    const result = await service.updateKeycloakUserStatus('user-id', true);
 
-                expect(result).toStrictEqual({ ok: true, value: undefined });
-                expect(kcUsersMock.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: true });
-                expect(kcUsersMock.update).toHaveBeenCalledWith(
-                    { id: 'user-id' },
-                    { attributes: { someOtherAttribute: ['someValue'] } },
-                );
-            });
+                    expect(result).toStrictEqual({ ok: true, value: undefined });
+                    expect(kcUsersMock.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: true });
+                    expect(kcUsersMock.update).toHaveBeenCalledWith(
+                        { id: 'user-id' },
+                        { attributes: { someOtherAttribute: ['someValue'] } },
+                    );
+                },
+            );
 
             it('should return error if update fails', async () => {
                 kcUsersMock.update.mockRejectedValueOnce(new Error('Update failed'));

@@ -318,7 +318,7 @@ export class KeycloakUserService {
     ): Promise<void> {
         const user: UserRepresentation | undefined = await kcAdminClient.users.findOne({ id: userId });
         if (user) {
-            user.attributes = user.attributes || {};
+            user.attributes = user.attributes ?? {};
             for (const key in customAttributes) {
                 if (customAttributes.hasOwnProperty(key)) {
                     user.attributes[key] = [customAttributes[key]];
@@ -331,7 +331,7 @@ export class KeycloakUserService {
     private async removeLockedAttributes(kcAdminClient: KeycloakAdminClient, userId: string): Promise<void> {
         const user: UserRepresentation | undefined = await kcAdminClient.users.findOne({ id: userId });
         if (user) {
-            user.attributes = user.attributes || {};
+            user.attributes = user.attributes ?? {};
             const filteredAttributes: Record<string, string[]> = Object.fromEntries(
                 Object.entries(user.attributes).filter(([key]: string[]) => !LOCK_KEYS.includes(key ?? '')),
             );
