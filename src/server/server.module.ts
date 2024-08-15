@@ -34,6 +34,7 @@ import { ItsLearningModule } from '../modules/itslearning/itslearning.module.js'
 import { LdapModule } from '../core/ldap/ldap.module.js';
 import { EmailModule } from '../modules/email/email.module.js';
 import { UtilityModule } from '../modules/utility/utility.module.js';
+import { OxModule } from '../modules/ox/ox.module.js';
 
 @Module({
     imports: [
@@ -87,6 +88,7 @@ import { UtilityModule } from '../modules/utility/utility.module.js';
         ItsLearningModule,
         LdapModule,
         EmailModule,
+        OxModule,
         PrivacyIdeaAdministrationModule,
         UtilityModule, //necessary to enable event-adapter to transform events
     ],

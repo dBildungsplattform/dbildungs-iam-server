@@ -87,11 +87,13 @@ describe('Event Adapter', () => {
     });
 
     describe('handlePersonenkontextDeletedEvent', () => {
+        let fakePKId: string;
         let fakePersonId: string;
         let fakeOrgaId: string;
         let fakeRolleId: string;
 
         beforeEach(() => {
+            fakePKId = faker.string.uuid();
             fakePersonId = faker.string.uuid();
             fakeOrgaId = faker.string.uuid();
             fakeRolleId = faker.string.uuid();
@@ -119,6 +121,7 @@ describe('Event Adapter', () => {
                 rolleRepoMock.findById.mockResolvedValueOnce(fakeRolle);
 
                 const event: SimplePersonenkontextDeletedEvent = new SimplePersonenkontextDeletedEvent(
+                    fakePKId,
                     fakePersonId,
                     fakeOrgaId,
                     fakeRolleId,
@@ -138,6 +141,7 @@ describe('Event Adapter', () => {
                             referrer: fakePerson.referrer,
                         },
                         kontextData: {
+                            id: fakePKId,
                             rolleId: fakeRolle.id,
                             rolle: fakeRolle.rollenart,
                             orgaId: fakeOrga.id,
@@ -154,6 +158,7 @@ describe('Event Adapter', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
                 const event: SimplePersonenkontextDeletedEvent = new SimplePersonenkontextDeletedEvent(
+                    fakePKId,
                     fakePersonId,
                     fakeOrgaId,
                     fakeRolleId,
@@ -174,6 +179,7 @@ describe('Event Adapter', () => {
                 organisationRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
                 const event: SimplePersonenkontextDeletedEvent = new SimplePersonenkontextDeletedEvent(
+                    fakePKId,
                     fakePersonId,
                     fakeOrgaId,
                     fakeRolleId,
@@ -197,6 +203,7 @@ describe('Event Adapter', () => {
                 rolleRepoMock.findById.mockResolvedValueOnce(undefined);
 
                 const event: SimplePersonenkontextDeletedEvent = new SimplePersonenkontextDeletedEvent(
+                    fakePKId,
                     fakePersonId,
                     fakeOrgaId,
                     fakeRolleId,

@@ -211,7 +211,7 @@ export class PersonRepository {
         if (personPKs) {
             personPKs.forEach((pk: Personenkontext<true>) => {
                 this.eventService.publish(
-                    new SimplePersonenkontextDeletedEvent(pk.personId, pk.organisationId, pk.rolleId),
+                    new SimplePersonenkontextDeletedEvent(pk.id, pk.personId, pk.organisationId, pk.rolleId),
                 );
             });
         }

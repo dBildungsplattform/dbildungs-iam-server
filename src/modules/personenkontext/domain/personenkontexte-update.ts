@@ -209,6 +209,7 @@ export class PersonenkontexteUpdate {
                 deletedPKs.push(existingPK);
                 this.eventService.publish(
                     new SimplePersonenkontextDeletedEvent(
+                        existingPK.id,
                         existingPK.personId,
                         existingPK.organisationId,
                         existingPK.rolleId,
@@ -235,9 +236,9 @@ export class PersonenkontexteUpdate {
                         existingPK.rolleId == sentPK.rolleId,
                 )
             ) {
-                await this.dBiamPersonenkontextRepo.save(sentPK);
-                createdPKs.push(sentPK);
-                /*  this.eventService.publish(
+                const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(sentPK);
+                createdPKs.push(savedPK);
+                /*this.eventService.publish(
                     new PersonenkontextCreatedEvent(sentPK.personId, sentPK.organisationId, sentPK.rolleId),
                 );*/
             }

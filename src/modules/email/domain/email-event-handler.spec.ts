@@ -445,6 +445,7 @@ describe('Email Event Handler', () => {
                     faker.string.uuid(),
                     faker.string.uuid(),
                     faker.string.uuid(),
+                    faker.string.uuid(),
                 );
 
                 const rolle: Rolle<true> = createMock<Rolle<true>>({ serviceProviderIds: [] });
@@ -465,6 +466,7 @@ describe('Email Event Handler', () => {
         describe('when rolle does NOT exists', () => {
             it('should execute without errors', async () => {
                 const event: SimplePersonenkontextDeletedEvent = new SimplePersonenkontextDeletedEvent(
+                    faker.string.uuid(),
                     faker.string.uuid(),
                     faker.string.uuid(),
                     faker.string.uuid(),

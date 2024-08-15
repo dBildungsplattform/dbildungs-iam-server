@@ -6,7 +6,11 @@ import { type Personenkontext } from '../../modules/personenkontext/domain/perso
 import { type Rolle } from '../../modules/rolle/domain/rolle.js';
 import { PersonenkontextEventKontextData, PersonenkontextEventPersonData } from './personenkontext-event.types.js';
 
-function mapPersonToData(person: Person<true>): PersonenkontextEventPersonData {
+export type PersonenkontextUpdatedPersonData = PersonenkontextEventPersonData;
+
+export type PersonenkontextUpdatedData = PersonenkontextEventKontextData;
+
+function mapPersonToData(person: Person<true>): PersonenkontextUpdatedPersonData {
     return {
         id: person.id,
         vorname: person.vorname,
@@ -21,6 +25,7 @@ function mapPersonenkontextAndRolleAggregateToData([pk, orga, rolle]: [
     Rolle<true>,
 ]): PersonenkontextEventKontextData {
     return {
+        id: pk.id,
         rolleId: pk.rolleId,
         rolle: rolle.rollenart,
         orgaId: pk.organisationId,

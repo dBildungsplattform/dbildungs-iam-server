@@ -1,6 +1,6 @@
 import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enums.js';
 import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
-import { OrganisationID, PersonID, RolleID } from '../types/index.js';
+import { OrganisationID, PersonenkontextID, PersonID, RolleID } from '../types/index.js';
 
 export type PersonenkontextEventPersonData = {
     id: PersonID;
@@ -10,6 +10,8 @@ export type PersonenkontextEventPersonData = {
 };
 
 export type PersonenkontextEventKontextData = {
+    id: PersonenkontextID;
+
     rolleId: RolleID;
     rolle: RollenArt;
     orgaId: OrganisationID;

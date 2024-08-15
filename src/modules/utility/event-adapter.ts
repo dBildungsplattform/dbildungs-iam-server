@@ -50,6 +50,7 @@ export class EventAdapter {
             referrer: person.referrer,
         };
         const kontextData: PersonenkontextEventKontextData = {
+            id: event.personenkontextID,
             rolleId: rolle.id,
             rolle: rolle.rollenart,
             orgaId: orga.id,

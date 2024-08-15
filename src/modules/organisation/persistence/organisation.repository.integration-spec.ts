@@ -479,6 +479,43 @@ describe('OrganisationRepository', () => {
         });
     });
 
+    describe('deleteKlasse', () => {
+        describe('when all validations succeed', () => {
+            it('should succeed', async () => {
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.KLASSE,
+                });
+                const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
+
+                await sut.deleteKlasse(savedOrganisaiton.id);
+                const exists: boolean = await sut.exists(savedOrganisaiton.id);
+
+                expect(exists).toBe(false);
+            });
+        });
+
+        describe('when organisation does not exist', () => {
+            it('should return EntityNotFoundError', async () => {
+                const id: string = faker.string.uuid();
+                const result: Option<DomainError> = await sut.deleteKlasse(id);
+                expect(result).toEqual(new EntityNotFoundError('Organisation', id));
+            });
+        });
+
+        describe('when organisation is not a Klasse', () => {
+            it('should return EntityCouldNotBeUpdated', async () => {
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.SONSTIGE,
+                    name: 'test',
+                });
+                const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
+
+                const result: Option<DomainError> = await sut.deleteKlasse(savedOrganisaiton.id);
+
+                expect(result).toBeInstanceOf(EntityCouldNotBeUpdated);
+            });
+        });
+    });
     describe('updateKlassenname', () => {
         describe('when organisation does not exist', () => {
             it('should return EntityNotFoundError', async () => {
