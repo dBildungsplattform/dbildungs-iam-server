@@ -212,63 +212,6 @@ export class ItsLearningPersonsEventHandler {
         });
     }
 
-    public async deleteMemberships(
-        person: PersonenkontextUpdatedPersonData,
-        deletedPersonenkontexte: PersonenkontextUpdatedData[],
-    ): Promise<void> {
-        if (deletedPersonenkontexte.length === 0) {
-            return;
-        }
-
-        // Use mutex because multiple personenkontexte can be deleted at once
-        return this.mutex.runExclusive(async () => {
-            const createAction: DeleteMembershipsAction = new DeleteMembershipsAction(
-                deletedPersonenkontexte.map((pk: PersonenkontextUpdatedData) => pk.id),
-            );
-
-            const deleteResult: Result<void, DomainError> = await this.itsLearningService.send(createAction);
-
-            if (!deleteResult.ok) {
-                return this.logger.error(
-                    `Error while deleting ${deletedPersonenkontexte.length} memberships for person ${person.id}!`,
-                );
-            }
-
-            return this.logger.info(`Deleted ${deletedPersonenkontexte.length} memberships for person ${person.id}!`);
-        });
-    }
-
-    public async addMemberships(
-        person: PersonenkontextUpdatedPersonData,
-        newPersonenkontexte: PersonenkontextUpdatedData[],
-    ): Promise<void> {
-        if (newPersonenkontexte.length === 0) {
-            return;
-        }
-
-        // Use mutex because multiple personenkontexte can be created at once
-        return this.mutex.runExclusive(async () => {
-            const createAction: CreateMembershipsAction = new CreateMembershipsAction(
-                newPersonenkontexte.map((pk: PersonenkontextUpdatedData) => ({
-                    id: pk.id,
-                    personId: person.id,
-                    groupId: pk.orgaId,
-                    roleType: ROLLENART_TO_IMSES_ROLE[pk.rolle],
-                })),
-            );
-
-            const createResult: Result<void, DomainError> = await this.itsLearningService.send(createAction);
-
-            if (!createResult.ok) {
-                return this.logger.error(
-                    `Error while creating ${newPersonenkontexte.length} memberships for person ${person.id}!`,
-                );
-            }
-
-            return this.logger.info(`Created ${newPersonenkontexte.length} memberships for person ${person.id}!`);
-        });
-    }
-
     /**
      * Determines which role the user should have in itsLearning (User needs to have a primary role)
      * @param personenkontexte
