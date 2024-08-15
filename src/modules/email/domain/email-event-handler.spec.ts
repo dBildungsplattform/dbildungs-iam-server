@@ -141,7 +141,6 @@ describe('Email Event Handler', () => {
         let fakePersonId: PersonID;
         let fakeRolleId: RolleID;
         let fakeEmailAddressString: string;
-        //let emailAddressId: EmailAddressID;
         let event: PersonenkontextCreatedEvent;
         let personenkontexte: Personenkontext<true>[];
         let rolle: Rolle<true>;
@@ -154,7 +153,6 @@ describe('Email Event Handler', () => {
             fakePersonId = faker.string.uuid();
             fakeRolleId = faker.string.uuid();
             fakeEmailAddressString = faker.internet.email();
-            //emailAddressId = faker.string.uuid();
             event = new PersonenkontextCreatedEvent(fakePersonId, faker.string.uuid(), faker.string.uuid());
 
             personenkontexte = [createMock<Personenkontext<true>>()];

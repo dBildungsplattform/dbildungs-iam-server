@@ -11,8 +11,6 @@ import {
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 
 import { LdapModule } from '../ldap.module.js';
-import { OrganisationApiModule } from '../../../modules/organisation/organisation-api.module.js';
-import { PersonenKontextApiModule } from '../../../modules/personenkontext/personenkontext-api.module.js';
 import { LdapEventHandler } from './ldap-event-handler.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClientService, PersonData } from './ldap-client.service.js';
@@ -46,8 +44,6 @@ describe('LDAP Event Handler', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LdapModule,
                 MapperTestModule,
-                OrganisationApiModule,
-                PersonenKontextApiModule,
             ],
             providers: [
                 {
