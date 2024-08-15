@@ -1,6 +1,6 @@
 import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enums.js';
 import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
-import { OrganisationID, PersonID, RolleID } from '../types/index.js';
+import { OrganisationID, PersonID, PersonenkontextID, RolleID } from '../types/index.js';
 import { BaseEvent } from './base-event.js';
 
 import { type Organisation } from '../../modules/organisation/domain/organisation.js';
@@ -16,6 +16,7 @@ export type PersonenkontextUpdatedPersonData = {
 };
 
 export type PersonenkontextUpdatedData = {
+    id: PersonenkontextID;
     rolleId: RolleID;
     rolle: RollenArt;
     orgaId: OrganisationID;
@@ -38,6 +39,7 @@ function mapPersonenkontextAndRolleAggregateToData([pk, orga, rolle]: [
     Rolle<true>,
 ]): PersonenkontextUpdatedData {
     return {
+        id: pk.id,
         rolleId: pk.rolleId,
         rolle: rolle.rollenart,
         orgaId: pk.organisationId,
