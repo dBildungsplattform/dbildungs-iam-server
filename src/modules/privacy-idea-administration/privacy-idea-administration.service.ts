@@ -14,7 +14,13 @@ import {
     TokenOTPSerialResponse,
     TokenVerificationResponse,
 } from './privacy-idea-api.types.js';
-import { TokenError } from './api/error/token-error.js';
+import { HardwareTokenServiceError } from './api/error/hardware-token-service.error.js';
+import { SerialNotFoundError } from './api/error/serial-not-found.error.js';
+import { SerialInUseError } from './api/error/serial-in-use.error.js';
+import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
+import { ConfigService } from '@nestjs/config';
+import { PrivacyIdeaConfig } from '../../shared/config/privacyidea.config.js';
+import { ServerConfig } from '../../shared/config/server.config.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {
@@ -24,7 +30,14 @@ export class PrivacyIdeaAdministrationService {
 
     private static AUTHORIZATION_TIMEBOX_MS: number = 59 * 60 * 1000;
 
-    public constructor(private readonly httpService: HttpService) {}
+    private readonly privacyIdeaConfig: PrivacyIdeaConfig;
+
+    public constructor(
+        private readonly httpService: HttpService,
+        configService: ConfigService<ServerConfig>,
+    ) {
+        this.privacyIdeaConfig = configService.getOrThrow<PrivacyIdeaConfig>('PRIVACYIDEA');
+    }
 
     public async initializeSoftwareToken(user: string): Promise<string> {
         try {
@@ -50,17 +63,15 @@ export class PrivacyIdeaAdministrationService {
             return this.jwtToken;
         }
 
-        const endpoint: string = '/auth';
-        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
-        const authUrl: string = baseUrl + endpoint;
+        const url: string = this.privacyIdeaConfig.ENDPOINT + '/auth';
         const authPayload: { username: string; password: string } = {
-            username: process.env['PI_ADMIN_USER'] ?? 'admin',
-            password: process.env['PI_ADMIN_PASSWORD'] ?? 'admin',
+            username: this.privacyIdeaConfig.USERNAME,
+            password: this.privacyIdeaConfig.PASSWORD,
         };
 
         try {
             const response: AxiosResponse<AuthenticaitonResponse> = await firstValueFrom(
-                this.httpService.post(authUrl, authPayload, {
+                this.httpService.post(url, authPayload, {
                     headers: { 'Content-Type': 'application/json' },
                 }),
             );
@@ -89,9 +100,7 @@ export class PrivacyIdeaAdministrationService {
         otpkeyformat: string = 'hex',
         rollover: number = 0,
     ): Promise<InitSoftwareToken> {
-        const endpoint: string = '/token/init';
-        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
-        const url: string = baseUrl + endpoint;
+        const url: string = this.privacyIdeaConfig.ENDPOINT + '/token/init';
         const headers: { Authorization: string; 'Content-Type': string } = {
             Authorization: `${token}`,
             'Content-Type': 'application/json',
@@ -129,9 +138,7 @@ export class PrivacyIdeaAdministrationService {
             return undefined;
         }
         const token: string = await this.getJWTToken();
-        const endpoint: string = '/token';
-        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
-        const url: string = baseUrl + endpoint;
+        const url: string = this.privacyIdeaConfig.ENDPOINT + '/token';
         const headers: { Authorization: string } = {
             Authorization: `${token}`,
         };
@@ -154,9 +161,7 @@ export class PrivacyIdeaAdministrationService {
 
     private async checkUserExists(userName: string): Promise<boolean> {
         const token: string = await this.getJWTToken();
-        const endpoint: string = '/user';
-        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
-        const url: string = baseUrl + endpoint;
+        const url: string = this.privacyIdeaConfig.ENDPOINT + '/user';
         const headers: { Authorization: string } = {
             Authorization: `${token}`,
         };
@@ -180,17 +185,14 @@ export class PrivacyIdeaAdministrationService {
 
     private async addUser(userName: string): Promise<void> {
         const token: string = await this.getJWTToken();
-        const endpoint: string = '/user/';
-        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
-        const resolver: string = process.env['PI_USER_RESOLVER'] ?? 'deflocal';
-        const url: string = baseUrl + endpoint;
+        const url: string = this.privacyIdeaConfig.ENDPOINT + '/user/';
         const headers: { Authorization: string } = {
             Authorization: `${token}`,
         };
         const payload: { username: string; user: string; resolver: string } = {
             username: userName,
             user: userName,
-            resolver: resolver,
+            resolver: this.privacyIdeaConfig.USER_RESOLVER,
         };
 
         try {
@@ -205,9 +207,7 @@ export class PrivacyIdeaAdministrationService {
     }
 
     private async verifyTokenStatus(serial: string, token: string): Promise<TokenVerificationResponse> {
-        const endpoint: string = `/token?serial=${serial}`;
-        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
-        const url: string = `${baseUrl}${endpoint}`;
+        const url: string = this.privacyIdeaConfig.ENDPOINT + `/token?serial=${serial}`;
         const headers: { Authorization: string } = {
             Authorization: `${token}`,
         };
@@ -217,17 +217,12 @@ export class PrivacyIdeaAdministrationService {
             );
             return response.data;
         } catch (error) {
-            throw new TokenError(
-                'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
-                'general-token-error',
-            );
+            throw new HardwareTokenServiceError();
         }
     }
 
     private async getSerialWithOTP(otp: string, token: string): Promise<TokenOTPSerialResponse> {
-        const endpoint: string = `/token/getserial/${otp}?unassigned=1`;
-        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
-        const url: string = `${baseUrl}${endpoint}`;
+        const url: string = this.privacyIdeaConfig.ENDPOINT + `/token/getserial/${otp}?unassigned=1`;
         const headers: { Authorization: string } = {
             Authorization: `${token}`,
         };
@@ -238,17 +233,12 @@ export class PrivacyIdeaAdministrationService {
             );
             return response.data;
         } catch (error) {
-            throw new TokenError(
-                'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
-                'general-token-error',
-            );
+            throw new HardwareTokenServiceError();
         }
     }
 
     private async assignToken(serial: string, token: string, user: string): Promise<AssignTokenResponse> {
-        const endpoint: string = '/token/assign';
-        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
-        const url: string = baseUrl + endpoint;
+        const url: string = this.privacyIdeaConfig.ENDPOINT + '/token/assign';
         const headers: { Authorization: string; 'Content-Type': string } = {
             Authorization: `${token}`,
             'Content-Type': 'application/json',
@@ -266,10 +256,7 @@ export class PrivacyIdeaAdministrationService {
             );
             return response.data;
         } catch (error) {
-            throw new TokenError(
-                'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
-                'general-token-error',
-            );
+            throw new HardwareTokenServiceError();
         }
     }
 
@@ -278,22 +265,16 @@ export class PrivacyIdeaAdministrationService {
         const tokenVerificationResponse: TokenVerificationResponse = await this.verifyTokenStatus(serial, token);
         //Check token existence
         if (tokenVerificationResponse.result.value.count === 0) {
-            throw new TokenError(
-                'Die eingegebene Seriennummer konnte leider nicht gefunden werden. Vergewissern Sie sich bitte, das Sie eine korrekte Seriennummer eingegeben haben.',
-                'token-not-found',
-            );
+            throw new SerialNotFoundError();
         }
         //Check token assigned or not
         if (tokenVerificationResponse.result.value.tokens[0]?.username !== '') {
-            throw new TokenError(
-                'Die eingegebene Seriennummer wird bereits aktiv verwendet. Bitte überprüfen Sie ihre Eingabe und versuchen Sie es erneut.',
-                'token-already-assigned',
-            );
+            throw new SerialInUseError();
         }
         //Verify otp input
         const tokenOTPserialResponse: TokenOTPSerialResponse = await this.getSerialWithOTP(otp, token);
         if (tokenOTPserialResponse.result.value.serial !== serial) {
-            throw new TokenError('Ungültiger Code. Bitte versuchen Sie es erneut.', 'token-otp-not-valid');
+            throw new OTPnotValidError();
         }
         // Call assignToken
         return this.assignToken(serial, token, user);

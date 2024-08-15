@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Query, UseFilters } from '@nestjs/common';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { Public } from '../authentication/api/public.decorator.js';
 import { AssignTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
@@ -21,8 +21,12 @@ import { Person } from '../person/domain/person.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { AssignHardwareTokenBodyParams } from './api/assign-hardware-token.body.params.js';
 import { AssignHardwareTokenResponse } from './api/assign-hardware-token.response.js';
-import { TokenError } from './api/error/token-error.js';
+import { TokenError } from './api/error/token.error.js';
+import { PrivacyIdeaAdministrationExceptionFilter } from './api/privacy-idea-administration-exception-filter.js';
+import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
+import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
 
+@UseFilters(new PrivacyIdeaAdministrationExceptionFilter())
 @ApiTags('2FA')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -79,7 +83,6 @@ export class PrivacyIdeaAdministrationController {
             personId,
             permissions,
         );
-
         if (!personResult.ok) {
             throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
         }
@@ -107,12 +110,24 @@ export class PrivacyIdeaAdministrationController {
     @Public()
     public async assignHardwareToken(
         @Body() params: AssignHardwareTokenBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<AssignHardwareTokenResponse | undefined> {
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            params.userId,
+            permissions,
+        );
+        if (!personResult.ok) {
+            throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
+        }
+
+        if (personResult.value.referrer === undefined) {
+            throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
+        }
         try {
             const result: AssignTokenResponse = await this.privacyIdeaAdministrationService.assignHardwareToken(
                 params.serial,
                 params.otp,
-                params.user,
+                personResult.value.referrer,
             );
             return new AssignHardwareTokenResponse(
                 result.id,
@@ -125,23 +140,12 @@ export class PrivacyIdeaAdministrationController {
             );
         } catch (error) {
             if (error instanceof TokenError) {
-                // Return structured error response with code and message
-                throw new HttpException(
-                    {
-                        statusCode: HttpStatus.BAD_REQUEST,
-                        message: error.message,
-                        code: error.name,
-                    },
-                    HttpStatus.BAD_REQUEST,
-                );
+                throw error;
             }
-            // Handle other unexpected errors
-            throw new HttpException(
-                {
-                    statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-                    message: 'An unexpected error occurred.',
-                },
-                HttpStatus.INTERNAL_SERVER_ERROR,
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityCouldNotBeCreated('Hardware-Token could not be assigned.'),
+                ),
             );
         }
     }
