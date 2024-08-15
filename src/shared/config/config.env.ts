@@ -4,6 +4,7 @@ import { FrontendConfig } from './frontend.config.js';
 import { HostConfig } from './host.config.js';
 import { ItsLearningConfig } from './itslearning.config.js';
 import { LdapConfig } from './ldap.config.js';
+import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { OxConfig } from './ox.config.js';
 
 export default (): {
@@ -13,6 +14,7 @@ export default (): {
     FRONTEND: Partial<FrontendConfig>;
     HOST: Partial<HostConfig>;
     ITSLEARNING: Partial<ItsLearningConfig>;
+    PRIVACYIDEA: Partial<PrivacyIdeaConfig>;
     OX: Partial<OxConfig>;
 } => ({
     DB: {
@@ -44,6 +46,12 @@ export default (): {
         ENDPOINT: process.env['ITSLEARNING_ENDPOINT'],
         USERNAME: process.env['ITSLEARNING_USERNAME'],
         PASSWORD: process.env['ITSLEARNING_PASSWORD'],
+    },
+    PRIVACYIDEA: {
+        ENDPOINT: process.env['PI_BASE_URL'],
+        USERNAME: process.env['PI_ADMIN_USER'],
+        PASSWORD: process.env['PI_ADMIN_PASSWORD'],
+        USER_RESOLVER: process.env['PI_USER_RESOLVER'],
     },
     OX: {
         ENABLED: process.env['OX_ENABLED']?.toLowerCase() as 'true' | 'false',

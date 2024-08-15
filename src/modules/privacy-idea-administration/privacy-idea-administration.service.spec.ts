@@ -12,7 +12,8 @@ import {
     TokenVerificationResponse,
     User,
 } from './privacy-idea-api.types.js';
-import { TokenError } from './api/error/token-error.js';
+import { TokenError } from './api/error/token.error.js';
+import { ConfigTestModule } from '../../../test/utils/index.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -60,33 +61,32 @@ export const mockUser: User = {
     username: 'johndoe',
 };
 
-export const mockJWTTokenResponse = (): Observable<AxiosResponse> =>
+const mockJWTTokenResponse = (): Observable<AxiosResponse> =>
     of({ data: { result: { value: { token: `jwt-token` } } } } as AxiosResponse);
 
-export const mockEmptyUserResponse = (): Observable<AxiosResponse> =>
-    of({ data: { result: { value: [] } } } as AxiosResponse);
+const mockEmptyUserResponse = (): Observable<AxiosResponse> => of({ data: { result: { value: [] } } } as AxiosResponse);
 
-export const mockUserResponse = (): Observable<AxiosResponse> =>
+const mockUserResponse = (): Observable<AxiosResponse> =>
     of({ data: { result: { value: [mockUser] } } } as AxiosResponse);
 
-export const mockGoogleImageResponse = (): Observable<AxiosResponse> =>
+const mockGoogleImageResponse = (): Observable<AxiosResponse> =>
     of({ data: { detail: { googleurl: { img: `base64img` } } } } as AxiosResponse);
 
-export const mockEmptyPostResponse = (): Observable<AxiosResponse> => of({} as AxiosResponse);
+const mockEmptyPostResponse = (): Observable<AxiosResponse> => of({} as AxiosResponse);
 
-export const mockTokenResponse = (): Observable<AxiosResponse> =>
+const mockTokenResponse = (): Observable<AxiosResponse> =>
     of({ data: { result: { value: { tokens: [mockPrivacyIdeaToken] } } } } as AxiosResponse);
 
-export const mockErrorResponse = (): never => {
+const mockErrorResponse = (): never => {
     throw new Error(mockErrorMsg);
 };
 
-export const mockNonErrorThrow = (): never => {
+const mockNonErrorThrow = (): never => {
     // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw { message: mockErrorMsg };
 };
 
-export const mockTokenVerificationResponse: TokenVerificationResponse = {
+const mockTokenVerificationResponse: TokenVerificationResponse = {
     result: {
         value: {
             count: 1,
@@ -135,7 +135,7 @@ export const mockTokenVerificationResponse: TokenVerificationResponse = {
     signature: '',
 };
 
-export const mockTokenVerificationResponseNotFound: TokenVerificationResponse = {
+const mockTokenVerificationResponseNotFound: TokenVerificationResponse = {
     result: {
         value: {
             count: 0,
@@ -154,7 +154,7 @@ export const mockTokenVerificationResponseNotFound: TokenVerificationResponse = 
     signature: '',
 };
 
-export const mockTokenVerificationResponseAlreadyAssigned: TokenVerificationResponse = {
+const mockTokenVerificationResponseAlreadyAssigned: TokenVerificationResponse = {
     result: {
         value: {
             count: 1,
@@ -203,7 +203,7 @@ export const mockTokenVerificationResponseAlreadyAssigned: TokenVerificationResp
     signature: '',
 };
 
-export const mockTokenOTPSerialResponse: TokenOTPSerialResponse = {
+const mockTokenOTPSerialResponse: TokenOTPSerialResponse = {
     result: {
         value: {
             serial: 'ABC123456',
@@ -219,7 +219,7 @@ export const mockTokenOTPSerialResponse: TokenOTPSerialResponse = {
     signature: '',
 };
 
-export const mockTokenOTPSerialResponseInvalid: TokenOTPSerialResponse = {
+const mockTokenOTPSerialResponseInvalid: TokenOTPSerialResponse = {
     result: {
         value: {
             serial: 'INVALID',
@@ -235,7 +235,7 @@ export const mockTokenOTPSerialResponseInvalid: TokenOTPSerialResponse = {
     signature: '',
 };
 
-export const mockAssignTokenResponse: AssignTokenResponse = {
+const mockAssignTokenResponse: AssignTokenResponse = {
     id: 1,
     jsonrpc: '2.0',
     result: {
@@ -254,6 +254,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
+            imports: [ConfigTestModule],
             providers: [
                 PrivacyIdeaAdministrationService,
                 { provide: HttpService, useValue: createMock<HttpService>() },

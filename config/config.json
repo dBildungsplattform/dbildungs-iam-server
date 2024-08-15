@@ -64,6 +64,12 @@
         "ROOT_OEFFENTLICH": "oeffentlich",
         "ROOT_ERSATZ": "ersatz"
     },
+    "PRIVACYIDEA": {
+        "ENDPOINT": "http://localhost:5000",
+        "USERNAME": "admin",
+        "PASSWORD": "admin",
+        "USER_RESOLVER": "mariadb_resolver"
+    },
     "OX": {
         "ENABLED": "false",
         "ENDPOINT": "http://ox.dev.spsh.dbildungsplattform.de/webservices/",
