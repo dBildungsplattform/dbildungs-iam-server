@@ -14,8 +14,8 @@ import { DeleteGroupAction } from '../actions/delete-group.action.js';
 import { GroupResponse, ReadGroupAction } from '../actions/read-group.action.js';
 import { UpdateGroupAction, UpdateGroupParams } from '../actions/update-group.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
-import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
 import { RootDirectChildrenType } from '../../organisation/domain/organisation.enums.js';
+import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
 
 @Injectable()
 export class ItsLearningOrganisationsEventHandler {
@@ -161,12 +161,8 @@ export class ItsLearningOrganisationsEventHandler {
         this.logger.info(`Klasse with ID ${event.organisationId} was updated.`);
     }
 
-    public async deletedKlasseEventHandler(): Promise<void> {
-        // TODO: Replace with Event when SPSH-743 is merged
-        const event = {
-            organisationId: '',
-        };
-
+    @EventHandler(KlasseDeletedEvent)
+    public async deletedKlasseEventHandler(event: KlasseDeletedEvent): Promise<void> {
         this.logger.info(`Received KlasseUpdatedEvent, ID: ${event.organisationId}`);
 
         if (!this.ENABLED) {
