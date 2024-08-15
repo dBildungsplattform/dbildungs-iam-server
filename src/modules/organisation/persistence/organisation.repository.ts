@@ -13,6 +13,7 @@ import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
+import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
@@ -209,6 +210,22 @@ export class OrganisationRepository {
         });
 
         return organisations.map(mapEntityToAggregate);
+    }
+
+    public async deleteKlasse(id: OrganisationID): Promise<Option<DomainError>> {
+        const organisationEntity: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
+        if (!organisationEntity) {
+            return new EntityNotFoundError('Organisation', id);
+        }
+
+        if (organisationEntity.typ !== OrganisationsTyp.KLASSE) {
+            return new EntityCouldNotBeUpdated('Organisation', id, ['Only Klassen can be deleted.']);
+        }
+
+        await this.em.removeAndFlush(organisationEntity);
+        this.eventService.publish(new KlasseDeletedEvent(organisationEntity.id));
+
+        return;
     }
 
     public async updateKlassenname(id: string, newName: string): Promise<DomainError | Organisation<true>> {
