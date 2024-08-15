@@ -4,6 +4,7 @@ import { FrontendConfig } from './frontend.config.js';
 import { HostConfig } from './host.config.js';
 import { ItsLearningConfig } from './itslearning.config.js';
 import { LdapConfig } from './ldap.config.js';
+import { OxConfig } from './ox.config.js';
 
 export default (): {
     DB: Partial<DbConfig>;
@@ -12,6 +13,7 @@ export default (): {
     FRONTEND: Partial<FrontendConfig>;
     HOST: Partial<HostConfig>;
     ITSLEARNING: Partial<ItsLearningConfig>;
+    OX: Partial<OxConfig>;
 } => ({
     DB: {
         DB_NAME: process.env['DB_NAME'],
@@ -42,5 +44,11 @@ export default (): {
         ENDPOINT: process.env['ITSLEARNING_ENDPOINT'],
         USERNAME: process.env['ITSLEARNING_USERNAME'],
         PASSWORD: process.env['ITSLEARNING_PASSWORD'],
+    },
+    OX: {
+        ENABLED: process.env['OX_ENABLED']?.toLowerCase() as 'true' | 'false',
+        ENDPOINT: process.env['OX_ENDPOINT'],
+        USERNAME: process.env['OX_USERNAME'],
+        PASSWORD: process.env['OX_PASSWORD'],
     },
 });
