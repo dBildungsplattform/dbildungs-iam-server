@@ -1,4 +1,4 @@
-import { IPersonPermissions } from '../../src/modules/authentication/domain/person-permissions.interface.js';
+import { IPersonPermissions } from '../../src/shared/permissions/person-permissions.interface.js';
 
 export class PersonPermissionsMock implements IPersonPermissions {
     public hasSystemrechteAtOrganisation(): Promise<boolean> {
