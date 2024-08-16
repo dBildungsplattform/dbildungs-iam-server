@@ -26,9 +26,9 @@ export class CheckRollenartLernSpecification {
         if (hasLernRolle) {
             // If any existing Personenkontext has a role of type LERN,
             // check if the new Personenkontext also has a role of type LERN
-            const newRole: Option<Rolle<true>> = await this.rolleRepo.findById(personenkontext.rolleId);
+            const newRolle: Option<Rolle<true>> = await this.rolleRepo.findById(personenkontext.rolleId);
 
-            if (newRole && newRole.rollenart !== RollenArt.LERN) {
+            if (newRolle && newRolle.rollenart !== RollenArt.LERN) {
                 return false;
             }
         }
