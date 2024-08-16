@@ -39,7 +39,7 @@ export class DBiamPersonenkontextService {
         const pkKlasseSpecification: PersonenkontextKlasseSpecification = new PersonenkontextKlasseSpecification(
             nurLehrUndLernAnKlasse,
             gleicheRolleAnKlasseWieSchule,
-            nurRollenartLern
+            nurRollenartLern,
         );
 
         return pkKlasseSpecification.returnsError(personenkontext);
