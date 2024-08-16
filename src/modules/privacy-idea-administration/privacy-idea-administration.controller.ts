@@ -43,20 +43,8 @@ export class PrivacyIdeaAdministrationController {
         @Body() params: TokenInitBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<string> {
-        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
-            params.personId,
-            permissions,
-        );
-
-        if (!personResult.ok) {
-            throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
-        }
-
-        if (personResult.value.referrer === undefined) {
-            throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
-        }
-
-        return this.privacyIdeaAdministrationService.initializeSoftwareToken(personResult.value.referrer);
+        const referrer: string = await this.getPersonIfAllowed(params.personId, permissions);
+        return this.privacyIdeaAdministrationService.initializeSoftwareToken(referrer);
     }
 
     @Get('state')
@@ -72,34 +60,42 @@ export class PrivacyIdeaAdministrationController {
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
     ): Promise<TokenStateResponse> {
-        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
-            personId,
-            permissions,
-        );
-
-        if (!personResult.ok) {
-            throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
-        }
-
-        if (personResult.value.referrer === undefined) {
-            throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
-        }
-        const piToken: PrivacyIdeaToken | undefined = await this.privacyIdeaAdministrationService.getTwoAuthState(
-            personResult.value.referrer,
-        );
+        const referrer: string = await this.getPersonIfAllowed(personId, permissions);
+        const piToken: PrivacyIdeaToken | undefined =
+            await this.privacyIdeaAdministrationService.getTwoAuthState(referrer);
         return new TokenStateResponse(piToken);
     }
 
     @Put('reset')
     @HttpCode(HttpStatus.OK)
-    @ApiCreatedResponse({ description: 'The token was successfully reset.', type: PrivacyIdeaAdministrationService })
+    @ApiCreatedResponse({ description: 'The token was successfully reset.', type: Boolean })
     @ApiBadRequestResponse({ description: 'A username was not given or not found.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to reset token.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to reset token.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to reset token.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while reseting a token.' })
     @Public()
-    public async resetToken(@Query('userName') userName: string): Promise<ResetTokenResponse | undefined> {
-        return this.privacyIdeaAdministrationService.resetToken(userName);
+    public async resetToken(
+        @Query('personId') personId: string,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<boolean> {
+        const referrer: string = await this.getPersonIfAllowed(personId, permissions);
+
+        const response: ResetTokenResponse = await this.privacyIdeaAdministrationService.resetToken(referrer);
+        return response.result.status;
+    }
+
+    private async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<string> {
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            personId,
+            permissions,
+        );
+        if (!personResult.ok) {
+            throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
+        }
+        if (personResult.value.referrer === undefined) {
+            throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
+        }
+        return personResult.value.referrer;
     }
 }

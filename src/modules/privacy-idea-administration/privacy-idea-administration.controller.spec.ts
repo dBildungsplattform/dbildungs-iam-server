@@ -62,7 +62,6 @@ describe('PrivacyIdeaAdministrationController', () => {
 
     describe('PrivacyIdeaAdministrationController initializeSoftwareToken', () => {
         it('should successfully create a token', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
             const person: Person<true> = getPerson();
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
@@ -76,8 +75,6 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return forbidden insufficient permissions', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
-
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: false,
                 error: new Error('Forbidden access'),
@@ -89,8 +86,6 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return user not found if referrer is undefined', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
-
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: getPerson(true),
@@ -104,7 +99,6 @@ describe('PrivacyIdeaAdministrationController', () => {
 
     describe('PrivacyIdeaAdministrationController getTwoAuthState', () => {
         it('should successfully retrieve token state', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
             const person: Person<true> = getPerson();
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
@@ -142,15 +136,12 @@ describe('PrivacyIdeaAdministrationController', () => {
                 user_realm: '',
                 username: '',
             };
-            personPermissionsMock = createMock<PersonPermissions>();
-
             serviceMock.getTwoAuthState.mockResolvedValue(mockTokenState);
             const response: TokenStateResponse = await sut.getTwoAuthState('user1', personPermissionsMock);
             expect(response).toEqual(new TokenStateResponse(mockTokenState));
         });
 
         it('should successfully retrieve empty token state when user is undefined', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
             const person: Person<true> = getPerson();
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
@@ -166,8 +157,6 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return forbidden insufficient permissions', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
-
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: false,
                 error: new Error('Forbidden access'),
@@ -179,8 +168,6 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return user not found if referrer is undefined', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
-
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: getPerson(true),
@@ -193,61 +180,42 @@ describe('PrivacyIdeaAdministrationController', () => {
     });
     describe('PrivacyIdeaAdministrationController resetToken', () => {
         it('should successfully reset a token', async () => {
-            const userName: string = 'user1';
+            const person: Person<true> = getPerson();
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: true,
+                value: person,
+            });
+            const personId: string = 'user1';
             const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
             serviceMock.resetToken.mockResolvedValue(mockResetTokenResponse);
 
-            const response: ResetTokenResponse | undefined = await sut.resetToken(userName);
+            const response: boolean = await sut.resetToken(personId, personPermissionsMock);
 
-            expect(response).toEqual(mockResetTokenResponse);
-            expect(serviceMock.resetToken).toHaveBeenCalledWith(userName);
+            expect(response).toEqual(mockResetTokenResponse.result.status);
+            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.referrer);
         });
 
         it('should return bad request if username is not given or not found', async () => {
-            const userName: string = '';
+            const personId: string = 'user1';
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: false,
+                error: new Error('Forbidden access'),
+            });
 
-            serviceMock.resetToken.mockRejectedValue(
-                new HttpException('A username was not given or not found.', HttpStatus.BAD_REQUEST),
-            );
-
-            await expect(sut.resetToken(userName)).rejects.toThrow(
-                new HttpException('A username was not given or not found.', HttpStatus.BAD_REQUEST),
+            await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toThrow(
+                new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
             );
         });
 
         it('should return unauthorized if not authorized to reset token', async () => {
-            const userName: string = 'user1';
+            const personId: string = 'user1';
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: true,
+                value: getPerson(true),
+            });
 
-            serviceMock.resetToken.mockRejectedValue(
-                new HttpException('Not authorized to reset token.', HttpStatus.UNAUTHORIZED),
-            );
-
-            await expect(sut.resetToken(userName)).rejects.toThrow(
-                new HttpException('Not authorized to reset token.', HttpStatus.UNAUTHORIZED),
-            );
-        });
-
-        it('should return forbidden if insufficient permissions to reset token', async () => {
-            const userName: string = 'user1';
-
-            serviceMock.resetToken.mockRejectedValue(
-                new HttpException('Insufficient permissions to reset token.', HttpStatus.FORBIDDEN),
-            );
-
-            await expect(sut.resetToken(userName)).rejects.toThrow(
-                new HttpException('Insufficient permissions to reset token.', HttpStatus.FORBIDDEN),
-            );
-        });
-
-        it('should return internal server error for unexpected error', async () => {
-            const userName: string = 'user1';
-
-            serviceMock.resetToken.mockRejectedValue(
-                new HttpException('Internal server error while reseting a token.', HttpStatus.INTERNAL_SERVER_ERROR),
-            );
-
-            await expect(sut.resetToken(userName)).rejects.toThrow(
-                new HttpException('Internal server error while reseting a token.', HttpStatus.INTERNAL_SERVER_ERROR),
+            await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toThrow(
+                new HttpException('User not found.', HttpStatus.BAD_REQUEST),
             );
         });
     });
