@@ -46,7 +46,7 @@ export class RolleFactory {
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
-        serviceProviderIds: string[] | undefined,
+        serviceProviderIds: string[],
         istTechnisch: boolean,
     ): Rolle<false> | DomainError {
         return Rolle.createNew(
@@ -57,7 +57,7 @@ export class RolleFactory {
             rollenart,
             merkmale,
             systemrechte,
-            serviceProviderIds ?? [],
+            serviceProviderIds,
             istTechnisch,
         );
     }
