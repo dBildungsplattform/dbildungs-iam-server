@@ -176,6 +176,8 @@ export class RolleController {
             params.rollenart,
             params.merkmale,
             params.systemrechte,
+            [],
+            false,
         );
 
         if (rolle instanceof DomainError) {

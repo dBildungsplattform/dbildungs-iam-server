@@ -22,6 +22,7 @@ export class RolleFactory {
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
+        istTechnisch: boolean,
     ): Rolle<true> {
         return Rolle.construct(
             this.organisationRepo,
@@ -35,6 +36,7 @@ export class RolleFactory {
             merkmale,
             systemrechte,
             serviceProviderIds,
+            istTechnisch,
         );
     }
 
@@ -44,7 +46,8 @@ export class RolleFactory {
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
-        serviceProviderIds?: string[],
+        serviceProviderIds: string[] | undefined,
+        istTechnisch: boolean,
     ): Rolle<false> | DomainError {
         return Rolle.createNew(
             this.organisationRepo,
@@ -55,6 +58,7 @@ export class RolleFactory {
             merkmale,
             systemrechte,
             serviceProviderIds ?? [],
+            istTechnisch,
         );
     }
 
@@ -68,6 +72,7 @@ export class RolleFactory {
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
+        istTechnisch: boolean,
     ): Promise<Rolle<true> | DomainError> {
         return Rolle.update(
             this.organisationRepo,
@@ -81,6 +86,7 @@ export class RolleFactory {
             merkmale,
             systemrechte,
             serviceProviderIds,
+            istTechnisch,
         );
     }
 }

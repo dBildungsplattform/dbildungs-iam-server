@@ -103,6 +103,8 @@ export class PersonenkontextWorkflowAggregate {
             return [];
         }
 
+        rollen = rollen.filter((r: Rolle<true>) => !r.istTechnisch);
+
         // Retrieve all organisations that the admin has access to
         const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],

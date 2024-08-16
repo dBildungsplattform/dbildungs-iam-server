@@ -53,6 +53,7 @@ export function mapAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<Ro
         merkmale,
         systemrechte,
         serviceProvider,
+        istTechnisch: rolle.istTechnisch,
     };
 }
 
@@ -79,6 +80,7 @@ export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFac
         merkmale,
         systemrechte,
         serviceProviderIds,
+        entity.istTechnisch,
     );
 }
 
@@ -275,6 +277,7 @@ export class RolleRepo {
             merkmale,
             systemrechte,
             serviceProviderIds,
+            authorizedRole.istTechnisch,
         );
 
         if (updatedRolle instanceof DomainError) {
