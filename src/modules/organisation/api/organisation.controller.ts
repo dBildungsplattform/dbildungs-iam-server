@@ -316,8 +316,8 @@ export class OrganisationController {
         const result: Paged<Organisation<true>> = await this.organisationService.findAllAdministriertVon(
             routeParams.organisationId,
             queryParams.searchFilter,
-            queryParams.limit,
             queryParams.offset,
+            queryParams.limit,
         );
 
         const organisations: OrganisationResponse[] = result.items.map(
