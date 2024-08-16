@@ -4,6 +4,8 @@ import { GleicheRolleAnKlasseWieSchule } from './gleiche-rolle-an-klasse-wie-sch
 import { DomainError } from '../../../shared/error/index.js';
 import { NurLehrUndLernAnKlasseError } from './error/nur-lehr-und-lern-an-klasse.error.js';
 import { GleicheRolleAnKlasseWieSchuleError } from './error/gleiche-rolle-an-klasse-wie-schule.error.js';
+import { CheckRollenartLernSpecification } from './nur-rolle-lern.js';
+import { UpdateInvalidRollenartForLernError } from '../domain/error/update-invalid-rollenart-for-lern.error.js';
 
 /**
  * 'This specification is not extending CompositeSpecification, but combines specifications for Personenkontexte
@@ -13,6 +15,7 @@ export class PersonenkontextKlasseSpecification {
     public constructor(
         protected readonly nurLehrUndLernAnKlasse: NurLehrUndLernAnKlasse,
         protected readonly gleicheRolleAnKlasseWieSchule: GleicheRolleAnKlasseWieSchule,
+        protected readonly nurRollenartLern: CheckRollenartLernSpecification,
     ) {}
 
     public async returnsError(p: Personenkontext<boolean>): Promise<Option<DomainError>> {
@@ -21,6 +24,9 @@ export class PersonenkontextKlasseSpecification {
         }
         if (!(await this.gleicheRolleAnKlasseWieSchule.isSatisfiedBy(p))) {
             return new GleicheRolleAnKlasseWieSchuleError();
+        }
+        if (!(await this.nurRollenartLern.checkRollenartLern(p))) {
+            return new UpdateInvalidRollenartForLernError();
         }
         return undefined;
     }
