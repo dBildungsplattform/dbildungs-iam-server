@@ -13,6 +13,8 @@ import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { CheckRollenartLernSpecification } from './nur-rolle-lern.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -206,6 +208,88 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
             rolleRepoMock.findById.mockResolvedValueOnce(rolle);
 
             expect(await specification.isSatisfiedBy(personenkontext)).toBeFalsy();
+        });
+    });
+    describe('Nur Lern kontext when person has LERN kontexte already', () => {
+        it('should pass the check when there are no existing LERN roles', async () => {
+            const specification: CheckRollenartLernSpecification = new CheckRollenartLernSpecification(
+                personenkontextRepoMock,
+                rolleRepoMock,
+            );
+            const personenkontext: Personenkontext<false> = createMock<Personenkontext<false>>();
+            const existingPersonenkontexte: Personenkontext<true>[] = [];
+
+            personenkontextRepoMock.findByPerson.mockResolvedValueOnce(existingPersonenkontexte);
+
+            const result: boolean = await specification.checkRollenartLern(personenkontext);
+
+            expect(result).toBe(true);
+        });
+
+        it('should pass the check when there are existing LERN roles and the new role is also LERN', async () => {
+            const specification: CheckRollenartLernSpecification = new CheckRollenartLernSpecification(
+                personenkontextRepoMock,
+                rolleRepoMock,
+            );
+            const personenkontext: Personenkontext<false> = createMock<Personenkontext<false>>();
+            const existingPersonenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
+            const existingRole: Rolle<true> = createMock<Rolle<true>>();
+            const newRole: Rolle<true> = createMock<Rolle<true>>();
+
+            existingRole.rollenart = RollenArt.LERN;
+            newRole.rollenart = RollenArt.LERN;
+
+            personenkontextRepoMock.findByPerson.mockResolvedValueOnce([existingPersonenkontext]);
+            rolleRepoMock.findById.mockResolvedValueOnce(existingRole);
+            rolleRepoMock.findById.mockResolvedValueOnce(newRole);
+
+            const result: boolean = await specification.checkRollenartLern(personenkontext);
+
+            expect(result).toBe(true);
+        });
+
+        it('should fail the check when there are existing LERN roles and the new role is not LERN', async () => {
+            const specification: CheckRollenartLernSpecification = new CheckRollenartLernSpecification(
+                personenkontextRepoMock,
+                rolleRepoMock,
+            );
+            const personenkontext: Personenkontext<false> = createMock<Personenkontext<false>>();
+            const existingPersonenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
+            const existingRole: Rolle<true> = createMock<Rolle<true>>();
+            const newRole: Rolle<true> = createMock<Rolle<true>>();
+
+            existingRole.rollenart = RollenArt.LERN;
+            newRole.rollenart = RollenArt.LEHR;
+
+            personenkontextRepoMock.findByPerson.mockResolvedValueOnce([existingPersonenkontext]);
+            rolleRepoMock.findById.mockResolvedValueOnce(existingRole);
+            rolleRepoMock.findById.mockResolvedValueOnce(newRole);
+
+            const result: boolean = await specification.checkRollenartLern(personenkontext);
+
+            expect(result).toBe(false);
+        });
+
+        it('should pass the check when there are existing roles, but none are of type LERN', async () => {
+            const specification: CheckRollenartLernSpecification = new CheckRollenartLernSpecification(
+                personenkontextRepoMock,
+                rolleRepoMock,
+            );
+            const personenkontext: Personenkontext<false> = createMock<Personenkontext<false>>();
+            const existingPersonenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
+            const existingRole: Rolle<true> = createMock<Rolle<true>>();
+            const newRole: Rolle<true> = createMock<Rolle<true>>();
+
+            existingRole.rollenart = RollenArt.LEHR;
+            newRole.rollenart = RollenArt.ORGADMIN;
+
+            personenkontextRepoMock.findByPerson.mockResolvedValueOnce([existingPersonenkontext]);
+            rolleRepoMock.findById.mockResolvedValueOnce(existingRole);
+            rolleRepoMock.findById.mockResolvedValueOnce(newRole);
+
+            const result: boolean = await specification.checkRollenartLern(personenkontext);
+
+            expect(result).toBe(true);
         });
     });
 });
