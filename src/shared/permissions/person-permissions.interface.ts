@@ -1,5 +1,5 @@
-import { OrganisationID, PersonID } from '../../../shared/types/index.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { OrganisationID, PersonID } from '../types/index.js';
+import { RollenSystemRecht } from '../../modules/rolle/domain/rolle.enums.js';
 
 export type IPersonPermissions = {
     hasSystemrechteAtOrganisation(organisationId: OrganisationID, systemrechte: RollenSystemRecht[]): Promise<boolean>;

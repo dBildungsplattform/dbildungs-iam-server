@@ -11,21 +11,34 @@ import {
     PersonenkontextUpdatedEvent,
     PersonenkontextUpdatedPersonData,
 } from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { CreateMembershipsAction } from '../actions/create-memberships.action.js';
 import { CreatePersonAction } from '../actions/create-person.action.js';
+import { DeleteMembershipsAction } from '../actions/delete-memberships.action.js';
 import { DeletePersonAction } from '../actions/delete-person.action.js';
 import { PersonResponse, ReadPersonAction } from '../actions/read-person.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
-import { ItsLearningRoleType } from '../types/role.enum.js';
+import { IMSESRoleType, IMSESInstitutionRoleType } from '../types/role.enum.js';
 
 // Maps our roles to itsLearning roles
-const ROLLENART_TO_ITSLEARNING_ROLE: Record<RollenArt, ItsLearningRoleType> = {
-    [RollenArt.EXTERN]: ItsLearningRoleType.GUEST,
-    [RollenArt.LERN]: ItsLearningRoleType.STUDENT,
-    [RollenArt.LEHR]: ItsLearningRoleType.STAFF,
-    [RollenArt.LEIT]: ItsLearningRoleType.ADMINISTRATOR,
-    [RollenArt.ORGADMIN]: ItsLearningRoleType.ADMINISTRATOR,
-    [RollenArt.SYSADMIN]: ItsLearningRoleType.SYSTEM_ADMINISTRATOR,
+const ROLLENART_TO_ITSLEARNING_ROLE: Record<RollenArt, IMSESInstitutionRoleType> = {
+    [RollenArt.EXTERN]: IMSESInstitutionRoleType.GUEST,
+    [RollenArt.LERN]: IMSESInstitutionRoleType.STUDENT,
+    [RollenArt.LEHR]: IMSESInstitutionRoleType.STAFF,
+    [RollenArt.LEIT]: IMSESInstitutionRoleType.ADMINISTRATOR,
+    [RollenArt.ORGADMIN]: IMSESInstitutionRoleType.ADMINISTRATOR,
+    [RollenArt.SYSADMIN]: IMSESInstitutionRoleType.SYSTEM_ADMINISTRATOR,
+};
+
+// Maps our roles to IMS ES roles (Different from InstitutionRoleType)
+const ROLLENART_TO_IMSES_ROLE: Record<RollenArt, IMSESRoleType> = {
+    [RollenArt.EXTERN]: IMSESRoleType.MEMBER,
+    [RollenArt.LERN]: IMSESRoleType.LEARNER,
+    [RollenArt.LEHR]: IMSESRoleType.INSTRUCTOR,
+    [RollenArt.LEIT]: IMSESRoleType.MANAGER,
+    [RollenArt.ORGADMIN]: IMSESRoleType.ADMINISTRATOR,
+    [RollenArt.SYSADMIN]: IMSESRoleType.ADMINISTRATOR,
 };
 
 // Determines order of roles.
@@ -63,36 +76,35 @@ export class ItsLearningPersonsEventHandler {
             return this.logger.info('Not enabled, ignoring event.');
         }
 
-        await this.updatePerson(event.person, event.currentKontexte);
+        const shouldDelete: boolean = await this.updatePerson(event.person, event.currentKontexte);
+
+        await this.deleteMemberships(event.person, event.removedKontexte);
+
+        await this.addMemberships(event.person, event.newKontexte);
+
+        if (shouldDelete) {
+            await this.deletePerson(event.person.id);
+        }
     }
 
     /**
      * Updates the person based on the current personenkontexte
+     * @returns Returns true, if the person should be deleted
      */
     public async updatePerson(
         person: PersonenkontextUpdatedPersonData,
         personenkontexte: PersonenkontextUpdatedData[],
-    ): Promise<void> {
+    ): Promise<boolean> {
         // Use mutex because multiple personenkontexte can be created at once
         return this.mutex.runExclusive(async () => {
             // If no personenkontexte exist, delete the person from itsLearning
             if (personenkontexte.length === 0) {
                 this.logger.info(`No Personenkontexte found for Person ${person.id}, deleting from itsLearning.`);
 
-                const deleteResult: Result<void, DomainError> = await this.itsLearningService.send(
-                    new DeletePersonAction(person.id),
-                );
-
-                if (deleteResult.ok) {
-                    this.logger.info(`Person deleted.`);
-                } else {
-                    this.logger.error(`Could not delete person from itsLearning.`);
-                }
-
-                return;
+                return true;
             }
 
-            const targetRole: ItsLearningRoleType = this.determineItsLearningRole(personenkontexte);
+            const targetRole: IMSESInstitutionRoleType = this.determineItsLearningRole(personenkontexte);
 
             const personResult: Result<PersonResponse, DomainError> = await this.itsLearningService.send(
                 new ReadPersonAction(person.id),
@@ -100,11 +112,13 @@ export class ItsLearningPersonsEventHandler {
 
             // If user already exists in itsLearning and has the correct role, don't send update
             if (personResult.ok && personResult.value.institutionRole === targetRole) {
-                return this.logger.info('Person already exists with correct role');
+                this.logger.info('Person already exists with correct role');
+                return false;
             }
 
             if (!person.referrer) {
-                return this.logger.error(`Person with ID ${person.id} has no username!`);
+                this.logger.error(`Person with ID ${person.id} has no username!`);
+                return false;
             }
 
             const createAction: CreatePersonAction = new CreatePersonAction({
@@ -118,10 +132,83 @@ export class ItsLearningPersonsEventHandler {
             const createResult: Result<void, DomainError> = await this.itsLearningService.send(createAction);
 
             if (!createResult.ok) {
-                return this.logger.error(`Person with ID ${person.id} could not be sent to itsLearning!`);
+                this.logger.error(`Person with ID ${person.id} could not be sent to itsLearning!`);
+                return false;
             }
 
-            return this.logger.info(`Person with ID ${person.id} created in itsLearning!`);
+            this.logger.info(`Person with ID ${person.id} created in itsLearning!`);
+            return false;
+        });
+    }
+
+    public async deleteMemberships(
+        person: PersonenkontextUpdatedPersonData,
+        deletedPersonenkontexte: PersonenkontextUpdatedData[],
+    ): Promise<void> {
+        if (deletedPersonenkontexte.length === 0) {
+            return;
+        }
+
+        // Use mutex because multiple personenkontexte can be deleted at once
+        return this.mutex.runExclusive(async () => {
+            const createAction: DeleteMembershipsAction = new DeleteMembershipsAction(
+                deletedPersonenkontexte.map((pk: PersonenkontextUpdatedData) => pk.id),
+            );
+
+            const deleteResult: Result<void, DomainError> = await this.itsLearningService.send(createAction);
+
+            if (!deleteResult.ok) {
+                return this.logger.error(
+                    `Error while deleting ${deletedPersonenkontexte.length} memberships for person ${person.id}!`,
+                );
+            }
+
+            return this.logger.info(`Deleted ${deletedPersonenkontexte.length} memberships for person ${person.id}!`);
+        });
+    }
+
+    public async addMemberships(
+        person: PersonenkontextUpdatedPersonData,
+        newPersonenkontexte: PersonenkontextUpdatedData[],
+    ): Promise<void> {
+        if (newPersonenkontexte.length === 0) {
+            return;
+        }
+
+        // Use mutex because multiple personenkontexte can be created at once
+        return this.mutex.runExclusive(async () => {
+            const createAction: CreateMembershipsAction = new CreateMembershipsAction(
+                newPersonenkontexte.map((pk: PersonenkontextUpdatedData) => ({
+                    id: pk.id,
+                    personId: person.id,
+                    groupId: pk.orgaId,
+                    roleType: ROLLENART_TO_IMSES_ROLE[pk.rolle],
+                })),
+            );
+
+            const createResult: Result<void, DomainError> = await this.itsLearningService.send(createAction);
+
+            if (!createResult.ok) {
+                return this.logger.error(
+                    `Error while creating ${newPersonenkontexte.length} memberships for person ${person.id}!`,
+                );
+            }
+
+            return this.logger.info(`Created ${newPersonenkontexte.length} memberships for person ${person.id}!`);
+        });
+    }
+
+    public async deletePerson(personID: PersonID): Promise<void> {
+        return this.mutex.runExclusive(async () => {
+            const deleteResult: Result<void, DomainError> = await this.itsLearningService.send(
+                new DeletePersonAction(personID),
+            );
+
+            if (deleteResult.ok) {
+                this.logger.info(`Person deleted.`);
+            } else {
+                this.logger.error(`Could not delete person from itsLearning.`);
+            }
         });
     }
 
@@ -130,7 +217,7 @@ export class ItsLearningPersonsEventHandler {
      * @param personenkontexte
      * @returns
      */
-    private determineItsLearningRole(personenkontexte: PersonenkontextUpdatedData[]): ItsLearningRoleType {
+    private determineItsLearningRole(personenkontexte: PersonenkontextUpdatedData[]): IMSESInstitutionRoleType {
         let highestRole: number = 0;
 
         for (const { rolle } of personenkontexte) {
