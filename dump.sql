@@ -1,7 +1,6 @@
-/*!999999\- enable the sandbox mode */
--- MariaDB dump 10.19-11.4.2-MariaDB, for debian-linux-gnu (x86_64)
+-- MariaDB dump 10.19  Distrib 10.11.6-MariaDB, for debian-linux-gnu (x86_64)
 --
--- Host: localhost    Database:
+-- Host: mariadb    Database: ducsxqm001
 -- ------------------------------------------------------
 -- Server version	11.4.2-MariaDB-ubu2404
 
@@ -14,7 +13,7 @@
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*M!100616 SET @OLD_NOTE_VERBOSITY=@@NOTE_VERBOSITY, NOTE_VERBOSITY=0 */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
 -- Current Database: `ducsxqm001`
@@ -30,7 +29,7 @@ USE `ducsxqm001`;
 
 DROP SEQUENCE IF EXISTS `audit_seq`;
 CREATE SEQUENCE `audit_seq` start with 1 minvalue 1 maxvalue 9223372036854775806 increment by 0 cache 1000 nocycle ENGINE=InnoDB;
-SELECT SETVAL(`audit_seq`, 1001, 0);
+SELECT SETVAL(`audit_seq`, 3001, 0);
 
 --
 -- Sequence structure for `authcache_seq`
@@ -182,7 +181,7 @@ SELECT SETVAL(`periodictaskopt_seq`, 1, 0);
 
 DROP SEQUENCE IF EXISTS `policy_seq`;
 CREATE SEQUENCE `policy_seq` start with 1 minvalue 1 maxvalue 9223372036854775806 increment by 0 cache 1000 nocycle ENGINE=InnoDB;
-SELECT SETVAL(`policy_seq`, 1, 0);
+SELECT SETVAL(`policy_seq`, 1001, 0);
 
 --
 -- Sequence structure for `policycondition_seq`
@@ -190,7 +189,7 @@ SELECT SETVAL(`policy_seq`, 1, 0);
 
 DROP SEQUENCE IF EXISTS `policycondition_seq`;
 CREATE SEQUENCE `policycondition_seq` start with 1 minvalue 1 maxvalue 9223372036854775806 increment by 0 cache 1000 nocycle ENGINE=InnoDB;
-SELECT SETVAL(`policycondition_seq`, 1, 0);
+SELECT SETVAL(`policycondition_seq`, 1001, 0);
 
 --
 -- Sequence structure for `privacyideaserver_seq`
@@ -294,7 +293,7 @@ SELECT SETVAL(`subscription_seq`, 1, 0);
 
 DROP SEQUENCE IF EXISTS `token_seq`;
 CREATE SEQUENCE `token_seq` start with 1 minvalue 1 maxvalue 9223372036854775806 increment by 0 cache 1000 nocycle ENGINE=InnoDB;
-SELECT SETVAL(`token_seq`, 1001, 0);
+SELECT SETVAL(`token_seq`, 2001, 0);
 
 --
 -- Sequence structure for `tokengroup_seq`
@@ -310,7 +309,7 @@ SELECT SETVAL(`tokengroup_seq`, 1, 0);
 
 DROP SEQUENCE IF EXISTS `tokeninfo_seq`;
 CREATE SEQUENCE `tokeninfo_seq` start with 1 minvalue 1 maxvalue 9223372036854775806 increment by 0 cache 1000 nocycle ENGINE=InnoDB;
-SELECT SETVAL(`tokeninfo_seq`, 1001, 0);
+SELECT SETVAL(`tokeninfo_seq`, 2001, 0);
 
 --
 -- Sequence structure for `tokenowner_seq`
@@ -318,7 +317,7 @@ SELECT SETVAL(`tokeninfo_seq`, 1001, 0);
 
 DROP SEQUENCE IF EXISTS `tokenowner_seq`;
 CREATE SEQUENCE `tokenowner_seq` start with 1 minvalue 1 maxvalue 9223372036854775806 increment by 0 cache 1000 nocycle ENGINE=InnoDB;
-SELECT SETVAL(`tokenowner_seq`, 1001, 0);
+SELECT SETVAL(`tokenowner_seq`, 2001, 0);
 
 --
 -- Sequence structure for `tokenrealm_seq`
@@ -326,7 +325,7 @@ SELECT SETVAL(`tokenowner_seq`, 1001, 0);
 
 DROP SEQUENCE IF EXISTS `tokenrealm_seq`;
 CREATE SEQUENCE `tokenrealm_seq` start with 1 minvalue 1 maxvalue 9223372036854775806 increment by 0 cache 1000 nocycle ENGINE=InnoDB;
-SELECT SETVAL(`tokenrealm_seq`, 1001, 0);
+SELECT SETVAL(`tokenrealm_seq`, 2001, 0);
 
 --
 -- Sequence structure for `tokentokengroup_seq`
@@ -366,7 +365,7 @@ CREATE TABLE `admin` (
 LOCK TABLES `admin` WRITE;
 /*!40000 ALTER TABLE `admin` DISABLE KEYS */;
 INSERT INTO `admin` VALUES
-('admin','$argon2id$v=19$m=65536,t=9,p=4$fc8ZI8S411qL0bqXUirFWA$j9/5vfS3pJvB5FsKNVs6o9WCd7jU3++FPIO6rfkqNHM',NULL);
+('admin','$argon2id$v=19$m=65536,t=9,p=4$xFirNQYAoNTa2/sfQ6j1fg$0yCbSQDaXbwumcdDNsO+KWFEIXkw3Hi0FWyA5+7gzF0',NULL);
 /*!40000 ALTER TABLE `admin` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -548,7 +547,7 @@ CREATE TABLE `config` (
 LOCK TABLES `config` WRITE;
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` VALUES
-('__timestamp__','1722001250','','config timestamp. last changed.');
+('__timestamp__','1723715017','','config timestamp. last changed.');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -984,6 +983,13 @@ CREATE TABLE `pidea_audit` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+--
+-- Dumping data for table `pidea_audit`
+--
+
+LOCK TABLES `pidea_audit` WRITE;
+
+UNLOCK TABLES;
 
 --
 -- Table structure for table `policy`
@@ -1019,6 +1025,8 @@ CREATE TABLE `policy` (
 
 LOCK TABLES `policy` WRITE;
 /*!40000 ALTER TABLE `policy` DISABLE KEYS */;
+INSERT INTO `policy` VALUES
+(1,1,0,'self-service','enrollment','verify_enrollment=totp hotp','','','','','','','','',1);
 /*!40000 ALTER TABLE `policy` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1049,6 +1057,9 @@ CREATE TABLE `policycondition` (
 
 LOCK TABLES `policycondition` WRITE;
 /*!40000 ALTER TABLE `policycondition` DISABLE KEYS */;
+INSERT INTO `policycondition` VALUES
+(9,1,'HTTP Request header','SelfService','equals','true',1),
+(10,1,'tokeninfo','tokenkind','equals','software',0);
 /*!40000 ALTER TABLE `policycondition` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1199,7 +1210,7 @@ INSERT INTO `resolverconfig` VALUES
 (4,2,'Port','3306','int',''),
 (5,2,'Database','ducsxqm001','string',''),
 (6,2,'User','admin','string',''),
-(7,2,'Password','ec3af8d866e2795aeb737a197c110014:d2f22c2249998099901c70b20e1db865','password',''),
+(7,2,'Password','3918045e3a9cf5fe4f17421465d1df6d:dcadc530912f7d75607b479910efbef3','password',''),
 (8,2,'Editable','True','int',''),
 (9,2,'Password_Hash_Type','SSHA256','string',''),
 (10,2,'Table','users','string',''),
@@ -1438,7 +1449,9 @@ LOCK TABLES `token` WRITE;
 /*!40000 ALTER TABLE `token` DISABLE KEYS */;
 INSERT INTO `token` VALUES
 (1,'Description of the token','TOTP0000D0CA','totp','','','','','',6,'','616d155aa45fd15aa58501057044258272134bbac3be6600c20a1b67579afc1c9411266b54e9f4317cd7c0162f1b6cb6','c043bcbd75d5b438988ec8becdfaa916',10,1,0,0,0,0,10,1000,''),
-(2,'Description of the token','TOTP0001EFF5','totp','','','','','',6,'','fa47b29c16dbd6459bfadff5afea7d40bc612506c5173c2589558b461a22da0a390502e247bedad9a5dc928256dcd2dc','5f9a4a3d2c5dfa1c8ffb7190f089790a',10,1,0,0,0,0,10,1000,'');
+(2,'Description of the token','TOTP0001EFF5','totp','','','','','',6,'','fa47b29c16dbd6459bfadff5afea7d40bc612506c5173c2589558b461a22da0a390502e247bedad9a5dc928256dcd2dc','5f9a4a3d2c5dfa1c8ffb7190f089790a',10,1,0,0,0,0,10,1000,''),
+(1006,'Description of the token','TOTP0002791A','totp','','','','','',6,'','f2bfc0fdc57e3bd77665eaa09752f3328cd4caea862ecf11026a172237af84fc1c05db6c057b1dbdbd98428fd810a01f','8d33cb6948b781f375fc3d402d459b48',10,1,0,0,0,0,10,1000,''),
+(1010,'Description of the token','TOTP00031FFD','totp','','','','','',6,'','1ef4a4a0be309dfc1fb8535e3c51f08a26331be021c05c4f55c0d30223d81638456df268f9c770ed7a762e9758539236','928e63527581dfbe698e126d19c8f1ca',10,1,0,0,0,0,10,1000,'');
 /*!40000 ALTER TABLE `token` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1504,7 +1517,17 @@ INSERT INTO `tokeninfo` VALUES
 (7,'hashlib','sha1',NULL,NULL,2),
 (8,'timeWindow','180','','',2),
 (9,'timeShift','0.0','','',2),
-(10,'timeStep','30','','',2);
+(10,'timeStep','30','','',2),
+(1026,'tokenkind','software','','',1006),
+(1027,'hashlib','sha1',NULL,NULL,1006),
+(1028,'timeWindow','180','','',1006),
+(1029,'timeShift','0.0','','',1006),
+(1030,'timeStep','30','','',1006),
+(1046,'tokenkind','software','','',1010),
+(1047,'hashlib','sha1',NULL,NULL,1010),
+(1048,'timeWindow','180','','',1010),
+(1049,'timeShift','0.0','','',1010),
+(1050,'timeStep','30','','',1010);
 /*!40000 ALTER TABLE `tokeninfo` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1539,7 +1562,9 @@ LOCK TABLES `tokenowner` WRITE;
 /*!40000 ALTER TABLE `tokenowner` DISABLE KEYS */;
 INSERT INTO `tokenowner` VALUES
 (1,1,'mariadb_resolver','1',1),
-(2,2,'mariadb_resolver','2',1);
+(2,2,'mariadb_resolver','2',1),
+(1006,1006,'mariadb_resolver','4',1),
+(1010,1010,'mariadb_resolver','5',1);
 /*!40000 ALTER TABLE `tokenowner` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1570,7 +1595,9 @@ LOCK TABLES `tokenrealm` WRITE;
 /*!40000 ALTER TABLE `tokenrealm` DISABLE KEYS */;
 INSERT INTO `tokenrealm` VALUES
 (2,1,1),
-(4,2,1);
+(4,2,1),
+(1014,1006,1),
+(1026,1010,1);
 /*!40000 ALTER TABLE `tokenrealm` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1645,7 +1672,7 @@ CREATE TABLE `users` (
   `username` varchar(255) NOT NULL,
   PRIMARY KEY (`userid`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1656,7 +1683,10 @@ LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
 (1,'autotester'),
-(2,'faltmann');
+(2,'faltmann'),
+(5,'lmuellermeier'),
+(4,'mclassen'),
+(3,'test');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -1667,6 +1697,6 @@ UNLOCK TABLES;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-07-26 13:52:09
+-- Dump completed on 2024-08-16  9:46:11
