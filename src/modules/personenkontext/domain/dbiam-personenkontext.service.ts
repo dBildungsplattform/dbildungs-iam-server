@@ -32,7 +32,7 @@ export class DBiamPersonenkontextService {
             this.rolleRepo,
         );
 
-        // Checks that the sent personnekontext is of type LERN 
+        // Checks that the sent personnekontext is of type LERN
         //(Only returns an error if the person has some kontext of type LERN already and the sent PK isn't)
         const nurRollenartLern: CheckRollenartLernSpecification = new CheckRollenartLernSpecification(
             this.personenkontextRepo,
