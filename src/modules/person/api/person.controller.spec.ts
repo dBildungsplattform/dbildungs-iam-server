@@ -759,8 +759,8 @@ describe('PersonController', () => {
         describe('when locking a user is successful', () => {
             const person: Person<true> = getPerson();
             const lockUserBodyParams: LockUserBodyParams = {
-                lock: false,
-                locked_from: '2024-01-01T00:00:00Z',
+                lock: true,
+                locked_from: 'Theo Tester',
             };
             it('should return a success message', async () => {
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
@@ -781,8 +781,8 @@ describe('PersonController', () => {
         describe('when unlocking a user is successful', () => {
             const person: Person<true> = getPerson();
             const lockUserBodyParams: LockUserBodyParams = {
-                lock: true,
-                locked_from: '2024-01-01T00:00:00Z',
+                lock: false,
+                locked_from: 'Theo Tester',
             };
             it('should return a success message', async () => {
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
