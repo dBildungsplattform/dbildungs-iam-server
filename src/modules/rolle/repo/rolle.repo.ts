@@ -157,18 +157,28 @@ export class RolleRepo {
         return rollenMap;
     }
 
-    public async findByName(searchStr: string, limit?: number, offset?: number): Promise<Option<Rolle<true>[]>> {
+    public async findByName(
+        searchStr: string,
+        includeTechnische: boolean,
+        limit?: number,
+        offset?: number,
+    ): Promise<Option<Rolle<true>[]>> {
+        const technischeQuery: { istTechnisch?: false } = includeTechnische ? {} : { istTechnisch: false };
+
         const rollen: Option<RolleEntity[]> = await this.em.find(
             this.entityName,
-            { name: { $ilike: '%' + searchStr + '%' } },
+            { name: { $ilike: '%' + searchStr + '%' }, ...technischeQuery },
             { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit, offset: offset },
         );
         return rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
     }
 
-    public async find(limit?: number, offset?: number): Promise<Rolle<true>[]> {
+    public async find(includeTechnische: boolean, limit?: number, offset?: number): Promise<Rolle<true>[]> {
+        const technischeQuery: { istTechnisch?: false } = includeTechnische ? {} : { istTechnisch: false };
+
         const rollen: RolleEntity[] = await this.em.findAll(RolleEntity, {
             populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+            where: technischeQuery,
             limit: limit,
             offset: offset,
         });
@@ -178,6 +188,7 @@ export class RolleRepo {
 
     public async findRollenAuthorized(
         permissions: PersonPermissions,
+        includeTechnische: boolean,
         searchStr?: string,
         limit?: number,
         offset?: number,
@@ -196,11 +207,15 @@ export class RolleRepo {
         const organisationWhereClause: {
             administeredBySchulstrukturknoten: { $in: OrganisationID[] };
         } = { administeredBySchulstrukturknoten: { $in: orgIdsWithRecht } };
+
+        const technischeQuery: { istTechnisch?: false } = includeTechnische ? {} : { istTechnisch: false };
+
         if (searchStr) {
             [rollen, total] = await this.em.findAndCount(
                 this.entityName,
                 {
                     name: { $ilike: '%' + searchStr + '%' },
+                    ...technischeQuery,
                     ...organisationWhereClause,
                 },
                 { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit, offset: offset },
@@ -208,7 +223,10 @@ export class RolleRepo {
         } else {
             [rollen, total] = await this.em.findAndCount(
                 this.entityName,
-                { ...organisationWhereClause },
+                {
+                    ...technischeQuery,
+                    ...organisationWhereClause,
+                },
                 {
                     populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
                     limit: limit,
