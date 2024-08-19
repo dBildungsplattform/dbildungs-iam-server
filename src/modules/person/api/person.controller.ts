@@ -498,10 +498,6 @@ export class PersonController {
                 ),
             );
         }
-        if (!lockUserBodyParams.lock) {
-            return new PersonLockResponse('User has been successfully locked.');
-        } else {
-            return new PersonLockResponse('User has been successfully unlocked.');
-        }
+        return new PersonLockResponse(`User has been successfully ${lockUserBodyParams.lock ? '' : 'un'}locked.`);
     }
 }
