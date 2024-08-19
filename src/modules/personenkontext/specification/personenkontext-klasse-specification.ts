@@ -19,14 +19,14 @@ export class PersonenkontextKlasseSpecification {
     ) {}
 
     public async returnsError(p: Personenkontext<boolean>): Promise<Option<DomainError>> {
+        if (!(await this.nurRollenartLern.checkRollenartLern(p))) {
+            return new UpdateInvalidRollenartForLernError();
+        }
         if (!(await this.nurLehrUndLernAnKlasse.isSatisfiedBy(p))) {
             return new NurLehrUndLernAnKlasseError();
         }
         if (!(await this.gleicheRolleAnKlasseWieSchule.isSatisfiedBy(p))) {
             return new GleicheRolleAnKlasseWieSchuleError();
-        }
-        if (!(await this.nurRollenartLern.checkRollenartLern(p))) {
-            return new UpdateInvalidRollenartForLernError();
         }
         return undefined;
     }
