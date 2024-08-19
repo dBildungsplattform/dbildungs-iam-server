@@ -19,7 +19,7 @@ import { DeleteMembershipsAction } from '../actions/delete-memberships.action.js
 import { DeletePersonAction } from '../actions/delete-person.action.js';
 import { PersonResponse, ReadPersonAction } from '../actions/read-person.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
-import { IMSESInstitutionRoleType, IMSESRoleType } from '../types/role.enum.js';
+import { IMSESRoleType, IMSESInstitutionRoleType } from '../types/role.enum.js';
 
 // Maps our roles to itsLearning roles
 const ROLLENART_TO_ITSLEARNING_ROLE: Record<RollenArt, IMSESInstitutionRoleType> = {
