@@ -202,6 +202,7 @@ describe('PersonenkontexteUpdate', () => {
                 const mapRollen: Map<string, Rolle<true>> = new Map();
                 mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -232,6 +233,7 @@ describe('PersonenkontexteUpdate', () => {
                 const mapRollen: Map<string, Rolle<true>> = new Map();
                 mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -258,6 +260,7 @@ describe('PersonenkontexteUpdate', () => {
 
                 const mapRollen: Map<string, Rolle<true>> = new Map();
                 mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
 
@@ -286,6 +289,7 @@ describe('PersonenkontexteUpdate', () => {
 
                 const mapRollen: Map<string, Rolle<true>> = new Map();
                 mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
 
@@ -318,6 +322,7 @@ describe('PersonenkontexteUpdate', () => {
                 const mapRollen: Map<string, Rolle<true>> = new Map();
                 mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
@@ -337,6 +342,7 @@ describe('PersonenkontexteUpdate', () => {
 
                 const mapRollen: Map<string, Rolle<true>> = new Map();
                 mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
 
@@ -364,6 +370,7 @@ describe('PersonenkontexteUpdate', () => {
                 const mapRollen: Map<string, Rolle<true>> = new Map();
                 mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
@@ -389,6 +396,7 @@ describe('PersonenkontexteUpdate', () => {
                 const mapRollen: Map<string, Rolle<true>> = new Map();
                 mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
@@ -408,6 +416,7 @@ describe('PersonenkontexteUpdate', () => {
 
                 const mapRollen: Map<string, Rolle<true>> = new Map();
                 mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
 
@@ -434,6 +443,7 @@ describe('PersonenkontexteUpdate', () => {
 
                 const mapRollen: Map<string, Rolle<true>> = new Map();
                 mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
 

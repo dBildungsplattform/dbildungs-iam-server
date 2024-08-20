@@ -248,23 +248,31 @@ export class PersonenkontexteUpdate {
         existingPKs: Personenkontext<true>[],
         sentPKs: Personenkontext<boolean>[],
     ): Promise<Option<PersonenkontexteUpdateError>> {
+        // Check if the sent PKs have any LERN roles
+        const sentRollen: Rolle<true>[] = await this.getUniqueRollenFromPersonenkontexte(sentPKs);
+        const hasAnyLernInSent: boolean = sentRollen.some((rolle: Rolle<true>) => rolle.rollenart === RollenArt.LERN);
+
+        // Check if existing PKs have LERN roles
         const hasLernInExisting: boolean = await this.hasAnyPersonenkontextWithRollenartLern(existingPKs);
 
-        const sentRollen: Rolle<true>[] = await this.getUniqueRollenFromPersonenkontexte(sentPKs);
+        // Early return: If neither the existing PKs nor the sent PKs contain LERN roles, it's safe to return undefined
+        if (!hasLernInExisting && !hasAnyLernInSent) {
+            return undefined;
+        }
 
+        // Check if sent PKs contain only LERN roles
         const hasOnlyRollenartLern: boolean = sentRollen.every(
             (rolle: Rolle<true>) => rolle.rollenart === RollenArt.LERN,
         );
 
-        // Check if existing PKs have LERN roles and sent PKs mix LERN with other types
+        // If there are LERN roles in existing PKs, ensure sent PKs do not mix LERN with other types
         if (hasLernInExisting && !hasOnlyRollenartLern) {
             return new UpdateInvalidRollenartForLernError();
         }
 
         // Check if sent PKs alone mix LERN and other types
         const containsMixedRollen: boolean =
-            sentRollen.some((rolle: Rolle<true>) => rolle.rollenart === RollenArt.LERN) &&
-            sentRollen.some((rolle: Rolle<true>) => rolle.rollenart !== RollenArt.LERN);
+            hasAnyLernInSent && sentRollen.some((rolle: Rolle<true>) => rolle.rollenart !== RollenArt.LERN);
 
         if (containsMixedRollen) {
             return new UpdateInvalidRollenartForLernError();
