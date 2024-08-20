@@ -28,7 +28,9 @@
         "db:migration-init": "npm run start:console -- db migration-init",
         "db:migration-create": "npm run start:console -- db migration-create",
         "db:migration-apply": "npm run start:console -- db migration-apply",
-        "setup": "npm run db:migration-apply && npm run db:seed dev"
+        "setup": "npm run db:migration-apply && npm run db:seed dev",
+        "db:seedingdata-generate": "npm run start:console -- db seedingdata-generate ./seeding/dev/01/ numberOfSchools=50 classesPerSchool=12"
+
     },
     "dependencies": {
         "@automapper/classes": "^8.8.1",
