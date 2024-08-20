@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 //import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import {
+    PersonenkontextUpdatedData,
+    PersonenkontextUpdatedEvent,
+} from '../../../shared/events/personenkontext-updated.event.js';
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
@@ -20,19 +23,15 @@ export class KCtest {
         private readonly KeycloackService: KeycloakUserService,
     ) {}
 
-    public async fetchFilteredRolesDifferenceDelete(
-        NewrolleId: string | string[],
-        DeleteRolle: string | string[],
+    public async fetchFilteredRolesDifference(
+        currentRoles: string | string[],
+        changingRole: string | string[],
     ): Promise<(KeycloakRole | undefined)[]> {
         const allRolleServiceProviders: RolleServiceProviderEntity[] =
-            await this.serviceRepo.fetchRolleServiceProvidersWithoutPerson({
-                rolleId: DeleteRolle,
-            });
+            await this.serviceRepo.fetchRolleServiceProvidersWithoutPerson(changingRole);
 
         const specificRolleServiceProviders: RolleServiceProviderEntity[] =
-            await this.serviceRepo.fetchRolleServiceProvidersWithoutPerson({
-                rolleId: NewrolleId,
-            });
+            await this.serviceRepo.fetchRolleServiceProvidersWithoutPerson(currentRoles);
 
         const allServiceProvidersNames: Set<KeycloakRole | undefined> = new Set(
             allRolleServiceProviders.map((element: RolleServiceProviderEntity) => element.serviceProvider.keycloakRole),
@@ -58,12 +57,12 @@ export class KCtest {
         let KeycloackRoleNames: (KeycloakRole | undefined)[];
         const currentRolleIDs: RolleID[] =
             event.currentKontexte
-                ?.map((kontext) => kontext.rolleId)
-                .filter((id) => id !== undefined && id !== newRolle) || [];
+                ?.map((kontext: PersonenkontextUpdatedData) => kontext.rolleId)
+                .filter((id: RolleID) => id !== undefined && id !== newRolle) || [];
         const deleteRolle: RolleID | undefined = event.removedKontexte?.[0]?.rolleId;
 
         if (event.currentKontexte?.length && newRolle !== undefined) {
-            KeycloackRoleNames = await this.fetchFilteredRolesDifferenceDelete(currentRolleIDs, newRolle);
+            KeycloackRoleNames = await this.fetchFilteredRolesDifference(currentRolleIDs, newRolle);
 
             if (KeycloackRoleNames && event.person.keycloakUserId) {
                 const filteredKeycloackRoleNames: KeycloakRole[] = KeycloackRoleNames.filter(
@@ -77,7 +76,7 @@ export class KCtest {
         }
 
         if (event.removedKontexte?.length && deleteRolle !== undefined) {
-            KeycloackRoleNames = await this.fetchFilteredRolesDifferenceDelete(currentRolleIDs, deleteRolle);
+            KeycloackRoleNames = await this.fetchFilteredRolesDifference(currentRolleIDs, deleteRolle);
 
             if (KeycloackRoleNames && event.person.keycloakUserId) {
                 const filteredKeycloackRoleNames: KeycloakRole[] = KeycloackRoleNames.filter(

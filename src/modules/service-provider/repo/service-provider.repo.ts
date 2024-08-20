@@ -7,6 +7,7 @@ import { CreateGroupAndRoleEvent } from '../../../shared/events/kc-group-and-rol
 import { EventService } from '../../../core/eventbus/index.js';
 
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
@@ -138,11 +139,9 @@ export class ServiceProviderRepo {
         return mapEntityToAggregate(serviceProviderEntity);
     }
 
-    public async fetchRolleServiceProvidersWithoutPerson(params: {
-        rolleId: string | string[];
-    }): Promise<RolleServiceProviderEntity[]> {
-        const { rolleId } = params;
-
+    public async fetchRolleServiceProvidersWithoutPerson(
+        rolleId: RolleID | RolleID[],
+    ): Promise<RolleServiceProviderEntity[]> {
         return this.em.find(
             RolleServiceProviderEntity,
             {
