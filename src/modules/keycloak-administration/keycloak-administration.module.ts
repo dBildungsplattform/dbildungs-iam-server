@@ -15,7 +15,7 @@ import { PersonRepository } from '../person/persistence/person.repository.js';
 //import { KeyclockServiceProviderEventHandler } from './event-handlers/keycloack-service-provider.event-handler.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextFactory } from '../personenkontext/domain/personenkontext.factory.js';
-import { KCtest } from './event-handlers/KY-test.js';
+import { KCtest } from './event-handlers/keycloack-service-provider-update.event-handler.js';
 
 @Module({
     imports: [LoggerModule.register(KeycloakAdministrationModule.name), KeycloakConfigModule],

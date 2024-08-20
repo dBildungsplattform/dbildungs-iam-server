@@ -160,7 +160,7 @@ export class ServiceProviderRepo {
     }
 
     public async fetchRolleServiceProvidersWithoutPerson(params: {
-        rolleId: string;
+        rolleId: string | string[];
         excludeRolleId?: boolean;
     }): Promise<RolleServiceProviderEntity[]> {
         const { rolleId, excludeRolleId = false } = params;
@@ -169,7 +169,13 @@ export class ServiceProviderRepo {
             RolleServiceProviderEntity,
             {
                 rolle: {
-                    id: excludeRolleId ? { $ne: rolleId } : rolleId,
+                    id: Array.isArray(rolleId)
+                        ? excludeRolleId
+                            ? { $nin: rolleId }
+                            : { $in: rolleId }
+                        : excludeRolleId
+                          ? { $ne: rolleId }
+                          : rolleId,
                 },
             },
             {
