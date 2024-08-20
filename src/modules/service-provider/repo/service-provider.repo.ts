@@ -50,11 +50,11 @@ type ServiceProviderFindOptions = {
     withLogo?: boolean;
 };
 
-type FetchRolleServiceProvidersParams = {
-    personId: string;
-    rolleId: string;
-    excludeRolleId?: boolean;
-};
+// type FetchRolleServiceProvidersParams = {
+//     personId: string;
+//     rolleId: string;
+//     excludeRolleId?: boolean;
+// };
 
 @Injectable()
 export class ServiceProviderRepo {
@@ -138,44 +138,16 @@ export class ServiceProviderRepo {
         return mapEntityToAggregate(serviceProviderEntity);
     }
 
-    public async fetchRolleServiceProviders(
-        params: FetchRolleServiceProvidersParams,
-    ): Promise<RolleServiceProviderEntity[]> {
-        const { personId, rolleId, excludeRolleId = false }: FetchRolleServiceProvidersParams = params;
-
-        return this.em.find(
-            RolleServiceProviderEntity,
-            {
-                rolle: {
-                    id: excludeRolleId ? { $ne: rolleId } : rolleId,
-                    personenKontexte: {
-                        personId: personId,
-                    },
-                },
-            },
-            {
-                populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
-            },
-        );
-    }
-
     public async fetchRolleServiceProvidersWithoutPerson(params: {
         rolleId: string | string[];
-        excludeRolleId?: boolean;
     }): Promise<RolleServiceProviderEntity[]> {
-        const { rolleId, excludeRolleId = false } = params;
+        const { rolleId } = params;
 
         return this.em.find(
             RolleServiceProviderEntity,
             {
                 rolle: {
-                    id: Array.isArray(rolleId)
-                        ? excludeRolleId
-                            ? { $nin: rolleId }
-                            : { $in: rolleId }
-                        : excludeRolleId
-                          ? { $ne: rolleId }
-                          : rolleId,
+                    id: Array.isArray(rolleId) ? { $in: rolleId } : rolleId,
                 },
             },
             {
