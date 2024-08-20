@@ -146,7 +146,9 @@ export class KCtest {
         const newRolle: RolleID | undefined = event.newKontexte?.[0]?.rolleId;
         let KeycloackRoleNames: (KeycloakRole | undefined)[];
         const currentRolleIDs: RolleID[] =
-            event.currentKontexte?.map((kontext) => kontext.rolleId).filter((id) => id !== undefined) || [];
+            event.currentKontexte
+                ?.map((kontext) => kontext.rolleId)
+                .filter((id) => id !== undefined && id !== newRolle) || [];
         const deleteRolle: RolleID | undefined = event.removedKontexte?.[0]?.rolleId;
 
         if (event.currentKontexte?.length && newRolle !== undefined) {
@@ -158,7 +160,7 @@ export class KCtest {
                 if (personenkontextIdSet.size <= 1) {
                     KeycloackRoleNames = await this.fetchFilteredRoles(event.person.id, newRolle);
                 } else {
-                    KeycloackRoleNames = await this.fetchFilteredRolesDifference(event.person.id, newRolle);
+                    KeycloackRoleNames = await this.fetchFilteredRolesDifferenceDelete(currentRolleIDs, newRolle);
                 }
                 if (KeycloackRoleNames && event.person.keycloakUserId) {
                     const filteredKeycloackRoleNames: KeycloakRole[] = KeycloackRoleNames.filter(
@@ -170,22 +172,22 @@ export class KCtest {
                     );
                 }
             }
-        }
 
-        if (event.removedKontexte?.length && deleteRolle !== undefined) {
-            KeycloackRoleNames = await this.fetchFilteredRolesDifferenceDelete(currentRolleIDs, deleteRolle);
+            if (event.removedKontexte?.length && deleteRolle !== undefined) {
+                KeycloackRoleNames = await this.fetchFilteredRolesDifferenceDelete(currentRolleIDs, deleteRolle);
 
-            if (KeycloackRoleNames && event.person.keycloakUserId) {
-                const filteredKeycloackRoleNames: KeycloakRole[] = KeycloackRoleNames.filter(
-                    (role: string | undefined): role is string => role !== undefined,
-                );
-                await this.KeycloackService.removeRealmRolesFromUser(
-                    event.person.keycloakUserId,
-                    filteredKeycloackRoleNames,
-                );
+                if (KeycloackRoleNames && event.person.keycloakUserId) {
+                    const filteredKeycloackRoleNames: KeycloakRole[] = KeycloackRoleNames.filter(
+                        (role: string | undefined): role is string => role !== undefined,
+                    );
+                    await this.KeycloackService.removeRealmRolesFromUser(
+                        event.person.keycloakUserId,
+                        filteredKeycloackRoleNames,
+                    );
+                }
             }
-        }
 
-        return undefined;
+            return undefined;
+        }
     }
 }
