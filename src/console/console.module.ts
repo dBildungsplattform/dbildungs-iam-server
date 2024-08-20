@@ -25,6 +25,7 @@ import { DbInitMigrationConsole } from './dbmigrate/db-init-migration.console.js
 import { DbCreateMigrationConsole } from './dbmigrate/db-create-migration.console.js';
 import { DbApplyMigrationConsole } from './dbmigrate/db-apply-migration.console.js';
 import { LdapModule } from '../core/ldap/ldap.module.js';
+import { DbSeedDataGeneratorConsole } from './dbseed/db-seed-data-generator.console.js';
 
 @Module({
     imports: [
@@ -90,6 +91,7 @@ import { LdapModule } from '../core/ldap/ldap.module.js';
         DbCreateMigrationConsole,
         DbApplyMigrationConsole,
         UsernameGeneratorService,
+        DbSeedDataGeneratorConsole,
     ],
 })
 export class ConsoleModule {}

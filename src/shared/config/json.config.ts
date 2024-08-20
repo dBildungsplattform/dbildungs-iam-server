@@ -9,6 +9,7 @@ import { LoggingConfig } from './logging.config.js';
 import { RedisConfig } from './redis.config.js';
 import { LdapConfig } from './ldap.config.js';
 import { ItsLearningConfig } from './itslearning.config.js';
+import { OxConfig } from './ox.config.js';
 
 export class JsonConfig {
     @ValidateNested()
@@ -46,4 +47,8 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => ItsLearningConfig)
     public readonly ITSLEARNING!: ItsLearningConfig;
+
+    @ValidateNested()
+    @Type(() => OxConfig)
+    public readonly OX!: OxConfig;
 }
