@@ -8,6 +8,7 @@ import { EventHandler } from '../../../core/eventbus/decorators/event-handler.de
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { KeycloakUserService } from '../domain/keycloak-user.service.js';
 
 export type KontextIdsAndDuplicationFlag = {
     hasDuplicateRolleIds: boolean;
@@ -19,6 +20,7 @@ export class KCtest {
     public constructor(
         //private readonly logger: ClassLogger,
         private readonly serviceRepo: ServiceProviderRepo,
+        private readonly KeycloackService: KeycloakUserService,
     ) {}
 
     public processKontexte(kontexte: PersonenkontextUpdatedData[]): KontextIdsAndDuplicationFlag {
@@ -96,6 +98,7 @@ export class KCtest {
     public async updatePersonenkontexteKCandSP(event: PersonenkontextUpdatedEvent): Promise<void> {
         //this.logger.info(`Received PersonenkontextUpdatedEvent, ${event.person.id}`);
         const firstRolleId: RolleID | undefined = event.newKontexte?.[0]?.rolleId;
+        let KeycloackRoleNames: (KeycloakRole | undefined)[];
 
         if (event.currentKontexte?.length && firstRolleId !== undefined) {
             const { hasDuplicateRolleIds, personenkontextIdSet }: KontextIdsAndDuplicationFlag = this.processKontexte(
@@ -104,9 +107,18 @@ export class KCtest {
 
             if (!hasDuplicateRolleIds) {
                 if (personenkontextIdSet.size <= 1) {
-                    await this.fetchFilteredRoles(event.person.id, firstRolleId);
+                    KeycloackRoleNames = await this.fetchFilteredRoles(event.person.id, firstRolleId);
                 } else {
-                    await this.fetchFilteredRolesDifference(event.person.id, firstRolleId);
+                    KeycloackRoleNames = await this.fetchFilteredRolesDifference(event.person.id, firstRolleId);
+                }
+                if (KeycloackRoleNames && event.person.keycloakUserId) {
+                    const filteredKeycloackRoleNames: KeycloakRole[] = KeycloackRoleNames.filter(
+                        (role: string | undefined): role is string => role !== undefined,
+                    );
+                    await this.KeycloackService.assignRealmRolesToUser(
+                        event.person.keycloakUserId,
+                        filteredKeycloackRoleNames,
+                    );
                 }
             }
         }

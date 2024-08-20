@@ -295,7 +295,7 @@ export class KeycloakUserService {
             const allRoles: RoleRepresentation[] = await kcAdminClientResult.value.roles.find();
             // return all roles instead of calling the DB multiple times KC does not support finding all the roles with one call
             const rolesToAssign: RoleRepresentation[] = allRoles.filter((role: RoleRepresentation) =>
-                roleNames.some((roleName: string) => role.name === `${roleName}-user`),
+                roleNames.some((roleName: string) => role.name === roleName),
             );
 
             const validRoles: RoleRepresentation[] = rolesToAssign.filter(
@@ -361,7 +361,7 @@ export class KeycloakUserService {
         try {
             const allRoles: RoleRepresentation[] = await kcAdminClientResult.value.roles.find();
             const rolesToRemove: RoleRepresentation[] = allRoles.filter((role: RoleRepresentation) =>
-                roleNames.some((roleName: string) => role.name === `${roleName}-user`),
+                roleNames.some((roleName: string) => role.name === roleName),
             );
 
             const validRoles: RoleRepresentation[] = rolesToRemove.filter(
