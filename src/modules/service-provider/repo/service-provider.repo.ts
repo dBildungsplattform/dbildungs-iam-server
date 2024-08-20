@@ -158,4 +158,23 @@ export class ServiceProviderRepo {
             },
         );
     }
+
+    public async fetchRolleServiceProvidersWithoutPerson(params: {
+        rolleId: string;
+        excludeRolleId?: boolean;
+    }): Promise<RolleServiceProviderEntity[]> {
+        const { rolleId, excludeRolleId = false } = params;
+
+        return this.em.find(
+            RolleServiceProviderEntity,
+            {
+                rolle: {
+                    id: excludeRolleId ? { $ne: rolleId } : rolleId,
+                },
+            },
+            {
+                populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
+            },
+        );
+    }
 }
