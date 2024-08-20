@@ -30,7 +30,7 @@ export type PersonCreationParams = {
     username?: string;
     password?: string;
     personalnummer?: string;
-    attributes?: Record<string, string>[];
+    attributes?: Record<string, string>;
     isLocked?: boolean;
 };
 
