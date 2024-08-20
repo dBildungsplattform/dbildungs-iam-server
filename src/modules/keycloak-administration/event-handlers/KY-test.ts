@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 
-import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import {
+    PersonenkontextUpdatedData,
+    PersonenkontextUpdatedEvent,
+} from '../../../shared/events/personenkontext-updated.event.js';
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
@@ -15,47 +18,46 @@ export class KCtest {
         private readonly serviceRepo: ServiceProviderRepo,
     ) {}
 
+    public processKontexte(kontexte: PersonenkontextUpdatedData[]): {
+        hasRolleIdDuplicates: boolean;
+        personenkontextSet: Set<string>;
+    } {
+        const rolleIdSet: Set<string> = new Set<string>();
+        const personenkontextSet: Set<string> = new Set<string>();
+        let hasRolleIdDuplicates: boolean = false;
+
+        for (const kontext of kontexte) {
+            if (kontext.rolleId) {
+                if (rolleIdSet.has(kontext.rolleId)) {
+                    hasRolleIdDuplicates = true;
+                    break;
+                }
+                rolleIdSet.add(kontext.rolleId);
+            }
+            if (kontext.id) {
+                personenkontextSet.add(kontext.id);
+            }
+        }
+
+        return { hasRolleIdDuplicates, personenkontextSet };
+    }
+
     @EventHandler(PersonenkontextUpdatedEvent)
     public async updatePersonenkontexteKCandSP(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(`Received PersonenkontextUpdatedEvent, ${event.person.id}`);
-        //console.log(event.newKontexte);
-        //console.log(event.currentKontexte.);
         const firstRolleId: RolleID | undefined = event.newKontexte?.[0]?.rolleId;
 
         if (event.currentKontexte?.length > 0 && firstRolleId !== undefined) {
-            const rolleIdSet = new Set<string>();
-            const personenkontextSet = new Set<string>();
-            let hasDuplicates = false;
+            const { hasRolleIdDuplicates, personenkontextSet } = this.processKontexte(event.currentKontexte);
 
-            for (const kontext of event.currentKontexte) {
-                if (kontext.rolleId) {
-                    if (rolleIdSet.has(kontext.rolleId)) {
-                        hasDuplicates = true;
-                        break;
-                    }
-                    rolleIdSet.add(kontext.rolleId);
-                }
-            }
-
-            if (!hasDuplicates) {
-                for (const kontext of event.currentKontexte) {
-                    if (kontext.id) {
-                        personenkontextSet.add(kontext.id);
-                    }
-                }
-
-                //const firstRolleId: RolleID | undefined = event.newKontexte[0]?.rolleId;
-                //if (firstRolleId !== undefined) {
+            if (!hasRolleIdDuplicates) {
                 if (personenkontextSet.size <= 1) {
                     await this.serviceRepo.firstOne(event.person.id, firstRolleId);
                 } else {
                     await this.serviceRepo.fetchFilteredRolesDifference(event.person.id, firstRolleId);
                 }
-                //}
             }
         }
-
-        //await this.serviceRepo.fetchall(event.person.id);
 
         return undefined;
     }
