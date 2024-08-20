@@ -24,8 +24,8 @@ export class KCtest {
     ) {}
 
     public async fetchFilteredRolesDifference(
-        currentRoles: string | string[],
-        changingRole: string | string[],
+        currentRoles: RolleID | string[],
+        changingRole: RolleID | string[],
     ): Promise<(KeycloakRole | undefined)[]> {
         const allRolleServiceProviders: RolleServiceProviderEntity[] =
             await this.serviceRepo.fetchRolleServiceProvidersWithoutPerson(changingRole);
@@ -43,7 +43,7 @@ export class KCtest {
             ),
         );
 
-        const updateRole: (string | undefined)[] = Array.from(allServiceProvidersNames).filter(
+        const updateRole: (KeycloakRole | undefined)[] = Array.from(allServiceProvidersNames).filter(
             (role: KeycloakRole | undefined) => !specificServiceProvidersNames.has(role),
         );
 
@@ -51,44 +51,42 @@ export class KCtest {
     }
 
     @EventHandler(PersonenkontextUpdatedEvent)
-    public async updatePersonenkontexteKCandSP(event: PersonenkontextUpdatedEvent): Promise<void> {
-        //this.logger.info(`Received PersonenkontextUpdatedEvent, ${event.person.id}`);
-        const newRolle: RolleID | undefined = event.newKontexte?.[0]?.rolleId;
-        let KeycloackRoleNames: (KeycloakRole | undefined)[];
+    public async updatePersonenkontexteOrDeleteKCandSP(event: PersonenkontextUpdatedEvent): Promise<void> {
+        const { newKontexte, currentKontexte, removedKontexte, person }: PersonenkontextUpdatedEvent = event;
+        const newRolle: RolleID | undefined = newKontexte?.[0]?.rolleId;
+        const deleteRolle: RolleID | undefined = removedKontexte?.[0]?.rolleId;
         const currentRolleIDs: RolleID[] =
-            event.currentKontexte
+            currentKontexte
                 ?.map((kontext: PersonenkontextUpdatedData) => kontext.rolleId)
-                .filter((id: RolleID) => id !== undefined && id !== newRolle) || [];
-        const deleteRolle: RolleID | undefined = event.removedKontexte?.[0]?.rolleId;
+                .filter((id: RolleID) => id && id !== newRolle) || [];
 
-        if (event.currentKontexte?.length && newRolle !== undefined) {
-            KeycloackRoleNames = await this.fetchFilteredRolesDifference(currentRolleIDs, newRolle);
+        if (person.keycloakUserId) {
+            if (newRolle !== undefined && currentKontexte?.length) {
+                await this.updateUserRoles(person.keycloakUserId, currentRolleIDs, newRolle);
+            }
 
-            if (KeycloackRoleNames && event.person.keycloakUserId) {
-                const filteredKeycloackRoleNames: KeycloakRole[] = KeycloackRoleNames.filter(
-                    (role: string | undefined): role is string => role !== undefined,
-                );
-                await this.KeycloackService.assignRealmRolesToUser(
-                    event.person.keycloakUserId,
-                    filteredKeycloackRoleNames,
-                );
+            if (deleteRolle !== undefined && removedKontexte?.length) {
+                await this.updateUserRoles(person.keycloakUserId, currentRolleIDs, deleteRolle, true);
             }
         }
+    }
 
-        if (event.removedKontexte?.length && deleteRolle !== undefined) {
-            KeycloackRoleNames = await this.fetchFilteredRolesDifference(currentRolleIDs, deleteRolle);
-
-            if (KeycloackRoleNames && event.person.keycloakUserId) {
-                const filteredKeycloackRoleNames: KeycloakRole[] = KeycloackRoleNames.filter(
-                    (role: string | undefined): role is string => role !== undefined,
-                );
-                await this.KeycloackService.removeRealmRolesFromUser(
-                    event.person.keycloakUserId,
-                    filteredKeycloackRoleNames,
-                );
+    private async updateUserRoles(
+        userId: string,
+        currentRolleIDs: RolleID[],
+        rolle: RolleID,
+        remove: boolean = false,
+    ): Promise<void> {
+        const roleNames: (string | undefined)[] = await this.fetchFilteredRolesDifference(currentRolleIDs, rolle);
+        if (roleNames) {
+            const filteredRoleNames: string[] = roleNames.filter(
+                (role: KeycloakRole | undefined): role is KeycloakRole => role !== undefined,
+            );
+            if (remove) {
+                await this.KeycloackService.removeRealmRolesFromUser(userId, filteredRoleNames);
+            } else {
+                await this.KeycloackService.assignRealmRolesToUser(userId, filteredRoleNames);
             }
         }
-
-        return undefined;
     }
 }
