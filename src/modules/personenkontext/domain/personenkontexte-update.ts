@@ -248,14 +248,26 @@ export class PersonenkontexteUpdate {
         existingPKs: Personenkontext<true>[],
         sentPKs: Personenkontext<boolean>[],
     ): Promise<Option<PersonenkontexteUpdateError>> {
-        if (await this.hasAnyPersonenkontextWithRollenartLern(existingPKs)) {
-            const sentRollen: Rolle<true>[] = await this.getUniqueRollenFromPersonenkontexte(sentPKs);
-            const hasOnlyRollenartLern: boolean = sentRollen.every(
-                (rolle: Rolle<true>) => rolle.rollenart === RollenArt.LERN,
-            );
-            if (!hasOnlyRollenartLern) {
-                return new UpdateInvalidRollenartForLernError();
-            }
+        const hasLernInExisting: boolean = await this.hasAnyPersonenkontextWithRollenartLern(existingPKs);
+
+        const sentRollen: Rolle<true>[] = await this.getUniqueRollenFromPersonenkontexte(sentPKs);
+
+        const hasOnlyRollenartLern: boolean = sentRollen.every(
+            (rolle: Rolle<true>) => rolle.rollenart === RollenArt.LERN,
+        );
+
+        // Check if existing PKs have LERN roles and sent PKs mix LERN with other types
+        if (hasLernInExisting && !hasOnlyRollenartLern) {
+            return new UpdateInvalidRollenartForLernError();
+        }
+
+        // Check if sent PKs alone mix LERN and other types
+        const containsMixedRollen: boolean =
+            sentRollen.some((rolle: Rolle<true>) => rolle.rollenart === RollenArt.LERN) &&
+            sentRollen.some((rolle: Rolle<true>) => rolle.rollenart !== RollenArt.LERN);
+
+        if (containsMixedRollen) {
+            return new UpdateInvalidRollenartForLernError();
         }
 
         return undefined;
