@@ -50,6 +50,12 @@ type ServiceProviderFindOptions = {
     withLogo?: boolean;
 };
 
+type FetchRolleServiceProvidersParams = {
+    personId: string;
+    rolleId: string;
+    excludeRolleId?: boolean;
+};
+
 @Injectable()
 export class ServiceProviderRepo {
     public constructor(
@@ -132,27 +138,16 @@ export class ServiceProviderRepo {
         return mapEntityToAggregate(serviceProviderEntity);
     }
 
-    public async fetchFilteredRolesDifference(personId: string, rolleId: string): Promise<(string | undefined)[]> {
-        const allRolleServiceProviders = await this.em.find(
-            RolleServiceProviderEntity,
-            {
-                rolle: {
-                    id: { $ne: rolleId },
-                    personenKontexte: {
-                        personId: personId,
-                    },
-                },
-            },
-            {
-                populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
-            },
-        );
+    private async fetchRolleServiceProviders(
+        params: FetchRolleServiceProvidersParams,
+    ): Promise<RolleServiceProviderEntity[]> {
+        const { personId, rolleId, excludeRolleId = false }: FetchRolleServiceProvidersParams = params;
 
-        const rolleServiceProviders = await this.em.find(
+        return this.em.find(
             RolleServiceProviderEntity,
             {
                 rolle: {
-                    id: rolleId,
+                    id: excludeRolleId ? { $ne: rolleId } : rolleId,
                     personenKontexte: {
                         personId: personId,
                     },
@@ -162,40 +157,43 @@ export class ServiceProviderRepo {
                 populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
             },
         );
+    }
+
+    public async fetchFilteredRolesDifference(personId: string, rolleId: string): Promise<(string | undefined)[]> {
+        const allRolleServiceProviders = await this.fetchRolleServiceProviders({
+            personId: personId,
+            rolleId: rolleId,
+            excludeRolleId: true,
+        });
+
+        const specificRolleServiceProviders = await this.fetchRolleServiceProviders({
+            personId: personId,
+            rolleId: rolleId,
+        });
 
         const allServiceProvidersNames = new Set(
             allRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
         );
 
         const specificServiceProvidersNames = new Set(
-            rolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
+            specificRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
         );
 
-        const rolesToUpdate = Array.from(specificServiceProvidersNames).filter(
+        const updateRole = Array.from(specificServiceProvidersNames).filter(
             (role) => !allServiceProvidersNames.has(role),
         );
 
-        return rolesToUpdate;
+        return updateRole;
     }
 
     public async firstOne(personId: string, rolleId: string): Promise<(string | undefined)[]> {
-        const rolleServiceProviders = await this.em.find(
-            RolleServiceProviderEntity,
-            {
-                rolle: {
-                    id: rolleId,
-                    personenKontexte: {
-                        personId: personId,
-                    },
-                },
-            },
-            {
-                populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
-            },
-        );
+        const specificRolleServiceProviders = await this.fetchRolleServiceProviders({
+            personId: personId,
+            rolleId: rolleId,
+        });
 
         const allServiceProvidersNames = new Set(
-            rolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
+            specificRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
         );
 
         return Array.from(allServiceProvidersNames);
