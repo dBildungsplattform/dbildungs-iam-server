@@ -24,6 +24,7 @@ import { Person } from '../../person/domain/person.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { KeycloakConfig } from '../../../shared/config/keycloak.config.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -34,6 +35,7 @@ describe('AuthenticationController', () => {
     let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
+    let keyCloakConfig: KeycloakConfig;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -76,6 +78,7 @@ describe('AuthenticationController', () => {
         authController = module.get(AuthenticationController);
         oidcClient = module.get(OIDC_CLIENT);
         frontendConfig = module.get(ConfigService).getOrThrow<FrontendConfig>('FRONTEND');
+        keyCloakConfig = module.get(ConfigService).getOrThrow<KeycloakConfig>('KEYCLOAK');
         personPermissionsRepoMock = module.get(PersonPermissionsRepo);
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         organisationRepoMock = module.get(OrganisationRepository);
@@ -251,6 +254,18 @@ describe('AuthenticationController', () => {
 
             expect(result).toBeInstanceOf(UserinfoResponse);
             expect(result.birthdate!).toBe(permissions.personFields.geburtsdatum?.toISOString());
+        });
+    });
+
+    describe('ResetPassword', () => {
+        it('should redirect to the correct Keycloak URL', () => {
+            const responseMock: Response = createMock<Response>();
+            const redirectUrl: string = faker.internet.url();
+            const loginHint: string = faker.internet.userName();
+            authController.resetPassword(redirectUrl, loginHint, responseMock);
+            const keyCloakRealm: string = keyCloakConfig.REALM_NAME.toLowerCase();
+            const expectedUrl: string = `${oidcClient.issuer.metadata.authorization_endpoint}?client_id=${keyCloakRealm}&login_hint=${loginHint}&response_type=code&scope=openid&kc_action=UPDATE_PASSWORD&redirect_uri=${redirectUrl}`;
+            expect(responseMock.redirect).toHaveBeenCalledWith(expectedUrl);
         });
     });
 });
