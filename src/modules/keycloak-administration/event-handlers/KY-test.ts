@@ -42,6 +42,46 @@ export class KCtest {
         return { hasRolleIdDuplicates, personenkontextSet };
     }
 
+    public async fetchFilteredRolesDifference(personId: string, rolleId: string): Promise<(string | undefined)[]> {
+        const allRolleServiceProviders = await this.serviceRepo.fetchRolleServiceProviders({
+            personId: personId,
+            rolleId: rolleId,
+            excludeRolleId: true,
+        });
+
+        const specificRolleServiceProviders = await this.serviceRepo.fetchRolleServiceProviders({
+            personId: personId,
+            rolleId: rolleId,
+        });
+
+        const allServiceProvidersNames = new Set(
+            allRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
+        );
+
+        const specificServiceProvidersNames = new Set(
+            specificRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
+        );
+
+        const updateRole = Array.from(specificServiceProvidersNames).filter(
+            (role) => !allServiceProvidersNames.has(role),
+        );
+
+        return updateRole;
+    }
+
+    public async firstOne(personId: string, rolleId: string): Promise<(string | undefined)[]> {
+        const specificRolleServiceProviders = await this.serviceRepo.fetchRolleServiceProviders({
+            personId: personId,
+            rolleId: rolleId,
+        });
+
+        const allServiceProvidersNames = new Set(
+            specificRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
+        );
+
+        return Array.from(allServiceProvidersNames);
+    }
+
     @EventHandler(PersonenkontextUpdatedEvent)
     public async updatePersonenkontexteKCandSP(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(`Received PersonenkontextUpdatedEvent, ${event.person.id}`);
@@ -52,9 +92,9 @@ export class KCtest {
 
             if (!hasRolleIdDuplicates) {
                 if (personenkontextSet.size <= 1) {
-                    await this.serviceRepo.firstOne(event.person.id, firstRolleId);
+                    await this.firstOne(event.person.id, firstRolleId);
                 } else {
-                    await this.serviceRepo.fetchFilteredRolesDifference(event.person.id, firstRolleId);
+                    await this.fetchFilteredRolesDifference(event.person.id, firstRolleId);
                 }
             }
         }

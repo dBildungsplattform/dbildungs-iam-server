@@ -138,7 +138,7 @@ export class ServiceProviderRepo {
         return mapEntityToAggregate(serviceProviderEntity);
     }
 
-    private async fetchRolleServiceProviders(
+    public async fetchRolleServiceProviders(
         params: FetchRolleServiceProvidersParams,
     ): Promise<RolleServiceProviderEntity[]> {
         const { personId, rolleId, excludeRolleId = false }: FetchRolleServiceProvidersParams = params;
@@ -157,45 +157,5 @@ export class ServiceProviderRepo {
                 populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
             },
         );
-    }
-
-    public async fetchFilteredRolesDifference(personId: string, rolleId: string): Promise<(string | undefined)[]> {
-        const allRolleServiceProviders = await this.fetchRolleServiceProviders({
-            personId: personId,
-            rolleId: rolleId,
-            excludeRolleId: true,
-        });
-
-        const specificRolleServiceProviders = await this.fetchRolleServiceProviders({
-            personId: personId,
-            rolleId: rolleId,
-        });
-
-        const allServiceProvidersNames = new Set(
-            allRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
-        );
-
-        const specificServiceProvidersNames = new Set(
-            specificRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
-        );
-
-        const updateRole = Array.from(specificServiceProvidersNames).filter(
-            (role) => !allServiceProvidersNames.has(role),
-        );
-
-        return updateRole;
-    }
-
-    public async firstOne(personId: string, rolleId: string): Promise<(string | undefined)[]> {
-        const specificRolleServiceProviders = await this.fetchRolleServiceProviders({
-            personId: personId,
-            rolleId: rolleId,
-        });
-
-        const allServiceProvidersNames = new Set(
-            specificRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
-        );
-
-        return Array.from(allServiceProvidersNames);
     }
 }
