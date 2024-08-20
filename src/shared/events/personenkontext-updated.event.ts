@@ -13,6 +13,7 @@ export type PersonenkontextUpdatedPersonData = {
     vorname: string;
     familienname: string;
     referrer?: string;
+    keycloakUserId?: string;
 };
 
 export type PersonenkontextUpdatedData = {
@@ -30,6 +31,7 @@ function mapPersonToData(person: Person<true>): PersonenkontextUpdatedPersonData
         vorname: person.vorname,
         familienname: person.familienname,
         referrer: person.referrer,
+        keycloakUserId: person.keycloakUserId,
     };
 }
 

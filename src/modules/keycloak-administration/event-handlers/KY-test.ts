@@ -6,6 +6,7 @@ import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkont
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 
 @Injectable()
 export class KCtest {
@@ -17,8 +18,47 @@ export class KCtest {
     @EventHandler(PersonenkontextUpdatedEvent)
     public async updatePersonenkontexteKCandSP(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(`Received PersonenkontextUpdatedEvent, ${event.person.id}`);
-        if (event.newKontexte && event.newKontexte[0] && event.newKontexte[0].rolleId) {
-            await this.serviceRepo.fetchfilteredroles(event.person.id, event.newKontexte[0].rolleId);
+        //console.log(event.newKontexte);
+        //console.log(event.currentKontexte.);
+
+        if (event.currentKontexte && event.currentKontexte.length > 0) {
+            const rolleIdSet: Set<string> = new Set<string>();
+            let hasDuplicates: boolean = false;
+            const personenkontextSet: Set<string> = new Set<string>();
+
+            for (const kontext of event.currentKontexte) {
+                if (kontext.rolleId) {
+                    if (rolleIdSet.has(kontext.rolleId)) {
+                        hasDuplicates = true;
+                        break;
+                    }
+                    rolleIdSet.add(kontext.rolleId);
+                }
+            }
+
+            for (const kontext of event.currentKontexte) {
+                if (kontext.id) {
+                    if (personenkontextSet.has(kontext.id)) {
+                        break;
+                    }
+                    personenkontextSet.add(kontext.id);
+                }
+            }
+
+            if (!hasDuplicates) {
+                if (personenkontextSet.size <= 1) {
+                    const firstRolleId: RolleID | undefined = event.newKontexte[0]?.rolleId;
+                    if (firstRolleId !== undefined) {
+                        await this.serviceRepo.FirstOne(event.person.id, firstRolleId);
+                    }
+                } else {
+                    const firstRolleId: RolleID | undefined = event.newKontexte[0]?.rolleId;
+
+                    if (firstRolleId !== undefined) {
+                        await this.serviceRepo.fetchFilteredRolesDifference(event.person.id, firstRolleId);
+                    }
+                }
+            }
         }
 
         await this.serviceRepo.fetchall(event.person.id);

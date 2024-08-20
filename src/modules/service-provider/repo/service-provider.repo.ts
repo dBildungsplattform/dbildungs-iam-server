@@ -133,6 +133,7 @@ export class ServiceProviderRepo {
     }
 
     public async fetchall(personId: string): Promise<(string | undefined)[]> {
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         const rolleServiceProviders = await this.em.find(
             RolleServiceProviderEntity,
             {
@@ -182,6 +183,7 @@ export class ServiceProviderRepo {
             RolleServiceProviderEntity,
             {
                 rolle: {
+                    id: { $ne: rolleId },
                     personenKontexte: {
                         personId: personId,
                     },
@@ -192,7 +194,7 @@ export class ServiceProviderRepo {
             },
         );
 
-        const specificRolleServiceProviders = await this.em.find(
+        const rolleServiceProviders = await this.em.find(
             RolleServiceProviderEntity,
             {
                 rolle: {
@@ -210,18 +212,44 @@ export class ServiceProviderRepo {
         const allServiceProvidersNames = new Set(
             allRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
         );
+
         const specificServiceProvidersNames = new Set(
-            specificRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
+            rolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
         );
 
         const rolesToUpdate = Array.from(specificServiceProvidersNames).filter(
             (role) => !allServiceProvidersNames.has(role),
         );
 
-        if (specificServiceProvidersNames.size === 0) {
-            return Array.from(allServiceProvidersNames);
-        }
+        const rolesToRemove = Array.from(allServiceProvidersNames).filter(
+            (role) => !specificServiceProvidersNames.has(role),
+        );
 
-        return rolesToUpdate;
+        const difference = [...rolesToUpdate, ...rolesToRemove];
+
+        return difference;
+    }
+
+    public async FirstOne(personId: string, rolleId: string): Promise<(string | undefined)[]> {
+        const rolleServiceProviders = await this.em.find(
+            RolleServiceProviderEntity,
+            {
+                rolle: {
+                    id: rolleId,
+                    personenKontexte: {
+                        personId: personId,
+                    },
+                },
+            },
+            {
+                populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
+            },
+        );
+
+        const allServiceProvidersNames = new Set(
+            rolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
+        );
+
+        return Array.from(allServiceProvidersNames);
     }
 }
