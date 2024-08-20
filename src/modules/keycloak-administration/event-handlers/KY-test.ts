@@ -1,25 +1,23 @@
 import { Injectable } from '@nestjs/common';
-
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-
+//import { ClassLogger } from '../../../core/logging/class-logger.js';
 import {
     PersonenkontextUpdatedData,
     PersonenkontextUpdatedEvent,
 } from '../../../shared/events/personenkontext-updated.event.js';
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
-
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 
-type KontextIdsAndDuplicationFlag = {
+export type KontextIdsAndDuplicationFlag = {
     hasDuplicateRolleIds: boolean;
     personenkontextIdSet: Set<string>;
 };
+export type KeycloakRole = string;
 @Injectable()
 export class KCtest {
     public constructor(
-        private readonly logger: ClassLogger,
+        //private readonly logger: ClassLogger,
         private readonly serviceRepo: ServiceProviderRepo,
     ) {}
 
@@ -44,7 +42,10 @@ export class KCtest {
         return { hasDuplicateRolleIds, personenkontextIdSet };
     }
 
-    public async fetchFilteredRolesDifference(personId: string, rolleId: string): Promise<(string | undefined)[]> {
+    public async fetchFilteredRolesDifference(
+        personId: string,
+        rolleId: string,
+    ): Promise<(KeycloakRole | undefined)[]> {
         const allRolleServiceProviders: RolleServiceProviderEntity[] =
             await this.serviceRepo.fetchRolleServiceProviders({
                 personId: personId,
@@ -58,31 +59,31 @@ export class KCtest {
                 rolleId: rolleId,
             });
 
-        const allServiceProvidersNames: Set<string | undefined> = new Set(
+        const allServiceProvidersNames: Set<KeycloakRole | undefined> = new Set(
             allRolleServiceProviders.map((element: RolleServiceProviderEntity) => element.serviceProvider.keycloakRole),
         );
 
-        const specificServiceProvidersNames: Set<string | undefined> = new Set(
+        const specificServiceProvidersNames: Set<KeycloakRole | undefined> = new Set(
             specificRolleServiceProviders.map(
                 (element: RolleServiceProviderEntity) => element.serviceProvider.keycloakRole,
             ),
         );
 
         const updateRole: (string | undefined)[] = Array.from(specificServiceProvidersNames).filter(
-            (role: string | undefined) => !allServiceProvidersNames.has(role),
+            (role: KeycloakRole | undefined) => !allServiceProvidersNames.has(role),
         );
 
         return updateRole;
     }
 
-    public async firstOne(personId: string, rolleId: string): Promise<(string | undefined)[]> {
+    public async fetchFilteredRoles(personId: string, rolleId: string): Promise<(KeycloakRole | undefined)[]> {
         const specificRolleServiceProviders: RolleServiceProviderEntity[] =
             await this.serviceRepo.fetchRolleServiceProviders({
                 personId: personId,
                 rolleId: rolleId,
             });
 
-        const allServiceProvidersNames: Set<string | undefined> = new Set(
+        const allServiceProvidersNames: Set<KeycloakRole | undefined> = new Set(
             specificRolleServiceProviders.map(
                 (element: RolleServiceProviderEntity) => element.serviceProvider.keycloakRole,
             ),
@@ -93,17 +94,17 @@ export class KCtest {
 
     @EventHandler(PersonenkontextUpdatedEvent)
     public async updatePersonenkontexteKCandSP(event: PersonenkontextUpdatedEvent): Promise<void> {
-        this.logger.info(`Received PersonenkontextUpdatedEvent, ${event.person.id}`);
+        //this.logger.info(`Received PersonenkontextUpdatedEvent, ${event.person.id}`);
         const firstRolleId: RolleID | undefined = event.newKontexte?.[0]?.rolleId;
 
-        if (event.currentKontexte?.length > 0 && firstRolleId !== undefined) {
+        if (event.currentKontexte?.length && firstRolleId !== undefined) {
             const { hasDuplicateRolleIds, personenkontextIdSet }: KontextIdsAndDuplicationFlag = this.processKontexte(
                 event.currentKontexte,
             );
 
             if (!hasDuplicateRolleIds) {
                 if (personenkontextIdSet.size <= 1) {
-                    await this.firstOne(event.person.id, firstRolleId);
+                    await this.fetchFilteredRoles(event.person.id, firstRolleId);
                 } else {
                     await this.fetchFilteredRolesDifference(event.person.id, firstRolleId);
                 }
