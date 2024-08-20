@@ -49,7 +49,7 @@ export class KCtest {
                 if (personenkontextSet.size <= 1) {
                     const firstRolleId: RolleID | undefined = event.newKontexte[0]?.rolleId;
                     if (firstRolleId !== undefined) {
-                        await this.serviceRepo.FirstOne(event.person.id, firstRolleId);
+                        await this.serviceRepo.firstOne(event.person.id, firstRolleId);
                     }
                 } else {
                     const firstRolleId: RolleID | undefined = event.newKontexte[0]?.rolleId;
@@ -61,7 +61,7 @@ export class KCtest {
             }
         }
 
-        await this.serviceRepo.fetchall(event.person.id);
+        //await this.serviceRepo.fetchall(event.person.id);
 
         return undefined;
     }

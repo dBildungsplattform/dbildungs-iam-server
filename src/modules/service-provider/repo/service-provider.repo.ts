@@ -132,52 +132,6 @@ export class ServiceProviderRepo {
         return mapEntityToAggregate(serviceProviderEntity);
     }
 
-    public async fetchall(personId: string): Promise<(string | undefined)[]> {
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        const rolleServiceProviders = await this.em.find(
-            RolleServiceProviderEntity,
-            {
-                rolle: {
-                    personenKontexte: {
-                        personId: personId,
-                    },
-                },
-            },
-            {
-                populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
-            },
-        );
-
-        const serviceProviders = rolleServiceProviders.map((rsp) => rsp.serviceProvider);
-
-        const serviceProvidersNames = serviceProviders.map((sp) => sp.keycloakRole);
-
-        return serviceProvidersNames;
-    }
-
-    public async fetchfilteredroles(personId: string, rolleId: string): Promise<(string | undefined)[]> {
-        const rolleServiceProviders = await this.em.find(
-            RolleServiceProviderEntity,
-            {
-                rolle: {
-                    id: rolleId,
-                    personenKontexte: {
-                        personId: personId,
-                    },
-                },
-            },
-            {
-                populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
-            },
-        );
-
-        const serviceProviders = rolleServiceProviders.map((rsp) => rsp.serviceProvider);
-
-        const serviceProvidersNames = serviceProviders.map((sp) => sp.keycloakRole);
-
-        return serviceProvidersNames;
-    }
-
     public async fetchFilteredRolesDifference(personId: string, rolleId: string): Promise<(string | undefined)[]> {
         const allRolleServiceProviders = await this.em.find(
             RolleServiceProviderEntity,
@@ -221,16 +175,10 @@ export class ServiceProviderRepo {
             (role) => !allServiceProvidersNames.has(role),
         );
 
-        const rolesToRemove = Array.from(allServiceProvidersNames).filter(
-            (role) => !specificServiceProvidersNames.has(role),
-        );
-
-        const difference = [...rolesToUpdate, ...rolesToRemove];
-
-        return difference;
+        return rolesToUpdate;
     }
 
-    public async FirstOne(personId: string, rolleId: string): Promise<(string | undefined)[]> {
+    public async firstOne(personId: string, rolleId: string): Promise<(string | undefined)[]> {
         const rolleServiceProviders = await this.em.find(
             RolleServiceProviderEntity,
             {
