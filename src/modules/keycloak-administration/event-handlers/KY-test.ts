@@ -10,7 +10,12 @@ import { EventHandler } from '../../../core/eventbus/decorators/event-handler.de
 
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 
+type KontextIdsAndDuplicationFlag = {
+    hasDuplicateRolleIds: boolean;
+    personenkontextIdSet: Set<string>;
+};
 @Injectable()
 export class KCtest {
     public constructor(
@@ -18,65 +23,69 @@ export class KCtest {
         private readonly serviceRepo: ServiceProviderRepo,
     ) {}
 
-    public processKontexte(kontexte: PersonenkontextUpdatedData[]): {
-        hasRolleIdDuplicates: boolean;
-        personenkontextSet: Set<string>;
-    } {
+    public processKontexte(kontexte: PersonenkontextUpdatedData[]): KontextIdsAndDuplicationFlag {
         const rolleIdSet: Set<string> = new Set<string>();
-        const personenkontextSet: Set<string> = new Set<string>();
-        let hasRolleIdDuplicates: boolean = false;
+        const personenkontextIdSet: Set<string> = new Set<string>();
+        let hasDuplicateRolleIds: boolean = false;
 
         for (const kontext of kontexte) {
             if (kontext.rolleId) {
                 if (rolleIdSet.has(kontext.rolleId)) {
-                    hasRolleIdDuplicates = true;
+                    hasDuplicateRolleIds = true;
                     break;
                 }
                 rolleIdSet.add(kontext.rolleId);
             }
             if (kontext.id) {
-                personenkontextSet.add(kontext.id);
+                personenkontextIdSet.add(kontext.id);
             }
         }
 
-        return { hasRolleIdDuplicates, personenkontextSet };
+        return { hasDuplicateRolleIds, personenkontextIdSet };
     }
 
     public async fetchFilteredRolesDifference(personId: string, rolleId: string): Promise<(string | undefined)[]> {
-        const allRolleServiceProviders = await this.serviceRepo.fetchRolleServiceProviders({
-            personId: personId,
-            rolleId: rolleId,
-            excludeRolleId: true,
-        });
+        const allRolleServiceProviders: RolleServiceProviderEntity[] =
+            await this.serviceRepo.fetchRolleServiceProviders({
+                personId: personId,
+                rolleId: rolleId,
+                excludeRolleId: true,
+            });
 
-        const specificRolleServiceProviders = await this.serviceRepo.fetchRolleServiceProviders({
-            personId: personId,
-            rolleId: rolleId,
-        });
+        const specificRolleServiceProviders: RolleServiceProviderEntity[] =
+            await this.serviceRepo.fetchRolleServiceProviders({
+                personId: personId,
+                rolleId: rolleId,
+            });
 
-        const allServiceProvidersNames = new Set(
-            allRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
+        const allServiceProvidersNames: Set<string | undefined> = new Set(
+            allRolleServiceProviders.map((element: RolleServiceProviderEntity) => element.serviceProvider.keycloakRole),
         );
 
-        const specificServiceProvidersNames = new Set(
-            specificRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
+        const specificServiceProvidersNames: Set<string | undefined> = new Set(
+            specificRolleServiceProviders.map(
+                (element: RolleServiceProviderEntity) => element.serviceProvider.keycloakRole,
+            ),
         );
 
-        const updateRole = Array.from(specificServiceProvidersNames).filter(
-            (role) => !allServiceProvidersNames.has(role),
+        const updateRole: (string | undefined)[] = Array.from(specificServiceProvidersNames).filter(
+            (role: string | undefined) => !allServiceProvidersNames.has(role),
         );
 
         return updateRole;
     }
 
     public async firstOne(personId: string, rolleId: string): Promise<(string | undefined)[]> {
-        const specificRolleServiceProviders = await this.serviceRepo.fetchRolleServiceProviders({
-            personId: personId,
-            rolleId: rolleId,
-        });
+        const specificRolleServiceProviders: RolleServiceProviderEntity[] =
+            await this.serviceRepo.fetchRolleServiceProviders({
+                personId: personId,
+                rolleId: rolleId,
+            });
 
-        const allServiceProvidersNames = new Set(
-            specificRolleServiceProviders.map((element) => element.serviceProvider.keycloakRole),
+        const allServiceProvidersNames: Set<string | undefined> = new Set(
+            specificRolleServiceProviders.map(
+                (element: RolleServiceProviderEntity) => element.serviceProvider.keycloakRole,
+            ),
         );
 
         return Array.from(allServiceProvidersNames);
@@ -88,10 +97,12 @@ export class KCtest {
         const firstRolleId: RolleID | undefined = event.newKontexte?.[0]?.rolleId;
 
         if (event.currentKontexte?.length > 0 && firstRolleId !== undefined) {
-            const { hasRolleIdDuplicates, personenkontextSet } = this.processKontexte(event.currentKontexte);
+            const { hasDuplicateRolleIds, personenkontextIdSet }: KontextIdsAndDuplicationFlag = this.processKontexte(
+                event.currentKontexte,
+            );
 
-            if (!hasRolleIdDuplicates) {
-                if (personenkontextSet.size <= 1) {
+            if (!hasDuplicateRolleIds) {
+                if (personenkontextIdSet.size <= 1) {
                     await this.firstOne(event.person.id, firstRolleId);
                 } else {
                     await this.fetchFilteredRolesDifference(event.person.id, firstRolleId);
