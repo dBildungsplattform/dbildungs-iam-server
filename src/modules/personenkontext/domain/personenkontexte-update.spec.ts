@@ -492,6 +492,26 @@ describe('PersonenkontexteUpdate', () => {
 
                 expect(updateError).toBeInstanceOf(UpdateInvalidRollenartForLernError);
             });
+            it.only('should return UpdateInvalidRollenartForLernError if new personenkontext roles mix LERN with other types', async () => {
+                const newPerson: Person<true> = createMock<Person<true>>();
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                const mapRollenExisting: Map<string, Rolle<true>> = new Map();
+                mapRollenExisting.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollenExisting);
+
+                const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
+                expect(updateError).toBeInstanceOf(UpdateInvalidRollenartForLernError);
+            });
         });
     });
 });
