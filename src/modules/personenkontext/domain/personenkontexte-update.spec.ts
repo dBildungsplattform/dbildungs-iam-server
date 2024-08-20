@@ -492,7 +492,7 @@ describe('PersonenkontexteUpdate', () => {
 
                 expect(updateError).toBeInstanceOf(UpdateInvalidRollenartForLernError);
             });
-            it.only('should return UpdateInvalidRollenartForLernError if new personenkontext roles mix LERN with other types', async () => {
+            it('should return UpdateInvalidRollenartForLernError if new personenkontext roles mix LERN with other types', async () => {
                 const newPerson: Person<true> = createMock<Person<true>>();
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
