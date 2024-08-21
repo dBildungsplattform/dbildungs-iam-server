@@ -20,9 +20,8 @@ import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { SimplePersonenkontextDeletedEvent } from '../../../shared/events/simple-personenkontext-deleted.event.js';
-import { DBiamPersonenkontextHelperRepo } from './dbiam-personenkontext-helper.repo.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
@@ -98,6 +97,10 @@ export function mapEntityToAggregateInplace(entity: PersonEntity, person: Person
     return person;
 }
 
+export type PersonEventPayload = {
+    personenkontexte: [{ id: string; organisationId: string; rolleId: string }];
+};
+
 @Injectable()
 export class PersonRepository {
     public readonly ROOT_ORGANISATION_ID: string;
@@ -106,7 +109,6 @@ export class PersonRepository {
         private readonly kcUserService: KeycloakUserService,
         private readonly em: EntityManager,
         private readonly eventService: EventService,
-        private readonly dBiamPersonenkontextHelperRepo: DBiamPersonenkontextHelperRepo,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -179,7 +181,11 @@ export class PersonRepository {
         return { ok: true, value: person };
     }
 
-    public async deletePerson(personId: string, permissions: PersonPermissions): Promise<Result<void, DomainError>> {
+    public async deletePerson(
+        personId: string,
+        permissions: PersonPermissions,
+        removedPersonenkontexts: PersonenkontextEventKontextData[],
+    ): Promise<Result<void, DomainError>> {
         // First check if the user has permission to view the person
         const personResult: Result<Person<true>> = await this.getPersonIfAllowed(personId, permissions);
 
@@ -204,17 +210,17 @@ export class PersonRepository {
         // Delete the person from Keycloak
         await this.kcUserService.delete(person.keycloakUserId);
 
-        const personPKs: Option<Personenkontext<true>[]> = await this.dBiamPersonenkontextHelperRepo.findByPersonID(
-            this,
-            personId,
+        const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+            {
+                id: personId,
+                familienname: person.familienname,
+                vorname: person.vorname,
+            },
+            [],
+            removedPersonenkontexts,
+            [],
         );
-        if (personPKs) {
-            personPKs.forEach((pk: Personenkontext<true>) => {
-                this.eventService.publish(
-                    new SimplePersonenkontextDeletedEvent(pk.id, pk.personId, pk.organisationId, pk.rolleId),
-                );
-            });
-        }
+        this.eventService.publish(personenkontextUpdatedEvent);
         // Delete email-addresses if any, must happen before person deletion to get the referred email-address
         if (person.email) {
             this.eventService.publish(new PersonDeletedEvent(personId, person.email));
