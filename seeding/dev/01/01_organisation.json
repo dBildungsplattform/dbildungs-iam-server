@@ -127,6 +127,26 @@
             "typ": "KLASSE",
             "administriertVon": 3,
             "zugehoerigZu": 3
+        },
+        {
+            "id": 13,
+            "kennung": "1111111-3a",
+            "name": "Playwright3a",
+            "namensergaenzung": "Keine",
+            "kuerzel": "Testschule-3a",
+            "typ": "KLASSE",
+            "administriertVon": 9,
+            "zugehoerigZu": 9
+        },
+        {
+            "id": 14,
+            "kennung": "1111111-4b",
+            "name": "Playwright4b",
+            "namensergaenzung": "Keine",
+            "kuerzel": "Testschule-4b",
+            "typ": "KLASSE",
+            "administriertVon": 9,
+            "zugehoerigZu": 9
         }
     ]
 }
