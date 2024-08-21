@@ -12,6 +12,8 @@ import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderRepo } from './service-provider.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { createMock } from '@golevelup/ts-jest';
+import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
@@ -161,5 +163,13 @@ describe('ServiceProviderRepo', () => {
 
             expect(serviceProviderMap).toBeDefined();
         });
+    });
+
+    it('should return an array of RolleServiceProviderEntity', async () => {
+        const role: RolleID = faker.string.uuid();
+        const serviceProviderResult: RolleServiceProviderEntity[] = await sut.fetchRolleServiceProvidersWithoutPerson([
+            role,
+        ]);
+        expect(serviceProviderResult).toBeDefined();
     });
 });
