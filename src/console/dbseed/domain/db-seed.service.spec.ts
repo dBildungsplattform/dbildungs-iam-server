@@ -386,11 +386,15 @@ describe('DbSeedService', () => {
                 );
 
                 const person: Person<true> = createMock<Person<true>>();
+                const id: string = faker.string.uuid();
                 const existingUser: User<true> = User.construct<true>(
-                    faker.string.uuid(),
+                    id,
                     'testusername',
                     'test@example.com',
                     faker.date.recent(),
+                    {
+                        ID_ITSLEARNING: id,
+                    },
                 );
 
                 kcUserService.findOne.mockResolvedValueOnce({ ok: true, value: existingUser });
