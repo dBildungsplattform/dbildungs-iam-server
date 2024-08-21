@@ -195,7 +195,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     vorname: faker.person.firstName(),
                     organisationId: organisation.id,
                     rolleId: rolle.id,
-                    personalnummer: '1234567'
+                    personalnummer: '1234567',
                 });
             expect(response.status).toBe(201);
         });
