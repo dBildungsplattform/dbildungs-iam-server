@@ -60,6 +60,7 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { OrganisationIstBereitsZugewiesenError } from '../domain/organisation-ist-bereits-zugewiesen.error.js';
 import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
 import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
+import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -206,6 +207,24 @@ export class OrganisationController {
         }
 
         return new OrganisationRootChildrenResponse(oeffentlich, ersatz);
+    }
+
+    @Post('parents-by-ids')
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({
+        description: 'The parent organizations were successfully pulled.',
+        type: Array<OrganisationResponse>,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get the organizations.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organizations.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
+    public async getParentsByIds(
+        @Body() body: ParentOrganisationsByIdsBodyParams,
+    ): Promise<Array<OrganisationResponse>> {
+        const organisationen: Organisation<true>[] = await this.organisationRepository.findParentOrgasForIds(
+            body.organisationIds,
+        );
+        return organisationen.map((organisation: Organisation<true>) => new OrganisationResponse(organisation));
     }
 
     @Get(':organisationId')
