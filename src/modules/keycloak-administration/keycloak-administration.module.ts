@@ -7,32 +7,31 @@ import { LoggerModule } from '../../core/logging/logger.module.js';
 import { KeycloakConfigModule } from './keycloak-config.module.js';
 import { KeycloakGroupRoleService } from './domain/keycloak-group-role.service.js';
 
-import { RolleRepo } from '../rolle/repo/rolle.repo.js';
-import { RolleFactory } from '../rolle/domain/rolle.factory.js';
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
 import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
-//import { KeyclockServiceProviderEventHandler } from './event-handlers/keycloack-service-provider.event-handler.js';
+
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextFactory } from '../personenkontext/domain/personenkontext.factory.js';
-import { KCtest } from './event-handlers/keycloack-service-provider-update.event-handler.js';
+import { KeycloackServiceProviderHandler } from './event-handlers/keycloack-service-provider.event-handler.js';
+import { EventModule } from '../../core/eventbus/event.module.js';
+import { RolleModule } from '../rolle/rolle.module.js';
 
 @Module({
-    imports: [LoggerModule.register(KeycloakAdministrationModule.name), KeycloakConfigModule],
+    imports: [LoggerModule.register(KeycloakAdministrationModule.name), KeycloakConfigModule, EventModule, RolleModule],
     providers: [
         KeycloakAdminClient,
         KeycloakUserService,
         KeycloakGroupRoleService,
         KeycloakAdministrationService,
-        //KeyclockServiceProviderEventHandler,
-        RolleRepo,
-        RolleFactory,
+
         OrganisationRepository,
         ServiceProviderRepo,
         PersonRepository,
         DBiamPersonenkontextRepo,
         PersonenkontextFactory,
-        KCtest,
+        KeycloackServiceProviderHandler,
+        eventhan,
     ],
     exports: [KeycloakUserService, KeycloakGroupRoleService],
 })

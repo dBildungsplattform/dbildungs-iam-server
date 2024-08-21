@@ -1,115 +1,91 @@
-// import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+//import { ClassLogger } from '../../../core/logging/class-logger.js';
+import {
+    PersonenkontextUpdatedData,
+    PersonenkontextUpdatedEvent,
+} from '../../../shared/events/personenkontext-updated.event.js';
+import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { KeycloakUserService } from '../domain/keycloak-user.service.js';
 
-// import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
-// import { ClassLogger } from '../../../core/logging/class-logger.js';
+export type KontextIdsAndDuplicationFlag = {
+    hasDuplicateRolleIds: boolean;
+    personenkontextIdSet: Set<string>;
+};
+export type KeycloakRole = string;
+@Injectable()
+export class KeycloackServiceProviderHandler {
+    public constructor(
+        //private readonly logger: ClassLogger,
+        private readonly serviceRepo: ServiceProviderRepo,
+        private readonly KeycloackService: KeycloakUserService,
+    ) {}
 
-// import {
-//     PersonenkontextUpdatedData,
-//     PersonenkontextUpdatedEvent,
-// } from '../../../shared/events/personenkontext-updated.event.js';
+    public async fetchFilteredRolesDifference(
+        currentRoles: RolleID | string[],
+        changingRole: RolleID | string[],
+    ): Promise<(KeycloakRole | undefined)[]> {
+        const allRolleServiceProviders: RolleServiceProviderEntity[] =
+            await this.serviceRepo.fetchRolleServiceProvidersWithoutPerson(changingRole);
 
-// import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-// import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
-// import { Rolle } from '../../rolle/domain/rolle.js';
-// import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-// import { PersonRepository } from '../../person/persistence/person.repository.js';
-// import { KeycloakUserService } from '../domain/keycloak-user.service.js';
-// import { Person } from '../../person/domain/person.js';
-// import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
-// import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-// import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+        const specificRolleServiceProviders: RolleServiceProviderEntity[] =
+            await this.serviceRepo.fetchRolleServiceProvidersWithoutPerson(currentRoles);
 
-// @Injectable()
-// export class KeyclockServiceProviderEventHandler {
-//     public constructor(
-//         private readonly logger: ClassLogger,
-//         private readonly rolleRepo: RolleRepo,
-//         private readonly personRepo: PersonRepository,
-//         private readonly personKontextRepo: DBiamPersonenkontextRepo,
-//         private readonly keycloackUserService: KeycloakUserService,
-//     ) {}
+        const allServiceProvidersNames: Set<KeycloakRole | undefined> = new Set(
+            allRolleServiceProviders.map((element: RolleServiceProviderEntity) => element.serviceProvider.keycloakRole),
+        );
 
-//     public kontextToString(kontext: PersonenkontextUpdatedData): string {
-//         return `rolleId: ${kontext.rolleId}, rolle: ${kontext.rolle}, orgaId: ${kontext.orgaId}, orgaTyp: ${kontext.orgaTyp}, orgaKennung: ${kontext.orgaKennung}`;
-//     }
+        const specificServiceProvidersNames: Set<KeycloakRole | undefined> = new Set(
+            specificRolleServiceProviders.map(
+                (element: RolleServiceProviderEntity) => element.serviceProvider.keycloakRole,
+            ),
+        );
 
-//     private async getServiceProviderNames(event: PersonenkontextUpdatedEvent): Promise<string[]> {
-//         const kontexteStrings: string = event.currentKontexte
-//             .map((kontext: PersonenkontextUpdatedData) => this.kontextToString(kontext))
-//             .join('; ');
-//         this.logger.info(`Received PersonenkontextUpdatedEvent, ${kontexteStrings}`);
+        const updateRole: (KeycloakRole | undefined)[] = Array.from(allServiceProvidersNames).filter(
+            (role: KeycloakRole | undefined) => !specificServiceProvidersNames.has(role),
+        );
 
-//         const serviceProviderNames: string[] = [];
+        return updateRole;
+    }
 
-//         const rolleId: RolleID | undefined = event.currentKontexte[0]?.rolleId;
-//         if (rolleId) {
-//             const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(rolleId);
-//             this.logger.info(
-//                 `Received PersonenkontextUpdatedEvent, rolleId: ${rolleId}, serviceproviderID: ${JSON.stringify(rolle?.serviceProviderIds)}`,
-//             );
-//             const serviceProvidersMap: Map<string, ServiceProvider<true>> | undefined =
-//                 await rolle?.serviceProviderRepo.findByIds(rolle?.serviceProviderIds);
-//             if (serviceProvidersMap) {
-//                 const serviceProviders: ServiceProvider<true>[] = Array.from(
-//                     serviceProvidersMap.values(),
-//                     (value: ServiceProvider<true>) => value,
-//                 );
-//                 serviceProviders.forEach((serviceProvider: ServiceProvider<true>) => {
-//                     this.logger.info(`ServiceProvider: ${JSON.stringify(serviceProvider.name)}`);
-//                     serviceProviderNames.push(serviceProvider.name);
-//                 });
-//             }
-//         }
+    @EventHandler(PersonenkontextUpdatedEvent)
+    public async updatePersonenkontexteOrDeleteKCandSP(event: PersonenkontextUpdatedEvent): Promise<void> {
+        const { newKontexte, currentKontexte, removedKontexte, person }: PersonenkontextUpdatedEvent = event;
+        const newRolle: RolleID | undefined = newKontexte?.[0]?.rolleId;
+        const deleteRolle: RolleID | undefined = removedKontexte?.[0]?.rolleId;
+        const currentRolleIDs: RolleID[] = currentKontexte
+            .map((kontext: PersonenkontextUpdatedData) => kontext.rolleId)
+            .filter((id: RolleID) => id && id !== newRolle);
 
-//         return serviceProviderNames;
-//     }
+        if (person.keycloakUserId) {
+            if (newRolle !== undefined && currentKontexte?.length) {
+                await this.updateUserRoles(person.keycloakUserId, currentRolleIDs, newRolle);
+            }
 
-//     @EventHandler(PersonenkontextUpdatedEvent)
-//     public async updatePersonenkontexteKCandSP(event: PersonenkontextUpdatedEvent): Promise<void> {
-//         this.logger.info(`Received PersonenkontextUpdatedEvent, ${event.person.id}`);
-//         const serviceProviders: string[] = await this.getServiceProviderNames(event);
+            if (deleteRolle !== undefined && removedKontexte?.length) {
+                await this.updateUserRoles(person.keycloakUserId, currentRolleIDs, deleteRolle, true);
+            }
+        }
+    }
 
-//         const person: Option<Person<true>> = await this.personRepo.findById(event.person.id);
-//         if (person && person.keycloakUserId) {
-//             await this.keycloackUserService.assignRealmRolesToUser(person.keycloakUserId, serviceProviders);
-//         }
-//     }
-
-//     @EventHandler(PersonenkontextDeletedEvent)
-//     public async deletePersonenkontexteKCandSP(event: PersonenkontextDeletedEvent): Promise<void> {
-//         this.logger.info(`Received PersonenkontextUpdatedEvent for deletion, ${event.personId}`);
-
-//         const serviceProviderNames: string[] = [];
-
-//         const persons: Personenkontext<true>[] = await this.personKontextRepo.findByPerson(event.personId);
-//         if (persons) {
-//             this.logger.info(`Personsssss ${JSON.stringify(persons)}}`);
-//         }
-
-//         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(event.rolleId);
-//         this.logger.info(
-//             `Received PersonenkontextDeletedEvent, rolleId: ${event.rolleId}, serviceproviderID: ${JSON.stringify(rolle?.serviceProviderIds)}`,
-//         );
-
-//         const serviceProvidersMap: Map<string, ServiceProvider<true>> | undefined =
-//             await rolle?.serviceProviderRepo.findByIds(rolle?.serviceProviderIds);
-
-//         if (serviceProvidersMap) {
-//             const serviceProviders: ServiceProvider<true>[] = Array.from(
-//                 serviceProvidersMap.values(),
-//                 (value: ServiceProvider<true>) => value,
-//             );
-//             serviceProviders.forEach((serviceProvider: ServiceProvider<true>) => {
-//                 this.logger.info(`ServiceProvider to delete: ${JSON.stringify(serviceProvider.name)}`);
-//                 serviceProviderNames.push(serviceProvider.name);
-//             });
-//         }
-
-//         const person: Option<Person<true>> = await this.personRepo.findById(event.personId);
-//         if (person && person.keycloakUserId) {
-//             this.logger.info(`here we get the kC user ${person.keycloakUserId}`);
-
-//             await this.keycloackUserService.removeRealmRolesFromUser(person.keycloakUserId, serviceProviderNames);
-//         }
-//     }
-// }
+    public async updateUserRoles(
+        userId: string,
+        currentRolleIDs: RolleID[],
+        rolle: RolleID,
+        remove: boolean = false,
+    ): Promise<void> {
+        const roleNames: (string | undefined)[] = await this.fetchFilteredRolesDifference(currentRolleIDs, rolle);
+        if (roleNames) {
+            const filteredRoleNames: string[] = roleNames.filter(
+                (role: KeycloakRole | undefined): role is KeycloakRole => role !== undefined,
+            );
+            if (remove) {
+                await this.KeycloackService.removeRealmRolesFromUser(userId, filteredRoleNames);
+            } else {
+                await this.KeycloackService.assignRealmRolesToUser(userId, filteredRoleNames);
+            }
+        }
+    }
+}

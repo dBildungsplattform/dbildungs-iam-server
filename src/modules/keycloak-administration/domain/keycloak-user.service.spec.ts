@@ -1,6 +1,6 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { KeycloakAdminClient, UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
+import { KeycloakAdminClient, RoleRepresentation, UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
 
 import { faker } from '@faker-js/faker';
 import { ConfigTestModule, DoFactory, LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
@@ -626,6 +626,319 @@ describe('KeycloakUserService', () => {
                 expect(result).toStrictEqual({
                     ok: false,
                     error: new KeycloakClientError('Could not authenticate'),
+                });
+            });
+        });
+    });
+    describe('assignRealmRolesToUser', () => {
+        describe('when all roles are valid and not already assigned', () => {
+            it('should assign roles to the user and return ok result', async () => {
+                const userId: string = faker.string.uuid();
+                const roleNames: string[] = ['role1', 'role2'];
+                const roles: RoleRepresentation[] = roleNames.map((name) => ({
+                    id: faker.string.uuid(),
+                    name,
+                }));
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                    ok: true,
+                    value: createMock<KeycloakAdminClient>({
+                        users: kcUsersMock,
+                        roles: {
+                            find: jest.fn().mockResolvedValue(roles),
+                        },
+                    }),
+                });
+                service.findById = jest.fn().mockResolvedValue({
+                    ok: true,
+                    value: { id: userId },
+                });
+
+                kcUsersMock.listRealmRoleMappings.mockResolvedValueOnce([]); // No roles currently assigned
+                kcUsersMock.addRealmRoleMappings.mockResolvedValueOnce(undefined);
+
+                const res: Result<void> = await service.assignRealmRolesToUser(userId, roleNames);
+
+                expect(res).toStrictEqual<Result<void>>({
+                    ok: true,
+                    value: undefined,
+                });
+                expect(kcUsersMock.addRealmRoleMappings).toHaveBeenCalledWith({
+                    id: userId,
+                    roles: roles.map((role) => ({
+                        id: role.id,
+                        name: role.name,
+                    })),
+                });
+            });
+        });
+
+        describe('when no valid roles found', () => {
+            it('should return an error result', async () => {
+                const userId: string = faker.string.uuid();
+                const roleNames: string[] = ['invalidRole1', 'invalidRole2'];
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                    ok: true,
+                    value: createMock<KeycloakAdminClient>({
+                        users: kcUsersMock,
+                        roles: {
+                            find: jest.fn().mockResolvedValue([]), // No roles found
+                        },
+                    }),
+                });
+                service.findById = jest.fn().mockResolvedValue({
+                    ok: true,
+                    value: { id: userId },
+                });
+
+                const res: Result<void> = await service.assignRealmRolesToUser(userId, roleNames);
+
+                expect(res).toStrictEqual<Result<void>>({
+                    ok: false,
+                    error: new EntityNotFoundError(`No valid roles found for the provided role names`),
+                });
+            });
+        });
+
+        describe('when roles are already assigned', () => {
+            it('should return ok result without making changes', async () => {
+                const userId: string = faker.string.uuid();
+                const roleNames: string[] = ['role1'];
+                const roles: RoleRepresentation[] = roleNames.map((name) => ({
+                    id: faker.string.uuid(),
+                    name,
+                }));
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                    ok: true,
+                    value: createMock<KeycloakAdminClient>({
+                        users: kcUsersMock,
+                        roles: {
+                            find: jest.fn().mockResolvedValue(roles),
+                        },
+                    }),
+                });
+                service.findById = jest.fn().mockResolvedValue({
+                    ok: true,
+                    value: { id: userId },
+                });
+
+                kcUsersMock.listRealmRoleMappings.mockResolvedValueOnce(roles);
+
+                const res: Result<void> = await service.assignRealmRolesToUser(userId, roleNames);
+
+                expect(res).toStrictEqual<Result<void>>({
+                    ok: true,
+                    value: undefined,
+                });
+            });
+        });
+        describe('when no valid roles found', () => {
+            it('should return an error result', async () => {
+                const userId: string = faker.string.uuid();
+                const roleNames: string[] = ['invalidRole1', 'invalidRole2'];
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                    ok: true,
+                    value: createMock<KeycloakAdminClient>({
+                        users: kcUsersMock,
+                        roles: {
+                            find: jest.fn().mockResolvedValue([]),
+                        },
+                    }),
+                });
+                service.findById = jest.fn().mockResolvedValue({
+                    ok: true,
+                    value: { id: userId },
+                });
+
+                const res: Result<void> = await service.assignRealmRolesToUser(userId, roleNames);
+
+                expect(res).toStrictEqual<Result<void>>({
+                    ok: false,
+                    error: new EntityNotFoundError(`No valid roles found for the provided role names`),
+                });
+            });
+        });
+
+        describe('when roles are already assigned', () => {
+            it('should return ok result without making changes', async () => {
+                const userId: string = faker.string.uuid();
+                const roleNames: string[] = ['role1'];
+                const roles: RoleRepresentation[] = roleNames.map((name) => ({
+                    id: faker.string.uuid(),
+                    name,
+                }));
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                    ok: true,
+                    value: createMock<KeycloakAdminClient>({
+                        users: kcUsersMock,
+                        roles: {
+                            find: jest.fn().mockResolvedValue(roles),
+                        },
+                    }),
+                });
+                service.findById = jest.fn().mockResolvedValue({
+                    ok: true,
+                    value: { id: userId },
+                });
+
+                kcUsersMock.listRealmRoleMappings.mockResolvedValueOnce(roles);
+
+                const res: Result<void> = await service.assignRealmRolesToUser(userId, roleNames);
+
+                expect(res).toStrictEqual<Result<void>>({
+                    ok: true,
+                    value: undefined,
+                });
+            });
+        });
+    });
+
+    describe('removeRealmRolesFromUser', () => {
+        describe('when all roles are valid and currently assigned', () => {
+            it('should remove roles from the user and return ok result', async () => {
+                const userId: string = faker.string.uuid();
+                const roleNames: string[] = ['role1'];
+                const roles: RoleRepresentation[] = roleNames.map((name) => ({
+                    id: faker.string.uuid(),
+                    name,
+                }));
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                    ok: true,
+                    value: createMock<KeycloakAdminClient>({
+                        users: kcUsersMock,
+                        roles: {
+                            find: jest.fn().mockResolvedValue(roles),
+                        },
+                    }),
+                });
+                service.findById = jest.fn().mockResolvedValue({
+                    ok: true,
+                    value: { id: userId },
+                });
+
+                kcUsersMock.listRealmRoleMappings.mockResolvedValueOnce(roles);
+                kcUsersMock.delRealmRoleMappings.mockResolvedValueOnce(undefined);
+
+                const res: Result<void> = await service.removeRealmRolesFromUser(userId, roleNames);
+
+                expect(res).toStrictEqual<Result<void>>({
+                    ok: true,
+                    value: undefined,
+                });
+                expect(kcUsersMock.delRealmRoleMappings).toHaveBeenCalledWith({
+                    id: userId,
+                    roles: roles.map((role) => ({
+                        id: role.id,
+                        name: role.name,
+                    })),
+                });
+            });
+        });
+    });
+    describe('when all roles are valid and currently assigned', () => {
+        it('should remove roles from the user and return ok result', async () => {
+            const userId: string = faker.string.uuid();
+            const roleNames: string[] = ['role1'];
+            const roles: RoleRepresentation[] = roleNames.map((name) => ({
+                id: faker.string.uuid(),
+                name,
+            }));
+
+            adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                ok: true,
+                value: createMock<KeycloakAdminClient>({
+                    users: kcUsersMock,
+                    roles: {
+                        find: jest.fn().mockResolvedValue(roles),
+                    },
+                }),
+            });
+            service.findById = jest.fn().mockResolvedValue({
+                ok: true,
+                value: { id: userId },
+            });
+
+            kcUsersMock.listRealmRoleMappings.mockResolvedValueOnce(roles); // Roles currently assigned
+            kcUsersMock.delRealmRoleMappings.mockResolvedValueOnce(undefined);
+
+            const res: Result<void> = await service.removeRealmRolesFromUser(userId, roleNames);
+
+            expect(res).toStrictEqual<Result<void>>({
+                ok: true,
+                value: undefined,
+            });
+            expect(kcUsersMock.delRealmRoleMappings).toHaveBeenCalledWith({
+                id: userId,
+                roles: roles.map((role) => ({
+                    id: role.id,
+                    name: role.name,
+                })),
+            });
+        });
+
+        describe('when no valid roles found', () => {
+            it('should return an error result', async () => {
+                const userId: string = faker.string.uuid();
+                const roleNames: string[] = ['invalidRole1'];
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                    ok: true,
+                    value: createMock<KeycloakAdminClient>({
+                        users: kcUsersMock,
+                        roles: {
+                            find: jest.fn().mockResolvedValue([]), // No roles found
+                        },
+                    }),
+                });
+                service.findById = jest.fn().mockResolvedValue({
+                    ok: true,
+                    value: { id: userId },
+                });
+
+                const res: Result<void> = await service.removeRealmRolesFromUser(userId, roleNames);
+
+                expect(res).toStrictEqual<Result<void>>({
+                    ok: false,
+                    error: new EntityNotFoundError(`No valid roles found for the provided role names`),
+                });
+            });
+        });
+
+        describe('when roles are not assigned to the user', () => {
+            it('should return ok result without making changes', async () => {
+                const userId: string = faker.string.uuid();
+                const roleNames: string[] = ['role1'];
+                const roles: RoleRepresentation[] = roleNames.map((name) => ({
+                    id: faker.string.uuid(),
+                    name,
+                }));
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                    ok: true,
+                    value: createMock<KeycloakAdminClient>({
+                        users: kcUsersMock,
+                        roles: {
+                            find: jest.fn().mockResolvedValue(roles),
+                        },
+                    }),
+                });
+                service.findById = jest.fn().mockResolvedValue({
+                    ok: true,
+                    value: { id: userId },
+                });
+
+                kcUsersMock.listRealmRoleMappings.mockResolvedValueOnce([]); // No roles currently assigned
+
+                const res: Result<void> = await service.removeRealmRolesFromUser(userId, roleNames);
+
+                expect(res).toStrictEqual<Result<void>>({
+                    ok: true,
+                    value: undefined,
                 });
             });
         });
