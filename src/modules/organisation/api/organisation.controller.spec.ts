@@ -30,6 +30,8 @@ import { OrganisationService } from '../domain/organisation.service.js';
 
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { OrganisationParentsResponse } from './organisation.parents.response.js';
+import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -391,6 +393,35 @@ describe('OrganisationController', () => {
 
                 await expect(organisationController.getRootChildren()).rejects.toThrow(HttpException);
             });
+        });
+    });
+
+    describe('getParents', () => {
+        it('should return the parent organisations', async () => {
+            const ids: Array<string> = [faker.string.uuid(), faker.string.uuid(), faker.string.uuid()];
+            const mockBody: ParentOrganisationsByIdsBodyParams = { organisationIds: ids };
+            const mockedRepoResponse: Array<Organisation<true>> = ids.map((id: string) =>
+                Organisation.construct(
+                    id,
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.numeric(),
+                    faker.lorem.word(),
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.ROOT,
+                ),
+            );
+            organisationRepositoryMock.findParentOrgasForIds.mockResolvedValue(mockedRepoResponse);
+
+            const result: OrganisationParentsResponse = await organisationController.getParentsByIds(mockBody);
+
+            expect(organisationRepositoryMock.findParentOrgasForIds).toHaveBeenCalledTimes(1);
+            expect(organisationRepositoryMock.findParentOrgasForIds).toHaveBeenCalledWith(ids);
+            expect(result).toBeInstanceOf(OrganisationParentsResponse);
+            expect(result.parents[0]?.id).toBe(ids[0]);
         });
     });
 
