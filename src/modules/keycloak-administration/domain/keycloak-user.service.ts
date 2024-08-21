@@ -6,7 +6,7 @@ import { validate, ValidationError } from 'class-validator';
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { UserRepresentationDto } from './keycloak-client/user-representation.dto.js';
-import { User } from './user.js';
+import { ExternalSystemIDs, User } from './user.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export type FindUserFilter = {
@@ -54,6 +54,7 @@ export class KeycloakUserService {
             const userRepresentation: UserRepresentation = {
                 username: user.username,
                 enabled: true,
+                attributes: user.externalSystemIDs,
             };
 
             if (user.email) {
@@ -150,6 +151,7 @@ export class KeycloakUserService {
                         type: 'password',
                     },
                 ],
+                attributes: user.externalSystemIDs,
             };
 
             const response: { id: string } = await kcAdminClientResult.value.users.create(userRepresentation);
@@ -264,11 +266,16 @@ export class KeycloakUserService {
             return { ok: false, error: new KeycloakClientError('Response is invalid') };
         }
 
+        const attributes: ExternalSystemIDs = {
+            ID_ITSLEARNING: userReprDto.attributes.ID_ITSLEARNING,
+        };
+
         const userDo: User<true> = User.construct<true>(
             userReprDto.id,
             userReprDto.username,
             userReprDto.email,
             new Date(userReprDto.createdTimestamp),
+            attributes,
         );
 
         return { ok: true, value: userDo };
