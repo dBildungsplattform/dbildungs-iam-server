@@ -177,6 +177,7 @@ export class PersonenkontextWorkflowAggregate {
         count: number,
         personenkontexte: DbiamPersonenkontextBodyParams[],
         permissions: IPersonPermissions,
+        personalnummer?: string,
     ): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
             personId,
@@ -184,6 +185,7 @@ export class PersonenkontextWorkflowAggregate {
             count,
             personenkontexte,
             permissions,
+            personalnummer,
         );
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
 
