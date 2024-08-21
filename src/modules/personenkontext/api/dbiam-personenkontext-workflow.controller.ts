@@ -216,6 +216,7 @@ export class DbiamPersonenkontextWorkflowController {
                 params.familienname,
                 params.organisationId,
                 params.rolleId,
+                params.personalnummer,
             );
 
         if (savedPersonWithPersonenkontext instanceof PersonenkontextSpecificationError) {
