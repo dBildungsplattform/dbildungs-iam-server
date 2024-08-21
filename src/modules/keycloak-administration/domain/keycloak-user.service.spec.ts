@@ -10,6 +10,7 @@ import { type FindUserFilter, KeycloakUserService } from './keycloak-user.servic
 import { PersonService } from '../../person/domain/person.service.js';
 import { User } from './user.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 describe('KeycloakUserService', () => {
     let module: TestingModule;
@@ -17,6 +18,7 @@ describe('KeycloakUserService', () => {
     let adminService: DeepMocked<KeycloakAdministrationService>;
     let kcUsersMock: DeepMocked<KeycloakAdminClient['users']>;
     let kcRolesMock: DeepMocked<KeycloakAdminClient['roles']>;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
         kcUsersMock = createMock<KeycloakAdminClient['users']>();
@@ -48,6 +50,7 @@ describe('KeycloakUserService', () => {
         }).compile();
         service = module.get(KeycloakUserService);
         adminService = module.get(KeycloakAdministrationService);
+        loggerMock = module.get(ClassLogger);
     });
 
     beforeEach(() => {
@@ -655,10 +658,12 @@ describe('KeycloakUserService', () => {
         describe('when user does not exist', () => {
             it('should return error when findById fails', async () => {
                 const user: User<true> = DoFactory.createUser(true);
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
+                const rolle2: Rolle<true> = DoFactory.createRolle(true);
                 kcUsersMock.findOne.mockResolvedValueOnce(undefined);
-                const roleNames = ['role1', 'role2'];
+                const roleNames: string[] = [rolle.name, rolle2.name];
 
-                const result = await service.assignRealmRolesToUser(user.id, roleNames);
+                const result: Result<void, DomainError> = await service.assignRealmRolesToUser(user.id, roleNames);
 
                 expect(result).toStrictEqual<Result<User<true>>>({
                     ok: false,
@@ -671,7 +676,6 @@ describe('KeycloakUserService', () => {
                 const user: User<true> = DoFactory.createUser(true);
                 const roleNames = ['role1', 'role2'];
 
-                // Mock the user lookup to return a valid user
                 kcUsersMock.findOne.mockResolvedValueOnce({
                     id: user.id,
                     username: user.username,
@@ -679,50 +683,135 @@ describe('KeycloakUserService', () => {
                     createdTimestamp: user.createdDate.getTime(),
                 } as UserRepresentation);
 
-                // Mock roles returned by the roles.find method
                 const mockRoles: RoleRepresentation[] = [
                     {
                         id: 'role-id-1',
                         name: 'role1',
                         description: 'First role',
-                        composite: false,
-                        clientRole: false,
-                        attributes: {
-                            key1: ['value1'],
-                            key2: ['value2'],
-                        },
                     },
                     {
                         id: 'role-id-2',
                         name: 'role2',
                         description: 'Second role',
-                        composite: true,
-                        clientRole: true,
-                        composites: {
-                            realm: ['composite-role1'],
-                            client: {
-                                'client-id': ['client-role1'],
-                            },
-                        },
                     },
                 ];
                 kcRolesMock.find.mockResolvedValueOnce(mockRoles);
 
-                // Mock the user's current role mappings to simulate that they currently have no roles
                 kcUsersMock.listRealmRoleMappings.mockResolvedValueOnce([]);
 
-                // Mock the addRealmRoleMappings call to simulate successful role assignment
                 kcUsersMock.addRealmRoleMappings.mockResolvedValueOnce(undefined);
 
-                // Call the method under test
                 const result = await service.assignRealmRolesToUser(user.id, roleNames);
 
-                // Assert the expected result
                 expect(result).toStrictEqual<Result<void>>({
                     ok: true,
                     value: undefined,
                 });
             });
+        });
+        describe('when no valid roles found', () => {
+            it('should return an error', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                } as UserRepresentation);
+
+                kcRolesMock.find.mockResolvedValueOnce([]);
+
+                const result = await service.assignRealmRolesToUser(user.id, ['non-existing-role']);
+
+                expect(result).toStrictEqual<Result<void>>({
+                    ok: false,
+                    error: new EntityNotFoundError(`No valid roles found for the provided role names`),
+                });
+            });
+        });
+        describe('when user already has all roles', () => {
+            it('should return ok without assigning new roles', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                } as UserRepresentation);
+
+                const mockRoles: RoleRepresentation[] = [
+                    { id: 'role-id-1', name: 'role1', description: 'First role' },
+                    { id: 'role-id-2', name: 'role2', description: 'Second role' },
+                ];
+                kcRolesMock.find.mockResolvedValueOnce(mockRoles);
+
+                kcUsersMock.listRealmRoleMappings.mockResolvedValueOnce(mockRoles); // User already has roles
+
+                const result = await service.assignRealmRolesToUser(user.id, ['role1', 'role2']);
+
+                expect(result).toStrictEqual<Result<void>>({ ok: true, value: undefined });
+            });
+        });
+        describe('when no roles are provided', () => {
+            it('should return ok without making any changes', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                } as UserRepresentation);
+
+                const result = await service.assignRealmRolesToUser(user.id, []);
+
+                expect(result).toStrictEqual<Result<void>>({ ok: true, value: undefined });
+            });
+        });
+    });
+    describe('when some roles are not valid', () => {
+        it('should only assign the valid roles', async () => {
+            const user: User<true> = DoFactory.createUser(true);
+            kcUsersMock.findOne.mockResolvedValueOnce({
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                createdTimestamp: user.createdDate.getTime(),
+            } as UserRepresentation);
+
+            const mockRoles: RoleRepresentation[] = [{ id: 'role-id-1', name: 'role1', description: 'First role' }]; // Only one valid role
+
+            kcRolesMock.find.mockResolvedValueOnce(mockRoles);
+            kcUsersMock.listRealmRoleMappings.mockResolvedValueOnce([]);
+            kcUsersMock.addRealmRoleMappings.mockResolvedValueOnce(undefined);
+
+            const result = await service.assignRealmRolesToUser(user.id, ['role1', 'invalid-role']);
+
+            expect(result).toStrictEqual<Result<void>>({ ok: true, value: undefined });
+            // Assert that only the valid role was passed to addRealmRoleMappings
+            expect(kcUsersMock.addRealmRoleMappings).toHaveBeenCalledWith({
+                id: user.id,
+                roles: [{ id: 'role-id-1', name: 'role1' }],
+            });
+        });
+    });
+    describe('when an error occurs during role assignment', () => {
+        it('should log the error and return a DomainError', async () => {
+            const user: User<true> = DoFactory.createUser(true);
+            const roleNames = ['role1', 'role2'];
+
+            kcUsersMock.findOne.mockResolvedValueOnce({
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                createdTimestamp: user.createdDate.getTime(),
+            } as UserRepresentation);
+
+            const error = new Error('Simulated error during role assignment');
+            kcUsersMock.addRealmRoleMappings.mockRejectedValueOnce(error);
+
+            await service.assignRealmRolesToUser(user.id, roleNames);
+
+            expect(loggerMock.error).toHaveBeenCalled();
         });
     });
 });
