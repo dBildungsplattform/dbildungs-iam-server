@@ -23,9 +23,9 @@ export class PersonAdministrationService {
         let rollen: Option<Rolle<true>[]>;
 
         if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName);
+            rollen = await this.rolleRepo.findByName(rolleName, false);
         } else {
-            rollen = await this.rolleRepo.find();
+            rollen = await this.rolleRepo.find(false);
         }
 
         if (!rollen) return [];
