@@ -7,7 +7,7 @@ import {
     PersonenkontextUpdatedEvent,
     PersonenkontextUpdatedPersonData,
 } from '../../../shared/events/personenkontext-updated.event.js';
-import { KeycloackServiceProviderHandler } from './keycloack-service-provider.event-handler.js';
+import { KeycloackServiceProviderHandler } from '../keycloak-administration/event-handlers/keycloack-service-provider.event-handler.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { KeycloakUserService } from '../domain/keycloak-user.service.js';
 

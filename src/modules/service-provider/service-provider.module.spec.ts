@@ -1,13 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
 import { ServiceProviderModule } from './service-provider.module.js';
+import { EventModule } from '../../core/eventbus/index.js';
 
 describe('ServiceProviderModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), ServiceProviderModule, MapperTestModule],
+            imports: [
+                ConfigTestModule,
+                DatabaseTestModule.forRoot(),
+                ServiceProviderModule,
+                MapperTestModule,
+                EventModule,
+            ],
         }).compile();
     });
 

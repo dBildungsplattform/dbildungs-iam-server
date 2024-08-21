@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
-//import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
+
+import { RolleServiceProviderEntity } from '../rolle/entity/rolle-service-provider.entity.js';
 import {
     PersonenkontextUpdatedData,
     PersonenkontextUpdatedEvent,
-} from '../../../shared/events/personenkontext-updated.event.js';
-import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
-import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
-import { KeycloakUserService } from '../domain/keycloak-user.service.js';
+} from '../../shared/events/personenkontext-updated.event.js';
+import { EventHandler } from '../../core/eventbus/decorators/event-handler.decorator.js';
+import { KeycloakUserService } from '../keycloak-administration/index.js';
+import { RolleID } from '../../shared/types/aggregate-ids.types.js';
+
+//import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export type KontextIdsAndDuplicationFlag = {
     hasDuplicateRolleIds: boolean;
