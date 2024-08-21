@@ -397,5 +397,35 @@ describe('PersonenkontexteUpdate', () => {
                 await expect(pkUpdate.update()).resolves.toBeInstanceOf(MissingPermissionsError);
             });
         });
+        describe('when personalnummer is provided', () => {
+            beforeEach(() => {
+                const count: number = 2;
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    lastModified,
+                    count,
+                    [bodyParam1, bodyParam2],
+                    personPermissionsMock,
+                    '1234567',
+                );
+            });
+
+            it('should update the personalnummer of the person', async () => {
+                const newPerson: Person<true> = createMock<Person<true>>();
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+                // Mock call before publishing the event
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+
+                // Mock call if the personalnummer exists
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+
+                await sut.update();
+
+                expect(personRepoMock.save).toHaveBeenCalledTimes(1);
+            });
+        });
     });
 });
