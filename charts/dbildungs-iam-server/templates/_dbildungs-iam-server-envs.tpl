@@ -26,6 +26,11 @@
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: frontend-sessionSecret
+          - name: ITSLEARNING_ENABLED
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: itslearning-enabled
           - name: ITSLEARNING_ENDPOINT
             valueFrom:
               secretKeyRef:
