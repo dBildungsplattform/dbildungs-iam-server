@@ -107,10 +107,26 @@ describe('RolleRepo', () => {
                 sut.save(DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] })),
             ]);
 
-            const rollenResult: Rolle<true>[] = await sut.find();
+            const rollenResult: Rolle<true>[] = await sut.find(false);
 
             expect(rollenResult).toHaveLength(3);
             expect(rollenResult).toEqual(rollen);
+        });
+
+        it('should not return technische rollen if includeTechnische = false', async () => {
+            await sut.save(DoFactory.createRolle(false, { istTechnisch: true }));
+            const rolleResult: Option<Rolle<true>[]> = await sut.find(false);
+
+            expect(rolleResult).toBeDefined();
+            expect(rolleResult).toHaveLength(0);
+        });
+
+        it('should return technische rollen if includeTechnische = true', async () => {
+            await sut.save(DoFactory.createRolle(false, { istTechnisch: true }));
+            const rolleResult: Option<Rolle<true>[]> = await sut.find(true);
+
+            expect(rolleResult).toBeDefined();
+            expect(rolleResult).toHaveLength(1);
         });
     });
 
@@ -168,6 +184,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                false,
                 undefined,
                 10,
                 0,
@@ -186,6 +203,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                false,
                 undefined,
                 10,
                 0,
@@ -204,6 +222,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                false,
                 undefined,
                 10,
                 0,
@@ -230,6 +249,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                false,
                 'Test',
                 10,
                 0,
@@ -248,6 +268,7 @@ describe('RolleRepo', () => {
 
             const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
                 permissions,
+                false,
                 undefined,
                 10,
                 0,
@@ -256,18 +277,76 @@ describe('RolleRepo', () => {
             expect(rolleResult?.length).toBe(1);
             expect(total).toBe(1);
         });
+
+        it('should not return technische rollen if includeTechnische = false', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId, istTechnisch: true }),
+            );
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
+
+            const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                false,
+                undefined,
+                10,
+                0,
+            );
+
+            expect(rolleResult).toHaveLength(0);
+            expect(total).toBe(0);
+        });
+
+        it('should return technische rollen if includeTechnische = true', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId, istTechnisch: true }),
+            );
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationId]);
+
+            const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                true,
+                undefined,
+                10,
+                0,
+            );
+
+            expect(rolleResult).toHaveLength(1);
+            expect(total).toBe(1);
+        });
     });
     describe('findByName', () => {
         it('should return the rolle', async () => {
             const rolle: Rolle<true> = await sut.save(DoFactory.createRolle(false));
-            const rolleResult: Option<Rolle<true>[]> = await sut.findByName(rolle.name, 1);
+            const rolleResult: Option<Rolle<true>[]> = await sut.findByName(rolle.name, false, 1);
+
+            expect(rolleResult).toBeDefined();
+            expect(rolleResult).toHaveLength(1);
+        });
+
+        it('should not return technische rollen if includeTechnische = false', async () => {
+            const rolle: Rolle<true> = await sut.save(DoFactory.createRolle(false, { istTechnisch: true }));
+            const rolleResult: Option<Rolle<true>[]> = await sut.findByName(rolle.name, false, 1);
+
+            expect(rolleResult).toBeDefined();
+            expect(rolleResult).toHaveLength(0);
+        });
+
+        it('should return technische rollen if includeTechnische = true', async () => {
+            const rolle: Rolle<true> = await sut.save(DoFactory.createRolle(false, { istTechnisch: true }));
+            const rolleResult: Option<Rolle<true>[]> = await sut.findByName(rolle.name, true, 1);
 
             expect(rolleResult).toBeDefined();
             expect(rolleResult).toHaveLength(1);
         });
 
         it('should return undefined if the entity does not exist', async () => {
-            const rolleResult: Option<Rolle<true>[]> = await sut.findByName(faker.string.alpha(), 1);
+            const rolleResult: Option<Rolle<true>[]> = await sut.findByName(faker.string.alpha(), false, 1);
 
             expect(rolleResult).toBeDefined();
             expect(rolleResult).toHaveLength(0);

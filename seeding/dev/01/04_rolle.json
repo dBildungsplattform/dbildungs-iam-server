@@ -115,7 +115,8 @@
           "SCHULTRAEGER_VERWALTEN",
           "MIGRATION_DURCHFUEHREN"
         ],
-        "serviceProviderIds": []
+        "serviceProviderIds": [],
+        "istTechnisch": true
       },
       {
         "id": 6,

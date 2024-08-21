@@ -214,6 +214,7 @@ describe('Personenuebersicht API', () => {
                         [],
                         [],
                         [],
+                        false,
                     );
 
                     if (rolle1 instanceof DomainError) {
@@ -228,6 +229,7 @@ describe('Personenuebersicht API', () => {
                         [],
                         [],
                         [],
+                        false,
                     );
 
                     if (rolle2 instanceof DomainError) {
@@ -357,6 +359,7 @@ describe('Personenuebersicht API', () => {
                         [],
                         [],
                         [],
+                        false,
                     );
 
                     if (rolle1 instanceof DomainError) {
@@ -371,6 +374,7 @@ describe('Personenuebersicht API', () => {
                         [],
                         [],
                         [],
+                        false,
                     );
 
                     if (rolle2 instanceof DomainError) {
@@ -448,6 +452,7 @@ describe('Personenuebersicht API', () => {
                 [],
                 [],
                 [],
+                false,
             );
 
             if (rolle1 instanceof DomainError) {
@@ -462,6 +467,7 @@ describe('Personenuebersicht API', () => {
                 [],
                 [],
                 [],
+                false,
             );
 
             if (rolle2 instanceof DomainError) {
