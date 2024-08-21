@@ -165,11 +165,18 @@ describe('ServiceProviderRepo', () => {
         });
     });
 
-    it('should return an array of RolleServiceProviderEntity', async () => {
+    it('should return an array of RolleServiceProviderEntity with an Array', async () => {
         const role: RolleID = faker.string.uuid();
         const serviceProviderResult: RolleServiceProviderEntity[] = await sut.fetchRolleServiceProvidersWithoutPerson([
             role,
         ]);
+        expect(serviceProviderResult).toBeDefined();
+    });
+    it('should return an array of RolleServiceProviderEntity with a single rolle', async () => {
+        const role: RolleID = faker.string.uuid();
+
+        const serviceProviderResult: RolleServiceProviderEntity[] =
+            await sut.fetchRolleServiceProvidersWithoutPerson(role);
         expect(serviceProviderResult).toBeDefined();
     });
 });
