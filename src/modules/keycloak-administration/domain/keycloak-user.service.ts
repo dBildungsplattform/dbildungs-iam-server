@@ -266,6 +266,7 @@ export class KeycloakUserService {
             return { ok: false, error: new KeycloakClientError('Response is invalid') };
         }
 
+        // TODO: Are attributes actually returned by keycloak?
         const attributes: ExternalSystemIDs = {
             ID_ITSLEARNING: userReprDto.attributes.ID_ITSLEARNING,
         };

@@ -386,14 +386,13 @@ describe('DbSeedService', () => {
                 );
 
                 const person: Person<true> = createMock<Person<true>>();
-                const id: string = faker.string.uuid();
                 const existingUser: User<true> = User.construct<true>(
-                    id,
+                    faker.string.uuid(),
                     'testusername',
                     'test@example.com',
                     faker.date.recent(),
                     {
-                        ID_ITSLEARNING: id,
+                        ID_ITSLEARNING: faker.string.uuid(),
                     },
                 );
 
