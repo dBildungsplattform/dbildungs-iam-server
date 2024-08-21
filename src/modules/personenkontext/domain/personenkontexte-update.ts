@@ -270,8 +270,6 @@ export class PersonenkontexteUpdate {
             this.personId,
         );
 
-        await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate);
-
         // Update the personalnummer if it is provided
         if (this.personalnummer) {
             const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
@@ -280,6 +278,9 @@ export class PersonenkontexteUpdate {
                 await this.personRepo.save(person);
             }
         }
+
+        await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate);
+
         return existingPKsAfterUpdate;
     }
 

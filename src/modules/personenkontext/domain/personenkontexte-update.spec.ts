@@ -398,18 +398,6 @@ describe('PersonenkontexteUpdate', () => {
             });
         });
         describe('when personalnummer is provided', () => {
-            beforeEach(() => {
-                const count: number = 2;
-                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
-                    personId,
-                    lastModified,
-                    count,
-                    [bodyParam1, bodyParam2],
-                    personPermissionsMock,
-                    '1234567',
-                );
-            });
-
             it('should update the personalnummer of the person', async () => {
                 const newPerson: Person<true> = createMock<Person<true>>();
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
@@ -422,6 +410,15 @@ describe('PersonenkontexteUpdate', () => {
                 // Mock call if the personalnummer exists
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
 
+                const count: number = 2;
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    lastModified,
+                    count,
+                    [bodyParam1, bodyParam2],
+                    personPermissionsMock,
+                    '1234567',
+                );
                 await sut.update();
 
                 expect(personRepoMock.save).toHaveBeenCalledTimes(1);
