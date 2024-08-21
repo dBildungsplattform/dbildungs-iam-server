@@ -1,18 +1,16 @@
-import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-
+import { KeycloackServiceProviderHandler } from './keycloack-service-provider.event-handler.js';
+import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
+import { KeycloakUserService } from '../keycloak-administration/index.js';
 import {
     PersonenkontextUpdatedData,
     PersonenkontextUpdatedEvent,
     PersonenkontextUpdatedPersonData,
-} from '../../../shared/events/personenkontext-updated.event.js';
-import { KeycloackServiceProviderHandler } from '../keycloak-administration/event-handlers/keycloack-service-provider.event-handler.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { KeycloakUserService } from '../domain/keycloak-user.service.js';
-
-import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
-import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+} from '../../shared/events/personenkontext-updated.event.js';
+import { RolleServiceProviderEntity } from '../rolle/entity/rolle-service-provider.entity.js';
+import { RolleID } from '../../shared/types/aggregate-ids.types.js';
+import { faker } from '@faker-js/faker';
 
 describe('KeycloackServiceProviderHandler', () => {
     let module: TestingModule;
