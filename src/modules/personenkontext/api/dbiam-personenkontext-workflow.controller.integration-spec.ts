@@ -173,6 +173,33 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             expect(response.status).toBe(201);
         });
 
+        it('should return created person and personenkontext with personalnummer', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/personenkontext-workflow')
+                .send({
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                    personalnummer: '1234567'
+                });
+            expect(response.status).toBe(201);
+        });
+
         it('should return error with status-code=404 if organisation does NOT exist', async () => {
             const rolle: Rolle<true> = await rolleRepo.save(
                 DoFactory.createRolle(false, {
