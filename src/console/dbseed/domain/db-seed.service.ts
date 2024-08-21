@@ -147,6 +147,7 @@ export class DbSeedService {
                 file.merkmale,
                 file.systemrechte,
                 serviceProviderUUIDs,
+                file.istTechnisch ?? false,
             );
 
             if (rolle instanceof DomainError) {

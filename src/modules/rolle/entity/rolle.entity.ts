@@ -51,4 +51,9 @@ export class RolleEntity extends TimestampedEntity {
         orphanRemoval: true,
     })
     public personenKontexte: Collection<PersonenkontextEntity> = new Collection<PersonenkontextEntity>(this);
+
+    @Property({
+        default: false,
+    })
+    public istTechnisch!: boolean;
 }
