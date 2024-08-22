@@ -61,7 +61,7 @@ import { OrganisationIstBereitsZugewiesenError } from '../domain/organisation-is
 import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
 import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
-import { OrganisationParentsResponse } from './organisation.parents.response.js';
+import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -214,18 +214,18 @@ export class OrganisationController {
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({
         description: 'The parent organizations were successfully pulled.',
-        type: OrganisationParentsResponse,
+        type: ParentOrganisationenResponse,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the organizations.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organizations.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
     public async getParentsByIds(
         @Body() body: ParentOrganisationsByIdsBodyParams,
-    ): Promise<OrganisationParentsResponse> {
+    ): Promise<ParentOrganisationenResponse> {
         const organisationen: Organisation<true>[] = await this.organisationRepository.findParentOrgasForIds(
             body.organisationIds,
         );
-        return new OrganisationParentsResponse(organisationen);
+        return new ParentOrganisationenResponse(organisationen);
     }
 
     @Get(':organisationId')

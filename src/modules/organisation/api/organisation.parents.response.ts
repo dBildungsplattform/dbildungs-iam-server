@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { OrganisationResponse } from './organisation.response.js';
 import { Organisation } from '../domain/organisation.js';
 
-export class OrganisationParentsResponse {
+export class ParentOrganisationenResponse {
     @ApiProperty({ type: [OrganisationResponse] })
     public readonly parents!: Array<OrganisationResponse>;
 

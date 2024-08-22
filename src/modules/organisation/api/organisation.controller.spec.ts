@@ -30,7 +30,7 @@ import { OrganisationService } from '../domain/organisation.service.js';
 
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { OrganisationParentsResponse } from './organisation.parents.response.js';
+import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
@@ -416,11 +416,11 @@ describe('OrganisationController', () => {
             );
             organisationRepositoryMock.findParentOrgasForIds.mockResolvedValue(mockedRepoResponse);
 
-            const result: OrganisationParentsResponse = await organisationController.getParentsByIds(mockBody);
+            const result: ParentOrganisationenResponse = await organisationController.getParentsByIds(mockBody);
 
             expect(organisationRepositoryMock.findParentOrgasForIds).toHaveBeenCalledTimes(1);
             expect(organisationRepositoryMock.findParentOrgasForIds).toHaveBeenCalledWith(ids);
-            expect(result).toBeInstanceOf(OrganisationParentsResponse);
+            expect(result).toBeInstanceOf(ParentOrganisationenResponse);
             expect(result.parents[0]?.id).toBe(ids[0]);
         });
     });
