@@ -18,11 +18,12 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { Person } from '../../person/domain/person.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rollenart-for-lern.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { CheckRollenartLernSpecification } from '../specification/nur-rolle-lern.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -244,56 +245,19 @@ export class PersonenkontexteUpdate {
         return createdPKs;
     }
 
-    private async validationForRollenartLern(
-        existingPKs: Personenkontext<true>[],
+    private async checkRollenartLernSpecification(
         sentPKs: Personenkontext<boolean>[],
     ): Promise<Option<PersonenkontexteUpdateError>> {
-        // Check if the sent PKs have any LERN roles
-        const sentRollen: Rolle<true>[] = await this.getUniqueRollenFromPersonenkontexte(sentPKs);
-        const hasAnyLernInSent: boolean = sentRollen.some((rolle: Rolle<true>) => rolle.rollenart === RollenArt.LERN);
+        const isSatisfied: boolean = await new CheckRollenartLernSpecification(
+            this.dBiamPersonenkontextRepo,
+            this.rolleRepo,
+        ).checkRollenartLern(sentPKs);
 
-        // Check if existing PKs have LERN roles
-        const hasLernInExisting: boolean = await this.hasAnyPersonenkontextWithRollenartLern(existingPKs);
-
-        // Early return: If neither the existing PKs nor the sent PKs contain LERN roles, it's safe to return undefined
-        if (!hasLernInExisting && !hasAnyLernInSent) {
-            return undefined;
-        }
-
-        // Check if sent PKs contain only LERN roles
-        const hasOnlyRollenartLern: boolean = sentRollen.every(
-            (rolle: Rolle<true>) => rolle.rollenart === RollenArt.LERN,
-        );
-
-        // If there are LERN roles in existing PKs, ensure sent PKs do not mix LERN with other types
-        if (hasLernInExisting && !hasOnlyRollenartLern) {
-            return new UpdateInvalidRollenartForLernError();
-        }
-
-        // Check if sent PKs alone mix LERN and other types
-        const containsMixedRollen: boolean =
-            hasAnyLernInSent && sentRollen.some((rolle: Rolle<true>) => rolle.rollenart !== RollenArt.LERN);
-
-        if (containsMixedRollen) {
+        if (!isSatisfied) {
             return new UpdateInvalidRollenartForLernError();
         }
 
         return undefined;
-    }
-
-    private async getUniqueRollenFromPersonenkontexte(
-        personenkontexte: Personenkontext<true>[],
-    ): Promise<Rolle<true>[]> {
-        const uniquesRolleIds: RolleID[] = Array.from(
-            new Set(personenkontexte.map((pk: Personenkontext<true>) => pk.rolleId)),
-        );
-        const mapRollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(uniquesRolleIds);
-        return Array.from(mapRollen.values());
-    }
-
-    private async hasAnyPersonenkontextWithRollenartLern(personenkontexte: Personenkontext<true>[]): Promise<boolean> {
-        const foundRollen: Rolle<true>[] = await this.getUniqueRollenFromPersonenkontexte(personenkontexte);
-        return foundRollen.some((rolle: Rolle<true>) => rolle.rollenart === RollenArt.LERN);
     }
 
     public async update(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
@@ -303,10 +267,8 @@ export class PersonenkontexteUpdate {
         }
 
         const existingPKs: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(this.personId);
-        const validationForLernError: Option<PersonenkontexteUpdateError> = await this.validationForRollenartLern(
-            existingPKs,
-            sentPKs,
-        );
+        const validationForLernError: Option<PersonenkontexteUpdateError> =
+            await this.checkRollenartLernSpecification(sentPKs);
         if (validationForLernError) {
             return validationForLernError;
         }

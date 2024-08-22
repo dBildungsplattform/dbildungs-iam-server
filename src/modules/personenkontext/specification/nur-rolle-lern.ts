@@ -10,29 +10,57 @@ export class CheckRollenartLernSpecification {
         private readonly rolleRepo: RolleRepo,
     ) {}
 
-    public async checkRollenartLern(personenkontext: Personenkontext<false>): Promise<boolean> {
+    public async checkRollenartLern(sentPKs: Personenkontext<boolean>[]): Promise<boolean> {
         // Fetch all personenkontexte for the person
-        const existingPersonenkontexte: Personenkontext<true>[] = await this.personenkontextRepo.findByPerson(
-            personenkontext.personId,
+        let existingPKs: Personenkontext<true>[] = [];
+
+        if (sentPKs[0]?.personId) {
+            existingPKs = await this.personenkontextRepo.findByPerson(sentPKs[0]?.personId);
+        }
+
+        // Step 1: Check if the sent PKs have any LERN roles
+        const sentRollen: Rolle<true>[] = await this.getUniqueRollenFromPersonenkontexte(sentPKs);
+        const hasAnyLernInSent: boolean = sentRollen.some((rolle: Rolle<true>) => rolle.rollenart === RollenArt.LERN);
+
+        // Step 2: Check if existing PKs have LERN roles
+        const hasLernInExisting: boolean = await this.hasAnyPersonenkontextWithRollenartLern(existingPKs);
+
+        // Early return: If neither the existing PKs nor the sent PKs contain LERN roles, it's safe to return undefined
+        if (!hasLernInExisting && !hasAnyLernInSent) {
+            return true;
+        }
+
+        // Step 3: Check if sent PKs contain only LERN roles
+        const hasOnlyRollenartLern: boolean = sentRollen.every(
+            (rolle: Rolle<true>) => rolle.rollenart === RollenArt.LERN,
         );
 
-        // Check if any existing Personenkontext has a role of type LERN
-        const rollen: Option<Rolle<true>>[] = await Promise.all(
-            existingPersonenkontexte.map((pk: Personenkontext<true>) => this.rolleRepo.findById(pk.rolleId)),
-        );
+        // Step 4: If there are LERN roles in existing PKs, ensure sent PKs do not mix LERN with other types
+        if (hasLernInExisting && !hasOnlyRollenartLern) {
+            return true;
+        }
 
-        const hasLernRolle: boolean = rollen.some((rolle: Option<Rolle<true>>) => rolle?.rollenart === RollenArt.LERN);
+        // Step 5: Check if sent PKs alone mix LERN and other types
+        const containsMixedRollen: boolean =
+            hasAnyLernInSent && sentRollen.some((rolle: Rolle<true>) => rolle.rollenart !== RollenArt.LERN);
 
-        if (hasLernRolle) {
-            // If any existing Personenkontext has a role of type LERN,
-            // check if the new Personenkontext also has a role of type LERN
-            const newRolle: Option<Rolle<true>> = await this.rolleRepo.findById(personenkontext.rolleId);
-
-            if (newRolle && newRolle.rollenart !== RollenArt.LERN) {
-                return false;
-            }
+        if (containsMixedRollen) {
+            return false;
         }
 
         return true;
+    }
+
+    private async getUniqueRollenFromPersonenkontexte(
+        personenkontexte: Personenkontext<boolean>[],
+    ): Promise<Rolle<true>[]> {
+        const uniqueRolleIds: Set<string> = new Set(personenkontexte.map((pk) => pk.rolleId));
+        const mapRollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(Array.from(uniqueRolleIds));
+        return Array.from(mapRollen.values());
+    }
+
+    private async hasAnyPersonenkontextWithRollenartLern(personenkontexte: Personenkontext<true>[]): Promise<boolean> {
+        const foundRollen: Rolle<true>[] = await this.getUniqueRollenFromPersonenkontexte(personenkontexte);
+        return foundRollen.some((rolle: Rolle<true>) => rolle.rollenart === RollenArt.LERN);
     }
 }
