@@ -87,15 +87,14 @@ describe('KeycloackServiceProviderHandler', () => {
         // Arrange
         const keycloakUserIdDelete: string = faker.string.uuid();
         const keycloakUserIdCurrent: string = faker.string.uuid();
-        const personenkontextUpdatedEventMock: DeepMocked<PersonenkontextUpdatedEvent> =
-            createMock<PersonenkontextUpdatedEvent>({
-                person: {
-                    keycloakUserId: faker.string.uuid(),
-                } as PersonenkontextUpdatedPersonData,
-                newKontexte: [],
-                removedKontexte: [{ rolleId: faker.string.uuid() } as PersonenkontextUpdatedData],
-                currentKontexte: [{ rolleId: faker.string.uuid() } as PersonenkontextUpdatedData],
-            });
+        const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+            {
+                keycloakUserId: faker.string.uuid(),
+            } as PersonenkontextUpdatedPersonData,
+            [],
+            [{ rolleId: faker.string.uuid() } as PersonenkontextUpdatedData],
+            [{ rolleId: faker.string.uuid() } as PersonenkontextUpdatedData],
+        );
 
         serviceProviderRepoMock.fetchRolleServiceProvidersWithoutPerson.mockResolvedValueOnce([
             {
@@ -110,11 +109,11 @@ describe('KeycloackServiceProviderHandler', () => {
         ]);
 
         // Act
-        await sut.updatePersonenkontexteOrDeleteKCandSP(personenkontextUpdatedEventMock);
+        await sut.updatePersonenkontexteOrDeleteKCandSP(personenkontextUpdatedEvent);
 
         // Assert
         expect(keycloakUserServiceMock.removeRealmRolesFromUser).toHaveBeenCalledWith(
-            personenkontextUpdatedEventMock.person.keycloakUserId,
+            personenkontextUpdatedEvent.person.keycloakUserId,
             [keycloakUserIdDelete],
         );
         expect(keycloakUserServiceMock.assignRealmRolesToUser).not.toHaveBeenCalled();
@@ -122,18 +121,17 @@ describe('KeycloackServiceProviderHandler', () => {
 
     it('should not update roles if no Keycloak user ID is present', async () => {
         // Arrange
-        const personenkontextUpdatedEventMock: DeepMocked<PersonenkontextUpdatedEvent> =
-            createMock<PersonenkontextUpdatedEvent>({
-                person: {
-                    keycloakUserId: undefined,
-                } as PersonenkontextUpdatedPersonData,
-                newKontexte: [{ rolleId: faker.string.uuid() } as PersonenkontextUpdatedData],
-                removedKontexte: [],
-                currentKontexte: [{ rolleId: faker.string.uuid() } as PersonenkontextUpdatedData],
-            });
+        const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+            {
+                keycloakUserId: undefined,
+            } as PersonenkontextUpdatedPersonData,
+            [{ rolleId: faker.string.uuid() } as PersonenkontextUpdatedData],
+            [],
+            [{ rolleId: faker.string.uuid() } as PersonenkontextUpdatedData],
+        );
 
         // Act
-        await sut.updatePersonenkontexteOrDeleteKCandSP(personenkontextUpdatedEventMock);
+        await sut.updatePersonenkontexteOrDeleteKCandSP(personenkontextUpdatedEvent);
 
         // Assert
         expect(serviceProviderRepoMock.fetchRolleServiceProvidersWithoutPerson).not.toHaveBeenCalled();
@@ -142,18 +140,17 @@ describe('KeycloackServiceProviderHandler', () => {
     });
     it('should return the correct currentRolleIDs', async () => {
         // Arrange
-        const rolleID = faker.string.uuid();
-        const rollID2 = faker.string.uuid();
-        const keycloakUserId = faker.string.uuid();
-        const personenkontextUpdatedEventMock: DeepMocked<PersonenkontextUpdatedEvent> =
-            createMock<PersonenkontextUpdatedEvent>({
-                person: {
-                    keycloakUserId: keycloakUserId,
-                } as PersonenkontextUpdatedPersonData,
-                newKontexte: [{ rolleId: rolleID } as PersonenkontextUpdatedData],
-                removedKontexte: [],
-                currentKontexte: [{ rolleId: rolleID }, { rolleId: rollID2 }] as PersonenkontextUpdatedData[],
-            });
+        const rolleID: string = faker.string.uuid();
+        const rollID2: string = faker.string.uuid();
+        const keycloakUserId: string = faker.string.uuid();
+        const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+            {
+                keycloakUserId: keycloakUserId,
+            } as PersonenkontextUpdatedPersonData,
+            [{ rolleId: rolleID } as PersonenkontextUpdatedData],
+            [],
+            [{ rolleId: rolleID }, { rolleId: rollID2 }] as PersonenkontextUpdatedData[],
+        );
 
         serviceProviderRepoMock.fetchRolleServiceProvidersWithoutPerson.mockResolvedValueOnce([
             {
@@ -167,17 +164,16 @@ describe('KeycloackServiceProviderHandler', () => {
             } as RolleServiceProviderEntity,
         ]);
 
-        const newRolle: RolleID | undefined = personenkontextUpdatedEventMock.newKontexte?.[0]?.rolleId;
+        const newRolle: RolleID | undefined = personenkontextUpdatedEvent.newKontexte?.[0]?.rolleId;
         const currentRolleIDs: RolleID[] =
-            personenkontextUpdatedEventMock.currentKontexte
+            personenkontextUpdatedEvent.currentKontexte
                 ?.map((kontext: PersonenkontextUpdatedData) => kontext.rolleId)
                 .filter((id: RolleID) => id && id !== newRolle) || [];
 
         // Act
-        await sut.updatePersonenkontexteOrDeleteKCandSP(personenkontextUpdatedEventMock);
+        await sut.updatePersonenkontexteOrDeleteKCandSP(personenkontextUpdatedEvent);
 
         // Assert
-
         expect(currentRolleIDs).toEqual([rollID2]);
     });
 });

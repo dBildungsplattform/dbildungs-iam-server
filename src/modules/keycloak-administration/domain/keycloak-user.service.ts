@@ -274,8 +274,6 @@ export class KeycloakUserService {
         return { ok: true, value: userDo };
     }
 
-    // TODO if the user aledy has the role dont update
-    //TODO if the user is deleting the role check the other PK is that the user has if they have keep the ones that the user has in the other role
     public async assignRealmRolesToUser(usernameId: string, roleNames: string[]): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
@@ -283,7 +281,7 @@ export class KeycloakUserService {
         if (!kcAdminClientResult.ok) {
             return kcAdminClientResult;
         }
-
+        // this function returns the findby user
         const userResult: Result<User<true>, DomainError> = await this.findById(usernameId);
         if (!userResult.ok) {
             return userResult;
@@ -309,7 +307,6 @@ export class KeycloakUserService {
                     error: new EntityNotFoundError(`No valid roles found for the provided role names`),
                 };
             }
-            // remains to be seen if important or not
             const userCurrentRoles: RoleRepresentation[] = await kcAdminClientResult.value.users.listRealmRoleMappings({
                 id: userId,
             });
