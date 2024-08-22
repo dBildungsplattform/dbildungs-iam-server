@@ -37,7 +37,7 @@ export class CheckRollenartLernSpecification {
 
         // Step 4: If there are LERN roles in existing PKs, ensure sent PKs do not mix LERN with other types
         if (hasLernInExisting && !hasOnlyRollenartLern) {
-            return true;
+            return false;
         }
 
         // Step 5: Check if sent PKs alone mix LERN and other types
@@ -54,7 +54,7 @@ export class CheckRollenartLernSpecification {
     private async getUniqueRollenFromPersonenkontexte(
         personenkontexte: Personenkontext<boolean>[],
     ): Promise<Rolle<true>[]> {
-        const uniqueRolleIds: Set<string> = new Set(personenkontexte.map((pk) => pk.rolleId));
+        const uniqueRolleIds: Set<string> = new Set(personenkontexte.map((pk: Personenkontext<boolean>) => pk.rolleId));
         const mapRollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(Array.from(uniqueRolleIds));
         return Array.from(mapRollen.values());
     }

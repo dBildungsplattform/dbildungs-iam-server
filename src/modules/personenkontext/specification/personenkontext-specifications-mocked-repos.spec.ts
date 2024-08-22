@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { NurLehrUndLernAnKlasse } from './nur-lehr-und-lern-an-klasse.js';
 import { Personenkontext } from '../domain/personenkontext.js';
@@ -221,7 +221,13 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
 
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce(existingPersonenkontexte);
 
-            const result: boolean = await specification.checkRollenartLern(personenkontext);
+            const mapRollen: Map<string, Rolle<true>> = new Map();
+            mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+            mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+            rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+            rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+            const result: boolean = await specification.checkRollenartLern([personenkontext]);
 
             expect(result).toBe(true);
         });
@@ -233,17 +239,15 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
             );
             const personenkontext: Personenkontext<false> = createMock<Personenkontext<false>>();
             const existingPersonenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-            const existingRole: Rolle<true> = createMock<Rolle<true>>();
-            const newRole: Rolle<true> = createMock<Rolle<true>>();
-
-            existingRole.rollenart = RollenArt.LERN;
-            newRole.rollenart = RollenArt.LERN;
 
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce([existingPersonenkontext]);
-            rolleRepoMock.findById.mockResolvedValueOnce(existingRole);
-            rolleRepoMock.findById.mockResolvedValueOnce(newRole);
 
-            const result: boolean = await specification.checkRollenartLern(personenkontext);
+            const mapRollen: Map<string, Rolle<true>> = new Map();
+            mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
+            rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+            rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+            const result: boolean = await specification.checkRollenartLern([personenkontext]);
 
             expect(result).toBe(true);
         });
@@ -255,17 +259,18 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
             );
             const personenkontext: Personenkontext<false> = createMock<Personenkontext<false>>();
             const existingPersonenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-            const existingRole: Rolle<true> = createMock<Rolle<true>>();
-            const newRole: Rolle<true> = createMock<Rolle<true>>();
-
-            existingRole.rollenart = RollenArt.LERN;
-            newRole.rollenart = RollenArt.LEHR;
 
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce([existingPersonenkontext]);
-            rolleRepoMock.findById.mockResolvedValueOnce(existingRole);
-            rolleRepoMock.findById.mockResolvedValueOnce(newRole);
 
-            const result: boolean = await specification.checkRollenartLern(personenkontext);
+            const mapRollen: Map<string, Rolle<true>> = new Map();
+            mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+            rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+            const mapExistingRollen: Map<string, Rolle<true>> = new Map();
+            mapExistingRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
+            rolleRepoMock.findByIds.mockResolvedValueOnce(mapExistingRollen);
+
+            const result: boolean = await specification.checkRollenartLern([personenkontext]);
 
             expect(result).toBe(false);
         });
@@ -277,17 +282,15 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
             );
             const personenkontext: Personenkontext<false> = createMock<Personenkontext<false>>();
             const existingPersonenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-            const existingRole: Rolle<true> = createMock<Rolle<true>>();
-            const newRole: Rolle<true> = createMock<Rolle<true>>();
-
-            existingRole.rollenart = RollenArt.LEHR;
-            newRole.rollenart = RollenArt.ORGADMIN;
 
             personenkontextRepoMock.findByPerson.mockResolvedValueOnce([existingPersonenkontext]);
-            rolleRepoMock.findById.mockResolvedValueOnce(existingRole);
-            rolleRepoMock.findById.mockResolvedValueOnce(newRole);
 
-            const result: boolean = await specification.checkRollenartLern(personenkontext);
+            const mapRollen: Map<string, Rolle<true>> = new Map();
+            mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+            rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+            rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+            const result: boolean = await specification.checkRollenartLern([personenkontext]);
 
             expect(result).toBe(true);
         });
