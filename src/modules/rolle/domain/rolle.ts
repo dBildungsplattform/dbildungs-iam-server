@@ -21,6 +21,7 @@ export class Rolle<WasPersisted extends boolean> {
         public merkmale: RollenMerkmal[],
         public systemrechte: RollenSystemRecht[],
         public serviceProviderIds: string[],
+        public istTechnisch: boolean,
     ) {}
 
     public static createNew(
@@ -32,6 +33,7 @@ export class Rolle<WasPersisted extends boolean> {
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
+        istTechnisch: boolean,
     ): Rolle<false> | DomainError {
         // Validate the Rollenname
         if (!NameValidator.isNameValid(name)) {
@@ -49,6 +51,7 @@ export class Rolle<WasPersisted extends boolean> {
             merkmale,
             systemrechte,
             serviceProviderIds,
+            istTechnisch,
         );
     }
 
@@ -64,6 +67,7 @@ export class Rolle<WasPersisted extends boolean> {
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
+        istTechnisch: boolean,
     ): Promise<Rolle<true> | DomainError> {
         if (!NameValidator.isNameValid(name)) {
             return new NameForRolleWithTrailingSpaceError();
@@ -80,6 +84,7 @@ export class Rolle<WasPersisted extends boolean> {
             merkmale,
             systemrechte,
             [],
+            istTechnisch,
         );
         //Replace service providers with new ones.
         for (const serviceProviderId of serviceProviderIds) {
@@ -103,6 +108,7 @@ export class Rolle<WasPersisted extends boolean> {
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
+        istTechnisch: boolean,
     ): Rolle<WasPersisted> {
         return new Rolle(
             organisationRepo,
@@ -116,6 +122,7 @@ export class Rolle<WasPersisted extends boolean> {
             merkmale,
             systemrechte,
             serviceProviderIds,
+            istTechnisch,
         );
     }
 
