@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 import { IsDIN91379A } from '../../../../shared/util/din-91379-validation.js';
 import { OrganisationID, RolleID } from '../../../../shared/types/aggregate-ids.types.js';
 
@@ -17,8 +17,6 @@ export class DbiamCreatePersonWithContextBodyParams {
     public readonly vorname!: string;
 
     @IsString()
-    @MinLength(7)
-    @MaxLength(7)
     @IsOptional()
     @ApiProperty({ required: false })
     public readonly personalnummer?: string;
