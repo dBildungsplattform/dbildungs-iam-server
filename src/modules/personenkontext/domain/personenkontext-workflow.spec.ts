@@ -619,7 +619,12 @@ describe('PersonenkontextWorkflow', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+            rolleRepoMock.findById.mockResolvedValue(rolle1);
+
             anlage.initialize(organisation.id);
+
+            jest.spyOn(anlage, 'checkReferences').mockResolvedValue(undefined);
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, undefined, 2);
 
@@ -707,9 +712,11 @@ describe('PersonenkontextWorkflow', () => {
             const organisationen: Organisation<true>[] = [parentOrganisation];
             const personenkontexte: Personenkontext<true>[] = [personenkontext];
 
+            rolleRepoMock.findById.mockResolvedValueOnce(rolle);
             organisationRepoMock.findByNameOrKennung.mockResolvedValue(organisationen);
             dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);
 
+            parentOrganisation.typ = OrganisationsTyp.SCHULE;
             organisationRepoMock.findById.mockResolvedValue(parentOrganisation);
 
             organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
