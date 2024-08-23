@@ -6,7 +6,7 @@ import { validate, ValidationError } from 'class-validator';
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { UserRepresentationDto } from './keycloak-client/user-representation.dto.js';
-import { ExternalSystemIDs, User } from './user.js';
+import { User } from './user.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export type FindUserFilter = {
@@ -266,17 +266,12 @@ export class KeycloakUserService {
             return { ok: false, error: new KeycloakClientError('Response is invalid') };
         }
 
-        // TODO: Are attributes actually returned by keycloak?
-        const attributes: ExternalSystemIDs = {
-            ID_ITSLEARNING: userReprDto.attributes.ID_ITSLEARNING,
-        };
-
         const userDo: User<true> = User.construct<true>(
             userReprDto.id,
             userReprDto.username,
             userReprDto.email,
             new Date(userReprDto.createdTimestamp),
-            attributes,
+            {}, // UserAttributes - Keycloak sends them in a weird format
         );
 
         return { ok: true, value: userDo };

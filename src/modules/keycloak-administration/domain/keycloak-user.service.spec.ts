@@ -117,9 +117,6 @@ describe('KeycloakUserService', () => {
                         email: user.email,
                         id: user.id,
                         createdTimestamp: user.createdDate.getTime(),
-                        attributes: {
-                            ID_ITSLEARNING: user.externalSystemIDs.ID_ITSLEARNING,
-                        },
                     },
                 ] as unknown as UserRepresentation[]);
 
@@ -292,9 +289,6 @@ describe('KeycloakUserService', () => {
                         email: user.email,
                         id: user.id,
                         createdTimestamp: user.createdDate.getTime(),
-                        attributes: {
-                            ID_ITSLEARNING: user.externalSystemIDs.ID_ITSLEARNING,
-                        },
                     },
                 ] as unknown as UserRepresentation[]);
 
@@ -409,9 +403,6 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     id: user.id,
                     createdTimestamp: user.createdDate.getTime(),
-                    attributes: {
-                        ID_ITSLEARNING: user.externalSystemIDs.ID_ITSLEARNING,
-                    },
                 } as unknown as UserRepresentation);
 
                 const res: Result<User<true>> = await service.findById(user.id);
@@ -494,9 +485,6 @@ describe('KeycloakUserService', () => {
                         email: user.email,
                         id: user.id,
                         createdTimestamp: user.createdDate.getTime(),
-                        attributes: {
-                            ID_ITSLEARNING: user.externalSystemIDs.ID_ITSLEARNING,
-                        },
                     },
                 ] as unknown as UserRepresentation[]);
 

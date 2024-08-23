@@ -31,8 +31,6 @@ export function getEnabledEmailAddress(entity: PersonEntity): string | undefined
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
     return {
-        // Don't assign createdAt and updatedAt, they are auto-generated!
-        id: person.id,
         keycloakUserId: person.keycloakUserId!,
         referrer: person.referrer,
         mandant: person.mandant,
@@ -239,8 +237,9 @@ export class PersonRepository {
 
         try {
             // Create DB person
-            person.id = randomUUID();
-            const personEntity: PersonEntity = transaction.create(PersonEntity, mapAggregateToData(person));
+            const personEntity: PersonEntity = transaction.create(PersonEntity, mapAggregateToData(person)).assign({
+                id: randomUUID(), // Generate ID here instead of at insert-time
+            });
             transaction.persist(personEntity);
 
             const persistedPerson: Person<true> = mapEntityToAggregateInplace(personEntity, person);
