@@ -21,5 +21,5 @@ export class UserRepresentationDto {
 
     @ValidateNested()
     @Type(() => UserRepresentationAttributesDto)
-    public attributes!: UserRepresentationAttributesDto;
+    public attributes: UserRepresentationAttributesDto = {};
 }

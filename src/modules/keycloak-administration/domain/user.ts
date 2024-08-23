@@ -1,5 +1,5 @@
 export type ExternalSystemIDs = {
-    ID_ITSLEARNING: string;
+    ID_ITSLEARNING?: string;
 };
 
 export class User<WasPersisted extends boolean> {
