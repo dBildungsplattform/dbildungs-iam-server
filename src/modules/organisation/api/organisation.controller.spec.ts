@@ -22,13 +22,13 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { EventService } from '../../../core/eventbus/index.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
-import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
 import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
 import { NameRequiredForKlasseError } from '../specification/error/name-required-for-klasse.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { OrganisationService } from '../domain/organisation.service.js';
 
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
+import { OrganisationByNameQueryParams } from './organisation-by-name.query.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
@@ -418,7 +418,7 @@ describe('OrganisationController', () => {
             organisationId: faker.string.uuid(),
         };
 
-        const queryParams: OrganisationByIdQueryParams = {
+        const queryParams: OrganisationByNameQueryParams = {
             searchFilter: undefined,
         };
 
