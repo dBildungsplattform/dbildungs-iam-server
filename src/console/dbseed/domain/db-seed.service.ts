@@ -137,6 +137,11 @@ export class DbSeedService {
                 const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(spId);
                 serviceProviderUUIDs.push(sp.id);
             }
+            const serviceProviderData: ServiceProvider<true>[] = [];
+            for (const spId of file.serviceProviderIds) {
+                const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(spId);
+                serviceProviderData.push(sp);
+            }
             const referencedOrga: Organisation<true> = await this.getReferencedOrganisation(
                 file.administeredBySchulstrukturknoten,
             );
@@ -147,6 +152,7 @@ export class DbSeedService {
                 file.merkmale,
                 file.systemrechte,
                 serviceProviderUUIDs,
+                serviceProviderData,
                 file.istTechnisch ?? false,
             );
 

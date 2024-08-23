@@ -8,6 +8,7 @@ import { ServiceProviderModule } from '../service-provider/service-provider.modu
 //import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { KeycloackServiceProviderHandler } from './keycloack-service-provider.event-handler.js';
+import { RolleModule } from '../rolle/rolle.module.js';
 
 @Module({
     imports: [
@@ -15,6 +16,7 @@ import { KeycloackServiceProviderHandler } from './keycloack-service-provider.ev
         EventModule,
         PersonModule,
         ServiceProviderModule,
+        RolleModule,
         EventModule,
         KeycloakConfigModule,
         KeycloakAdministrationModule,

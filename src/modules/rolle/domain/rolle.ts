@@ -22,6 +22,7 @@ export class Rolle<WasPersisted extends boolean> {
         public systemrechte: RollenSystemRecht[],
         public serviceProviderIds: string[],
         public istTechnisch: boolean,
+        public serviceProviderData: ServiceProvider<true>[],
     ) {}
 
     public static createNew(
@@ -33,6 +34,7 @@ export class Rolle<WasPersisted extends boolean> {
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
+        serviceProviderData: ServiceProvider<true>[],
         istTechnisch: boolean,
     ): Rolle<false> | DomainError {
         // Validate the Rollenname
@@ -52,6 +54,7 @@ export class Rolle<WasPersisted extends boolean> {
             systemrechte,
             serviceProviderIds,
             istTechnisch,
+            serviceProviderData,
         );
     }
 
@@ -68,6 +71,7 @@ export class Rolle<WasPersisted extends boolean> {
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
         istTechnisch: boolean,
+        serviceProviderData?: ServiceProvider<true>[],
     ): Promise<Rolle<true> | DomainError> {
         if (!NameValidator.isNameValid(name)) {
             return new NameForRolleWithTrailingSpaceError();
@@ -85,6 +89,7 @@ export class Rolle<WasPersisted extends boolean> {
             systemrechte,
             [],
             istTechnisch,
+            serviceProviderData ?? [],
         );
         //Replace service providers with new ones.
         for (const serviceProviderId of serviceProviderIds) {
@@ -109,6 +114,7 @@ export class Rolle<WasPersisted extends boolean> {
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
         istTechnisch: boolean,
+        serviceProviderData?: ServiceProvider<true>[],
     ): Rolle<WasPersisted> {
         return new Rolle(
             organisationRepo,
@@ -123,6 +129,7 @@ export class Rolle<WasPersisted extends boolean> {
             systemrechte,
             serviceProviderIds,
             istTechnisch,
+            serviceProviderData || [],
         );
     }
 

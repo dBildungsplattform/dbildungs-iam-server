@@ -23,6 +23,8 @@ import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
  */
@@ -70,6 +72,26 @@ export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFac
         (serviceProvider: RolleServiceProviderEntity) => serviceProvider.serviceProvider.id,
     );
 
+    const serviceProviderData: ServiceProvider<true>[] = entity.serviceProvider.map(
+        (serviceProvider: RolleServiceProviderEntity) => {
+            const sp = serviceProvider.serviceProvider;
+            return ServiceProvider.construct(
+                sp.id,
+                sp.createdAt,
+                sp.updatedAt,
+                sp.name,
+                sp.target,
+                sp.url,
+                sp.kategorie,
+                sp.providedOnSchulstrukturknoten,
+                sp.logo,
+                sp.logoMimeType,
+                sp.keycloakGroup,
+                sp.keycloakRole,
+            );
+        },
+    );
+
     return rolleFactory.construct(
         entity.id,
         entity.createdAt,
@@ -81,6 +103,7 @@ export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFac
         systemrechte,
         serviceProviderIds,
         entity.istTechnisch,
+        serviceProviderData,
     );
 }
 

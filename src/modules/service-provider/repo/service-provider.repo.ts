@@ -51,12 +51,6 @@ type ServiceProviderFindOptions = {
     withLogo?: boolean;
 };
 
-// type FetchRolleServiceProvidersParams = {
-//     personId: string;
-//     rolleId: string;
-//     excludeRolleId?: boolean;
-// };
-
 @Injectable()
 export class ServiceProviderRepo {
     public constructor(

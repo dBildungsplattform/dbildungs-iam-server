@@ -274,14 +274,16 @@ export class KeycloakUserService {
         return { ok: true, value: userDo };
     }
 
-    public async assignRealmRolesToUser(usernameId: string, roleNames: string[]): Promise<Result<void, DomainError>> {
+    public async assignRealmRolesToUser(
+        usernameId: string,
+        roleNames: (string | undefined)[],
+    ): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
 
         if (!kcAdminClientResult.ok) {
             return kcAdminClientResult;
         }
-        // this function returns the findby user
         const userResult: Result<User<true>, DomainError> = await this.findById(usernameId);
         if (!userResult.ok) {
             return userResult;
@@ -291,9 +293,12 @@ export class KeycloakUserService {
 
         try {
             const allRoles: RoleRepresentation[] = await kcAdminClientResult.value.roles.find();
+            const filteredRoleNames: string[] = roleNames.filter(
+                (roleName): roleName is string => roleName !== undefined,
+            );
             // return all roles instead of calling the DB multiple times KC does not support finding all the roles with one call
             const rolesToAssign: RoleRepresentation[] = allRoles.filter((role: RoleRepresentation) =>
-                roleNames.some((roleName: string) => role.name === roleName),
+                filteredRoleNames.some((roleName: string) => role.name === roleName),
             );
 
             const validRoles: RoleRepresentation[] = rolesToAssign.filter(
@@ -340,7 +345,10 @@ export class KeycloakUserService {
         }
     }
 
-    public async removeRealmRolesFromUser(usernameId: string, roleNames: string[]): Promise<Result<void, DomainError>> {
+    public async removeRealmRolesFromUser(
+        usernameId: string,
+        roleNames: (string | undefined)[],
+    ): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
 
@@ -354,11 +362,14 @@ export class KeycloakUserService {
         }
 
         const userId: string = userResult.value.id;
-
         try {
             const allRoles: RoleRepresentation[] = await kcAdminClientResult.value.roles.find();
+            const filteredRoleNames: string[] = roleNames.filter(
+                (roleName): roleName is string => roleName !== undefined,
+            );
+
             const rolesToRemove: RoleRepresentation[] = allRoles.filter((role: RoleRepresentation) =>
-                roleNames.some((roleName: string) => role.name === roleName),
+                filteredRoleNames.some((roleName: string) => role.name === roleName),
             );
 
             const validRoles: RoleRepresentation[] = rolesToRemove.filter(
