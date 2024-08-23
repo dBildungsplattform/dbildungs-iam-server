@@ -141,8 +141,8 @@ export class ServiceProviderRepo {
 
     public async fetchRolleServiceProvidersWithoutPerson(
         rolleId: RolleID | RolleID[],
-    ): Promise<RolleServiceProviderEntity[]> {
-        return this.em.find(
+    ): Promise<ServiceProvider<true>[]> {
+        const rolleServiceProviderEntities: RolleServiceProviderEntity[] = await this.em.find(
             RolleServiceProviderEntity,
             {
                 rolle: {
@@ -153,5 +153,13 @@ export class ServiceProviderRepo {
                 populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
             },
         );
+
+        const serviceProviders: ServiceProvider<true>[] = rolleServiceProviderEntities.map(
+            (rolleServiceProviderEntity: RolleServiceProviderEntity) => {
+                return mapEntityToAggregate(rolleServiceProviderEntity.serviceProvider);
+            },
+        );
+
+        return serviceProviders;
     }
 }

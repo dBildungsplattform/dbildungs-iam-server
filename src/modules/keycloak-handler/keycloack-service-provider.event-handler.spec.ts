@@ -73,7 +73,7 @@ describe('KeycloackServiceProviderHandler', () => {
         ]);
 
         // Act
-        await sut.updatePersonenkontexteOrDeleteKCandSP(personenkontextUpdatedEventMock);
+        await sut.handlePersonenkontextUpdatedEvent(personenkontextUpdatedEventMock);
 
         // Assert
         expect(keycloakUserServiceMock.assignRealmRolesToUser).toHaveBeenCalledWith(
@@ -109,7 +109,7 @@ describe('KeycloackServiceProviderHandler', () => {
         ]);
 
         // Act
-        await sut.updatePersonenkontexteOrDeleteKCandSP(personenkontextUpdatedEvent);
+        await sut.handlePersonenkontextUpdatedEvent(personenkontextUpdatedEvent);
 
         // Assert
         expect(keycloakUserServiceMock.removeRealmRolesFromUser).toHaveBeenCalledWith(
@@ -131,7 +131,7 @@ describe('KeycloackServiceProviderHandler', () => {
         );
 
         // Act
-        await sut.updatePersonenkontexteOrDeleteKCandSP(personenkontextUpdatedEvent);
+        await sut.handlePersonenkontextUpdatedEvent(personenkontextUpdatedEvent);
 
         // Assert
         expect(serviceProviderRepoMock.fetchRolleServiceProvidersWithoutPerson).not.toHaveBeenCalled();
@@ -171,7 +171,7 @@ describe('KeycloackServiceProviderHandler', () => {
                 .filter((id: RolleID) => id && id !== newRolle) || [];
 
         // Act
-        await sut.updatePersonenkontexteOrDeleteKCandSP(personenkontextUpdatedEvent);
+        await sut.handlePersonenkontextUpdatedEvent(personenkontextUpdatedEvent);
 
         // Assert
         expect(currentRolleIDs).toEqual([rollID2]);

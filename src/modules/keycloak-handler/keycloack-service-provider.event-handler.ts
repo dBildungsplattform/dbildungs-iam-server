@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
 
-import { RolleServiceProviderEntity } from '../rolle/entity/rolle-service-provider.entity.js';
+//import { RolleServiceProviderEntity } from '../rolle/entity/rolle-service-provider.entity.js';
 import {
     PersonenkontextUpdatedData,
     PersonenkontextUpdatedEvent,
@@ -9,6 +9,7 @@ import {
 import { EventHandler } from '../../core/eventbus/decorators/event-handler.decorator.js';
 import { KeycloakUserService } from '../keycloak-administration/index.js';
 import { RolleID } from '../../shared/types/aggregate-ids.types.js';
+import { ServiceProvider } from '../service-provider/domain/service-provider.js';
 
 //import { ClassLogger } from '../../../core/logging/class-logger.js';
 
@@ -29,20 +30,18 @@ export class KeycloackServiceProviderHandler {
         currentRoles: RolleID | string[],
         changingRole: RolleID | string[],
     ): Promise<(KeycloakRole | undefined)[]> {
-        const allRolleServiceProviders: RolleServiceProviderEntity[] =
-            await this.serviceRepo.fetchRolleServiceProvidersWithoutPerson(changingRole);
+        const allRolleServiceProviders: ServiceProvider<true>[] =
+            await this.serviceRepo.fetchRolleServiceProvidersWithoutPersonSS(changingRole);
 
-        const specificRolleServiceProviders: RolleServiceProviderEntity[] =
-            await this.serviceRepo.fetchRolleServiceProvidersWithoutPerson(currentRoles);
+        const specificRolleServiceProviders: ServiceProvider<true>[] =
+            await this.serviceRepo.fetchRolleServiceProvidersWithoutPersonSS(currentRoles);
 
         const allServiceProvidersNames: Set<KeycloakRole | undefined> = new Set(
-            allRolleServiceProviders.map((element: RolleServiceProviderEntity) => element.serviceProvider.keycloakRole),
+            allRolleServiceProviders.map((element: ServiceProvider<true>) => element.keycloakRole),
         );
 
         const specificServiceProvidersNames: Set<KeycloakRole | undefined> = new Set(
-            specificRolleServiceProviders.map(
-                (element: RolleServiceProviderEntity) => element.serviceProvider.keycloakRole,
-            ),
+            specificRolleServiceProviders.map((element: ServiceProvider<true>) => element.keycloakRole),
         );
 
         const updateRole: (KeycloakRole | undefined)[] = Array.from(allServiceProvidersNames).filter(
@@ -53,7 +52,7 @@ export class KeycloackServiceProviderHandler {
     }
 
     @EventHandler(PersonenkontextUpdatedEvent)
-    public async updatePersonenkontexteOrDeleteKCandSP(event: PersonenkontextUpdatedEvent): Promise<void> {
+    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         const { newKontexte, currentKontexte, removedKontexte, person }: PersonenkontextUpdatedEvent = event;
         const newRolle: RolleID | undefined = newKontexte?.[0]?.rolleId;
         const deleteRolle: RolleID | undefined = removedKontexte?.[0]?.rolleId;
