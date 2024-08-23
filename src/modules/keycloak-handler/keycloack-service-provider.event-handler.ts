@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-//import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
 
-//import { RolleServiceProviderEntity } from '../rolle/entity/rolle-service-provider.entity.js';
 import {
     PersonenkontextUpdatedData,
     PersonenkontextUpdatedEvent,
@@ -12,8 +10,6 @@ import { RolleID } from '../../shared/types/aggregate-ids.types.js';
 import { ServiceProvider } from '../service-provider/domain/service-provider.js';
 import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { Rolle } from '../rolle/domain/rolle.js';
-
-//import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export type KontextIdsAndDuplicationFlag = {
     hasDuplicateRolleIds: boolean;
@@ -45,11 +41,11 @@ export class KeycloackServiceProviderHandler {
         );
 
         const allServiceProvidersNames: Set<KeycloakRole | undefined> = new Set(
-            allRolleServiceProviders.map((element: ServiceProvider<true>) => element.keycloakRole),
+            allRolleServiceProviders.map((element: ServiceProvider<true>) => element.keycloakGroup),
         );
 
         const specificServiceProvidersNames: Set<KeycloakRole | undefined> = new Set(
-            specificRolleServiceProviders.map((element: ServiceProvider<true>) => element.keycloakRole),
+            specificRolleServiceProviders.map((element: ServiceProvider<true>) => element.keycloakGroup),
         );
 
         const updateRole: (KeycloakRole | undefined)[] = Array.from(allServiceProvidersNames).filter(
@@ -89,9 +85,9 @@ export class KeycloackServiceProviderHandler {
 
         if (roleNames.length > 0) {
             if (remove) {
-                await this.KeycloackService.removeRealmRolesFromUser(userId, roleNames);
+                await this.KeycloackService.removeRealmGroupsFromUser(userId, roleNames);
             } else {
-                await this.KeycloackService.assignRealmRolesToUser(userId, roleNames);
+                await this.KeycloackService.assignRealmGroupsToUser(userId, roleNames);
             }
         }
     }

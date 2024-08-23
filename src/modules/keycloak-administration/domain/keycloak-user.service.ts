@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { KeycloakAdminClient, RoleRepresentation, type UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
+import { GroupRepresentation, KeycloakAdminClient, type UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
 import { plainToClass } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 
@@ -274,9 +274,9 @@ export class KeycloakUserService {
         return { ok: true, value: userDo };
     }
 
-    public async assignRealmRolesToUser(
+    public async assignRealmGroupsToUser(
         usernameId: string,
-        roleNames: (string | undefined)[],
+        groupNames: (string | undefined)[],
     ): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
@@ -292,62 +292,57 @@ export class KeycloakUserService {
         const userId: string = userResult.value.id;
 
         try {
-            const allRoles: RoleRepresentation[] = await kcAdminClientResult.value.roles.find();
-            const filteredRoleNames: string[] = roleNames.filter(
-                (roleName): roleName is string => roleName !== undefined,
-            );
-            // return all roles instead of calling the DB multiple times KC does not support finding all the roles with one call
-            const rolesToAssign: RoleRepresentation[] = allRoles.filter((role: RoleRepresentation) =>
-                filteredRoleNames.some((roleName: string) => role.name === roleName),
+            const allGroups: GroupRepresentation[] = await kcAdminClientResult.value.groups.find();
+            const filteredGroupNames: string[] = groupNames.filter(
+                (groupName): groupName is string => groupName !== undefined,
             );
 
-            const validRoles: RoleRepresentation[] = rolesToAssign.filter(
-                (role: RoleRepresentation | undefined): role is RoleRepresentation =>
-                    role !== undefined && role.id !== undefined && role.name !== undefined,
+            const groupsToAssign: GroupRepresentation[] = allGroups.filter((group: GroupRepresentation) =>
+                filteredGroupNames.some((groupName: string) => group.name === groupName),
             );
 
-            if (validRoles.length === 0) {
+            const validGroups: GroupRepresentation[] = groupsToAssign.filter(
+                (group: GroupRepresentation | undefined): group is GroupRepresentation =>
+                    group !== undefined && group.id !== undefined && group.name !== undefined,
+            );
+
+            if (validGroups.length === 0) {
                 return {
                     ok: false,
-                    error: new EntityNotFoundError(`No valid roles found for the provided role names`),
+                    error: new EntityNotFoundError(`No valid groups found for the provided group names`),
                 };
             }
-            const userCurrentRoles: RoleRepresentation[] = await kcAdminClientResult.value.users.listRealmRoleMappings({
+
+            const userCurrentGroups: GroupRepresentation[] = await kcAdminClientResult.value.users.listGroups({
                 id: userId,
             });
 
-            const newRolesToAssign: RoleRepresentation[] = validRoles.filter(
-                (role: RoleRepresentation) =>
-                    !userCurrentRoles.some((userRole: RoleRepresentation) => userRole.id === role.id),
+            const newGroupsToAssign: GroupRepresentation[] = validGroups.filter(
+                (group: GroupRepresentation) =>
+                    !userCurrentGroups.some((userGroup: GroupRepresentation) => userGroup.id === group.id),
             );
 
-            if (newRolesToAssign.length === 0) {
+            if (newGroupsToAssign.length === 0) {
                 return { ok: true, value: undefined };
             }
 
-            const roleMappings: {
-                id: string;
-                name: string;
-            }[] = newRolesToAssign.map((role: RoleRepresentation) => ({
-                id: role.id!,
-                name: role.name!,
-            }));
-
-            await kcAdminClientResult.value.users.addRealmRoleMappings({
-                id: userId,
-                roles: roleMappings,
-            });
+            for (const group of newGroupsToAssign) {
+                await kcAdminClientResult.value.users.addToGroup({
+                    id: userId,
+                    groupId: group.id!,
+                });
+            }
 
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.error(`Failed to assign roles to user ${usernameId}: ${JSON.stringify(err)}`);
-            return { ok: false, error: new KeycloakClientError('Failed to assign roles') };
+            this.logger.error(`Failed to assign groups to user ${usernameId}: ${JSON.stringify(err)}`);
+            return { ok: false, error: new KeycloakClientError('Failed to assign groups') };
         }
     }
 
-    public async removeRealmRolesFromUser(
+    public async removeRealmGroupsFromUser(
         usernameId: string,
-        roleNames: (string | undefined)[],
+        groupNames: (string | undefined)[],
     ): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
@@ -363,56 +358,50 @@ export class KeycloakUserService {
 
         const userId: string = userResult.value.id;
         try {
-            const allRoles: RoleRepresentation[] = await kcAdminClientResult.value.roles.find();
-            const filteredRoleNames: string[] = roleNames.filter(
-                (roleName): roleName is string => roleName !== undefined,
+            const allGroups: GroupRepresentation[] = await kcAdminClientResult.value.groups.find();
+            const filteredGroupNames: string[] = groupNames.filter(
+                (groupName): groupName is string => groupName !== undefined,
             );
 
-            const rolesToRemove: RoleRepresentation[] = allRoles.filter((role: RoleRepresentation) =>
-                filteredRoleNames.some((roleName: string) => role.name === roleName),
+            const groupsToRemove: GroupRepresentation[] = allGroups.filter((group: GroupRepresentation) =>
+                filteredGroupNames.some((groupName: string) => group.name === groupName),
             );
 
-            const validRoles: RoleRepresentation[] = rolesToRemove.filter(
-                (role: RoleRepresentation | undefined): role is RoleRepresentation =>
-                    role !== undefined && role.id !== undefined && role.name !== undefined,
+            const validGroups: GroupRepresentation[] = groupsToRemove.filter(
+                (group: GroupRepresentation | undefined): group is GroupRepresentation =>
+                    group !== undefined && group.id !== undefined && group.name !== undefined,
             );
 
-            if (validRoles.length === 0) {
+            if (validGroups.length === 0) {
                 return {
                     ok: false,
-                    error: new EntityNotFoundError(`No valid roles found for the provided role names`),
+                    error: new EntityNotFoundError(`No valid groups found for the provided group names`),
                 };
             }
 
-            const userCurrentRoles: RoleRepresentation[] = await kcAdminClientResult.value.users.listRealmRoleMappings({
+            const userCurrentGroups: GroupRepresentation[] = await kcAdminClientResult.value.users.listGroups({
                 id: userId,
             });
 
-            const rolesToUnassign: RoleRepresentation[] = validRoles.filter((role: RoleRepresentation) =>
-                userCurrentRoles.some((userRole: RoleRepresentation) => userRole.id === role.id),
+            const groupsToUnassign: GroupRepresentation[] = validGroups.filter((group: GroupRepresentation) =>
+                userCurrentGroups.some((userGroup: GroupRepresentation) => userGroup.id === group.id),
             );
 
-            if (rolesToUnassign.length === 0) {
+            if (groupsToUnassign.length === 0) {
                 return { ok: true, value: undefined };
             }
 
-            const roleMappings: {
-                id: string;
-                name: string;
-            }[] = rolesToUnassign.map((role: RoleRepresentation) => ({
-                id: role.id!,
-                name: role.name!,
-            }));
-
-            await kcAdminClientResult.value.users.delRealmRoleMappings({
-                id: userId,
-                roles: roleMappings,
-            });
+            for (const group of groupsToUnassign) {
+                await kcAdminClientResult.value.users.delFromGroup({
+                    id: userId,
+                    groupId: group.id!,
+                });
+            }
 
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.error(`Failed to remove roles from user ${usernameId}: ${JSON.stringify(err)}`);
-            return { ok: false, error: new KeycloakClientError('Failed to remove roles') };
+            this.logger.error(`Failed to remove groups from user ${usernameId}: ${JSON.stringify(err)}`);
+            return { ok: false, error: new KeycloakClientError('Failed to remove groups') };
         }
     }
 }
