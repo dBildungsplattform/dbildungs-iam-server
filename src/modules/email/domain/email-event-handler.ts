@@ -22,6 +22,7 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 
 @Injectable()
 export class EmailEventHandler {
@@ -91,6 +92,13 @@ export class EmailEventHandler {
             `Received PersonenkontextDeletedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
         );
         // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
+    }
+
+    @EventHandler(PersonenkontextUpdatedEvent)
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
+        this.logger.info(`Received handlePersonenkontextUpdatedEvent, personId:${event.person.id}`);
+        // // TODO implement handlePersonenkontextUpdatedEvent
     }
 
     // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received

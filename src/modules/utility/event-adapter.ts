@@ -48,6 +48,7 @@ export class EventAdapter {
             vorname: person.vorname,
             familienname: person.familienname,
             referrer: person.referrer,
+            email: person.email,
         };
         const kontextData: PersonenkontextEventKontextData = {
             id: event.personenkontextID,

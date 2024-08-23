@@ -16,6 +16,7 @@ function mapPersonToData(person: Person<true>): PersonenkontextUpdatedPersonData
         vorname: person.vorname,
         familienname: person.familienname,
         referrer: person.referrer,
+        email: person.email,
     };
 }
 

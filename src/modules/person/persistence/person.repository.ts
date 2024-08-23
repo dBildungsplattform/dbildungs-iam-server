@@ -215,6 +215,7 @@ export class PersonRepository {
                 id: personId,
                 familienname: person.familienname,
                 vorname: person.vorname,
+                email: person.email,
             },
             [],
             removedPersonenkontexts,

@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError, EntityCouldNotBeDeleted } from '../../../shared/error/index.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
@@ -7,7 +8,7 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { PersonRepository } from '../persistence/person.repository.js';
-
+@Injectable()
 export class PersonDeleteService {
     public constructor(
         private readonly logger: ClassLogger,
