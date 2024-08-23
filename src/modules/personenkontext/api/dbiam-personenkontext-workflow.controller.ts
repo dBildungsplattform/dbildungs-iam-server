@@ -144,7 +144,7 @@ export class DbiamPersonenkontextWorkflowController {
                     bodyParams.count,
                     bodyParams.personenkontexte,
                     permissions,
-                    params.personalnummer,
+                    params.personalnummer || undefined,
                 );
 
         if (updateResult instanceof PersonenkontexteUpdateError) {
