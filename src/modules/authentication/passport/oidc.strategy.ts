@@ -22,7 +22,7 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
         super({
             client,
             usePKCE: true,
-            params: { redirect_uri: frontendConfig.OIDC_CALLBACK_URL, acr_values: 'silver' },
+            params: { redirect_uri: frontendConfig.OIDC_CALLBACK_URL },
             passReqToCallback: false,
         } satisfies StrategyOptions);
     }
