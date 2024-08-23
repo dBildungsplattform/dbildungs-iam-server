@@ -49,7 +49,7 @@ import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js
 import { DbiamOrganisationError } from './dbiam-organisation.error.js';
 import { OrganisationExceptionFilter } from './organisation-exception-filter.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
-import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
+import { OrganisationByNameQueryParams } from './organisation-by-name.query.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
@@ -322,7 +322,7 @@ export class OrganisationController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
     public async getAdministrierteOrganisationen(
         @Param() routeParams: OrganisationByIdParams,
-        @Query() queryParams: OrganisationByIdQueryParams,
+        @Query() queryParams: OrganisationByNameQueryParams,
     ): Promise<PagedResponse<OrganisationResponse>> {
         const parentOrg: Result<Organisation<true>, DomainError> = await this.organisationService.findOrganisationById(
             routeParams.organisationId,
@@ -336,6 +336,8 @@ export class OrganisationController {
         const result: Paged<Organisation<true>> = await this.organisationService.findAllAdministriertVon(
             routeParams.organisationId,
             queryParams.searchFilter,
+            queryParams.offset,
+            queryParams.limit,
         );
 
         const organisations: OrganisationResponse[] = result.items.map(
