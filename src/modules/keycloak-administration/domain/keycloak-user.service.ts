@@ -271,7 +271,7 @@ export class KeycloakUserService {
             userReprDto.username,
             userReprDto.email,
             new Date(userReprDto.createdTimestamp),
-            {}, // UserAttributes - Keycloak sends them in a weird format
+            {}, // UserAttributes
         );
 
         return { ok: true, value: userDo };
