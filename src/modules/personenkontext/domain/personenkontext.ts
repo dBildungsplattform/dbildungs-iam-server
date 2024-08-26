@@ -47,6 +47,7 @@ export class Personenkontext<WasPersisted extends boolean> {
         public readonly sichtfreigabe: SichtfreigabeType | undefined,
         public readonly loeschungZeitpunkt: Date | undefined,
         public readonly revision: Persisted<string, WasPersisted>,
+        public readonly befristung?: Persisted<Date, WasPersisted>,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
@@ -67,6 +68,7 @@ export class Personenkontext<WasPersisted extends boolean> {
         sichtfreigabe: SichtfreigabeType | undefined = undefined,
         loeschungZeitpunkt: Date | undefined = undefined,
         revision: Persisted<string, WasPersisted> = '1',
+        befristung?: Persisted<Date, WasPersisted>,
     ): Personenkontext<WasPersisted> {
         return new Personenkontext(
             personRepo,
@@ -86,6 +88,7 @@ export class Personenkontext<WasPersisted extends boolean> {
             sichtfreigabe,
             loeschungZeitpunkt,
             revision,
+            befristung,
         );
     }
 
@@ -103,6 +106,7 @@ export class Personenkontext<WasPersisted extends boolean> {
         jahrgangsstufe: Jahrgangsstufe | undefined = undefined,
         sichtfreigabe: SichtfreigabeType | undefined = undefined,
         loeschungZeitpunkt: Date | undefined = undefined,
+        befristung: Date | undefined = undefined,
     ): Personenkontext<false> {
         return new Personenkontext(
             personRepo,
@@ -122,6 +126,7 @@ export class Personenkontext<WasPersisted extends boolean> {
             sichtfreigabe,
             loeschungZeitpunkt,
             undefined,
+            befristung,
         );
     }
 

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { IsDate, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 import { OrganisationID, PersonID, RolleID } from '../../../../shared/types/index.js';
 
@@ -21,4 +21,9 @@ export class DbiamPersonenkontextBodyParams {
     @IsUUID()
     @ApiProperty({ type: String })
     public readonly rolleId!: RolleID;
+
+    @IsDate()
+    @IsOptional()
+    @ApiProperty({ type: Date })
+    public readonly befristung?: Date;
 }
