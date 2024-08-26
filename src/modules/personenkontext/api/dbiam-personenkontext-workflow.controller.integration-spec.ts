@@ -351,6 +351,65 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 expect(response.status).toBe(400);
             });
         });
+
+        describe('for Person with a PK rolle with rollenart LERN', () => {
+            it('should return error with status-code 400, if the new PK rolle is not rollenart LERN', async () => {
+                const schueler: Person<true> = await createPerson();
+                const schule: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+                );
+                const lernRolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, { rollenart: RollenArt.LERN, systemrechte: [] }),
+                );
+                const savedPK: Personenkontext<true> = await personenkontextRepo.save(
+                    DoFactory.createPersonenkontext(false, {
+                        personId: schueler.id,
+                        rolleId: lernRolle.id,
+                        organisationId: schule.id,
+                        updatedAt: new Date(),
+                    }),
+                );
+
+                const lehrerRolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        rollenart: RollenArt.LEHR,
+                        systemrechte: [RollenSystemRecht.KLASSEN_VERWALTEN],
+                    }),
+                );
+
+                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
+                    createMock<DbiamUpdatePersonenkontexteBodyParams>({
+                        count: 2,
+                        lastModified: savedPK.updatedAt,
+                        personenkontexte: [
+                            {
+                                personId: schueler.id,
+                                rolleId: lernRolle.id,
+                                organisationId: schule.id,
+                            },
+                            {
+                                personId: schueler.id,
+                                rolleId: lehrerRolle.id,
+                                organisationId: schule.id,
+                            },
+                        ],
+                    });
+                const personpermissions: DeepMocked<PersonPermissions> = createMock();
+                personpermissions.canModifyPerson.mockResolvedValueOnce(true);
+                personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .put(`/personenkontext-workflow/${schueler.id}`)
+                    .send(updatePKsRequest);
+
+                expect(response.status).toBe(400);
+                expect(response.body).toEqual({
+                    code: 400,
+                    i18nKey: 'INVALID_PERSONENKONTEXT_FOR_PERSON_WITH_ROLLENART_LERN',
+                });
+            });
+        });
     });
 
     describe('/GET schulstrukturknoten for personenkontext', () => {

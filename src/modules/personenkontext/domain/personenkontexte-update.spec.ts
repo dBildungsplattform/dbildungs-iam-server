@@ -21,8 +21,11 @@ import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { UpdatePersonNotFoundError } from './error/update-person-not-found.error.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { PersonPermissionsMock } from '../../../../test/utils/index.js';
+import { DoFactory, PersonPermissionsMock } from '../../../../test/utils/index.js';
 import { Person } from '../../person/domain/person.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rollenart-for-lern.error.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>({
@@ -53,6 +56,7 @@ describe('PersonenkontexteUpdate', () => {
     let pk1: Personenkontext<true>;
     let pk2: Personenkontext<true>;
     let personPermissionsMock: PersonPermissionsMock;
+    let rolleRepoMock: DeepMocked<RolleRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -114,6 +118,7 @@ describe('PersonenkontexteUpdate', () => {
             rolleId: bodyParam2.rolleId,
         });
         personPermissionsMock = new PersonPermissionsMock();
+        rolleRepoMock = module.get(RolleRepo);
     });
 
     afterAll(async () => {
@@ -148,6 +153,7 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(null); //mock pk2 is not found => therefore handled as new
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]); //mock pk1 is found as existing in DB
 
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); // mock while checking the existing PKs
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock the return values in the end of update method
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
@@ -193,6 +199,12 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]); //mock: only one PK is found
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -219,6 +231,13 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: both PKs are found
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
                 expect(updateError).toBeInstanceOf(UpdateOutdatedError);
@@ -241,8 +260,14 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: only one PK is found
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
 
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
+
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
                 expect(updateError).toBeInstanceOf(UpdatePersonNotFoundError);
@@ -265,8 +290,14 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: only one PK is found
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
 
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
+
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
                 expect(updateError).toBeInstanceOf(UpdatePersonNotFoundError);
@@ -292,6 +323,14 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: both PKs are found
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: return the PKs found after update
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock for event
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                personRepoMock.findById.mockResolvedValue(undefined);
+
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
                 expect(updateResult).toBeInstanceOf(Array);
@@ -306,6 +345,13 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk2, pk1]); //mock: both PKs are found
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: return the PKs found after update
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                personRepoMock.findById.mockResolvedValue(undefined);
 
                 expect(dBiamPersonenkontextRepoMock.delete).toHaveBeenCalledTimes(0);
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
@@ -327,7 +373,14 @@ describe('PersonenkontexteUpdate', () => {
             it('should return empty', async () => {
                 const newPerson: Person<true> = createMock<Person<true>>();
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValue([]); // No existing PKs
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                personRepoMock.findById.mockResolvedValue(undefined);
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
                 expect(updateResult).toEqual([]);
@@ -348,9 +401,19 @@ describe('PersonenkontexteUpdate', () => {
             it('should return UpdateOutdatedError', async () => {
                 const newPerson: Person<true> = createMock<Person<true>>();
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); // Existing PKs
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                personRepoMock.findById.mockResolvedValue(undefined);
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
                 expect(updateResult).toBeInstanceOf(UpdateOutdatedError);
             });
         });
@@ -363,6 +426,13 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk2, pk1]); //mock: both PKs are found
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: return the PKs found after update
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                personRepoMock.findById.mockResolvedValue(undefined);
+
                 const permissions: DeepMocked<PersonPermissions> = createMock();
                 permissions.canModifyPerson.mockResolvedValueOnce(false);
                 const pkUpdate: PersonenkontexteUpdate = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
@@ -383,6 +453,13 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk2, pk1]); //mock: both PKs are found
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock: return the PKs found after update
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                personRepoMock.findById.mockResolvedValue(undefined);
+
                 const permissions: DeepMocked<PersonPermissions> = createMock();
                 permissions.canModifyPerson.mockResolvedValueOnce(true);
                 permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
@@ -422,6 +499,80 @@ describe('PersonenkontexteUpdate', () => {
                 await sut.update();
 
                 expect(personRepoMock.save).toHaveBeenCalledTimes(1);
+            });
+        });
+        describe('when existing personenkontexte have one personenkontext with rollenart LERN', () => {
+            beforeAll(() => {
+                const count: number = 2;
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    lastModified,
+                    count,
+                    [bodyParam1, bodyParam2],
+                    personPermissionsMock,
+                );
+            });
+
+            it('should return UpdateInvalidRollenartForLernError, if new personenkontext is not a Rolle with rollenart LERN', async () => {
+                const newPerson: Person<true> = createMock<Person<true>>();
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
+                expect(updateError).toBeInstanceOf(UpdateInvalidRollenartForLernError);
+            });
+            it('should return UpdateInvalidRollenartForLernError if new personenkontext roles mix LERN with other types', async () => {
+                const newPerson: Person<true> = createMock<Person<true>>();
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                const mapRollenExisting: Map<string, Rolle<true>> = new Map();
+                mapRollenExisting.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollenExisting);
+
+                const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
+                expect(updateError).toBeInstanceOf(UpdateInvalidRollenartForLernError);
+            });
+            it('Should not throw any Update invalid Rollenart error', async () => {
+                const newPerson: Person<true> = createMock<Person<true>>();
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                const mapRollenExisting: Map<string, Rolle<true>> = new Map();
+                mapRollenExisting.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
+
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollenExisting);
+
+                const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
+                expect(updateError).toBeDefined();
             });
         });
     });
