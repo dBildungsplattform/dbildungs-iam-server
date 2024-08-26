@@ -516,6 +516,26 @@ describe('PersonRepository Integration', () => {
                 });
             });
         });
+
+        describe('When an unexpected error occurs', () => {
+            it('should rollback transaction and rethrow', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
+                const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                });
+                if (person instanceof DomainError) {
+                    throw person;
+                }
+
+                const dummyError: Error = new Error('Unexpected');
+                kcUserServiceMock.create.mockRejectedValueOnce(dummyError);
+
+                const promise: Promise<unknown> = sut.create(person);
+
+                await expect(promise).rejects.toBe(dummyError);
+            });
+        });
     });
 
     describe('update', () => {

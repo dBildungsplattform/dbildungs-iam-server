@@ -18,6 +18,7 @@ import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js'
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -619,11 +620,65 @@ describe('PersonenkontextWorkflow', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
 
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+            rolleRepoMock.findById.mockResolvedValue(rolle1);
+
             anlage.initialize(organisation.id);
+
+            jest.spyOn(anlage, 'checkReferences').mockResolvedValue(undefined);
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, undefined, 2);
 
             expect(result).toHaveLength(2);
+        });
+        it('should filter out roles that do not pass the reference check', async () => {
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+            const childOrganisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.KLASSE,
+            });
+            const rolle1: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.ORGADMIN,
+                name: 'rolle1',
+            });
+            const rolle2: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.ORGADMIN,
+                name: 'rolle2',
+            });
+            const rollen: Rolle<true>[] = [rolle1, rolle2];
+            const orgsWithRecht: string[] = [organisation.id, childOrganisation.id];
+
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValue([childOrganisation]);
+            organisationRepoMock.findByIds.mockResolvedValue(
+                new Map(orgsWithRecht.map((id: string) => [id, DoFactory.createOrganisation(true, { id })])),
+            );
+            rolleRepoMock.find.mockResolvedValue(rollen);
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+            rolleRepoMock.findById.mockResolvedValue(rolle1);
+
+            anlage.initialize(organisation.id);
+
+            const mockDomainError: DomainError = {
+                name: 'ReferenceCheckError',
+                message: 'Some error message',
+                code: 'ERROR_CODE',
+            };
+
+            // Mock checkReferences to return the mockDomainError for the first call (for rolle1)
+            jest.spyOn(anlage, 'checkReferences')
+                .mockResolvedValueOnce(mockDomainError) // For rolle1
+                .mockResolvedValueOnce(undefined); // For rolle2
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
+
+            // Only rolle2 should be included because rolle1 fails the reference check
+            expect(result).toHaveLength(1);
+            expect(result[0]).toEqual(rolle2);
         });
     });
     describe('commit', () => {
@@ -707,9 +762,11 @@ describe('PersonenkontextWorkflow', () => {
             const organisationen: Organisation<true>[] = [parentOrganisation];
             const personenkontexte: Personenkontext<true>[] = [personenkontext];
 
+            rolleRepoMock.findById.mockResolvedValueOnce(rolle);
             organisationRepoMock.findByNameOrKennung.mockResolvedValue(organisationen);
             dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);
 
+            parentOrganisation.typ = OrganisationsTyp.SCHULE;
             organisationRepoMock.findById.mockResolvedValue(parentOrganisation);
 
             organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
