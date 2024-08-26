@@ -3,14 +3,18 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
+import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
+import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { OrganisationID } from '../../../shared/types/index.js';
 import { RootDirectChildrenType } from '../../organisation/domain/organisation.enums.js';
-import { ItsLearningOrganisationsEventHandler } from './itslearning-organisations.event-handler.js';
-import { ItsLearningIMSESService } from '../itslearning.service.js';
 import { CreateGroupAction } from '../actions/create-group.action.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
+import { DeleteGroupAction } from '../actions/delete-group.action.js';
+import { UpdateGroupAction } from '../actions/update-group.action.js';
+import { ItsLearningIMSESService } from '../itslearning.service.js';
+import { ItsLearningOrganisationsEventHandler } from './itslearning-organisations.event-handler.js';
 
 describe('ItsLearning Organisations Event Handler', () => {
     let module: TestingModule;
@@ -220,6 +224,106 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.createKlasseEventHandler(event);
             expect(loggerMock.error).toHaveBeenLastCalledWith('Could not create Klasse in itsLearning: Error');
+        });
+    });
+
+    describe('updatedKlasseEventHandler', () => {
+        it('should log on success', async () => {
+            const event: KlasseUpdatedEvent = new KlasseUpdatedEvent(
+                faker.string.uuid(),
+                faker.string.alphanumeric(),
+                faker.string.uuid(),
+            );
+            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: {} }); // UpdateGroupAction
+
+            await sut.updatedKlasseEventHandler(event);
+
+            expect(itsLearningServiceMock.send).toHaveBeenLastCalledWith(expect.any(UpdateGroupAction));
+            expect(loggerMock.info).toHaveBeenLastCalledWith(`Klasse with ID ${event.organisationId} was updated.`);
+        });
+
+        it('should skip event, if not enabled', async () => {
+            sut.ENABLED = false;
+            const event: KlasseUpdatedEvent = new KlasseUpdatedEvent(
+                faker.string.uuid(),
+                faker.string.alphanumeric(),
+                faker.string.uuid(),
+            );
+
+            await sut.updatedKlasseEventHandler(event);
+
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
+            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+        });
+
+        it('should log error, if administriertVon is undefined', async () => {
+            const event: KlasseUpdatedEvent = new KlasseUpdatedEvent(
+                faker.string.uuid(),
+                faker.string.alphanumeric(),
+                undefined,
+            );
+
+            await sut.updatedKlasseEventHandler(event);
+
+            expect(loggerMock.error).toHaveBeenCalledWith('Klasse has no parent organisation. Aborting.');
+            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+        });
+
+        it('should log error, if the klasse has no name', async () => {
+            const event: KlasseUpdatedEvent = new KlasseUpdatedEvent(faker.string.uuid(), '', faker.string.uuid());
+
+            await sut.updatedKlasseEventHandler(event);
+
+            expect(loggerMock.error).toHaveBeenCalledWith('Klasse has no name. Aborting.');
+            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+        });
+
+        it('should log error on failed update', async () => {
+            const event: KlasseUpdatedEvent = new KlasseUpdatedEvent(
+                faker.string.uuid(),
+                faker.string.alphanumeric(),
+                faker.string.uuid(),
+            );
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: false,
+                error: createMock<DomainError>({ message: 'Error' }),
+            }); // UpdateGroupAction
+
+            await sut.updatedKlasseEventHandler(event);
+            expect(loggerMock.error).toHaveBeenLastCalledWith('Could not update Klasse in itsLearning: Error');
+        });
+    });
+
+    describe('deletedKlasseEventHandler', () => {
+        it('should log on success', async () => {
+            const event: KlasseDeletedEvent = new KlasseDeletedEvent(faker.string.uuid());
+            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: {} }); // DeleteGroupAction
+
+            await sut.deletedKlasseEventHandler(event);
+
+            expect(itsLearningServiceMock.send).toHaveBeenLastCalledWith(expect.any(DeleteGroupAction));
+            expect(loggerMock.info).toHaveBeenLastCalledWith(`Klasse with ID ${event.organisationId} was deleted.`);
+        });
+
+        it('should skip event, if not enabled', async () => {
+            sut.ENABLED = false;
+            const event: KlasseDeletedEvent = new KlasseDeletedEvent(faker.string.uuid());
+
+            await sut.deletedKlasseEventHandler(event);
+
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
+            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+        });
+
+        it('should log error on failed delete', async () => {
+            const event: KlasseDeletedEvent = new KlasseDeletedEvent(faker.string.uuid());
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: false,
+                error: createMock<DomainError>({ message: 'Error' }),
+            }); // DeleteGroupAction
+
+            await sut.deletedKlasseEventHandler(event);
+            expect(loggerMock.error).toHaveBeenLastCalledWith('Could not delete Klasse in itsLearning: Error');
         });
     });
 });

@@ -16,7 +16,7 @@ import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js'
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { IPersonPermissions } from '../../authentication/domain/person-permissions.interface.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export class PersonenkontextWorkflowAggregate {
     public selectedOrganisationId?: string;
@@ -94,9 +94,9 @@ export class PersonenkontextWorkflowAggregate {
         let rollen: Option<Rolle<true>[]>;
 
         if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName);
+            rollen = await this.rolleRepo.findByName(rolleName, false);
         } else {
-            rollen = await this.rolleRepo.find();
+            rollen = await this.rolleRepo.find(false);
         }
 
         if (!rollen) {

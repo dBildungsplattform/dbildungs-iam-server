@@ -29,9 +29,6 @@ services:
       - 8443:8443
     volumes:
       - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
-      - source: '${THEMES_DIR:-keycloak/themes}'
-        target: '/opt/keycloak/themes'
-        type: bind
 
   redis:
     image: redis:7.2.2
@@ -148,7 +145,7 @@ services:
       timeout: 5s
       retries: 3
     volumes:
-      - ./mariadb:/var/lib/mysql
+      - mariadb:/var/lib/mysql
       - ./dump.sql:/docker-entrypoint-initdb.d/dump.sql
 
 volumes:

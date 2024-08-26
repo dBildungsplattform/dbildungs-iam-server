@@ -21,7 +21,9 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { IPersonPermissions } from '../../authentication/domain/person-permissions.interface.js';
+import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rollenart-for-lern.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { CheckRollenartLernSpecification } from '../specification/nur-rolle-lern.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -243,6 +245,21 @@ export class PersonenkontexteUpdate {
         return createdPKs;
     }
 
+    private async checkRollenartLernSpecification(
+        sentPKs: Personenkontext<boolean>[],
+    ): Promise<Option<PersonenkontexteUpdateError>> {
+        const isSatisfied: boolean = await new CheckRollenartLernSpecification(
+            this.dBiamPersonenkontextRepo,
+            this.rolleRepo,
+        ).checkRollenartLern(sentPKs);
+
+        if (!isSatisfied) {
+            return new UpdateInvalidRollenartForLernError();
+        }
+
+        return undefined;
+    }
+
     public async update(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
         const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
         if (sentPKs instanceof PersonenkontexteUpdateError) {
@@ -250,6 +267,11 @@ export class PersonenkontexteUpdate {
         }
 
         const existingPKs: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(this.personId);
+        const validationForLernError: Option<PersonenkontexteUpdateError> =
+            await this.checkRollenartLernSpecification(sentPKs);
+        if (validationForLernError) {
+            return validationForLernError;
+        }
         const validationError: Option<PersonenkontexteUpdateError> = await this.validate(existingPKs);
         if (validationError) {
             return validationError;

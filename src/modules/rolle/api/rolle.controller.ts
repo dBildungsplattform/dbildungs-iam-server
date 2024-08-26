@@ -89,6 +89,7 @@ export class RolleController {
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
         const [rollen, total]: [Option<Rolle<true>[]>, number] = await this.rolleRepo.findRollenAuthorized(
             permissions,
+            false,
             queryParams.searchStr,
             queryParams.limit,
             queryParams.offset,
@@ -176,6 +177,8 @@ export class RolleController {
             params.rollenart,
             params.merkmale,
             params.systemrechte,
+            [],
+            false,
         );
 
         if (rolle instanceof DomainError) {
