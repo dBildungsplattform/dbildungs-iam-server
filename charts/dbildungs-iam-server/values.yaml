@@ -48,6 +48,8 @@ auth:
   pi_admin_user: ""
   pi_admin_password: ""
   pi_user_resolver: ""
+  vidis_client_id: ""
+  vidis_client_secret: ""
 
 
 backend:

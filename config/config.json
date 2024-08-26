@@ -27,7 +27,8 @@
         "CLIENT_ID": "spsh",
         "CLIENT_SECRET": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M",
         "ADMIN_SECRET": "44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R",
-        "TEST_CLIENT_ID": "spsh-test"
+        "TEST_CLIENT_ID": "spsh-test",
+        "VIDIS_CLIENT_ID": "vidis-test"
     },
     "REDIS": {
         "HOST": "localhost",
