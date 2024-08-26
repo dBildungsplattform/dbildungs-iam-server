@@ -98,6 +98,7 @@ export class DBiamPersonenkontextController {
             undefined,
             undefined,
             undefined,
+            params.befristung,
         );
 
         //Check specifications

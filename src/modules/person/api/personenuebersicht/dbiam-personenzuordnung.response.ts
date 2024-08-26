@@ -30,6 +30,9 @@ export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: Boolean })
     public readonly editable: boolean;
 
+    @ApiProperty({ type: Date })
+    public readonly befristung?: Date;
+
     public constructor(
         personenkontext: Personenkontext<true>,
         organisation: OrganisationDo<true>,
@@ -45,5 +48,6 @@ export class DBiamPersonenzuordnungResponse {
         this.administriertVon = organisation.administriertVon;
         this.typ = organisation.typ;
         this.editable = editable;
+        this.befristung = personenkontext.befristung;
     }
 }
