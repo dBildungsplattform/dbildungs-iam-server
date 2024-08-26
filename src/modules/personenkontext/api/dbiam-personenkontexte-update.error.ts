@@ -9,6 +9,7 @@ export enum PersonenkontexteUpdateErrorI18nTypes {
     INVALID_LAST_MODIFIED_VALUE = 'INVALID_LAST_MODIFIED_VALUE',
     PERSON_ID_MISMATCH = 'PERSON_ID_MISMATCH',
     PERSON_NOT_FOUND = 'PERSON_NOT_FOUND',
+    INVALID_PERSONENKONTEXT_FOR_PERSON_WITH_ROLLENART_LERN = 'INVALID_PERSONENKONTEXT_FOR_PERSON_WITH_ROLLENART_LERN',
 }
 export type DbiamPersonenkontexteUpdateErrorProps = DbiamErrorProps & {
     i18nKey: PersonenkontexteUpdateErrorI18nTypes;
