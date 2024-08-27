@@ -13,6 +13,7 @@ export type PersonenkontextUpdatedPersonData = {
     vorname: string;
     familienname: string;
     referrer?: string;
+    ldapEntryUUID?: string;
 };
 
 export type PersonenkontextUpdatedData = {
@@ -24,12 +25,13 @@ export type PersonenkontextUpdatedData = {
     orgaKennung?: string;
 };
 
-function mapPersonToData(person: Person<true>): PersonenkontextUpdatedPersonData {
+function mapPersonToData(person: Person<true>, ldapEntryUUID?: string): PersonenkontextUpdatedPersonData {
     return {
         id: person.id,
         vorname: person.vorname,
         familienname: person.familienname,
         referrer: person.referrer,
+        ldapEntryUUID: ldapEntryUUID,
     };
 }
 
@@ -63,9 +65,10 @@ export class PersonenkontextUpdatedEvent extends BaseEvent {
         newKontexte: [Personenkontext<true>, Organisation<true>, Rolle<true>][],
         removedKontexte: [Personenkontext<true>, Organisation<true>, Rolle<true>][],
         currentKontexte: [Personenkontext<true>, Organisation<true>, Rolle<true>][],
+        ldapEntryUUID?: string,
     ): PersonenkontextUpdatedEvent {
         return new PersonenkontextUpdatedEvent(
-            mapPersonToData(person),
+            mapPersonToData(person, ldapEntryUUID),
             newKontexte.map(mapPersonenkontextAndRolleAggregateToData),
             removedKontexte.map(mapPersonenkontextAndRolleAggregateToData),
             currentKontexte.map(mapPersonenkontextAndRolleAggregateToData),

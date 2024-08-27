@@ -3,6 +3,7 @@ export type LdapPersonEntry = {
     sn: string;
     mail: string[];
     objectclass: string[];
+    entryUUID?: string;
 };
 
 export type LdapOrganisationEntry = {

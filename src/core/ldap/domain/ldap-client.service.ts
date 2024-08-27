@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { Client, SearchResult } from 'ldapts';
+import { Client, Control, SearchResult } from 'ldapts';
 import { LdapEntityType, LdapOrganisationEntry, LdapPersonEntry, LdapRoleEntry } from './ldap.types.js';
 import { KennungRequiredForSchuleError } from '../../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
 import { LdapClient } from './ldap-client.js';
@@ -13,6 +13,7 @@ export type PersonData = {
     vorname: string;
     familienname: string;
     referrer?: string;
+    ldapEntryUUID?: string;
 };
 
 type OrganisationData = {
@@ -151,7 +152,15 @@ export class LdapClientService {
                 mail: [`${person.referrer}@schule-sh.de`],
                 objectclass: ['inetOrgPerson'],
             };
-            await client.add(lehrerUid, entry);
+
+            const controls: Control[] = [];
+            if (person.ldapEntryUUID) {
+                const relaxRulesControlOID: string = '1.3.6.1.4.1.4203.666.5.12';
+                entry.entryUUID = person.ldapEntryUUID;
+                controls.push(new Control(relaxRulesControlOID));
+            }
+
+            await client.add(lehrerUid, entry, controls);
             this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
 
             return { ok: true, value: person };
