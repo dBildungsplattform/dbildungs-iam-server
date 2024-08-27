@@ -4,7 +4,7 @@ import { Personenkontext } from '../../../personenkontext/domain/personenkontext
 import { Rolle } from '../../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
 import { OrganisationsTyp, OrganisationsTypName } from '../../../organisation/domain/organisation.enums.js';
-import { RollenMerkmal } from '../../../rolle/domain/rolle.enums.js';
+import { RollenMerkmal, RollenMerkmalTypName } from '../../../rolle/domain/rolle.enums.js';
 
 export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: String })
@@ -31,7 +31,7 @@ export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: Boolean })
     public readonly editable: boolean;
 
-    @ApiProperty({ type: RollenMerkmal })
+    @ApiProperty({ enum: RollenMerkmal, enumName: RollenMerkmalTypName, nullable: true })
     public readonly merkmale?: RollenMerkmal[];
 
     public constructor(
