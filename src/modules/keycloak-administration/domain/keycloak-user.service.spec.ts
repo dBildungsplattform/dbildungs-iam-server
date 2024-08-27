@@ -69,6 +69,7 @@ describe('KeycloakUserService', () => {
                     createdDate: undefined,
                     username: user.username,
                     email: user.email,
+                    externalSystemIDs: user.externalSystemIDs,
                     enabled: user.enabled,
                     attributes: user.attributes,
                 });
@@ -92,6 +93,7 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        externalSystemIDs: user.externalSystemIDs,
                         enabled: user.enabled,
                         attributes: user.attributes,
                     },
@@ -103,6 +105,9 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     enabled: true,
                     credentials: [{ type: 'password', value: password, temporary: false }],
+                    attributes: {
+                        ID_ITSLEARNING: user.externalSystemIDs.ID_ITSLEARNING,
+                    },
                 });
             });
         });
@@ -126,6 +131,7 @@ describe('KeycloakUserService', () => {
                     createdDate: undefined,
                     username: user.username,
                     email: user.email,
+                    externalSystemIDs: user.externalSystemIDs,
                     enabled: user.enabled,
                     attributes: user.attributes,
                 });
@@ -180,6 +186,7 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        externalSystemIDs: user.externalSystemIDs,
                         enabled: user.enabled,
                         attributes: user.attributes,
                     },
@@ -204,6 +211,7 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        externalSystemIDs: user.externalSystemIDs,
                         enabled: user.enabled,
                         attributes: user.attributes,
                     },
@@ -227,6 +235,7 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        externalSystemIDs: user.externalSystemIDs,
                         enabled: user.enabled,
                         attributes: user.attributes,
                     },
@@ -250,6 +259,7 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        externalSystemIDs: user.externalSystemIDs,
                         enabled: user.enabled,
                         attributes: user.attributes,
                     },
@@ -273,6 +283,7 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        externalSystemIDs: user.externalSystemIDs,
                         enabled: user.enabled,
                         attributes: user.attributes,
                     },
@@ -307,6 +318,7 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        externalSystemIDs: user.externalSystemIDs,
                         enabled: user.enabled,
                         attributes: user.attributes,
                     },

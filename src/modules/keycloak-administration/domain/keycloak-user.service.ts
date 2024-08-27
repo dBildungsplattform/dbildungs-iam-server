@@ -56,6 +56,7 @@ export class KeycloakUserService {
             const userRepresentation: UserRepresentation = {
                 username: user.username,
                 enabled: true,
+                attributes: user.externalSystemIDs,
             };
 
             if (user.email) {
@@ -152,6 +153,7 @@ export class KeycloakUserService {
                         type: 'password',
                     },
                 ],
+                attributes: user.externalSystemIDs,
             };
 
             const response: { id: string } = await kcAdminClientResult.value.users.create(userRepresentation);
@@ -271,6 +273,7 @@ export class KeycloakUserService {
             userReprDto.username,
             userReprDto.email,
             new Date(userReprDto.createdTimestamp),
+            {}, // UserAttributes
             userReprDto.enabled,
             userReprDto.attributes,
         );
