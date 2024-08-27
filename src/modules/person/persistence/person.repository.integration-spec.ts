@@ -1065,7 +1065,7 @@ describe('PersonRepository Integration', () => {
                             enabled: true,
                             email: faker.internet.email(),
                             createdDate: new Date(),
-                        externalSystemIDs: {},
+                            externalSystemIDs: {},
                             attributes: {},
                         },
                     });
