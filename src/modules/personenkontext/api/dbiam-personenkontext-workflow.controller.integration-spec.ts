@@ -37,6 +37,8 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
+import { PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
     const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
@@ -66,6 +68,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let personRepo: PersonRepository;
     let personenkontextRepo: DBiamPersonenkontextRepo;
     let personFactory: PersonFactory;
+    let personenkontextService: PersonenkontextCreationService;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -113,6 +116,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         personRepo = module.get(PersonRepository);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personFactory = module.get(PersonFactory);
+        personenkontextService = module.get(PersonenkontextCreationService);
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
@@ -285,6 +289,38 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 titel: 'Angefragte Entität existiert nicht',
                 beschreibung: 'Die angeforderte Entität existiert nicht',
             });
+        });
+        it('should return error with status-code 400 if DuplicatePersonalnummerError is thrown', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+            // Mock the service to throw DuplicatePersonalnummerError
+            jest.spyOn(personenkontextService, 'createPersonWithPersonenkontext').mockResolvedValueOnce(
+                new DuplicatePersonalnummerError('Duplicate Kopers'),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/personenkontext-workflow')
+                .send({
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                    personalnummer: '1234567',
+                });
+
+            expect(response.status).toBe(400);
         });
     });
 
