@@ -24,6 +24,7 @@ export function mapAggregateToData(
         logoMimeType: serviceProvider.logoMimeType,
         keycloakGroup: serviceProvider.keycloakGroup,
         keycloakRole: serviceProvider.keycloakRole,
+        requires2fa: serviceProvider.requires2fa,
     };
 }
 
@@ -41,6 +42,7 @@ function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<bo
         entity.logoMimeType,
         entity.keycloakGroup,
         entity.keycloakRole,
+        entity.requires2fa,
     );
 }
 

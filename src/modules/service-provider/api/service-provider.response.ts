@@ -27,6 +27,9 @@ export class ServiceProviderResponse {
     @ApiProperty()
     public hasLogo: boolean;
 
+    @ApiProperty()
+    public requires2fa?: boolean;
+
     public constructor(serviceProvider: ServiceProvider<true>) {
         this.id = serviceProvider.id;
         this.name = serviceProvider.name;
@@ -34,5 +37,6 @@ export class ServiceProviderResponse {
         this.url = serviceProvider.url;
         this.kategorie = serviceProvider.kategorie;
         this.hasLogo = !!serviceProvider.logoMimeType; // serviceProvider.logo might not be loaded, so just check the mime-type
+        this.requires2fa = serviceProvider.requires2fa;
     }
 }
