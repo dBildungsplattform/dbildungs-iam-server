@@ -392,8 +392,11 @@ describe('PersonRepository Integration', () => {
             });
             describe('when creating a person with an existing personalnummer', () => {
                 it('should return DuplicatePersonalnummerError and rollback the transaction', async () => {
-                    // Arrange: Mock dependencies and set up the scenario
                     const existingPersonalnummer: string = '123456';
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                        ok: true,
+                        value: 'testusername',
+                    });
                     const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
                         familienname: faker.person.lastName(),
                         vorname: faker.person.firstName(),
