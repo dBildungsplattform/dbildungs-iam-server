@@ -125,7 +125,10 @@ export class RolleRepo {
         const rolle: Option<RolleEntity> = await this.em.findOne(
             this.entityName,
             { id },
-            { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const },
+            {
+                populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+                exclude: ['serviceProvider.serviceProvider.logo'] as const,
+            },
         );
 
         return rolle && mapEntityToAggregate(rolle, this.rolleFactory);
@@ -167,7 +170,8 @@ export class RolleRepo {
             RolleEntity,
             { id: { $in: ids } },
             {
-                populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+                populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+                exclude: ['serviceProvider.serviceProvider.logo'] as const,
             },
         );
 
@@ -191,7 +195,12 @@ export class RolleRepo {
         const rollen: Option<RolleEntity[]> = await this.em.find(
             this.entityName,
             { name: { $ilike: '%' + searchStr + '%' }, ...technischeQuery },
-            { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit, offset: offset },
+            {
+                populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+                exclude: ['serviceProvider.serviceProvider.logo'] as const,
+                limit: limit,
+                offset: offset,
+            },
         );
         return rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
     }
@@ -200,7 +209,8 @@ export class RolleRepo {
         const technischeQuery: { istTechnisch?: false } = includeTechnische ? {} : { istTechnisch: false };
 
         const rollen: RolleEntity[] = await this.em.findAll(RolleEntity, {
-            populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            exclude: ['serviceProvider.serviceProvider.logo'] as const,
             where: technischeQuery,
             limit: limit,
             offset: offset,
@@ -241,7 +251,12 @@ export class RolleRepo {
                     ...technischeQuery,
                     ...organisationWhereClause,
                 },
-                { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit, offset: offset },
+                {
+                    populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+                    exclude: ['serviceProvider.serviceProvider.logo'] as const,
+                    limit: limit,
+                    offset: offset,
+                },
             );
         } else {
             [rollen, total] = await this.em.findAndCount(
@@ -251,7 +266,8 @@ export class RolleRepo {
                     ...organisationWhereClause,
                 },
                 {
-                    populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+                    populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+                    exclude: ['serviceProvider.serviceProvider.logo'] as const,
                     limit: limit,
                     offset: offset,
                 },
@@ -340,7 +356,8 @@ export class RolleRepo {
         }
 
         const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, id, {
-            populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
 
         try {
@@ -365,7 +382,8 @@ export class RolleRepo {
 
     private async update(rolle: Rolle<true>): Promise<Rolle<true>> {
         const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, rolle.id, {
-            populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
         rolleEntity.assign(mapAggregateToData(rolle), { updateNestedEntities: true });
 
