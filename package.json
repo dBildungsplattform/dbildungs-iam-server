@@ -30,7 +30,6 @@
         "db:migration-apply": "npm run start:console -- db migration-apply",
         "setup": "npm run db:migration-apply && npm run db:seed dev",
         "db:seedingdata-generate": "npm run start:console -- db seedingdata-generate ./seeding/dev/01/ numberOfSchools=50 classesPerSchool=12"
-
     },
     "dependencies": {
         "@automapper/classes": "^8.8.1",
@@ -38,6 +37,7 @@
         "@automapper/nestjs": "^8.8.1",
         "@faker-js/faker": "^8.4.1",
         "@golevelup/nestjs-discovery": "^4.0.1",
+        "@keycloak/keycloak-admin-client": "^25.0.4",
         "@mikro-orm/core": "^6.2.1",
         "@mikro-orm/migrations": "^6.2.1",
         "@mikro-orm/nestjs": "^5.2.3",
