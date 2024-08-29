@@ -4,6 +4,7 @@ import { Personenkontext } from '../../../personenkontext/domain/personenkontext
 import { Rolle } from '../../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
 import { OrganisationsTyp, OrganisationsTypName } from '../../../organisation/domain/organisation.enums.js';
+import { RollenMerkmal, RollenMerkmalTypName } from '../../../rolle/domain/rolle.enums.js';
 
 export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: String })
@@ -33,6 +34,9 @@ export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: Date })
     public readonly befristung?: Date;
 
+    @ApiProperty({ enum: RollenMerkmal, enumName: RollenMerkmalTypName, nullable: true })
+    public readonly merkmale?: RollenMerkmal[];
+
     public constructor(
         personenkontext: Personenkontext<true>,
         organisation: OrganisationDo<true>,
@@ -48,6 +52,7 @@ export class DBiamPersonenzuordnungResponse {
         this.administriertVon = organisation.administriertVon;
         this.typ = organisation.typ;
         this.editable = editable;
+        this.merkmale = rolle.merkmale;
         this.befristung = personenkontext.befristung;
     }
 }

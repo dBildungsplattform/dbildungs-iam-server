@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -20,6 +21,7 @@ import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
@@ -231,23 +233,62 @@ export class PersonRepository {
     }
 
     public async create(person: Person<false>, hashedPassword?: string): Promise<Person<true> | DomainError> {
-        let personWithKeycloakUser: Person<false> | DomainError;
-        if (!hashedPassword) {
-            personWithKeycloakUser = await this.createKeycloakUser(person, this.kcUserService);
-        } else {
-            personWithKeycloakUser = await this.createKeycloakUserWithHashedPassword(
-                person,
-                hashedPassword,
-                this.kcUserService,
-            );
-        }
-        if (personWithKeycloakUser instanceof DomainError) {
-            return personWithKeycloakUser;
-        }
-        const personEntity: PersonEntity = this.em.create(PersonEntity, mapAggregateToData(personWithKeycloakUser));
-        await this.em.persistAndFlush(personEntity);
+        const transaction: EntityManager = this.em.fork();
+        await transaction.begin();
 
-        return mapEntityToAggregateInplace(personEntity, personWithKeycloakUser);
+        try {
+            if (person.personalnummer) {
+                // Check if personalnummer already exists
+                const existingPerson: Loaded<PersonEntity, never, '*', never> | null = await transaction.findOne(
+                    PersonEntity,
+                    { personalnummer: person.personalnummer },
+                );
+                if (existingPerson) {
+                    await transaction.rollback();
+                    return new DuplicatePersonalnummerError(`Personalnummer ${person.personalnummer} already exists.`);
+                }
+            }
+
+            // Create DB person
+            const personEntity: PersonEntity = transaction.create(PersonEntity, mapAggregateToData(person)).assign({
+                id: randomUUID(), // Generate ID here instead of at insert-time
+            });
+            transaction.persist(personEntity);
+
+            const persistedPerson: Person<true> = mapEntityToAggregateInplace(personEntity, person);
+
+            // Take ID from person to create keycloak user
+            let personWithKeycloakUser: Person<true> | DomainError;
+            if (!hashedPassword) {
+                personWithKeycloakUser = await this.createKeycloakUser(persistedPerson, this.kcUserService);
+            } else {
+                personWithKeycloakUser = await this.createKeycloakUserWithHashedPassword(
+                    persistedPerson,
+                    hashedPassword,
+                    this.kcUserService,
+                );
+            }
+
+            // -> When keycloak fails, rollback
+            if (personWithKeycloakUser instanceof DomainError) {
+                await transaction.rollback();
+                return personWithKeycloakUser;
+            }
+
+            // Take ID from keycloak and update user
+            personEntity.assign(mapAggregateToData(personWithKeycloakUser));
+
+            // Commit
+            await transaction.commit();
+
+            // Return mapped person
+            return mapEntityToAggregateInplace(personEntity, personWithKeycloakUser);
+        } catch (e) {
+            // Any other errors
+            // -> rollback and rethrow
+            await transaction.rollback();
+            throw e;
+        }
     }
 
     public async update(person: Person<true>): Promise<Person<true> | DomainError> {
@@ -287,15 +328,17 @@ export class PersonRepository {
     }
 
     private async createKeycloakUser(
-        person: Person<boolean>,
+        person: Person<true>,
         kcUserService: KeycloakUserService,
-    ): Promise<Person<boolean> | DomainError> {
+    ): Promise<Person<true> | DomainError> {
         if (person.keycloakUserId || !person.newPassword || !person.username) {
             return new EntityCouldNotBeCreated('Person');
         }
 
         person.referrer = person.username;
-        const userDo: User<false> = User.createNew(person.username, undefined);
+        const userDo: User<false> = User.createNew(person.username, undefined, {
+            ID_ITSLEARNING: person.id,
+        });
 
         const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
         if (!creationResult.ok) {
@@ -324,15 +367,17 @@ export class PersonRepository {
     }
 
     private async createKeycloakUserWithHashedPassword(
-        person: Person<boolean>,
+        person: Person<true>,
         hashedPassword: string,
         kcUserService: KeycloakUserService,
-    ): Promise<Person<boolean> | DomainError> {
+    ): Promise<Person<true> | DomainError> {
         if (person.keycloakUserId || !person.username) {
             return new EntityCouldNotBeCreated('Person');
         }
         person.referrer = person.username;
-        const userDo: User<false> = User.createNew(person.username, undefined);
+        const userDo: User<false> = User.createNew(person.username, undefined, {
+            ID_ITSLEARNING: person.id,
+        });
 
         const creationResult: Result<string, DomainError> = await kcUserService.createWithHashedPassword(
             userDo,

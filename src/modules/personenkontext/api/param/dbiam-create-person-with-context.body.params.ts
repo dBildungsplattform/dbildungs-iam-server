@@ -22,6 +22,11 @@ export class DbiamCreatePersonWithContextBodyParams {
     public readonly befristung?: Date;
 
     @IsString()
+    @IsOptional()
+    @ApiProperty({ required: false })
+    public readonly personalnummer?: string;
+
+    @IsString()
     @IsNotEmpty()
     @ApiProperty({ type: String })
     public readonly organisationId!: OrganisationID;
