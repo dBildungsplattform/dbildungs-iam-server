@@ -209,7 +209,7 @@ export class DbiamPersonenkontextWorkflowController {
         @Body() params: DbiamCreatePersonWithContextBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonResponse> {
-        //Check all references & permissions then save person 
+        //Check all references & permissions then save person
         const savedPersonWithPersonenkontext:
             | PersonPersonenkontext
             | DomainError
