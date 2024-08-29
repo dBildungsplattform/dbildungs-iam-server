@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
 
 export class LockUserBodyParams {
     @IsBoolean()
@@ -10,6 +10,7 @@ export class LockUserBodyParams {
     public readonly lock!: boolean;
 
     @IsString()
+    @IsNotEmpty()
     @ApiProperty({
         required: true,
         nullable: false,
