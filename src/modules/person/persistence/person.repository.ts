@@ -21,6 +21,7 @@ import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
@@ -236,6 +237,18 @@ export class PersonRepository {
         await transaction.begin();
 
         try {
+            if (person.personalnummer) {
+                // Check if personalnummer already exists
+                const existingPerson: Loaded<PersonEntity, never, '*', never> | null = await transaction.findOne(
+                    PersonEntity,
+                    { personalnummer: person.personalnummer },
+                );
+                if (existingPerson) {
+                    await transaction.rollback();
+                    return new DuplicatePersonalnummerError(`Personalnummer ${person.personalnummer} already exists.`);
+                }
+            }
+
             // Create DB person
             const personEntity: PersonEntity = transaction.create(PersonEntity, mapAggregateToData(person)).assign({
                 id: randomUUID(), // Generate ID here instead of at insert-time
@@ -262,7 +275,7 @@ export class PersonRepository {
                 return personWithKeycloakUser;
             }
 
-            // take ID from keycloak and update user
+            // Take ID from keycloak and update user
             personEntity.assign(mapAggregateToData(personWithKeycloakUser));
 
             // Commit

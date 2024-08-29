@@ -32,10 +32,12 @@ export class PersonenkontextCreationService {
         familienname: string,
         organisationId: string,
         rolleId: string,
+        personalnummer?: string,
     ): Promise<PersonPersonenkontext | DomainError> {
         const person: Person<false> | DomainError = await this.personFactory.createNew({
             vorname: vorname,
             familienname: familienname,
+            personalnummer: personalnummer,
         });
         if (person instanceof DomainError) {
             return person;
@@ -52,6 +54,7 @@ export class PersonenkontextCreationService {
         }
         //Save Person
         const savedPerson: DomainError | Person<true> = await this.personRepository.create(person);
+
         if (savedPerson instanceof DomainError) {
             return savedPerson;
         }
