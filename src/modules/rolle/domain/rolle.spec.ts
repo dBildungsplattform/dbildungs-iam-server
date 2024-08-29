@@ -70,6 +70,7 @@ describe('Rolle Aggregate', () => {
                 [],
                 [],
                 [],
+                [],
                 false,
             );
 
@@ -85,6 +86,7 @@ describe('Rolle Aggregate', () => {
                 'test',
                 faker.string.uuid(),
                 RollenArt.LERN,
+                [],
                 [],
                 [],
                 [],
@@ -106,6 +108,7 @@ describe('Rolle Aggregate', () => {
                 'test',
                 faker.string.uuid(),
                 RollenArt.LERN,
+                [],
                 [],
                 [],
                 [],
@@ -145,6 +148,7 @@ describe('Rolle Aggregate', () => {
                 creationParams.merkmale,
                 creationParams.systemrechte,
                 creationParams.serviceProviderIds,
+                [],
                 false,
             );
 
@@ -174,6 +178,7 @@ describe('Rolle Aggregate', () => {
                 creationParams.merkmale,
                 creationParams.systemrechte,
                 creationParams.serviceProviderIds,
+                [],
                 false,
             );
 
@@ -203,6 +208,7 @@ describe('Rolle Aggregate', () => {
                 creationParams.merkmale,
                 creationParams.systemrechte,
                 creationParams.serviceProviderIds,
+                [],
                 false,
             );
 
@@ -232,6 +238,7 @@ describe('Rolle Aggregate', () => {
                 creationParams.merkmale,
                 creationParams.systemrechte,
                 creationParams.serviceProviderIds,
+                [],
                 false,
             );
 

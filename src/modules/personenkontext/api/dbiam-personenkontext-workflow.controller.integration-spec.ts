@@ -46,6 +46,7 @@ function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rol
         [faker.helpers.enumValue(RollenMerkmal)],
         [faker.helpers.enumValue(RollenSystemRecht)],
         [],
+        [],
         false,
     );
     Object.assign(rolle, params);

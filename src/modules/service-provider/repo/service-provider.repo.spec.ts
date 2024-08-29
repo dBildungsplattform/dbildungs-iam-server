@@ -12,7 +12,6 @@ import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderRepo } from './service-provider.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { createMock } from '@golevelup/ts-jest';
-import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 
 describe('ServiceProviderRepo', () => {

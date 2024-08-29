@@ -214,6 +214,7 @@ describe('Personenuebersicht API', () => {
                         [],
                         [],
                         [],
+                        [],
                         false,
                     );
 
@@ -226,6 +227,7 @@ describe('Personenuebersicht API', () => {
                         faker.string.alpha(5),
                         faker.string.uuid(),
                         RollenArt.LEHR,
+                        [],
                         [],
                         [],
                         [],
@@ -359,6 +361,7 @@ describe('Personenuebersicht API', () => {
                         [],
                         [],
                         [],
+                        [],
                         false,
                     );
 
@@ -371,6 +374,7 @@ describe('Personenuebersicht API', () => {
                         faker.string.alpha(5),
                         faker.string.uuid(),
                         RollenArt.LERN,
+                        [],
                         [],
                         [],
                         [],
@@ -452,6 +456,7 @@ describe('Personenuebersicht API', () => {
                 [],
                 [],
                 [],
+                [],
                 false,
             );
 
@@ -464,6 +469,7 @@ describe('Personenuebersicht API', () => {
                 faker.string.alpha(5),
                 faker.string.uuid(),
                 RollenArt.LERN,
+                [],
                 [],
                 [],
                 [],
