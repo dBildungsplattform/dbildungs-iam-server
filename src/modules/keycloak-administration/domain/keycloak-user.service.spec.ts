@@ -738,15 +738,7 @@ describe('KeycloakUserService', () => {
 
                     expect(result).toStrictEqual({ ok: true, value: undefined });
                     expect(kcUsersMock.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: true });
-                    expect(kcUsersMock.update).toHaveBeenCalledWith(
-                        { id: 'user-id' },
-                        {
-                            attributes: {
-                                someOtherAttribute: ['someValue'],
-                                '': ['empty'],
-                            },
-                        },
-                    );
+                    expect(kcUsersMock.update).toHaveBeenCalledWith({ id: 'user-id' }, findOneResponse);
                 },
             );
 

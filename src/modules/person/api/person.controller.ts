@@ -69,7 +69,7 @@ import { PersonExceptionFilter } from './person-exception-filter.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
-import { KeycloakUserService, LOCK_KEYS } from '../../keycloak-administration/index.js';
+import { KeycloakUserService, LockKeys } from '../../keycloak-administration/index.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonLockResponse } from './person-lock.response.js';
 
@@ -480,11 +480,9 @@ export class PersonController {
             );
         }
 
-        const tempAttributes: Record<string, string> = {};
-        tempAttributes[LOCK_KEYS[0] as string] = lockUserBodyParams.locked_from;
-        tempAttributes[LOCK_KEYS[1] as string] = new Date().toISOString();
-
-        const customAttributes: Record<string, string> = tempAttributes;
+        const customAttributes: Record<string, string> = {};
+        customAttributes[LockKeys.LockedFrom] = lockUserBodyParams.locked_from;
+        customAttributes[LockKeys.Timestamp] = new Date().toISOString();
 
         const result: Result<void, DomainError> = await this.keycloakUserService.updateKeycloakUserStatus(
             personResult.value.keycloakUserId,

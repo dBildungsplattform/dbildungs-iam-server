@@ -14,7 +14,10 @@ export type FindUserFilter = {
     email?: string;
 };
 
-export const LOCK_KEYS: string[] = ['lock_locked_from', 'lock_timestamp'];
+export enum LockKeys {
+    LockedFrom = 'lock_locked_from',
+    Timestamp = 'lock_timestamp',
+}
 
 @Injectable()
 export class KeycloakUserService {
@@ -336,7 +339,7 @@ export class KeycloakUserService {
         if (user) {
             user.attributes = user.attributes ?? {};
             const filteredAttributes: Record<string, string[]> = Object.fromEntries(
-                Object.entries(user.attributes).filter(([key]: string[]) => !LOCK_KEYS.includes(key!)),
+                Object.entries(user.attributes).filter(([key]: string[]) => !(key! in LockKeys)),
             );
 
             user.attributes = filteredAttributes;

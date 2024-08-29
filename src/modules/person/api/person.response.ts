@@ -2,7 +2,7 @@ import { PersonNameParams } from './person-name.params.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { Vertrauensstufe, VertrauensstufeTypName } from '../domain/person.enums.js';
 import { ApiProperty } from '@nestjs/swagger';
-import { KcCustomAttributes } from '../../keycloak-administration/index.js';
+import { LockInfo } from '../domain/person.js';
 
 export class PersonResponse {
     @ApiProperty()
@@ -45,5 +45,5 @@ export class PersonResponse {
     public isLocked?: boolean;
 
     @ApiProperty({ nullable: true })
-    public attributes?: KcCustomAttributes;
+    public lockInfo?: LockInfo;
 }

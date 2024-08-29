@@ -13,9 +13,9 @@ import {
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
+import { KeycloakUserService, LockKeys, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { Person } from '../domain/person.js';
+import { Person, LockInfo } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
@@ -84,7 +84,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.vertrauensstufe,
         entity.auskunftssperre,
         entity.personalnummer,
-        {},
+        undefined,
         undefined,
         getEnabledEmailAddress(entity),
     );
@@ -166,7 +166,11 @@ export class PersonRepository {
             person.keycloakUserId,
         );
         if (keyCloakUserDataResponse.ok) {
-            person.attributes = keyCloakUserDataResponse.value.attributes;
+            const lockInfo: LockInfo = {
+                lock_locked_from: keyCloakUserDataResponse.value.attributes[LockKeys.LockedFrom]?.toString() ?? '',
+                lock_timestamp: keyCloakUserDataResponse.value.attributes[LockKeys.Timestamp]?.toString() ?? '',
+            };
+            person.lockInfo = lockInfo;
             person.isLocked = keyCloakUserDataResponse.value.enabled === false;
         }
         return person;

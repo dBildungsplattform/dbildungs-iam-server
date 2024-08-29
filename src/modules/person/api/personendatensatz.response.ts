@@ -39,7 +39,7 @@ export class PersonendatensatzResponse {
             startpasswort: withStartPasswort === true ? person.newPassword : undefined,
             personalnummer: person.personalnummer,
             isLocked: person.isLocked,
-            attributes: person.attributes,
+            lockInfo: person.lockInfo,
         };
 
         this.person = personResponse;
