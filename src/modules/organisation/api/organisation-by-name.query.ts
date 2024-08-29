@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-
-export class OrganisationByIdQueryParams {
+import { PagedQueryParams } from '../../../shared/paging/index.js';
+export class OrganisationByNameQueryParams extends PagedQueryParams {
     @IsString()
     @IsOptional()
     @ApiPropertyOptional({

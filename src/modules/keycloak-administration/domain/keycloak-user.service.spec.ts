@@ -76,6 +76,7 @@ describe('KeycloakUserService', () => {
                     createdDate: undefined,
                     username: user.username,
                     email: user.email,
+                    externalSystemIDs: user.externalSystemIDs,
                 });
 
                 expect(res).toStrictEqual<Result<string>>({
@@ -97,6 +98,7 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        externalSystemIDs: user.externalSystemIDs,
                     },
                     password,
                 );
@@ -106,6 +108,9 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     enabled: true,
                     credentials: [{ type: 'password', value: password, temporary: false }],
+                    attributes: {
+                        ID_ITSLEARNING: user.externalSystemIDs.ID_ITSLEARNING,
+                    },
                 });
             });
         });
@@ -127,6 +132,7 @@ describe('KeycloakUserService', () => {
                     createdDate: undefined,
                     username: user.username,
                     email: user.email,
+                    externalSystemIDs: user.externalSystemIDs,
                 });
 
                 expect(res).toStrictEqual<Result<string>>({
@@ -179,6 +185,7 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        externalSystemIDs: user.externalSystemIDs,
                     },
                     `{BCRYPT}$2b$12$hqG5T3z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
                     GgKOau`,
@@ -201,6 +208,7 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        externalSystemIDs: user.externalSystemIDs,
                     },
                     `{crypt}$6$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
                     sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
@@ -222,6 +230,7 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        externalSystemIDs: user.externalSystemIDs,
                     },
                     `{BCRYPT}xxxxxhqG5T3$z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
                     GgKOau`,
@@ -243,6 +252,7 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        externalSystemIDs: user.externalSystemIDs,
                     },
                     `{crypt}$$x$$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
                     sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
@@ -264,6 +274,7 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        externalSystemIDs: user.externalSystemIDs,
                     },
                     `{notsupported}$6$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
                     sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
@@ -294,6 +305,7 @@ describe('KeycloakUserService', () => {
                         createdDate: undefined,
                         username: user.username,
                         email: user.email,
+                        externalSystemIDs: user.externalSystemIDs,
                     },
                     `{BCRYPT}$2b$12$hqG5T3z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
                     GgKOau`,
