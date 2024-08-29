@@ -222,6 +222,9 @@ export class DbiamPersonenkontextWorkflowController {
         if (savedPersonWithPersonenkontext instanceof PersonenkontextSpecificationError) {
             throw savedPersonWithPersonenkontext;
         }
+        if (savedPersonWithPersonenkontext instanceof PersonenkontexteUpdateError) {
+            throw savedPersonWithPersonenkontext;
+        }
 
         if (savedPersonWithPersonenkontext instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(

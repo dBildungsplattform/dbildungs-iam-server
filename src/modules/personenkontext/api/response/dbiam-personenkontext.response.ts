@@ -13,9 +13,13 @@ export class DBiamPersonenkontextResponse {
     @ApiProperty({ type: String })
     public readonly rolleId: RolleID;
 
+    @ApiProperty({ type: String })
+    public readonly befristung?: Date;
+
     public constructor(personenkontext: Personenkontext<true>) {
         this.personId = personenkontext.personId;
         this.organisationId = personenkontext.organisationId;
         this.rolleId = personenkontext.rolleId;
+        this.befristung = personenkontext.befristung;
     }
 }
