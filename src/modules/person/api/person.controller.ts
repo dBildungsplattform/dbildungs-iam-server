@@ -52,7 +52,7 @@ import {
     EntityNotFoundError,
     MissingPermissionsError,
 } from '../../../shared/error/index.js';
-import { Person } from '../domain/person.js';
+import { LockInfo, Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { ScopeOrder } from '../../../shared/persistence/index.js';
@@ -69,7 +69,7 @@ import { PersonExceptionFilter } from './person-exception-filter.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
-import { KeycloakUserService, LockKeys } from '../../keycloak-administration/index.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonLockResponse } from './person-lock.response.js';
 
@@ -480,14 +480,15 @@ export class PersonController {
             );
         }
 
-        const customAttributes: Record<string, string> = {};
-        customAttributes[LockKeys.LockedFrom] = lockUserBodyParams.locked_from;
-        customAttributes[LockKeys.Timestamp] = new Date().toISOString();
+        const lockInfo: LockInfo = {
+            lock_locked_from: lockUserBodyParams.locked_from,
+            lock_timestamp: new Date().toISOString(),
+        };
 
         const result: Result<void, DomainError> = await this.keycloakUserService.updateKeycloakUserStatus(
             personResult.value.keycloakUserId,
             !lockUserBodyParams.lock,
-            customAttributes,
+            lockInfo,
         );
         if (!result.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
