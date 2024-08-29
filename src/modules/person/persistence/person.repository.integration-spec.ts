@@ -37,8 +37,7 @@ import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
-import { DBiamPersonenkontextHelperRepo } from './dbiam-personenkontext-helper.repo.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -50,7 +49,6 @@ describe('PersonRepository Integration', () => {
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let configService: ConfigService;
     let eventServiceMock: DeepMocked<EventService>;
-    let dBiamPersonenkontextHelperRepoMock: DeepMocked<DBiamPersonenkontextHelperRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -79,10 +77,6 @@ describe('PersonRepository Integration', () => {
                     provide: DBiamPersonenkontextRepo,
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
-                {
-                    provide: DBiamPersonenkontextHelperRepo,
-                    useValue: createMock<DBiamPersonenkontextHelperRepo>(),
-                },
             ],
         }).compile();
         sut = module.get(PersonRepository);
@@ -94,9 +88,6 @@ describe('PersonRepository Integration', () => {
         usernameGeneratorService = module.get(UsernameGeneratorService);
         configService = module.get(ConfigService);
         eventServiceMock = module.get(EventService);
-        dBiamPersonenkontextHelperRepoMock = module.get(DBiamPersonenkontextHelperRepo);
-        /*     organisationRepositoryMock = module.get(OrganisationRepository);
-        rolleRepoMock = module.get(RolleRepo);*/
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -921,7 +912,12 @@ describe('PersonRepository Integration', () => {
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
-                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
 
                 expect(result.ok).toBeTruthy();
             });
@@ -934,7 +930,12 @@ describe('PersonRepository Integration', () => {
 
                 await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
-                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
 
                 expect(result.ok).toBeFalsy();
             });
@@ -972,9 +973,12 @@ describe('PersonRepository Integration', () => {
                 if (!personGetAllowed.ok) {
                     throw new EntityNotFoundError('Person', person1.id);
                 }
+
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                 const result: Result<void, DomainError> = await sut.deletePerson(
                     personGetAllowed.value.id,
                     personPermissionsMock,
+                    removedPersonenkontexts,
                 );
                 expect(result.ok).toBeTruthy();
             });
@@ -1007,9 +1011,12 @@ describe('PersonRepository Integration', () => {
                     if (!personGetAllowed.ok) {
                         throw new EntityNotFoundError('Person', person.id);
                     }
+
+                    const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                     const result: Result<void, DomainError> = await sut.deletePerson(
                         personGetAllowed.value.id,
                         personPermissionsMock,
+                        removedPersonenkontexts,
                     );
 
                     expect(eventServiceMock.publish).toHaveBeenCalledWith(
@@ -1041,11 +1048,6 @@ describe('PersonRepository Integration', () => {
                     personEntity.emailAddresses.add(emailAddress);
                     await em.persistAndFlush(personEntity);
 
-                    const personenkontextMock: Personenkontext<true> = createMock<Personenkontext<true>>({
-                        personId: person.id,
-                    });
-                    dBiamPersonenkontextHelperRepoMock.findByPersonID.mockResolvedValue([personenkontextMock]);
-
                     await sut.getPersonIfAllowed(person.id, personPermissionsMock);
                     const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
                         person.id,
@@ -1054,14 +1056,20 @@ describe('PersonRepository Integration', () => {
                     if (!personGetAllowed.ok) {
                         throw new EntityNotFoundError('Person', person.id);
                     }
+
+                    const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                     const result: Result<void, DomainError> = await sut.deletePerson(
                         personGetAllowed.value.id,
                         personPermissionsMock,
+                        removedPersonenkontexts,
                     );
 
                     expect(eventServiceMock.publish).toHaveBeenCalledWith(
                         expect.objectContaining({
-                            personId: person.id,
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            person: expect.objectContaining({
+                                id: personEntity.id,
+                            }),
                         }),
                     );
                     expect(result.ok).toBeTruthy();
@@ -1074,7 +1082,12 @@ describe('PersonRepository Integration', () => {
 
                 await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
-                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
 
                 expect(result.ok).toBeFalsy();
             });
@@ -1103,7 +1116,12 @@ describe('PersonRepository Integration', () => {
 
                 await sut.checkIfDeleteIsAllowed(personGetAllowed.value.id, personPermissionsMock);
 
-                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
 
                 expect(result.ok).toBeFalsy();
                 if (!result.ok) {
@@ -1129,9 +1147,10 @@ describe('PersonRepository Integration', () => {
                     throw new EntityNotFoundError('Person', person1.id);
                 }
 
-                await expect(sut.deletePerson(personGetAllowed.value.id, personPermissionsMock)).rejects.toThrow(
-                    PersonHasNoKeycloakId,
-                );
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                await expect(
+                    sut.deletePerson(personGetAllowed.value.id, personPermissionsMock, removedPersonenkontexts),
+                ).rejects.toThrow(PersonHasNoKeycloakId);
             });
         });
     });

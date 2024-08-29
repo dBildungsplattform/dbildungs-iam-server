@@ -20,7 +20,6 @@ import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { MikroORM } from '@mikro-orm/core';
 import { EmailAddress } from '../domain/email-address.js';
-import { DBiamPersonenkontextHelperRepo } from '../../person/persistence/dbiam-personenkontext-helper.repo.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -39,10 +38,6 @@ describe('EmailRepo', () => {
                 EmailFactory,
                 PersonFactory,
                 PersonRepository,
-                {
-                    provide: DBiamPersonenkontextHelperRepo,
-                    useValue: createMock<DBiamPersonenkontextHelperRepo>(),
-                },
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),

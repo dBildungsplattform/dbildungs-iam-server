@@ -100,7 +100,7 @@ describe('Event Adapter', () => {
         });
 
         describe('when every entity is found in DB', () => {
-            it('should info and trigger PersonenkontextDeletedEvent', async () => {
+            it('should log info and trigger PersonenkontextDeletedEvent', async () => {
                 const fakePerson: Person<true> = createMock<Person<true>>({
                     id: fakePersonId,
                     vorname: faker.person.firstName(),
@@ -134,12 +134,13 @@ describe('Event Adapter', () => {
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledWith(
                     expect.objectContaining({
-                        personData: {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        personData: expect.objectContaining({
                             id: fakePerson.id,
                             vorname: fakePerson.vorname,
                             familienname: fakePerson.familienname,
                             referrer: fakePerson.referrer,
-                        },
+                        }),
                         kontextData: {
                             id: fakePKId,
                             rolleId: fakeRolle.id,
