@@ -30,7 +30,6 @@ export class KeycloackServiceProviderHandler {
         changingRole: RolleID[],
     ): Promise<(KeycloakRole | undefined)[]> {
         const rolleWhole: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(changingRole);
-        console.log(rolleWhole);
         const allRolleServiceProviders: ServiceProvider<true>[] = Array.from(rolleWhole.values()).flatMap(
             (rolle: Rolle<true>) => rolle.serviceProviderData ?? [],
         );

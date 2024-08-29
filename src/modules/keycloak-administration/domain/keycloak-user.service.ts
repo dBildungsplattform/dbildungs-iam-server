@@ -297,7 +297,7 @@ export class KeycloakUserService {
         try {
             const allGroups: GroupRepresentation[] = await kcAdminClientResult.value.groups.find();
             const filteredGroupNames: string[] = groupNames.filter(
-                (groupName): groupName is string => groupName !== undefined,
+                (groupName: string | undefined): groupName is string => groupName !== undefined,
             );
 
             const groupsToAssign: GroupRepresentation[] = allGroups.filter((group: GroupRepresentation) =>
@@ -363,7 +363,7 @@ export class KeycloakUserService {
         try {
             const allGroups: GroupRepresentation[] = await kcAdminClientResult.value.groups.find();
             const filteredGroupNames: string[] = groupNames.filter(
-                (groupName): groupName is string => groupName !== undefined,
+                (groupName: string | undefined): groupName is string => groupName !== undefined,
             );
 
             const groupsToRemove: GroupRepresentation[] = allGroups.filter((group: GroupRepresentation) =>

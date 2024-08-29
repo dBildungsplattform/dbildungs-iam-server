@@ -649,7 +649,7 @@ describe('KeycloakUserService', () => {
             });
         });
     });
-    describe('assignRealmRolesToUser', () => {
+    describe('assignRealmGroupsToUser', () => {
         describe('getAuthedKcAdminClient is not ok ', () => {
             it('should return a DomainError', async () => {
                 const user: User<true> = DoFactory.createUser(true);
@@ -662,7 +662,7 @@ describe('KeycloakUserService', () => {
 
                 adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
 
-                const res: Result<void, DomainError> = await service.assignRealmRolesToUser(user.id, [rolle.name]);
+                const res: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, [rolle.name]);
 
                 expect(res).toBe(error);
             });
@@ -675,7 +675,7 @@ describe('KeycloakUserService', () => {
                 kcUsersMock.findOne.mockResolvedValueOnce(undefined);
                 const roleNames: string[] = [rolle.name, rolle2.name];
 
-                const result: Result<void, DomainError> = await service.assignRealmRolesToUser(user.id, roleNames);
+                const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, roleNames);
 
                 expect(result).toStrictEqual<Result<User<true>>>({
                     ok: false,
@@ -713,7 +713,7 @@ describe('KeycloakUserService', () => {
 
                 kcUsersMock.addRealmRoleMappings.mockResolvedValueOnce(undefined);
 
-                const result: Result<void, DomainError> = await service.assignRealmRolesToUser(user.id, roleNames);
+                const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, roleNames);
 
                 expect(result).toStrictEqual<Result<void>>({
                     ok: true,
@@ -733,7 +733,7 @@ describe('KeycloakUserService', () => {
 
                 kcRolesMock.find.mockResolvedValueOnce([]);
 
-                const result: Result<void, DomainError> = await service.assignRealmRolesToUser(user.id, [
+                const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, [
                     'non-existing-role',
                 ]);
 
@@ -760,7 +760,7 @@ describe('KeycloakUserService', () => {
                 kcRolesMock.find.mockResolvedValueOnce(mockRoles);
 
                 kcUsersMock.listRealmRoleMappings.mockResolvedValueOnce(mockRoles);
-                const result: Result<void, DomainError> = await service.assignRealmRolesToUser(user.id, [
+                const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, [
                     'role1',
                     'role2',
                 ]);
@@ -778,7 +778,7 @@ describe('KeycloakUserService', () => {
                     createdTimestamp: user.createdDate.getTime(),
                 } as UserRepresentation);
 
-                const result: Result<void, DomainError> = await service.assignRealmRolesToUser(user.id, []);
+                const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, []);
 
                 expect(result).toStrictEqual<Result<void>>({ ok: true, value: undefined });
             });
@@ -800,7 +800,7 @@ describe('KeycloakUserService', () => {
                 kcUsersMock.listRealmRoleMappings.mockResolvedValueOnce([]);
                 kcUsersMock.addRealmRoleMappings.mockResolvedValueOnce(undefined);
 
-                const result: Result<void, DomainError> = await service.assignRealmRolesToUser(user.id, [
+                const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, [
                     'role1',
                     'invalid-role',
                 ]);
@@ -828,13 +828,13 @@ describe('KeycloakUserService', () => {
                 const error: Error = new Error('Simulated error during role assignment');
                 kcUsersMock.addRealmRoleMappings.mockRejectedValueOnce(error);
 
-                await service.assignRealmRolesToUser(user.id, roleNames);
+                await service.assignRealmGroupsToUser(user.id, roleNames);
 
                 expect(loggerMock.error).toHaveBeenCalled();
             });
         });
     });
-    describe('removeRealmRolesFromUser', () => {
+    describe('removeRealmGroupsFromUser', () => {
         describe('getAuthedKcAdminClient is not ok', () => {
             it('should return a DomainError', async () => {
                 const user: User<true> = DoFactory.createUser(true);
@@ -847,7 +847,7 @@ describe('KeycloakUserService', () => {
 
                 adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
 
-                const res: Result<void, DomainError> = await service.removeRealmRolesFromUser(user.id, [rolle.name]);
+                const res: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, [rolle.name]);
 
                 expect(res).toBe(error);
             });
@@ -861,7 +861,7 @@ describe('KeycloakUserService', () => {
                 kcUsersMock.findOne.mockResolvedValueOnce(undefined);
                 const roleNames: string[] = [rolle.name, rolle2.name];
 
-                const result: Result<void, DomainError> = await service.removeRealmRolesFromUser(user.id, roleNames);
+                const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, roleNames);
 
                 expect(result).toStrictEqual<Result<User<true>>>({
                     ok: false,
@@ -900,7 +900,7 @@ describe('KeycloakUserService', () => {
 
                 kcUsersMock.delRealmRoleMappings.mockResolvedValueOnce(undefined);
 
-                const result: Result<void, DomainError> = await service.removeRealmRolesFromUser(user.id, roleNames);
+                const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, roleNames);
 
                 expect(result).toStrictEqual<Result<void>>({
                     ok: true,
@@ -921,7 +921,7 @@ describe('KeycloakUserService', () => {
 
                 kcRolesMock.find.mockResolvedValueOnce([]);
 
-                const result: Result<void, DomainError> = await service.removeRealmRolesFromUser(user.id, [
+                const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, [
                     'non-existing-role',
                 ]);
 
@@ -950,7 +950,7 @@ describe('KeycloakUserService', () => {
 
                 kcUsersMock.listRealmRoleMappings.mockResolvedValueOnce([]);
 
-                const result: Result<void, DomainError> = await service.removeRealmRolesFromUser(user.id, [
+                const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, [
                     'role1',
                     'role2',
                 ]);
@@ -969,7 +969,7 @@ describe('KeycloakUserService', () => {
                     createdTimestamp: user.createdDate.getTime(),
                 } as UserRepresentation);
 
-                const result: Result<void, DomainError> = await service.removeRealmRolesFromUser(user.id, []);
+                const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, []);
 
                 expect(result).toStrictEqual<Result<void>>({ ok: true, value: undefined });
             });
@@ -991,7 +991,7 @@ describe('KeycloakUserService', () => {
                 kcUsersMock.listRealmRoleMappings.mockResolvedValueOnce(mockRoles);
                 kcUsersMock.delRealmRoleMappings.mockResolvedValueOnce(undefined);
 
-                const result: Result<void, DomainError> = await service.removeRealmRolesFromUser(user.id, [
+                const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, [
                     'role1',
                     'invalid-role',
                 ]);
@@ -1020,7 +1020,7 @@ describe('KeycloakUserService', () => {
                 const error: Error = new Error('Simulated error during role removal');
                 kcUsersMock.delRealmRoleMappings.mockRejectedValueOnce(error);
 
-                const result: Result<void, DomainError> = await service.removeRealmRolesFromUser(user.id, roleNames);
+                const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, roleNames);
 
                 expect(loggerMock.error).toHaveBeenCalled();
                 expect(result).toStrictEqual<Result<void>>({

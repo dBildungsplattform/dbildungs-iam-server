@@ -24,6 +24,7 @@ import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -74,7 +75,7 @@ export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFac
 
     const serviceProviderData: ServiceProvider<true>[] = entity.serviceProvider.map(
         (serviceProvider: RolleServiceProviderEntity) => {
-            const sp = serviceProvider.serviceProvider;
+            const sp: ServiceProviderEntity = serviceProvider.serviceProvider;
             return ServiceProvider.construct(
                 sp.id,
                 sp.createdAt,
