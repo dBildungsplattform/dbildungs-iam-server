@@ -68,4 +68,8 @@ export class PersonenkontextEntity extends TimestampedEntity {
     @AutoMap(() => String)
     @Property({ nullable: false, default: '1' })
     public revision!: string & Opt;
+
+    @AutoMap(() => Date)
+    @Property({ nullable: true, type: DateTimeType })
+    public readonly befristung?: Date;
 }
