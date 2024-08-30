@@ -19,8 +19,7 @@ import { DeleteMembershipsAction } from '../actions/delete-memberships.action.js
 import { DeletePersonAction } from '../actions/delete-person.action.js';
 import { PersonResponse, ReadPersonAction } from '../actions/read-person.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
-import { IMSESInstitutionRoleType, IMSESRoleType } from '../types/role.enum.js';
-import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
+import { IMSESRoleType, IMSESInstitutionRoleType } from '../types/role.enum.js';
 
 // Maps our roles to itsLearning roles
 const ROLLENART_TO_ITSLEARNING_ROLE: Record<RollenArt, IMSESInstitutionRoleType> = {
@@ -67,19 +66,6 @@ export class ItsLearningPersonsEventHandler {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
 
         this.ENABLED = itsLearningConfig.ENABLED === 'true';
-    }
-
-    @EventHandler(PersonenkontextDeletedEvent)
-    public async handlePersonenkontextDeletedEvent(event: PersonenkontextDeletedEvent): Promise<void> {
-        this.logger.info(
-            `Received PersonenkontextDeletedEvent, personId:${event.personData.id}, orgaId:${event.kontextData.orgaId}, rolleId:${event.kontextData.rolleId}`,
-        );
-
-        if (!this.ENABLED) {
-            return this.logger.info('Not enabled, ignoring event.');
-        }
-
-        await this.deletePerson(event.personData.id);
     }
 
     @EventHandler(PersonenkontextUpdatedEvent)
