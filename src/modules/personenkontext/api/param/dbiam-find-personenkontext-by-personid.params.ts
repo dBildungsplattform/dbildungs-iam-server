@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 import { PersonID } from '../../../../shared/types/index.js';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class DBiamFindPersonenkontexteByPersonIdParams {
     @ApiProperty({
@@ -11,9 +11,4 @@ export class DBiamFindPersonenkontexteByPersonIdParams {
     @IsString()
     @IsNotEmpty()
     public readonly personId!: PersonID;
-
-    @IsString()
-    @IsOptional()
-    @ApiProperty({ required: false })
-    public readonly personalnummer?: string;
 }
