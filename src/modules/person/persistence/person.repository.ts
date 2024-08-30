@@ -149,6 +149,7 @@ export class PersonRepository {
         scope.findBy({ ids: [personId] }).sortBy('vorname', ScopeOrder.ASC);
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);
+
         const person: Person<true> | undefined = persons[0];
 
         if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
