@@ -408,16 +408,23 @@ describe(`PrivacyIdeaAdministrationService`, () => {
     describe('assignHardwareToken', () => {
         it('should assign hardware token successfully', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            jest.spyOn(
+                service as unknown as { checkUserExists: () => Promise<boolean> },
+                'checkUserExists',
+            ).mockResolvedValueOnce(true);
             httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenVerificationResponse } as AxiosResponse));
             httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenOTPSerialResponse } as AxiosResponse));
             httpServiceMock.post.mockReturnValueOnce(of({ data: mockAssignTokenResponse } as AxiosResponse));
-
             const result: AssignTokenResponse = await service.assignHardwareToken('ABC123456', 'otp', 'test-user');
             expect(result).toEqual(mockAssignTokenResponse);
         });
 
         it('should throw token-not-found error', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            jest.spyOn(
+                service as unknown as { checkUserExists: () => Promise<boolean> },
+                'checkUserExists',
+            ).mockResolvedValueOnce(true);
             httpServiceMock.get.mockReturnValueOnce(
                 of({ data: mockTokenVerificationResponseNotFound } as AxiosResponse),
             );
@@ -432,6 +439,10 @@ describe(`PrivacyIdeaAdministrationService`, () => {
 
         it('should throw token-already-assigned error', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            jest.spyOn(
+                service as unknown as { checkUserExists: () => Promise<boolean> },
+                'checkUserExists',
+            ).mockResolvedValueOnce(true);
             httpServiceMock.get.mockReturnValueOnce(
                 of({ data: mockTokenVerificationResponseAlreadyAssigned } as AxiosResponse),
             );
@@ -446,6 +457,10 @@ describe(`PrivacyIdeaAdministrationService`, () => {
 
         it('should throw token-otp-not-valid error', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            jest.spyOn(
+                service as unknown as { checkUserExists: () => Promise<boolean> },
+                'checkUserExists',
+            ).mockResolvedValueOnce(true);
             httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenVerificationResponse } as AxiosResponse));
             httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenOTPSerialResponseInvalid } as AxiosResponse));
 
@@ -456,6 +471,10 @@ describe(`PrivacyIdeaAdministrationService`, () => {
 
         it('should throw general-token-error on verifyTokenStatus error', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            jest.spyOn(
+                service as unknown as { checkUserExists: () => Promise<boolean> },
+                'checkUserExists',
+            ).mockResolvedValueOnce(true);
             httpServiceMock.get.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
 
             await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
@@ -468,6 +487,10 @@ describe(`PrivacyIdeaAdministrationService`, () => {
 
         it('should throw general-token-error on getSerialWithOTP error', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            jest.spyOn(
+                service as unknown as { checkUserExists: () => Promise<boolean> },
+                'checkUserExists',
+            ).mockResolvedValueOnce(true);
             httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenVerificationResponse } as AxiosResponse));
             httpServiceMock.get.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
 
@@ -481,6 +504,10 @@ describe(`PrivacyIdeaAdministrationService`, () => {
 
         it('should throw general-token-error on assignToken error', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            jest.spyOn(
+                service as unknown as { checkUserExists: () => Promise<boolean> },
+                'checkUserExists',
+            ).mockResolvedValueOnce(true);
             httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenVerificationResponse } as AxiosResponse));
             httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenOTPSerialResponse } as AxiosResponse));
             httpServiceMock.post.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
