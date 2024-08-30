@@ -35,6 +35,7 @@ import { EmailAddress } from './email-address.js';
 import { PersonID, RolleID } from '../../../shared/types/index.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 
 function getEmail(): EmailAddress<true> {
     const fakePersonId: PersonID = faker.string.uuid();
@@ -476,6 +477,20 @@ describe('Email Event Handler', () => {
                 const result: void = await emailEventHandler.handlePersonenkontextDeletedEvent(event);
 
                 expect(result).toBeUndefined();
+            });
+        });
+    });
+
+    describe('handlePersonenkontextUpdatedEvent', () => {
+        describe('when called', () => {
+            it('should log info', async () => {
+                const event: PersonenkontextUpdatedEvent = createMock<PersonenkontextUpdatedEvent>();
+
+                await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Received handlePersonenkontextUpdatedEvent, personId:${event.person.id}`,
+                );
             });
         });
     });
