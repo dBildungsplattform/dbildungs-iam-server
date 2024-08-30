@@ -18,6 +18,7 @@ import {
 } from '@nestjs/common';
 import {
     ApiAcceptedResponse,
+    ApiBadGatewayResponse,
     ApiBadRequestResponse,
     ApiBearerAuth,
     ApiCreatedResponse,
@@ -46,12 +47,7 @@ import { PersonenkontextResponse } from '../../personenkontext/api/response/pers
 import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { PersonRepository } from '../persistence/person.repository.js';
-import {
-    DomainError,
-    EntityCouldNotBeUpdated,
-    EntityNotFoundError,
-    MissingPermissionsError,
-} from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { LockInfo, Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
@@ -72,6 +68,8 @@ import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonLockResponse } from './person-lock.response.js';
+import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
+import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -456,6 +454,7 @@ export class PersonController {
     @ApiNotFoundResponse({ description: 'The person was not found.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
+    @ApiBadGatewayResponse({ description: 'A downstream server returned an error.' })
     public async lockPerson(
         @Param('personId') personId: string,
         @Body() lockUserBodyParams: LockUserBodyParams,
@@ -467,17 +466,11 @@ export class PersonController {
         );
 
         if (!personResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Person not found or no permissions.'),
-                ),
-            );
+            throw new NotFoundOrNoPermissionError(personId);
         }
 
         if (!personResult.value?.keycloakUserId) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Person', personId)),
-            );
+            throw new PersonDomainError(`Person with id ${personId} has no keycloak id`, personId);
         }
 
         const lockInfo: LockInfo = {
@@ -491,11 +484,7 @@ export class PersonController {
             lockInfo,
         );
         if (!result.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityCouldNotBeUpdated('Person', personId),
-                ),
-            );
+            throw new DownstreamKeycloakError(result.error.message, personId, [result.error.details]);
         }
         return new PersonLockResponse(`User has been successfully ${lockUserBodyParams.lock ? '' : 'un'}locked.`);
     }

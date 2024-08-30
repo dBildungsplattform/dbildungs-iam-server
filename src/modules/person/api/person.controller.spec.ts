@@ -41,6 +41,7 @@ import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
+import { PersonDomainError } from '../domain/person-domain.error.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -812,7 +813,7 @@ describe('PersonController', () => {
                 });
                 await expect(
                     personController.lockPerson(params.personId, lockUserBodyParams, personPermissionsMock),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toThrow(PersonDomainError);
             });
         });
 
@@ -831,7 +832,7 @@ describe('PersonController', () => {
                 });
                 await expect(
                     personController.lockPerson(params.personId, lockUserBodyParams, personPermissionsMock),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toThrow(PersonDomainError);
             });
         });
 
@@ -854,7 +855,7 @@ describe('PersonController', () => {
                 });
                 await expect(
                     personController.lockPerson(params.personId, lockUserBodyParams, personPermissionsMock),
-                ).rejects.toThrow(HttpException);
+                ).rejects.toThrow(PersonDomainError);
             });
         });
     });
