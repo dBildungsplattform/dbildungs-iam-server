@@ -273,7 +273,7 @@ describe('PersonScope', () => {
 
             it('should return found persons', async () => {
                 const scope: PersonScope = new PersonScope()
-                    .findBy({ id: knownId })
+                    .findBy({ ids: [knownId] })
                     .sortBy('vorname', ScopeOrder.ASC)
                     .paged(0, 10);
                 const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);

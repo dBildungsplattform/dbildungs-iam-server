@@ -20,7 +20,7 @@ export class PersonScope extends ScopeBase<PersonEntity> {
     public findBy(findProps: Findable<FindProps>, operator: ScopeOperator = ScopeOperator.AND): this {
         const filters: QBFilterQuery<PersonEntity> = {
             [operator]: [
-                findProps.ids !== undefined && { id: { $in: findProps.ids } },  // Filter by array of IDs
+                findProps.ids !== undefined && { id: { $in: findProps.ids } }, // Filter by array of IDs
                 findProps.vorname !== undefined && { vorname: findProps.vorname },
                 findProps.familienname !== undefined && { familienname: findProps.familienname },
                 findProps.geburtsdatum !== undefined && { geburtsdatum: findProps.geburtsdatum },

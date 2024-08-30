@@ -502,6 +502,7 @@ describe('Personenuebersicht API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/dbiam/personenuebersicht`)
+                .query({ personIds: [savedPerson1.id, savedPerson2.id] })
                 .send();
 
             expect(response.status).toBe(200);
