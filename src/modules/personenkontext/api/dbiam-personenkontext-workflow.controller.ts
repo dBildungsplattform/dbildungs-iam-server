@@ -39,6 +39,7 @@ import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 @UseFilters(
     SchulConnexValidationErrorFilter,
@@ -210,17 +211,24 @@ export class DbiamPersonenkontextWorkflowController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonResponse> {
         //Check all references & permissions then save person
-        const savedPersonWithPersonenkontext: PersonPersonenkontext | DomainError | PersonenkontextCommitError =
-            await this.personenkontextCreationService.createPersonWithPersonenkontext(
-                permissions,
-                params.vorname,
-                params.familienname,
-                params.organisationId,
-                params.rolleId,
-                params.personalnummer || undefined,
-            );
+        const savedPersonWithPersonenkontext:
+            | PersonPersonenkontext
+            | DomainError
+            | PersonenkontextCommitError
+            | DuplicatePersonalnummerError = await this.personenkontextCreationService.createPersonWithPersonenkontext(
+            permissions,
+            params.vorname,
+            params.familienname,
+            params.organisationId,
+            params.rolleId,
+            params.personalnummer || undefined,
+        );
 
         if (savedPersonWithPersonenkontext instanceof PersonenkontextSpecificationError) {
+            throw savedPersonWithPersonenkontext;
+        }
+
+        if (savedPersonWithPersonenkontext instanceof DuplicatePersonalnummerError) {
             throw savedPersonWithPersonenkontext;
         }
 
