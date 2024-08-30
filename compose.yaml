@@ -14,6 +14,8 @@ services:
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
+    env_file:
+      - .env
     entrypoint: '/opt/keycloak/bin/kc.sh start-dev'
     command:
       # Internal DB but still persisted in container
