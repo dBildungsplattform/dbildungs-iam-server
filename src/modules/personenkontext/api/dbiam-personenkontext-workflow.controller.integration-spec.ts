@@ -37,6 +37,8 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
+import { PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
     const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
@@ -46,6 +48,7 @@ function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rol
         [faker.helpers.enumValue(RollenMerkmal)],
         [faker.helpers.enumValue(RollenSystemRecht)],
         [],
+        false,
     );
     Object.assign(rolle, params);
 
@@ -65,6 +68,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let personRepo: PersonRepository;
     let personenkontextRepo: DBiamPersonenkontextRepo;
     let personFactory: PersonFactory;
+    let personenkontextService: PersonenkontextCreationService;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -112,6 +116,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         personRepo = module.get(PersonRepository);
         personenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personFactory = module.get(PersonFactory);
+        personenkontextService = module.get(PersonenkontextCreationService);
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
@@ -168,6 +173,33 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     vorname: faker.person.firstName(),
                     organisationId: organisation.id,
                     rolleId: rolle.id,
+                });
+            expect(response.status).toBe(201);
+        });
+
+        it('should return created person and personenkontext with personalnummer', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/personenkontext-workflow')
+                .send({
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                    personalnummer: '1234567',
                 });
             expect(response.status).toBe(201);
         });
@@ -258,6 +290,38 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 beschreibung: 'Die angeforderte Entität existiert nicht',
             });
         });
+        it('should return error with status-code 400 if DuplicatePersonalnummerError is thrown', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+            // Mock the service to throw DuplicatePersonalnummerError
+            jest.spyOn(personenkontextService, 'createPersonWithPersonenkontext').mockResolvedValueOnce(
+                new DuplicatePersonalnummerError('Duplicate Kopers'),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/personenkontext-workflow')
+                .send({
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                    personalnummer: '1234567',
+                });
+
+            expect(response.status).toBe(400);
+        });
     });
 
     describe('/PUT commit', () => {
@@ -321,6 +385,65 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     .send(updatePKsRequest);
 
                 expect(response.status).toBe(400);
+            });
+        });
+
+        describe('for Person with a PK rolle with rollenart LERN', () => {
+            it('should return error with status-code 400, if the new PK rolle is not rollenart LERN', async () => {
+                const schueler: Person<true> = await createPerson();
+                const schule: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+                );
+                const lernRolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, { rollenart: RollenArt.LERN, systemrechte: [] }),
+                );
+                const savedPK: Personenkontext<true> = await personenkontextRepo.save(
+                    DoFactory.createPersonenkontext(false, {
+                        personId: schueler.id,
+                        rolleId: lernRolle.id,
+                        organisationId: schule.id,
+                        updatedAt: new Date(),
+                    }),
+                );
+
+                const lehrerRolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        rollenart: RollenArt.LEHR,
+                        systemrechte: [RollenSystemRecht.KLASSEN_VERWALTEN],
+                    }),
+                );
+
+                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
+                    createMock<DbiamUpdatePersonenkontexteBodyParams>({
+                        count: 2,
+                        lastModified: savedPK.updatedAt,
+                        personenkontexte: [
+                            {
+                                personId: schueler.id,
+                                rolleId: lernRolle.id,
+                                organisationId: schule.id,
+                            },
+                            {
+                                personId: schueler.id,
+                                rolleId: lehrerRolle.id,
+                                organisationId: schule.id,
+                            },
+                        ],
+                    });
+                const personpermissions: DeepMocked<PersonPermissions> = createMock();
+                personpermissions.canModifyPerson.mockResolvedValueOnce(true);
+                personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .put(`/personenkontext-workflow/${schueler.id}`)
+                    .send(updatePKsRequest);
+
+                expect(response.status).toBe(400);
+                expect(response.body).toEqual({
+                    code: 400,
+                    i18nKey: 'INVALID_PERSONENKONTEXT_FOR_PERSON_WITH_ROLLENART_LERN',
+                });
             });
         });
     });

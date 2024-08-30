@@ -16,7 +16,7 @@ import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js'
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { IPersonPermissions } from '../../authentication/domain/person-permissions.interface.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export class PersonenkontextWorkflowAggregate {
     public selectedOrganisationId?: string;
@@ -94,9 +94,9 @@ export class PersonenkontextWorkflowAggregate {
         let rollen: Option<Rolle<true>[]>;
 
         if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName);
+            rollen = await this.rolleRepo.findByName(rolleName, false);
         } else {
-            rollen = await this.rolleRepo.find();
+            rollen = await this.rolleRepo.find(false);
         }
 
         if (!rollen) {
@@ -127,14 +127,25 @@ export class PersonenkontextWorkflowAggregate {
         let allowedRollen: Rolle<true>[] = [];
         // If the user has rights for this specific organization or any of its children, return the filtered roles
         if (orgsWithRecht.includes(organisation.id)) {
-            const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-            rollen.forEach(function (rolle: Rolle<true>) {
-                // Check here what kind of roles the admin can assign depending on the type of organisation
-                if (organisationMatchesRollenart.isSatisfiedBy(organisation, rolle) && !allowedRollen.includes(rolle)) {
-                    allowedRollen.push(rolle);
+            const allowedRollenPromises: Promise<Rolle<true> | null>[] = rollen.map(async (rolle: Rolle<true>) => {
+                // Check if the rolle can be assigned to the target organisation
+                const referenceCheckError: Option<DomainError> = await this.checkReferences(organisation.id, rolle.id);
+
+                // If the reference check passes and the organisation matches the role type
+                if (!referenceCheckError) {
+                    return rolle;
                 }
+                return null;
             });
+
+            // Resolve all the promises and filter out any null values (roles that can't be assigned)
+            const resolvedRollen: Rolle<true>[] = (await Promise.all(allowedRollenPromises)).filter(
+                (rolle: Rolle<true> | null): rolle is Rolle<true> => rolle !== null,
+            );
+
+            allowedRollen = resolvedRollen;
         }
+
         if (limit) {
             allowedRollen = allowedRollen.slice(0, limit);
         }

@@ -38,6 +38,7 @@ import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -390,6 +391,36 @@ describe('PersonRepository Integration', () => {
                     }
                 });
             });
+            describe('when creating a person with an existing personalnummer', () => {
+                it('should return DuplicatePersonalnummerError and rollback the transaction', async () => {
+                    const existingPersonalnummer: string = '123456';
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                        ok: true,
+                        value: 'testusername',
+                    });
+                    const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                        familienname: faker.person.lastName(),
+                        vorname: faker.person.firstName(),
+                        personalnummer: existingPersonalnummer, // Setting the personalnummer to check for duplicates
+                    });
+                    expect(person).not.toBeInstanceOf(DomainError);
+                    if (person instanceof DomainError) {
+                        return;
+                    }
+                    const personEntity: PersonEntity = em.create(PersonEntity, mapAggregateToData(person));
+
+                    personEntity.keycloakUserId = faker.string.numeric();
+
+                    // Persist a person with the same Personalnummer as the one we send later
+                    await em.persistAndFlush(personEntity);
+
+                    // Act: Attempt to create the person
+                    const result: Person<true> | DomainError = await sut.create(person);
+
+                    // Assert: Ensure that a DuplicatePersonalnummerError was thrown and the transaction was rolled back
+                    expect(result).toBeInstanceOf(DuplicatePersonalnummerError);
+                });
+            });
         });
         describe('When Migration Call With Hashed Password', () => {
             describe('when successful', () => {
@@ -515,6 +546,26 @@ describe('PersonRepository Integration', () => {
 
                     expect(result).toBeInstanceOf(DomainError);
                 });
+            });
+        });
+
+        describe('When an unexpected error occurs', () => {
+            it('should rollback transaction and rethrow', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
+                const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                });
+                if (person instanceof DomainError) {
+                    throw person;
+                }
+
+                const dummyError: Error = new Error('Unexpected');
+                kcUserServiceMock.create.mockRejectedValueOnce(dummyError);
+
+                const promise: Promise<unknown> = sut.create(person);
+
+                await expect(promise).rejects.toBe(dummyError);
             });
         });
     });

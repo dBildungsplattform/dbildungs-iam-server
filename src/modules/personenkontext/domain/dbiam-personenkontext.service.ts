@@ -7,6 +7,7 @@ import { PersonenkontextKlasseSpecification } from '../specification/personenkon
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { CheckRollenartLernSpecification } from '../specification/nur-rolle-lern.js';
 
 @Injectable()
 export class DBiamPersonenkontextService {
@@ -30,9 +31,17 @@ export class DBiamPersonenkontextService {
             this.personenkontextRepo,
             this.rolleRepo,
         );
+
+        // Checks that the sent personnekontext is of type LERN
+        //(Only returns an error if the person has some kontext of type LERN already and the sent PK isn't)
+        const nurRollenartLern: CheckRollenartLernSpecification = new CheckRollenartLernSpecification(
+            this.personenkontextRepo,
+            this.rolleRepo,
+        );
         const pkKlasseSpecification: PersonenkontextKlasseSpecification = new PersonenkontextKlasseSpecification(
             nurLehrUndLernAnKlasse,
             gleicheRolleAnKlasseWieSchule,
+            nurRollenartLern,
         );
 
         return pkKlasseSpecification.returnsError(personenkontext);
