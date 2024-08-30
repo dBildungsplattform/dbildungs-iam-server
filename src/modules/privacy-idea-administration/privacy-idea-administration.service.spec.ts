@@ -419,6 +419,21 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             expect(result).toEqual(mockAssignTokenResponse);
         });
 
+        it('should assign hardware token successfully and create a new user', async () => {
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            jest.spyOn(
+                service as unknown as { checkUserExists: () => Promise<boolean> },
+                'checkUserExists',
+            ).mockResolvedValueOnce(false);
+
+            jest.spyOn(service as unknown as { addUser: () => Promise<void> }, 'addUser').mockResolvedValueOnce();
+            httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenVerificationResponse } as AxiosResponse));
+            httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenOTPSerialResponse } as AxiosResponse));
+            httpServiceMock.post.mockReturnValueOnce(of({ data: mockAssignTokenResponse } as AxiosResponse));
+            const result: AssignTokenResponse = await service.assignHardwareToken('ABC123456', 'otp', 'test-user');
+            expect(result).toEqual(mockAssignTokenResponse);
+        });
+
         it('should throw token-not-found error', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
             jest.spyOn(
