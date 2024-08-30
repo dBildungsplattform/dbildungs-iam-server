@@ -221,8 +221,8 @@ export class PrivacyIdeaAdministrationService {
         }
     }
 
-    private async getSerialWithOTP(otp: string, token: string): Promise<TokenOTPSerialResponse> {
-        const url: string = this.privacyIdeaConfig.ENDPOINT + `/token/getserial/${otp}?unassigned=1`;
+    private async getSerialWithOTP(serial: string, otp: string, token: string): Promise<TokenOTPSerialResponse> {
+        const url: string = this.privacyIdeaConfig.ENDPOINT + `/token/getserial/${otp}?unassigned=1&serial=${serial}`;
         const headers: { Authorization: string } = {
             Authorization: `${token}`,
         };
@@ -239,15 +239,16 @@ export class PrivacyIdeaAdministrationService {
 
     private async assignToken(serial: string, token: string, user: string): Promise<AssignTokenResponse> {
         const url: string = this.privacyIdeaConfig.ENDPOINT + '/token/assign';
+        const realm: string = this.privacyIdeaConfig.USER_RESOLVER;
         const headers: { Authorization: string; 'Content-Type': string } = {
             Authorization: `${token}`,
             'Content-Type': 'application/json',
         };
 
         const payload: AssignTokenPayload = {
-            serial,
+            serial: serial,
             user: user,
-            realm: 'defrealm',
+            realm: realm,
         };
 
         try {
@@ -262,6 +263,10 @@ export class PrivacyIdeaAdministrationService {
 
     public async assignHardwareToken(serial: string, otp: string, user: string): Promise<AssignTokenResponse> {
         const token: string = await this.getJWTToken();
+
+        if (!(await this.checkUserExists(user))) {
+            await this.addUser(user);
+        }
         const tokenVerificationResponse: TokenVerificationResponse = await this.verifyTokenStatus(serial, token);
         //Check token existence
         if (tokenVerificationResponse.result.value.count === 0) {
@@ -272,7 +277,7 @@ export class PrivacyIdeaAdministrationService {
             throw new SerialInUseError();
         }
         //Verify otp input
-        const tokenOTPserialResponse: TokenOTPSerialResponse = await this.getSerialWithOTP(otp, token);
+        const tokenOTPserialResponse: TokenOTPSerialResponse = await this.getSerialWithOTP(serial, otp, token);
         if (tokenOTPserialResponse.result.value.serial !== serial) {
             throw new OTPnotValidError();
         }
