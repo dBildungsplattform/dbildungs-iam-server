@@ -5,11 +5,11 @@ import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.ty
 import { EntityManager, SelectQueryBuilder } from '@mikro-orm/postgresql';
 
 type FindProps = {
-    id: PersonID;
-    vorname: string;
-    familienname: string;
-    geburtsdatum: Date;
-    organisationen: OrganisationID[];
+    ids?: PersonID[]; // Changed to an array to support multiple IDs
+    vorname?: string;
+    familienname?: string;
+    geburtsdatum?: Date;
+    organisationen?: OrganisationID[];
 };
 
 export class PersonScope extends ScopeBase<PersonEntity> {
@@ -20,7 +20,7 @@ export class PersonScope extends ScopeBase<PersonEntity> {
     public findBy(findProps: Findable<FindProps>, operator: ScopeOperator = ScopeOperator.AND): this {
         const filters: QBFilterQuery<PersonEntity> = {
             [operator]: [
-                findProps.id !== undefined && { id: findProps.id },
+                findProps.ids !== undefined && { id: { $in: findProps.ids } },  // Filter by array of IDs
                 findProps.vorname !== undefined && { vorname: findProps.vorname },
                 findProps.familienname !== undefined && { familienname: findProps.familienname },
                 findProps.geburtsdatum !== undefined && { geburtsdatum: findProps.geburtsdatum },

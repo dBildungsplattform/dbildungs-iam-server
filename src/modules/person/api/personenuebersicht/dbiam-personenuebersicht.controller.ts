@@ -78,7 +78,7 @@ export class DBiamPersonenuebersichtController {
 
         // Find all Personen on child-orgas (+root orgas)
         const scope: PersonScope = new PersonScope()
-            .findBy({ organisationen: organisationIDs })
+            .findBy({ ids: queryParams.personIds, organisationen: organisationIDs })
             .sortBy('vorname', ScopeOrder.ASC)
             .paged(queryParams.offset, queryParams.limit);
 
