@@ -253,6 +253,7 @@ describe('dbiam Personenkontext API', () => {
             const schuelerRolleDummy: Rolle<false> = DoFactory.createRolle(false, {
                 rollenart: RollenArt.LERN,
                 administeredBySchulstrukturknoten: schule.id,
+                merkmale: [],
             });
             const schuelerRolle: Rolle<true> = await rolleRepo.save(schuelerRolleDummy);
             await personenkontextRepo.save(personenkontextFactory.createNew(lehrer.id, schule.id, schuelerRolle.id));
