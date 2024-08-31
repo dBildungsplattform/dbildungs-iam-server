@@ -9,6 +9,7 @@ export class CheckBefristungSpecification {
     public async checkBefristung(sentPKs: Personenkontext<boolean>[]): Promise<boolean> {
         // Extract unique Rolle IDs from sentPKs
         const uniqueRolleIds: Set<string> = new Set(sentPKs.map((pk: Personenkontext<boolean>) => pk.rolleId));
+
         const mapRollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(Array.from(uniqueRolleIds));
 
         for (const pk of sentPKs) {
