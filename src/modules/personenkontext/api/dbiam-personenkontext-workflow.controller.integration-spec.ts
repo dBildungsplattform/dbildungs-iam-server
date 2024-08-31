@@ -159,6 +159,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 DoFactory.createRolle(false, {
                     administeredBySchulstrukturknoten: organisation.id,
                     rollenart: RollenArt.LEHR,
+                    merkmale: [RollenMerkmal.KOPERS_PFLICHT],
                 }),
             );
 
@@ -185,6 +186,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 DoFactory.createRolle(false, {
                     administeredBySchulstrukturknoten: organisation.id,
                     rollenart: RollenArt.LEHR,
+                    merkmale: [RollenMerkmal.KOPERS_PFLICHT],
                 }),
             );
 
