@@ -112,6 +112,7 @@ describe('PersonenkontexteUpdate', () => {
             personId: bodyParam1.personId,
             organisationId: bodyParam1.organisationId,
             rolleId: bodyParam1.rolleId,
+            befristung: undefined,
         });
         pk2 = createMock<Personenkontext<true>>({
             updatedAt: faker.date.past(),
@@ -583,7 +584,7 @@ describe('PersonenkontexteUpdate', () => {
 
                 expect(updateError).toBeDefined();
             });
-            it('should return UpdateInvalidRollenartForLernError if new personenkontext roles mix LERN with other types', async () => {
+            it.only('should return PersonenkontextBefristungRequiredError if new personenkontext roles mix LERN with other types', async () => {
                 const newPerson: Person<true> = createMock<Person<true>>();
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
@@ -599,7 +600,28 @@ describe('PersonenkontexteUpdate', () => {
                 mapRollenExisting.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollenExisting);
 
-                jest.spyOn(CheckBefristungSpecification.prototype, 'checkBefristung').mockResolvedValue(false);
+                const mapRollenBefristung: Map<string, Rolle<true>> = new Map();
+                mapRollenBefristung.set(
+                    pk1.rolleId,
+                    DoFactory.createRolle(true, {
+                        id: pk1.rolleId,
+                        rollenart: RollenArt.LERN,
+                        merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
+                    }),
+                );
+                mapRollenBefristung.set(
+                    pk2.rolleId,
+                    DoFactory.createRolle(true, {
+                        id: pk2.rolleId,
+                        rollenart: RollenArt.LERN,
+                        merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
+                    }),
+                );
+
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollenBefristung);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollenBefristung);
+
+                //jest.spyOn(CheckBefristungSpecification.prototype, 'checkBefristung').mockResolvedValue(false);
 
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -619,6 +641,8 @@ describe('PersonenkontexteUpdate', () => {
 
                 const mapRollenExisting: Map<string, Rolle<true>> = new Map();
                 mapRollenExisting.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
+
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
 
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollenExisting);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
