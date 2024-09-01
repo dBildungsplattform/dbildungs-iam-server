@@ -599,11 +599,35 @@ describe('PersonenkontexteUpdate', () => {
                 mapRollenExisting.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollenExisting);
 
-                jest.spyOn(CheckBefristungSpecification.prototype, 'checkBefristung').mockResolvedValue(false); 
+                jest.spyOn(CheckBefristungSpecification.prototype, 'checkBefristung').mockResolvedValue(false);
 
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
                 expect(updateError).toBeInstanceOf(PersonenkontextBefristungRequiredError);
+            });
+            it('Should not throw any PersonenkontextBefristungRequiredError', async () => {
+                const newPerson: Person<true> = createMock<Person<true>>();
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                const mapRollenExisting: Map<string, Rolle<true>> = new Map();
+                mapRollenExisting.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
+
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollenExisting);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                jest.spyOn(CheckBefristungSpecification.prototype, 'checkBefristung').mockResolvedValue(true);
+
+                const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
+                expect(updateError).toBeDefined();
             });
         });
     });

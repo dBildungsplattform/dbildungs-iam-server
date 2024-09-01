@@ -23,7 +23,6 @@ import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkont
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
 ): RequiredEntityData<PersonenkontextEntity> {
-    const befristung: Date | undefined = personenKontext.befristung === null ? undefined : personenKontext.befristung;
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
         id: personenKontext.id,
@@ -31,7 +30,7 @@ export function mapAggregateToData(
         organisationId: personenKontext.organisationId,
         rolleId: rel(RolleEntity, personenKontext.rolleId),
         rolle: Rolle.LERNENDER, // Placeholder, until rolle is removed from entity
-        befristung: befristung,
+        befristung: personenKontext.befristung ?? undefined,
     };
 }
 
