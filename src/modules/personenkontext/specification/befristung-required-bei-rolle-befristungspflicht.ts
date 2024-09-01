@@ -16,7 +16,7 @@ export class CheckBefristungSpecification {
             const rolle: Rolle<true> | undefined = mapRollen.get(pk.rolleId);
             if (rolle && rolle.merkmale.includes(RollenMerkmal.BEFRISTUNG_PFLICHT)) {
                 // Check if befristung is set
-                if (pk.befristung === undefined || pk.befristung === null) {
+                if (pk.befristung === undefined) {
                     return false;
                 }
             }
