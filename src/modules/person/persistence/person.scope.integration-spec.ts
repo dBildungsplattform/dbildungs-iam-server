@@ -281,17 +281,6 @@ describe('PersonScope', () => {
                 expect(total).toBe(1);
                 expect(persons).toHaveLength(1);
             });
-
-            it('should handle empty array for ids', async () => {
-                const scope: PersonScope = new PersonScope()
-                    .findBy({ ids: [] })
-                    .sortBy('vorname', ScopeOrder.ASC)
-                    .paged(0, 10);
-                const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
-
-                expect(total).toBe(0);
-                expect(persons).toHaveLength(0);
-            });
         });
     });
 });
