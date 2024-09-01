@@ -284,7 +284,7 @@ describe('PersonScope', () => {
 
             it('should handle empty array for ids', async () => {
                 const scope: PersonScope = new PersonScope()
-                    .findBy({ ids: [] }) // Empty array
+                    .findBy({ ids: [] })
                     .sortBy('vorname', ScopeOrder.ASC)
                     .paged(0, 10);
                 const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);

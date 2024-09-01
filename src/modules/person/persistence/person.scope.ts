@@ -5,7 +5,7 @@ import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.ty
 import { EntityManager, SelectQueryBuilder } from '@mikro-orm/postgresql';
 
 type FindProps = {
-    ids?: PersonID[]; // Changed to an array to support multiple IDs
+    ids?: PersonID[] | undefined[];
     vorname?: string;
     familienname?: string;
     geburtsdatum?: Date;
@@ -21,7 +21,7 @@ export class PersonScope extends ScopeBase<PersonEntity> {
         const filters: QBFilterQuery<PersonEntity> = {
             [operator]: [
                 findProps.ids !== undefined && {
-                    id: { $in: Array.isArray(findProps.ids) ? findProps.ids : [findProps.ids] },
+                    id: { $in: findProps.ids },
                 },
                 findProps.vorname !== undefined && { vorname: findProps.vorname },
                 findProps.familienname !== undefined && { familienname: findProps.familienname },

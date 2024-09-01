@@ -76,9 +76,13 @@ export class DBiamPersonenuebersichtController {
             organisationIDs = undefined;
         }
 
+        const personIds: PersonID[] | undefined[] = Array.isArray(queryParams.personIds)
+            ? queryParams.personIds
+            : [queryParams.personIds];
+
         // Find all Personen on child-orgas (+root orgas)
         const scope: PersonScope = new PersonScope()
-            .findBy({ ids: queryParams.personIds, organisationen: organisationIDs })
+            .findBy({ ids: personIds, organisationen: organisationIDs })
             .sortBy('vorname', ScopeOrder.ASC)
             .paged(queryParams.offset, queryParams.limit);
 
