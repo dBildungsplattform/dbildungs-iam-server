@@ -18,11 +18,11 @@ export class PersonScope extends ScopeBase<PersonEntity> {
     }
 
     public findBy(findProps: Findable<FindProps>, operator: ScopeOperator = ScopeOperator.AND): this {
-        const ids: PersonID[] = findProps.ids ? (Array.isArray(findProps.ids) ? findProps.ids : [findProps.ids]) : [];
-
         const filters: QBFilterQuery<PersonEntity> = {
             [operator]: [
-                ids.length > 0 && { id: { $in: ids } }, // Use the normalized ids array
+                findProps.ids !== undefined && {
+                    id: { $in: Array.isArray(findProps.ids) ? findProps.ids : [findProps.ids] },
+                },
                 findProps.vorname !== undefined && { vorname: findProps.vorname },
                 findProps.familienname !== undefined && { familienname: findProps.familienname },
                 findProps.geburtsdatum !== undefined && { geburtsdatum: findProps.geburtsdatum },
