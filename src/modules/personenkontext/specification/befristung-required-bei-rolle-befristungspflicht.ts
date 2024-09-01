@@ -11,7 +11,6 @@ export class CheckBefristungSpecification {
         const uniqueRolleIds: Set<string> = new Set(sentPKs.map((pk: Personenkontext<boolean>) => pk.rolleId));
 
         const mapRollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(Array.from(uniqueRolleIds));
-
         for (const pk of sentPKs) {
             const rolle: Rolle<true> | undefined = mapRollen.get(pk.rolleId);
             if (rolle && rolle.merkmale.includes(RollenMerkmal.BEFRISTUNG_PFLICHT)) {

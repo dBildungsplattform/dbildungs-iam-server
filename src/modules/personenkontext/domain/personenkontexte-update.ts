@@ -40,7 +40,6 @@ export class PersonenkontexteUpdate {
         private readonly count: number,
         private readonly dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
         private readonly permissions: IPersonPermissions,
-        private readonly personalnummer?: string,
     ) {}
 
     public static createNew(
@@ -55,7 +54,6 @@ export class PersonenkontexteUpdate {
         count: number,
         dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
         permissions: IPersonPermissions,
-        personalnummer?: string,
     ): PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
             eventService,
@@ -69,7 +67,6 @@ export class PersonenkontexteUpdate {
             count,
             dBiamPersonenkontextBodyParams,
             permissions,
-            personalnummer,
         );
     }
 
@@ -313,16 +310,6 @@ export class PersonenkontexteUpdate {
         const existingPKsAfterUpdate: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(
             this.personId,
         );
-
-        // Update the personalnummer if it is provided
-        if (this.personalnummer) {
-            const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
-            if (person) {
-                person.personalnummer = this.personalnummer;
-                await this.personRepo.save(person);
-            }
-        }
-
         await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate);
 
         return existingPKsAfterUpdate;
