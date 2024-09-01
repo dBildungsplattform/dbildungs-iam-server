@@ -25,7 +25,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
@@ -449,6 +449,7 @@ describe('dbiam Personenkontext API', () => {
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.SYSADMIN,
+                        merkmale: [RollenMerkmal.KOPERS_PFLICHT],
                     }),
                 );
 
