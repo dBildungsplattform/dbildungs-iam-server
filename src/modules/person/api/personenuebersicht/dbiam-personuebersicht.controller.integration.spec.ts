@@ -501,11 +501,12 @@ describe('Personenuebersicht API', () => {
             ]);
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/dbiam/personenuebersicht`)
-                .query({ personIds: [savedPerson1.id, savedPerson2.id] })
-                .send();
+                .post(`/dbiam/personenuebersicht`)
+                .send({
+                    personIds: [savedPerson1.id, savedPerson2.id],
+                });
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(201);
             expect(response.body).toBeInstanceOf(Object);
             const responseBody: PagedResponse<DBiamPersonenuebersichtResponse> =
                 response.body as PagedResponse<DBiamPersonenuebersichtResponse>;
