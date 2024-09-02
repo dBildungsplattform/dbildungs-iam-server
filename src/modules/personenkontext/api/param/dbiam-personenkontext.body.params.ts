@@ -24,6 +24,6 @@ export class DbiamPersonenkontextBodyParams {
 
     @IsDate()
     @IsOptional()
-    @ApiProperty({ type: Date })
+    @ApiProperty({ required: false })
     public readonly befristung?: Date;
 }
