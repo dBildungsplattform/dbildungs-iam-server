@@ -10,7 +10,7 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { DomainError, EntityCouldNotBeCreated, EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityCouldNotBeCreated } from '../../../shared/error/index.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
@@ -130,7 +130,9 @@ export class DBiamPersonenkontextController {
             new PermissionsOverride(permissions).grantPersonModifyPermission(params.personId),
         );
 
-        const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
+        const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update(
+            params.ldapEntryUUID,
+        );
 
         if (updateResult instanceof PersonenkontexteUpdateError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(

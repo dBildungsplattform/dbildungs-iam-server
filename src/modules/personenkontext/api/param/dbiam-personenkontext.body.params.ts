@@ -21,4 +21,10 @@ export class DbiamPersonenkontextBodyParams {
     @IsUUID()
     @ApiProperty({ type: String })
     public readonly rolleId!: RolleID;
+
+    @IsString()
+    @IsNotEmpty()
+    @IsUUID()
+    @ApiProperty({ type: String })
+    public readonly ldapEntryUUID?: string;
 }
