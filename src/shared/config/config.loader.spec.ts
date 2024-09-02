@@ -58,6 +58,12 @@ describe('configloader', () => {
                     ROOT_OEFFENTLICH: 'oeffentlich',
                     ROOT_ERSATZ: 'ersatz',
                 },
+                PRIVACYIDEA: {
+                    ENDPOINT: 'http://localhost:5000',
+                    USERNAME: 'admin',
+                    PASSWORD: 'admin',
+                    USER_RESOLVER: 'mariadb_resolver',
+                },
                 OX: {
                     ENABLED: 'true',
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
@@ -150,6 +156,12 @@ describe('configloader', () => {
                     PASSWORD: 'password',
                     ROOT_OEFFENTLICH: 'oeffentlich',
                     ROOT_ERSATZ: 'ersatz',
+                },
+                PRIVACYIDEA: {
+                    ENDPOINT: 'http://localhost:5000',
+                    USERNAME: 'admin',
+                    PASSWORD: 'admin',
+                    USER_RESOLVER: 'mariadb_resolver',
                 },
                 OX: {
                     ENABLED: 'true',

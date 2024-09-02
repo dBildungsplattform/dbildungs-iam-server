@@ -1,0 +1,24 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { DbiamError, DbiamErrorProps } from '../../../../shared/error/dbiam.error.js';
+
+export enum PrivacyIdeaAdministrationErrorI18nTypes {
+    PRIVACY_IDEA_ADMINISTRATION_ERROR = 'PRIVACY_IDEA_ADMINISTRATION_ERROR',
+    SERIENNUMMER_NICHT_GEFUNDEN = 'SERIENNUMMER_NICHT_GEFUNDEN',
+    SERIENNUMMER_IN_VERWENDUNG = 'SERIENNUMMER_IN_VERWENDUNG',
+    OTP_NICHT_GUELTIG = 'OTP_NICHT_GUELTIG',
+    HARDWARE_TOKEN_SERVICE_FEHLER = 'HARDWARE_TOKEN_SERVICE_FEHLER',
+}
+
+export type DbiamPersonErrorProps = DbiamErrorProps & {
+    i18nKey: PrivacyIdeaAdministrationErrorI18nTypes;
+};
+
+export class DbiamPrivacyIdeaAdministrationError extends DbiamError {
+    @ApiProperty({ enum: PrivacyIdeaAdministrationErrorI18nTypes })
+    public override readonly i18nKey: string;
+
+    public constructor(props: DbiamPersonErrorProps) {
+        super(props);
+        this.i18nKey = props.i18nKey;
+    }
+}
