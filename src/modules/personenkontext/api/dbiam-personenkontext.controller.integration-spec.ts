@@ -170,7 +170,7 @@ describe('dbiam Personenkontext API', () => {
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissions.canModifyPerson.mockResolvedValueOnce(true);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([pk1.organisationId, pk2.organisationId]);
+            personpermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([pk1.organisationId, pk2.organisationId]);
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/dbiam/personenkontext/${personA.id}`)
                 .send();
@@ -229,7 +229,7 @@ describe('dbiam Personenkontext API', () => {
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            personpermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([organisation.id]);
             personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -264,7 +264,7 @@ describe('dbiam Personenkontext API', () => {
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([schule.id, klasse.id]);
+            personpermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([schule.id, klasse.id]);
             personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
             const response: Response = await request(app.getHttpServer() as App)

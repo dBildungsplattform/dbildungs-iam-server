@@ -495,7 +495,7 @@ describe('Personenuebersicht API', () => {
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
+            personpermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([
                 savedOrganisation1.id,
                 savedOrganisation2.id,
             ]);

@@ -28,6 +28,8 @@ export type PersonenkontextRolleFields = {
     rolle: RolleFields;
 };
 
+export type PermittedOrgas = { all: true } | { all: false; orgaIds: OrganisationID[] };
+
 export class PersonPermissions implements IPersonPermissions {
     private cachedPersonenkontextsFields?: PersonKontextFields[];
 
@@ -65,7 +67,7 @@ export class PersonPermissions implements IPersonPermissions {
     /**
      * @deprecated Inefficient
      */
-    public async getOrgIdsWithSystemrecht(
+    public async getOrgIdsWithSystemrechtDeprecated(
         systemrechte: RollenSystemRecht[],
         withChildren: boolean = false,
     ): Promise<OrganisationID[]> {
@@ -92,6 +94,41 @@ export class PersonPermissions implements IPersonPermissions {
         }
 
         return Array.from(organisationIDs);
+    }
+
+    public async getOrgIdsWithSystemrecht(
+        systemrechte: RollenSystemRecht[],
+        withChildren: boolean = false,
+    ): Promise<PermittedOrgas> {
+        if (await this.hasSystemrechteAtRootOrganisation(systemrechte)) {
+            return { all: true };
+        }
+        const organisationIDs: Set<OrganisationID> = new Set();
+
+        const personKontextFields: PersonKontextFields[] = await this.getPersonenkontextsFields();
+        const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(
+            personKontextFields.map((pk: PersonKontextFields) => pk.rolleId),
+        );
+
+        for (const pk of personKontextFields) {
+            const rolle: Rolle<true> | undefined = rollen.get(pk.rolleId);
+            if (rolle && systemrechte.every((r: RollenSystemRecht) => rolle.hasSystemRecht(r))) {
+                organisationIDs.add(pk.organisationId);
+            }
+        }
+
+        if (withChildren) {
+            const childOrgas: Organisation<true>[] = await this.organisationRepo.findChildOrgasForIds(
+                Array.from(organisationIDs),
+            );
+
+            childOrgas.forEach((orga: Organisation<true>) => organisationIDs.add(orga.id));
+        }
+
+        return {
+            all: false,
+            orgaIds: Array.from(organisationIDs),
+        };
     }
 
     public async hasSystemrechteAtOrganisation(

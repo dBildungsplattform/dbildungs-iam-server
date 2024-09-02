@@ -30,7 +30,7 @@ export class PersonAdministrationService {
 
         if (!rollen) return [];
 
-        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrechtDeprecated(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );

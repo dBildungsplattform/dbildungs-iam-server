@@ -102,7 +102,7 @@ describe('PersonAdministrationController Integration Test', () => {
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationRepo.ROOT_ORGANISATION_ID]);
+            personpermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([organisationRepo.ROOT_ORGANISATION_ID]);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const response: Response = await request(app.getHttpServer() as App)

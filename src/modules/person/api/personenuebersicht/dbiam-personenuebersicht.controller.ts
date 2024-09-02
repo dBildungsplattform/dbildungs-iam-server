@@ -66,7 +66,7 @@ export class DBiamPersonenuebersichtController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<DBiamPersonenuebersichtResponse>> {
         // Find all organisations where user has permission
-        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
+        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrechtDeprecated(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );

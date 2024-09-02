@@ -63,7 +63,7 @@ describe('PersonAdministrationService', () => {
             const rollen: Rolle<true>[] = [rolle, leitRolle, lehrRolle, lernRolle];
             rolleRepoMock.find.mockResolvedValue(rollen);
 
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([
                 organisationRepositoryMock.ROOT_ORGANISATION_ID,
             ]);
 
@@ -87,7 +87,7 @@ describe('PersonAdministrationService', () => {
             organisationMap.set(organisation.id, organisation);
             organisationRepositoryMock.findByIds.mockResolvedValueOnce(organisationMap);
 
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([organisation.id]);
 
             const result: Rolle<true>[] = await sut.findAuthorizedRollen(personpermissionsMock);
             expect(result).not.toContain(rolle);
@@ -97,7 +97,7 @@ describe('PersonAdministrationService', () => {
             const rolle: Rolle<true> = DoFactory.createRolle(true);
             rolleRepoMock.findByName.mockResolvedValue([rolle]);
 
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([
                 organisationRepositoryMock.ROOT_ORGANISATION_ID,
             ]);
 
@@ -121,7 +121,7 @@ describe('PersonAdministrationService', () => {
             const rollen: Rolle<true>[] = [rolle, leitRolle, lehrRolle, lernRolle];
             rolleRepoMock.find.mockResolvedValue(rollen);
 
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([
                 organisationRepositoryMock.ROOT_ORGANISATION_ID,
             ]);
 
@@ -145,7 +145,7 @@ describe('PersonAdministrationService', () => {
             organisationMap.set(organisation.id, organisation);
             organisationRepositoryMock.findByIds.mockResolvedValueOnce(organisationMap);
 
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([organisation.id]);
 
             const result: Rolle<true>[] = await sut.findAuthorizedRollen(personpermissionsMock, undefined, 2);
             expect(result).toHaveLength(2);

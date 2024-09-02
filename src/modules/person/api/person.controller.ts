@@ -102,12 +102,12 @@ export class PersonController {
         let organisationIDs: OrganisationID[];
 
         if (isMigrationCall === true) {
-            organisationIDs = await permissions.getOrgIdsWithSystemrecht(
+            organisationIDs = await permissions.getOrgIdsWithSystemrechtDeprecated(
                 [RollenSystemRecht.MIGRATION_DURCHFUEHREN],
                 true,
             );
         } else {
-            organisationIDs = await permissions.getOrgIdsWithSystemrecht([RollenSystemRecht.PERSONEN_VERWALTEN], true);
+            organisationIDs = await permissions.getOrgIdsWithSystemrechtDeprecated([RollenSystemRecht.PERSONEN_VERWALTEN], true);
         }
         if (organisationIDs.length < 1) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -315,7 +315,7 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<PersonendatensatzResponse>> {
         // Find all organisations where user has permission
-        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
+        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrechtDeprecated(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );

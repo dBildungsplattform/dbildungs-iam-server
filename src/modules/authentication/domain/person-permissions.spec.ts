@@ -166,7 +166,7 @@ describe('PersonPermissions', () => {
                 rolleRepoMock,
                 person,
             );
-            const ids: OrganisationID[] = await personPermissions.getOrgIdsWithSystemrecht(
+            const ids: OrganisationID[] = await personPermissions.getOrgIdsWithSystemrechtDeprecated(
                 [RollenSystemRecht.PERSONEN_VERWALTEN],
                 true,
             );
@@ -200,7 +200,7 @@ describe('PersonPermissions', () => {
                 rolleRepoMock,
                 person,
             );
-            const ids: OrganisationID[] = await personPermissions.getOrgIdsWithSystemrecht([]);
+            const ids: OrganisationID[] = await personPermissions.getOrgIdsWithSystemrechtDeprecated([]);
             expect(ids).toContain('1');
         });
     });

@@ -924,7 +924,7 @@ describe('PersonRepository Integration', () => {
         describe('when person is found on any same organisations like the affected person', () => {
             it('should return person', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([person1.id]);
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
@@ -940,7 +940,7 @@ describe('PersonRepository Integration', () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 const fakeOrganisationId: string = configService.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
 
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([fakeOrganisationId]);
+                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([fakeOrganisationId]);
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
 
@@ -957,7 +957,7 @@ describe('PersonRepository Integration', () => {
         describe('when person is found on any same organisations like the affected person', () => {
             it('should delete with no error', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([person1.id]);
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
@@ -971,7 +971,7 @@ describe('PersonRepository Integration', () => {
             it('should not delete', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
 
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
 
                 await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
@@ -983,7 +983,7 @@ describe('PersonRepository Integration', () => {
         it('should return an EntityCouldNotBeDeleted exception', async () => {
             const person1: Person<true> = DoFactory.createPerson(true);
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+            personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
 
             await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
@@ -1001,7 +1001,7 @@ describe('PersonRepository Integration', () => {
         describe('Delete the person and all kontexte', () => {
             it('should delete the person', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([person1.id]);
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
@@ -1025,7 +1025,7 @@ describe('PersonRepository Integration', () => {
                     const person: Person<true> = DoFactory.createPerson(true);
                     const personEntity: PersonEntity = em.create(PersonEntity, mapAggregateToData(person));
                     person.id = personEntity.id;
-                    personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person.id]);
+                    personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([person.id]);
 
                     await em.persistAndFlush(personEntity);
 
@@ -1064,7 +1064,7 @@ describe('PersonRepository Integration', () => {
 
             it('should not delete the person because of unsufficient permissions to find the person', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
 
                 await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
@@ -1074,7 +1074,7 @@ describe('PersonRepository Integration', () => {
             });
             it('should not delete the person because of unsufficient permissions to delete the person', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([person1.id]);
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
@@ -1108,7 +1108,7 @@ describe('PersonRepository Integration', () => {
             it('should not delete the person because it has no keycloakId', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 person1.keycloakUserId = '';
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([person1.id]);
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;

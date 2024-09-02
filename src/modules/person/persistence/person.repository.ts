@@ -115,7 +115,7 @@ export class PersonRepository {
         requiredRight: RollenSystemRecht = RollenSystemRecht.PERSONEN_VERWALTEN,
     ): Promise<PersonScope> {
         // Find all organisations where user has the required permission
-        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
+        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrechtDeprecated(
             [requiredRight],
             true,
         );

@@ -242,7 +242,7 @@ export class OrganisationController {
         @Query() queryParams: FindOrganisationQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const validOrgaIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+        const validOrgaIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrechtDeprecated(
             queryParams.systemrechte,
             true,
         );

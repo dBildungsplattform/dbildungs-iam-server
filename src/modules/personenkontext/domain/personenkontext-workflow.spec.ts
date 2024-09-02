@@ -145,7 +145,7 @@ describe('PersonenkontextWorkflow', () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             const organisations: Organisation<true>[] = [organisation];
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue(organisations);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([organisation.id]);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -159,7 +159,7 @@ describe('PersonenkontextWorkflow', () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             const organisations: Organisation<true>[] = [organisation];
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue(organisations);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([organisation.id]);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -171,7 +171,7 @@ describe('PersonenkontextWorkflow', () => {
 
         it('should return an empty array if no organisations are found', async () => {
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -200,7 +200,7 @@ describe('PersonenkontextWorkflow', () => {
                 org3,
                 org4,
             ]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -217,7 +217,7 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -235,7 +235,7 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id, org3.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2, org3]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -253,7 +253,7 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id, org3.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2, org3]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -274,7 +274,7 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id, org3.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2, org3]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -290,7 +290,7 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -317,7 +317,7 @@ describe('PersonenkontextWorkflow', () => {
                 org3,
                 org4,
             ]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -334,7 +334,7 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -356,7 +356,7 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -378,7 +378,7 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -400,7 +400,7 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -422,7 +422,7 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -444,7 +444,7 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -466,7 +466,7 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
@@ -494,7 +494,7 @@ describe('PersonenkontextWorkflow', () => {
         it('should return an empty array if no organisations with system rights are found', async () => {
             rolleRepoMock.find.mockResolvedValue([createMock<Rolle<true>>()]);
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValue([]);
+            permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue([]);
 
             anlage.initialize('organisation-id');
 
@@ -509,7 +509,7 @@ describe('PersonenkontextWorkflow', () => {
             rolleRepoMock.find.mockResolvedValue([rolle]);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValue(['org-id']);
+            permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(['org-id']);
 
             organisationRepoMock.findById.mockResolvedValue(undefined);
 
@@ -527,7 +527,7 @@ describe('PersonenkontextWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValue(organisation);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValue(['some-other-org-id']);
+            permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(['some-other-org-id']);
 
             anlage.initialize('organisation-id');
 
@@ -561,7 +561,7 @@ describe('PersonenkontextWorkflow', () => {
             rolleRepoMock.find.mockResolvedValue(rollen);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             anlage.initialize(organisation.id);
 
@@ -576,7 +576,7 @@ describe('PersonenkontextWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValue(organisation);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([organisation.id]);
 
             anlage.initialize(organisation.id);
 
@@ -618,7 +618,7 @@ describe('PersonenkontextWorkflow', () => {
             rolleRepoMock.find.mockResolvedValue(rollen);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             organisationRepoMock.findById.mockResolvedValue(organisation);
             rolleRepoMock.findById.mockResolvedValue(rolle1);
@@ -657,7 +657,7 @@ describe('PersonenkontextWorkflow', () => {
             rolleRepoMock.find.mockResolvedValue(rollen);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
 
             organisationRepoMock.findById.mockResolvedValue(organisation);
             rolleRepoMock.findById.mockResolvedValue(rolle1);

@@ -61,7 +61,7 @@ export class PersonenkontextWorkflowAggregate {
 
         if (allOrganisationsExceptKlassen.length === 0) return [];
 
-        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrechtDeprecated(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );
@@ -104,7 +104,7 @@ export class PersonenkontextWorkflowAggregate {
         }
 
         // Retrieve all organisations that the admin has access to
-        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrechtDeprecated(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );

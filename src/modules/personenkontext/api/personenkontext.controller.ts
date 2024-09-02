@@ -121,7 +121,7 @@ export class PersonenkontextController {
         @Query() queryParams: PersonenkontextQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<PersonenkontextdatensatzResponse>> {
-        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrechtDeprecated(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );

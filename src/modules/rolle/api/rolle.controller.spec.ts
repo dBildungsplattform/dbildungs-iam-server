@@ -106,7 +106,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     searchStr: faker.string.alpha(),
                 };
                 const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-                permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+                permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
 
                 //mock getRollenByName
                 rolleRepoMock.findByName.mockResolvedValueOnce(undefined);

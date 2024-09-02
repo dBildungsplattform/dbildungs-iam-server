@@ -281,7 +281,7 @@ describe('OrganisationController', () => {
                 ];
 
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+                permissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
 
                 organisationRepositoryMock.findBy.mockResolvedValue(mockedRepoResponse);
 
@@ -321,7 +321,7 @@ describe('OrganisationController', () => {
                 ];
 
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+                permissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
 
                 organisationRepositoryMock.findBy.mockResolvedValue(mockedRepoResponse);
 
