@@ -199,6 +199,28 @@ describe('LDAP Client Service', () => {
                 expect(result.ok).toBeTruthy();
             });
 
+            it('when called with extra entryUUID should return truthy result', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValue();
+                    clientMock.add.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }),
+                    ); //mock existsSchule
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>()); //mock existsLehrer
+
+                    return clientMock;
+                });
+                const testLehrer: PersonData = {
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.lorem.word(),
+                    ldapEntryUUID: faker.string.uuid(),
+                };
+                const result: Result<PersonData> = await ldapClientService.createLehrer(testLehrer, organisation);
+
+                expect(result.ok).toBeTruthy();
+            });
+
             it('when called with valid person and an organisation without kennung should return error result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
