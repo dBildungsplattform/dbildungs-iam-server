@@ -1,13 +1,29 @@
-import { Body, Controller, Get, NotFoundException, Param, Patch, Post, Put, Query, UseFilters } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    HttpStatus,
+    NotFoundException,
+    Param,
+    Patch,
+    Post,
+    Put,
+    Query,
+    UseFilters,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiNoContentResponse,
     ApiNotFoundResponse,
     ApiOAuth2,
     ApiOkResponse,
+    ApiOperation,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -33,13 +49,15 @@ import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js
 import { DbiamOrganisationError } from './dbiam-organisation.error.js';
 import { OrganisationExceptionFilter } from './organisation-exception-filter.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
-import { OrganisationByIdQueryParams } from './organisation-by-id.query.js';
+import { OrganisationByNameQueryParams } from './organisation-by-name.query.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { OrganisationService } from '../domain/organisation.service.js';
 import { DataConfig } from '../../../shared/config/data.config.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { OrganisationIstBereitsZugewiesenError } from '../domain/organisation-ist-bereits-zugewiesen.error.js';
 import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
 import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 
@@ -55,6 +73,7 @@ import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 export class OrganisationController {
     public constructor(
         private readonly organisationRepository: OrganisationRepository,
+        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly config: ConfigService<ServerConfig>,
         private readonly organisationService: OrganisationService,
     ) {}
@@ -283,7 +302,7 @@ export class OrganisationController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
     public async getAdministrierteOrganisationen(
         @Param() routeParams: OrganisationByIdParams,
-        @Query() queryParams: OrganisationByIdQueryParams,
+        @Query() queryParams: OrganisationByNameQueryParams,
     ): Promise<PagedResponse<OrganisationResponse>> {
         const parentOrg: Result<Organisation<true>, DomainError> = await this.organisationService.findOrganisationById(
             routeParams.organisationId,
@@ -297,6 +316,8 @@ export class OrganisationController {
         const result: Paged<Organisation<true>> = await this.organisationService.findAllAdministriertVon(
             routeParams.organisationId,
             queryParams.searchFilter,
+            queryParams.offset,
+            queryParams.limit,
         );
 
         const organisations: OrganisationResponse[] = result.items.map(
@@ -398,6 +419,26 @@ export class OrganisationController {
             }
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(res.error),
+            );
+        }
+    }
+
+    @Delete(':organisationId/klasse')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiOperation({ description: 'Delete an organisation of type Klasse by id.' })
+    @ApiNoContentResponse({ description: 'The organisation was deleted successfully.' })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamOrganisationError })
+    @ApiNotFoundResponse({ description: 'The organisation that should be deleted does not exist.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to delete the organisation.' })
+    public async deleteKlasse(@Param() params: OrganisationByIdParams): Promise<void> {
+        if (await this.dBiamPersonenkontextRepo.isOrganisationAlreadyAssigned(params.organisationId)) {
+            throw new OrganisationIstBereitsZugewiesenError();
+        }
+
+        const result: Option<DomainError> = await this.organisationRepository.deleteKlasse(params.organisationId);
+        if (result instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
     }

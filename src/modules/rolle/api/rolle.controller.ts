@@ -18,6 +18,7 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiNoContentResponse,
     ApiNotFoundResponse,
     ApiOAuth2,
     ApiOkResponse,
@@ -88,6 +89,7 @@ export class RolleController {
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
         const [rollen, total]: [Option<Rolle<true>[]>, number] = await this.rolleRepo.findRollenAuthorized(
             permissions,
+            false,
             queryParams.searchStr,
             queryParams.limit,
             queryParams.offset,
@@ -175,6 +177,8 @@ export class RolleController {
             params.rollenart,
             params.merkmale,
             params.systemrechte,
+            [],
+            false,
         );
 
         if (rolle instanceof DomainError) {
@@ -348,7 +352,7 @@ export class RolleController {
     @Delete(':rolleId')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ description: 'Delete a role by id.' })
-    @ApiOkResponse({ description: 'Role was deleted successfully.' })
+    @ApiNoContentResponse({ description: 'Role was deleted successfully.' })
     @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamRolleError })
     @ApiNotFoundResponse({ description: 'The rolle that should be deleted does not exist.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to delete the role.' })

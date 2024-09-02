@@ -10,8 +10,9 @@ import { GleicheRolleAnKlasseWieSchuleError } from '../specification/error/gleic
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 import { RolleNurAnPassendeOrganisationError } from '../specification/error/rolle-nur-an-passende-organisation.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
-@Catch(PersonenkontextSpecificationError)
+@Catch(PersonenkontextSpecificationError, DuplicatePersonalnummerError)
 export class PersonenkontextExceptionFilter implements ExceptionFilter<PersonenkontextSpecificationError> {
     private ERROR_MAPPINGS: Map<string, DbiamPersonenkontextError> = new Map([
         [
@@ -40,6 +41,13 @@ export class PersonenkontextExceptionFilter implements ExceptionFilter<Personenk
             new DbiamPersonenkontextError({
                 code: 400,
                 i18nKey: PersonenkontextSpecificationErrorI18nTypes.ROLLE_NUR_AN_PASSENDE_ORGANISATION,
+            }),
+        ],
+        [
+            DuplicatePersonalnummerError.name,
+            new DbiamPersonenkontextError({
+                code: 400,
+                i18nKey: PersonenkontextSpecificationErrorI18nTypes.PERSONALNUMMER_NICHT_EINDEUTIG,
             }),
         ],
     ]);

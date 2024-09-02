@@ -437,6 +437,14 @@ export class DBiamPersonenkontextRepo {
         return result[0].has_persona_systemrecht_at_any_kontext_of_personb;
     }
 
+    public async isOrganisationAlreadyAssigned(organisationId: string): Promise<boolean> {
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, {
+            organisationId,
+        });
+
+        return personenKontexte.length > 0;
+    }
+
     public async isRolleAlreadyAssigned(id: RolleID): Promise<boolean> {
         return (await this.findByRolle(id)).length > 0;
     }

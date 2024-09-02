@@ -37,6 +37,7 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -172,6 +173,7 @@ describe('dbiam Personenkontext Repo', () => {
             [],
             rechte,
             [],
+            false,
         );
 
         if (rolle instanceof DomainError) {
@@ -843,6 +845,26 @@ describe('dbiam Personenkontext Repo', () => {
         });
     });
 
+    describe('isOrganisationAlreadyAssigned', () => {
+        it('should return true if there is any personenkontext for an organisation', async () => {
+            const person: Person<true> = await createPerson();
+            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+            const organisation: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                typ: OrganisationsTyp.KLASSE,
+            });
+            await sut.save(
+                createPersonenkontext(false, {
+                    rolleId: rolle.id,
+                    personId: person.id,
+                    organisationId: organisation.id,
+                }),
+            );
+
+            const result: boolean = await sut.isOrganisationAlreadyAssigned(organisation.id);
+            expect(result).toBeTruthy();
+        });
+    });
+
     describe('isRolleAlreadyAssigned', () => {
         it('should return true if there is any personenkontext for a rolle', async () => {
             const person: Person<true> = await createPerson();
@@ -852,6 +874,11 @@ describe('dbiam Personenkontext Repo', () => {
             const result: boolean = await sut.isRolleAlreadyAssigned(rolle.id);
 
             expect(result).toBeTruthy();
+        });
+
+        it('should return false if there is no  personenkontext for an organisation', async () => {
+            const result: boolean = await sut.isOrganisationAlreadyAssigned(faker.string.uuid());
+            expect(result).toBeFalsy();
         });
 
         it('should return false if there is no  personenkontext for a rolle', async () => {

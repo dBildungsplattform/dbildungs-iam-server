@@ -70,6 +70,7 @@ describe('Rolle Aggregate', () => {
                 [],
                 [],
                 [],
+                false,
             );
 
             if (rolle instanceof DomainError) {
@@ -87,6 +88,7 @@ describe('Rolle Aggregate', () => {
                 [],
                 [],
                 [],
+                false,
             );
 
             if (rolle instanceof DomainError) {
@@ -107,6 +109,7 @@ describe('Rolle Aggregate', () => {
                 [],
                 [],
                 [],
+                false,
             );
             organisationRepo.isOrgaAParentOfOrgaB.mockResolvedValueOnce(false);
 
@@ -142,6 +145,7 @@ describe('Rolle Aggregate', () => {
                 creationParams.merkmale,
                 creationParams.systemrechte,
                 creationParams.serviceProviderIds,
+                false,
             );
 
             expect(result).toBeInstanceOf(NameForRolleWithTrailingSpaceError);
@@ -170,6 +174,7 @@ describe('Rolle Aggregate', () => {
                 creationParams.merkmale,
                 creationParams.systemrechte,
                 creationParams.serviceProviderIds,
+                false,
             );
 
             expect(result).toBeInstanceOf(NameForRolleWithTrailingSpaceError);
@@ -198,6 +203,7 @@ describe('Rolle Aggregate', () => {
                 creationParams.merkmale,
                 creationParams.systemrechte,
                 creationParams.serviceProviderIds,
+                false,
             );
 
             expect(result).toBeInstanceOf(NameForRolleWithTrailingSpaceError);
@@ -226,6 +232,7 @@ describe('Rolle Aggregate', () => {
                 creationParams.merkmale,
                 creationParams.systemrechte,
                 creationParams.serviceProviderIds,
+                false,
             );
 
             expect(rolle).toBeDefined();
@@ -285,6 +292,7 @@ describe('Rolle Aggregate', () => {
                     [],
                     [],
                     [],
+                    false,
                 );
                 const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
                 serviceProvider.id = serviceProviderIdToAttach;
@@ -313,6 +321,7 @@ describe('Rolle Aggregate', () => {
                     [],
                     [],
                     [],
+                    false,
                 );
                 serviceProviderRepoMock.findById.mockResolvedValue(undefined);
 
@@ -336,6 +345,7 @@ describe('Rolle Aggregate', () => {
                     [],
                     [],
                     [serviceProviderIdToAttach],
+                    false,
                 );
 
                 const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
@@ -367,6 +377,7 @@ describe('Rolle Aggregate', () => {
                     [],
                     [],
                     [serviceProviderIdToDetach],
+                    false,
                 );
 
                 const result: void | DomainError = rolle.detatchServiceProvider(serviceProviderIdToDetach);
@@ -389,6 +400,7 @@ describe('Rolle Aggregate', () => {
                     [],
                     [],
                     [],
+                    false,
                 );
 
                 const result: void | DomainError = rolle.detatchServiceProvider(serviceProviderIdToDetach);
@@ -444,6 +456,7 @@ describe('Rolle Aggregate', () => {
                 [faker.helpers.enumValue(RollenMerkmal)],
                 [faker.helpers.enumValue(RollenSystemRecht)],
                 [faker.string.uuid()],
+                false,
             );
             expect(result).toBeInstanceOf(DomainError);
         });
@@ -459,6 +472,7 @@ describe('Rolle Aggregate', () => {
                 [faker.helpers.enumValue(RollenMerkmal)],
                 [faker.helpers.enumValue(RollenSystemRecht)],
                 [faker.string.uuid()],
+                false,
             );
             expect(result).toBeInstanceOf(NameForRolleWithTrailingSpaceError);
         });

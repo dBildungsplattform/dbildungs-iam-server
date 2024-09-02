@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Req, Res, Session, UseFilters, UseGuards } from '@nestjs/common';
+import { Controller, Get, Inject, Req, Res, Session, UseFilters, UseGuards, Query } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
     ApiBearerAuth,
@@ -15,7 +15,7 @@ import { Request, Response } from 'express';
 import { SessionData } from 'express-session';
 import { Client } from 'openid-client';
 
-import { FrontendConfig, ServerConfig } from '../../../shared/config/index.js';
+import { FrontendConfig, KeycloakConfig, ServerConfig } from '../../../shared/config/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
 import { LoginGuard } from './login.guard.js';
 import { RedirectQueryParams } from './redirect.query.params.js';
@@ -37,12 +37,16 @@ export class AuthenticationController {
 
     private readonly logoutRedirect: string;
 
+    private readonly keyCloakclientRealm: string;
+
     public constructor(
         configService: ConfigService<ServerConfig>,
         @Inject(OIDC_CLIENT) private client: Client,
         private readonly logger: ClassLogger,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
+        const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
+        this.keyCloakclientRealm = keycloakConfig.REALM_NAME;
         this.defaultLoginRedirect = frontendConfig.DEFAULT_LOGIN_REDIRECT;
         this.logoutRedirect = frontendConfig.LOGOUT_REDIRECT;
     }
@@ -117,5 +121,23 @@ export class AuthenticationController {
                 ),
         );
         return new UserinfoResponse(permissions, rolleFieldsResponse);
+    }
+
+    @Get('reset-password')
+    @Public()
+    @ApiOperation({ summary: 'Redirect to Keycloak password reset.' })
+    @ApiResponse({ status: 302, description: 'Redirect to Keycloak password reset page.' })
+    public resetPassword(
+        @Query('redirectUrl') redirectUrl: string,
+        @Query('login_hint') login_hint: string,
+        @Res() res: Response,
+    ): void {
+        const clientId: string = this.keyCloakclientRealm.toLowerCase();
+        const responseType: string = 'code';
+        const scope: string = 'openid';
+        const kcAction: string = 'UPDATE_PASSWORD';
+        const endpoint: string | undefined = this.client.issuer.metadata.authorization_endpoint;
+        const setNewPasswordUrl: string = `${endpoint}?client_id=${clientId}&login_hint=${login_hint}&response_type=${responseType}&scope=${scope}&kc_action=${kcAction}&redirect_uri=${redirectUrl}`;
+        res.redirect(setNewPasswordUrl);
     }
 }
