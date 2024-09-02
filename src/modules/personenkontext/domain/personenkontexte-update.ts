@@ -260,7 +260,8 @@ export class PersonenkontexteUpdate {
         return undefined;
     }
 
-    public async update(ldapEntryUUID?: string): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> { //If first lehrer kontext is created and a UUID is passed as ldapEntryUUID it is used as internal LDAP entryUUID (needed for migration, can be build back afterwards)
+    public async update(ldapEntryUUID?: string): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
+        //If first lehrer kontext is created and a UUID is passed as ldapEntryUUID it is used as internal LDAP entryUUID (needed for migration, can be build back afterwards)
         const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
         if (sentPKs instanceof PersonenkontexteUpdateError) {
             return sentPKs;
