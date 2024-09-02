@@ -4,7 +4,7 @@ import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { TokenStateResponse } from './token-state.response.js';
 import { AssignTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
-import { PrivacyIdeaToken, ResetTokenResponse } from './privacy-idea-api.types.js';
+import { ResetTokenResponse } from './privacy-idea-api.types.js';
 import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { Person } from '../person/domain/person.js';

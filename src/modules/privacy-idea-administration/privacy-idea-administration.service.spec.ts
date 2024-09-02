@@ -5,7 +5,7 @@ import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.
 import { AxiosHeaders, AxiosResponse } from 'axios';
 import { Observable, of, throwError } from 'rxjs';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { ResetTokenPayload, ResetTokenResponse, User } from './privacy-idea-api.types.js';
+import { ResetTokenPayload, ResetTokenResponse } from './privacy-idea-api.types.js';
 import {
     AssignTokenResponse,
     PrivacyIdeaToken,
@@ -15,6 +15,8 @@ import {
 } from './privacy-idea-api.types.js';
 import { TokenError } from './api/error/token.error.js';
 import { ConfigTestModule } from '../../../test/utils/index.js';
+import { TokenResetError } from './api/error/token-reset.error.js';
+import { TwoAuthStateError } from './api/error/two-auth-state.error.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -445,7 +447,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
                 'getTwoAuthState',
             ).mockResolvedValueOnce(null);
 
-            await expect(service.resetToken(mockResetUser)).rejects.toThrow('Error getting two-factor auth state.');
+            await expect(service.resetToken(mockResetUser)).rejects.toThrow(new TwoAuthStateError());
         });
 
         it('should throw an error if unassignToken fails', async () => {
@@ -463,29 +465,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             ).mockResolvedValueOnce(mockTwoAuthState);
             jest.spyOn(service, 'unassignToken').mockRejectedValue(new Error('unassignToken error'));
 
-            await expect(service.resetToken(mockResetUser)).rejects.toThrow(
-                'Error resetting token: unassignToken error',
-            );
-        });
-
-        it('should throw an error if unassignToken fails with non error throw', async () => {
-            const mockResetUser: string = 'testUser';
-            const mockJWTToken: string = 'mockJWTToken';
-            const mockTwoAuthState: ResetTokenPayload = createMock<ResetTokenPayload>();
-
-            jest.spyOn(
-                service as unknown as { getJWTToken: () => Promise<string> },
-                'getJWTToken',
-            ).mockResolvedValueOnce(mockJWTToken);
-            jest.spyOn(
-                service as unknown as { getTwoAuthState: (user: string) => Promise<ResetTokenPayload | null> },
-                'getTwoAuthState',
-            ).mockResolvedValueOnce(mockTwoAuthState);
-            jest.spyOn(service, 'unassignToken').mockImplementationOnce(mockNonErrorThrow);
-
-            await expect(service.resetToken(mockResetUser)).rejects.toThrow(
-                'Error resetting token: Unknown error occurred',
-            );
+            await expect(service.resetToken(mockResetUser)).rejects.toThrow(new TokenResetError());
         });
     });
 

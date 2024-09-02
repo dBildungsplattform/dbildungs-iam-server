@@ -1,5 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Put, Query } from '@nestjs/common';
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Query, UseFilters } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    HttpCode,
+    HttpException,
+    HttpStatus,
+    Post,
+    Query,
+    Put,
+    UseFilters,
+} from '@nestjs/common';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { Public } from '../authentication/api/public.decorator.js';
 import { PrivacyIdeaToken, ResetTokenResponse, AssignTokenResponse } from './privacy-idea-api.types.js';
@@ -26,6 +36,7 @@ import { TokenError } from './api/error/token.error.js';
 import { PrivacyIdeaAdministrationExceptionFilter } from './api/privacy-idea-administration-exception-filter.js';
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
+import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
 
 @UseFilters(new PrivacyIdeaAdministrationExceptionFilter())
 @ApiTags('2FA')
@@ -88,23 +99,19 @@ export class PrivacyIdeaAdministrationController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<boolean> {
         const referrer: string = await this.getPersonIfAllowed(personId, permissions);
-
-        const response: ResetTokenResponse = await this.privacyIdeaAdministrationService.resetToken(referrer);
-        return response.result.status;
-    }
-
-    private async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<string> {
-        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
-            personId,
-            permissions,
-        );
-        if (!personResult.ok) {
-            throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
+        try {
+            const response: ResetTokenResponse = await this.privacyIdeaAdministrationService.resetToken(referrer);
+            return response.result.status;
+        } catch (error) {
+            if (error instanceof TokenError) {
+                throw error;
+            }
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityCouldNotBeUpdated(referrer, 'Hardware-Token could not be assigned.'),
+                ),
+            );
         }
-        if (personResult.value.referrer === undefined) {
-            throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
-        }
-        return personResult.value.referrer;
     }
 
     @Post('assign/hardwareToken')
@@ -123,7 +130,7 @@ export class PrivacyIdeaAdministrationController {
         @Body() params: AssignHardwareTokenBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<AssignHardwareTokenResponse | undefined> {
-        const referrer: string = await this.getPersonIfAllowed(personId, permissions);
+        const referrer: string = await this.getPersonIfAllowed(params.userId, permissions);
         try {
             const result: AssignTokenResponse = await this.privacyIdeaAdministrationService.assignHardwareToken(
                 params.serial,
@@ -149,5 +156,19 @@ export class PrivacyIdeaAdministrationController {
                 ),
             );
         }
+    }
+
+    private async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<string> {
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            personId,
+            permissions,
+        );
+        if (!personResult.ok) {
+            throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
+        }
+        if (personResult.value.referrer === undefined) {
+            throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
+        }
+        return personResult.value.referrer;
     }
 }

@@ -11,6 +11,8 @@ import {
 import { SerialInUseError } from './error/serial-in-use.error.js';
 import { OTPnotValidError } from './error/otp-not-valid.error.js';
 import { HardwareTokenServiceError } from './error/hardware-token-service.error.js';
+import { TokenResetError } from './error/token-reset.error.js';
+import { TwoAuthStateError } from './error/two-auth-state.error.js';
 
 @Catch(TokenError)
 export class PrivacyIdeaAdministrationExceptionFilter implements ExceptionFilter<TokenError> {
@@ -41,6 +43,20 @@ export class PrivacyIdeaAdministrationExceptionFilter implements ExceptionFilter
             new DbiamPrivacyIdeaAdministrationError({
                 code: 400,
                 i18nKey: PrivacyIdeaAdministrationErrorI18nTypes.HARDWARE_TOKEN_SERVICE_FEHLER,
+            }),
+        ],
+        [
+            TokenResetError.name,
+            new DbiamPrivacyIdeaAdministrationError({
+                code: 400,
+                i18nKey: PrivacyIdeaAdministrationErrorI18nTypes.TOKEN_RESET_ERROR,
+            }),
+        ],
+        [
+            TwoAuthStateError.name,
+            new DbiamPrivacyIdeaAdministrationError({
+                code: 400,
+                i18nKey: PrivacyIdeaAdministrationErrorI18nTypes.TWO_AUTH_STATE_ERROR,
             }),
         ],
     ]);

@@ -23,6 +23,8 @@ import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
 import { ConfigService } from '@nestjs/config';
 import { PrivacyIdeaConfig } from '../../shared/config/privacyidea.config.js';
 import { ServerConfig } from '../../shared/config/server.config.js';
+import { TokenResetError } from './api/error/token-reset.error.js';
+import { TwoAuthStateError } from './api/error/two-auth-state.error.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {
@@ -292,18 +294,14 @@ export class PrivacyIdeaAdministrationService {
 
         const twoAuthState: PrivacyIdeaToken | undefined = await this.getTwoAuthState(user);
         if (!twoAuthState) {
-            throw new Error('Error getting two-factor auth state.');
+            throw new TwoAuthStateError();
         }
         const serial: string = twoAuthState.serial;
         try {
             const response: ResetTokenResponse = await this.unassignToken(serial, token);
             return response;
         } catch (error) {
-            if (error instanceof Error) {
-                throw new Error(`Error resetting token: ${error.message}`);
-            } else {
-                throw new Error(`Error resetting token: Unknown error occurred`);
-            }
+            throw new TokenResetError();
         }
     }
 
