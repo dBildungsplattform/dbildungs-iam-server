@@ -203,6 +203,7 @@ describe('LDAP Event Handler', () => {
                     value: {
                         vorname: faker.person.firstName(),
                         familienname: faker.person.lastName(),
+                        id: faker.string.uuid(),
                         referrer: faker.internet.userName(),
                     },
                 };
@@ -295,7 +296,7 @@ describe('LDAP Event Handler', () => {
 
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
+            expect(ldapClientServiceMock.deleteLehrerByPersonId).toHaveBeenCalledTimes(1);
         });
 
         describe('when ldap client fails', () => {
@@ -347,11 +348,14 @@ describe('LDAP Event Handler', () => {
                 ],
                 [],
             );
-            ldapClientServiceMock.deleteLehrer.mockResolvedValueOnce({ ok: false, error: new Error('Error') });
+            ldapClientServiceMock.deleteLehrerByPersonId.mockResolvedValueOnce({
+                ok: false,
+                error: new Error('Error'),
+            });
 
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
+            expect(ldapClientServiceMock.deleteLehrerByPersonId).toHaveBeenCalledTimes(1);
         });
     });
 });

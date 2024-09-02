@@ -75,10 +75,10 @@ export class LdapEventHandler {
             event.removedKontexte
                 .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
                 .map(async (pk: PersonenkontextEventKontextData) => {
-                    this.logger.info(`Call LdapClientService because rollenArt is LEHR`);
-                    const deletionResult: Result<PersonData> = await this.ldapClientService.deleteLehrer(event.person, {
-                        kennung: pk.orgaKennung,
-                    });
+                    this.logger.info(`Call LdapClientService because rollenArt is LEHR, pkId: ${pk.id}`);
+                    const deletionResult: Result<PersonData> = await this.ldapClientService.deleteLehrerByPersonId(
+                        event.person,
+                    );
                     if (!deletionResult.ok) {
                         this.logger.error(deletionResult.error.message);
                     }
