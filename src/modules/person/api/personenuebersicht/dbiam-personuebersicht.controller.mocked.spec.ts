@@ -22,7 +22,7 @@ import { DBiamFindPersonenuebersichtByPersonIdParams } from './dbiam-find-person
 import { Person } from '../../domain/person.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
-import { PersonenuebersichtQueryParams } from './personenuebersicht-query.params.js';
+import { PersonenuebersichtQueryParams } from './personenuebersicht-body.params.js';
 import { DBiamPersonenuebersichtResponse } from './dbiam-personenuebersicht.response.js';
 import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
 import { EntityNotFoundError } from '../../../../shared/error/index.js';

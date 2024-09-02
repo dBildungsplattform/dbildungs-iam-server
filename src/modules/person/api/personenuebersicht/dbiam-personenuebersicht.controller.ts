@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseFilters } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
@@ -22,7 +22,7 @@ import { RolleRepo } from '../../../rolle/repo/rolle.repo.js';
 import { OrganisationID, PersonID, RolleID } from '../../../../shared/types/aggregate-ids.types.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
 import { ApiOkResponsePaginated, PagedResponse, PagingHeadersObject } from '../../../../shared/paging/index.js';
-import { PersonenuebersichtQueryParams } from './personenuebersicht-query.params.js';
+import { PersonenuebersichtBodyParams } from './personenuebersicht-body.params.js';
 import { Permissions } from '../../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
 import { PersonScope } from '../../persistence/person.scope.js';
@@ -53,7 +53,7 @@ export class DBiamPersonenuebersichtController {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
 
-    @Get('')
+    @Post('')
     @ApiOkResponsePaginated(DBiamPersonenuebersichtResponse, {
         description: 'The personenuebersichten were successfully returned.',
         headers: PagingHeadersObject,
@@ -62,7 +62,7 @@ export class DBiamPersonenuebersichtController {
     @ApiForbiddenResponse({ description: 'Insufficient permission to get personenuebersichten.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting personenuebersichten.' })
     public async findPersonenuebersichten(
-        @Query() queryParams: PersonenuebersichtQueryParams,
+        @Body() bodyParams: PersonenuebersichtBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<DBiamPersonenuebersichtResponse>> {
         // Find all organisations where user has permission
@@ -76,15 +76,15 @@ export class DBiamPersonenuebersichtController {
             organisationIDs = undefined;
         }
 
-        const personIds: PersonID[] | undefined[] = Array.isArray(queryParams.personIds)
-            ? queryParams.personIds
-            : [queryParams.personIds];
+        const personIds: PersonID[] | undefined[] = Array.isArray(bodyParams.personIds)
+            ? bodyParams.personIds
+            : [bodyParams.personIds];
 
         // Find all Personen on child-orgas (+root orgas)
         const scope: PersonScope = new PersonScope()
             .findBy({ ids: personIds, organisationen: organisationIDs })
             .sortBy('vorname', ScopeOrder.ASC)
-            .paged(queryParams.offset, queryParams.limit);
+            .paged(bodyParams.offset, bodyParams.limit);
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
 
@@ -137,8 +137,8 @@ export class DBiamPersonenuebersichtController {
 
         return {
             items,
-            offset: queryParams.offset ?? 0,
-            limit: queryParams.limit ?? 0,
+            offset: bodyParams.offset ?? 0,
+            limit: bodyParams.limit ?? 0,
             total,
         };
     }
