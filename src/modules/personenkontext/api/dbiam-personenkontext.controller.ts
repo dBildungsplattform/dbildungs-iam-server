@@ -130,9 +130,7 @@ export class DBiamPersonenkontextController {
             new PermissionsOverride(permissions).grantPersonModifyPermission(params.personId),
         );
 
-        const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update(
-            params.ldapEntryUUID,
-        );
+        const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
 
         if (updateResult instanceof PersonenkontexteUpdateError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
