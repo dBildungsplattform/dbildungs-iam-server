@@ -28,7 +28,7 @@ export class LdapTestModule implements OnModuleDestroy {
                                     },
                                 ])
                                 .withPullPolicy(PullPolicy.defaultPolicy())
-                                .withExposedPorts(389)
+                                .withExposedPorts(636)
                                 .withEnvironment({
                                     LDAP_ADMIN_PASSWORD: 'admin',
                                     LDAP_CONFIG_PASSWORD: 'config',
