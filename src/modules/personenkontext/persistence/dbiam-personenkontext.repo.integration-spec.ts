@@ -37,7 +37,6 @@ import { PersonenkontextScope } from './personenkontext.scope.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { Domain } from 'domain';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
