@@ -290,14 +290,13 @@ export class PrivacyIdeaAdministrationService {
     }
 
     public async resetToken(user: string): Promise<ResetTokenResponse> {
-        const token: string = await this.getJWTToken();
-
-        const twoAuthState: PrivacyIdeaToken | undefined = await this.getTwoAuthState(user);
-        if (!twoAuthState) {
-            throw new TwoAuthStateError();
-        }
-        const serial: string = twoAuthState.serial;
         try {
+            const token: string = await this.getJWTToken();
+            const twoAuthState: PrivacyIdeaToken | undefined = await this.getTwoAuthState(user);
+            if (!twoAuthState) {
+                throw new TwoAuthStateError();
+            }
+            const serial: string = twoAuthState.serial;
             const response: ResetTokenResponse = await this.unassignToken(serial, token);
             return response;
         } catch (error) {

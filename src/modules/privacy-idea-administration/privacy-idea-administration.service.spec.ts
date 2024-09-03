@@ -16,7 +16,6 @@ import {
 import { TokenError } from './api/error/token.error.js';
 import { ConfigTestModule } from '../../../test/utils/index.js';
 import { TokenResetError } from './api/error/token-reset.error.js';
-import { TwoAuthStateError } from './api/error/two-auth-state.error.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -447,7 +446,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
                 'getTwoAuthState',
             ).mockResolvedValueOnce(null);
 
-            await expect(service.resetToken(mockResetUser)).rejects.toThrow(new TwoAuthStateError());
+            await expect(service.resetToken(mockResetUser)).rejects.toThrow(new TokenResetError());
         });
 
         it('should throw an error if unassignToken fails', async () => {
