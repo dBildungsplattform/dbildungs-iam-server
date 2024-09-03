@@ -16,9 +16,6 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { EntityAlreadyExistsError } from '../../../shared/error/entity-already-exists.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
-import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
-import { EventService } from '../../../core/eventbus/index.js';
-import { SimplePersonenkontextDeletedEvent } from '../../../shared/events/simple-personenkontext-deleted.event.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
@@ -58,7 +55,6 @@ function mapEntityToAggregate(
 export class DBiamPersonenkontextRepo {
     public constructor(
         private readonly em: EntityManager,
-        private readonly eventService: EventService,
         private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
@@ -257,13 +253,7 @@ export class DBiamPersonenkontextRepo {
         );
 
         await this.em.persistAndFlush(personenKontextEntity);
-        this.eventService.publish(
-            new PersonenkontextCreatedEvent(
-                personenkontext.personId,
-                personenkontext.organisationId,
-                personenkontext.rolleId,
-            ),
-        );
+
         return {
             ok: true,
             value: mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory),
@@ -302,13 +292,7 @@ export class DBiamPersonenkontextRepo {
             mapAggregateToData(personenKontext),
         );
         await this.em.persistAndFlush(personenKontextEntity);
-        this.eventService.publish(
-            new PersonenkontextCreatedEvent(
-                personenKontext.personId,
-                personenKontext.organisationId,
-                personenKontext.rolleId,
-            ),
-        );
+
         return mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory);
     }
 
@@ -346,14 +330,6 @@ export class DBiamPersonenkontextRepo {
             organisationId: organisationId,
             rolleId: rolleId,
         });
-        this.eventService.publish(
-            new SimplePersonenkontextDeletedEvent(
-                personenKontext.id,
-                personenKontext.personId,
-                personenKontext.organisationId,
-                personenKontext.rolleId,
-            ),
-        );
     }
 
     public async hasSystemrechtAtOrganisation(

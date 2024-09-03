@@ -15,19 +15,19 @@ import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { DBiamPersonenkontextService } from '../domain/dbiam-personenkontext.service.js';
-import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextResponse } from './response/dbiam-personenkontext.response.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { DbiamPersonenkontextBodyParams } from './param/dbiam-personenkontext.body.params.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
-import { OrganisationMatchesRollenartError } from '../specification/error/organisation-matches-rollenart.error.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { PersonenkontexteUpdate } from '../domain/personenkontexte-update.js';
+import { DbiamPersonenkontextFactory } from '../domain/dbiam-personenkontext.factory.js';
+import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
+import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -42,8 +42,7 @@ import { AuthenticationExceptionFilter } from '../../authentication/api/authenti
 export class DBiamPersonenkontextController {
     public constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
-        private readonly dbiamPersonenkontextService: DBiamPersonenkontextService,
-        private readonly personenkontextFactory: PersonenkontextFactory,
+        private readonly personenkontextFactory: DbiamPersonenkontextFactory,
     ) {}
 
     @Get(':personId')
@@ -87,42 +86,46 @@ export class DBiamPersonenkontextController {
         @Body() params: DbiamPersonenkontextBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonenkontextResponse> {
-        // Construct new personenkontext
-        const newPersonenkontext: Personenkontext<false> = this.personenkontextFactory.createNew(
+        // Get existing personenkontexte
+        const existingPKs: DbiamPersonenkontextBodyParams[] = await this.personenkontextRepo.findByPerson(
             params.personId,
-            params.organisationId,
-            params.rolleId,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
         );
 
-        //Check specifications
-        const specificationCheckError: Option<PersonenkontextSpecificationError> =
-            await this.dbiamPersonenkontextService.checkSpecifications(newPersonenkontext);
-        if (specificationCheckError) {
-            throw specificationCheckError;
-        }
+        // Add new PK to list
+        existingPKs.push({
+            personId: params.personId,
+            organisationId: params.organisationId,
+            rolleId: params.rolleId,
+        });
 
-        // Save personenkontext
-        const saveResult: Result<Personenkontext<true>, DomainError> = await this.personenkontextRepo.saveAuthorized(
-            newPersonenkontext,
-            permissions,
-        );
-
-        if (!saveResult.ok) {
-            if (saveResult.error instanceof OrganisationMatchesRollenartError) {
-                throw saveResult.error;
-            }
-
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult.error),
+        // Update
+        const personenkontextUpdate: PersonenkontexteUpdate =
+            this.personenkontextFactory.createNewPersonenkontexteUpdate(
+                params.personId,
+                new Date(),
+                existingPKs.length - 1,
+                existingPKs,
+                permissions,
             );
+
+        const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError =
+            await personenkontextUpdate.update();
+
+        if (updateResult instanceof DomainError) {
+            throw updateResult;
         }
 
-        return new DBiamPersonenkontextResponse(saveResult.value);
+        const newPersonenkontext: Personenkontext<true> | undefined = updateResult.find(
+            (pk: Personenkontext<true>) =>
+                pk.personId === params.personId &&
+                pk.organisationId === params.organisationId &&
+                pk.rolleId === params.rolleId,
+        );
+
+        if (!newPersonenkontext) {
+            throw new PersonenkontextCommitError();
+        }
+
+        return new DBiamPersonenkontextResponse(newPersonenkontext);
     }
 }

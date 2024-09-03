@@ -22,7 +22,6 @@ import { PassportUser } from '../../authentication/types/user.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
@@ -36,6 +35,9 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
+import { DbiamPersonenkontextFactory } from '../domain/dbiam-personenkontext.factory.js';
+import { PersonenkontexteUpdate } from '../domain/personenkontexte-update.js';
+import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
 
 describe('dbiam Personenkontext API', () => {
     let app: INestApplication;
@@ -45,7 +47,7 @@ describe('dbiam Personenkontext API', () => {
     let personRepo: PersonRepository;
     let organisationRepo: OrganisationRepository;
     let rolleRepo: RolleRepo;
-    let personenkontextFactory: PersonenkontextFactory;
+    let personenkontextFactory: DbiamPersonenkontextFactory;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let personFactory: PersonFactory;
 
@@ -94,7 +96,7 @@ describe('dbiam Personenkontext API', () => {
         personRepo = module.get(PersonRepository);
         organisationRepo = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
-        personenkontextFactory = module.get(PersonenkontextFactory);
+        personenkontextFactory = module.get(DbiamPersonenkontextFactory);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
         personFactory = module.get(PersonFactory);
 
@@ -239,46 +241,7 @@ describe('dbiam Personenkontext API', () => {
             expect(response.status).toBe(201);
         });
 
-        it('should return created personenkontext when Klasse specifications are met', async () => {
-            //create lehrer on Schule
-            const lehrer: Person<true> = await createPerson();
-            if (lehrer instanceof DomainError) {
-                throw lehrer;
-            }
-            const schuleDo: Organisation<false> = DoFactory.createOrganisation(false, {
-                typ: OrganisationsTyp.SCHULE,
-            });
-            const schule: Organisation<true> = await organisationRepo.save(schuleDo);
-            const schuelerRolleDummy: Rolle<false> = DoFactory.createRolle(false, {
-                rollenart: RollenArt.LERN,
-                administeredBySchulstrukturknoten: schule.id,
-            });
-            const schuelerRolle: Rolle<true> = await rolleRepo.save(schuelerRolleDummy);
-            await personenkontextRepo.save(personenkontextFactory.createNew(lehrer.id, schule.id, schuelerRolle.id));
-
-            const klasseDo: Organisation<false> = DoFactory.createOrganisation(false, {
-                typ: OrganisationsTyp.KLASSE,
-                administriertVon: schule.id,
-            });
-            const klasse: Organisation<true> = await organisationRepo.save(klasseDo);
-
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([schule.id, klasse.id]);
-            personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .post('/dbiam/personenkontext')
-                .send({
-                    personId: lehrer.id,
-                    organisationId: klasse.id,
-                    rolleId: schuelerRolle.id,
-                });
-
-            expect(response.status).toBe(201);
-        });
-
-        it('should return error if personenkontext already exists', async () => {
+        it('should return error if PersonenkontexteUpdateError occurs', async () => {
             const person: Person<true> = await createPerson();
             const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
@@ -289,176 +252,54 @@ describe('dbiam Personenkontext API', () => {
                     rollenart: RollenArt.LEHR,
                 }),
             );
-            const personenkontext: Personenkontext<true> = await personenkontextRepo.save(
-                personenkontextFactory.createNew(person.id, organisation.id, rolle.id),
+
+            const personenkontextUpdateMock: DeepMocked<PersonenkontexteUpdate> = createMock();
+            personenkontextUpdateMock.update.mockResolvedValueOnce(new PersonenkontextCommitError());
+            jest.spyOn(personenkontextFactory, 'createNewPersonenkontexteUpdate').mockReturnValueOnce(
+                personenkontextUpdateMock,
             );
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(permissions);
-            permissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true);
-            permissions.canModifyPerson.mockResolvedValueOnce(true);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/dbiam/personenkontext')
                 .send({
-                    personId: personenkontext.personId,
-                    organisationId: personenkontext.organisationId,
-                    rolleId: personenkontext.rolleId,
+                    personId: person.id,
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
                 });
 
             expect(response.status).toBe(400);
+            expect(response.text).toBe('{"code":400,"i18nKey":"PERSONENKONTEXTE_UPDATE_ERROR"}');
         });
 
-        it('should return error if references do not exist', async () => {
-            const personenkontext: Personenkontext<false> = DoFactory.createPersonenkontext(false);
+        it('should return error, if personenkontext was not added', async () => {
+            const person: Person<true> = await createPerson();
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            // Error can only occur when database write fails, therefore it needs to be mocked
+            const personenkontextUpdateMock: DeepMocked<PersonenkontexteUpdate> = createMock();
+            personenkontextUpdateMock.update.mockResolvedValueOnce([]);
+            jest.spyOn(personenkontextFactory, 'createNewPersonenkontexteUpdate').mockReturnValueOnce(
+                personenkontextUpdateMock,
+            );
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/dbiam/personenkontext')
                 .send({
-                    personId: personenkontext.personId,
-                    organisationId: personenkontext.organisationId,
-                    rolleId: personenkontext.rolleId,
+                    personId: person.id,
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
                 });
 
-            expect(response.status).toBe(400); // TODO: Fix
-        });
-
-        describe('should return error if specifications are not satisfied', () => {
-            it('when organisation is not found', async () => {
-                const person: Person<true> = await createPerson();
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
-                const response: Response = await request(app.getHttpServer() as App)
-                    .post('/dbiam/personenkontext')
-                    .send({
-                        personId: person.id,
-                        organisationId: faker.string.uuid(),
-                        rolleId: rolle.id,
-                    });
-
-                expect(response.status).toBe(400);
-            });
-
-            it('when rolle is not found', async () => {
-                const person: Person<true> = await createPerson();
-                const organisation: Organisation<true> = await organisationRepo.save(
-                    DoFactory.createOrganisation(false),
-                );
-                const response: Response = await request(app.getHttpServer() as App)
-                    .post('/dbiam/personenkontext')
-                    .send({
-                        personId: person.id,
-                        organisationId: organisation.id,
-                        rolleId: faker.string.uuid(),
-                    });
-
-                expect(response.status).toBe(404);
-            });
-
-            it('when rollenart of rolle is not LEHR or LERN', async () => {
-                const orgaDo: Organisation<false> = DoFactory.createOrganisation(false, {
-                    typ: OrganisationsTyp.KLASSE,
-                });
-                const rolleDummy: Rolle<false> = DoFactory.createRolle(false, { rollenart: RollenArt.SYSADMIN });
-
-                const person: Person<true> = await createPerson();
-                const organisation: Organisation<true> = await organisationRepo.save(orgaDo);
-                const rolle: Rolle<true> = await rolleRepo.save(rolleDummy);
-                const response: Response = await request(app.getHttpServer() as App)
-                    .post('/dbiam/personenkontext')
-                    .send({
-                        personId: person.id,
-                        organisationId: organisation.id,
-                        rolleId: rolle.id,
-                    });
-
-                expect(response.status).toBe(400);
-            });
-
-            it('when rollenart for Schule and Klasse are not equal', async () => {
-                //create admin on Schule
-                const admin: Person<true> = await createPerson();
-                const schuleDo: Organisation<false> = DoFactory.createOrganisation(false, {
-                    typ: OrganisationsTyp.SCHULE,
-                });
-                const adminRolleDummy: Rolle<false> = DoFactory.createRolle(false, { rollenart: RollenArt.ORGADMIN });
-
-                const schule: Organisation<true> = await organisationRepo.save(schuleDo);
-                const adminRolle: Rolle<true> = await rolleRepo.save(adminRolleDummy);
-                await personenkontextRepo.save(personenkontextFactory.createNew(admin.id, schule.id, adminRolle.id));
-
-                const klasseDo: Organisation<false> = DoFactory.createOrganisation(false, {
-                    typ: OrganisationsTyp.KLASSE,
-                    administriertVon: schule.id,
-                });
-                const lehrRolleDummy: Rolle<false> = DoFactory.createRolle(false, { rollenart: RollenArt.LEHR });
-                const lehrer: Person<true> = admin;
-                const klasse: Organisation<true> = await organisationRepo.save(klasseDo);
-                const lehrRolle: Rolle<true> = await rolleRepo.save(lehrRolleDummy);
-                const response: Response = await request(app.getHttpServer() as App)
-                    .post('/dbiam/personenkontext')
-                    .send({
-                        personId: lehrer.id,
-                        organisationId: klasse.id,
-                        rolleId: lehrRolle.id,
-                    });
-
-                expect(response.status).toBe(400);
-            });
-        });
-
-        describe('when user is not authorized', () => {
-            it('should return error', async () => {
-                const person: Person<true> = await createPerson();
-                const organisation: Organisation<true> = await organisationRepo.save(
-                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
-                );
-                const rolle: Rolle<true> = await rolleRepo.save(
-                    DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten: organisation.id,
-                        rollenart: RollenArt.LEHR,
-                    }),
-                );
-
-                const personpermissions: DeepMocked<PersonPermissions> = createMock();
-                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-                personpermissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false);
-
-                const response: Response = await request(app.getHttpServer() as App)
-                    .post('/dbiam/personenkontext')
-                    .send({ personId: person.id, organisationId: organisation.id, rolleId: rolle.id });
-
-                expect(response.status).toBe(404);
-                expect(response.body).toEqual({
-                    code: 404,
-                    subcode: '01',
-                    titel: 'Angefragte Entität existiert nicht',
-                    beschreibung: 'Die angeforderte Entität existiert nicht',
-                });
-            });
-        });
-
-        describe('when OrganisationMatchesRollenart is not satisfied', () => {
-            it('should return error and map to 400', async () => {
-                const person: Person<true> = await createPerson();
-                const organisation: Organisation<true> = await organisationRepo.save(
-                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
-                );
-                const rolle: Rolle<true> = await rolleRepo.save(
-                    DoFactory.createRolle(false, {
-                        administeredBySchulstrukturknoten: organisation.id,
-                        rollenart: RollenArt.SYSADMIN,
-                    }),
-                );
-
-                const personpermissions: DeepMocked<PersonPermissions> = createMock();
-                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-                personpermissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false);
-
-                const response: Response = await request(app.getHttpServer() as App)
-                    .post('/dbiam/personenkontext')
-                    .send({ personId: person.id, organisationId: organisation.id, rolleId: rolle.id });
-
-                expect(response.status).toBe(400);
-            });
+            expect(response.status).toBe(400);
+            expect(response.text).toBe('{"code":400,"i18nKey":"PERSONENKONTEXTE_UPDATE_ERROR"}');
         });
     });
 });
