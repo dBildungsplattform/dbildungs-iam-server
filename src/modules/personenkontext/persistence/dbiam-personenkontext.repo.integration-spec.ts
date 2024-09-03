@@ -24,7 +24,6 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { OrganisationID, PersonenkontextID } from '../../../shared/types/aggregate-ids.types.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
@@ -38,6 +37,7 @@ import { PersonenkontextScope } from './personenkontext.scope.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { Domain } from 'domain';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -47,7 +47,6 @@ describe('dbiam Personenkontext Repo', () => {
 
     let personFactory: PersonFactory;
     let personRepo: PersonRepository;
-    let organisationRepo: OrganisationRepo;
     let organisationRepository: OrganisationRepository;
     let rolleRepo: RolleRepo;
     let rolleFactory: RolleFactory;
@@ -117,7 +116,6 @@ describe('dbiam Personenkontext Repo', () => {
         em = module.get(EntityManager);
         personFactory = module.get(PersonFactory);
         personRepo = module.get(PersonRepository);
-        organisationRepo = module.get(OrganisationRepo);
         organisationRepository = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
         rolleFactory = module.get(RolleFactory);
@@ -149,14 +147,21 @@ describe('dbiam Personenkontext Repo', () => {
         isRoot: boolean,
         typ: OrganisationsTyp,
     ): Promise<OrganisationID> {
-        const organisation: OrganisationDo<false> = DoFactory.createOrganisation(false, {
-            administriertVon: parentOrga,
-            zugehoerigZu: parentOrga,
+        const organisation: Organisation<false> | DomainError = Organisation.createNew(
+            parentOrga, // administriertVon
+            parentOrga, // zugehoerigZu
+            undefined, // kennung
+            undefined, // name
+            undefined, // namensergaenzung
+            undefined, // kuerzel
             typ,
-        });
-        if (isRoot) organisation.id = organisationRepo.ROOT_ORGANISATION_ID;
+        );
+        if (organisation instanceof DomainError) {
+            throw organisation;
+        }
+        if (isRoot) organisation.id = organisationRepository.ROOT_ORGANISATION_ID;
 
-        const result: OrganisationDo<true> = await organisationRepo.save(organisation);
+        const result: OrganisationDo<true> = await organisationRepository.save(organisation);
 
         return result.id;
     }

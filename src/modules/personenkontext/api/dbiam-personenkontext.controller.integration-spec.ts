@@ -170,7 +170,10 @@ describe('dbiam Personenkontext API', () => {
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissions.canModifyPerson.mockResolvedValueOnce(true);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-            personpermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([pk1.organisationId, pk2.organisationId]);
+            personpermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([
+                pk1.organisationId,
+                pk2.organisationId,
+            ]);
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/dbiam/personenkontext/${personA.id}`)
                 .send();

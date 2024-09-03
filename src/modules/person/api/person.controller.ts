@@ -107,7 +107,10 @@ export class PersonController {
                 true,
             );
         } else {
-            organisationIDs = await permissions.getOrgIdsWithSystemrechtDeprecated([RollenSystemRecht.PERSONEN_VERWALTEN], true);
+            organisationIDs = await permissions.getOrgIdsWithSystemrechtDeprecated(
+                [RollenSystemRecht.PERSONEN_VERWALTEN],
+                true,
+            );
         }
         if (organisationIDs.length < 1) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
