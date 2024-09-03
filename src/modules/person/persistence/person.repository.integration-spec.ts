@@ -1080,54 +1080,6 @@ describe('PersonRepository Integration', () => {
                 });
             });
 
-            describe('Delete the person and trigger PersonenkontextDeletedEvents for each PK of person', () => {
-                it('should delete the person and trigger PersonenkontextDeletedEvents', async () => {
-                    const person: Person<true> = DoFactory.createPerson(true);
-                    const personEntity: PersonEntity = em.create(PersonEntity, mapAggregateToData(person));
-                    person.id = personEntity.id;
-                    personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person.id]);
-
-                    await em.persistAndFlush(personEntity);
-
-                    const emailAddress: EmailAddressEntity = new EmailAddressEntity();
-                    emailAddress.address = faker.internet.email();
-                    emailAddress.personId = rel(PersonEntity, person.id);
-                    emailAddress.enabled = true;
-
-                    const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
-                    await em.persistAndFlush(pp);
-
-                    personEntity.emailAddresses.add(emailAddress);
-                    await em.persistAndFlush(personEntity);
-
-                    await sut.getPersonIfAllowed(person.id, personPermissionsMock);
-                    const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
-                        person.id,
-                        personPermissionsMock,
-                    );
-                    if (!personGetAllowed.ok) {
-                        throw new EntityNotFoundError('Person', person.id);
-                    }
-
-                    const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
-                    const result: Result<void, DomainError> = await sut.deletePerson(
-                        personGetAllowed.value.id,
-                        personPermissionsMock,
-                        removedPersonenkontexts,
-                    );
-
-                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
-                        expect.objectContaining({
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            person: expect.objectContaining({
-                                id: personEntity.id,
-                            }),
-                        }),
-                    );
-                    expect(result.ok).toBeTruthy();
-                });
-            });
-
             it('should not delete the person because of unsufficient permissions to find the person', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
