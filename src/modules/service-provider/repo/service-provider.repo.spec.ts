@@ -13,10 +13,20 @@ import { ServiceProviderRepo } from './service-provider.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { createMock } from '@golevelup/ts-jest';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+//import { Rolle } from '../../rolle/domain/rolle.js';
+//import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { ServiceProviderEntity } from './service-provider.entity.js';
+import { ServiceProviderKategorie, ServiceProviderTarget } from '../domain/service-provider.enum.js';
+import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
     let sut: ServiceProviderRepo;
+    // let rolleRepo: RolleRepo;
     let orm: MikroORM;
     let em: EntityManager;
 
@@ -25,9 +35,17 @@ describe('ServiceProviderRepo', () => {
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), LoggingTestModule],
             providers: [
                 ServiceProviderRepo,
+                RolleRepo,
+                RolleFactory,
+                OrganisationRepository,
+
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
+                },
+                {
+                    provide: RolleFactory,
+                    useValue: createMock<RolleFactory>(),
                 },
             ],
         }).compile();
@@ -35,6 +53,7 @@ describe('ServiceProviderRepo', () => {
         sut = module.get(ServiceProviderRepo);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
+        //rolleRepo = module.get(RolleRepo);
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
@@ -163,18 +182,42 @@ describe('ServiceProviderRepo', () => {
             expect(serviceProviderMap).toBeDefined();
         });
     });
+    describe('fetchRolleServiceProvidersWithoutPerson', () => {
+        it('should define serviceProviderResult', async () => {
+            const role: RolleID = faker.string.uuid();
+            const serviceProviderResult: ServiceProvider<true>[] = await sut.fetchRolleServiceProvidersWithoutPerson([
+                role,
+            ]);
+            expect(serviceProviderResult).toBeDefined();
+        });
 
-    it('should return an array of ServiceProvider with an Array', async () => {
-        const role: RolleID = faker.string.uuid();
-        const serviceProviderResult: ServiceProvider<true>[] = await sut.fetchRolleServiceProvidersWithoutPerson([
-            role,
-        ]);
-        expect(serviceProviderResult).toBeDefined();
-    });
-    it('should return an array of ServiceProvider with a single rolle', async () => {
-        const role: RolleID = faker.string.uuid();
+        it('should correctly map RolleServiceProviderEntity to ServiceProvider', async () => {
+            // Arrange
+            const roleId: RolleID = faker.string.uuid();
 
-        const serviceProviderResult: ServiceProvider<true>[] = await sut.fetchRolleServiceProvidersWithoutPerson(role);
-        expect(serviceProviderResult).toBeDefined();
+            const serviceProviderEntityMock: ServiceProviderEntity = {
+                id: faker.string.uuid(),
+                name: faker.company.name(),
+                target: ServiceProviderTarget.SCHULPORTAL_ADMINISTRATION,
+                providedOnSchulstrukturknoten: faker.string.uuid(),
+                kategorie: ServiceProviderKategorie.VERWALTUNG,
+            } as ServiceProviderEntity;
+
+            const rolleServiceProviderEntityMock: RolleServiceProviderEntity = {
+                rolle: { id: roleId } as RolleEntity,
+                serviceProvider: serviceProviderEntityMock,
+            } as RolleServiceProviderEntity;
+
+            jest.spyOn(em, 'find').mockResolvedValue([rolleServiceProviderEntityMock]);
+
+            const result: ServiceProvider<true>[] = await sut.fetchRolleServiceProvidersWithoutPerson(roleId);
+
+            expect(result).toBeDefined();
+            expect(em.find).toHaveBeenCalledWith(
+                RolleServiceProviderEntity,
+                { rolle: { id: roleId } },
+                { populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'] },
+            );
+        });
     });
 });
