@@ -25,18 +25,19 @@ describe('GleicheRolleAnKlasseWieSchule specification', () => {
             rolleRepoMock,
         );
         const schuleId: string = faker.string.uuid();
+        const rolleId: string = faker.string.uuid();
         organisationRepoMock.findById.mockResolvedValueOnce(
-            DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE, administriertVon: schuleId }),
+            DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE, administriertVon: schuleId }),
         );
         organisationRepoMock.findById.mockResolvedValueOnce(
-            DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE, administriertVon: schuleId }),
+            DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE, id: schuleId }),
         );
         personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
-            DoFactory.createPersonenkontext(true, { id: schuleId }),
+            DoFactory.createPersonenkontext(true, { organisationId: schuleId }),
         ]);
-        rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
+        rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true, { id: rolleId }));
 
-        const pk: Personenkontext<false> = DoFactory.createPersonenkontext(false);
+        const pk: Personenkontext<false> = DoFactory.createPersonenkontext(false, { rolleId });
 
         await expect(spec.isSatisfiedBy(pk)).resolves.toBe(true);
     });
@@ -130,10 +131,10 @@ describe('GleicheRolleAnKlasseWieSchule specification', () => {
             DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE, administriertVon: schuleId }),
         );
         organisationRepoMock.findById.mockResolvedValueOnce(
-            DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE, administriertVon: schuleId }),
+            DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE, id: schuleId }),
         );
         personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
-            DoFactory.createPersonenkontext(true, { id: schuleId }),
+            DoFactory.createPersonenkontext(true, { organisationId: schuleId }),
         ]);
         rolleRepoMock.findById.mockResolvedValueOnce(undefined);
 
@@ -153,10 +154,10 @@ describe('GleicheRolleAnKlasseWieSchule specification', () => {
             DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE, administriertVon: schuleId }),
         );
         organisationRepoMock.findById.mockResolvedValueOnce(
-            DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE, administriertVon: schuleId }),
+            DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE, id: schuleId }),
         );
         personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
-            DoFactory.createPersonenkontext(true, { id: schuleId }),
+            DoFactory.createPersonenkontext(true, { organisationId: schuleId }),
         ]);
         rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
 

@@ -32,7 +32,7 @@ describe('NurLehrUndLernAnKlasse specification', () => {
         organisationRepoMock.findById.mockResolvedValueOnce(
             DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE }),
         );
-        rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+        rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
 
         const pk: Personenkontext<boolean> = DoFactory.createPersonenkontext(false);
 
