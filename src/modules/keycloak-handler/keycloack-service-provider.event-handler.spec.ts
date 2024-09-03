@@ -11,6 +11,7 @@ import { RolleID } from '../../shared/types/aggregate-ids.types.js';
 import { faker } from '@faker-js/faker';
 import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { Rolle } from '../rolle/domain/rolle.js';
+import { DoFactory } from '../../../test/utils/do-factory.js';
 
 describe('KeycloackServiceProviderHandler', () => {
     let module: TestingModule;
@@ -79,6 +80,34 @@ describe('KeycloackServiceProviderHandler', () => {
         // Assert
         expect(keycloakUserServiceMock.assignRealmGroupsToUser).toHaveBeenCalledWith(keycloakUserId, [newKeycloakRole]);
         expect(keycloakUserServiceMock.removeRealmGroupsFromUser).not.toHaveBeenCalled();
+
+        const allServiceProvidersNames: Set<string | undefined> = new Set([newKeycloakRole]);
+        const specificServiceProvidersNames: Set<string | undefined> = new Set([currentKeycloakRole]);
+
+        expect(Array.from(allServiceProvidersNames)).toEqual([newKeycloakRole]);
+        expect(Array.from(specificServiceProvidersNames)).toEqual([currentKeycloakRole]);
+    });
+
+    it('should handle undefined serviceProviderData and keycloakGroup correctly', async () => {
+        // Arrange
+
+        const newRolleId: string = faker.string.uuid();
+        const currentRolleId: string = faker.string.uuid();
+        const rolleWithoutServiceProvider: Rolle<true> = DoFactory.createRolle(true, {
+            serviceProviderData: undefined,
+        });
+        const rolleWithoutServiceProvider2: Rolle<true> = DoFactory.createRolle(true, {
+            serviceProviderData: undefined,
+        });
+
+        rolleRepoMock.findByIds.mockResolvedValueOnce(new Map([[newRolleId, rolleWithoutServiceProvider]]));
+        rolleRepoMock.findByIds.mockResolvedValueOnce(new Map([[currentRolleId, rolleWithoutServiceProvider2]]));
+
+        // Act
+        const result: (string | undefined)[] = await sut.fetchFilteredRolesDifference([currentRolleId], [newRolleId]);
+
+        // Assert
+        expect(result).toEqual([]);
     });
 
     it('should remove user roles when roles are removed', async () => {
@@ -115,6 +144,10 @@ describe('KeycloackServiceProviderHandler', () => {
             deleteKeycloakRole,
         ]);
         expect(keycloakUserServiceMock.assignRealmGroupsToUser).not.toHaveBeenCalled();
+
+        const specificServiceProvidersNames: Set<string | undefined> = new Set([currentKeycloakRole]);
+
+        expect(Array.from(specificServiceProvidersNames)).toEqual([currentKeycloakRole]);
     });
 
     it('should not update roles if no Keycloak user ID is present', async () => {
@@ -136,6 +169,7 @@ describe('KeycloackServiceProviderHandler', () => {
         expect(keycloakUserServiceMock.assignRealmGroupsToUser).not.toHaveBeenCalled();
         expect(keycloakUserServiceMock.removeRealmGroupsFromUser).not.toHaveBeenCalled();
     });
+
     it('should return the correct currentRolleIDs', async () => {
         // Arrange
         const rolleID: string = faker.string.uuid();

@@ -24,7 +24,7 @@ export class RolleFactory {
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
         istTechnisch: boolean,
-        serviceProviderData?: ServiceProvider<true>[], // Allow undefined
+        serviceProviderData?: ServiceProvider<true>[],
     ): Rolle<true> {
         return Rolle.construct(
             this.organisationRepo,
@@ -39,7 +39,7 @@ export class RolleFactory {
             systemrechte,
             serviceProviderIds,
             istTechnisch,
-            serviceProviderData, // Do not use `?? []` here
+            serviceProviderData,
         );
     }
 
