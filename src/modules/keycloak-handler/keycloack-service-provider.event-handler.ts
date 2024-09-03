@@ -19,13 +19,11 @@ export type KeycloakRole = string;
 @Injectable()
 export class KeycloackServiceProviderHandler {
     public constructor(
-        //private readonly logger: ClassLogger,
-        //private readonly serviceRepo: ServiceProviderRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly KeycloackService: KeycloakUserService,
     ) {}
 
-    public async fetchFilteredRolesDifference(
+    private async fetchFilteredRolesDifference(
         currentRoles: RolleID[],
         changingRole: RolleID[],
     ): Promise<(KeycloakRole | undefined)[]> {
@@ -74,7 +72,7 @@ export class KeycloackServiceProviderHandler {
         }
     }
 
-    public async updateUserRoles(
+    private async updateUserRoles(
         userId: string,
         currentRolleIDs: RolleID[],
         rolle: RolleID,
