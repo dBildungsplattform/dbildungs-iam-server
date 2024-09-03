@@ -11,10 +11,11 @@ import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js'
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
+import { DbiamCreatePersonenkontextBodyParams } from '../api/param/dbiam-create-personenkontext.body.params.js';
 
 export type PersonPersonenkontext = {
     person: Person<true>;
-    personenkontext: Personenkontext<true>;
+    personenkontexte: Personenkontext<true>[];
 };
 
 @Injectable()
@@ -26,12 +27,11 @@ export class PersonenkontextCreationService {
         private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
     ) {}
 
-    public async createPersonWithPersonenkontext(
+    public async createPersonWithPersonenkontexte(
         permissions: PersonPermissions,
         vorname: string,
         familienname: string,
-        organisationId: string,
-        rolleId: string,
+        createPersonenkontexte: DbiamCreatePersonenkontextBodyParams[],
         personalnummer?: string,
     ): Promise<PersonPersonenkontext | DomainError> {
         const person: Person<false> | DomainError = await this.personFactory.createNew({
@@ -44,14 +44,14 @@ export class PersonenkontextCreationService {
         }
         const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
 
-        anlage.initialize(organisationId, rolleId);
-
-        // Check if permissions are enough to create the kontext
-        const canCommit: DomainError | boolean = await anlage.canCommit(permissions);
-
-        if (canCommit instanceof DomainError) {
-            return canCommit;
+        for (const createPersonenkontext of createPersonenkontexte) {
+            anlage.initialize(createPersonenkontext.organisationId, createPersonenkontext.rolleId);
+            const canCommit: DomainError | boolean = await anlage.canCommit(permissions);
+            if (canCommit instanceof DomainError) {
+                return canCommit;
+            }
         }
+
         //Save Person
         const savedPerson: DomainError | Person<true> = await this.personRepository.create(person);
 
@@ -63,13 +63,11 @@ export class PersonenkontextCreationService {
             savedPerson.id,
             new Date(),
             0,
-            [
-                {
-                    personId: savedPerson.id,
-                    organisationId,
-                    rolleId,
-                },
-            ],
+            createPersonenkontexte.map((createPersonenkontext: DbiamCreatePersonenkontextBodyParams) => ({
+                personId: savedPerson.id,
+                organisationId: createPersonenkontext.organisationId,
+                rolleId: createPersonenkontext.rolleId,
+            })),
             new PermissionsOverride(permissions).grantPersonModifyPermission(savedPerson.id),
         );
 
@@ -78,13 +76,13 @@ export class PersonenkontextCreationService {
             return updateResult;
         }
 
-        if (updateResult.length !== 1) {
+        if (updateResult.length !== createPersonenkontexte.length) {
             return new PersonenkontexteUpdateError('The number of updated personenkontexte is invalid');
         }
 
         return {
             person: savedPerson,
-            personenkontext: updateResult[0]!,
+            personenkontexte: updateResult,
         };
     }
 }
