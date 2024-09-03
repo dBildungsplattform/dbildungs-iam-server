@@ -13,8 +13,6 @@ import { ServiceProviderRepo } from './service-provider.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { createMock } from '@golevelup/ts-jest';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
-//import { Rolle } from '../../rolle/domain/rolle.js';
-//import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -26,7 +24,7 @@ import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
     let sut: ServiceProviderRepo;
-    // let rolleRepo: RolleRepo;
+
     let orm: MikroORM;
     let em: EntityManager;
 
@@ -53,7 +51,7 @@ describe('ServiceProviderRepo', () => {
         sut = module.get(ServiceProviderRepo);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
-        //rolleRepo = module.get(RolleRepo);
+
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
