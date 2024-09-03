@@ -26,7 +26,6 @@ import { RolleFactory } from '../../../rolle/domain/rolle.factory.js';
 import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
 import { RolleRepo } from '../../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
-import { OrganisationRepo } from '../../../organisation/persistence/organisation.repo.js';
 import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
 import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -41,6 +40,8 @@ import { DBiamPersonenuebersichtController } from './dbiam-personenuebersicht.co
 import { OrganisationID } from '../../../../shared/types/aggregate-ids.types.js';
 import { PersonenkontextFactory } from '../../../personenkontext/domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
+import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../../organisation/domain/organisation.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
@@ -49,10 +50,10 @@ describe('Personenuebersicht API', () => {
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let rolleFactory: RolleFactory;
     let rolleRepo: RolleRepo;
-    let organisationRepo: OrganisationRepo;
     let personenkontextFactory: PersonenkontextFactory;
     let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
+    let organisationRepository: OrganisationRepository;
 
     let ROOT_ORGANISATION_ID: OrganisationID;
 
@@ -93,7 +94,6 @@ describe('Personenuebersicht API', () => {
                 PersonRepository,
                 RolleFactory,
                 RolleRepo,
-                OrganisationRepo,
                 DBiamPersonenkontextRepo,
                 PersonenkontextFactory,
                 PersonRepository,
@@ -124,10 +124,10 @@ describe('Personenuebersicht API', () => {
         usernameGeneratorService.generateUsername = jest.fn().mockResolvedValue({ ok: true, value: 'mockUsername' });
         rolleFactory = module.get(RolleFactory);
         rolleRepo = module.get(RolleRepo);
-        organisationRepo = module.get(OrganisationRepo);
         dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
+        organisationRepository = module.get(OrganisationRepository);
 
         ROOT_ORGANISATION_ID = module.get(DBiamPersonenuebersichtController).ROOT_ORGANISATION_ID;
 
@@ -237,10 +237,10 @@ describe('Personenuebersicht API', () => {
                     }
                     const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
-                    const savedOrganisation1: OrganisationDo<true> = await organisationRepo.save(
+                    const savedOrganisation1: OrganisationDo<true> = await organisationRepository.save(
                         DoFactory.createOrganisation(true),
                     );
-                    const savedOrganisation2: OrganisationDo<true> = await organisationRepo.save(
+                    const savedOrganisation2: OrganisationDo<true> = await organisationRepository.save(
                         DoFactory.createOrganisation(true),
                     );
 
@@ -383,7 +383,7 @@ describe('Personenuebersicht API', () => {
                     const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
                     const unsavedOrganisation1: OrganisationDo<true> = DoFactory.createOrganisation(true);
-                    const savedOrganisation2: OrganisationDo<true> = await organisationRepo.save(
+                    const savedOrganisation2: OrganisationDo<true> = await organisationRepository.save(
                         DoFactory.createOrganisation(true),
                     );
 
@@ -475,10 +475,10 @@ describe('Personenuebersicht API', () => {
             }
             const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
-            const savedOrganisation1: OrganisationDo<true> = await organisationRepo.save(
+            const savedOrganisation1: OrganisationDo<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(true, { id: ROOT_ORGANISATION_ID }),
             );
-            const savedOrganisation2: OrganisationDo<true> = await organisationRepo.save(
+            const savedOrganisation2: OrganisationDo<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(true),
             );
 
