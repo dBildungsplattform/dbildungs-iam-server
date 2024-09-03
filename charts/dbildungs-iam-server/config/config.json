@@ -60,12 +60,13 @@
         "ENDPOINT": "http://localhost:5000",
         "USERNAME": "admin",
         "PASSWORD": "admin",
-        "USER_RESOLVER": "mariadb_resolver"
+        "USER_RESOLVER": "mariadb_resolver",
+        "REALM": "defrealm"
     },
-  "OX": {
-    "ENABLED": "false",
-    "ENDPOINT": "https://ox_ip:ox_port/webservices/OXUserService",
-    "USERNAME": "username",
-    "PASSWORD": "password"
-  }
+    "OX": {
+        "ENABLED": "false",
+        "ENDPOINT": "https://ox_ip:ox_port/webservices/OXUserService",
+        "USERNAME": "username",
+        "PASSWORD": "password"
+    }
 }

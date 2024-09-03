@@ -52,6 +52,7 @@ export default (): {
         USERNAME: process.env['PI_ADMIN_USER'],
         PASSWORD: process.env['PI_ADMIN_PASSWORD'],
         USER_RESOLVER: process.env['PI_USER_RESOLVER'],
+        REALM: process.env['PI_REALM'],
     },
     OX: {
         ENABLED: process.env['OX_ENABLED']?.toLowerCase() as 'true' | 'false',

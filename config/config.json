@@ -68,7 +68,8 @@
         "ENDPOINT": "http://localhost:5000",
         "USERNAME": "admin",
         "PASSWORD": "admin",
-        "USER_RESOLVER": "mariadb_resolver"
+        "USER_RESOLVER": "mariadb_resolver",
+        "REALM": "defrealm"
     },
     "OX": {
         "ENABLED": "false",
