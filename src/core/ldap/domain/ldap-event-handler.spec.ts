@@ -6,7 +6,6 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
@@ -47,7 +46,6 @@ describe('LDAP Event Handler', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LdapModule,
                 MapperTestModule,
-                LoggingTestModule,
             ],
             providers: [
                 {
@@ -66,6 +64,8 @@ describe('LDAP Event Handler', () => {
             .useValue(createMock<RolleRepo>())
             .overrideProvider(DBiamPersonenkontextRepo)
             .useValue(createMock<DBiamPersonenkontextRepo>())
+            .overrideProvider(ClassLogger)
+            .useValue(createMock<ClassLogger>())
             .compile();
 
         orm = module.get(MikroORM);
@@ -291,7 +291,7 @@ describe('LDAP Event Handler', () => {
 
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-            expect(ldapClientServiceMock.deleteLehrerByPersonId).toHaveBeenCalledTimes(1);
+            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
         });
 
         describe('when ldap client fails', () => {
@@ -343,14 +343,14 @@ describe('LDAP Event Handler', () => {
                 ],
                 [],
             );
-            ldapClientServiceMock.deleteLehrerByPersonId.mockResolvedValueOnce({
+            ldapClientServiceMock.deleteLehrer.mockResolvedValueOnce({
                 ok: false,
                 error: new Error('Error'),
             });
 
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-            expect(ldapClientServiceMock.deleteLehrerByPersonId).toHaveBeenCalledTimes(1);
+            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
         });
     });
 });
