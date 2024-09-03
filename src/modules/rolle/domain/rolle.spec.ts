@@ -289,6 +289,7 @@ describe('Rolle Aggregate', () => {
         describe('when successfull', () => {
             it('should add serviceProviderId to rolle field', async () => {
                 const serviceProviderIdToAttach: string = faker.string.uuid();
+                const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
                 const rolle: Rolle<true> = rolleFactory.construct(
                     faker.string.uuid(),
                     faker.date.anytime(),
@@ -300,8 +301,9 @@ describe('Rolle Aggregate', () => {
                     [],
                     [],
                     false,
+                    [serviceProvider],
                 );
-                const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
+
                 serviceProvider.id = serviceProviderIdToAttach;
                 serviceProviderRepoMock.findById.mockResolvedValue(serviceProvider);
 
@@ -309,6 +311,7 @@ describe('Rolle Aggregate', () => {
 
                 expect(result).not.toBeInstanceOf(DomainError);
                 expect(rolle.serviceProviderIds.includes(serviceProviderIdToAttach)).toBeTruthy();
+                expect(rolle.serviceProviderData.includes(serviceProvider)).toBeTruthy();
                 expect(
                     rolle.serviceProviderIds.filter((id: string) => id === serviceProviderIdToAttach).length,
                 ).toEqual(1);
@@ -341,6 +344,7 @@ describe('Rolle Aggregate', () => {
 
         describe('when serviceProvider is already attached', () => {
             it('should return error', async () => {
+                const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
                 const serviceProviderIdToAttach: string = faker.string.uuid();
                 const rolle: Rolle<true> = rolleFactory.construct(
                     faker.string.uuid(),
@@ -353,9 +357,9 @@ describe('Rolle Aggregate', () => {
                     [],
                     [serviceProviderIdToAttach],
                     false,
+                    [serviceProvider],
                 );
 
-                const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
                 serviceProvider.id = serviceProviderIdToAttach;
                 serviceProviderRepoMock.findById.mockResolvedValue(serviceProvider);
 
@@ -363,6 +367,7 @@ describe('Rolle Aggregate', () => {
 
                 expect(result).toBeInstanceOf(DomainError);
                 expect(rolle.serviceProviderIds.includes(serviceProviderIdToAttach)).toBeTruthy();
+                expect(rolle.serviceProviderData.includes(serviceProvider)).toBeTruthy();
                 expect(
                     rolle.serviceProviderIds.filter((id: string) => id === serviceProviderIdToAttach).length,
                 ).toEqual(1);
@@ -371,7 +376,7 @@ describe('Rolle Aggregate', () => {
     });
 
     describe('detachServiceProvider', () => {
-        describe('when successfull', () => {
+        describe('when successful', () => {
             it('should remove serviceProviderId to rolle field', () => {
                 const serviceProviderIdToDetach: string = faker.string.uuid();
                 const rolle: Rolle<true> = rolleFactory.construct(
@@ -414,6 +419,25 @@ describe('Rolle Aggregate', () => {
 
                 expect(result).toBeInstanceOf(DomainError);
             });
+        });
+    });
+
+    describe('Rolle Construct with Default Values', () => {
+        it('should set serviceProviderData to an empty array if not provided', () => {
+            const rolle: Rolle<true> = rolleFactory.construct(
+                faker.string.uuid(),
+                faker.date.anytime(),
+                faker.date.anytime(),
+                '',
+                '',
+                RollenArt.LEHR,
+                [],
+                [],
+                [],
+                false,
+            );
+
+            expect(rolle.serviceProviderData).toEqual([]);
         });
     });
 

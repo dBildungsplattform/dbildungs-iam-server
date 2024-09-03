@@ -4,9 +4,7 @@ import { Rolle } from './rolle.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-//import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-//import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 
 @Injectable()
 export class RolleFactory {
@@ -26,7 +24,7 @@ export class RolleFactory {
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
         istTechnisch: boolean,
-        serviceProviderData?: ServiceProvider<true>[],
+        serviceProviderData?: ServiceProvider<true>[], // Allow undefined
     ): Rolle<true> {
         return Rolle.construct(
             this.organisationRepo,
@@ -41,7 +39,7 @@ export class RolleFactory {
             systemrechte,
             serviceProviderIds,
             istTechnisch,
-            serviceProviderData ?? [],
+            serviceProviderData, // Do not use `?? []` here
         );
     }
 

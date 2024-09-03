@@ -836,6 +836,41 @@ describe('KeycloakUserService', () => {
                 expect(loggerMock.error).toHaveBeenCalled();
             });
         });
+        describe('when an error occurs during group assignment', () => {
+            it('should log the error and return a DomainError', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                const groupNames: string[] = ['group1', 'group2'];
+
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                } as UserRepresentation);
+
+                const mockGroups: GroupRepresentation[] = [
+                    { id: 'group-id-1', name: 'group1' },
+                    { id: 'group-id-2', name: 'group2' },
+                ];
+                kcGroupsMock.find.mockResolvedValueOnce(mockGroups);
+
+                kcUsersMock.listGroups.mockResolvedValueOnce([]);
+
+                const error: Error = new Error('Simulated error during group assignment');
+                kcUsersMock.addToGroup.mockRejectedValueOnce(error);
+
+                const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, groupNames);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Failed to assign groups to user ${user.id}: ${JSON.stringify(error)}`,
+                );
+
+                expect(result).toStrictEqual({
+                    ok: false,
+                    error: new KeycloakClientError('Failed to assign groups'),
+                });
+            });
+        });
     });
     describe('removeRealmGroupsFromUser', () => {
         describe('getAuthedKcAdminClient is not ok', () => {
