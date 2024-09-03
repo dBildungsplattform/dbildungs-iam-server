@@ -21,6 +21,7 @@ import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
@@ -147,7 +148,7 @@ export class PersonRepository {
 
     public async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<Result<Person<true>>> {
         const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions);
-        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+        scope.findBy({ ids: [personId] }).sortBy('vorname', ScopeOrder.ASC);
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);
         let person: Person<true> | undefined = persons[0];
@@ -185,7 +186,7 @@ export class PersonRepository {
             permissions,
             RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN,
         );
-        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+        scope.findBy({ ids: [personId] }).sortBy('vorname', ScopeOrder.ASC);
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);
         const person: Person<true> | undefined = persons[0];
@@ -257,6 +258,18 @@ export class PersonRepository {
         await transaction.begin();
 
         try {
+            if (person.personalnummer) {
+                // Check if personalnummer already exists
+                const existingPerson: Loaded<PersonEntity, never, '*', never> | null = await transaction.findOne(
+                    PersonEntity,
+                    { personalnummer: person.personalnummer },
+                );
+                if (existingPerson) {
+                    await transaction.rollback();
+                    return new DuplicatePersonalnummerError(`Personalnummer ${person.personalnummer} already exists.`);
+                }
+            }
+
             // Create DB person
             const personEntity: PersonEntity = transaction.create(PersonEntity, mapAggregateToData(person)).assign({
                 id: randomUUID(), // Generate ID here instead of at insert-time
@@ -283,7 +296,7 @@ export class PersonRepository {
                 return personWithKeycloakUser;
             }
 
-            // take ID from keycloak and update user
+            // Take ID from keycloak and update user
             personEntity.assign(mapAggregateToData(personWithKeycloakUser));
 
             // Commit
