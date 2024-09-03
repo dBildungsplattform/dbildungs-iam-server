@@ -63,16 +63,16 @@ export class KeycloackServiceProviderHandler {
 
         if (person.keycloakUserId) {
             if (newRolle !== undefined && currentKontexte?.length) {
-                await this.updateUserRoles(person.keycloakUserId, currentRolleIDs, newRolle);
+                await this.updateUserGroups(person.keycloakUserId, currentRolleIDs, newRolle);
             }
 
             if (deleteRolle !== undefined && removedKontexte?.length) {
-                await this.updateUserRoles(person.keycloakUserId, currentRolleIDs, deleteRolle, true);
+                await this.updateUserGroups(person.keycloakUserId, currentRolleIDs, deleteRolle, true);
             }
         }
     }
 
-    private async updateUserRoles(
+    private async updateUserGroups(
         userId: string,
         currentRolleIDs: RolleID[],
         rolle: RolleID,

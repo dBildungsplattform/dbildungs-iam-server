@@ -103,11 +103,21 @@ describe('KeycloackServiceProviderHandler', () => {
         rolleRepoMock.findByIds.mockResolvedValueOnce(new Map([[newRolleId, rolleWithoutServiceProvider]]));
         rolleRepoMock.findByIds.mockResolvedValueOnce(new Map([[currentRolleId, rolleWithoutServiceProvider2]]));
 
-        // Act
-        const result: (string | undefined)[] = await sut.fetchFilteredRolesDifference([currentRolleId], [newRolleId]);
+        const personenkontextUpdatedEventMock: DeepMocked<PersonenkontextUpdatedEvent> =
+            createMock<PersonenkontextUpdatedEvent>({
+                person: {
+                    keycloakUserId: faker.string.uuid(),
+                } as PersonenkontextUpdatedPersonData,
+                newKontexte: [{ rolleId: newRolleId } as PersonenkontextUpdatedData],
+                removedKontexte: [],
+                currentKontexte: [{ rolleId: currentRolleId } as PersonenkontextUpdatedData],
+            });
+
+        await sut.handlePersonenkontextUpdatedEvent(personenkontextUpdatedEventMock);
 
         // Assert
-        expect(result).toEqual([]);
+        expect(keycloakUserServiceMock.assignRealmGroupsToUser).not.toHaveBeenCalled();
+        expect(keycloakUserServiceMock.removeRealmGroupsFromUser).not.toHaveBeenCalled();
     });
 
     it('should remove user roles when roles are removed', async () => {
