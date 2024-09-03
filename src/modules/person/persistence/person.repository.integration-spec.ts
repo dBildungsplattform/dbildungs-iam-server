@@ -1037,7 +1037,8 @@ describe('PersonRepository Integration', () => {
             describe('Delete the person and all kontexte and trigger event to delete email', () => {
                 it('should delete the person and trigger PersonDeletedEvent', async () => {
                     const person: Person<true> = DoFactory.createPerson(true);
-                    const personEntity: PersonEntity = em.create(PersonEntity, mapAggregateToData(person));
+                    const personEntity: PersonEntity = new PersonEntity();
+                    await em.persistAndFlush(personEntity.assign(mapAggregateToData(person)));
                     person.id = personEntity.id;
                     personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person.id]);
 

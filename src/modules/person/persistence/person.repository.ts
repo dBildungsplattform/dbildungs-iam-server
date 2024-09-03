@@ -152,9 +152,10 @@ export class PersonRepository {
 
     public async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<Result<Person<true>>> {
         const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions);
-        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+        scope.findBy({ ids: [personId] }).sortBy('vorname', ScopeOrder.ASC);
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);
+
         const person: Person<true> | undefined = persons[0];
 
         if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
@@ -171,7 +172,7 @@ export class PersonRepository {
             permissions,
             RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN,
         );
-        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+        scope.findBy({ ids: [personId] }).sortBy('vorname', ScopeOrder.ASC);
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);
         const person: Person<true> | undefined = persons[0];
