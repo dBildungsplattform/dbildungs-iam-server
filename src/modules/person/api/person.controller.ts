@@ -99,20 +99,17 @@ export class PersonController {
     ): Promise<PersonendatensatzResponse> {
         // Find all organisations where user has permission
         const isMigrationCall: boolean = !(!params.hashedPassword && !params.username);
-        let organisationIDs: OrganisationID[];
+        let permittedOrgas: PermittedOrgas;
 
         if (isMigrationCall === true) {
-            organisationIDs = await permissions.getOrgIdsWithSystemrechtDeprecated(
+            permittedOrgas = await permissions.getOrgIdsWithSystemrecht(
                 [RollenSystemRecht.MIGRATION_DURCHFUEHREN],
                 true,
             );
         } else {
-            organisationIDs = await permissions.getOrgIdsWithSystemrechtDeprecated(
-                [RollenSystemRecht.PERSONEN_VERWALTEN],
-                true,
-            );
+            permittedOrgas = await permissions.getOrgIdsWithSystemrecht([RollenSystemRecht.PERSONEN_VERWALTEN], true);
         }
-        if (organisationIDs.length < 1) {
+        if (!permittedOrgas.all && permittedOrgas.orgaIds.length < 1) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Person')),
             );

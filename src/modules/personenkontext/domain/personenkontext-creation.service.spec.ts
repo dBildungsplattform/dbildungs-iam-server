@@ -21,7 +21,6 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { PersonenkontextWorkflowFactory } from './personenkontext-workflow.factory.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { RolleNurAnPassendeOrganisationError } from '../specification/error/rolle-nur-an-passende-organisation.js';
 import { PersonenkontextCreationService, PersonPersonenkontext } from './personenkontext-creation.service.js';
@@ -77,10 +76,6 @@ describe('PersonenkontextCreationService', () => {
                 {
                     provide: PersonPermissions,
                     useValue: createMock<PersonPermissions>(),
-                },
-                {
-                    provide: OrganisationRepo,
-                    useValue: createMock<OrganisationRepo>(),
                 },
                 {
                     provide: DbiamPersonenkontextFactory,

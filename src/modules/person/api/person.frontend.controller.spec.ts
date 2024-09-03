@@ -97,9 +97,9 @@ describe('PersonFrontendController', () => {
 
         it('should get all persons', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
-            personPermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([
-                personController.ROOT_ORGANISATION_ID,
-            ]);
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: true,
+            });
 
             personRepositoryMock.findBy.mockResolvedValue([[person1, person2], 2]);
 
@@ -119,9 +119,9 @@ describe('PersonFrontendController', () => {
             const suchFilter: string = 'Max';
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
 
-            personPermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([
-                personController.ROOT_ORGANISATION_ID,
-            ]);
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: true,
+            });
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
 
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
@@ -139,9 +139,9 @@ describe('PersonFrontendController', () => {
 
         it('should filter person with the given rolle id', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
-            personPermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([
-                personController.ROOT_ORGANISATION_ID,
-            ]);
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: true,
+            });
 
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
             const rolleID: string = personenkontext1.rolleId;
@@ -161,9 +161,9 @@ describe('PersonFrontendController', () => {
 
         it('should filter person rolleID undefined', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
-            personPermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([
-                personController.ROOT_ORGANISATION_ID,
-            ]);
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: true,
+            });
 
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
 
@@ -184,10 +184,10 @@ describe('PersonFrontendController', () => {
         it('should filter person with the given orgnisation id', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
             const organisationID: string = personenkontext1.organisationId;
-            personPermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([
-                personController.ROOT_ORGANISATION_ID,
-                organisationID,
-            ]);
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [organisationID],
+            });
 
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
 
@@ -207,7 +207,10 @@ describe('PersonFrontendController', () => {
 
         it('should throw an error when organisationID is not in the permissions', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
-            personPermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [],
+            });
 
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
 
