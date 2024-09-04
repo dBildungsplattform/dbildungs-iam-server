@@ -17,6 +17,9 @@ import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
 import { ExistsUserAction, ExistsUserParams, ExistsUserResponse } from '../actions/user/exists-user.action.js';
+import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { OxUserCreatedEvent } from '../../../shared/events/ox-user-created.event.js';
+import { OXContextID } from '../../../shared/types/ox-ids.types.js';
 
 @Injectable()
 export class OxEventHandler extends PersonenkontextCreatedEventHandler {
@@ -33,6 +36,7 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
         protected override readonly dbiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly oxService: OxService,
         private readonly personRepository: PersonRepository,
+        private readonly eventService: EventService,
         configService: ConfigService<ServerConfig>,
     ) {
         super(logger, rolleRepo, serviceProviderRepo, dbiamPersonenkontextRepo);
@@ -51,6 +55,10 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
 
         if (!this.ENABLED) {
             this.logger.info('Not enabled, ignoring event');
+            //DEMO
+            /*  this.eventService.publish(
+                new OxUserCreatedEvent('afam', '123', '1', 'afam@schule-sh.de'),
+            );*/
             return;
         }
 
@@ -85,8 +93,9 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
             return;
         }
 
+        const contextId: OXContextID = '1';
         const params: CreateUserParams = {
-            contextId: '1',
+            contextId: contextId,
             displayName: person.vorname + person.familienname,
             email1: person.email,
             firstname: person.vorname,
@@ -109,5 +118,15 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
         }
 
         this.logger.info(`User created in OX, userId:${result.value.id}, email:${result.value.primaryEmail}`);
+
+        if (!person.referrer) {
+            this.logger.error(
+                `Person with personId:${personId} has no keycloakUsername/referrer: cannot create OXUserCreatedEvent`,
+            );
+            return;
+        }
+        this.eventService.publish(
+            new OxUserCreatedEvent(person.referrer, result.value.id, contextId, result.value.primaryEmail),
+        );
     }
 }

@@ -6,8 +6,9 @@ import { validate, ValidationError } from 'class-validator';
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { UserRepresentationDto } from './keycloak-client/user-representation.dto.js';
-import { User } from './user.js';
+import { ExternalSystemIDs, User } from './user.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 
 export type FindUserFilter = {
     username?: string;
@@ -163,6 +164,50 @@ export class KeycloakUserService {
         }
     }
 
+    public async updateUser(username: string, oxUserID: OXUserID): Promise<Result<void, DomainError>> {
+        // Get authed client
+        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+            await this.kcAdminService.getAuthedKcAdminClient();
+
+        if (!kcAdminClientResult.ok) {
+            return kcAdminClientResult;
+        }
+
+        // Check for existing user
+        const filter: FindUserFilter = {
+            username: username,
+        };
+
+        const findResult: Result<User<true>, DomainError> = await this.findOne(filter);
+
+        if (!findResult.ok) {
+            return {
+                ok: false,
+                error: findResult.error,
+            };
+        }
+
+        const foundUser: User<true> = findResult.value;
+        const newExternalSystemIDs: ExternalSystemIDs = {
+            ID_ITSLEARNING: foundUser.externalSystemIDs.ID_ITSLEARNING,
+            ID_OX: oxUserID,
+        };
+
+        const userRepresentation: UserRepresentation = {
+            //only attributes shall be updated here for this event
+            attributes: newExternalSystemIDs,
+        };
+
+        try {
+            await kcAdminClientResult.value.users.update({ id: foundUser.id }, userRepresentation);
+
+            return { ok: true, value: undefined };
+        } catch (err) {
+            this.logger.error(`Could not update user-attributes, message: ${JSON.stringify(err)} `);
+            return { ok: false, error: new KeycloakClientError('Could not update user-attributes') };
+        }
+    }
+
     public async delete(id: string): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
@@ -266,12 +311,18 @@ export class KeycloakUserService {
             return { ok: false, error: new KeycloakClientError('Response is invalid') };
         }
 
+        const externalSystemIDs: ExternalSystemIDs = {};
+        if (userReprDto.attributes) {
+            externalSystemIDs.ID_ITSLEARNING = userReprDto.attributes['ID_ITSLEARNING'] as string;
+            externalSystemIDs.ID_OX = userReprDto.attributes['ID_OX'] as string;
+        }
+
         const userDo: User<true> = User.construct<true>(
             userReprDto.id,
             userReprDto.username,
             userReprDto.email,
             new Date(userReprDto.createdTimestamp),
-            {}, // UserAttributes
+            externalSystemIDs, // UserAttributes
         );
 
         return { ok: true, value: userDo };

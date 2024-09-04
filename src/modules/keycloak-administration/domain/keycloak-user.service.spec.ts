@@ -358,6 +358,60 @@ describe('KeycloakUserService', () => {
         });
     });
 
+    describe('updateUser', () => {
+        let username: string;
+        let oxUserID: string;
+
+        beforeEach(() => {
+            username = faker.internet.userName();
+            oxUserID = faker.string.uuid();
+        });
+
+        describe('when user does not exist', () => {
+            it('should return error', async () => {
+                kcUsersMock.find.mockRejectedValueOnce(new Error());
+                kcUsersMock.update.mockResolvedValueOnce();
+
+                const res: Result<void, DomainError> = await service.updateUser(username, oxUserID);
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+
+        describe('when user could not be updated', () => {
+            it('should return error result', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: faker.string.alphanumeric(),
+                        email: faker.string.alphanumeric(),
+                        id: faker.string.uuid(),
+                        createdTimestamp: faker.date.recent().getTime(),
+                    },
+                ]);
+                kcUsersMock.update.mockRejectedValueOnce(new Error());
+
+                const res: Result<void, DomainError> = await service.updateUser(username, oxUserID);
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+
+        describe('when getAuthedKcAdminClient fails', () => {
+            it('should pass along error result', async () => {
+                const error: Result<KeycloakAdminClient, DomainError> = {
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                };
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
+
+                const res: Result<void, DomainError> = await service.updateUser(username, oxUserID);
+
+                expect(res).toBe(error);
+            });
+        });
+    });
+
     describe('delete', () => {
         it('should return ok result if user exists', async () => {
             kcUsersMock.del.mockResolvedValueOnce();
