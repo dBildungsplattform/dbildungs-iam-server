@@ -8,8 +8,7 @@ import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.e
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { EventService } from '../../../core/eventbus/index.js';
-import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
-import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
+import { SimplePersonenkontextDeletedEvent } from '../../../shared/events/simple-personenkontext-deleted.event.js';
 import { UpdatePersonNotFoundError } from './error/update-person-not-found.error.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -211,7 +210,12 @@ export class PersonenkontexteUpdate {
                 await this.dBiamPersonenkontextRepo.delete(existingPK);
                 deletedPKs.push(existingPK);
                 this.eventService.publish(
-                    new PersonenkontextDeletedEvent(existingPK.personId, existingPK.organisationId, existingPK.rolleId),
+                    new SimplePersonenkontextDeletedEvent(
+                        existingPK.id,
+                        existingPK.personId,
+                        existingPK.organisationId,
+                        existingPK.rolleId,
+                    ),
                 );
             }
         }
@@ -236,9 +240,9 @@ export class PersonenkontexteUpdate {
             ) {
                 const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(sentPK);
                 createdPKs.push(savedPK);
-                this.eventService.publish(
+                /*this.eventService.publish(
                     new PersonenkontextCreatedEvent(sentPK.personId, sentPK.organisationId, sentPK.rolleId),
-                );
+                );*/
             }
         }
 
