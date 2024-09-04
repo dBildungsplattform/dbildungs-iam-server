@@ -54,6 +54,8 @@ describe('LDAP Event Handler', () => {
                 },
             ],
         })
+            .overrideProvider(ClassLogger)
+            .useValue(createMock<ClassLogger>())
             .overrideProvider(LdapClientService)
             .useValue(createMock<LdapClientService>())
             .overrideProvider(PersonRepository)
@@ -291,7 +293,7 @@ describe('LDAP Event Handler', () => {
 
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
+            expect(ldapClientServiceMock.deleteLehrerByPersonId).toHaveBeenCalledTimes(1);
         });
 
         describe('when ldap client fails', () => {
@@ -350,7 +352,7 @@ describe('LDAP Event Handler', () => {
 
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
+            expect(ldapClientServiceMock.deleteLehrerByPersonId).toHaveBeenCalledTimes(1);
         });
     });
 });
