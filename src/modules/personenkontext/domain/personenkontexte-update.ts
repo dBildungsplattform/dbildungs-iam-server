@@ -206,8 +206,13 @@ export class PersonenkontexteUpdate {
                         pk.rolleId == existingPK.rolleId,
                 )
             ) {
-                await this.dBiamPersonenkontextRepo.delete(existingPK);
-                deletedPKs.push(existingPK);
+                try {
+                    await this.dBiamPersonenkontextRepo.delete(existingPK).then(() => {});
+                    deletedPKs.push(existingPK);
+                } catch (err) {
+                    // DB error, ignore
+                    // Fired event will not contain this context as a deleted kontext
+                }
             }
         }
 
@@ -229,8 +234,13 @@ export class PersonenkontexteUpdate {
                         existingPK.rolleId == sentPK.rolleId,
                 )
             ) {
-                const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(sentPK);
-                createdPKs.push(savedPK);
+                try {
+                    const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(sentPK);
+                    createdPKs.push(savedPK);
+                } catch (err) {
+                    // DB error, ignore
+                    // Fired event will not contain this context as an added kontext
+                }
             }
         }
 
