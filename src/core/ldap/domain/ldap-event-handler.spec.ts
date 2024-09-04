@@ -293,7 +293,7 @@ describe('LDAP Event Handler', () => {
 
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-            expect(ldapClientServiceMock.deleteLehrerByPersonId).toHaveBeenCalledTimes(1);
+            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
         });
 
         describe('when ldap client fails', () => {
@@ -352,7 +352,7 @@ describe('LDAP Event Handler', () => {
 
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-            expect(ldapClientServiceMock.deleteLehrerByPersonId).toHaveBeenCalledTimes(1);
+            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
         });
     });
 });
