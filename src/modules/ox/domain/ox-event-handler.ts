@@ -29,6 +29,8 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
 
     private readonly authPassword: string;
 
+    private readonly contextID: OXContextID;
+
     public constructor(
         protected override readonly logger: ClassLogger,
         protected override readonly rolleRepo: RolleRepo,
@@ -45,6 +47,7 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
         this.ENABLED = oxConfig.ENABLED === 'true';
         this.authUser = oxConfig.USERNAME;
         this.authPassword = oxConfig.PASSWORD;
+        this.contextID = oxConfig.CONTEXT_ID;
     }
 
     @EventHandler(EmailAddressGeneratedEvent)
@@ -55,10 +58,6 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
 
         if (!this.ENABLED) {
             this.logger.info('Not enabled, ignoring event');
-            //DEMO
-            /*  this.eventService.publish(
-                new OxUserCreatedEvent('afam', '123', '1', 'afam@schule-sh.de'),
-            );*/
             return;
         }
 
@@ -78,7 +77,7 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
         }
 
         const existsParams: ExistsUserParams = {
-            contextId: '1',
+            contextId: this.contextID,
             username: person.vorname,
             login: this.authUser,
             password: this.authPassword,
@@ -93,9 +92,8 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
             return;
         }
 
-        const contextId: OXContextID = '1';
         const params: CreateUserParams = {
-            contextId: contextId,
+            contextId: this.contextID,
             displayName: person.vorname + person.familienname,
             email1: person.email,
             firstname: person.vorname,
@@ -126,7 +124,7 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
             return;
         }
         this.eventService.publish(
-            new OxUserCreatedEvent(person.referrer, result.value.id, contextId, result.value.primaryEmail),
+            new OxUserCreatedEvent(person.referrer, result.value.id, this.contextID, result.value.primaryEmail),
         );
     }
 }

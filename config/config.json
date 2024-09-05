@@ -67,6 +67,7 @@
     "OX": {
         "ENABLED": "false",
         "ENDPOINT": "http://ox.dev.spsh.dbildungsplattform.de/webservices/",
+        "CONTEXT_ID": "1337",
         "USERNAME": "username",
         "PASSWORD": "password"
     }
