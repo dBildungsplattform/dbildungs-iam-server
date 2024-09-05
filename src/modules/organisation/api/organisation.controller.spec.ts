@@ -429,6 +429,7 @@ describe('OrganisationController', () => {
                     limit: 10,
                     offset: 0,
                     total: 2,
+                    itemsCount: 2,
                 };
                 const organisatonResponse: OrganisationResponse[] = organisations.items.map(
                     (item: Organisation<true>) => new OrganisationResponse(item),
@@ -474,6 +475,7 @@ describe('OrganisationController', () => {
                     limit: 10,
                     offset: 0,
                     total: 2,
+                    itemsCount: 2,
                 };
                 const organisatonResponse: OrganisationResponse[] = organisations.items.map(
                     (item: Organisation<true>) => new OrganisationResponse(item),

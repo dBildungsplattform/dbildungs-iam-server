@@ -61,11 +61,11 @@ export class OrganisationRepository {
     }
 
     public async findBy(scope: OrganisationScope): Promise<Counted<Organisation<true>>> {
-        const [entities]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
+        const [entities, total]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
         const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
             mapEntityToAggregate(entity),
         );
-        return [organisations, organisations.length];
+        return [organisations, total];
     }
 
     public async save(organisation: Organisation<boolean>): Promise<Organisation<true>> {

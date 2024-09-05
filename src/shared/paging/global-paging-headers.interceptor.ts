@@ -36,5 +36,6 @@ export class GlobalPagingHeadersInterceptor implements NestInterceptor {
         response.setHeader(PagingHeaders.OFFSET, payload.offset);
         response.setHeader(PagingHeaders.LIMIT, payload.limit);
         response.setHeader(PagingHeaders.TOTAL, payload.total);
+        response.setHeader(PagingHeaders.ITEMS_COUNT, payload.itemsCount ?? 0);
     }
 }
