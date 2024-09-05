@@ -19,7 +19,7 @@ import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address
 import { ExistsUserAction, ExistsUserParams, ExistsUserResponse } from '../actions/user/exists-user.action.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { OxUserCreatedEvent } from '../../../shared/events/ox-user-created.event.js';
-import { OXContextID } from '../../../shared/types/ox-ids.types.js';
+import { OXContextID, OXContextName } from '../../../shared/types/ox-ids.types.js';
 
 @Injectable()
 export class OxEventHandler extends PersonenkontextCreatedEventHandler {
@@ -30,6 +30,8 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
     private readonly authPassword: string;
 
     private readonly contextID: OXContextID;
+
+    private readonly contextName: OXContextName;
 
     public constructor(
         protected override readonly logger: ClassLogger,
@@ -48,6 +50,7 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
         this.authUser = oxConfig.USERNAME;
         this.authPassword = oxConfig.PASSWORD;
         this.contextID = oxConfig.CONTEXT_ID;
+        this.contextName = oxConfig.CONTEXT_NAME;
     }
 
     @EventHandler(EmailAddressGeneratedEvent)
@@ -124,7 +127,14 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
             return;
         }
         this.eventService.publish(
-            new OxUserCreatedEvent(person.referrer, result.value.id, this.contextID, result.value.primaryEmail),
+            new OxUserCreatedEvent(
+                person.referrer,
+                result.value.id,
+                result.value.username,
+                this.contextID,
+                this.contextName,
+                result.value.primaryEmail,
+            ),
         );
     }
 }

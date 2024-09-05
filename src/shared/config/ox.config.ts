@@ -11,6 +11,9 @@ export class OxConfig {
     public readonly CONTEXT_ID!: string;
 
     @IsString()
+    public readonly CONTEXT_NAME!: string;
+
+    @IsString()
     public readonly USERNAME!: string;
 
     @IsString()

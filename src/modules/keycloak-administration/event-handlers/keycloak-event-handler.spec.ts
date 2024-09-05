@@ -6,6 +6,7 @@ import { KeycloakUserService } from '../domain/keycloak-user.service.js';
 import { KeycloakEventHandler } from './keycloak-event-handler.js';
 import { OxUserCreatedEvent } from '../../../shared/events/ox-user-created.event.js';
 import { faker } from '@faker-js/faker';
+import { OXContextID, OXContextName, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
 
 describe('KeycloakEventHandler', () => {
     let module: TestingModule;
@@ -41,13 +42,21 @@ describe('KeycloakEventHandler', () => {
 
     describe('handleOxUserCreatedEvent', () => {
         it('should log info and call KeycloakUserService', async () => {
-            const fakeOXUserID: string = faker.string.uuid();
-            const fakeOXContextID: string = faker.string.uuid();
+            const fakeOXUserID: OXUserID = faker.string.uuid();
+            const fakeOXContextID: OXContextID = faker.string.uuid();
+            const fakeOXUserName: OXUserName = faker.internet.userName();
+            const fakeOXContextName: OXContextName = 'context1';
             await sut.handleOxUserCreatedEvent(
-                new OxUserCreatedEvent(faker.internet.userName(), fakeOXUserID, fakeOXContextID),
+                new OxUserCreatedEvent(
+                    faker.internet.userName(),
+                    fakeOXUserID,
+                    fakeOXUserName,
+                    fakeOXContextID,
+                    fakeOXContextName,
+                ),
             );
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received OxUserCreatedEvent userId:${fakeOXUserID}, contextId:${fakeOXContextID}`,
+                `Received OxUserCreatedEvent userId:${fakeOXUserID}, userName:${fakeOXUserName} contextId:${fakeOXContextID}, contextName:${fakeOXContextName}`,
             );
             expect(keycloakUserServiceMock.updateUser).toHaveBeenCalledTimes(1);
         });

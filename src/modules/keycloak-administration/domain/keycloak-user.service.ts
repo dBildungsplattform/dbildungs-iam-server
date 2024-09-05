@@ -8,7 +8,9 @@ import { KeycloakAdministrationService } from './keycloak-admin-client.service.j
 import { UserRepresentationDto } from './keycloak-client/user-representation.dto.js';
 import { ExternalSystemIDs, User } from './user.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { OXUserID } from '../../../shared/types/ox-ids.types.js';
+import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js';
+import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { OxUserAttributesCreatedEvent } from '../../../shared/events/ox-user-attributes-created.event.js';
 
 export type FindUserFilter = {
     username?: string;
@@ -19,8 +21,8 @@ export type FindUserFilter = {
 export class KeycloakUserService {
     public constructor(
         private readonly kcAdminService: KeycloakAdministrationService,
-
         private readonly logger: ClassLogger,
+        private readonly eventService: EventService,
     ) {}
 
     public async create(user: User<false>, password?: string): Promise<Result<string, DomainError>> {
@@ -164,7 +166,11 @@ export class KeycloakUserService {
         }
     }
 
-    public async updateUser(username: string, oxUserID: OXUserID): Promise<Result<void, DomainError>> {
+    public async updateUser(
+        username: string,
+        oxUserName: OXUserName,
+        oxContextName: OXContextName,
+    ): Promise<Result<void, DomainError>> {
         // Get authed client
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
@@ -190,7 +196,7 @@ export class KeycloakUserService {
         const foundUser: User<true> = findResult.value;
         const newExternalSystemIDs: ExternalSystemIDs = {
             ID_ITSLEARNING: foundUser.externalSystemIDs.ID_ITSLEARNING,
-            ID_OX: oxUserID,
+            ID_OX: oxUserName + '@' + oxContextName,
         };
 
         const userRepresentation: UserRepresentation = {
@@ -201,6 +207,8 @@ export class KeycloakUserService {
         try {
             await kcAdminClientResult.value.users.update({ id: foundUser.id }, userRepresentation);
             this.logger.info(`Updated user-attributes for user:${foundUser.id}`);
+
+            this.eventService.publish(new OxUserAttributesCreatedEvent(username, oxUserName, oxContextName));
 
             return { ok: true, value: undefined };
         } catch (err) {

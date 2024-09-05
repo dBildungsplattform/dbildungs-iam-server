@@ -62,6 +62,7 @@ describe('configloader', () => {
                     ENABLED: 'true',
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
+                    CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                 },
             };
@@ -156,6 +157,7 @@ describe('configloader', () => {
                     ENABLED: 'true',
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
+                    CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                     PASSWORD: 'password',
                 },

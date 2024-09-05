@@ -14,8 +14,10 @@ export class KeycloakEventHandler {
 
     @EventHandler(OxUserCreatedEvent)
     public async handleOxUserCreatedEvent(event: OxUserCreatedEvent): Promise<void> {
-        this.logger.info(`Received OxUserCreatedEvent userId:${event.userId}, contextId:${event.contextId}`);
+        this.logger.info(
+            `Received OxUserCreatedEvent userId:${event.userId}, userName:${event.userName} contextId:${event.contextId}, contextName:${event.contextName}`,
+        );
 
-        await this.kcUserService.updateUser(event.keycloakUsername, event.userId);
+        await this.kcUserService.updateUser(event.keycloakUsername, event.userName, event.contextName);
     }
 }
