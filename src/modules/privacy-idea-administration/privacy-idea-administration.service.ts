@@ -211,7 +211,7 @@ export class PrivacyIdeaAdministrationService {
     }
 
     private async verifyTokenStatus(serial: string, token: string): Promise<TokenVerificationResponse> {
-        const url: string = this.privacyIdeaConfig.ENDPOINT + `/token?serial=${serial}`;
+        const url: string = this.privacyIdeaConfig.ENDPOINT + `/token?serial=${serial}&type=totp`;
         const headers: { Authorization: string } = {
             Authorization: `${token}`,
         };
@@ -243,7 +243,7 @@ export class PrivacyIdeaAdministrationService {
 
     private async assignToken(serial: string, token: string, user: string): Promise<AssignTokenResponse> {
         const url: string = this.privacyIdeaConfig.ENDPOINT + '/token/assign';
-        const realm: string = this.privacyIdeaConfig.USER_RESOLVER;
+        const realm: string = this.privacyIdeaConfig.REALM;
         const headers: { Authorization: string; 'Content-Type': string } = {
             Authorization: `${token}`,
             'Content-Type': 'application/json',

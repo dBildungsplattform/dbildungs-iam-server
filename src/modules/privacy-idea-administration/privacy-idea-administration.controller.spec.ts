@@ -225,6 +225,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
     });
+
     describe('PrivacyIdeaAdministrationController assignHardwareToken', () => {
         beforeEach(() => {
             personPermissionsMock = createMock<PersonPermissions>();

@@ -63,6 +63,7 @@ describe('configloader', () => {
                     USERNAME: 'admin',
                     PASSWORD: 'admin',
                     USER_RESOLVER: 'mariadb_resolver',
+                    REALM: 'defrealm',
                 },
                 OX: {
                     ENABLED: 'true',
@@ -162,6 +163,7 @@ describe('configloader', () => {
                     USERNAME: 'admin',
                     PASSWORD: 'admin',
                     USER_RESOLVER: 'mariadb_resolver',
+                    REALM: 'defrealm',
                 },
                 OX: {
                     ENABLED: 'true',

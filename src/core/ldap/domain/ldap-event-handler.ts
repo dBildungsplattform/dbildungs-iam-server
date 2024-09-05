@@ -5,10 +5,9 @@ import { LdapClientService, PersonData } from './ldap-client.service.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
 import { SchuleDeletedEvent } from '../../../shared/events/schule-deleted.event.js';
-import {
-    PersonenkontextUpdatedData,
-    PersonenkontextUpdatedEvent,
-} from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -52,21 +51,34 @@ export class LdapEventHandler {
         }
     }
 
+    @EventHandler(PersonenkontextDeletedEvent)
+    public async handlePersonenkontextDeletedEvent(event: PersonenkontextDeletedEvent): Promise<void> {
+        this.logger.info(
+            `Received PersonenkontextDeletedEvent, personId:${event.personData.id}, orgaId:${event.kontextData.orgaId}, rolleId:${event.kontextData.rolleId}`,
+        );
+        const deletionResult: Result<PersonData> = await this.ldapClientService.deleteLehrer(event.personData, {
+            kennung: event.kontextData.orgaKennung,
+        });
+        if (!deletionResult.ok) {
+            this.logger.error(deletionResult.error.message);
+        }
+    }
+
     @EventHandler(PersonenkontextUpdatedEvent)
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
-            `Received PersonenkontextCreatedEvent, personId:${event.person.id}, new personenkontexte: ${event.newKontexte.length}, deleted personenkontexte: ${event.removedKontexte.length}`,
+            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, new personenkontexte: ${event.newKontexte.length}, deleted personenkontexte: ${event.removedKontexte.length}`,
         );
 
         // Delete all removed personenkontexte if rollenart === LEHR
         await Promise.allSettled(
             event.removedKontexte
-                .filter((pk: PersonenkontextUpdatedData) => pk.rolle === RollenArt.LEHR)
-                .map(async (pk: PersonenkontextUpdatedData) => {
-                    this.logger.info(`Call LdapClientService because rollenArt is LEHR`);
-                    const deletionResult: Result<PersonData> = await this.ldapClientService.deleteLehrer(event.person, {
-                        kennung: pk.orgaKennung,
-                    });
+                .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
+                .map(async (pk: PersonenkontextEventKontextData) => {
+                    this.logger.info(`Call LdapClientService because rollenArt is LEHR, pkId: ${pk.id}`);
+                    const deletionResult: Result<PersonData> = await this.ldapClientService.deleteLehrerByPersonId(
+                        event.person,
+                    );
                     if (!deletionResult.ok) {
                         this.logger.error(deletionResult.error.message);
                     }
@@ -76,8 +88,8 @@ export class LdapEventHandler {
         // Create personenkontexte if rollenart === LEHR
         await Promise.allSettled(
             event.newKontexte
-                .filter((pk: PersonenkontextUpdatedData) => pk.rolle === RollenArt.LEHR)
-                .map(async (pk: PersonenkontextUpdatedData) => {
+                .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
+                .map(async (pk: PersonenkontextEventKontextData) => {
                     this.logger.info(`Call LdapClientService because rollenArt is LEHR`);
                     const creationResult: Result<PersonData> = await this.ldapClientService.createLehrer(event.person, {
                         kennung: pk.orgaKennung,

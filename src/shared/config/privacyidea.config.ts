@@ -12,4 +12,7 @@ export class PrivacyIdeaConfig {
 
     @IsString()
     public readonly ENDPOINT!: string;
+
+    @IsString()
+    public readonly REALM!: string;
 }

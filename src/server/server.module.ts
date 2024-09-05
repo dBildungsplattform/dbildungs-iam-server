@@ -33,6 +33,7 @@ import { EventModule } from '../core/eventbus/index.js';
 import { ItsLearningModule } from '../modules/itslearning/itslearning.module.js';
 import { LdapModule } from '../core/ldap/ldap.module.js';
 import { EmailModule } from '../modules/email/email.module.js';
+import { UtilityModule } from '../modules/utility/utility.module.js';
 import { OxModule } from '../modules/ox/ox.module.js';
 
 @Module({
@@ -89,6 +90,7 @@ import { OxModule } from '../modules/ox/ox.module.js';
         EmailModule,
         OxModule,
         PrivacyIdeaAdministrationModule,
+        UtilityModule, //necessary to enable event-adapter to transform events
     ],
     providers: [
         {
