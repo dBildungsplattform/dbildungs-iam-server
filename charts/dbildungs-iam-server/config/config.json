@@ -55,10 +55,12 @@
     "PASSWORD": "password",
     "ROOT_OEFFENTLICH": "oeffentlich",
     "ROOT_ERSATZ": "ersatz"
-  }, 
+  },
   "OX": {
     "ENABLED": "false",
     "ENDPOINT": "https://ox_ip:ox_port/webservices/OXUserService",
+    "CONTEXT_ID": "1337",
+    "CONTEXT_NAME": "contextname",
     "USERNAME": "username",
     "PASSWORD": "password"
   }
