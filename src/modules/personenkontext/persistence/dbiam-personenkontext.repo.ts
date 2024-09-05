@@ -18,7 +18,7 @@ import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { EventService } from '../../../core/eventbus/index.js';
-import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
+import { SimplePersonenkontextDeletedEvent } from '../../../shared/events/simple-personenkontext-deleted.event.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
@@ -349,7 +349,8 @@ export class DBiamPersonenkontextRepo {
             rolleId: rolleId,
         });
         this.eventService.publish(
-            new PersonenkontextDeletedEvent(
+            new SimplePersonenkontextDeletedEvent(
+                personenKontext.id,
                 personenKontext.personId,
                 personenKontext.organisationId,
                 personenKontext.rolleId,
