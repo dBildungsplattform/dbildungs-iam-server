@@ -13,7 +13,7 @@ export class PagedResponse<T> {
     public readonly limit: number;
 
     @Exclude()
-    public readonly itemsCount?: number;
+    public readonly pageTotal?: number;
 
     @ApiProperty()
     public readonly items: T[];
@@ -23,6 +23,6 @@ export class PagedResponse<T> {
         this.offset = page.offset;
         this.limit = page.limit;
         this.items = page.items;
-        this.itemsCount = page.itemsCount
+        this.pageTotal = page.pageTotal;
     }
 }
