@@ -322,19 +322,13 @@ export class OrganisationController {
             queryParams.limit,
         );
 
-        const organisations: OrganisationResponse[] = result.items.map(
-            (item: Organisation<true>) => new OrganisationResponse(item),
-        );
-
-        const response: PagedResponse<OrganisationResponse> = new PagedResponse({
+        return new PagedResponse({
             total: result.total,
             offset: result.offset,
             limit: result.limit,
-            items: organisations,
-            pageTotal: organisations.length,
+            items: result.items.map((item: Organisation<true>) => new OrganisationResponse(item)),
+            pageTotal: result.items.length,
         });
-
-        return response;
     }
 
     @Post(':organisationId/administriert')
