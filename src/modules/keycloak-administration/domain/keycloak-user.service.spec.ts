@@ -367,10 +367,18 @@ describe('KeycloakUserService', () => {
             oxUserID = faker.string.uuid();
         });
 
-        describe('when user does not exist', () => {
-            it('should return error', async () => {
-                kcUsersMock.find.mockRejectedValueOnce(new Error());
-                kcUsersMock.update.mockResolvedValueOnce();
+        describe('when user could not be updated', () => {
+            it('should return error result', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: faker.string.alphanumeric(),
+                        email: faker.internet.email(),
+                        id: faker.string.uuid(),
+                        createdTimestamp: faker.date.recent().getTime(),
+                    },
+                ]);
+
+                kcUsersMock.update.mockRejectedValueOnce(new Error());
 
                 const res: Result<void, DomainError> = await service.updateUser(username, oxUserID);
 
@@ -378,17 +386,29 @@ describe('KeycloakUserService', () => {
             });
         });
 
-        describe('when user could not be updated', () => {
-            it('should return error result', async () => {
+        describe('when updating user is successful', () => {
+            it('should log info', async () => {
                 kcUsersMock.find.mockResolvedValueOnce([
                     {
                         username: faker.string.alphanumeric(),
-                        email: faker.string.alphanumeric(),
+                        email: faker.internet.email(),
                         id: faker.string.uuid(),
                         createdTimestamp: faker.date.recent().getTime(),
                     },
                 ]);
-                kcUsersMock.update.mockRejectedValueOnce(new Error());
+
+                kcUsersMock.update.mockResolvedValueOnce();
+
+                const res: Result<void, DomainError> = await service.updateUser(username, oxUserID);
+
+                expect(res.ok).toBeTruthy();
+            });
+        });
+
+        describe('when user does not exist', () => {
+            it('should return error', async () => {
+                kcUsersMock.find.mockRejectedValueOnce(new Error());
+                kcUsersMock.update.mockResolvedValueOnce();
 
                 const res: Result<void, DomainError> = await service.updateUser(username, oxUserID);
 

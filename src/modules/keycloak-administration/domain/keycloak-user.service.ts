@@ -200,10 +200,12 @@ export class KeycloakUserService {
 
         try {
             await kcAdminClientResult.value.users.update({ id: foundUser.id }, userRepresentation);
+            this.logger.info(`Updated user-attributes for user:${foundUser.id}`);
 
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.error(`Could not update user-attributes, message: ${JSON.stringify(err)} `);
+            this.logger.error(`Could not update user-attributes, message: ${JSON.stringify(err)}`);
+
             return { ok: false, error: new KeycloakClientError('Could not update user-attributes') };
         }
     }
