@@ -278,6 +278,7 @@ export class OrganisationController {
             .paged(queryParams.offset, queryParams.limit);
 
         const [organisations, total]: Counted<Organisation<true>> = await this.organisationRepository.findBy(scope);
+
         const organisationResponses: OrganisationResponse[] = organisations.map((organisation: Organisation<true>) => {
             return new OrganisationResponse(organisation);
         });
