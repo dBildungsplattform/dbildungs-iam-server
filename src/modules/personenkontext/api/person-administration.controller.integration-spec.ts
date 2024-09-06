@@ -73,6 +73,7 @@ describe('PersonAdministrationController Integration Test', () => {
             .compile();
 
         orm = module.get(MikroORM);
+        organisationRepo = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 

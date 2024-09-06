@@ -11,8 +11,8 @@ import {
     EntityNotFoundError,
 } from '../../../shared/error/index.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Person } from '../domain/person.js';
@@ -115,17 +115,15 @@ export class PersonRepository {
         requiredRight: RollenSystemRecht = RollenSystemRecht.PERSONEN_VERWALTEN,
     ): Promise<PersonScope> {
         // Find all organisations where user has the required permission
-        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrechtDeprecated(
-            [requiredRight],
-            true,
-        );
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht([requiredRight], true);
 
         // Check if user has permission on root organisation
-        if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
-            organisationIDs = undefined;
+        if (permittedOrgas.all) {
+            return new PersonScope();
         }
-
-        return new PersonScope().findBy({ organisationen: organisationIDs }).setScopeWhereOperator(ScopeOperator.AND);
+        return new PersonScope()
+            .findBy({ organisationen: permittedOrgas.orgaIds })
+            .setScopeWhereOperator(ScopeOperator.AND);
     }
 
     public async findBy(scope: PersonScope): Promise<Counted<Person<true>>> {
