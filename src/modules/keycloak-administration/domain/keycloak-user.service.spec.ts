@@ -644,7 +644,8 @@ describe('KeycloakUserService', () => {
     });
 
     describe('getLastPasswordChange', () => {
-        const mockUser: UserRepresentation = { id: faker.string.uuid(), createdTimestamp: faker.date.past().valueOf() };
+        const userCreationTimestamp: number = faker.date.past().valueOf();
+        const mockUser: UserRepresentation = { id: faker.string.uuid(), createdTimestamp: userCreationTimestamp };
         describe('when the password has been updated', () => {
             const updatedAt: number = Date.now();
             const mockCredentials: Array<CredentialRepresentation> = [
@@ -699,7 +700,7 @@ describe('KeycloakUserService', () => {
                 { credentials: [{ type: 'other' }], error: 'Keycloak user has no password' },
                 { credentials: [{ type: 'password' }], error: 'Keycloak user password has no createdDate' },
                 {
-                    credentials: [{ type: 'password', createdDate: mockUser.createdTimestamp! }],
+                    credentials: [{ type: 'password', createdDate: userCreationTimestamp }],
                     error: 'Keycloak user password has never been updated',
                 },
             ];
@@ -715,6 +716,19 @@ describe('KeycloakUserService', () => {
                     });
                 },
             );
+        });
+        describe('when getAuthedKcAdminClient fails', () => {
+            it('should pass along error result', async () => {
+                const error: Result<KeycloakAdminClient, DomainError> = {
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                };
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
+                const res: Result<number, DomainError> = await service.getLastPasswordChange(faker.string.uuid());
+
+                expect(res).toBe(error);
+            });
         });
     });
 });
