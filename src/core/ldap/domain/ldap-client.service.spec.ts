@@ -211,6 +211,7 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
                 const testLehrer: PersonData = {
+                    id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
                     referrer: faker.lorem.word(),
