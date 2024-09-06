@@ -23,6 +23,8 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rollenart-for-lern.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { CheckRollenartLernSpecification } from '../specification/nur-rolle-lern.js';
+import { CheckBefristungSpecification } from '../specification/befristung-required-bei-rolle-befristungspflicht.js';
+import { PersonenkontextBefristungRequiredError } from './error/personenkontext-befristung-required.error.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -89,6 +91,7 @@ export class PersonenkontexteUpdate {
                     undefined,
                     undefined,
                     undefined,
+                    pkBodyParam.befristung,
                 );
                 personenKontexte.push(newPK); // New
             } else {
@@ -264,6 +267,18 @@ export class PersonenkontexteUpdate {
         return undefined;
     }
 
+    private async checkBefristungSpecification(
+        sentPKs: Personenkontext<boolean>[],
+    ): Promise<Option<PersonenkontexteUpdateError>> {
+        const isSatisfied: boolean = await new CheckBefristungSpecification(this.rolleRepo).checkBefristung(sentPKs);
+
+        if (!isSatisfied) {
+            return new PersonenkontextBefristungRequiredError();
+        }
+
+        return undefined;
+    }
+
     public async update(ldapEntryUUID?: string): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
         //If first lehrer kontext is created and a UUID is passed as ldapEntryUUID it is used as internal LDAP entryUUID (needed for migration, can be build back afterwards)
         const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
@@ -272,10 +287,17 @@ export class PersonenkontexteUpdate {
         }
 
         const existingPKs: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(this.personId);
+
         const validationForLernError: Option<PersonenkontexteUpdateError> =
             await this.checkRollenartLernSpecification(sentPKs);
         if (validationForLernError) {
             return validationForLernError;
+        }
+
+        const validationForBefristung: Option<PersonenkontexteUpdateError> =
+            await this.checkBefristungSpecification(sentPKs);
+        if (validationForBefristung) {
+            return validationForBefristung;
         }
         const validationError: Option<PersonenkontexteUpdateError> = await this.validate(existingPKs);
         if (validationError) {
