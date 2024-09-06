@@ -47,7 +47,7 @@ export class Personenkontext<WasPersisted extends boolean> {
         public readonly sichtfreigabe: SichtfreigabeType | undefined,
         public readonly loeschungZeitpunkt: Date | undefined,
         public readonly revision: Persisted<string, WasPersisted>,
-        public readonly befristung: Date | undefined
+        public readonly befristung: Date | undefined,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
