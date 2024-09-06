@@ -1,29 +1,14 @@
-import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enums.js';
-import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
-import { OrganisationID, PersonID, PersonenkontextID, RolleID } from '../types/index.js';
 import { BaseEvent } from './base-event.js';
 
 import { type Organisation } from '../../modules/organisation/domain/organisation.js';
 import { type Person } from '../../modules/person/domain/person.js';
 import { type Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { type Rolle } from '../../modules/rolle/domain/rolle.js';
+import { PersonenkontextEventKontextData, PersonenkontextEventPersonData } from './personenkontext-event.types.js';
 
-export type PersonenkontextUpdatedPersonData = {
-    id: PersonID;
-    vorname: string;
-    familienname: string;
-    referrer?: string;
-    ldapEntryUUID?: string;
-};
+export type PersonenkontextUpdatedPersonData = PersonenkontextEventPersonData;
 
-export type PersonenkontextUpdatedData = {
-    id: PersonenkontextID;
-    rolleId: RolleID;
-    rolle: RollenArt;
-    orgaId: OrganisationID;
-    orgaTyp?: OrganisationsTyp;
-    orgaKennung?: string;
-};
+export type PersonenkontextUpdatedData = PersonenkontextEventKontextData;
 
 function mapPersonToData(person: Person<true>, ldapEntryUUID?: string): PersonenkontextUpdatedPersonData {
     return {
@@ -32,6 +17,7 @@ function mapPersonToData(person: Person<true>, ldapEntryUUID?: string): Personen
         familienname: person.familienname,
         referrer: person.referrer,
         ldapEntryUUID: ldapEntryUUID,
+        email: person.email,
     };
 }
 
@@ -39,7 +25,7 @@ function mapPersonenkontextAndRolleAggregateToData([pk, orga, rolle]: [
     Personenkontext<true>,
     Organisation<true>,
     Rolle<true>,
-]): PersonenkontextUpdatedData {
+]): PersonenkontextEventKontextData {
     return {
         id: pk.id,
         rolleId: pk.rolleId,
@@ -52,10 +38,10 @@ function mapPersonenkontextAndRolleAggregateToData([pk, orga, rolle]: [
 
 export class PersonenkontextUpdatedEvent extends BaseEvent {
     public constructor(
-        public readonly person: PersonenkontextUpdatedPersonData,
-        public readonly newKontexte: PersonenkontextUpdatedData[],
-        public readonly removedKontexte: PersonenkontextUpdatedData[],
-        public readonly currentKontexte: PersonenkontextUpdatedData[],
+        public readonly person: PersonenkontextEventPersonData,
+        public readonly newKontexte: PersonenkontextEventKontextData[],
+        public readonly removedKontexte: PersonenkontextEventKontextData[],
+        public readonly currentKontexte: PersonenkontextEventKontextData[],
     ) {
         super();
     }
