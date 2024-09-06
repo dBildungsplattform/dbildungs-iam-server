@@ -1,7 +1,7 @@
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Query, UseFilters } from '@nestjs/common';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { Public } from '../authentication/api/public.decorator.js';
-import { PrivacyIdeaToken } from './privacy-idea-api.types.js';
+import { AssignTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -20,7 +20,14 @@ import { Permissions } from '../authentication/api/permissions.decorator.js';
 import { Person } from '../person/domain/person.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { TokenVerifyBodyParams } from './token-verify.params.js';
+import { AssignHardwareTokenBodyParams } from './api/assign-hardware-token.body.params.js';
+import { AssignHardwareTokenResponse } from './api/assign-hardware-token.response.js';
+import { TokenError } from './api/error/token.error.js';
+import { PrivacyIdeaAdministrationExceptionFilter } from './api/privacy-idea-administration-exception-filter.js';
+import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
+import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
 
+@UseFilters(new PrivacyIdeaAdministrationExceptionFilter())
 @ApiTags('2FA')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -79,7 +86,6 @@ export class PrivacyIdeaAdministrationController {
             personId,
             permissions,
         );
-
         if (!personResult.ok) {
             throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
         }
@@ -91,6 +97,60 @@ export class PrivacyIdeaAdministrationController {
             personResult.value.referrer,
         );
         return new TokenStateResponse(piToken);
+    }
+
+    @Post('assign/hardwareToken')
+    @HttpCode(HttpStatus.OK)
+    @ApiCreatedResponse({
+        description: 'The hardware token was successfully assigned.',
+        type: AssignHardwareTokenResponse,
+    })
+    @ApiBadRequestResponse({ description: 'Not found.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to assign hardware token.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to reset token.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to assign hardware token.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while assigning a hardware token.' })
+    @Public()
+    public async assignHardwareToken(
+        @Body() params: AssignHardwareTokenBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<AssignHardwareTokenResponse | undefined> {
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            params.userId,
+            permissions,
+        );
+        if (!personResult.ok) {
+            throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
+        }
+
+        if (personResult.value.referrer === undefined) {
+            throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
+        }
+        try {
+            const result: AssignTokenResponse = await this.privacyIdeaAdministrationService.assignHardwareToken(
+                params.serial,
+                params.otp,
+                personResult.value.referrer,
+            );
+            return new AssignHardwareTokenResponse(
+                result.id,
+                result.jsonrpc,
+                result.time,
+                result.version,
+                result.versionnumber,
+                result.signature,
+                'Token wurde erfolgreich zugeordnet.',
+            );
+        } catch (error) {
+            if (error instanceof TokenError) {
+                throw error;
+            }
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityCouldNotBeCreated('Hardware-Token could not be assigned.'),
+                ),
+            );
+        }
     }
 
     @Post('verify')

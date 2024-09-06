@@ -9,17 +9,17 @@ export class TokenStateResponse {
     public tokenKind: string;
 
     @ApiProperty()
-    public tokenSerial: string;
+    public serial: string;
 
     public constructor(token: PrivacyIdeaToken | undefined) {
         if (token) {
             this.hasToken = true;
             this.tokenKind = token.info.tokenkind;
-            this.tokenSerial = token.serial;
+            this.serial = token.serial;
         } else {
             this.hasToken = false;
             this.tokenKind = '';
-            this.tokenSerial = '';
+            this.serial = '';
         }
     }
 }

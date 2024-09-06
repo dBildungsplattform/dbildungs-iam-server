@@ -324,6 +324,53 @@ describe('LDAP Client Service', () => {
             });
         });
 
+        describe('delete lehrer by personId', () => {
+            it('should return truthy result', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [createMock<Entry>()],
+                        }),
+                    );
+                    clientMock.del.mockResolvedValueOnce();
+                    return clientMock;
+                });
+
+                const result: Result<PersonData> = await ldapClientService.deleteLehrerByPersonId(person);
+
+                expect(result.ok).toBeTruthy();
+            });
+
+            it('should return error when lehrer cannot be found', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [],
+                        }),
+                    );
+                    clientMock.del.mockResolvedValueOnce();
+                    return clientMock;
+                });
+
+                const result: Result<PersonData> = await ldapClientService.deleteLehrerByPersonId(person);
+
+                expect(result.ok).toBeFalsy();
+            });
+
+            it('when bind returns error', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockRejectedValueOnce(new Error());
+                    clientMock.add.mockResolvedValueOnce();
+                    return clientMock;
+                });
+                const result: Result<PersonData> = await ldapClientService.deleteLehrerByPersonId(person);
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+
         describe('delete organisation', () => {
             it('when called with valid organisation should return truthy result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
