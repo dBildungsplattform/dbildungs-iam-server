@@ -15,6 +15,7 @@ import { AssignHardwareTokenResponse } from './api/assign-hardware-token.respons
 import { TokenError } from './api/error/token.error.js';
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
+import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
@@ -192,7 +193,9 @@ describe('PrivacyIdeaAdministrationController', () => {
                 value: person,
             });
             const personId: string = 'user1';
-            const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
+            const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>({
+                result: { status: true },
+            });
             serviceMock.resetToken.mockResolvedValue(mockResetTokenResponse);
 
             const response: boolean = await sut.resetToken(personId, personPermissionsMock);
@@ -223,6 +226,42 @@ describe('PrivacyIdeaAdministrationController', () => {
             await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toThrow(
                 new HttpException('User not found.', HttpStatus.BAD_REQUEST),
             );
+        });
+
+        it('should throw TokenError if caught during resetToken', async () => {
+            const person: Person<true> = getPerson();
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: true,
+                value: person,
+            });
+
+            const personId: string = 'user1';
+            const tokenError: TokenError = new TokenError('Something went wrong', 'Error');
+            serviceMock.resetToken.mockRejectedValue(tokenError);
+
+            await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toThrow(tokenError);
+
+            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.referrer);
+        });
+
+        it('should map other errors to SchulConnexError', async () => {
+            const person: Person<true> = getPerson();
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: true,
+                value: person,
+            });
+
+            const personId: string = 'user1';
+            const entityCouldNotBeUpdatedError: EntityCouldNotBeUpdated = createMock<EntityCouldNotBeUpdated>();
+            serviceMock.resetToken.mockRejectedValue(entityCouldNotBeUpdatedError);
+
+            await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toThrow(
+                SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(entityCouldNotBeUpdatedError),
+                ),
+            );
+
+            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.referrer);
         });
     });
 
