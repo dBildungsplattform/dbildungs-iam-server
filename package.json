@@ -30,7 +30,6 @@
         "db:migration-apply": "npm run start:console -- db migration-apply",
         "setup": "npm run db:migration-apply && npm run db:seed dev",
         "db:seedingdata-generate": "npm run start:console -- db seedingdata-generate ./seeding/dev/01/ numberOfSchools=50 classesPerSchool=12"
-
     },
     "dependencies": {
         "@automapper/classes": "^8.8.1",
@@ -63,6 +62,7 @@
         "generate-password-ts": "^1.6.5",
         "jsonwebtoken": "^9.0.2",
         "jwks-rsa": "^3.1.0",
+        "jwt-decode": "^4.0.0",
         "ldapts": "^7.0.11",
         "lodash-es": "^4.17.21",
         "nest-commander": "^3.12.5",

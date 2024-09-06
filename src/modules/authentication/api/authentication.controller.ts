@@ -29,6 +29,12 @@ import { RolleID } from '../../../shared/types/index.js';
 import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
 import { RollenSystemRechtServiceProviderIDResponse } from './rolle-systemrechte-serviceproviderid.response.js';
 import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
+import { jwtDecode, JwtPayload } from 'jwt-decode';
+
+interface CustomJwtPayload extends JwtPayload {
+    acr?: string;
+}
+
 @UseFilters(new AuthenticationExceptionFilter())
 @ApiTags('auth')
 @Controller({ path: 'auth' })
@@ -105,7 +111,7 @@ export class AuthenticationController {
     @ApiOperation({ summary: 'Info about logged in user.' })
     @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
     @ApiOkResponse({ description: 'Returns info about the logged in user.', type: UserinfoResponse })
-    public async info(@Permissions() permissions: PersonPermissions): Promise<UserinfoResponse> {
+    public async info(@Permissions() permissions: PersonPermissions, @Req() req: Request): Promise<UserinfoResponse> {
         const roleIds: RolleID[] = await permissions.getRoleIds();
         this.logger.info('Roles: ' + roleIds.toString());
         this.logger.info('User: ' + JSON.stringify(permissions.personFields));
@@ -120,7 +126,12 @@ export class AuthenticationController {
                     ),
                 ),
         );
-        return new UserinfoResponse(permissions, rolleFieldsResponse);
+
+        let decodedIdToken: CustomJwtPayload = { acr: '' };
+        if (req.passportUser?.access_token) {
+            decodedIdToken = jwtDecode<CustomJwtPayload>(req.passportUser?.access_token);
+        }
+        return new UserinfoResponse(permissions, rolleFieldsResponse, decodedIdToken.acr ?? '');
     }
 
     @Get('reset-password')

@@ -63,7 +63,10 @@ export class UserinfoResponse {
     @ApiProperty({ type: PersonenkontextRolleFieldsResponse, isArray: true })
     public personenkontexte: PersonenkontextRolleFieldsResponse[];
 
-    public constructor(info: PersonPermissions, personenkontexte: PersonenkontextRolleFieldsResponse[]) {
+    @ApiProperty()
+    public acr?: string;
+
+    public constructor(info: PersonPermissions, personenkontexte: PersonenkontextRolleFieldsResponse[], acr: string) {
         this.sub = info.personFields.keycloakUserId!;
         this.personId = info.personFields.id;
         this.name = `${info.personFields.vorname} ${info.personFields.familienname}`;
@@ -75,5 +78,6 @@ export class UserinfoResponse {
         this.birthdate = info.personFields.geburtsdatum?.toISOString();
         this.updated_at = info.personFields.updatedAt.getTime() / 1000;
         this.personenkontexte = personenkontexte;
+        this.acr = acr;
     }
 }

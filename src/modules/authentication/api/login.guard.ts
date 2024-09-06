@@ -25,9 +25,6 @@ export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
         if (request.query['redirectUrl']) {
             request.session.redirectUrl = request.query['redirectUrl'] as string;
         }
-        if (request.isAuthenticated()) {
-            return true;
-        }
 
         try {
             if (!(await super.canActivate(context))) {

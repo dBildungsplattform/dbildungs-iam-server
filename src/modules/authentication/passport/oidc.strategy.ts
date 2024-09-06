@@ -9,6 +9,7 @@ import { PassportUser } from '../types/user.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
+import { Request } from 'express';
 
 @Injectable()
 export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
@@ -25,6 +26,16 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
             params: { redirect_uri: frontendConfig.OIDC_CALLBACK_URL },
             passReqToCallback: false,
         } satisfies StrategyOptions);
+    }
+
+    public override authenticate(req: Request): void {
+        const acrValue: string = req.query['stepUp'] === 'true' ? 'gold' : 'silver';
+
+        const options: { acr_values: string } = {
+            acr_values: acrValue,
+        };
+
+        super.authenticate(req, options);
     }
 
     public async validate(tokenset: TokenSet): Promise<AuthorizationParameters & PassportUser> {
