@@ -325,7 +325,7 @@ describe('OrganisationController', () => {
                         .setScopeWhereOperator(ScopeOperator.AND)
                         .findByAdministriertVonArray(queryParams.administriertVon)
                         .searchString(queryParams.searchString)
-                        .byIDs()
+                        .byIDs([])
                         .paged(queryParams.offset, queryParams.limit),
                 );
 
