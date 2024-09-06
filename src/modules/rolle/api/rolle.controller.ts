@@ -58,6 +58,8 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { RolleDomainError } from '../domain/rolle-domain.error.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -71,6 +73,7 @@ export class RolleController {
         private readonly orgService: OrganisationService,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly organisationRepository: OrganisationRepository,
     ) {}
 
     @Get()
@@ -104,6 +107,12 @@ export class RolleController {
             };
             return new PagedResponse(pagedRolleWithServiceProvidersResponse);
         }
+        const administeredBySchulstrukturknotenIds: string[] = rollen.map(
+            (r: Rolle<true>) => r.administeredBySchulstrukturknoten,
+        );
+        const administeredOrganisations: Map<string, Organisation<true>> = await this.organisationRepository.findByIds(
+            administeredBySchulstrukturknotenIds,
+        );
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {
@@ -111,7 +120,10 @@ export class RolleController {
                     .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
                     .filter(Boolean) as ServiceProvider<true>[];
 
-                return new RolleWithServiceProvidersResponse(r, sps);
+                const administeredBySchulstrukturknotenName: string | undefined =
+                    administeredOrganisations.get(r.administeredBySchulstrukturknoten)?.name ?? undefined;
+
+                return new RolleWithServiceProvidersResponse(r, sps, administeredBySchulstrukturknotenName);
             },
         );
         const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
@@ -384,6 +396,13 @@ export class RolleController {
             .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
             .filter(Boolean) as ServiceProvider<true>[];
 
-        return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
+        const administeredBySchulstrukturknotenName: string | undefined =
+            (await this.organisationRepository.findById(rolle.administeredBySchulstrukturknoten))?.name ?? undefined;
+
+        return new RolleWithServiceProvidersResponse(
+            rolle,
+            rolleServiceProviders,
+            administeredBySchulstrukturknotenName,
+        );
     }
 }
