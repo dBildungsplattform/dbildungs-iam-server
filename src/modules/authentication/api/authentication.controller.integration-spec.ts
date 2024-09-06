@@ -25,6 +25,7 @@ import { ServiceProviderModule } from '../../service-provider/service-provider.m
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { KeycloakConfig } from '../../../shared/config/keycloak.config.js';
+import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -47,6 +48,7 @@ describe('AuthenticationController', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonModule,
                 PersonenKontextModule,
+                KeycloakAdministrationModule,
             ],
             providers: [
                 AuthenticationController,
