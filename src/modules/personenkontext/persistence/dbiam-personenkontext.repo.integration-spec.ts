@@ -23,7 +23,6 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { OrganisationID, PersonenkontextID } from '../../../shared/types/aggregate-ids.types.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
@@ -37,6 +36,7 @@ import { PersonenkontextScope } from './personenkontext.scope.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { organisationCreatorFactory } from '../../../../test/utils/organisation-test-helper.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -49,6 +49,11 @@ describe('dbiam Personenkontext Repo', () => {
     let organisationRepository: OrganisationRepository;
     let rolleRepo: RolleRepo;
     let rolleFactory: RolleFactory;
+    let createOrganisation: (
+        parentOrga: OrganisationID | undefined,
+        isRoot: boolean,
+        typ: OrganisationsTyp,
+    ) => Promise<OrganisationID>;
 
     let personenkontextFactory: PersonenkontextFactory;
 
@@ -121,6 +126,7 @@ describe('dbiam Personenkontext Repo', () => {
         personenkontextFactory = module.get(PersonenkontextFactory);
 
         await DatabaseTestModule.setupDatabase(orm);
+        createOrganisation = organisationCreatorFactory(orm.em, organisationRepository);
     }, 10000000);
 
     async function createPerson(): Promise<Person<true>> {
@@ -139,30 +145,6 @@ describe('dbiam Personenkontext Repo', () => {
         }
 
         return person;
-    }
-
-    async function createOrganisation(
-        parentOrga: OrganisationID | undefined,
-        isRoot: boolean,
-        typ: OrganisationsTyp,
-    ): Promise<OrganisationID> {
-        const organisation: Organisation<false> | DomainError = Organisation.createNew(
-            parentOrga, // administriertVon
-            parentOrga, // zugehoerigZu
-            undefined, // kennung
-            undefined, // name
-            undefined, // namensergaenzung
-            undefined, // kuerzel
-            typ,
-        );
-        if (organisation instanceof DomainError) {
-            throw organisation;
-        }
-        if (isRoot) organisation.id = organisationRepository.ROOT_ORGANISATION_ID;
-
-        const result: OrganisationDo<true> = await organisationRepository.save(organisation);
-
-        return result.id;
     }
 
     async function createRolle(
