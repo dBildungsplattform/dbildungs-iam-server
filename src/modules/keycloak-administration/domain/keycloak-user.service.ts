@@ -264,6 +264,8 @@ export class KeycloakUserService {
             kcAdminClientResult.value.users.findOne({ id: userId }),
         );
         if (!userResult.ok) return userResult;
+        if (!userResult.value?.createdTimestamp)
+            return { ok: false, error: new KeycloakClientError('Keycloak user has no createdTimestamp') };
 
         const credentialsResult: Result<
             Option<Array<CredentialRepresentation>>,
@@ -280,7 +282,7 @@ export class KeycloakUserService {
         if (!password.createdDate)
             return { ok: false, error: new KeycloakClientError('Keycloak user password has no createdDate') };
 
-        if (password.createdDate <= (userResult.value?.createdTimestamp ?? 0))
+        if (password.createdDate <= userResult.value?.createdTimestamp)
             return { ok: false, error: new KeycloakClientError('Keycloak user password has never been updated') };
         return { ok: true, value: password.createdDate };
     }
