@@ -13,6 +13,7 @@ import { ServiceProviderRepo } from '../service-provider/repo/service-provider.r
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
 import { EventModule } from '../../core/eventbus/event.module.js';
 import { PersonPersistenceMapperProfile } from './persistence/person-persistence.mapper.profile.js';
+import { PersonEventHandler } from './event-handlers/person-event-handler.js';
 @Module({
     imports: [KeycloakAdministrationModule, LoggerModule.register(PersonModule.name), EventModule],
     providers: [
@@ -20,6 +21,7 @@ import { PersonPersistenceMapperProfile } from './persistence/person-persistence
         PersonRepository,
         PersonService,
         PersonFactory,
+        PersonEventHandler,
         UsernameGeneratorService,
         RolleRepo,
         OrganisationRepo,

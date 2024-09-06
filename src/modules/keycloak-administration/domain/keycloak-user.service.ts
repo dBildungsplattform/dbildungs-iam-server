@@ -9,8 +9,6 @@ import { UserRepresentationDto } from './keycloak-client/user-representation.dto
 import { ExternalSystemIDs, User } from './user.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { OxUserAttributesCreatedEvent } from '../../../shared/events/ox-user-attributes-created.event.js';
 
 export type FindUserFilter = {
     username?: string;
@@ -22,7 +20,6 @@ export class KeycloakUserService {
     public constructor(
         private readonly kcAdminService: KeycloakAdministrationService,
         private readonly logger: ClassLogger,
-        private readonly eventService: EventService,
     ) {}
 
     public async create(user: User<false>, password?: string): Promise<Result<string, DomainError>> {
@@ -207,8 +204,6 @@ export class KeycloakUserService {
         try {
             await kcAdminClientResult.value.users.update({ id: foundUser.id }, userRepresentation);
             this.logger.info(`Updated user-attributes for user:${foundUser.id}`);
-
-            this.eventService.publish(new OxUserAttributesCreatedEvent(username, oxUserName, oxContextName));
 
             return { ok: true, value: undefined };
         } catch (err) {

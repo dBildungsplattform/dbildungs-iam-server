@@ -128,6 +128,7 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
         }
         this.eventService.publish(
             new OxUserCreatedEvent(
+                personId,
                 person.referrer,
                 result.value.id,
                 result.value.username,

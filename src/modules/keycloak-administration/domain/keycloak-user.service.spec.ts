@@ -9,7 +9,6 @@ import { KeycloakAdministrationService } from './keycloak-admin-client.service.j
 import { type FindUserFilter, KeycloakUserService } from './keycloak-user.service.js';
 import { PersonService } from '../../person/domain/person.service.js';
 import { User } from './user.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js';
 
 describe('KeycloakUserService', () => {
@@ -17,7 +16,6 @@ describe('KeycloakUserService', () => {
     let service: KeycloakUserService;
     let adminService: DeepMocked<KeycloakAdministrationService>;
     let kcUsersMock: DeepMocked<KeycloakAdminClient['users']>;
-    let eventServiceMock: DeepMocked<EventService>;
 
     beforeAll(async () => {
         kcUsersMock = createMock<KeycloakAdminClient['users']>();
@@ -43,15 +41,10 @@ describe('KeycloakUserService', () => {
                     provide: PersonService,
                     useValue: createMock<PersonService>(),
                 },
-                {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
-                },
             ],
         }).compile();
         service = module.get(KeycloakUserService);
         adminService = module.get(KeycloakAdministrationService);
-        eventServiceMock = module.get(EventService);
     });
 
     beforeEach(() => {
@@ -412,13 +405,6 @@ describe('KeycloakUserService', () => {
                 const res: Result<void, DomainError> = await service.updateUser(username, oxUserName, oxContextName);
 
                 expect(res.ok).toBeTruthy();
-                expect(eventServiceMock.publish).toHaveBeenLastCalledWith(
-                    expect.objectContaining({
-                        keycloakUsername: username,
-                        userName: oxUserName,
-                        contextName: oxContextName,
-                    }),
-                );
             });
         });
 
