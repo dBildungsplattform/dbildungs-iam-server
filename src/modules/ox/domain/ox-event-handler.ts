@@ -67,7 +67,8 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
         await this.handlePerson(event.personId);
     }
 
-    /*  @EventHandler(EmailAddressGeneratedEvent)
+    //Just for simplified testing, will be removed before merge on main
+    /*@EventHandler(EmailAddressGeneratedEvent)
     public fake(event: EmailAddressGeneratedEvent): void {
         this.logger.info(
             `FAKE: Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddressId:${event.emailAddressId}, address:${event.address}`,

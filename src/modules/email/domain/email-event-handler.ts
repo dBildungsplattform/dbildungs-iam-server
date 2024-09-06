@@ -213,7 +213,7 @@ export class EmailEventHandler {
                 existingEmail.request();
                 const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(existingEmail);
                 if (persistenceResult instanceof EmailAddress) {
-                    this.logger.info(`Set Requested status and persisted address:${persistenceResult.currentAddress}`);
+                    this.logger.info(`Set Requested status and persisted address:${persistenceResult.address}`);
                     this.eventService.publish(
                         new EmailAddressGeneratedEvent(
                             personId,
