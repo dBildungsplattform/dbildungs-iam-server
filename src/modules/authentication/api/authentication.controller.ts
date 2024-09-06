@@ -19,7 +19,7 @@ import { FrontendConfig, KeycloakConfig, ServerConfig } from '../../../shared/co
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
 import { LoginGuard } from './login.guard.js';
 import { RedirectQueryParams } from './redirect.query.params.js';
-import { UserinfoResponse } from './userinfo.response.js';
+import { UserinfoExtension, UserinfoResponse } from './userinfo.response.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonPermissions } from '../domain/person-permissions.js';
 import { Permissions } from './permissions.decorator.js';
@@ -29,6 +29,8 @@ import { RolleID } from '../../../shared/types/index.js';
 import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
 import { RollenSystemRechtServiceProviderIDResponse } from './rolle-systemrechte-serviceproviderid.response.js';
 import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 @UseFilters(new AuthenticationExceptionFilter())
 @ApiTags('auth')
 @Controller({ path: 'auth' })
@@ -43,6 +45,7 @@ export class AuthenticationController {
         configService: ConfigService<ServerConfig>,
         @Inject(OIDC_CLIENT) private client: Client,
         private readonly logger: ClassLogger,
+        private keycloakUserService: KeycloakUserService,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
         const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
@@ -120,7 +123,14 @@ export class AuthenticationController {
                     ),
                 ),
         );
-        return new UserinfoResponse(permissions, rolleFieldsResponse);
+        const userinfoExtension: UserinfoExtension = {};
+        if (permissions.personFields.keycloakUserId) {
+            const lastPasswordChange: Result<number, DomainError> =
+                await this.keycloakUserService.getLastPasswordChange(permissions.personFields.keycloakUserId);
+            if (lastPasswordChange.ok) userinfoExtension.password_updated_at = lastPasswordChange.value;
+        }
+
+        return new UserinfoResponse(permissions, rolleFieldsResponse, userinfoExtension);
     }
 
     @Get('reset-password')

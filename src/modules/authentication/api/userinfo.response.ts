@@ -2,6 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { PersonPermissions } from '../domain/person-permissions.js';
 import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
 
+export type UserinfoExtension = {
+    password_updated_at?: number;
+};
+
 export class UserinfoResponse {
     @ApiProperty()
     public sub: string;
@@ -60,10 +64,17 @@ export class UserinfoResponse {
     @ApiProperty({ nullable: true })
     public updated_at?: number;
 
+    @ApiProperty({ nullable: true })
+    public password_updated_at?: number;
+
     @ApiProperty({ type: PersonenkontextRolleFieldsResponse, isArray: true })
     public personenkontexte: PersonenkontextRolleFieldsResponse[];
 
-    public constructor(info: PersonPermissions, personenkontexte: PersonenkontextRolleFieldsResponse[]) {
+    public constructor(
+        info: PersonPermissions,
+        personenkontexte: PersonenkontextRolleFieldsResponse[],
+        extension?: UserinfoExtension,
+    ) {
         this.sub = info.personFields.keycloakUserId!;
         this.personId = info.personFields.id;
         this.name = `${info.personFields.vorname} ${info.personFields.familienname}`;
@@ -75,5 +86,6 @@ export class UserinfoResponse {
         this.birthdate = info.personFields.geburtsdatum?.toISOString();
         this.updated_at = info.personFields.updatedAt.getTime() / 1000;
         this.personenkontexte = personenkontexte;
+        this.password_updated_at = extension?.password_updated_at;
     }
 }

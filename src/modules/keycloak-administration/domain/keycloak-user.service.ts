@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { KeycloakAdminClient, type UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
+import {
+    CredentialRepresentation,
+    KeycloakAdminClient,
+    type UserRepresentation,
+} from '@s3pweb/keycloak-admin-client-cjs';
 import { plainToClass } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 
@@ -247,6 +251,38 @@ export class KeycloakUserService {
         } catch (err) {
             return { ok: false, error: new KeycloakClientError('Could not authorize with Keycloak') };
         }
+    }
+
+    public async getLastPasswordChange(userId: string): Promise<Result<number, DomainError>> {
+        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+            await this.kcAdminService.getAuthedKcAdminClient();
+        if (!kcAdminClientResult.ok) {
+            return kcAdminClientResult;
+        }
+
+        const userResult: Result<Option<UserRepresentation>, DomainError> = await this.wrapClientResponse(
+            kcAdminClientResult.value.users.findOne({ id: userId }),
+        );
+        if (!userResult.ok) return userResult;
+
+        const credentialsResult: Result<
+            Option<Array<CredentialRepresentation>>,
+            DomainError
+        > = await this.wrapClientResponse(kcAdminClientResult.value.users.getCredentials({ id: userId }));
+        if (!credentialsResult.ok) return credentialsResult;
+        if (!credentialsResult.value || credentialsResult.value.length <= 0)
+            return { ok: false, error: new KeycloakClientError('Keycloak returned no credentials') };
+
+        const password: CredentialRepresentation | undefined = credentialsResult.value.find(
+            (credential: CredentialRepresentation) => credential.type == 'password',
+        );
+        if (!password) return { ok: false, error: new KeycloakClientError('Keycloak user has no password') };
+        if (!password.createdDate)
+            return { ok: false, error: new KeycloakClientError('Keycloak user password has no createdDate') };
+
+        if (password.createdDate <= (userResult.value?.createdTimestamp ?? 0))
+            return { ok: false, error: new KeycloakClientError('Keycloak user password has never been updated') };
+        return { ok: true, value: password.createdDate };
     }
 
     private async wrapClientResponse<T>(promise: Promise<T>): Promise<Result<T, DomainError>> {

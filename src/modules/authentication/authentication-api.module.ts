@@ -12,6 +12,7 @@ import { PersonenKontextModule } from '../personenkontext/personenkontext.module
 import { JwtStrategy } from './passport/jwt.strategy.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { RolleModule } from '../rolle/rolle.module.js';
+import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 
 @Module({
     imports: [
@@ -21,6 +22,7 @@ import { RolleModule } from '../rolle/rolle.module.js';
         PersonenKontextModule,
         OrganisationModule,
         RolleModule,
+        KeycloakAdministrationModule,
     ],
     providers: [
         OpenIdConnectStrategy,
