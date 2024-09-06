@@ -23,6 +23,8 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rollenart-for-lern.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { CheckRollenartLernSpecification } from '../specification/nur-rolle-lern.js';
+import { CheckBefristungSpecification } from '../specification/befristung-required-bei-rolle-befristungspflicht.js';
+import { PersonenkontextBefristungRequiredError } from './error/personenkontext-befristung-required.error.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -89,6 +91,7 @@ export class PersonenkontexteUpdate {
                     undefined,
                     undefined,
                     undefined,
+                    pkBodyParam.befristung,
                 );
                 personenKontexte.push(newPK); // New
             } else {
@@ -264,6 +267,18 @@ export class PersonenkontexteUpdate {
         return undefined;
     }
 
+    private async checkBefristungSpecification(
+        sentPKs: Personenkontext<boolean>[],
+    ): Promise<Option<PersonenkontexteUpdateError>> {
+        const isSatisfied: boolean = await new CheckBefristungSpecification(this.rolleRepo).checkBefristung(sentPKs);
+
+        if (!isSatisfied) {
+            return new PersonenkontextBefristungRequiredError();
+        }
+
+        return undefined;
+    }
+
     public async update(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
         const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
         if (sentPKs instanceof PersonenkontexteUpdateError) {
@@ -271,10 +286,17 @@ export class PersonenkontexteUpdate {
         }
 
         const existingPKs: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(this.personId);
+
         const validationForLernError: Option<PersonenkontexteUpdateError> =
             await this.checkRollenartLernSpecification(sentPKs);
         if (validationForLernError) {
             return validationForLernError;
+        }
+
+        const validationForBefristung: Option<PersonenkontexteUpdateError> =
+            await this.checkBefristungSpecification(sentPKs);
+        if (validationForBefristung) {
+            return validationForBefristung;
         }
         const validationError: Option<PersonenkontexteUpdateError> = await this.validate(existingPKs);
         if (validationError) {
@@ -292,7 +314,6 @@ export class PersonenkontexteUpdate {
         const existingPKsAfterUpdate: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(
             this.personId,
         );
-
         await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate);
 
         return existingPKsAfterUpdate;
