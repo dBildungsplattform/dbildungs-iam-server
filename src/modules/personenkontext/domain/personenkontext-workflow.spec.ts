@@ -152,7 +152,7 @@ describe('PersonenkontextWorkflow', () => {
                 undefined,
                 LIMIT,
             );
-            expect(result.length).toBe(1);
+            expect(result.length).toBe(2);
         });
 
         it('should return organisations based on name or kennung if provided', async () => {
