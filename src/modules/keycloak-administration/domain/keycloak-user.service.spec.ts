@@ -704,6 +704,10 @@ describe('KeycloakUserService', () => {
                     error: 'Keycloak user password has never been updated',
                 },
             ];
+            beforeEach(() => {
+                kcUsersMock.findOne.mockReset();
+                kcUsersMock.getCredentials.mockReset();
+            });
             it.each(data)(
                 'should return an error',
                 async ({ credentials, error }: { credentials: Array<CredentialRepresentation>; error: string }) => {
@@ -717,6 +721,7 @@ describe('KeycloakUserService', () => {
                 },
             );
         });
+
         describe('when getAuthedKcAdminClient fails', () => {
             it('should pass along error result', async () => {
                 const error: Result<KeycloakAdminClient, DomainError> = {
