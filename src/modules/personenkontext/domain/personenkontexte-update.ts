@@ -22,10 +22,12 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rollenart-for-lern.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { CheckRollenartLernSpecification } from '../specification/nur-rolle-lern.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
         private readonly eventService: EventService,
+        private readonly logger: ClassLogger,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personRepo: PersonRepository,
         private readonly rolleRepo: RolleRepo,
@@ -40,6 +42,7 @@ export class PersonenkontexteUpdate {
 
     public static createNew(
         eventService: EventService,
+        logger: ClassLogger,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         personRepo: PersonRepository,
         rolleRepo: RolleRepo,
@@ -53,6 +56,7 @@ export class PersonenkontexteUpdate {
     ): PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
             eventService,
+            logger,
             dBiamPersonenkontextRepo,
             personRepo,
             rolleRepo,
@@ -210,8 +214,7 @@ export class PersonenkontexteUpdate {
                     await this.dBiamPersonenkontextRepo.delete(existingPK).then(() => {});
                     deletedPKs.push(existingPK);
                 } catch (err) {
-                    // DB error, ignore
-                    // Fired event will not contain this context as a deleted kontext
+                    this.logger.error(`Personenkontext with ID ${existingPK.id} could not be deleted!`, err);
                 }
             }
         }
@@ -238,8 +241,10 @@ export class PersonenkontexteUpdate {
                     const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(sentPK);
                     createdPKs.push(savedPK);
                 } catch (err) {
-                    // DB error, ignore
-                    // Fired event will not contain this context as an added kontext
+                    this.logger.error(
+                        `Personenkontext with (person: ${sentPK.personId}, organisation: ${sentPK.organisationId}, rolle: ${sentPK.rolleId}) could not be added!`,
+                        err,
+                    );
                 }
             }
         }
@@ -322,6 +327,9 @@ export class PersonenkontexteUpdate {
         ]);
 
         if (!person) {
+            this.logger.error(
+                `Could not find person with ID ${this.personId} while building PersonenkontextUpdatedEvent`,
+            );
             return; // Person can not be found
         }
 

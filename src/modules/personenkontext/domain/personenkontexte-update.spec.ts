@@ -57,6 +57,7 @@ describe('PersonenkontexteUpdate', () => {
     let pk2: Personenkontext<true>;
     let personPermissionsMock: PersonPermissionsMock;
     let rolleRepoMock: DeepMocked<RolleRepo>;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -119,6 +120,7 @@ describe('PersonenkontexteUpdate', () => {
         });
         personPermissionsMock = new PersonPermissionsMock();
         rolleRepoMock = module.get(RolleRepo);
+        loggerMock = module.get(ClassLogger);
     });
 
     afterAll(async () => {
@@ -159,6 +161,71 @@ describe('PersonenkontexteUpdate', () => {
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
                 expect(updateResult).toBeInstanceOf(Array);
+            });
+        });
+
+        describe('when personenkontext could not be saved', () => {
+            beforeAll(() => {
+                const count: number = 1;
+
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    lastModified,
+                    count,
+                    [pk1, pk2],
+                    personPermissionsMock,
+                );
+            });
+
+            it('should log error', async () => {
+                dBiamPersonenkontextRepoMock.find.mockResolvedValue(null);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(null); //mock pk2 is not found => therefore handled as new
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]); //mock pk1 is found as existing in DB
+
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); // mock while checking the existing PKs
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock the return values in the end of update method
+
+                const error: Error = new Error('DB Error');
+                dBiamPersonenkontextRepoMock.save.mockRejectedValueOnce(error); // Simulate DB Error
+
+                const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
+                expect(updateResult).toBeInstanceOf(Array);
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Personenkontext with (person: ${pk2.personId}, organisation: ${pk2.organisationId}, rolle: ${pk2.rolleId}) could not be added!`,
+                    error,
+                );
+            });
+        });
+
+        describe('when personenkontext could not be deleted', () => {
+            beforeAll(() => {
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    lastModified,
+                    1,
+                    [],
+                    personPermissionsMock,
+                );
+            });
+
+            it('should log error', async () => {
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]); //mock pk1 is found as existing in DB
+
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]); // mock while checking the existing PKs
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([]); //mock the return values in the end of update method
+
+                const error: Error = new Error('DB Error');
+                dBiamPersonenkontextRepoMock.delete.mockRejectedValueOnce(error); // Simulate DB Error
+
+                const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
+                expect(updateResult).toBeInstanceOf(Array);
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Personenkontext with ID ${pk1.id} could not be deleted!`,
+                    error,
+                );
             });
         });
 
