@@ -249,7 +249,7 @@ export class OrganisationController {
 
         const scope: OrganisationScope = new OrganisationScope();
 
-        // If the typ is Klasse then only search by Name using the search string
+        // Define scope based on the organisation type
         if (queryParams.typ === OrganisationsTyp.KLASSE) {
             scope
                 .findBy({
@@ -263,28 +263,57 @@ export class OrganisationController {
                 .excludeTyp(queryParams.excludeTyp)
                 .byIDs(validOrgaIDs)
                 .paged(queryParams.offset, queryParams.limit);
+        } else {
+            scope
+                .findBy({
+                    kennung: queryParams.kennung,
+                    name: queryParams.name,
+                    typ: queryParams.typ,
+                })
+                .setScopeWhereOperator(ScopeOperator.AND)
+                .findByAdministriertVonArray(queryParams.administriertVon)
+                .searchString(queryParams.searchString)
+                .excludeTyp(queryParams.excludeTyp)
+                .byIDs(validOrgaIDs)
+                .paged(queryParams.offset, queryParams.limit);
         }
-        scope
-            .findBy({
-                kennung: queryParams.kennung,
-                name: queryParams.name,
-                typ: queryParams.typ,
-            })
-            .setScopeWhereOperator(ScopeOperator.AND)
-            .findByAdministriertVonArray(queryParams.administriertVon)
-            .searchString(queryParams.searchString)
-            .excludeTyp(queryParams.excludeTyp)
-            .byIDs(validOrgaIDs)
-            .paged(queryParams.offset, queryParams.limit);
 
         const [organisations, total]: Counted<Organisation<true>> = await this.organisationRepository.findBy(scope);
-        const organisationResponses: OrganisationResponse[] = organisations.map((organisation: Organisation<true>) => {
-            return new OrganisationResponse(organisation);
-        });
+
+        // Create a Map from the existing organisations
+        const organisationMap: Map<string, Organisation<true>> = new Map(
+            organisations.map((org: Organisation<true>) => [org.id, org]),
+        );
+
+        // Fetch and merge selected organisations
+        if (queryParams.organisationIds?.length) {
+            const selectedOrganisationMap: Map<
+                string,
+                Organisation<true>
+            > = await this.organisationRepository.findByIds(queryParams.organisationIds);
+
+            selectedOrganisationMap.forEach((organisation: Organisation<true>, id: string) => {
+                organisationMap.set(id, organisation);
+            });
+        }
+
+        // Convert the map to an array and handle pagination
+        const mergedOrganisations: Organisation<true>[] = Array.from(organisationMap.values());
+        const pagedOrganisations: Organisation<true>[] = mergedOrganisations.slice(
+            queryParams.offset ?? 0,
+            (queryParams.offset ?? 0) + (queryParams.limit ?? 25),
+        );
+
+        const organisationResponses: OrganisationResponse[] = pagedOrganisations.map(
+            (organisation: Organisation<true>) => {
+                return new OrganisationResponse(organisation);
+            },
+        );
+
         const pagedOrganisationResponse: Paged<OrganisationResponse> = {
             total: total,
             offset: queryParams.offset ?? 0,
-            limit: queryParams.limit ?? total,
+            limit: queryParams.limit ?? 0,
             items: organisationResponses,
         };
 
