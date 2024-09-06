@@ -96,6 +96,7 @@ export class DBiamPersonenkontextController {
             personId: params.personId,
             organisationId: params.organisationId,
             rolleId: params.rolleId,
+            befristung: params.befristung,
         });
 
         // Update

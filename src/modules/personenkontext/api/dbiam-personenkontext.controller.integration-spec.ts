@@ -226,6 +226,7 @@ describe('dbiam Personenkontext API', () => {
                 DoFactory.createRolle(false, {
                     administeredBySchulstrukturknoten: organisation.id,
                     rollenart: RollenArt.LEHR,
+                    merkmale: [],
                 }),
             );
 

@@ -27,6 +27,7 @@ export function mapAggregateToData(
         organisationId: personenKontext.organisationId,
         rolleId: rel(RolleEntity, personenKontext.rolleId),
         rolle: Rolle.LERNENDER, // Placeholder, until rolle is removed from entity
+        befristung: personenKontext.befristung,
     };
 }
 
@@ -48,6 +49,7 @@ function mapEntityToAggregate(
         entity.jahrgangsstufe,
         entity.sichtfreigabe,
         entity.loeschungZeitpunkt,
+        entity.befristung,
     );
 }
 
