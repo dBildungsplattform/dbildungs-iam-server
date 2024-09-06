@@ -24,10 +24,11 @@ import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
-        if (emailAddress.enabled) return emailAddress.address;
+        if (emailAddress.status === EmailAddressStatus.ENABLED) return emailAddress.address;
     }
     return undefined;
 }
