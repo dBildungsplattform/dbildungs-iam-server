@@ -6,6 +6,8 @@ import { NurLehrUndLernAnKlasseError } from './error/nur-lehr-und-lern-an-klasse
 import { GleicheRolleAnKlasseWieSchuleError } from './error/gleiche-rolle-an-klasse-wie-schule.error.js';
 import { CheckRollenartLernSpecification } from './nur-rolle-lern.js';
 import { UpdateInvalidRollenartForLernError } from '../domain/error/update-invalid-rollenart-for-lern.error.js';
+import { CheckBefristungSpecification } from './befristung-required-bei-rolle-befristungspflicht.js';
+import { PersonenkontextBefristungRequiredError } from '../domain/error/personenkontext-befristung-required.error.js';
 
 /**
  * 'This specification is not extending CompositeSpecification, but combines specifications for Personenkontexte
@@ -16,11 +18,15 @@ export class PersonenkontextKlasseSpecification {
         protected readonly nurLehrUndLernAnKlasse: NurLehrUndLernAnKlasse,
         protected readonly gleicheRolleAnKlasseWieSchule: GleicheRolleAnKlasseWieSchule,
         protected readonly nurRollenartLern: CheckRollenartLernSpecification,
+        protected readonly befristungRequired: CheckBefristungSpecification,
     ) {}
 
     public async returnsError(p: Personenkontext<boolean>): Promise<Option<DomainError>> {
         if (!(await this.nurRollenartLern.checkRollenartLern([p]))) {
             return new UpdateInvalidRollenartForLernError();
+        }
+        if (!(await this.befristungRequired.checkBefristung([p]))) {
+            return new PersonenkontextBefristungRequiredError();
         }
         if (!(await this.nurLehrUndLernAnKlasse.isSatisfiedBy(p))) {
             return new NurLehrUndLernAnKlasseError();
