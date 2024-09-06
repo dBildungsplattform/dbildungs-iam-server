@@ -71,5 +71,12 @@
         "CONTEXT_NAME": "contextname",
         "USERNAME": "username",
         "PASSWORD": "password"
+    },
+    "PRIVACYIDEA": {
+        "ENDPOINT": "http://localhost:5000",
+        "USERNAME": "admin",
+        "PASSWORD": "admin",
+        "USER_RESOLVER": "mariadb_resolver",
+        "REALM": "defrealm"
     }
 }
