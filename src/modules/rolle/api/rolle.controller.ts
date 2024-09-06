@@ -120,10 +120,16 @@ export class RolleController {
                     .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
                     .filter(Boolean) as ServiceProvider<true>[];
 
-                const administeredBySchulstrukturknotenName: string | undefined =
-                    administeredOrganisations.get(r.administeredBySchulstrukturknoten)?.name ?? undefined;
+                const administeredBySchulstrukturknoten: Organisation<true> | undefined = administeredOrganisations.get(
+                    r.administeredBySchulstrukturknoten,
+                );
 
-                return new RolleWithServiceProvidersResponse(r, sps, administeredBySchulstrukturknotenName);
+                return new RolleWithServiceProvidersResponse(
+                    r,
+                    sps,
+                    administeredBySchulstrukturknoten?.name,
+                    administeredBySchulstrukturknoten?.kennung,
+                );
             },
         );
         const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
@@ -396,13 +402,6 @@ export class RolleController {
             .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
             .filter(Boolean) as ServiceProvider<true>[];
 
-        const administeredBySchulstrukturknotenName: string | undefined =
-            (await this.organisationRepository.findById(rolle.administeredBySchulstrukturknoten))?.name ?? undefined;
-
-        return new RolleWithServiceProvidersResponse(
-            rolle,
-            rolleServiceProviders,
-            administeredBySchulstrukturknotenName,
-        );
+        return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
     }
 }

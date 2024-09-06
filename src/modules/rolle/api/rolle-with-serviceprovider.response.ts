@@ -9,16 +9,13 @@ export class RolleWithServiceProvidersResponse extends RolleResponse {
     @ApiProperty({ type: ServiceProviderIdNameResponse, isArray: true })
     public serviceProviders: ServiceProviderIdNameResponse[];
 
-    @ApiProperty()
-    public administeredBySchulstrukturknotenName: string | undefined;
-
     public constructor(
         rolle: Rolle<true>,
         serviceProviders: ServiceProvider<true>[],
-        administeredBySchulstrukturknotenName: string | undefined,
+        administeredBySchulstrukturknotenName?: string,
+        administeredBySchulstrukturknotenKennung?: string,
     ) {
-        super(rolle);
-        this.administeredBySchulstrukturknotenName = administeredBySchulstrukturknotenName;
+        super(rolle, administeredBySchulstrukturknotenName, administeredBySchulstrukturknotenKennung);
         this.serviceProviders = serviceProviders.map(
             (sp: ServiceProvider<true>) => new ServiceProviderIdNameResponse(sp),
         );
