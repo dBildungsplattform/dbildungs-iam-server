@@ -25,7 +25,7 @@ import { ServiceProviderModule } from '../../service-provider/service-provider.m
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { KeycloakConfig } from '../../../shared/config/keycloak.config.js';
-import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -36,6 +36,7 @@ describe('AuthenticationController', () => {
     let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
+    const keycloakUserServiceMock: DeepMocked<KeycloakUserService> = createMock<KeycloakUserService>();
     let keyCloakConfig: KeycloakConfig;
 
     beforeAll(async () => {
@@ -48,7 +49,6 @@ describe('AuthenticationController', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonModule,
                 PersonenKontextModule,
-                KeycloakAdministrationModule,
             ],
             providers: [
                 AuthenticationController,
@@ -71,6 +71,10 @@ describe('AuthenticationController', () => {
                 {
                     provide: OIDC_CLIENT,
                     useValue: createMock<Client>(),
+                },
+                {
+                    provide: KeycloakUserService,
+                    useValue: keycloakUserServiceMock,
                 },
             ],
         }).compile();
@@ -251,6 +255,10 @@ describe('AuthenticationController', () => {
                             rolle: { systemrechte: [], serviceProviderIds: [] },
                         },
                     ]),
+            });
+            keycloakUserServiceMock.getLastPasswordChange.mockResolvedValueOnce({
+                ok: true,
+                value: person.updatedAt.valueOf(),
             });
             const result: UserinfoResponse = await authController.info(permissions);
 
