@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PersonPermissions } from '../domain/person-permissions.js';
 import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
+import { StepUpLevel } from '../passport/oidc.strategy.js';
 
 export class UserinfoResponse {
     @ApiProperty()
@@ -63,10 +64,14 @@ export class UserinfoResponse {
     @ApiProperty({ type: PersonenkontextRolleFieldsResponse, isArray: true })
     public personenkontexte: PersonenkontextRolleFieldsResponse[];
 
-    @ApiProperty()
-    public acr?: string;
+    @ApiProperty({ nullable: false })
+    public acr: StepUpLevel;
 
-    public constructor(info: PersonPermissions, personenkontexte: PersonenkontextRolleFieldsResponse[], acr: string) {
+    public constructor(
+        info: PersonPermissions,
+        personenkontexte: PersonenkontextRolleFieldsResponse[],
+        acr: StepUpLevel,
+    ) {
         this.sub = info.personFields.keycloakUserId!;
         this.personId = info.personFields.id;
         this.name = `${info.personFields.vorname} ${info.personFields.familienname}`;

@@ -30,9 +30,10 @@ import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fie
 import { RollenSystemRechtServiceProviderIDResponse } from './rolle-systemrechte-serviceproviderid.response.js';
 import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
+import { StepUpLevel } from '../passport/oidc.strategy.js';
 
 interface CustomJwtPayload extends JwtPayload {
-    acr?: string;
+    acr: StepUpLevel;
 }
 
 @UseFilters(new AuthenticationExceptionFilter())
@@ -64,7 +65,7 @@ export class AuthenticationController {
     @ApiResponse({ status: 302, description: 'Redirection to orchestrate OIDC flow.' })
     @ApiQuery({ type: RedirectQueryParams })
     public login(@Res() res: Response, @Session() session: SessionData): void {
-        const target: string = session.redirectUrl ?? this.defaultLoginRedirect;
+        const target: string = session.passport?.user.redirect_uri ?? this.defaultLoginRedirect;
         res.redirect(target);
     }
 
@@ -126,12 +127,11 @@ export class AuthenticationController {
                     ),
                 ),
         );
-
-        let decodedIdToken: CustomJwtPayload = { acr: '' };
+        let decodedIdToken: CustomJwtPayload = { acr: StepUpLevel.NONE };
         if (req.passportUser?.access_token) {
             decodedIdToken = jwtDecode<CustomJwtPayload>(req.passportUser?.access_token);
         }
-        return new UserinfoResponse(permissions, rolleFieldsResponse, decodedIdToken.acr ?? '');
+        return new UserinfoResponse(permissions, rolleFieldsResponse, decodedIdToken.acr);
     }
 
     @Get('reset-password')
