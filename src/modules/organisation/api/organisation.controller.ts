@@ -299,12 +299,8 @@ export class OrganisationController {
 
         // Convert the map to an array and handle pagination
         const mergedOrganisations: Organisation<true>[] = Array.from(organisationMap.values());
-        const pagedOrganisations: Organisation<true>[] = mergedOrganisations.slice(
-            queryParams.offset ?? 0,
-            (queryParams.offset ?? 0) + (queryParams.limit ?? 25),
-        );
 
-        const organisationResponses: OrganisationResponse[] = pagedOrganisations.map(
+        const organisationResponses: OrganisationResponse[] = mergedOrganisations.map(
             (organisation: Organisation<true>) => {
                 return new OrganisationResponse(organisation);
             },
