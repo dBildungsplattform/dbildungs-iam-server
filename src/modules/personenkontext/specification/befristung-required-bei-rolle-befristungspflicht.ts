@@ -7,6 +7,10 @@ export class CheckBefristungSpecification {
     public constructor(private readonly rolleRepo: RolleRepo) {}
 
     public async checkBefristung(sentPKs: Personenkontext<boolean>[]): Promise<boolean> {
+        // Early return if all Personenkontext have befristung defined
+        if (sentPKs.every((pk: Personenkontext<boolean>) => pk.befristung !== undefined)) {
+            return true;
+        }
         // Extract unique Rolle IDs from sentPKs
         const uniqueRolleIds: Set<string> = new Set(sentPKs.map((pk: Personenkontext<boolean>) => pk.rolleId));
 
