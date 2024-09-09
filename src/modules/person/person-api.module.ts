@@ -13,6 +13,7 @@ import { DBiamPersonenuebersichtController } from './api/personenuebersicht/dbia
 import { PersonInfoController } from './api/person-info.controller.js';
 import { PersonApiMapper } from './mapper/person-api.mapper.js';
 import { PersonApiMapperProfile } from './api/person-api.mapper.profile.js';
+import { PersonDeleteModule } from './person-deletion/person-delete.module.js';
 
 @Module({
     imports: [
@@ -20,7 +21,7 @@ import { PersonApiMapperProfile } from './api/person-api.mapper.profile.js';
         RolleModule,
         OrganisationModule,
         PersonenKontextModule,
-        OrganisationModule,
+        PersonDeleteModule,
         KeycloakAdministrationModule,
         LoggerModule.register(PersonApiModule.name),
     ],

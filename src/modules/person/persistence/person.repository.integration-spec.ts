@@ -37,6 +37,7 @@ import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 describe('PersonRepository Integration', () => {
@@ -999,7 +1000,12 @@ describe('PersonRepository Integration', () => {
                     },
                 });
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
-                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
 
                 expect(result.ok).toBeTruthy();
             });
@@ -1012,7 +1018,12 @@ describe('PersonRepository Integration', () => {
 
                 await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
-                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
 
                 expect(result.ok).toBeFalsy();
             });
@@ -1062,9 +1073,12 @@ describe('PersonRepository Integration', () => {
                 if (!personGetAllowed.ok) {
                     throw new EntityNotFoundError('Person', person1.id);
                 }
+
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                 const result: Result<void, DomainError> = await sut.deletePerson(
                     personGetAllowed.value.id,
                     personPermissionsMock,
+                    removedPersonenkontexts,
                 );
                 expect(result.ok).toBeTruthy();
             });
@@ -1110,9 +1124,12 @@ describe('PersonRepository Integration', () => {
                     if (!personGetAllowed.ok) {
                         throw new EntityNotFoundError('Person', person.id);
                     }
+
+                    const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                     const result: Result<void, DomainError> = await sut.deletePerson(
                         personGetAllowed.value.id,
                         personPermissionsMock,
+                        removedPersonenkontexts,
                     );
 
                     expect(eventServiceMock.publish).toHaveBeenCalledWith(
@@ -1130,7 +1147,12 @@ describe('PersonRepository Integration', () => {
 
                 await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
-                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
 
                 expect(result.ok).toBeFalsy();
             });
@@ -1172,7 +1194,12 @@ describe('PersonRepository Integration', () => {
 
                 await sut.checkIfDeleteIsAllowed(personGetAllowed.value.id, personPermissionsMock);
 
-                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
 
                 expect(result.ok).toBeFalsy();
                 if (!result.ok) {
@@ -1211,9 +1238,10 @@ describe('PersonRepository Integration', () => {
                     throw new EntityNotFoundError('Person', person1.id);
                 }
 
-                await expect(sut.deletePerson(personGetAllowed.value.id, personPermissionsMock)).rejects.toThrow(
-                    PersonHasNoKeycloakId,
-                );
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                await expect(
+                    sut.deletePerson(personGetAllowed.value.id, personPermissionsMock, removedPersonenkontexts),
+                ).rejects.toThrow(PersonHasNoKeycloakId);
             });
         });
     });

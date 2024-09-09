@@ -70,6 +70,7 @@ import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonLockResponse } from './person-lock.response.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
+import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -84,6 +85,7 @@ export class PersonController {
         private readonly personRepository: PersonRepository,
         private readonly personFactory: PersonFactory,
         private readonly personenkontextService: PersonenkontextService,
+        private readonly personDeleteService: PersonDeleteService,
         private keycloakUserService: KeycloakUserService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
@@ -173,7 +175,7 @@ export class PersonController {
         @Param() params: PersonByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        const response: Result<void, DomainError> = await this.personRepository.deletePerson(
+        const response: Result<void, DomainError> = await this.personDeleteService.deletePerson(
             params.personId,
             permissions,
         );

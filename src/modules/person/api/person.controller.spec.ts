@@ -29,7 +29,7 @@ import { KeycloakClientError } from '../../../shared/error/keycloak-client.error
 import { PersonFactory } from '../domain/person.factory.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationID } from '../../../shared/types/index.js';
-import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { EntityCouldNotBeDeleted, EntityNotFoundError } from '../../../shared/error/index.js';
 import { ConfigService } from '@nestjs/config';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
@@ -40,6 +40,7 @@ import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-per
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
+import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonDomainError } from '../domain/person-domain.error.js';
 
@@ -52,7 +53,7 @@ describe('PersonController', () => {
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let keycloakUserService: DeepMocked<KeycloakUserService>;
-
+    let personDeleteServiceMock: DeepMocked<PersonDeleteService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
 
     beforeAll(async () => {
@@ -74,6 +75,10 @@ describe('PersonController', () => {
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),
+                },
+                {
+                    provide: PersonDeleteService,
+                    useValue: createMock<PersonDeleteService>(),
                 },
                 {
                     provide: PersonRepository,
@@ -107,6 +112,7 @@ describe('PersonController', () => {
         usernameGeneratorService = module.get(UsernameGeneratorService);
         personenkontextServiceMock = module.get(PersonenkontextService);
         rolleRepoMock = module.get(RolleRepo);
+        personDeleteServiceMock = module.get(PersonDeleteService);
         keycloakUserService = module.get(KeycloakUserService);
     });
 
@@ -279,21 +285,21 @@ describe('PersonController', () => {
         };
         describe('when deleting a person is successful', () => {
             it('should return no error ', async () => {
-                personRepositoryMock.findById.mockResolvedValue(person);
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-                personRepositoryMock.deletePerson.mockResolvedValueOnce({ ok: true, value: undefined });
-
+                personDeleteServiceMock.deletePerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
                 const response: void = await personController.deletePersonById(deleteParams, personPermissionsMock);
 
                 expect(response).toBeUndefined();
-                expect(personRepositoryMock.deletePerson).toHaveBeenCalledTimes(1);
+                expect(personDeleteServiceMock.deletePerson).toHaveBeenCalledTimes(1);
             });
         });
         describe('when deleting a person returns a SchulConnexError', () => {
             it('should throw HttpException', async () => {
-                personRepositoryMock.deletePerson.mockResolvedValueOnce({
+                personDeleteServiceMock.deletePerson.mockResolvedValueOnce({
                     ok: false,
-                    error: new EntityNotFoundError(),
+                    error: new EntityCouldNotBeDeleted('entity', faker.string.uuid()),
                 });
                 await expect(personController.deletePersonById(deleteParams, personPermissionsMock)).rejects.toThrow(
                     HttpException,
