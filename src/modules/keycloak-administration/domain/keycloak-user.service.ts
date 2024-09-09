@@ -282,7 +282,8 @@ export class KeycloakUserService {
         if (!password.createdDate)
             return { ok: false, error: new KeycloakClientError('Keycloak user password has no createdDate') };
 
-        if (password.createdDate <= userResult.value?.createdTimestamp)
+        const tolerance: number = 120000; // 2 minutes
+        if (password.createdDate - userResult.value.createdTimestamp <= tolerance)
             return { ok: false, error: new KeycloakClientError('Keycloak user password has never been updated') };
         return { ok: true, value: password.createdDate };
     }
